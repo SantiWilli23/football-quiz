@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: football-quiz
+    env: node
+    plan: free
+    buildCommand: npm install --prefix server && npm install --prefix client && npm run build --prefix client
+    startCommand: npm start --prefix server
+    healthCheckPath: /api/health
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_AUTH_TOKEN
+        sync: false
