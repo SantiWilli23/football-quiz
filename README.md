@@ -2,6 +2,8 @@
 
 Plataforma de trivia de fútbol para grupos de amigos. Una pregunta nueva cada día, puntos, rachas y ranking grupal.
 
+**En vivo:** https://football-quiz-nod2.onrender.com
+
 ## Stack
 
 - **Backend**: Node.js + Express + `@libsql/client` (SQLite) + JWT + bcryptjs
