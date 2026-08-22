@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
-import { Flame, Users, Target } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Flame, Radio, Target, Users } from "lucide-react";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import QuestionCard from "../components/QuestionCard.jsx";
 import BonusCard from "../components/BonusCard.jsx";
-import QuienEsMasCard from "../components/QuienEsMasCard.jsx";
-import QuePrefieresCard from "../components/QuePrefieresCard.jsx";
-import PersonalityCard from "../components/PersonalityCard.jsx";
+import ModeBCard from "../components/ModeBCard.jsx";
+
+const LIVE_REFRESH_MS = 15000;
 
 export default function Dashboard() {
   const { stats, refreshMe } = useAuth();
@@ -16,6 +16,8 @@ export default function Dashboard() {
   const [modeBData, setModeBData] = useState(null);
   const [groups, setGroups] = useState([]);
   const [mode, setMode] = useState("a");
+
+  const groupId = groups[0]?.id ?? null;
 
   const loadTrivia = async () => {
     try {
@@ -26,18 +28,18 @@ export default function Dashboard() {
     }
   };
 
-  const loadModeB = async () => {
-    if (groups.length === 0) {
+  const loadModeB = useCallback(async () => {
+    if (!groupId) {
       setModeBData(null);
       return;
     }
     try {
-      const { data } = await api.get("/mode-b/today", { params: { groupId: groups[0].id } });
+      const { data } = await api.get("/mode-b/today", { params: { groupId } });
       setModeBData(data);
     } catch {
       setModeBData(null);
     }
-  };
+  }, [groupId]);
 
   const loadGroups = async () => {
     try {
@@ -55,12 +57,28 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (mode === "b") loadModeB();
-  }, [mode, groups]);
+  }, [mode, loadModeB]);
+
+  // Sincronización en vivo: mientras mirás el modo especial se refrescan los
+  // votos del resto del grupo. Se pausa si la pestaña no está visible para no
+  // pegarle al servidor de fondo.
+  useEffect(() => {
+    if (mode !== "b" || !groupId) return;
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") loadModeB();
+    }, LIVE_REFRESH_MS);
+    return () => clearInterval(id);
+  }, [mode, groupId, loadModeB]);
 
   const handleAnswered = (index, result) => {
     setQuestions((prev) =>
       prev.map((item, i) => (i === index ? { ...item, answered: true, result } : item))
     );
+    refreshMe();
+  };
+
+  const handleModeBChanged = async () => {
+    await loadModeB();
     refreshMe();
   };
 
@@ -93,9 +111,18 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
-          <p className="text-gray-400 text-sm mb-6">
-            {new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}
-          </p>
+
+          <div className="flex items-center gap-3 mb-6">
+            <p className="text-gray-400 text-sm">
+              {new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}
+            </p>
+            {mode === "b" && modeBData && (
+              <span className="text-[11px] text-gray-500 flex items-center gap-1.5">
+                <Radio size={11} className="text-purple-400 animate-pulse" />
+                en vivo
+              </span>
+            )}
+          </div>
 
           {mode === "a" && questions && questions.length === 0 && (
             <Card>
@@ -103,7 +130,7 @@ export default function Dashboard() {
             </Card>
           )}
 
-          {mode === "b" && groups.length === 0 && (
+          {mode === "b" && !groupId && (
             <Card>
               <p className="text-gray-400">Necesitás estar en un grupo para ver las preguntas especiales.</p>
             </Card>
@@ -121,15 +148,27 @@ export default function Dashboard() {
                     onAnswered={(result) => handleAnswered(i, result)}
                   />
                 ))}
-                {groups.length > 0 && <BonusCard groupId={groups[0].id} />}
+                {groupId && <BonusCard groupId={groupId} />}
               </>
             ) : (
               modeBData &&
-              groups.length > 0 && (
+              groupId && (
                 <>
-                  <QuienEsMasCard data={modeBData.quien_es_mas} groupId={groups[0].id} onVoted={loadModeB} />
-                  <QuePrefieresCard data={modeBData.que_prefieres} groupId={groups[0].id} onVoted={loadModeB} />
-                  <PersonalityCard data={modeBData.personalidad} groupId={groups[0].id} onVoted={loadModeB} />
+                  <ModeBCard
+                    data={modeBData.quien_es_mas}
+                    groupId={groupId}
+                    onChanged={handleModeBChanged}
+                  />
+                  <ModeBCard
+                    data={modeBData.que_prefieres}
+                    groupId={groupId}
+                    onChanged={handleModeBChanged}
+                  />
+                  <ModeBCard
+                    data={modeBData.personalidad}
+                    groupId={groupId}
+                    onChanged={handleModeBChanged}
+                  />
                 </>
               )
             )}
@@ -178,6 +217,14 @@ export default function Dashboard() {
               <div>
                 <p className="text-gray-500 text-xs mb-1">Aciertos</p>
                 <p className="font-semibold text-lg">{stats?.accuracy ?? 0}%</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-xs mb-1">Trivia</p>
+                <p className="font-semibold text-lg">{stats?.trivia_points ?? 0}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-xs mb-1">Especial</p>
+                <p className="font-semibold text-lg text-purple-400">{stats?.mode_b_points ?? 0}</p>
               </div>
             </div>
           </Card>

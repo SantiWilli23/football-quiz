@@ -24,6 +24,17 @@ export default function BonusCard({ groupId }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId]);
 
+  // Refresca los votos del resto del grupo sin recargar la página. Se pausa
+  // mientras la pestaña está en segundo plano.
+  useEffect(() => {
+    if (!groupId) return;
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") load();
+    }, 15000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId]);
+
   const handleVote = async (candidateId) => {
     if (!data || data.voted || voting) return;
     setVoting(true);

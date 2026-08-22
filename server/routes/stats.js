@@ -1,0 +1,572 @@
+import { Router } from "express";
+import { db } from "../db/client.js";
+import { requireAuth } from "../middleware/auth.js";
+import { addDays, getBestStreak, todayStr } from "../utils/points.js";
+import { QUESTION_KINDS, getDayQuestions, settleGroup, tallyFor, winnersOf } from "../utils/mode-b.js";
+
+const router = Router();
+router.use(requireAuth);
+
+async function requireMembership(groupId, userId) {
+  const membership = await db.execute({
+    sql: "SELECT id FROM group_members WHERE group_id = ? AND user_id = ?",
+    args: [groupId, userId],
+  });
+  return membership.rows.length > 0;
+}
+
+async function groupMembers(groupId) {
+  const result = await db.execute({
+    sql: `SELECT u.id, u.username, u.avatar FROM group_members gm
+          JOIN users u ON u.id = gm.user_id
+          WHERE gm.group_id = ? ORDER BY u.username`,
+    args: [groupId],
+  });
+  return result.rows;
+}
+
+// Todas las respuestas de Modo B del grupo, aplanadas a
+// { key, date, kind, user_id, value } para poder cruzarlas en memoria.
+// Los grupos son de amigos (pocas personas), así que traerlas enteras es barato.
+async function allModeBAnswers(groupId) {
+  const specialResult = await db.execute({
+    sql: `SELECT sq.type AS kind, sq.scheduled_date AS date, sa.special_question_id AS qid,
+                 sa.user_id, sa.answer_value AS value
+          FROM special_answers sa
+          JOIN special_questions sq ON sq.id = sa.special_question_id
+          WHERE sa.group_id = ?`,
+    args: [groupId],
+  });
+  const personalityResult = await db.execute({
+    sql: `SELECT 'personalidad' AS kind, pq.scheduled_date AS date, pa.personality_question_id AS qid,
+                 pa.user_id, pa.answer AS value
+          FROM personality_answers pa
+          JOIN personality_questions pq ON pq.id = pa.personality_question_id
+          WHERE pa.group_id = ?`,
+    args: [groupId],
+  });
+
+  return [...specialResult.rows, ...personalityResult.rows].map((r) => ({
+    key: `${r.kind}:${r.qid}`,
+    date: r.date,
+    kind: r.kind,
+    user_id: r.user_id,
+    value: String(r.value),
+  }));
+}
+
+// Ranking de Modo B + a quién vota más el grupo en "¿Quién es más?".
+router.get("/mode-b", async (req, res) => {
+  const groupId = Number(req.query.groupId);
+  if (!groupId) return res.status(400).json({ error: "Falta groupId" });
+
+  try {
+    if (!(await requireMembership(groupId, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+    await settleGroup(groupId);
+
+    const members = await groupMembers(groupId);
+
+    const scoresResult = await db.execute({
+      sql: `SELECT user_id,
+                   COALESCE(SUM(points), 0) AS points,
+                   COALESCE(SUM(answered_count), 0) AS answered,
+                   COALESCE(SUM(correct_predictions), 0) AS correct_predictions,
+                   COUNT(DISTINCT scheduled_date) AS days
+            FROM mode_b_scores WHERE group_id = ? GROUP BY user_id`,
+      args: [groupId],
+    });
+    const scoreByUser = new Map(scoresResult.rows.map((r) => [r.user_id, r]));
+
+    const predictionsResult = await db.execute({
+      sql: "SELECT user_id, COUNT(*) AS total FROM mode_b_predictions WHERE group_id = ? GROUP BY user_id",
+      args: [groupId],
+    });
+    const predictionsByUser = new Map(predictionsResult.rows.map((r) => [r.user_id, Number(r.total)]));
+
+    const leaderboard = members
+      .map((m) => {
+        const score = scoreByUser.get(m.id);
+        const correct = score ? Number(score.correct_predictions) : 0;
+        const madePredictions = predictionsByUser.get(m.id) || 0;
+        return {
+          id: m.id,
+          username: m.username,
+          avatar: m.avatar,
+          points: score ? Number(score.points) : 0,
+          answered: score ? Number(score.answered) : 0,
+          days: score ? Number(score.days) : 0,
+          correct_predictions: correct,
+          predictions: madePredictions,
+          prediction_accuracy: madePredictions > 0 ? Math.round((correct / madePredictions) * 100) : 0,
+        };
+      })
+      .sort((a, b) => b.points - a.points || b.correct_predictions - a.correct_predictions)
+      .map((row, idx) => ({ position: idx + 1, ...row }));
+
+    const votesReceivedResult = await db.execute({
+      sql: `SELECT sa.answer_value AS uid, COUNT(*) AS votes
+            FROM special_answers sa
+            JOIN special_questions sq ON sq.id = sa.special_question_id
+            WHERE sa.group_id = ? AND sq.type = 'quien_es_mas'
+            GROUP BY sa.answer_value`,
+      args: [groupId],
+    });
+    const votesByUid = new Map(votesReceivedResult.rows.map((r) => [String(r.uid), Number(r.votes)]));
+
+    const most_voted = members
+      .map((m) => ({
+        id: m.id,
+        username: m.username,
+        avatar: m.avatar,
+        votes: votesByUid.get(String(m.id)) || 0,
+      }))
+      .sort((a, b) => b.votes - a.votes);
+
+    res.json({ leaderboard, most_voted });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Logros: se calculan al vuelo desde los datos, no se guardan. Cada uno lleva
+// su progreso para que los que faltan también digan algo.
+router.get("/achievements", async (req, res) => {
+  const groupId = Number(req.query.groupId) || null;
+
+  try {
+    if (groupId && !(await requireMembership(groupId, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+    if (groupId) await settleGroup(groupId);
+
+    const userResult = await db.execute({
+      sql: "SELECT username FROM users WHERE id = ?",
+      args: [req.userId],
+    });
+    const username = userResult.rows[0]?.username;
+
+    const triviaResult = await db.execute({
+      sql: `SELECT COALESCE(SUM(is_correct), 0) AS correct FROM answers WHERE user_id = ?`,
+      args: [req.userId],
+    });
+    const triviaCorrect = Number(triviaResult.rows[0].correct);
+
+    const perfectDaysResult = await db.execute({
+      sql: `SELECT q.scheduled_date AS date, COUNT(*) AS correct
+            FROM answers a JOIN questions q ON q.id = a.question_id
+            WHERE a.user_id = ? AND a.is_correct = 1
+            GROUP BY q.scheduled_date HAVING correct >= 3`,
+      args: [req.userId],
+    });
+    const perfectDays = perfectDaysResult.rows.length;
+
+    const bestStreak = await getBestStreak(req.userId);
+
+    let modeBAnswers = 0;
+    let correctPredictions = 0;
+    let fullDays = 0;
+    let votesReceived = 0;
+    let timesProtagonist = 0;
+
+    if (groupId) {
+      const scoreResult = await db.execute({
+        sql: `SELECT COALESCE(SUM(answered_count), 0) AS answered,
+                     COALESCE(SUM(correct_predictions), 0) AS correct
+              FROM mode_b_scores WHERE group_id = ? AND user_id = ?`,
+        args: [groupId, req.userId],
+      });
+      modeBAnswers = Number(scoreResult.rows[0].answered);
+      correctPredictions = Number(scoreResult.rows[0].correct);
+
+      const fullDaysResult = await db.execute({
+        sql: `SELECT COUNT(*) AS total FROM mode_b_scores
+              WHERE group_id = ? AND user_id = ? AND answered_count >= 3`,
+        args: [groupId, req.userId],
+      });
+      fullDays = Number(fullDaysResult.rows[0].total);
+
+      const votesResult = await db.execute({
+        sql: `SELECT COUNT(*) AS votes
+              FROM special_answers sa
+              JOIN special_questions sq ON sq.id = sa.special_question_id
+              WHERE sa.group_id = ? AND sq.type = 'quien_es_mas' AND sa.answer_value = ?`,
+        args: [groupId, String(req.userId)],
+      });
+      votesReceived = Number(votesResult.rows[0].votes);
+
+      const protagonistResult = await db.execute({
+        sql: `SELECT COUNT(*) AS total FROM personality_questions
+              WHERE group_id = ? AND personality_name = ?`,
+        args: [groupId, username],
+      });
+      timesProtagonist = Number(protagonistResult.rows[0].total);
+    }
+
+    const achievements = [
+      {
+        id: "francotirador",
+        emoji: "🎯",
+        title: "Francotirador",
+        description: "Acertá 10 preguntas de trivia",
+        current: triviaCorrect,
+        target: 10,
+      },
+      {
+        id: "dia-perfecto",
+        emoji: "💯",
+        title: "Día perfecto",
+        description: "Acertá las 3 preguntas de trivia en un mismo día",
+        current: perfectDays,
+        target: 1,
+      },
+      {
+        id: "en-llamas",
+        emoji: "🔥",
+        title: "En llamas",
+        description: "Llegá a 5 días seguidos de racha",
+        current: bestStreak,
+        target: 5,
+      },
+      {
+        id: "votante",
+        emoji: "🗳️",
+        title: "Votante",
+        description: "Respondé 20 preguntas del modo especial",
+        current: modeBAnswers,
+        target: 20,
+      },
+      {
+        id: "adivino",
+        emoji: "🔮",
+        title: "Adivino",
+        description: "Acertá 5 predicciones sobre lo que vota el grupo",
+        current: correctPredictions,
+        target: 5,
+      },
+      {
+        id: "constante",
+        emoji: "📅",
+        title: "Constante",
+        description: "Completá las 3 especiales en 7 días distintos",
+        current: fullDays,
+        target: 7,
+      },
+      {
+        id: "mas-votado",
+        emoji: "🏆",
+        title: "El más votado",
+        description: "Recibí 10 votos en “¿Quién es más?”",
+        current: votesReceived,
+        target: 10,
+      },
+      {
+        id: "protagonista",
+        emoji: "🌟",
+        title: "Protagonista",
+        description: "Sé 3 veces el protagonista de la pregunta de personalidad",
+        current: timesProtagonist,
+        target: 3,
+      },
+    ].map((a) => ({
+      ...a,
+      unlocked: a.current >= a.target,
+      progress: Math.min(100, Math.round((a.current / a.target) * 100)),
+    }));
+
+    res.json({
+      achievements,
+      unlocked_count: achievements.filter((a) => a.unlocked).length,
+      total: achievements.length,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Resumen de los últimos 7 días cerrados del grupo.
+router.get("/weekly", async (req, res) => {
+  const groupId = Number(req.query.groupId);
+  if (!groupId) return res.status(400).json({ error: "Falta groupId" });
+
+  try {
+    if (!(await requireMembership(groupId, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+    await settleGroup(groupId);
+
+    const today = todayStr();
+    const since = addDays(today, -7);
+    const members = await groupMembers(groupId);
+    const usernameById = new Map(members.map((m) => [String(m.id), m.username]));
+
+    const datesResult = await db.execute({
+      sql: `SELECT DISTINCT scheduled_date AS date FROM mode_b_scores
+            WHERE group_id = ? AND scheduled_date >= ? AND scheduled_date < ?
+            ORDER BY scheduled_date DESC`,
+      args: [groupId, since, today],
+    });
+    const dates = datesResult.rows.map((r) => r.date);
+
+    if (dates.length === 0) {
+      return res.json({ days: 0, summary: null });
+    }
+
+    const scoresResult = await db.execute({
+      sql: `SELECT user_id, SUM(points) AS points, SUM(answered_count) AS answered
+            FROM mode_b_scores
+            WHERE group_id = ? AND scheduled_date >= ? AND scheduled_date < ?
+            GROUP BY user_id ORDER BY points DESC`,
+      args: [groupId, since, today],
+    });
+    const topScorerRow = scoresResult.rows[0];
+    const answeredTotal = scoresResult.rows.reduce((sum, r) => sum + Number(r.answered), 0);
+
+    const votesReceived = new Map();
+    let mostDivisive = null;
+    let mostUnanimous = null;
+
+    for (const date of dates) {
+      const dayQuestions = await getDayQuestions(groupId, date);
+      for (const kind of QUESTION_KINDS) {
+        const question = dayQuestions[kind];
+        if (!question) continue;
+
+        const tally = await tallyFor(kind, question.id, groupId);
+        const total = [...tally.values()].reduce((sum, n) => sum + n, 0);
+        if (total < 2) continue;
+
+        if (kind === "quien_es_mas") {
+          for (const [uid, count] of tally) {
+            votesReceived.set(uid, (votesReceived.get(uid) || 0) + count);
+          }
+        }
+
+        // Cuanto más baja la cuota del más votado, más dividido estuvo el grupo.
+        const topShare = Math.max(...tally.values()) / total;
+        const prompt = kind === "personalidad" ? question.prompt_template : question.prompt;
+        const entry = { date, kind, prompt, share: Math.round(topShare * 100), total_votes: total };
+
+        if (!mostDivisive || topShare < mostDivisive.share / 100) mostDivisive = entry;
+        if (!mostUnanimous || topShare > mostUnanimous.share / 100) mostUnanimous = entry;
+      }
+    }
+
+    const mostVotedEntry = [...votesReceived.entries()].sort((a, b) => b[1] - a[1])[0];
+    const possibleAnswers = dates.length * 3 * members.length;
+
+    res.json({
+      days: dates.length,
+      from: dates[dates.length - 1],
+      to: dates[0],
+      summary: {
+        top_scorer: topScorerRow
+          ? {
+              username: usernameById.get(String(topScorerRow.user_id)) || "—",
+              points: Number(topScorerRow.points),
+            }
+          : null,
+        most_voted: mostVotedEntry
+          ? { username: usernameById.get(mostVotedEntry[0]) || "—", votes: mostVotedEntry[1] }
+          : null,
+        most_divisive: mostDivisive,
+        most_unanimous: mostUnanimous,
+        participation:
+          possibleAnswers > 0 ? Math.round((answeredTotal / possibleAnswers) * 100) : 0,
+        answers_total: answeredTotal,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Con quién del grupo coincidís más: porcentaje de preguntas de Modo B que
+// ambos respondieron igual, contando sólo las que respondieron los dos.
+router.get("/compatibility", async (req, res) => {
+  const groupId = Number(req.query.groupId);
+  if (!groupId) return res.status(400).json({ error: "Falta groupId" });
+
+  try {
+    if (!(await requireMembership(groupId, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+
+    const members = await groupMembers(groupId);
+    const answers = await allModeBAnswers(groupId);
+
+    const mine = new Map();
+    for (const a of answers) {
+      if (a.user_id === req.userId) mine.set(a.key, a.value);
+    }
+
+    const matches = new Map();
+    for (const a of answers) {
+      if (a.user_id === req.userId) continue;
+      if (!mine.has(a.key)) continue;
+      const entry = matches.get(a.user_id) || { shared: 0, same: 0 };
+      entry.shared++;
+      if (mine.get(a.key) === a.value) entry.same++;
+      matches.set(a.user_id, entry);
+    }
+
+    const compatibility = members
+      .filter((m) => m.id !== req.userId)
+      .map((m) => {
+        const entry = matches.get(m.id) || { shared: 0, same: 0 };
+        return {
+          id: m.id,
+          username: m.username,
+          avatar: m.avatar,
+          shared: entry.shared,
+          same: entry.same,
+          agreement: entry.shared > 0 ? Math.round((entry.same / entry.shared) * 100) : null,
+        };
+      })
+      .sort((a, b) => (b.agreement ?? -1) - (a.agreement ?? -1));
+
+    res.json({ compatibility });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+function csvCell(value) {
+  const text = value === null || value === undefined ? "" : String(value);
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+// Exporta todo lo que respondió el usuario (trivia + Modo B) como CSV.
+router.get("/export", async (req, res) => {
+  const groupId = Number(req.query.groupId) || null;
+
+  try {
+    if (groupId && !(await requireMembership(groupId, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+    if (groupId) await settleGroup(groupId);
+
+    const rows = [
+      ["tipo", "fecha", "pregunta", "tu_respuesta", "resultado_grupo", "tu_prediccion", "acerto", "puntos"],
+    ];
+
+    const triviaResult = await db.execute({
+      sql: `SELECT q.scheduled_date AS date, q.question, q.correct_answer, q.option_a, q.option_b,
+                   q.option_c, q.option_d, a.answer, a.is_correct, a.points
+            FROM answers a JOIN questions q ON q.id = a.question_id
+            WHERE a.user_id = ? ORDER BY q.scheduled_date DESC, q.slot ASC`,
+      args: [req.userId],
+    });
+    for (const r of triviaResult.rows) {
+      const labels = { a: r.option_a, b: r.option_b, c: r.option_c, d: r.option_d };
+      rows.push([
+        "Trivia",
+        r.date,
+        r.question,
+        labels[r.answer],
+        labels[r.correct_answer],
+        "",
+        r.is_correct ? "si" : "no",
+        r.points,
+      ]);
+    }
+
+    if (groupId) {
+      const members = await groupMembers(groupId);
+      const usernameById = new Map(members.map((m) => [String(m.id), m.username]));
+      const kindLabel = {
+        quien_es_mas: "¿Quién es más?",
+        que_prefieres: "¿Qué prefieres?",
+        personalidad: "Personalidad",
+      };
+
+      const datesResult = await db.execute({
+        sql: `SELECT DISTINCT scheduled_date AS date FROM mode_b_scores
+              WHERE group_id = ? AND user_id = ? ORDER BY scheduled_date DESC`,
+        args: [groupId, req.userId],
+      });
+
+      for (const { date } of datesResult.rows) {
+        const dayQuestions = await getDayQuestions(groupId, date);
+        const scoreResult = await db.execute({
+          sql: "SELECT * FROM mode_b_scores WHERE group_id = ? AND user_id = ? AND scheduled_date = ?",
+          args: [groupId, req.userId, date],
+        });
+        const dayPoints = scoreResult.rows[0] ? Number(scoreResult.rows[0].points) : 0;
+        // Los puntos de Modo B son del día completo, no por pregunta: se
+        // escriben en la primera fila del día y se dejan vacíos en el resto.
+        let dayPointsPending = true;
+
+        for (const kind of QUESTION_KINDS) {
+          const question = dayQuestions[kind];
+          if (!question) continue;
+
+          const labelFor = (value) => {
+            if (value === null) return "";
+            if (kind === "quien_es_mas") return usernameById.get(String(value)) || "";
+            const map = {
+              a: question.option_a,
+              b: question.option_b,
+              c: question.option_c,
+              d: question.option_d,
+            };
+            return map[value] ?? "";
+          };
+
+          const answerResult =
+            kind === "personalidad"
+              ? await db.execute({
+                  sql: `SELECT answer AS value FROM personality_answers
+                        WHERE personality_question_id = ? AND group_id = ? AND user_id = ?`,
+                  args: [question.id, groupId, req.userId],
+                })
+              : await db.execute({
+                  sql: `SELECT answer_value AS value FROM special_answers
+                        WHERE special_question_id = ? AND group_id = ? AND user_id = ?`,
+                  args: [question.id, groupId, req.userId],
+                });
+          if (answerResult.rows.length === 0) continue;
+
+          const predictionResult = await db.execute({
+            sql: `SELECT predicted_value FROM mode_b_predictions
+                  WHERE question_kind = ? AND question_id = ? AND group_id = ? AND user_id = ?`,
+            args: [kind, question.id, groupId, req.userId],
+          });
+          const prediction =
+            predictionResult.rows.length > 0 ? String(predictionResult.rows[0].predicted_value) : null;
+
+          const winners = winnersOf(await tallyFor(kind, question.id, groupId));
+
+          rows.push([
+            kindLabel[kind],
+            date,
+            kind === "personalidad" ? question.prompt_template : question.prompt,
+            labelFor(String(answerResult.rows[0].value)),
+            winners.map(labelFor).join(" / "),
+            labelFor(prediction),
+            prediction !== null && winners.includes(prediction) ? "si" : "no",
+            dayPointsPending ? dayPoints : "",
+          ]);
+          dayPointsPending = false;
+        }
+      }
+    }
+
+    const csv = rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
+
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="football-quiz-${todayStr()}.csv"`);
+    // BOM para que Excel abra los acentos bien.
+    res.send("﻿" + csv);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+export default router;

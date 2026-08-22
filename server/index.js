@@ -11,6 +11,7 @@ import groupsRoutes from "./routes/groups.js";
 import questionsRoutes from "./routes/questions.js";
 import bonusRoutes from "./routes/bonus.js";
 import modeBRoutes from "./routes/mode-b.js";
+import statsRoutes from "./routes/stats.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -28,6 +29,7 @@ app.use("/api/groups", groupsRoutes);
 app.use("/api/questions", questionsRoutes);
 app.use("/api/bonus", bonusRoutes);
 app.use("/api/mode-b", modeBRoutes);
+app.use("/api/stats", statsRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 

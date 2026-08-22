@@ -27,6 +27,8 @@ export default function Profile() {
 
   const items = [
     { label: "Puntos totales", value: stats.total_points },
+    { label: "Puntos de trivia", value: stats.trivia_points ?? 0 },
+    { label: "Puntos del modo especial", value: stats.mode_b_points ?? 0 },
     { label: "% de aciertos", value: `${stats.accuracy}%` },
     { label: "Respondidas", value: stats.answered },
     { label: "Racha actual", value: `${stats.current_streak} días` },

@@ -103,6 +103,15 @@ router.get("/me", requireAuth, async (req, res) => {
     const answered = Number(stats.answered);
     const correct = Number(stats.correct);
 
+    // Los puntos de Modo B se liquidan por grupo y día en `mode_b_scores`; acá
+    // se suman todos los grupos del usuario para el total general.
+    const modeBResult = await db.execute({
+      sql: "SELECT COALESCE(SUM(points), 0) AS points FROM mode_b_scores WHERE user_id = ?",
+      args: [req.userId],
+    });
+    const mode_b_points = Number(modeBResult.rows[0].points);
+    const trivia_points = Number(stats.total_points);
+
     const [current_streak, best_streak] = await Promise.all([
       getCurrentStreak(req.userId),
       getBestStreak(req.userId),
@@ -114,7 +123,9 @@ router.get("/me", requireAuth, async (req, res) => {
         answered,
         correct,
         accuracy: answered > 0 ? Math.round((correct / answered) * 100) : 0,
-        total_points: Number(stats.total_points),
+        trivia_points,
+        mode_b_points,
+        total_points: trivia_points + mode_b_points,
         current_streak,
         best_streak,
       },

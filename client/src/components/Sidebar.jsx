@@ -1,11 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { Home, Users, History, User, LogOut, Flame } from "lucide-react";
+import { Home, Users, History, BarChart3, User, LogOut, Flame } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const links = [
   { to: "/", label: "Inicio", icon: Home, end: true },
   { to: "/grupo", label: "Mi grupo", icon: Users },
   { to: "/historial", label: "Mis preguntas", icon: History },
+  { to: "/estadisticas", label: "Estadísticas", icon: BarChart3 },
   { to: "/perfil", label: "Mi perfil", icon: User },
 ];
 

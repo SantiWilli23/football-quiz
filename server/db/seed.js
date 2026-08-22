@@ -667,58 +667,29 @@ const QUE_PREFIERES_POOL = [
   { option_a: "Un empate controvertido", option_b: "Una derrota justa" },
 ].map((o) => ({ prompt: "¿Qué prefieres?", option_a: o.option_a, option_b: o.option_b }));
 
-// Personalidades por liga (se elegirá una al azar cada día)
-const PERSONALITY_TEMPLATES = [
-  {
-    prompt: "Si {name} fuera a la cárcel, ¿por qué sería?",
-    options: [
-      "Por abusar de cebollitas al pedir gol",
-      "Por arruinar predicciones con análisis",
-      "Por festejar goles como si ganara Libertadores",
-      "Por llevar 10 camisetas al partido",
-    ],
-  },
-  {
-    prompt: "Si {name} fuera entrenador, ¿cuál sería su estrategia?",
-    options: [
-      "Todos atacan aunque pierdan 5-0",
-      "Todos defienden aunque ganen",
-      "Tácticas que solo funcionan en teoría",
-      "Cambios cada 5 minutos sin razón",
-    ],
-  },
-  {
-    prompt: "Si {name} fuera árbitro, ¿qué pasaría?",
-    options: [
-      "Expulsaría a quien le reclame",
-      "Solo pitaría si come cebollitas",
-      "Haría más goles que los jugadores",
-      "Se dormiría durante el partido",
-    ],
-  },
-  {
-    prompt: "Si {name} ganara la Libertadores, ¿qué haría?",
-    options: [
-      "Lloraría por 3 días seguidos",
-      "Cambiaría su apellido al del club",
-      "Se tatúaría la copa en la frente",
-      "Renunciaría al fútbol de puro feliz",
-    ],
-  },
-  {
-    prompt: "Si {name} fuera comentarista, ¿qué diría?",
-    options: [
-      "Opiniones controversiales cada 5 segundos",
-      "Comparaciones con partidos hace 30 años",
-      "Gritos que despertarían al barrio",
-      "Análisis que nadie entiende",
-    ],
-  },
-];
-
 const NUM_DAYS = 20;
 
+// El seed corre en cada arranque del server, así que un deploy a mitad del día
+// vuelve a pasar por las preguntas de hoy. Si alguien ya respondió una, se deja
+// como está: cambiarle el texto por debajo dejaría las respuestas guardadas
+// apuntando a una pregunta que nadie llegó a ver.
+async function hasAnswers(table, column, questionId) {
+  const result = await db.execute({
+    sql: `SELECT 1 FROM ${table} WHERE ${column} = ? LIMIT 1`,
+    args: [questionId],
+  });
+  return result.rows.length > 0;
+}
+
 async function upsertQuestion(q, scheduled_date, slot) {
+  const existing = await db.execute({
+    sql: "SELECT id FROM questions WHERE scheduled_date = ? AND slot = ?",
+    args: [scheduled_date, slot],
+  });
+  if (existing.rows.length > 0 && (await hasAnswers("answers", "question_id", existing.rows[0].id))) {
+    return;
+  }
+
   const updateResult = await db.execute({
     sql: `UPDATE questions SET
             question = ?, category = ?, difficulty = ?,
@@ -760,6 +731,17 @@ async function upsertQuestion(q, scheduled_date, slot) {
 }
 
 async function upsertSpecialQuestion(type, prompt, scheduled_date, option_a = null, option_b = null) {
+  const existing = await db.execute({
+    sql: "SELECT id FROM special_questions WHERE type = ? AND scheduled_date = ?",
+    args: [type, scheduled_date],
+  });
+  if (
+    existing.rows.length > 0 &&
+    (await hasAnswers("special_answers", "special_question_id", existing.rows[0].id))
+  ) {
+    return;
+  }
+
   const updateResult = await db.execute({
     sql: "UPDATE special_questions SET prompt = ?, option_a = ?, option_b = ? WHERE type = ? AND scheduled_date = ?",
     args: [prompt, option_a, option_b, type, scheduled_date],
@@ -769,43 +751,6 @@ async function upsertSpecialQuestion(type, prompt, scheduled_date, option_a = nu
     await db.execute({
       sql: "INSERT INTO special_questions (type, prompt, option_a, option_b, scheduled_date) VALUES (?, ?, ?, ?, ?)",
       args: [type, prompt, option_a, option_b, scheduled_date],
-    });
-  }
-}
-
-async function upsertPersonalityQuestion(groupId, personalityName, template, scheduled_date) {
-  const updateResult = await db.execute({
-    sql: `UPDATE personality_questions SET
-            personality_name = ?, prompt_template = ?,
-            option_a = ?, option_b = ?, option_c = ?, option_d = ?
-          WHERE group_id = ? AND scheduled_date = ?`,
-    args: [
-      personalityName,
-      template.prompt,
-      template.options[0],
-      template.options[1],
-      template.options[2],
-      template.options[3],
-      groupId,
-      scheduled_date,
-    ],
-  });
-
-  if (updateResult.rowsAffected === 0) {
-    await db.execute({
-      sql: `INSERT INTO personality_questions
-        (group_id, personality_name, prompt_template, option_a, option_b, option_c, option_d, scheduled_date)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [
-        groupId,
-        personalityName,
-        template.prompt,
-        template.options[0],
-        template.options[1],
-        template.options[2],
-        template.options[3],
-        scheduled_date,
-      ],
     });
   }
 }
@@ -827,35 +772,25 @@ async function seed() {
     await upsertSpecialQuestion("que_prefieres", qp.prompt, scheduled_date, qp.option_a, qp.option_b);
   }
 
-  // Modo B: pregunta de personalidad, una por grupo y día (elige un
-  // integrante real del grupo + plantilla, y la fija para que no cambie
-  // en cada request).
-  const groupsResult = await db.execute("SELECT id FROM groups_t");
-  for (const group of groupsResult.rows) {
-    const membersResult = await db.execute({
-      sql: `SELECT u.username FROM group_members gm JOIN users u ON u.id = gm.user_id WHERE gm.group_id = ?`,
-      args: [group.id],
-    });
-    if (membersResult.rows.length === 0) continue;
-
-    for (let day = 0; day < NUM_DAYS; day++) {
-      const scheduled_date = dateOffset(day);
-      const member = membersResult.rows[day % membersResult.rows.length];
-      const template = PERSONALITY_TEMPLATES[day % PERSONALITY_TEMPLATES.length];
-      await upsertPersonalityQuestion(
-        group.id,
-        member.username,
-        { prompt: template.prompt.replace("{name}", member.username), options: template.options },
-        scheduled_date
-      );
-    }
+  // Versiones anteriores del seed pre-creaban las preguntas de personalidad
+  // para los 20 días siguientes, lo que congelaba al protagonista con la lista
+  // de miembros de ese momento. Ahora las arma /api/mode-b el mismo día, así
+  // que las futuras que quedaron dando vueltas se borran para que se
+  // regeneren con la rotación nueva. Sólo las de fechas futuras: por
+  // definición nadie pudo responderlas todavía.
+  const cleanup = await db.execute({
+    sql: "DELETE FROM personality_questions WHERE scheduled_date > ?",
+    args: [dateOffset(0)],
+  });
+  if (cleanup.rowsAffected > 0) {
+    console.log(`Limpiadas ${cleanup.rowsAffected} preguntas de personalidad futuras pre-creadas.`);
   }
 
   console.log(
-    `Seed completado: ${NUM_DAYS} días x 3 preguntas trivia (Modo A) + 2 preguntas especiales + 1 personalidad por grupo (Modo B).`
+    `Seed completado: ${NUM_DAYS} días x 3 preguntas trivia (Modo A) + 2 preguntas especiales (Modo B).`
   );
   console.log(`Modo A: General / Liga Chilena / Europa (Aumentada dificultad)`);
-  console.log(`Modo B: ¿Quién es más? / ¿Qué prefieres? / Pregunta personalizada (por liga)`);
+  console.log(`Modo B: ¿Quién es más? / ¿Qué prefieres? (la de personalidad la arma /api/mode-b por grupo)`);
   process.exit(0);
 }
 

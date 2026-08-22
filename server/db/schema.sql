@@ -124,3 +124,44 @@ CREATE TABLE IF NOT EXISTS personality_answers (
 );
 
 CREATE INDEX IF NOT EXISTS idx_personality_answers_lookup ON personality_answers(personality_question_id, group_id);
+
+CREATE TABLE IF NOT EXISTS mode_b_predictions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  question_kind TEXT NOT NULL CHECK (question_kind IN ('quien_es_mas', 'que_prefieres', 'personalidad')),
+  question_id INTEGER NOT NULL,
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  predicted_value TEXT NOT NULL,
+  predicted_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(question_kind, question_id, group_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_mode_b_predictions_lookup ON mode_b_predictions(question_kind, question_id, group_id);
+
+CREATE TABLE IF NOT EXISTS mode_b_reactions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  question_kind TEXT NOT NULL CHECK (question_kind IN ('quien_es_mas', 'que_prefieres', 'personalidad')),
+  question_id INTEGER NOT NULL,
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  emoji TEXT NOT NULL,
+  reacted_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(question_kind, question_id, group_id, user_id, emoji)
+);
+
+CREATE INDEX IF NOT EXISTS idx_mode_b_reactions_lookup ON mode_b_reactions(question_kind, question_id, group_id);
+
+CREATE TABLE IF NOT EXISTS mode_b_scores (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  scheduled_date TEXT NOT NULL,
+  answered_count INTEGER NOT NULL DEFAULT 0,
+  correct_predictions INTEGER NOT NULL DEFAULT 0,
+  points INTEGER NOT NULL DEFAULT 0,
+  settled_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(user_id, group_id, scheduled_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_mode_b_scores_group ON mode_b_scores(group_id, scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_mode_b_scores_user ON mode_b_scores(user_id);

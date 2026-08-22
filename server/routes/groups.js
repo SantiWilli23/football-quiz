@@ -139,16 +139,33 @@ router.get("/:id", async (req, res) => {
       args: [groupId],
     });
 
-    const ranking = rankingResult.rows.map((r, idx) => ({
-      position: idx + 1,
-      id: r.id,
-      username: r.username,
-      avatar: r.avatar,
-      points: Number(r.points),
-      answered: Number(r.answered),
-      correct: Number(r.correct),
-      accuracy: Number(r.answered) > 0 ? Math.round((Number(r.correct) / Number(r.answered)) * 100) : 0,
-    }));
+    // Los puntos de Modo B viven en otra tabla; se traen aparte y se suman en
+    // JS para no multiplicar filas con un segundo JOIN sobre el ranking.
+    const modeBResult = await db.execute({
+      sql: `SELECT user_id, COALESCE(SUM(points), 0) AS points
+            FROM mode_b_scores WHERE group_id = ? GROUP BY user_id`,
+      args: [groupId],
+    });
+    const modeBByUser = new Map(modeBResult.rows.map((r) => [r.user_id, Number(r.points)]));
+
+    const ranking = rankingResult.rows
+      .map((r) => {
+        const trivia_points = Number(r.points);
+        const mode_b_points = modeBByUser.get(r.id) || 0;
+        return {
+          id: r.id,
+          username: r.username,
+          avatar: r.avatar,
+          trivia_points,
+          mode_b_points,
+          points: trivia_points + mode_b_points,
+          answered: Number(r.answered),
+          correct: Number(r.correct),
+          accuracy: Number(r.answered) > 0 ? Math.round((Number(r.correct) / Number(r.answered)) * 100) : 0,
+        };
+      })
+      .sort((a, b) => b.points - a.points || b.correct - a.correct)
+      .map((row, idx) => ({ position: idx + 1, ...row }));
 
     res.json({ group, ranking });
   } catch (err) {

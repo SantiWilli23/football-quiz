@@ -242,7 +242,12 @@ export default function Group() {
                         {r.answered} respondidas · {r.accuracy}% aciertos
                       </p>
                     </div>
-                    <p className="font-semibold text-sm shrink-0">{r.points} pts</p>
+                    <div className="shrink-0 text-right">
+                      <p className="font-semibold text-sm">{r.points} pts</p>
+                      <p className="text-[11px] text-gray-600">
+                        {r.trivia_points} trivia · {r.mode_b_points} especial
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
