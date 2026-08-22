@@ -62,6 +62,69 @@ const PERSONALITY_TEMPLATES = [
       "Análisis que nadie entiende",
     ],
   },
+  {
+    prompt: "Si {name} fuera presidente del club, ¿qué sería lo primero que haría?",
+    options: [
+      "Vender a todos y empezar de cero",
+      "Fichar a un ídolo retirado hace 10 años",
+      "Cambiarle el color a la camiseta",
+      "Ponerse a sí mismo de titular",
+    ],
+  },
+  {
+    prompt: "Si {name} jugara en tu equipo, ¿en qué puesto lo pondrías?",
+    options: [
+      "Arquero, porque nadie más quiere",
+      "Defensor que solo revienta la pelota",
+      "Enganche que nunca pasa",
+      "En el banco, dando indicaciones",
+    ],
+  },
+  {
+    prompt: "Si {name} fuera relator, ¿cuál sería su marca registrada?",
+    options: [
+      "Un grito de gol de 40 segundos",
+      "Nombrar mal a todos los jugadores",
+      "Spoilear el resultado antes de tiempo",
+      "Llorar en cada gol importante",
+    ],
+  },
+  {
+    prompt: "Si {name} fuera el técnico y van perdiendo 3-0, ¿qué hace?",
+    options: [
+      "Mete tres delanteros de una",
+      "Se queda sentado sin decir nada",
+      "Se pelea con el cuarto árbitro",
+      "Culpa al campo de juego",
+    ],
+  },
+  {
+    prompt: "Si {name} fuera hincha del rival por un día, ¿qué pasaría?",
+    options: [
+      "Se convierte y no vuelve nunca",
+      "Va a la cancha con la camiseta abajo",
+      "Lo niega hasta el final de sus días",
+      "Aprovecha para hacer sufrir al grupo",
+    ],
+  },
+  {
+    prompt: "Si {name} tuviera que elegir entre el fútbol y algo más, ¿qué elegiría?",
+    options: [
+      "El fútbol, sin pensarlo un segundo",
+      "Lo pensaría demasiado tiempo",
+      "Diría que el fútbol y mentiría",
+      "Elegiría dormir la siesta",
+    ],
+  },
+  {
+    prompt: "Si {name} fuera jugador profesional, ¿por qué sería famoso?",
+    options: [
+      "Por sus festejos exagerados",
+      "Por las tarjetas rojas",
+      "Por las entrevistas polémicas",
+      "Por estar siempre lesionado",
+    ],
+  },
 ];
 
 async function requireMembership(groupId, userId) {

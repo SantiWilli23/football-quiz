@@ -86,8 +86,8 @@ export default function Dashboard() {
     <Layout>
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold">Preguntas del día</h1>
+          <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+            <h1 className="text-xl sm:text-2xl font-bold">Preguntas del día</h1>
             <div className="flex gap-2">
               <button
                 onClick={() => setMode("a")}

@@ -25,7 +25,7 @@ function Step({ n, label, active, done, color }) {
       >
         {done ? "✓" : n}
       </span>
-      <span className="text-[11px]" style={{ color: active ? color : "#6b7280" }}>
+      <span className="text-[11px] hidden sm:inline" style={{ color: active ? color : "#6b7280" }}>
         {label}
       </span>
     </div>

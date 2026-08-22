@@ -14,7 +14,7 @@ export default function Sidebar() {
   const { user, stats, logout } = useAuth();
 
   return (
-    <aside className="w-64 shrink-0 h-screen sticky top-0 flex flex-col border-r border-border bg-panel px-4 py-6">
+    <aside className="hidden lg:flex w-64 shrink-0 h-screen sticky top-0 flex-col border-r border-border bg-panel px-4 py-6">
       <div className="flex items-center gap-2 px-2 mb-8">
         <div className="w-9 h-9 rounded-card bg-accent/15 border border-accent/30 flex items-center justify-center text-accent font-bold">
           FQ
