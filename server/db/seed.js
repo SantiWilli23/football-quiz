@@ -9,103 +9,103 @@ function dateOffset(days) {
 
 const QUESTIONS = [
   {
-    question: "¿Qué selección ganó el Mundial de Qatar 2022?",
-    category: "Mundiales",
-    difficulty: "facil",
-    option_a: "Francia",
-    option_b: "Argentina",
-    option_c: "Brasil",
-    option_d: "Croacia",
-    correct_answer: "b",
-  },
-  {
-    question: "¿Cuántos Balones de Oro ha ganado Lionel Messi (hasta 2023)?",
+    question: "¿Quién es el máximo goleador histórico en la historia de los Mundiales de fútbol?",
     category: "Individuales",
-    difficulty: "media",
-    option_a: "6",
-    option_b: "7",
-    option_c: "8",
-    option_d: "5",
-    correct_answer: "c",
-  },
-  {
-    question: "¿Qué club ganó la primera edición de la Champions League (1955-56)?",
-    category: "Champions League",
     difficulty: "dificil",
-    option_a: "Real Madrid",
-    option_b: "AC Milan",
-    option_c: "Benfica",
-    option_d: "Manchester United",
-    correct_answer: "a",
-  },
-  {
-    question: "¿Cuál es el máximo goleador histórico de la Champions League?",
-    category: "Champions League",
-    difficulty: "media",
-    option_a: "Karim Benzema",
-    option_b: "Robert Lewandowski",
-    option_c: "Cristiano Ronaldo",
-    option_d: "Lionel Messi",
+    option_a: "Ronaldo Nazário",
+    option_b: "Just Fontaine",
+    option_c: "Miroslav Klose",
+    option_d: "Gerd Müller",
     correct_answer: "c",
   },
   {
-    question: "¿Qué país organizó el Mundial de 2018?",
+    question: "¿Qué selección ganó el primer Mundial de fútbol de la historia, disputado en 1930?",
     category: "Mundiales",
-    difficulty: "facil",
-    option_a: "Brasil",
-    option_b: "Rusia",
-    option_c: "Sudáfrica",
-    option_d: "Alemania",
+    difficulty: "media",
+    option_a: "Argentina",
+    option_b: "Uruguay",
+    option_c: "Brasil",
+    option_d: "Italia",
     correct_answer: "b",
   },
   {
-    question: "¿Cuántos jugadores conforman un equipo de fútbol en el campo (sin contar suplentes)?",
-    category: "Reglas",
-    difficulty: "facil",
-    option_a: "10",
-    option_b: "12",
-    option_c: "11",
-    option_d: "9",
+    question: "¿Qué arquero es el único portero en la historia en ganar el Balón de Oro, en 1963?",
+    category: "Individuales",
+    difficulty: "dificil",
+    option_a: "Gordon Banks",
+    option_b: "Dino Zoff",
+    option_c: "Gianluigi Buffon",
+    option_d: "Lev Yashin",
+    correct_answer: "d",
+  },
+  {
+    question: "¿Qué club ganó la primera edición de la Copa Libertadores, en 1960?",
+    category: "Libertadores",
+    difficulty: "dificil",
+    option_a: "River Plate",
+    option_b: "Nacional",
+    option_c: "Peñarol",
+    option_d: "Olimpia",
     correct_answer: "c",
   },
   {
-    question: "¿Qué jugador tiene el récord de más goles en una sola edición de un Mundial (13 goles)?",
+    question: "¿Quién tiene el récord de más goles en una sola edición de un Mundial, con 13 goles en 1958?",
     category: "Mundiales",
     difficulty: "dificil",
-    option_a: "Just Fontaine",
-    option_b: "Pelé",
-    option_c: "Ronaldo Nazário",
-    option_d: "Miroslav Klose",
+    option_a: "Pelé",
+    option_b: "Just Fontaine",
+    option_c: "Sándor Kocsis",
+    option_d: "Eusébio",
+    correct_answer: "b",
+  },
+  {
+    question: "¿Qué selección ganó la primera edición de la Eurocopa, en 1960?",
+    category: "Eurocopa",
+    difficulty: "dificil",
+    option_a: "Unión Soviética",
+    option_b: "Yugoslavia",
+    option_c: "Checoslovaquia",
+    option_d: "Francia",
     correct_answer: "a",
   },
   {
-    question: "¿Qué club ha ganado más títulos de la Copa Libertadores?",
-    category: "Libertadores",
+    question: "¿En qué país se disputó el Mundial de 1970, donde Brasil ganó su tercer título?",
+    category: "Mundiales",
     difficulty: "media",
-    option_a: "Boca Juniors",
-    option_b: "River Plate",
-    option_c: "Independiente",
-    option_d: "Peñarol",
+    option_a: "Chile",
+    option_b: "Argentina",
+    option_c: "México",
+    option_d: "Alemania",
     correct_answer: "c",
   },
   {
-    question: "¿En qué año se fundó la FIFA?",
-    category: "Historia",
+    question: "¿Quién fue el máximo goleador del Mundial de Brasil 2014, con 6 goles?",
+    category: "Mundiales",
     difficulty: "dificil",
-    option_a: "1904",
-    option_b: "1920",
-    option_c: "1888",
-    option_d: "1930",
-    correct_answer: "a",
+    option_a: "Lionel Messi",
+    option_b: "Thomas Müller",
+    option_c: "Neymar",
+    option_d: "James Rodríguez",
+    correct_answer: "d",
   },
   {
-    question: "¿Qué selección europea ganó la Eurocopa 2016?",
-    category: "Eurocopa",
-    difficulty: "facil",
-    option_a: "Francia",
-    option_b: "Alemania",
-    option_c: "Portugal",
-    option_d: "España",
+    question: "¿Qué selección se convirtió en 2022 en la primera de África en llegar a una semifinal de un Mundial?",
+    category: "Mundiales",
+    difficulty: "media",
+    option_a: "Ghana",
+    option_b: "Marruecos",
+    option_c: "Senegal",
+    option_d: "Camerún",
+    correct_answer: "b",
+  },
+  {
+    question: "¿Qué jugador tiene el récord de más partidos disputados en la historia de los Mundiales?",
+    category: "Individuales",
+    difficulty: "dificil",
+    option_a: "Lothar Matthäus",
+    option_b: "Diego Maradona",
+    option_c: "Lionel Messi",
+    option_d: "Franz Beckenbauer",
     correct_answer: "c",
   },
 ];
@@ -116,10 +116,12 @@ async function seed() {
   for (let i = 0; i < QUESTIONS.length; i++) {
     const q = QUESTIONS[i];
     const scheduled_date = dateOffset(i);
-    await db.execute({
-      sql: `INSERT OR IGNORE INTO questions
-        (question, category, difficulty, option_a, option_b, option_c, option_d, correct_answer, scheduled_date)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+
+    const updateResult = await db.execute({
+      sql: `UPDATE questions SET
+              question = ?, category = ?, difficulty = ?,
+              option_a = ?, option_b = ?, option_c = ?, option_d = ?, correct_answer = ?
+            WHERE scheduled_date = ?`,
       args: [
         q.question,
         q.category,
@@ -132,9 +134,28 @@ async function seed() {
         scheduled_date,
       ],
     });
+
+    if (updateResult.rowsAffected === 0) {
+      await db.execute({
+        sql: `INSERT INTO questions
+          (question, category, difficulty, option_a, option_b, option_c, option_d, correct_answer, scheduled_date)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [
+          q.question,
+          q.category,
+          q.difficulty,
+          q.option_a,
+          q.option_b,
+          q.option_c,
+          q.option_d,
+          q.correct_answer,
+          scheduled_date,
+        ],
+      });
+    }
   }
 
-  console.log(`Seed completado: ${QUESTIONS.length} preguntas insertadas (INSERT OR IGNORE).`);
+  console.log(`Seed completado: ${QUESTIONS.length} preguntas sincronizadas (upsert por fecha).`);
   process.exit(0);
 }
 
