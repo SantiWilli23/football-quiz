@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { addDays, getBestStreak, todayStr } from "../utils/points.js";
+import { DUEL_POINTS } from "./duels.js";
 import {
   QUESTION_KINDS,
   answersFor,
@@ -82,9 +83,34 @@ function monthBounds(month) {
   return { from: `${month}-01`, to: `${month}-31` };
 }
 
+// Puntos ganados en duelos terminados dentro del rango. Se cuentan por la
+// fecha en que se resolvió el duelo, no por cuándo se creó: si un duelo queda
+// abierto de un mes al otro, suma en el mes en que efectivamente se jugó.
+async function duelPointsByUser(groupId, from, to) {
+  const result = await db.execute({
+    sql: `SELECT challenger_id, opponent_id, winner_id FROM duels
+          WHERE group_id = ? AND status = 'terminado'
+            AND date(resolved_at) >= ? AND date(resolved_at) <= ?`,
+    args: [groupId, from, to],
+  });
+
+  const points = new Map();
+  const add = (userId, amount) => points.set(userId, (points.get(userId) || 0) + amount);
+
+  for (const row of result.rows) {
+    if (row.winner_id === null) {
+      add(row.challenger_id, DUEL_POINTS.draw);
+      add(row.opponent_id, DUEL_POINTS.draw);
+    } else {
+      add(row.winner_id, DUEL_POINTS.win);
+    }
+  }
+  return points;
+}
+
 // Ranking del grupo acotado a un rango de fechas. Los puntos de trivia son del
-// usuario (no del grupo), igual que en el ranking histórico; los de Modo B sí
-// son por grupo.
+// usuario (no del grupo), igual que en el ranking histórico; los de Modo B y
+// los de duelos sí son por grupo.
 async function rankingBetween(groupId, from, to) {
   const members = await groupMembers(groupId);
   if (members.length === 0) return [];
@@ -113,12 +139,14 @@ async function rankingBetween(groupId, from, to) {
     args: [groupId, from, to],
   });
   const modeBByUser = new Map(modeBResult.rows.map((r) => [r.user_id, Number(r.points)]));
+  const duelByUser = await duelPointsByUser(groupId, from, to);
 
   return members
     .map((m) => {
       const trivia = triviaByUser.get(m.id);
       const trivia_points = trivia ? Number(trivia.points) : 0;
       const mode_b_points = modeBByUser.get(m.id) || 0;
+      const duel_points = duelByUser.get(m.id) || 0;
       const answered = trivia ? Number(trivia.answered) : 0;
       const correct = trivia ? Number(trivia.correct) : 0;
       return {
@@ -128,7 +156,8 @@ async function rankingBetween(groupId, from, to) {
         avatar_config: m.avatar_config,
         trivia_points,
         mode_b_points,
-        points: trivia_points + mode_b_points,
+        duel_points,
+        points: trivia_points + mode_b_points + duel_points,
         answered,
         correct,
         accuracy: answered > 0 ? Math.round((correct / answered) * 100) : 0,
@@ -137,6 +166,70 @@ async function rankingBetween(groupId, from, to) {
     .sort((a, b) => b.points - a.points || b.correct - a.correct)
     .map((row, idx) => ({ position: idx + 1, ...row }));
 }
+
+// Racha del grupo: días seguidos en los que TODOS respondieron algo. Con que
+// uno falte, se corta — esa es la gracia, presiona al que se está colgando.
+// Se cuenta desde ayer hacia atrás, y hoy se suma sólo si ya jugaron todos,
+// para que la racha no figure cortada durante la mañana.
+router.get("/group-streak", async (req, res) => {
+  const groupId = Number(req.query.groupId);
+  if (!groupId) return res.status(400).json({ error: "Falta groupId" });
+
+  try {
+    if (!(await requireMembership(groupId, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+
+    const members = await groupMembers(groupId);
+    if (members.length === 0) return res.json({ streak: 0, members: 0, today_complete: false });
+
+    const memberIds = members.map((m) => m.id);
+    const placeholders = memberIds.map(() => "?").join(",");
+
+    // Un día "completo" es aquel en que cada miembro respondió al menos una
+    // pregunta, de trivia o del modo especial.
+    const activity = await db.execute({
+      sql: `SELECT q.scheduled_date AS date, a.user_id
+            FROM answers a JOIN questions q ON q.id = a.question_id
+            WHERE a.user_id IN (${placeholders})
+            UNION
+            SELECT scheduled_date AS date, user_id
+            FROM mode_b_scores
+            WHERE group_id = ? AND answered_count > 0`,
+      args: [...memberIds, groupId],
+    });
+
+    const byDate = new Map();
+    for (const row of activity.rows) {
+      if (!byDate.has(row.date)) byDate.set(row.date, new Set());
+      byDate.get(row.date).add(row.user_id);
+    }
+
+    const isComplete = (date) => {
+      const played = byDate.get(date);
+      return !!played && memberIds.every((id) => played.has(id));
+    };
+
+    const today = todayStr();
+    const todayComplete = isComplete(today);
+
+    let streak = todayComplete ? 1 : 0;
+    let cursor = addDays(today, -1);
+    while (isComplete(cursor)) {
+      streak++;
+      cursor = addDays(cursor, -1);
+    }
+
+    // Quiénes faltan hoy, para poder nombrarlos y que el resto los apure.
+    const playedToday = byDate.get(today) ?? new Set();
+    const missing = members.filter((m) => !playedToday.has(m.id)).map((m) => m.username);
+
+    res.json({ streak, members: members.length, today_complete: todayComplete, missing_today: missing });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
 
 // Temporada: el ranking del mes. Es el que importa día a día, porque el
 // histórico lo gana siempre el que arrancó primero.

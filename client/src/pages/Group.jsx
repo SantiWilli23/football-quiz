@@ -355,7 +355,7 @@ export default function Group() {
                     <div className="shrink-0 text-right">
                       <p className="font-semibold text-sm">{r.points} pts</p>
                       <p className="text-[11px] text-gray-600">
-                        {r.trivia_points} trivia · {r.mode_b_points} especial
+                        {r.trivia_points} trivia · {r.mode_b_points} especial{r.duel_points ? ` · ${r.duel_points} duelos` : ""}
                       </p>
                     </div>
                   </div>

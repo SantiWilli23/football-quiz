@@ -11,6 +11,7 @@ import BonusCard from "../components/BonusCard.jsx";
 import ModeBCard from "../components/ModeBCard.jsx";
 import GroupQuestionComposer from "../components/GroupQuestionComposer.jsx";
 import ShareButton from "../components/ShareButton.jsx";
+import GroupStreakCard from "../components/GroupStreakCard.jsx";
 
 const LIVE_REFRESH_MS = 15000;
 
@@ -179,6 +180,7 @@ export default function Dashboard() {
         </div>
 
         <div className="space-y-6">
+          {groupId && <GroupStreakCard groupId={groupId} />}
           <Card>
             <div className="flex items-center gap-2 text-orange-400 mb-1">
               <Flame size={18} />

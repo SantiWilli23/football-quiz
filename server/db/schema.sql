@@ -231,3 +231,43 @@ CREATE TABLE IF NOT EXISTS group_question_bank (
 );
 
 CREATE INDEX IF NOT EXISTS idx_group_question_bank_pending ON group_question_bank(group_id, used_on);
+
+CREATE TABLE IF NOT EXISTS duel_questions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  question TEXT UNIQUE NOT NULL,
+  option_a TEXT NOT NULL,
+  option_b TEXT NOT NULL,
+  option_c TEXT NOT NULL,
+  option_d TEXT NOT NULL,
+  correct_answer TEXT NOT NULL CHECK (correct_answer IN ('a','b','c','d'))
+);
+
+CREATE TABLE IF NOT EXISTS duels (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  challenger_id INTEGER NOT NULL REFERENCES users(id),
+  opponent_id INTEGER NOT NULL REFERENCES users(id),
+  question_ids TEXT NOT NULL,
+  challenger_correct INTEGER,
+  opponent_correct INTEGER,
+  winner_id INTEGER REFERENCES users(id),
+  status TEXT NOT NULL DEFAULT 'esperando' CHECK (status IN ('esperando', 'terminado')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  resolved_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_duels_group ON duels(group_id, status);
+CREATE INDEX IF NOT EXISTS idx_duels_players ON duels(challenger_id, opponent_id);
+
+CREATE TABLE IF NOT EXISTS duel_answers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  duel_id INTEGER NOT NULL REFERENCES duels(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  question_id INTEGER NOT NULL REFERENCES duel_questions(id),
+  answer TEXT NOT NULL CHECK (answer IN ('a','b','c','d')),
+  is_correct INTEGER NOT NULL,
+  answered_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(duel_id, user_id, question_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_duel_answers_lookup ON duel_answers(duel_id, user_id);

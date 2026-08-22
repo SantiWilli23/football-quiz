@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { db, initSchema } from "./client.js";
+import { DUEL_POOL } from "./duel-pool.js";
 
 function dateOffset(days) {
   const d = new Date();
@@ -2052,6 +2053,20 @@ async function seed() {
     await upsertSpecialQuestion("que_prefieres", qp.prompt, scheduled_date, qp.option_a, qp.option_b);
   }
 
+  // Las preguntas de los duelos no se programan por fecha: viven en su propia
+  // tabla y se sortean cinco en cada duelo. Se insertan una vez y listo.
+  for (const q of DUEL_POOL) {
+    await db.execute({
+      sql: `INSERT INTO duel_questions (question, option_a, option_b, option_c, option_d, correct_answer)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(question) DO UPDATE SET
+              option_a = excluded.option_a, option_b = excluded.option_b,
+              option_c = excluded.option_c, option_d = excluded.option_d,
+              correct_answer = excluded.correct_answer`,
+      args: [q.question, q.option_a, q.option_b, q.option_c, q.option_d, q.correct_answer],
+    });
+  }
+
   // Versiones anteriores del seed pre-creaban las preguntas de personalidad
   // para los 20 días siguientes, lo que congelaba al protagonista con la lista
   // de miembros de ese momento. Ahora las arma /api/mode-b el mismo día, así
@@ -2067,7 +2082,7 @@ async function seed() {
   }
 
   console.log(
-    `Seed completado: ${NUM_DAYS} días x 3 preguntas trivia (Modo A) + 2 preguntas especiales (Modo B).`
+    `Seed completado: ${NUM_DAYS} días x 3 preguntas trivia (Modo A) + 2 preguntas especiales (Modo B) + ${DUEL_POOL.length} preguntas de duelo.`
   );
   console.log(`Modo A: General / Liga Chilena / Europa (Aumentada dificultad)`);
   console.log(`Modo B: ¿Quién es más? / ¿Qué prefieres? (la de personalidad la arma /api/mode-b por grupo)`);

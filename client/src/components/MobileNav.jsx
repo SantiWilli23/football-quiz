@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { BarChart3, Flame, History, Home, LogOut, User, Users } from "lucide-react";
+import { BarChart3, Flame, History, Home, LogOut, Swords, User, Users } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import Avatar from "./Avatar.jsx";
 
@@ -8,7 +8,8 @@ import Avatar from "./Avatar.jsx";
 const links = [
   { to: "/", label: "Inicio", icon: Home, end: true },
   { to: "/grupo", label: "Grupo", icon: Users },
-  { to: "/historial", label: "Preguntas", icon: History },
+  { to: "/duelos", label: "Duelos", icon: Swords },
+  { to: "/historial", label: "Historial", icon: History },
   { to: "/estadisticas", label: "Stats", icon: BarChart3 },
   { to: "/perfil", label: "Perfil", icon: User },
 ];
@@ -45,12 +46,12 @@ export default function MobileNav() {
             to={to}
             end={end}
             className={({ isActive }) =>
-              `flex-1 flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors ${
+              `flex-1 min-w-0 flex flex-col items-center gap-0.5 py-2 px-0.5 text-[9px] font-medium leading-tight transition-colors ${
                 isActive ? "text-accent" : "text-gray-500"
               }`
             }
           >
-            <Icon size={19} />
+            <Icon size={18} />
             {label}
           </NavLink>
         ))}

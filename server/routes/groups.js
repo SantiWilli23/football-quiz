@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
+import { DUEL_POINTS } from "./duels.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -135,7 +136,11 @@ router.post("/:id/leave", async (req, res) => {
     });
 
     if (Number(remaining.rows[0].total) === 0) {
+      // El orden importa: primero lo que apunta a otras filas del grupo y
+      // recién al final el grupo, para no dejar nada colgado.
       for (const sql of [
+        "DELETE FROM duel_answers WHERE duel_id IN (SELECT id FROM duels WHERE group_id = ?)",
+        "DELETE FROM duels WHERE group_id = ?",
         "DELETE FROM mode_b_reactions WHERE group_id = ?",
         "DELETE FROM mode_b_predictions WHERE group_id = ?",
         "DELETE FROM mode_b_scores WHERE group_id = ?",
@@ -144,6 +149,7 @@ router.post("/:id/leave", async (req, res) => {
         "DELETE FROM group_question_answers WHERE group_id = ?",
         "DELETE FROM personality_questions WHERE group_id = ?",
         "DELETE FROM group_questions WHERE group_id = ?",
+        "DELETE FROM group_question_bank WHERE group_id = ?",
         "DELETE FROM bonus_votes WHERE group_id = ?",
         "DELETE FROM groups_t WHERE id = ?",
       ]) {
@@ -199,10 +205,28 @@ router.get("/:id", async (req, res) => {
     });
     const modeBByUser = new Map(modeBResult.rows.map((r) => [r.user_id, Number(r.points)]));
 
+    const duelsResult = await db.execute({
+      sql: `SELECT challenger_id, opponent_id, winner_id FROM duels
+            WHERE group_id = ? AND status = 'terminado'`,
+      args: [groupId],
+    });
+    const duelByUser = new Map();
+    const addDuel = (userId, amount) =>
+      duelByUser.set(userId, (duelByUser.get(userId) || 0) + amount);
+    for (const row of duelsResult.rows) {
+      if (row.winner_id === null) {
+        addDuel(row.challenger_id, DUEL_POINTS.draw);
+        addDuel(row.opponent_id, DUEL_POINTS.draw);
+      } else {
+        addDuel(row.winner_id, DUEL_POINTS.win);
+      }
+    }
+
     const ranking = rankingResult.rows
       .map((r) => {
         const trivia_points = Number(r.points);
         const mode_b_points = modeBByUser.get(r.id) || 0;
+        const duel_points = duelByUser.get(r.id) || 0;
         return {
           id: r.id,
           username: r.username,
@@ -210,7 +234,8 @@ router.get("/:id", async (req, res) => {
           avatar_config: r.avatar_config,
           trivia_points,
           mode_b_points,
-          points: trivia_points + mode_b_points,
+          duel_points,
+          points: trivia_points + mode_b_points + duel_points,
           answered: Number(r.answered),
           correct: Number(r.correct),
           accuracy: Number(r.answered) > 0 ? Math.round((Number(r.correct) / Number(r.answered)) * 100) : 0,
