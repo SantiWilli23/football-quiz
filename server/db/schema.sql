@@ -216,3 +216,18 @@ CREATE TABLE IF NOT EXISTS push_log (
   sent_count INTEGER NOT NULL DEFAULT 0,
   sent_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS group_question_bank (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  author_id INTEGER NOT NULL REFERENCES users(id),
+  prompt TEXT NOT NULL,
+  option_a TEXT NOT NULL,
+  option_b TEXT NOT NULL,
+  option_c TEXT,
+  option_d TEXT,
+  used_on TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_group_question_bank_pending ON group_question_bank(group_id, used_on);

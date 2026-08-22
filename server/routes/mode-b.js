@@ -225,6 +225,78 @@ async function myPredictionFor(kind, questionId, groupId, userId) {
   return result.rows.length > 0 ? String(result.rows[0].predicted_value) : null;
 }
 
+// Valida una pregunta escrita por un miembro (sirve para la del día y para las
+// que se guardan en el banco). Devuelve null si está bien, o el mensaje de error.
+function validateGroupQuestion(prompt, options) {
+  if (typeof prompt !== "string" || !Array.isArray(options)) return "Faltan campos requeridos";
+
+  const cleanPrompt = prompt.trim();
+  const cleanOptions = options.map((o) => String(o ?? "").trim()).filter(Boolean);
+
+  if (cleanPrompt.length < 5 || cleanPrompt.length > 200) {
+    return "La pregunta tiene que tener entre 5 y 200 caracteres";
+  }
+  if (cleanOptions.length < 2 || cleanOptions.length > 4) return "Cargá entre 2 y 4 alternativas";
+  if (cleanOptions.some((o) => o.length > 100)) {
+    return "Cada alternativa puede tener hasta 100 caracteres";
+  }
+  if (new Set(cleanOptions.map((o) => o.toLowerCase())).size !== cleanOptions.length) {
+    return "Las alternativas no pueden repetirse";
+  }
+  return null;
+}
+
+function cleanedGroupQuestion(prompt, options) {
+  const cleanOptions = options.map((o) => String(o ?? "").trim()).filter(Boolean);
+  const [a, b, c = null, d = null] = cleanOptions;
+  return { prompt: prompt.trim(), a, b, c, d };
+}
+
+// Si nadie escribió la pregunta del día en vivo, se toma la más vieja sin usar
+// del banco del grupo. Es lo que hace que las preguntas de los propios
+// miembros salgan casi siempre, en vez de sólo los días que alguien se acuerda
+// de escribir una a tiempo.
+async function useBankQuestion(groupId, today) {
+  const pending = await db.execute({
+    sql: `SELECT * FROM group_question_bank
+          WHERE group_id = ? AND used_on IS NULL
+          ORDER BY created_at ASC, id ASC LIMIT 1`,
+    args: [groupId],
+  });
+  const entry = pending.rows[0];
+  if (!entry) return null;
+
+  try {
+    const inserted = await db.execute({
+      sql: `INSERT INTO group_questions
+              (group_id, author_id, prompt, option_a, option_b, option_c, option_d, scheduled_date)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        groupId,
+        entry.author_id,
+        entry.prompt,
+        entry.option_a,
+        entry.option_b,
+        entry.option_c,
+        entry.option_d,
+        today,
+      ],
+    });
+    await db.execute({
+      sql: "UPDATE group_question_bank SET used_on = ? WHERE id = ?",
+      args: [today, entry.id],
+    });
+    return { id: Number(inserted.lastInsertRowid), ...entry, scheduled_date: today };
+  } catch {
+    // Alguien escribió una en vivo entre la consulta y este INSERT: gana esa.
+    const existing = await db.execute({
+      sql: "SELECT * FROM group_questions WHERE group_id = ? AND scheduled_date = ?",
+      args: [groupId, today],
+    });
+    return existing.rows[0] || null;
+  }
+}
+
 // La pregunta del grupo admite entre 2 y 4 alternativas, así que las vacías
 // no se ofrecen.
 function optionsOfGroupQuestion(question) {
@@ -326,21 +398,23 @@ router.get("/today", async (req, res) => {
       ]),
     ]);
 
-    // La cuarta pregunta la escribe el primero del grupo que entra ese día.
-    // Si todavía no la escribió nadie, en vez de la pregunta va la invitación
-    // a crearla.
+    // La cuarta pregunta la escribe el primero del grupo que entra ese día. Si
+    // nadie la escribió en vivo se saca una del banco del grupo, y sólo si el
+    // banco está vacío aparece la invitación a escribirla.
+    const groupQuestion = dayQuestions.grupal || (await useBankQuestion(groupId, today));
+
     let grupal;
-    if (dayQuestions.grupal) {
+    if (groupQuestion) {
       const authorResult = await db.execute({
         sql: "SELECT username FROM users WHERE id = ?",
-        args: [dayQuestions.grupal.author_id],
+        args: [groupQuestion.author_id],
       });
       grupal = await buildQuestionPayload(
         "grupal",
-        { ...dayQuestions.grupal, author_name: authorResult.rows[0]?.username ?? "alguien" },
+        { ...groupQuestion, author_name: authorResult.rows[0]?.username ?? "alguien" },
         groupId,
         req.userId,
-        optionsOfGroupQuestion(dayQuestions.grupal)
+        optionsOfGroupQuestion(groupQuestion)
       );
     } else {
       grupal = { kind: "grupal", pending: true };
@@ -438,21 +512,8 @@ router.post("/group-question", async (req, res) => {
     return res.status(400).json({ error: "Faltan campos requeridos" });
   }
 
-  const cleanPrompt = prompt.trim();
-  const cleanOptions = options.map((o) => String(o ?? "").trim()).filter(Boolean);
-
-  if (cleanPrompt.length < 5 || cleanPrompt.length > 200) {
-    return res.status(400).json({ error: "La pregunta tiene que tener entre 5 y 200 caracteres" });
-  }
-  if (cleanOptions.length < 2 || cleanOptions.length > 4) {
-    return res.status(400).json({ error: "Cargá entre 2 y 4 alternativas" });
-  }
-  if (cleanOptions.some((o) => o.length > 100)) {
-    return res.status(400).json({ error: "Cada alternativa puede tener hasta 100 caracteres" });
-  }
-  if (new Set(cleanOptions.map((o) => o.toLowerCase())).size !== cleanOptions.length) {
-    return res.status(400).json({ error: "Las alternativas no pueden repetirse" });
-  }
+  const invalid = validateGroupQuestion(prompt, options);
+  if (invalid) return res.status(400).json({ error: invalid });
 
   try {
     if (!(await requireMembership(group_id, req.userId))) {
@@ -468,13 +529,13 @@ router.post("/group-question", async (req, res) => {
       return res.status(409).json({ error: "Alguien del grupo ya escribió la pregunta de hoy" });
     }
 
-    const [a, b, c = null, d = null] = cleanOptions;
+    const q = cleanedGroupQuestion(prompt, options);
     try {
       await db.execute({
         sql: `INSERT INTO group_questions
                 (group_id, author_id, prompt, option_a, option_b, option_c, option_d, scheduled_date)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [group_id, req.userId, cleanPrompt, a, b, c, d, today],
+        args: [group_id, req.userId, q.prompt, q.a, q.b, q.c, q.d, today],
       });
     } catch {
       // Alguien ganó la carrera entre el SELECT de arriba y este INSERT.
@@ -482,6 +543,106 @@ router.post("/group-question", async (req, res) => {
     }
 
     res.status(201).json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Banco de preguntas: cada uno deja las suyas cargadas y van saliendo solas
+// los días que nadie escribe una en vivo.
+router.get("/bank", async (req, res) => {
+  const groupId = Number(req.query.groupId);
+  if (!groupId) return res.status(400).json({ error: "Falta groupId" });
+
+  try {
+    if (!(await requireMembership(groupId, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+
+    const result = await db.execute({
+      sql: `SELECT b.*, u.username AS author_name
+            FROM group_question_bank b
+            JOIN users u ON u.id = b.author_id
+            WHERE b.group_id = ?
+            ORDER BY b.used_on IS NOT NULL, b.created_at ASC, b.id ASC`,
+      args: [groupId],
+    });
+
+    res.json({
+      questions: result.rows.map((r) => ({
+        id: r.id,
+        prompt: r.prompt,
+        options: ["a", "b", "c", "d"].map((k) => r[`option_${k}`]).filter(Boolean),
+        author: r.author_name,
+        author_id: r.author_id,
+        mine: r.author_id === req.userId,
+        used_on: r.used_on,
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+router.post("/bank", async (req, res) => {
+  const { group_id, prompt, options } = req.body || {};
+  if (!group_id) return res.status(400).json({ error: "Falta el grupo" });
+
+  const invalid = validateGroupQuestion(prompt, options);
+  if (invalid) return res.status(400).json({ error: invalid });
+
+  try {
+    if (!(await requireMembership(group_id, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+
+    // Un tope por persona para que el banco no se llene con las de uno solo y
+    // el resto nunca llegue a salir.
+    const mine = await db.execute({
+      sql: `SELECT COUNT(*) AS total FROM group_question_bank
+            WHERE group_id = ? AND author_id = ? AND used_on IS NULL`,
+      args: [group_id, req.userId],
+    });
+    if (Number(mine.rows[0].total) >= 20) {
+      return res.status(409).json({ error: "Ya tenés 20 preguntas esperando. Dejá que salgan algunas." });
+    }
+
+    const q = cleanedGroupQuestion(prompt, options);
+    await db.execute({
+      sql: `INSERT INTO group_question_bank
+              (group_id, author_id, prompt, option_a, option_b, option_c, option_d)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      args: [group_id, req.userId, q.prompt, q.a, q.b, q.c, q.d],
+    });
+
+    res.status(201).json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+router.delete("/bank/:id", async (req, res) => {
+  const id = Number(req.params.id);
+
+  try {
+    const result = await db.execute({
+      sql: "SELECT * FROM group_question_bank WHERE id = ?",
+      args: [id],
+    });
+    const entry = result.rows[0];
+    if (!entry) return res.status(404).json({ error: "Pregunta no encontrada" });
+    if (entry.author_id !== req.userId) {
+      return res.status(403).json({ error: "Sólo podés borrar tus propias preguntas" });
+    }
+    if (entry.used_on) {
+      return res.status(400).json({ error: "Esa pregunta ya salió: no se puede borrar" });
+    }
+
+    await db.execute({ sql: "DELETE FROM group_question_bank WHERE id = ?", args: [id] });
+    res.json({ ok: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });
