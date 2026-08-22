@@ -10,6 +10,7 @@ import QuestionCard from "../components/QuestionCard.jsx";
 import BonusCard from "../components/BonusCard.jsx";
 import ModeBCard from "../components/ModeBCard.jsx";
 import GroupQuestionComposer from "../components/GroupQuestionComposer.jsx";
+import ShareButton from "../components/ShareButton.jsx";
 
 const LIVE_REFRESH_MS = 15000;
 
@@ -80,6 +81,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
             <h1 className="text-xl sm:text-2xl font-bold">Preguntas del día</h1>
             <div className="flex items-center gap-2">
+              <ShareButton trivia={questions} modeB={modeBData} />
               <GroupSelector className="mr-1" />
               <button
                 onClick={() => setMode("a")}

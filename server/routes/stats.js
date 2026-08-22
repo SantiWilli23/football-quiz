@@ -72,6 +72,146 @@ async function allModeBAnswers(groupId) {
   }));
 }
 
+export function monthOf(dateStr) {
+  return dateStr.slice(0, 7);
+}
+
+// Límites de un mes como texto: las fechas se guardan en ISO (YYYY-MM-DD), así
+// que comparar strings alcanza y evita hacer cuentas de calendario.
+function monthBounds(month) {
+  return { from: `${month}-01`, to: `${month}-31` };
+}
+
+// Ranking del grupo acotado a un rango de fechas. Los puntos de trivia son del
+// usuario (no del grupo), igual que en el ranking histórico; los de Modo B sí
+// son por grupo.
+async function rankingBetween(groupId, from, to) {
+  const members = await groupMembers(groupId);
+  if (members.length === 0) return [];
+
+  const placeholders = members.map(() => "?").join(",");
+  const memberIds = members.map((m) => m.id);
+
+  const triviaResult = await db.execute({
+    sql: `SELECT a.user_id,
+                 COALESCE(SUM(a.points), 0) AS points,
+                 COUNT(*) AS answered,
+                 COALESCE(SUM(a.is_correct), 0) AS correct
+          FROM answers a JOIN questions q ON q.id = a.question_id
+          WHERE a.user_id IN (${placeholders})
+            AND q.scheduled_date >= ? AND q.scheduled_date <= ?
+          GROUP BY a.user_id`,
+    args: [...memberIds, from, to],
+  });
+  const triviaByUser = new Map(triviaResult.rows.map((r) => [r.user_id, r]));
+
+  const modeBResult = await db.execute({
+    sql: `SELECT user_id, COALESCE(SUM(points), 0) AS points
+          FROM mode_b_scores
+          WHERE group_id = ? AND scheduled_date >= ? AND scheduled_date <= ?
+          GROUP BY user_id`,
+    args: [groupId, from, to],
+  });
+  const modeBByUser = new Map(modeBResult.rows.map((r) => [r.user_id, Number(r.points)]));
+
+  return members
+    .map((m) => {
+      const trivia = triviaByUser.get(m.id);
+      const trivia_points = trivia ? Number(trivia.points) : 0;
+      const mode_b_points = modeBByUser.get(m.id) || 0;
+      const answered = trivia ? Number(trivia.answered) : 0;
+      const correct = trivia ? Number(trivia.correct) : 0;
+      return {
+        id: m.id,
+        username: m.username,
+        avatar: m.avatar,
+        trivia_points,
+        mode_b_points,
+        points: trivia_points + mode_b_points,
+        answered,
+        correct,
+        accuracy: answered > 0 ? Math.round((correct / answered) * 100) : 0,
+      };
+    })
+    .sort((a, b) => b.points - a.points || b.correct - a.correct)
+    .map((row, idx) => ({ position: idx + 1, ...row }));
+}
+
+// Temporada: el ranking del mes. Es el que importa día a día, porque el
+// histórico lo gana siempre el que arrancó primero.
+router.get("/season", async (req, res) => {
+  const groupId = Number(req.query.groupId);
+  const month = /^\d{4}-\d{2}$/.test(req.query.month || "") ? req.query.month : monthOf(todayStr());
+
+  if (!groupId) return res.status(400).json({ error: "Falta groupId" });
+
+  try {
+    if (!(await requireMembership(groupId, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+    await settleGroup(groupId);
+
+    const { from, to } = monthBounds(month);
+    const ranking = await rankingBetween(groupId, from, to);
+    const isCurrent = month === monthOf(todayStr());
+
+    res.json({ month, is_current: isCurrent, ranking });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Campeones de los meses ya cerrados, del más reciente al más viejo.
+router.get("/champions", async (req, res) => {
+  const groupId = Number(req.query.groupId);
+  if (!groupId) return res.status(400).json({ error: "Falta groupId" });
+
+  try {
+    if (!(await requireMembership(groupId, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+    await settleGroup(groupId);
+
+    // Meses con actividad, de cualquiera de los dos modos.
+    const monthsResult = await db.execute({
+      sql: `SELECT DISTINCT substr(scheduled_date, 1, 7) AS month FROM mode_b_scores WHERE group_id = ?
+            UNION
+            SELECT DISTINCT substr(q.scheduled_date, 1, 7) AS month
+            FROM answers a
+            JOIN questions q ON q.id = a.question_id
+            JOIN group_members gm ON gm.user_id = a.user_id
+            WHERE gm.group_id = ?
+            ORDER BY month DESC`,
+      args: [groupId, groupId],
+    });
+
+    const currentMonth = monthOf(todayStr());
+    const champions = [];
+    for (const row of monthsResult.rows) {
+      if (row.month >= currentMonth) continue;
+      const { from, to } = monthBounds(row.month);
+      const ranking = await rankingBetween(groupId, from, to);
+      const winner = ranking[0];
+      if (!winner || winner.points === 0) continue;
+      champions.push({
+        month: row.month,
+        username: winner.username,
+        avatar: winner.avatar,
+        points: winner.points,
+        // Un empate en el primer puesto es posible: se avisa en vez de
+        // inventar un desempate.
+        tied: ranking.filter((r) => r.points === winner.points).length > 1,
+      });
+    }
+
+    res.json({ champions });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 // Ranking de Modo B + a quién vota más el grupo en "¿Quién es más?".
 router.get("/mode-b", async (req, res) => {
   const groupId = Number(req.query.groupId);

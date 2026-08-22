@@ -1,16 +1,26 @@
 import { useEffect, useState } from "react";
-import { Copy, Crown, Plus, Users } from "lucide-react";
+import { CalendarDays, Copy, Crown, Plus, Trophy, Users } from "lucide-react";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 
+const currentMonth = new Date().toISOString().slice(0, 7);
+
+function monthLabel(month) {
+  const [year, m] = month.split("-").map(Number);
+  return new Date(year, m - 1, 1).toLocaleDateString("es-ES", { month: "long", year: "numeric" });
+}
+
 export default function Group() {
   const { user } = useAuth();
   const { groups, activeGroupId, selectGroup, loading, reloadGroups } = useGroups();
   const [detail, setDetail] = useState(null);
   const [ranking, setRanking] = useState([]);
+  const [seasonRanking, setSeasonRanking] = useState([]);
+  const [champions, setChampions] = useState([]);
+  const [scope, setScope] = useState("mes");
 
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
@@ -43,6 +53,16 @@ export default function Group() {
         setDetail(null);
         setRanking([]);
       });
+
+    const params = { groupId: activeGroupId };
+    api
+      .get("/stats/season", { params })
+      .then(({ data }) => setSeasonRanking(data.ranking))
+      .catch(() => setSeasonRanking([]));
+    api
+      .get("/stats/champions", { params })
+      .then(({ data }) => setChampions(data.champions))
+      .catch(() => setChampions([]));
   }, [activeGroupId]);
 
   const handleCreate = async (e) => {
@@ -86,6 +106,11 @@ export default function Group() {
       setJoinLoading(false);
     }
   };
+
+  // El ranking del mes esconde a los que todavía no jugaron; el histórico
+  // muestra a todo el grupo, como venía siendo.
+  const shownRanking =
+    scope === "mes" ? seasonRanking.filter((r) => r.points > 0 || r.answered > 0) : ranking;
 
   const copyCode = () => {
     if (!detail) return;
@@ -215,8 +240,39 @@ export default function Group() {
                 </button>
               </div>
 
+              {/* La temporada del mes es la que se mira día a día: el histórico
+                  lo gana siempre el que arrancó primero. */}
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
+                <button
+                  onClick={() => setScope("mes")}
+                  className={`px-3 py-1.5 rounded-card text-xs font-medium border transition-colors flex items-center gap-1.5 ${
+                    scope === "mes"
+                      ? "border-accent/40 bg-accent/10 text-accent"
+                      : "border-border text-gray-400 hover:text-white hover:border-white/30"
+                  }`}
+                >
+                  <CalendarDays size={13} />
+                  {monthLabel(currentMonth)}
+                </button>
+                <button
+                  onClick={() => setScope("historico")}
+                  className={`px-3 py-1.5 rounded-card text-xs font-medium border transition-colors ${
+                    scope === "historico"
+                      ? "border-accent/40 bg-accent/10 text-accent"
+                      : "border-border text-gray-400 hover:text-white hover:border-white/30"
+                  }`}
+                >
+                  Histórico
+                </button>
+              </div>
+
               <div className="space-y-2">
-                {ranking.map((r) => (
+                {shownRanking.length === 0 && (
+                  <p className="text-sm text-gray-500 py-4">
+                    Todavía nadie sumó puntos {scope === "mes" ? "este mes" : "en el grupo"}.
+                  </p>
+                )}
+                {shownRanking.map((r) => (
                   <div
                     key={r.id}
                     className={`flex items-center gap-4 px-4 py-3 rounded-card border ${
@@ -244,6 +300,32 @@ export default function Group() {
                   </div>
                 ))}
               </div>
+
+              {champions.length > 0 && (
+                <div className="mt-6 pt-5 border-t border-border">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Trophy size={15} className="text-amber-400" />
+                    <h3 className="text-sm font-semibold">Campeones de meses anteriores</h3>
+                  </div>
+                  <div className="space-y-1.5">
+                    {champions.map((c) => (
+                      <div key={c.month} className="flex items-center gap-3 text-sm">
+                        <span className="text-xs text-gray-500 w-24 shrink-0 capitalize">
+                          {monthLabel(c.month)}
+                        </span>
+                        <span className="w-6 h-6 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 text-[10px] font-semibold shrink-0">
+                          {c.avatar || c.username.charAt(0).toUpperCase()}
+                        </span>
+                        <span className="flex-1 min-w-0 truncate">
+                          {c.username}
+                          {c.tied && <span className="text-gray-500 text-xs"> (empatado)</span>}
+                        </span>
+                        <span className="text-xs text-gray-500 shrink-0">{c.points} pts</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </Card>
           )}
         </div>
