@@ -127,7 +127,7 @@ CREATE INDEX IF NOT EXISTS idx_personality_answers_lookup ON personality_answers
 
 CREATE TABLE IF NOT EXISTS mode_b_predictions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  question_kind TEXT NOT NULL CHECK (question_kind IN ('quien_es_mas', 'que_prefieres', 'personalidad')),
+  question_kind TEXT NOT NULL CHECK (question_kind IN ('quien_es_mas', 'que_prefieres', 'personalidad', 'grupal')),
   question_id INTEGER NOT NULL,
   group_id INTEGER NOT NULL REFERENCES groups_t(id),
   user_id INTEGER NOT NULL REFERENCES users(id),
@@ -140,7 +140,7 @@ CREATE INDEX IF NOT EXISTS idx_mode_b_predictions_lookup ON mode_b_predictions(q
 
 CREATE TABLE IF NOT EXISTS mode_b_reactions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  question_kind TEXT NOT NULL CHECK (question_kind IN ('quien_es_mas', 'que_prefieres', 'personalidad')),
+  question_kind TEXT NOT NULL CHECK (question_kind IN ('quien_es_mas', 'que_prefieres', 'personalidad', 'grupal')),
   question_id INTEGER NOT NULL,
   group_id INTEGER NOT NULL REFERENCES groups_t(id),
   user_id INTEGER NOT NULL REFERENCES users(id),
@@ -165,3 +165,30 @@ CREATE TABLE IF NOT EXISTS mode_b_scores (
 
 CREATE INDEX IF NOT EXISTS idx_mode_b_scores_group ON mode_b_scores(group_id, scheduled_date);
 CREATE INDEX IF NOT EXISTS idx_mode_b_scores_user ON mode_b_scores(user_id);
+
+CREATE TABLE IF NOT EXISTS group_questions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  author_id INTEGER NOT NULL REFERENCES users(id),
+  prompt TEXT NOT NULL,
+  option_a TEXT NOT NULL,
+  option_b TEXT NOT NULL,
+  option_c TEXT,
+  option_d TEXT,
+  scheduled_date TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(group_id, scheduled_date)
+);
+
+CREATE TABLE IF NOT EXISTS group_question_answers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  group_question_id INTEGER NOT NULL REFERENCES group_questions(id),
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  answer TEXT NOT NULL CHECK (answer IN ('a','b','c','d')),
+  answered_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(group_question_id, group_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_group_questions_date ON group_questions(group_id, scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_group_question_answers_lookup ON group_question_answers(group_question_id, group_id);

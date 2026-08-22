@@ -24,6 +24,7 @@ const KIND_LABELS = {
   quien_es_mas: { label: "¿Quién es más?", color: "#3b82f6" },
   que_prefieres: { label: "¿Qué prefieres?", color: "#10b981" },
   personalidad: { label: "Personalidad", color: "#a855f7" },
+  grupal: { label: "Pregunta del grupo", color: "#f59e0b" },
 };
 
 function Pagination({ page, totalPages, onChange }) {
@@ -178,7 +179,7 @@ function ModeBHistory({ groupId }) {
             <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-border">
               <span className="text-sm font-semibold">{formatLocalDate(day.date)}</span>
               <div className="flex items-center gap-3 text-xs text-gray-500">
-                <span>{day.answered_count}/3 respondidas</span>
+                <span>{day.answered_count}/{day.questions_total} respondidas</span>
                 <span className="flex items-center gap-1">
                   <Target size={11} />
                   {day.correct_predictions} acertadas

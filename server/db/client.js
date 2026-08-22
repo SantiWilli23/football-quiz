@@ -31,6 +31,40 @@ export async function initSchema() {
   }
   await migrateQuestionsTable();
   await migrateSpecialQuestionsTable();
+  await migrateModeBKindConstraint();
+}
+
+// Las tablas de predicciones y reacciones nacieron con un CHECK que sólo
+// admitía los tres tipos originales de pregunta. Al sumarse la pregunta que
+// escribe el propio grupo ('grupal') hay que rehacerlas: SQLite no permite
+// modificar un CHECK con ALTER TABLE. Se detecta mirando el SQL guardado.
+async function migrateModeBKindConstraint() {
+  for (const table of ["mode_b_predictions", "mode_b_reactions"]) {
+    const info = await db.execute({
+      sql: "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
+      args: [table],
+    });
+    const createSql = info.rows[0]?.sql;
+    if (!createSql || createSql.includes("grupal")) continue;
+
+    const columns = (await db.execute(`PRAGMA table_info(${table})`)).rows
+      .map((r) => r.name)
+      .join(", ");
+
+    await db.execute("PRAGMA foreign_keys = OFF");
+    await db.execute(createSql.replace(table, `${table}_new`).replace(/'personalidad'/, "'personalidad', 'grupal'"));
+    await db.execute(`INSERT INTO ${table}_new (${columns}) SELECT ${columns} FROM ${table}`);
+    await db.execute(`DROP TABLE ${table}`);
+    await db.execute(`ALTER TABLE ${table}_new RENAME TO ${table}`);
+    await db.execute("PRAGMA foreign_keys = ON");
+  }
+
+  await db.execute(
+    "CREATE INDEX IF NOT EXISTS idx_mode_b_predictions_lookup ON mode_b_predictions(question_kind, question_id, group_id)"
+  );
+  await db.execute(
+    "CREATE INDEX IF NOT EXISTS idx_mode_b_reactions_lookup ON mode_b_reactions(question_kind, question_id, group_id)"
+  );
 }
 
 // Older deployments have a `questions` table with one row per day

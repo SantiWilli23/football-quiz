@@ -9,6 +9,7 @@ import GroupSelector from "../components/GroupSelector.jsx";
 import QuestionCard from "../components/QuestionCard.jsx";
 import BonusCard from "../components/BonusCard.jsx";
 import ModeBCard from "../components/ModeBCard.jsx";
+import GroupQuestionComposer from "../components/GroupQuestionComposer.jsx";
 
 const LIVE_REFRESH_MS = 15000;
 
@@ -160,6 +161,15 @@ export default function Dashboard() {
                     groupId={groupId}
                     onChanged={handleModeBChanged}
                   />
+                  {modeBData.grupal?.pending ? (
+                    <GroupQuestionComposer groupId={groupId} onCreated={handleModeBChanged} />
+                  ) : (
+                    <ModeBCard
+                      data={modeBData.grupal}
+                      groupId={groupId}
+                      onChanged={handleModeBChanged}
+                    />
+                  )}
                 </>
               )
             )}

@@ -6,7 +6,9 @@ import {
   MODE_B_EMOJIS,
   MODE_B_POINTS,
   QUESTION_KINDS,
+  answerSourceFor,
   getDayQuestions,
+  promptOf,
   reactionsFor,
   settleGroup,
   tallyFor,
@@ -205,18 +207,12 @@ async function getOrCreatePersonalityQuestion(groupId, today, members) {
 }
 
 async function myAnswerFor(kind, questionId, groupId, userId) {
-  const result =
-    kind === "personalidad"
-      ? await db.execute({
-          sql: `SELECT answer AS value FROM personality_answers
-                WHERE personality_question_id = ? AND group_id = ? AND user_id = ?`,
-          args: [questionId, groupId, userId],
-        })
-      : await db.execute({
-          sql: `SELECT answer_value AS value FROM special_answers
-                WHERE special_question_id = ? AND group_id = ? AND user_id = ?`,
-          args: [questionId, groupId, userId],
-        });
+  const source = answerSourceFor(kind);
+  const result = await db.execute({
+    sql: `SELECT ${source.column} AS value FROM ${source.table}
+          WHERE ${source.fk} = ? AND group_id = ? AND user_id = ?`,
+    args: [questionId, groupId, userId],
+  });
   return result.rows.length > 0 ? String(result.rows[0].value) : null;
 }
 
@@ -229,6 +225,14 @@ async function myPredictionFor(kind, questionId, groupId, userId) {
   return result.rows.length > 0 ? String(result.rows[0].predicted_value) : null;
 }
 
+// La pregunta del grupo admite entre 2 y 4 alternativas, así que las vacías
+// no se ofrecen.
+function optionsOfGroupQuestion(question) {
+  return ["a", "b", "c", "d"]
+    .filter((key) => question[`option_${key}`])
+    .map((key) => ({ value: key, label: question[`option_${key}`] }));
+}
+
 // Los resultados quedan tapados hasta que votás Y predecís. Si se vieran antes,
 // acertar la predicción sería mirar el marcador en vez de jugar.
 async function buildQuestionPayload(kind, question, groupId, userId, options) {
@@ -239,13 +243,13 @@ async function buildQuestionPayload(kind, question, groupId, userId, options) {
   const payload = {
     kind,
     id: question.id,
+    prompt: promptOf(kind, question),
     my_answer,
     my_prediction,
     revealed,
     options,
-    ...(kind === "personalidad"
-      ? { prompt: question.prompt_template, personality: question.personality_name }
-      : { prompt: question.prompt }),
+    ...(kind === "personalidad" ? { personality: question.personality_name } : {}),
+    ...(kind === "grupal" ? { author: question.author_name, author_id: question.author_id } : {}),
   };
 
   if (revealed) {
@@ -317,19 +321,47 @@ router.get("/today", async (req, res) => {
       ]),
     ]);
 
-    res.json({ date: today, points_rules: MODE_B_POINTS, quien_es_mas, que_prefieres, personalidad });
+    // La cuarta pregunta la escribe el primero del grupo que entra ese día.
+    // Si todavía no la escribió nadie, en vez de la pregunta va la invitación
+    // a crearla.
+    let grupal;
+    if (dayQuestions.grupal) {
+      const authorResult = await db.execute({
+        sql: "SELECT username FROM users WHERE id = ?",
+        args: [dayQuestions.grupal.author_id],
+      });
+      grupal = await buildQuestionPayload(
+        "grupal",
+        { ...dayQuestions.grupal, author_name: authorResult.rows[0]?.username ?? "alguien" },
+        groupId,
+        req.userId,
+        optionsOfGroupQuestion(dayQuestions.grupal)
+      );
+    } else {
+      grupal = { kind: "grupal", pending: true };
+    }
+
+    res.json({
+      date: today,
+      points_rules: MODE_B_POINTS,
+      quien_es_mas,
+      que_prefieres,
+      personalidad,
+      grupal,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });
   }
 });
 
-// Carga una pregunta validando que exista, sea del tipo pedido y (para
-// personalidad) pertenezca al grupo.
+// Carga una pregunta validando que exista, sea del tipo pedido y (las que son
+// por grupo) pertenezca al grupo de quien la pide.
 async function loadQuestion(kind, questionId, groupId) {
-  if (kind === "personalidad") {
+  const byGroup = { personalidad: "personality_questions", grupal: "group_questions" }[kind];
+  if (byGroup) {
     const result = await db.execute({
-      sql: "SELECT * FROM personality_questions WHERE id = ? AND group_id = ?",
+      sql: `SELECT * FROM ${byGroup} WHERE id = ? AND group_id = ?`,
       args: [questionId, groupId],
     });
     return result.rows[0] || null;
@@ -341,9 +373,15 @@ async function loadQuestion(kind, questionId, groupId) {
   return result.rows[0] || null;
 }
 
-async function isValidValue(kind, groupId, value) {
+async function isValidValue(kind, groupId, value, question) {
   if (kind === "quien_es_mas") return requireMembership(groupId, Number(value));
   if (kind === "que_prefieres") return value === "a" || value === "b";
+  if (kind === "grupal") {
+    // La pregunta del grupo puede tener 2, 3 o 4 alternativas: sólo valen las
+    // que su autor efectivamente cargó.
+    const filled = ["a", "b", "c", "d"].filter((k) => question[`option_${k}`]);
+    return filled.includes(value);
+  }
   return ["a", "b", "c", "d"].includes(value);
 }
 
@@ -364,25 +402,78 @@ router.post("/answer", async (req, res) => {
     if (question.scheduled_date !== todayStr()) {
       return res.status(400).json({ error: "Solo puedes responder la pregunta de hoy" });
     }
-    if (!(await isValidValue(question_kind, group_id, String(value)))) {
+    if (!(await isValidValue(question_kind, group_id, String(value), question))) {
       return res.status(400).json({ error: "Respuesta inválida" });
     }
     if (await myAnswerFor(question_kind, question.id, group_id, req.userId)) {
       return res.status(409).json({ error: "Ya respondiste esta pregunta" });
     }
 
-    if (question_kind === "personalidad") {
+    const source = answerSourceFor(question_kind);
+    await db.execute({
+      sql: `INSERT INTO ${source.table} (${source.fk}, group_id, user_id, ${source.column})
+            VALUES (?, ?, ?, ?)`,
+      args: [question.id, group_id, req.userId, String(value)],
+    });
+
+    res.status(201).json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// La pregunta del día la escribe el primero del grupo que llegue. El
+// UNIQUE(group_id, scheduled_date) es el que decide la carrera: si dos la
+// mandan a la vez, la segunda choca contra el índice y recibe el 409.
+router.post("/group-question", async (req, res) => {
+  const { group_id, prompt, options } = req.body || {};
+
+  if (!group_id || typeof prompt !== "string" || !Array.isArray(options)) {
+    return res.status(400).json({ error: "Faltan campos requeridos" });
+  }
+
+  const cleanPrompt = prompt.trim();
+  const cleanOptions = options.map((o) => String(o ?? "").trim()).filter(Boolean);
+
+  if (cleanPrompt.length < 5 || cleanPrompt.length > 200) {
+    return res.status(400).json({ error: "La pregunta tiene que tener entre 5 y 200 caracteres" });
+  }
+  if (cleanOptions.length < 2 || cleanOptions.length > 4) {
+    return res.status(400).json({ error: "Cargá entre 2 y 4 alternativas" });
+  }
+  if (cleanOptions.some((o) => o.length > 100)) {
+    return res.status(400).json({ error: "Cada alternativa puede tener hasta 100 caracteres" });
+  }
+  if (new Set(cleanOptions.map((o) => o.toLowerCase())).size !== cleanOptions.length) {
+    return res.status(400).json({ error: "Las alternativas no pueden repetirse" });
+  }
+
+  try {
+    if (!(await requireMembership(group_id, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+
+    const today = todayStr();
+    const existing = await db.execute({
+      sql: "SELECT id FROM group_questions WHERE group_id = ? AND scheduled_date = ?",
+      args: [group_id, today],
+    });
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: "Alguien del grupo ya escribió la pregunta de hoy" });
+    }
+
+    const [a, b, c = null, d = null] = cleanOptions;
+    try {
       await db.execute({
-        sql: `INSERT INTO personality_answers (personality_question_id, group_id, user_id, answer)
-              VALUES (?, ?, ?, ?)`,
-        args: [question.id, group_id, req.userId, String(value)],
+        sql: `INSERT INTO group_questions
+                (group_id, author_id, prompt, option_a, option_b, option_c, option_d, scheduled_date)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [group_id, req.userId, cleanPrompt, a, b, c, d, today],
       });
-    } else {
-      await db.execute({
-        sql: `INSERT INTO special_answers (special_question_id, group_id, user_id, answer_value)
-              VALUES (?, ?, ?, ?)`,
-        args: [question.id, group_id, req.userId, String(value)],
-      });
+    } catch {
+      // Alguien ganó la carrera entre el SELECT de arriba y este INSERT.
+      return res.status(409).json({ error: "Alguien del grupo ya escribió la pregunta de hoy" });
     }
 
     res.status(201).json({ ok: true });
@@ -409,7 +500,7 @@ router.post("/predict", async (req, res) => {
     if (question.scheduled_date !== todayStr()) {
       return res.status(400).json({ error: "Solo puedes predecir la pregunta de hoy" });
     }
-    if (!(await isValidValue(question_kind, group_id, String(value)))) {
+    if (!(await isValidValue(question_kind, group_id, String(value), question))) {
       return res.status(400).json({ error: "Predicción inválida" });
     }
     if (!(await myAnswerFor(question_kind, question.id, group_id, req.userId))) {
@@ -530,7 +621,7 @@ router.get("/history", async (req, res) => {
 
         questions.push({
           kind,
-          prompt: kind === "personalidad" ? question.prompt_template : question.prompt,
+          prompt: promptOf(kind, question),
           your_answer: labelFor(kind, question, my_answer),
           your_prediction: labelFor(kind, question, my_prediction),
           winner: winners.length > 0 ? winners.map((w) => labelFor(kind, question, w)).join(" / ") : null,
@@ -543,6 +634,9 @@ router.get("/history", async (req, res) => {
         date,
         points: score ? Number(score.points) : 0,
         answered_count: score ? Number(score.answered_count) : 0,
+        // Cuántas hubo ese día: la del grupo no siempre existe, así que el
+        // denominador no puede quedar fijo en el cliente.
+        questions_total: questions.length,
         correct_predictions: score ? Number(score.correct_predictions) : 0,
         questions,
       });

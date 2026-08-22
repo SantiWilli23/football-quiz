@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, GitCompare, Sparkles, Target, UserCircle2, Users, X } from "lucide-react";
+import { Check, GitCompare, PenLine, Sparkles, Target, UserCircle2, Users, X } from "lucide-react";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import Card from "./Card.jsx";
@@ -8,6 +8,7 @@ const KINDS = {
   quien_es_mas: { color: "#3b82f6", icon: Users, label: "¿Quién es más?" },
   que_prefieres: { color: "#10b981", icon: GitCompare, label: "¿Qué prefieres?" },
   personalidad: { color: "#a855f7", icon: UserCircle2, label: "Personalidad" },
+  grupal: { color: "#f59e0b", icon: PenLine, label: "Pregunta del grupo" },
 };
 
 const OPTION_LETTERS = ["A", "B", "C", "D"];
@@ -109,6 +110,7 @@ export default function ModeBCard({ data, groupId, onChanged }) {
             <Icon size={12} />
             {kind.label}
             {data.kind === "personalidad" && `: ${data.personality}`}
+            {data.kind === "grupal" && ` de ${data.author}`}
           </span>
 
           <div className="flex items-center gap-3">

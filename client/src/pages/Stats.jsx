@@ -11,6 +11,7 @@ const KIND_LABELS = {
   quien_es_mas: "¿Quién es más?",
   que_prefieres: "¿Qué prefieres?",
   personalidad: "Personalidad",
+  grupal: "Pregunta del grupo",
 };
 
 function formatLocalDate(dateStr) {

@@ -2,7 +2,15 @@ import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { addDays, getBestStreak, todayStr } from "../utils/points.js";
-import { QUESTION_KINDS, getDayQuestions, settleGroup, tallyFor, winnersOf } from "../utils/mode-b.js";
+import {
+  QUESTION_KINDS,
+  answersFor,
+  getDayQuestions,
+  promptOf,
+  settleGroup,
+  tallyFor,
+  winnersOf,
+} from "../utils/mode-b.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -46,7 +54,16 @@ async function allModeBAnswers(groupId) {
     args: [groupId],
   });
 
-  return [...specialResult.rows, ...personalityResult.rows].map((r) => ({
+  const groupResult = await db.execute({
+    sql: `SELECT 'grupal' AS kind, gq.scheduled_date AS date, ga.group_question_id AS qid,
+                 ga.user_id, ga.answer AS value
+          FROM group_question_answers ga
+          JOIN group_questions gq ON gq.id = ga.group_question_id
+          WHERE ga.group_id = ?`,
+    args: [groupId],
+  });
+
+  return [...specialResult.rows, ...personalityResult.rows, ...groupResult.rows].map((r) => ({
     key: `${r.kind}:${r.qid}`,
     date: r.date,
     kind: r.kind,
@@ -170,6 +187,7 @@ router.get("/achievements", async (req, res) => {
     let fullDays = 0;
     let votesReceived = 0;
     let timesProtagonist = 0;
+    let authoredQuestions = 0;
 
     if (groupId) {
       const scoreResult = await db.execute({
@@ -203,6 +221,12 @@ router.get("/achievements", async (req, res) => {
         args: [groupId, username],
       });
       timesProtagonist = Number(protagonistResult.rows[0].total);
+
+      const authoredResult = await db.execute({
+        sql: "SELECT COUNT(*) AS total FROM group_questions WHERE group_id = ? AND author_id = ?",
+        args: [groupId, req.userId],
+      });
+      authoredQuestions = Number(authoredResult.rows[0].total);
     }
 
     const achievements = [
@@ -250,9 +274,17 @@ router.get("/achievements", async (req, res) => {
         id: "constante",
         emoji: "📅",
         title: "Constante",
-        description: "Completá las 3 especiales en 7 días distintos",
+        description: "Respondé al menos 3 especiales en 7 días distintos",
         current: fullDays,
         target: 7,
+      },
+      {
+        id: "pregunton",
+        emoji: "✍️",
+        title: "Preguntón",
+        description: "Escribí 5 veces la pregunta del día del grupo",
+        current: authoredQuestions,
+        target: 5,
       },
       {
         id: "mas-votado",
@@ -328,15 +360,20 @@ router.get("/weekly", async (req, res) => {
     const votesReceived = new Map();
     let mostDivisive = null;
     let mostUnanimous = null;
+    // La pregunta que escribe el grupo puede faltar algunos días, así que el
+    // total posible se cuenta pregunta por pregunta en vez de asumir un fijo.
+    let questionsInWeek = 0;
 
     for (const date of dates) {
       const dayQuestions = await getDayQuestions(groupId, date);
       for (const kind of QUESTION_KINDS) {
         const question = dayQuestions[kind];
         if (!question) continue;
+        questionsInWeek++;
 
         const tally = await tallyFor(kind, question.id, groupId);
         const total = [...tally.values()].reduce((sum, n) => sum + n, 0);
+        // Con un solo voto no hay ni división ni unanimidad que medir.
         if (total < 2) continue;
 
         if (kind === "quien_es_mas") {
@@ -356,7 +393,7 @@ router.get("/weekly", async (req, res) => {
     }
 
     const mostVotedEntry = [...votesReceived.entries()].sort((a, b) => b[1] - a[1])[0];
-    const possibleAnswers = dates.length * 3 * members.length;
+    const possibleAnswers = questionsInWeek * members.length;
 
     res.json({
       days: dates.length,
@@ -483,6 +520,7 @@ router.get("/export", async (req, res) => {
         quien_es_mas: "¿Quién es más?",
         que_prefieres: "¿Qué prefieres?",
         personalidad: "Personalidad",
+        grupal: "Pregunta del grupo",
       };
 
       const datesResult = await db.execute({
@@ -518,19 +556,10 @@ router.get("/export", async (req, res) => {
             return map[value] ?? "";
           };
 
-          const answerResult =
-            kind === "personalidad"
-              ? await db.execute({
-                  sql: `SELECT answer AS value FROM personality_answers
-                        WHERE personality_question_id = ? AND group_id = ? AND user_id = ?`,
-                  args: [question.id, groupId, req.userId],
-                })
-              : await db.execute({
-                  sql: `SELECT answer_value AS value FROM special_answers
-                        WHERE special_question_id = ? AND group_id = ? AND user_id = ?`,
-                  args: [question.id, groupId, req.userId],
-                });
-          if (answerResult.rows.length === 0) continue;
+          const mine = (await answersFor(kind, question.id, groupId)).find(
+            (a) => a.user_id === req.userId
+          );
+          if (!mine) continue;
 
           const predictionResult = await db.execute({
             sql: `SELECT predicted_value FROM mode_b_predictions
@@ -545,8 +574,8 @@ router.get("/export", async (req, res) => {
           rows.push([
             kindLabel[kind],
             date,
-            kind === "personalidad" ? question.prompt_template : question.prompt,
-            labelFor(String(answerResult.rows[0].value)),
+            promptOf(kind, question),
+            labelFor(mine.value),
             winners.map(labelFor).join(" / "),
             labelFor(prediction),
             prediction !== null && winners.includes(prediction) ? "si" : "no",

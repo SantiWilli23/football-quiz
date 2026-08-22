@@ -7,10 +7,31 @@ export const MODE_B_POINTS = { answer: 5, prediction: 15 };
 
 export const MODE_B_EMOJIS = ["👍", "😂", "❤️", "😱", "🔥"];
 
-export const QUESTION_KINDS = ["quien_es_mas", "que_prefieres", "personalidad"];
+export const QUESTION_KINDS = ["quien_es_mas", "que_prefieres", "personalidad", "grupal"];
 
-// Las tres preguntas de un día para un grupo. La de personalidad es por grupo,
-// las otras dos son globales.
+// Dónde vive la respuesta de cada tipo de pregunta. Tenerlo en un solo lugar
+// evita repartir el mismo `if kind === ...` por media docena de consultas
+// (y que sumar un tipo nuevo obligue a acordarse de todas).
+const ANSWER_SOURCE = {
+  quien_es_mas: { table: "special_answers", fk: "special_question_id", column: "answer_value" },
+  que_prefieres: { table: "special_answers", fk: "special_question_id", column: "answer_value" },
+  personalidad: { table: "personality_answers", fk: "personality_question_id", column: "answer" },
+  grupal: { table: "group_question_answers", fk: "group_question_id", column: "answer" },
+};
+
+export function answerSourceFor(kind) {
+  return ANSWER_SOURCE[kind];
+}
+
+// El texto de la consigna según el tipo (personalidad guarda la suya en otra
+// columna porque lleva el nombre del protagonista ya reemplazado).
+export function promptOf(kind, question) {
+  return kind === "personalidad" ? question.prompt_template : question.prompt;
+}
+
+// Las preguntas de un día para un grupo. "¿Quién es más?" y "¿Qué prefieres?"
+// son comunes a todos los grupos; la de personalidad y la que escribe el propio
+// grupo son por grupo, y esta última puede no existir si nadie la creó.
 export async function getDayQuestions(groupId, date) {
   const specialResult = await db.execute({
     sql: "SELECT * FROM special_questions WHERE scheduled_date = ?",
@@ -20,31 +41,35 @@ export async function getDayQuestions(groupId, date) {
     sql: "SELECT * FROM personality_questions WHERE group_id = ? AND scheduled_date = ?",
     args: [groupId, date],
   });
+  const groupResult = await db.execute({
+    sql: "SELECT * FROM group_questions WHERE group_id = ? AND scheduled_date = ?",
+    args: [groupId, date],
+  });
 
   return {
     quien_es_mas: specialResult.rows.find((q) => q.type === "quien_es_mas") || null,
     que_prefieres: specialResult.rows.find((q) => q.type === "que_prefieres") || null,
     personalidad: personalityResult.rows[0] || null,
+    grupal: groupResult.rows[0] || null,
   };
+}
+
+// Filas { user_id, value } de quienes respondieron esa pregunta en el grupo.
+export async function answersFor(kind, questionId, groupId) {
+  const source = ANSWER_SOURCE[kind];
+  const result = await db.execute({
+    sql: `SELECT user_id, ${source.column} AS value FROM ${source.table}
+          WHERE ${source.fk} = ? AND group_id = ?`,
+    args: [questionId, groupId],
+  });
+  return result.rows.map((r) => ({ user_id: r.user_id, value: String(r.value) }));
 }
 
 // Votos de una pregunta dentro de un grupo, como Map<valor, cantidad>.
 export async function tallyFor(kind, questionId, groupId) {
-  const result =
-    kind === "personalidad"
-      ? await db.execute({
-          sql: "SELECT answer AS value FROM personality_answers WHERE personality_question_id = ? AND group_id = ?",
-          args: [questionId, groupId],
-        })
-      : await db.execute({
-          sql: "SELECT answer_value AS value FROM special_answers WHERE special_question_id = ? AND group_id = ?",
-          args: [questionId, groupId],
-        });
-
   const tally = new Map();
-  for (const row of result.rows) {
-    const key = String(row.value);
-    tally.set(key, (tally.get(key) || 0) + 1);
+  for (const row of await answersFor(kind, questionId, groupId)) {
+    tally.set(row.value, (tally.get(row.value) || 0) + 1);
   }
   return tally;
 }
@@ -67,25 +92,23 @@ async function isSettled(groupId, date) {
 
 // Fechas pasadas en las que el grupo tuvo actividad de Modo B.
 async function activeDatesBefore(groupId, date) {
-  const fromSpecial = await db.execute({
-    sql: `SELECT DISTINCT sq.scheduled_date AS date
-          FROM special_answers sa
-          JOIN special_questions sq ON sq.id = sa.special_question_id
-          WHERE sa.group_id = ? AND sq.scheduled_date < ?`,
-    args: [groupId, date],
-  });
-  const fromPersonality = await db.execute({
-    sql: `SELECT DISTINCT pq.scheduled_date AS date
-          FROM personality_answers pa
-          JOIN personality_questions pq ON pq.id = pa.personality_question_id
-          WHERE pa.group_id = ? AND pq.scheduled_date < ?`,
-    args: [groupId, date],
-  });
+  const sources = [
+    `SELECT DISTINCT sq.scheduled_date AS date FROM special_answers sa
+     JOIN special_questions sq ON sq.id = sa.special_question_id
+     WHERE sa.group_id = ? AND sq.scheduled_date < ?`,
+    `SELECT DISTINCT pq.scheduled_date AS date FROM personality_answers pa
+     JOIN personality_questions pq ON pq.id = pa.personality_question_id
+     WHERE pa.group_id = ? AND pq.scheduled_date < ?`,
+    `SELECT DISTINCT gq.scheduled_date AS date FROM group_question_answers ga
+     JOIN group_questions gq ON gq.id = ga.group_question_id
+     WHERE ga.group_id = ? AND gq.scheduled_date < ?`,
+  ];
 
-  const dates = new Set([
-    ...fromSpecial.rows.map((r) => r.date),
-    ...fromPersonality.rows.map((r) => r.date),
-  ]);
+  const dates = new Set();
+  for (const sql of sources) {
+    const result = await db.execute({ sql, args: [groupId, date] });
+    for (const row of result.rows) dates.add(row.date);
+  }
   return [...dates].sort();
 }
 
@@ -103,31 +126,20 @@ export async function settleGroupDay(groupId, date) {
   const memberIds = membersResult.rows.map((r) => r.user_id);
   if (memberIds.length === 0) return;
 
-  const perUser = new Map(
-    memberIds.map((id) => [id, { answered: 0, correctPredictions: 0 }])
-  );
+  const perUser = new Map(memberIds.map((id) => [id, { answered: 0, correctPredictions: 0 }]));
 
   for (const kind of QUESTION_KINDS) {
     const question = questions[kind];
     if (!question) continue;
 
-    const tally = await tallyFor(kind, question.id, groupId);
-    const winners = new Set(winnersOf(tally));
-
-    const answersResult =
-      kind === "personalidad"
-        ? await db.execute({
-            sql: "SELECT user_id FROM personality_answers WHERE personality_question_id = ? AND group_id = ?",
-            args: [question.id, groupId],
-          })
-        : await db.execute({
-            sql: "SELECT user_id FROM special_answers WHERE special_question_id = ? AND group_id = ?",
-            args: [question.id, groupId],
-          });
-    for (const row of answersResult.rows) {
+    const answers = await answersFor(kind, question.id, groupId);
+    const tally = new Map();
+    for (const row of answers) {
+      tally.set(row.value, (tally.get(row.value) || 0) + 1);
       const entry = perUser.get(row.user_id);
       if (entry) entry.answered++;
     }
+    const winners = new Set(winnersOf(tally));
 
     const predictionsResult = await db.execute({
       sql: `SELECT user_id, predicted_value FROM mode_b_predictions
@@ -142,8 +154,7 @@ export async function settleGroupDay(groupId, date) {
 
   for (const [userId, entry] of perUser) {
     const points =
-      entry.answered * MODE_B_POINTS.answer +
-      entry.correctPredictions * MODE_B_POINTS.prediction;
+      entry.answered * MODE_B_POINTS.answer + entry.correctPredictions * MODE_B_POINTS.prediction;
     await db.execute({
       sql: `INSERT INTO mode_b_scores
               (user_id, group_id, scheduled_date, answered_count, correct_predictions, points)
