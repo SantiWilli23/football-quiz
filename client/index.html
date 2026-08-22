@@ -2,8 +2,23 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Football Quiz</title>
+    <meta name="description" content="Trivia de fútbol para grupos de amigos: una tanda nueva cada día, puntos, rachas y ranking." />
+
+    <!-- Sin manifest, iOS no instala la app en la pantalla de inicio, y sin eso
+         Apple no permite activar las notificaciones push. -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#07070F" />
+
+    <!-- iOS ignora el manifest para el ícono y el modo pantalla completa:
+         necesita sus propias etiquetas. -->
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Football Quiz" />
+
+    <link rel="icon" type="image/png" href="/icon-192.png" />
   </head>
   <body class="bg-bg text-white">
     <div id="root"></div>
