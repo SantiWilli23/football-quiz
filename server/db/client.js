@@ -33,6 +33,19 @@ export async function initSchema() {
   await migrateSpecialQuestionsTable();
   await migrateModeBKindConstraint();
   await migrateAvatarConfig();
+  await migrateDuelDifficulty();
+}
+
+// Los duelos nacieron sin niveles de dificultad. Son columnas nuevas con valor
+// por defecto, así que entran con ALTER TABLE; el CHECK se omite acá (SQLite no
+// deja agregarlo después) y la validación queda en la ruta, que ya la hacía.
+async function migrateDuelDifficulty() {
+  for (const table of ["duel_questions", "duels"]) {
+    const info = await db.execute(`PRAGMA table_info(${table})`);
+    if (info.rows.length === 0) continue;
+    if (info.rows.some((r) => r.name === "difficulty")) continue;
+    await db.execute(`ALTER TABLE ${table} ADD COLUMN difficulty TEXT NOT NULL DEFAULT 'dificil'`);
+  }
 }
 
 // Instalaciones anteriores tienen `users` sin la columna del avatar dibujado.

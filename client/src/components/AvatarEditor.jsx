@@ -10,17 +10,52 @@ import {
   FACES,
   HAIRS,
   HAIR_COLORS,
+  JERSEYS,
+  JERSEY_COLORS,
   SKINS,
   parseAvatarConfig,
 } from "./Avatar.jsx";
 
-const HAIR_LABELS = { corto: "Corto", rulos: "Rulos", largo: "Largo", gorro: "Gorro", pelado: "Pelado" };
-const FACE_LABELS = { sonrisa: "Sonrisa", seria: "Seria", grito: "Grito", picara: "Pícara" };
+const HAIR_LABELS = {
+  corto: "Corto",
+  rulos: "Rulos",
+  largo: "Largo",
+  gorro: "Gorro",
+  pelado: "Pelado",
+  afro: "Afro",
+  mohicano: "Mohicano",
+  jopo: "Jopo",
+  colita: "Colita",
+  raya: "Con raya",
+};
+
+const FACE_LABELS = {
+  sonrisa: "Sonrisa",
+  seria: "Seria",
+  grito: "Grito",
+  picara: "Pícara",
+  enojada: "Enojada",
+  sorprendida: "Sorprendida",
+  guino: "Guiño",
+  triste: "Triste",
+};
+
 const ACCESSORY_LABELS = {
   ninguno: "Ninguno",
   anteojos: "Anteojos",
   vincha: "Vincha",
   barba: "Barba",
+  bigote: "Bigote",
+  gorra: "Gorra",
+  pintura: "Pintura",
+  sol: "De sol",
+};
+
+const JERSEY_LABELS = {
+  lisa: "Lisa",
+  rayas: "Rayada",
+  banda: "Con banda",
+  mitades: "Mitades",
 };
 
 function pick(list) {
@@ -39,8 +74,8 @@ function ColorRow({ label, colors, value, onChange }) {
             onClick={() => onChange(color)}
             aria-label={`${label}: ${color}`}
             aria-pressed={value === color}
-            className={`w-8 h-8 rounded-full border-2 transition-transform ${
-              value === color ? "border-white scale-110" : "border-transparent hover:scale-105"
+            className={`w-7 h-7 rounded-full border-2 transition-transform ${
+              value === color ? "border-white scale-110" : "border-black/30 hover:scale-105"
             }`}
             style={{ background: color }}
           />
@@ -94,6 +129,8 @@ export default function AvatarEditor({ user, onSaved }) {
       hairColor: pick(HAIR_COLORS),
       face: pick(FACES),
       accessory: pick(ACCESSORIES),
+      jersey: pick(JERSEYS),
+      jerseyColor: pick(JERSEY_COLORS),
     });
     setSaved(false);
   };
@@ -117,7 +154,9 @@ export default function AvatarEditor({ user, onSaved }) {
       <h2 className="font-semibold mb-5">Mi avatar</h2>
 
       <div className="flex flex-col sm:flex-row gap-6">
-        <div className="flex sm:flex-col items-center gap-3 shrink-0">
+        {/* En escritorio el muñequito queda fijo a la vista mientras se
+            recorren las opciones, que ahora son muchas. */}
+        <div className="flex sm:flex-col items-center gap-3 shrink-0 sm:sticky sm:top-6 sm:self-start">
           <div className="rounded-full overflow-hidden">
             <AvatarSvg config={config} size={112} />
           </div>
@@ -162,6 +201,19 @@ export default function AvatarEditor({ user, onSaved }) {
             labels={ACCESSORY_LABELS}
             value={config.accessory}
             onChange={set("accessory")}
+          />
+          <OptionRow
+            label="Camiseta"
+            options={JERSEYS}
+            labels={JERSEY_LABELS}
+            value={config.jersey}
+            onChange={set("jersey")}
+          />
+          <ColorRow
+            label="Color de camiseta"
+            colors={JERSEY_COLORS}
+            value={config.jerseyColor}
+            onChange={set("jerseyColor")}
           />
         </div>
       </div>

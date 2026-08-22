@@ -7,9 +7,24 @@ router.use(requireAuth);
 
 const QUESTIONS_PER_DUEL = 5;
 
-// Puntos del duelo. Cuentan para la temporada, así que ganar un duelo pesa
-// parecido a un buen día de preguntas, no más.
-export const DUEL_POINTS = { win: 20, draw: 8, loss: 0 };
+// Tres niveles, con premio acorde al riesgo: en demonio las preguntas son de
+// datos que casi nadie tiene, así que ganar vale bastante más.
+export const DUEL_DIFFICULTIES = {
+  dificil: { label: "Difícil", win: 15, draw: 6 },
+  ultra: { label: "Ultra difícil", win: 22, draw: 9 },
+  demonio: { label: "Demonio", win: 32, draw: 13 },
+};
+
+export const DEFAULT_DIFFICULTY = "dificil";
+
+// Los duelos viejos (anteriores a los niveles) quedaron marcados como
+// 'dificil' por la migración, así que siempre hay una entrada válida.
+export function duelPointsFor(difficulty, outcome) {
+  const tier = DUEL_DIFFICULTIES[difficulty] ?? DUEL_DIFFICULTIES[DEFAULT_DIFFICULTY];
+  if (outcome === "win") return tier.win;
+  if (outcome === "draw") return tier.draw;
+  return 0;
+}
 
 async function requireMembership(groupId, userId) {
   const result = await db.execute({
@@ -72,16 +87,18 @@ async function resolveIfComplete(duel) {
 
 function pointsFor(duel, userId) {
   if (duel.status !== "terminado") return 0;
-  if (duel.winner_id === null) return DUEL_POINTS.draw;
-  return duel.winner_id === userId ? DUEL_POINTS.win : DUEL_POINTS.loss;
+  if (duel.winner_id === null) return duelPointsFor(duel.difficulty, "draw");
+  return duel.winner_id === userId ? duelPointsFor(duel.difficulty, "win") : 0;
 }
 
 // Desafiar a alguien del grupo.
 router.post("/", async (req, res) => {
   const groupId = Number(req.body?.group_id);
   const opponentId = Number(req.body?.opponent_id);
+  const difficulty = req.body?.difficulty ?? DEFAULT_DIFFICULTY;
 
   if (!groupId || !opponentId) return res.status(400).json({ error: "Faltan campos requeridos" });
+  if (!DUEL_DIFFICULTIES[difficulty]) return res.status(400).json({ error: "Dificultad inválida" });
   if (opponentId === req.userId) {
     return res.status(400).json({ error: "No podés desafiarte a vos mismo" });
   }
@@ -106,17 +123,23 @@ router.post("/", async (req, res) => {
     }
 
     const questions = await db.execute({
-      sql: "SELECT id FROM duel_questions ORDER BY RANDOM() LIMIT ?",
-      args: [QUESTIONS_PER_DUEL],
+      sql: "SELECT id FROM duel_questions WHERE difficulty = ? ORDER BY RANDOM() LIMIT ?",
+      args: [difficulty, QUESTIONS_PER_DUEL],
     });
     if (questions.rows.length < QUESTIONS_PER_DUEL) {
-      return res.status(503).json({ error: "No hay suficientes preguntas de duelo cargadas" });
+      return res.status(503).json({ error: "No hay suficientes preguntas de ese nivel cargadas" });
     }
 
     const inserted = await db.execute({
-      sql: `INSERT INTO duels (group_id, challenger_id, opponent_id, question_ids)
-            VALUES (?, ?, ?, ?)`,
-      args: [groupId, req.userId, opponentId, JSON.stringify(questions.rows.map((q) => q.id))],
+      sql: `INSERT INTO duels (group_id, challenger_id, opponent_id, question_ids, difficulty)
+            VALUES (?, ?, ?, ?, ?)`,
+      args: [
+        groupId,
+        req.userId,
+        opponentId,
+        JSON.stringify(questions.rows.map((q) => q.id)),
+        difficulty,
+      ],
     });
 
     res.status(201).json({ id: Number(inserted.lastInsertRowid) });
@@ -179,6 +202,8 @@ router.get("/", async (req, res) => {
           avatar_config: iAmChallenger ? row.opponent_avatar_config : row.challenger_avatar_config,
         },
         i_challenged: iAmChallenger,
+        difficulty: duel.difficulty ?? DEFAULT_DIFFICULTY,
+        difficulty_label: (DUEL_DIFFICULTIES[duel.difficulty] ?? DUEL_DIFFICULTIES[DEFAULT_DIFFICULTY]).label,
         total_questions: total,
         my_answered: myAnswers.length,
         rival_answered: rivalAnswers.length,
@@ -210,7 +235,7 @@ router.get("/", async (req, res) => {
       });
     }
 
-    res.json({ duels, record, points_rules: DUEL_POINTS });
+    res.json({ duels, record, difficulties: DUEL_DIFFICULTIES });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });
@@ -262,6 +287,8 @@ router.get("/:id", async (req, res) => {
     res.json({
       id: duel.id,
       status: duel.status,
+      difficulty: duel.difficulty ?? DEFAULT_DIFFICULTY,
+      difficulty_label: (DUEL_DIFFICULTIES[duel.difficulty] ?? DUEL_DIFFICULTIES[DEFAULT_DIFFICULTY]).label,
       total_questions: ids.length,
       answered: mine.length,
       questions,

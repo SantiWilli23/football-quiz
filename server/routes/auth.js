@@ -25,13 +25,22 @@ function publicUser(u) {
 // El avatar es un muñequito dibujado con SVG en el cliente; acá sólo se guarda
 // su configuración. Se valida contra listas cerradas para que nadie meta
 // cualquier cosa en un campo que después se pinta en la pantalla de todos.
+// Tiene que quedar igual a las listas de client/src/components/Avatar.jsx.
 const AVATAR_OPTIONS = {
-  bg: ["#22c55e", "#3b82f6", "#a855f7", "#f59e0b", "#ef4444", "#14b8a6"],
-  skin: ["#f2d0b4", "#e0ac82", "#c68642", "#8d5524", "#5c3317"],
-  hairColor: ["#2c1b18", "#5a3825", "#a55728", "#d6b370", "#b9b9b9", "#2f6fa8"],
-  hair: ["corto", "rulos", "largo", "gorro", "pelado"],
-  face: ["sonrisa", "seria", "grito", "picara"],
-  accessory: ["ninguno", "anteojos", "vincha", "barba"],
+  bg: [
+    "#22c55e", "#3b82f6", "#a855f7", "#f59e0b", "#ef4444", "#14b8a6",
+    "#ec4899", "#6366f1", "#84cc16", "#f97316", "#0ea5e9", "#64748b",
+  ],
+  skin: ["#f8dcc4", "#f2d0b4", "#e0ac82", "#d18b5c", "#c68642", "#a1653a", "#8d5524", "#5c3317"],
+  hairColor: [
+    "#0f0f0f", "#2c1b18", "#5a3825", "#a55728", "#d6b370", "#f2e2b0",
+    "#b9b9b9", "#ffffff", "#2f6fa8", "#c2185b", "#2e7d32", "#7b1fa2",
+  ],
+  hair: ["corto", "rulos", "largo", "gorro", "pelado", "afro", "mohicano", "jopo", "colita", "raya"],
+  face: ["sonrisa", "seria", "grito", "picara", "enojada", "sorprendida", "guino", "triste"],
+  accessory: ["ninguno", "anteojos", "vincha", "barba", "bigote", "gorra", "pintura", "sol"],
+  jersey: ["lisa", "rayas", "banda", "mitades"],
+  jerseyColor: ["#ffffff", "#1e293b", "#dc2626", "#2563eb", "#16a34a", "#eab308", "#7c3aed", "#f97316"],
 };
 
 router.put("/avatar", requireAuth, async (req, res) => {

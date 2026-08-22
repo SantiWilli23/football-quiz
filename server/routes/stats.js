@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { addDays, getBestStreak, todayStr } from "../utils/points.js";
-import { DUEL_POINTS } from "./duels.js";
+import { duelPointsFor } from "./duels.js";
 import {
   QUESTION_KINDS,
   answersFor,
@@ -88,7 +88,7 @@ function monthBounds(month) {
 // abierto de un mes al otro, suma en el mes en que efectivamente se jugó.
 async function duelPointsByUser(groupId, from, to) {
   const result = await db.execute({
-    sql: `SELECT challenger_id, opponent_id, winner_id FROM duels
+    sql: `SELECT challenger_id, opponent_id, winner_id, difficulty FROM duels
           WHERE group_id = ? AND status = 'terminado'
             AND date(resolved_at) >= ? AND date(resolved_at) <= ?`,
     args: [groupId, from, to],
@@ -99,10 +99,10 @@ async function duelPointsByUser(groupId, from, to) {
 
   for (const row of result.rows) {
     if (row.winner_id === null) {
-      add(row.challenger_id, DUEL_POINTS.draw);
-      add(row.opponent_id, DUEL_POINTS.draw);
+      add(row.challenger_id, duelPointsFor(row.difficulty, "draw"));
+      add(row.opponent_id, duelPointsFor(row.difficulty, "draw"));
     } else {
-      add(row.winner_id, DUEL_POINTS.win);
+      add(row.winner_id, duelPointsFor(row.difficulty, "win"));
     }
   }
   return points;
@@ -425,6 +425,11 @@ router.get("/achievements", async (req, res) => {
     let votesReceived = 0;
     let timesProtagonist = 0;
     let authoredQuestions = 0;
+    let duelsWon = 0;
+    let demonDuelsWon = 0;
+    let bestDuelRun = 0;
+    let perfectPredictionDays = 0;
+    let bankQuestionsUsed = 0;
 
     if (groupId) {
       const scoreResult = await db.execute({
@@ -464,6 +469,43 @@ router.get("/achievements", async (req, res) => {
         args: [groupId, req.userId],
       });
       authoredQuestions = Number(authoredResult.rows[0].total);
+
+      const duelsResult = await db.execute({
+        sql: `SELECT winner_id, difficulty, resolved_at FROM duels
+              WHERE group_id = ? AND status = 'terminado'
+                AND (challenger_id = ? OR opponent_id = ?)
+              ORDER BY resolved_at ASC`,
+        args: [groupId, req.userId, req.userId],
+      });
+      const myDuels = duelsResult.rows;
+      duelsWon = myDuels.filter((d) => d.winner_id === req.userId).length;
+      demonDuelsWon = myDuels.filter(
+        (d) => d.winner_id === req.userId && d.difficulty === "demonio"
+      ).length;
+
+      // Racha más larga de duelos ganados al hilo, en orden cronológico.
+      let run = 0;
+      for (const duel of myDuels) {
+        run = duel.winner_id === req.userId ? run + 1 : 0;
+        bestDuelRun = Math.max(bestDuelRun, run);
+      }
+
+      // Días en los que acertaste TODAS las predicciones que hiciste, con al
+      // menos tres hechas: adivinar una sola no cuenta como pleno.
+      const plenoResult = await db.execute({
+        sql: `SELECT COUNT(*) AS total FROM mode_b_scores
+              WHERE group_id = ? AND user_id = ? AND answered_count >= 3
+                AND correct_predictions = answered_count`,
+        args: [groupId, req.userId],
+      });
+      perfectPredictionDays = Number(plenoResult.rows[0].total);
+
+      const bankUsedResult = await db.execute({
+        sql: `SELECT COUNT(*) AS total FROM group_question_bank
+              WHERE group_id = ? AND author_id = ? AND used_on IS NOT NULL`,
+        args: [groupId, req.userId],
+      });
+      bankQuestionsUsed = Number(bankUsedResult.rows[0].total);
     }
 
     const achievements = [
@@ -538,6 +580,70 @@ router.get("/achievements", async (req, res) => {
         description: "Sé 3 veces el protagonista de la pregunta de personalidad",
         current: timesProtagonist,
         target: 3,
+      },
+      {
+        id: "erudito",
+        emoji: "🧠",
+        title: "Erudito",
+        description: "Acertá 50 preguntas de trivia",
+        current: triviaCorrect,
+        target: 50,
+      },
+      {
+        id: "maratonista",
+        emoji: "🏃",
+        title: "Maratonista",
+        description: "Llegá a 15 días seguidos de racha",
+        current: bestStreak,
+        target: 15,
+      },
+      {
+        id: "coleccionista",
+        emoji: "🃏",
+        title: "Coleccionista",
+        description: "Respondé 100 preguntas del modo especial",
+        current: modeBAnswers,
+        target: 100,
+      },
+      {
+        id: "pleno",
+        emoji: "🎰",
+        title: "Pleno",
+        description: "Acertá todas tus predicciones en un mismo día",
+        current: perfectPredictionDays,
+        target: 1,
+      },
+      {
+        id: "duelista",
+        emoji: "🗡️",
+        title: "Duelista",
+        description: "Ganá 5 duelos",
+        current: duelsWon,
+        target: 5,
+      },
+      {
+        id: "cazademonios",
+        emoji: "😈",
+        title: "Cazademonios",
+        description: "Ganá un duelo en nivel demonio",
+        current: demonDuelsWon,
+        target: 1,
+      },
+      {
+        id: "invicto",
+        emoji: "🛡️",
+        title: "Invicto",
+        description: "Ganá 3 duelos seguidos sin perder",
+        current: bestDuelRun,
+        target: 3,
+      },
+      {
+        id: "bibliotecario",
+        emoji: "📚",
+        title: "Bibliotecario",
+        description: "Que salgan 10 preguntas tuyas del banco del grupo",
+        current: bankQuestionsUsed,
+        target: 10,
       },
     ].map((a) => ({
       ...a,

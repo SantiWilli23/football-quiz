@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
-import { DUEL_POINTS } from "./duels.js";
+import { duelPointsFor } from "./duels.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -206,7 +206,7 @@ router.get("/:id", async (req, res) => {
     const modeBByUser = new Map(modeBResult.rows.map((r) => [r.user_id, Number(r.points)]));
 
     const duelsResult = await db.execute({
-      sql: `SELECT challenger_id, opponent_id, winner_id FROM duels
+      sql: `SELECT challenger_id, opponent_id, winner_id, difficulty FROM duels
             WHERE group_id = ? AND status = 'terminado'`,
       args: [groupId],
     });
@@ -215,10 +215,10 @@ router.get("/:id", async (req, res) => {
       duelByUser.set(userId, (duelByUser.get(userId) || 0) + amount);
     for (const row of duelsResult.rows) {
       if (row.winner_id === null) {
-        addDuel(row.challenger_id, DUEL_POINTS.draw);
-        addDuel(row.opponent_id, DUEL_POINTS.draw);
+        addDuel(row.challenger_id, duelPointsFor(row.difficulty, "draw"));
+        addDuel(row.opponent_id, duelPointsFor(row.difficulty, "draw"));
       } else {
-        addDuel(row.winner_id, DUEL_POINTS.win);
+        addDuel(row.winner_id, duelPointsFor(row.difficulty, "win"));
       }
     }
 

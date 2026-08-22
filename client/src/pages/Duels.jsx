@@ -9,6 +9,12 @@ import Avatar from "../components/Avatar.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 
 const COLOR = "#ef4444";
+
+const DIFFICULTY_STYLE = {
+  dificil: { label: "Difícil", emoji: "🔥", color: "#f59e0b" },
+  ultra: { label: "Ultra difícil", emoji: "💀", color: "#ef4444" },
+  demonio: { label: "Demonio", emoji: "😈", color: "#a855f7" },
+};
 const LETTERS = { a: "A", b: "B", c: "C", d: "D" };
 
 const RESULT_STYLE = {
@@ -98,7 +104,7 @@ function DuelPlay({ duelId, onFinished, onCancel }) {
             style={{ background: `${COLOR}26`, color: COLOR, borderColor: `${COLOR}66` }}
           >
             <Swords size={12} />
-            Duelo
+            {data.difficulty_label ?? "Duelo"}
           </span>
           <span className="text-xs text-gray-500">
             Pregunta {current.index} de {data.total_questions}
@@ -183,6 +189,7 @@ export default function Duels() {
   const [playing, setPlaying] = useState(null);
   const [error, setError] = useState("");
   const [challenging, setChallenging] = useState(false);
+  const [difficulty, setDifficulty] = useState("dificil");
 
   const load = useCallback(async () => {
     if (!groupId) {
@@ -209,7 +216,7 @@ export default function Duels() {
     setChallenging(true);
     setError("");
     try {
-      const { data: created } = await api.post("/duels", { group_id: groupId, opponent_id: opponentId });
+      const { data: created } = await api.post("/duels", { group_id: groupId, opponent_id: opponentId, difficulty });
       await load();
       setPlaying(created.id);
     } catch (err) {
@@ -288,8 +295,7 @@ export default function Duels() {
             </div>
           </div>
           <p className="text-[11px] text-gray-600 mt-3">
-            {data.points_rules.win} pts por ganar, {data.points_rules.draw} por empatar. Cuentan para la
-            temporada del grupo.
+            Los puntos dependen del nivel del duelo y cuentan para la temporada del grupo.
           </p>
         </Card>
       )}
@@ -314,7 +320,8 @@ export default function Duels() {
                     {d.i_challenged ? "Desafiaste a" : "Te desafió"} {d.rival.username}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {d.my_answered}/{d.total_questions} respondidas
+                    {DIFFICULTY_STYLE[d.difficulty]?.emoji} {d.difficulty_label} · {d.my_answered}/
+                    {d.total_questions} respondidas
                   </p>
                 </div>
                 <button
@@ -332,6 +339,32 @@ export default function Duels() {
 
       <Card className="mb-6">
         <h2 className="font-semibold mb-4">Desafiar a alguien</h2>
+
+        <p className="text-xs text-gray-500 mb-2">Nivel del duelo</p>
+        <div className="flex gap-2 mb-5 flex-wrap">
+          {Object.entries(DIFFICULTY_STYLE).map(([key, style]) => {
+            const rules = data?.difficulties?.[key];
+            const active = difficulty === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setDifficulty(key)}
+                aria-pressed={active}
+                style={
+                  active ? { borderColor: `${style.color}99`, background: `${style.color}1a` } : undefined
+                }
+                className={`px-3 py-2 rounded-card text-xs font-medium border transition-colors flex items-center gap-1.5 ${
+                  active ? "" : "border-border text-gray-400 hover:text-white hover:border-white/30"
+                }`}
+              >
+                <span>{style.emoji}</span>
+                <span style={active ? { color: style.color } : undefined}>{style.label}</span>
+                {rules && <span className="text-gray-500">· {rules.win} pts</span>}
+              </button>
+            );
+          })}
+        </div>
+
         {members.length === 0 ? (
           <p className="text-sm text-gray-500">Sos el único miembro del grupo por ahora.</p>
         ) : (
@@ -390,7 +423,8 @@ export default function Duels() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm truncate">contra {d.rival.username}</p>
                     <p className="text-xs text-gray-500">
-                      {d.my_correct}–{d.rival_correct} de {d.total_questions}
+                      {DIFFICULTY_STYLE[d.difficulty]?.emoji} {d.my_correct}–{d.rival_correct} de{" "}
+                      {d.total_questions}
                     </p>
                   </div>
                   <div className="text-right shrink-0">

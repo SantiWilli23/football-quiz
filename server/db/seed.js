@@ -2057,13 +2057,13 @@ async function seed() {
   // tabla y se sortean cinco en cada duelo. Se insertan una vez y listo.
   for (const q of DUEL_POOL) {
     await db.execute({
-      sql: `INSERT INTO duel_questions (question, option_a, option_b, option_c, option_d, correct_answer)
-            VALUES (?, ?, ?, ?, ?, ?)
+      sql: `INSERT INTO duel_questions (question, option_a, option_b, option_c, option_d, correct_answer, difficulty)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(question) DO UPDATE SET
               option_a = excluded.option_a, option_b = excluded.option_b,
               option_c = excluded.option_c, option_d = excluded.option_d,
-              correct_answer = excluded.correct_answer`,
-      args: [q.question, q.option_a, q.option_b, q.option_c, q.option_d, q.correct_answer],
+              correct_answer = excluded.correct_answer, difficulty = excluded.difficulty`,
+      args: [q.question, q.option_a, q.option_b, q.option_c, q.option_d, q.correct_answer, q.difficulty],
     });
   }
 

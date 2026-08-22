@@ -239,7 +239,8 @@ CREATE TABLE IF NOT EXISTS duel_questions (
   option_b TEXT NOT NULL,
   option_c TEXT NOT NULL,
   option_d TEXT NOT NULL,
-  correct_answer TEXT NOT NULL CHECK (correct_answer IN ('a','b','c','d'))
+  correct_answer TEXT NOT NULL CHECK (correct_answer IN ('a','b','c','d')),
+  difficulty TEXT NOT NULL DEFAULT 'dificil' CHECK (difficulty IN ('dificil','ultra','demonio'))
 );
 
 CREATE TABLE IF NOT EXISTS duels (
@@ -248,6 +249,7 @@ CREATE TABLE IF NOT EXISTS duels (
   challenger_id INTEGER NOT NULL REFERENCES users(id),
   opponent_id INTEGER NOT NULL REFERENCES users(id),
   question_ids TEXT NOT NULL,
+  difficulty TEXT NOT NULL DEFAULT 'dificil' CHECK (difficulty IN ('dificil','ultra','demonio')),
   challenger_correct INTEGER,
   opponent_correct INTEGER,
   winner_id INTEGER REFERENCES users(id),
