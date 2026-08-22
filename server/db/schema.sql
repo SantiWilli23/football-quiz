@@ -74,3 +74,27 @@ CREATE TABLE IF NOT EXISTS bonus_votes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_bonus_votes_lookup ON bonus_votes(bonus_question_id, group_id);
+
+CREATE TABLE IF NOT EXISTS special_questions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  type TEXT NOT NULL CHECK (type IN ('quien_es_mas', 'que_prefieres')),
+  prompt TEXT NOT NULL,
+  scheduled_date TEXT NOT NULL,
+  UNIQUE(type, scheduled_date)
+);
+
+CREATE TABLE IF NOT EXISTS personality_questions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  personality_name TEXT NOT NULL,
+  prompt_template TEXT NOT NULL,
+  option_a TEXT NOT NULL,
+  option_b TEXT NOT NULL,
+  option_c TEXT NOT NULL,
+  option_d TEXT NOT NULL,
+  scheduled_date TEXT NOT NULL,
+  UNIQUE(group_id, scheduled_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_special_questions_date ON special_questions(scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_personality_questions_date ON personality_questions(scheduled_date);

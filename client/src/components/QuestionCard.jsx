@@ -4,6 +4,11 @@ import api from "../api.js";
 import Card from "./Card.jsx";
 
 const OPTION_LABELS = { a: "A", b: "B", c: "C", d: "D" };
+const SLOT_COLORS = {
+  1: { border: "#3b82f6", bg: "rgba(59,130,246,0.05)", label: "🌍 General" },
+  2: { border: "#10b981", bg: "rgba(16,185,129,0.05)", label: "🇨🇱 Liga Chilena" },
+  3: { border: "#f59e0b", bg: "rgba(245,158,11,0.05)", label: "⚽ Europa" },
+};
 
 export default function QuestionCard({ item, index, total, onAnswered }) {
   const { question } = item;
@@ -11,6 +16,8 @@ export default function QuestionCard({ item, index, total, onAnswered }) {
   const [result, setResult] = useState(item.answered ? item.result : null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  const slotColor = SLOT_COLORS[question.slot] || SLOT_COLORS[1];
 
   const options = [
     ["a", question.option_a],
@@ -37,18 +44,23 @@ export default function QuestionCard({ item, index, total, onAnswered }) {
   };
 
   return (
-    <Card>
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 text-gray-400 border border-border">
-          Pregunta {index + 1} de {total}
-        </span>
-        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-accent/15 text-accent border border-accent/30">
-          {question.category}
-        </span>
-        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 text-gray-400 border border-border capitalize">
-          {question.difficulty}
-        </span>
-      </div>
+    <div style={{ borderLeft: `4px solid ${slotColor.border}`, background: slotColor.bg, borderRadius: "8px" }}>
+      <Card>
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <span
+            className="text-xs font-medium px-2.5 py-1 rounded-full border"
+            style={{
+              background: `${slotColor.border}20`,
+              color: slotColor.border,
+              borderColor: `${slotColor.border}40`,
+            }}
+          >
+            {slotColor.label}
+          </span>
+          <span className="text-xs font-medium text-gray-400">
+            {index + 1} de {total}
+          </span>
+        </div>
 
       <h2 className="text-xl font-semibold mb-6">{question.question}</h2>
 
@@ -113,6 +125,7 @@ export default function QuestionCard({ item, index, total, onAnswered }) {
           </span>
         </div>
       )}
-    </Card>
+      </Card>
+    </div>
   );
 }

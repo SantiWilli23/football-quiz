@@ -10,6 +10,7 @@ import authRoutes from "./routes/auth.js";
 import groupsRoutes from "./routes/groups.js";
 import questionsRoutes from "./routes/questions.js";
 import bonusRoutes from "./routes/bonus.js";
+import modeBRoutes from "./routes/mode-b.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -26,6 +27,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/groups", groupsRoutes);
 app.use("/api/questions", questionsRoutes);
 app.use("/api/bonus", bonusRoutes);
+app.use("/api/mode-b", modeBRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 

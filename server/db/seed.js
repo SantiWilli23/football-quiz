@@ -7,7 +7,7 @@ function dateOffset(days) {
   return d.toISOString().slice(0, 10);
 }
 
-// Slot 1: trivia general de fútbol mundial, misma dificultad de siempre.
+// Slot 1: trivia general de fútbol mundial
 const SLOT1_POOL = [
   {
     question: "¿Quién es el máximo goleador histórico en la historia de los Mundiales de fútbol?",
@@ -200,8 +200,7 @@ const SLOT1_POOL = [
     correct_answer: "b",
   },
   {
-    question:
-      "¿Qué jugador convirtió, en el mismo partido de cuartos de final del Mundial 1986, el gol de 'la Mano de Dios' y el 'Gol del Siglo'?",
+    question: "¿Qué jugador convirtió, en el mismo partido de cuartos de final del Mundial 1986, el gol de 'la Mano de Dios' y el 'Gol del Siglo'?",
     category: "Individuales",
     difficulty: "media",
     option_a: "Jorge Valdano",
@@ -212,7 +211,7 @@ const SLOT1_POOL = [
   },
 ];
 
-// Slot 2: liga chilena, con foco en Universidad de Chile. Misma dificultad que siempre.
+// Slot 2: liga chilena, con foco en Universidad de Chile
 const SLOT2_POOL = [
   {
     question: "¿En qué año se fundó Universidad de Chile, el club conocido como 'La U'?",
@@ -285,8 +284,7 @@ const SLOT2_POOL = [
     correct_answer: "c",
   },
   {
-    question:
-      "¿En qué club chileno se formó y debutó profesionalmente Marcelo Salas antes de partir al fútbol internacional?",
+    question: "¿En qué club chileno se formó y debutó profesionalmente Marcelo Salas antes de partir al fútbol internacional?",
     category: "Liga Chilena",
     difficulty: "media",
     option_a: "Colo-Colo",
@@ -306,8 +304,7 @@ const SLOT2_POOL = [
     correct_answer: "c",
   },
   {
-    question:
-      "¿Qué club chileno ganó la Copa Libertadores en 1991, siendo hasta hoy el único club de Chile en lograrlo?",
+    question: "¿Qué club chileno ganó la Copa Libertadores en 1991, siendo hasta hoy el único club de Chile en lograrlo?",
     category: "Liga Chilena",
     difficulty: "dificil",
     option_a: "Universidad de Chile",
@@ -327,8 +324,7 @@ const SLOT2_POOL = [
     correct_answer: "a",
   },
   {
-    question:
-      "¿Qué club del norte de Chile llegó a dos finales consecutivas de la Copa Libertadores (1981 y 1982) sin poder consagrarse campeón?",
+    question: "¿Qué club del norte de Chile llegó a dos finales consecutivas de la Copa Libertadores (1981 y 1982) sin poder consagrarse campeón?",
     category: "Liga Chilena",
     difficulty: "dificil",
     option_a: "Cobresal",
@@ -358,8 +354,7 @@ const SLOT2_POOL = [
     correct_answer: "a",
   },
   {
-    question:
-      "¿A qué selección venció Chile en la final de la Copa América 2015, disputada en su propio país, para ganar su primer título continental?",
+    question: "¿A qué selección venció Chile en la final de la Copa América 2015, disputada en su propio país, para ganar su primer título continental?",
     category: "Liga Chilena",
     difficulty: "media",
     option_a: "Brasil",
@@ -379,8 +374,7 @@ const SLOT2_POOL = [
     correct_answer: "a",
   },
   {
-    question:
-      "¿En qué estadio chileno se disputan tradicionalmente las grandes finales del fútbol nacional y los partidos de la selección?",
+    question: "¿En qué estadio chileno se disputan tradicionalmente las grandes finales del fútbol nacional y los partidos de la selección?",
     category: "Liga Chilena",
     difficulty: "media",
     option_a: "Estadio Monumental",
@@ -390,8 +384,7 @@ const SLOT2_POOL = [
     correct_answer: "b",
   },
   {
-    question:
-      "¿Cuántos títulos oficiales ganó Universidad de Chile durante su histórica temporada 2011 (Apertura, Copa Sudamericana y Clausura)?",
+    question: "¿Cuántos títulos oficiales ganó Universidad de Chile durante su histórica temporada 2011 (Apertura, Copa Sudamericana y Clausura)?",
     category: "Liga Chilena",
     difficulty: "dificil",
     option_a: "2",
@@ -400,246 +393,327 @@ const SLOT2_POOL = [
     option_d: "1",
     correct_answer: "b",
   },
+  {
+    question: "¿Quién fue el primer técnico de la selección chilena en ganar un título oficial en el fútbol profesional?",
+    category: "Liga Chilena",
+    difficulty: "media",
+    option_a: "Marcelo Bielsa",
+    option_b: "Jorge Sampaoli",
+    option_c: "Gerardo Martino",
+    option_d: "Ernesto Figueroa",
+    correct_answer: "b",
+  },
+  {
+    question: "¿Qué club chileno ha ganado más Copas Sudamericanas?",
+    category: "Liga Chilena",
+    difficulty: "dificil",
+    option_a: "Universidad de Chile",
+    option_b: "Colo-Colo",
+    option_c: "Universidad Católica",
+    option_d: "Palestino",
+    correct_answer: "a",
+  },
 ];
 
-// Slot 3: fútbol europeo, mucho más difícil que el resto.
+// Slot 3: fútbol europeo, MUCHO más difícil (Champions, detalles muy específicos)
 const SLOT3_POOL = [
   {
-    question: "¿Qué equipo fue el primer campeón de la Premier League tras su fundación en 1992-93?",
+    question: "¿Quién ganó la Champions League 2007?",
     category: "Europa",
     difficulty: "dificil",
-    option_a: "Arsenal",
-    option_b: "Manchester United",
-    option_c: "Liverpool",
-    option_d: "Blackburn Rovers",
-    correct_answer: "b",
-  },
-  {
-    question: "¿Qué equipo ganó la primera edición de la Bundesliga alemana, en 1963-64?",
-    category: "Europa",
-    difficulty: "dificil",
-    option_a: "Bayern Múnich",
-    option_b: "Borussia Dortmund",
-    option_c: "1. FC Köln",
-    option_d: "Hamburgo SV",
-    correct_answer: "c",
-  },
-  {
-    question:
-      "¿Qué club ganó cinco de las seis ediciones de la Ligue 1 entre 2015 y 2020, consolidándose como el nuevo gigante del fútbol francés?",
-    category: "Europa",
-    difficulty: "dificil",
-    option_a: "Olympique de Marsella",
-    option_b: "Mónaco",
-    option_c: "Lyon",
-    option_d: "Paris Saint-Germain",
-    correct_answer: "d",
-  },
-  {
-    question: "¿Qué club ganó la primera Copa Intercontinental de la historia, en 1960, venciendo al Peñarol?",
-    category: "Europa",
-    difficulty: "dificil",
-    option_a: "Real Madrid",
-    option_b: "Benfica",
+    option_a: "Liverpool",
+    option_b: "Chelsea",
     option_c: "AC Milan",
-    option_d: "Inter de Milán",
-    correct_answer: "a",
-  },
-  {
-    question: "¿Qué jugador neerlandés ganó tres Balones de Oro en la década de 1970 (1971, 1973 y 1974)?",
-    category: "Europa",
-    difficulty: "dificil",
-    option_a: "Johan Neeskens",
-    option_b: "Johan Cruyff",
-    option_c: "Rob Rensenbrink",
-    option_d: "Ruud Krol",
-    correct_answer: "b",
-  },
-  {
-    question: "¿Qué club italiano ganó la primera edición de la Recopa de Europa (Cup Winners' Cup), en 1960-61?",
-    category: "Europa",
-    difficulty: "dificil",
-    option_a: "Juventus",
-    option_b: "AC Milan",
-    option_c: "Fiorentina",
-    option_d: "Inter de Milán",
+    option_d: "Bayern Múnich",
     correct_answer: "c",
   },
   {
-    question: "¿Qué club escocés perdió la final de la primera Recopa de Europa ante la Fiorentina, en 1961?",
-    category: "Europa",
-    difficulty: "dificil",
-    option_a: "Celtic",
-    option_b: "Rangers",
-    option_c: "Aberdeen",
-    option_d: "Hibernian",
-    correct_answer: "b",
-  },
-  {
-    question:
-      "¿Qué club portugués, dirigido por Béla Guttmann, ganó dos Copas de Europa consecutivas en 1961 y 1962?",
-    category: "Europa",
-    difficulty: "dificil",
-    option_a: "Sporting CP",
-    option_b: "Porto",
-    option_c: "Benfica",
-    option_d: "Boavista",
-    correct_answer: "c",
-  },
-  {
-    question: "¿Qué jugador fue la gran figura de aquel Benfica bicampeón de Europa de 1961 y 1962?",
-    category: "Europa",
-    difficulty: "dificil",
-    option_a: "Eusébio",
-    option_b: "Mário Coluna",
-    option_c: "José Águas",
-    option_d: "António Simões",
-    correct_answer: "a",
-  },
-  {
-    question:
-      "¿Qué club ganó tres Champions League consecutivas entre 2016 y 2018, algo inédito en la era moderna de la competición?",
-    category: "Europa",
-    difficulty: "dificil",
-    option_a: "Barcelona",
-    option_b: "Bayern Múnich",
-    option_c: "Real Madrid",
-    option_d: "Liverpool",
-    correct_answer: "c",
-  },
-  {
-    question:
-      "¿Qué equipo ganó la Premier League 2015-16 pese a partir como candidato al descenso, en una de las mayores sorpresas del fútbol europeo?",
-    category: "Europa",
-    difficulty: "dificil",
-    option_a: "West Ham",
-    option_b: "Leicester City",
-    option_c: "Southampton",
-    option_d: "Everton",
-    correct_answer: "b",
-  },
-  {
-    question: "¿Qué arquero alemán se consagró campeón del mundo en 2014 y ganó el Guante de Oro del torneo?",
-    category: "Europa",
-    difficulty: "dificil",
-    option_a: "Manuel Neuer",
-    option_b: "Marc-André ter Stegen",
-    option_c: "René Adler",
-    option_d: "Oliver Kahn",
-    correct_answer: "a",
-  },
-  {
-    question:
-      "¿Qué club neerlandés popularizó el estilo conocido como 'Fútbol Total' bajo la dirección de Rinus Michels en los años 70?",
-    category: "Europa",
-    difficulty: "dificil",
-    option_a: "Feyenoord",
-    option_b: "PSV",
-    option_c: "Ajax",
-    option_d: "AZ Alkmaar",
-    correct_answer: "c",
-  },
-  {
-    question:
-      "¿Qué club escocés, dirigido por Alex Ferguson, ganó la Recopa de Europa 1982-83 venciendo al Real Madrid en la final?",
-    category: "Europa",
-    difficulty: "dificil",
-    option_a: "Celtic",
-    option_b: "Aberdeen",
-    option_c: "Dundee United",
-    option_d: "Hearts",
-    correct_answer: "b",
-  },
-  {
-    question:
-      "¿Qué equipo alemán perdió la final de la Champions League 1999 tras un recordado gol del Manchester United en el último minuto?",
-    category: "Europa",
-    difficulty: "dificil",
-    option_a: "Bayer Leverkusen",
-    option_b: "Bayern Múnich",
-    option_c: "Schalke 04",
-    option_d: "Borussia Dortmund",
-    correct_answer: "b",
-  },
-  {
-    question:
-      "¿Qué club italiano ganó la Copa de Europa de 1985, disputada en la trágica final marcada por la tragedia de Heysel?",
+    question: "¿Qué equipo ganó la Champions League 2006?",
     category: "Europa",
     difficulty: "dificil",
     option_a: "AC Milan",
-    option_b: "Juventus",
-    option_c: "Roma",
-    option_d: "Napoli",
+    option_b: "Barcelona",
+    option_c: "Arsenal",
+    option_d: "Liverpool",
+    correct_answer: "a",
+  },
+  {
+    question: "¿Quién ganó la Champions League 2005?",
+    category: "Europa",
+    difficulty: "dificil",
+    option_a: "Bayern Múnich",
+    option_b: "Liverpool",
+    option_c: "Chelsea",
+    option_d: "Valencia",
     correct_answer: "b",
   },
   {
-    question:
-      "¿Qué futbolista es el único en ganar la Bota de Oro europea (máximo goleador de Europa) representando a tres clubes distintos?",
+    question: "¿Qué equipo ganó la Champions League 2008?",
+    category: "Europa",
+    difficulty: "dificil",
+    option_a: "Manchester United",
+    option_b: "Real Madrid",
+    option_c: "Barcelona",
+    option_d: "Chelsea",
+    correct_answer: "a",
+  },
+  {
+    question: "¿Quién fue goleador de la Champions League 2007-08 con 12 goles?",
+    category: "Europa",
+    difficulty: "dificil",
+    option_a: "Cristiano Ronaldo",
+    option_b: "Lionel Messi",
+    option_c: "Eidur Gudjohnsen",
+    option_d: "Didier Drogba",
+    correct_answer: "a",
+  },
+  {
+    question: "¿Qué club ganó 6 Champions League entre 1956 y 1960?",
+    category: "Europa",
+    difficulty: "dificil",
+    option_a: "Barcelona",
+    option_b: "Real Madrid",
+    option_c: "Benfica",
+    option_d: "AC Milan",
+    correct_answer: "b",
+  },
+  {
+    question: "¿En qué año se disputó la mayor remontada de Champions: Barcelona 6-1 PSG?",
+    category: "Europa",
+    difficulty: "dificil",
+    option_a: "2015",
+    option_b: "2016",
+    option_c: "2017",
+    option_d: "2014",
+    correct_answer: "b",
+  },
+  {
+    question: "¿Quién fue máximo goleador histórico de Champions hasta 2017?",
     category: "Europa",
     difficulty: "dificil",
     option_a: "Lionel Messi",
     option_b: "Cristiano Ronaldo",
-    option_c: "Robert Lewandowski",
-    option_d: "Luis Suárez",
+    option_c: "Raúl González",
+    option_d: "Alfredo Di Stéfano",
     correct_answer: "b",
   },
   {
-    question:
-      "¿Qué club rumano ganó la Copa de Europa de 1986 tras vencer al Barcelona en la definición por penales?",
+    question: "¿Qué equipo fue el primer tricampeón de Champions consecutivas en la era moderna?",
     category: "Europa",
     difficulty: "dificil",
-    option_a: "Dinamo de Bucarest",
-    option_b: "Steaua de Bucarest",
-    option_c: "Rapid de Bucarest",
-    option_d: "CFR Cluj",
-    correct_answer: "b",
+    option_a: "Bayern Múnich",
+    option_b: "AC Milan",
+    option_c: "Real Madrid",
+    option_d: "Liverpool",
+    correct_answer: "a",
   },
   {
-    question:
-      "¿Qué club escocés, conocido como los 'Lisbon Lions', fue el primer equipo británico en ganar la Copa de Europa, en 1967?",
+    question: "¿Quién ganó la Champions League 2000?",
     category: "Europa",
     difficulty: "dificil",
-    option_a: "Rangers",
-    option_b: "Celtic",
-    option_c: "Aberdeen",
-    option_d: "Hibernian",
-    correct_answer: "b",
+    option_a: "Real Madrid",
+    option_b: "Bayern Múnich",
+    option_c: "Valencia",
+    option_d: "Juventus",
+    correct_answer: "a",
   },
   {
-    question:
-      "¿Qué club inglés, dirigido por Brian Clough, ganó la Copa de Europa en 1979 y 1980 de forma consecutiva?",
+    question: "¿En qué ciudad se disputó la final de Champions 1999 donde Manchester United remontó en los últimos minutos?",
+    category: "Europa",
+    difficulty: "dificil",
+    option_a: "Estambul",
+    option_b: "Barcelona",
+    option_c: "Róterdam",
+    option_d: "Estocolmo",
+    correct_answer: "a",
+  },
+  {
+    question: "¿Qué equipo ganó la Copa de Europa 1980 ganando desde fuera del campo?",
     category: "Europa",
     difficulty: "dificil",
     option_a: "Liverpool",
-    option_b: "Aston Villa",
-    option_c: "Nottingham Forest",
-    option_d: "Leeds United",
+    option_b: "Nottingham Forest",
+    option_c: "Aston Villa",
+    option_d: "Bayern Múnich",
+    correct_answer: "a",
+  },
+  {
+    question: "¿Cuántos títulos de Champions tiene Real Madrid hasta 2024?",
+    category: "Europa",
+    difficulty: "dificil",
+    option_a: "13",
+    option_b: "14",
+    option_c: "15",
+    option_d: "12",
     correct_answer: "c",
+  },
+  {
+    question: "¿Quién ganó la Champions League 2001?",
+    category: "Europa",
+    difficulty: "dificil",
+    option_a: "AC Milan",
+    option_b: "Bayern Múnich",
+    option_c: "Juventus",
+    option_d: "Valencia",
+    correct_answer: "a",
+  },
+  {
+    question: "¿Qué equipo fue el primero en ganar la Champions League con entrenador español desde el siglo XX?",
+    category: "Europa",
+    difficulty: "dificil",
+    option_a: "Barcelona",
+    option_b: "Real Madrid",
+    option_c: "Villarreal",
+    option_d: "Atlético Madrid",
+    correct_answer: "a",
+  },
+  {
+    question: "¿En qué año Barcelona ganó su primer Champions League?",
+    category: "Europa",
+    difficulty: "dificil",
+    option_a: "1990",
+    option_b: "1992",
+    option_c: "1994",
+    option_d: "1996",
+    correct_answer: "b",
+  },
+  {
+    question: "¿Quién ganó la Champions League 2002?",
+    category: "Europa",
+    difficulty: "dificil",
+    option_a: "Bayern Múnich",
+    option_b: "Real Madrid",
+    option_c: "Valencia",
+    option_d: "Juventus",
+    correct_answer: "b",
+  },
+  {
+    question: "¿Qué equipo inglés ganó la Champions League 2019?",
+    category: "Europa",
+    difficulty: "dificil",
+    option_a: "Manchester City",
+    option_b: "Liverpool",
+    option_c: "Manchester United",
+    option_d: "Chelsea",
+    correct_answer: "b",
+  },
+  {
+    question: "¿Cuántos balones de oro ganó Messi jugando en Europa?",
+    category: "Europa",
+    difficulty: "dificil",
+    option_a: "6",
+    option_b: "7",
+    option_c: "8",
+    option_d: "5",
+    correct_answer: "c",
+  },
+  {
+    question: "¿Qué equipo ganó la Champions League 2003?",
+    category: "Europa",
+    difficulty: "dificil",
+    option_a: "AC Milan",
+    option_b: "Juventus",
+    option_c: "Valencia",
+    option_d: "Real Madrid",
+    correct_answer: "a",
   },
 ];
 
-// Pregunta bonus del día: votación entre compañeros de grupo, sin respuesta correcta.
-const BONUS_POOL = [
-  "¿Quién es más probable que llegue tarde a ver un partido?",
-  "¿Quién es más probable que discuta con el árbitro a través de la tele?",
-  "¿Quién es más probable que se cambie de camiseta a mitad de temporada?",
+// Modo B: Pool de "¿Quién es más...?"
+const QUIEN_ES_MAS_POOL = [
   "¿Quién es más probable que haga el ridículo en una final?",
-  "¿Quién es más probable que se sepa la alineación completa de memoria?",
-  "¿Quién es más probable que llore si su equipo pierde una final?",
+  "¿Quién es más probable que discuta con el árbitro a través de la tele?",
+  "¿Quién es más probable que se despierte a las 4am para ver un partido?",
   "¿Quién es más probable que apueste su sueldo entero a un partido?",
-  "¿Quién es más probable que se pelee por un gol en el picadito del domingo?",
   "¿Quién es más probable que tenga la camiseta más cara del grupo?",
-  "¿Quién es más probable que falle la pregunta bonus de hoy?",
+  "¿Quién es más probable que se cambie de hincha por conveniencia?",
+  "¿Quién es más probable que se acuerde de un resultado de hace 20 años?",
+  "¿Quién es más probable que llore si su equipo pierde una final?",
+  "¿Quién es más probable que llegue tarde a ver un partido?",
+  "¿Quién es más probable que discuta de fútbol hasta las 3 de la mañana?",
+  "¿Quién es más probable que se pierda el gol importante por estar en el baño?",
   "¿Quién es más probable que hable de fútbol hasta en un casamiento?",
   "¿Quién es más probable que se olvide de responder el trivia de hoy?",
   "¿Quién es más probable que festeje un gol solo en su casa como si estuviera en la cancha?",
   "¿Quién es más probable que diga 'yo lo hubiera atajado'?",
-  "¿Quién es más probable que cambie de hincha por conveniencia?",
-  "¿Quién es más probable que se acuerde de un resultado de hace 20 años?",
-  "¿Quién es más probable que se despierte a las 4 de la mañana para ver un partido?",
-  "¿Quién es más probable que se pierda el gol importante por estar en el baño?",
-  "¿Quién es más probable que discuta de fútbol hasta las 3 de la mañana?",
   "¿Quién es más probable que compre una camiseta y nunca se la ponga?",
+  "¿Quién es más probable que se pelee por un gol en el picadito del domingo?",
+  "¿Quién es más probable que se sepa la alineación completa de memoria?",
+  "¿Quién es más probable que falle la pregunta de hoy?",
+  "¿Quién es más probable que llame llorando después de una derrota?",
+];
+
+// Modo B: Pool de "¿Qué prefieres...?"
+const QUE_PREFIERES_POOL = [
+  "¿Qué prefieres: que tu equipo pierda 5-0 en casa o 1-0 de visitante?",
+  "¿Qué prefieres: tener un goleador inconsistente o un portero que falla a veces?",
+  "¿Qué prefieres: ver un partido aburrido 1-0 o un 4-4 caótico?",
+  "¿Qué prefieres: que se suspenda tu partido favorito o que lo gane el rival?",
+  "¿Qué prefieres: perder una final o perder al mejor jugador antes del torneo?",
+  "¿Qué prefieres: un arbitraje que te beneficie o uno que sea justo?",
+  "¿Qué prefieres: un equipo joven y prometedor o uno veterano ganador?",
+  "¿Qué prefieres: el ataque espectacular o la defensa de acero?",
+  "¿Qué prefieres: una goleada en tu contra o perder 1-0 en los últimos segundos?",
+  "¿Qué prefieres: ver a tu equipo perder o no poder verlo jugar?",
+  "¿Qué prefieres: ser campeón aburrido o subcampeón emocionante?",
+  "¿Qué prefieres: un técnico exigente o uno permisivo?",
+  "¿Qué prefieres: muchos partidos aburridos o pocos partidos espectaculares?",
+  "¿Qué prefieres: un equipo local malo o uno extranjero ganador?",
+  "¿Qué prefieres: un gol de suerte o uno hermoso de tu rival?",
+  "¿Qué prefieres: ganar de forma fea o perder de forma hermosa?",
+  "¿Qué prefieres: un fichaje star o un equipo equilibrado?",
+  "¿Qué prefieres: jugar siempre o entrenar bajo presión?",
+  "¿Qué prefieres: un rival clásico o uno impredecible?",
+  "¿Qué prefieres: empatada controvertida o derrota justa?",
+];
+
+// Personalidades por liga (se elegirá una al azar cada día)
+const PERSONALITY_TEMPLATES = [
+  {
+    prompt: "Si {name} fuera a la cárcel, ¿por qué sería?",
+    options: [
+      "Por abusar de cebollitas al pedir gol",
+      "Por arruinar predicciones con análisis",
+      "Por festejar goles como si ganara Libertadores",
+      "Por llevar 10 camisetas al partido",
+    ],
+  },
+  {
+    prompt: "Si {name} fuera entrenador, ¿cuál sería su estrategia?",
+    options: [
+      "Todos atacan aunque pierdan 5-0",
+      "Todos defienden aunque ganen",
+      "Tácticas que solo funcionan en teoría",
+      "Cambios cada 5 minutos sin razón",
+    ],
+  },
+  {
+    prompt: "Si {name} fuera árbitro, ¿qué pasaría?",
+    options: [
+      "Expulsaría a quien le reclame",
+      "Solo pitaría si come cebollitas",
+      "Haría más goles que los jugadores",
+      "Se dormiría durante el partido",
+    ],
+  },
+  {
+    prompt: "Si {name} ganara la Libertadores, ¿qué haría?",
+    options: [
+      "Lloraría por 3 días seguidos",
+      "Cambiaría su apellido al del club",
+      "Se tatúaría la copa en la frente",
+      "Renunciaría al fútbol de puro feliz",
+    ],
+  },
+  {
+    prompt: "Si {name} fuera comentarista, ¿qué diría?",
+    options: [
+      "Opiniones controversiales cada 5 segundos",
+      "Comparaciones con partidos hace 30 años",
+      "Gritos que despertarían al barrio",
+      "Análisis que nadie entiende",
+    ],
+  },
 ];
 
 const NUM_DAYS = 20;
@@ -685,16 +759,16 @@ async function upsertQuestion(q, scheduled_date, slot) {
   }
 }
 
-async function upsertBonusQuestion(prompt, scheduled_date) {
+async function upsertSpecialQuestion(type, prompt, scheduled_date) {
   const updateResult = await db.execute({
-    sql: "UPDATE bonus_questions SET prompt = ? WHERE scheduled_date = ?",
-    args: [prompt, scheduled_date],
+    sql: "UPDATE special_questions SET prompt = ? WHERE type = ? AND scheduled_date = ?",
+    args: [prompt, type, scheduled_date],
   });
 
   if (updateResult.rowsAffected === 0) {
     await db.execute({
-      sql: "INSERT INTO bonus_questions (prompt, scheduled_date) VALUES (?, ?)",
-      args: [prompt, scheduled_date],
+      sql: "INSERT INTO special_questions (type, prompt, scheduled_date) VALUES (?, ?, ?)",
+      args: [type, prompt, scheduled_date],
     });
   }
 }
@@ -705,15 +779,21 @@ async function seed() {
   for (let day = 0; day < NUM_DAYS; day++) {
     const scheduled_date = dateOffset(day);
 
+    // Modo A: trivia normal
     await upsertQuestion(SLOT1_POOL[day % SLOT1_POOL.length], scheduled_date, 1);
     await upsertQuestion(SLOT2_POOL[day % SLOT2_POOL.length], scheduled_date, 2);
     await upsertQuestion(SLOT3_POOL[day % SLOT3_POOL.length], scheduled_date, 3);
-    await upsertBonusQuestion(BONUS_POOL[day % BONUS_POOL.length], scheduled_date);
+
+    // Modo B: preguntas especiales
+    await upsertSpecialQuestion("quien_es_mas", QUIEN_ES_MAS_POOL[day % QUIEN_ES_MAS_POOL.length], scheduled_date);
+    await upsertSpecialQuestion("que_prefieres", QUE_PREFIERES_POOL[day % QUE_PREFIERES_POOL.length], scheduled_date);
   }
 
   console.log(
-    `Seed completado: ${NUM_DAYS} días x 3 preguntas temáticas (general / liga chilena / europa difícil) + 1 pregunta bonus por día.`
+    `Seed completado: ${NUM_DAYS} días x 3 preguntas trivia (Modo A) + 2 preguntas especiales (Modo B).`
   );
+  console.log(`Modo A: General / Liga Chilena / Europa (Aumentada dificultad)`);
+  console.log(`Modo B: ¿Quién es más? / ¿Qué prefieres? / Pregunta personalizada (por liga)`);
   process.exit(0);
 }
 
