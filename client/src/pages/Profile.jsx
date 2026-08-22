@@ -7,6 +7,7 @@ import Card from "../components/Card.jsx";
 import Avatar from "../components/Avatar.jsx";
 import AvatarEditor from "../components/AvatarEditor.jsx";
 import PushToggle from "../components/PushToggle.jsx";
+import AccountSettings from "../components/AccountSettings.jsx";
 
 export default function Profile() {
   const { user, stats, refreshMe } = useAuth();
@@ -74,6 +75,10 @@ export default function Profile() {
 
       <div className="mb-6">
         <PushToggle />
+      </div>
+
+      <div className="mb-6">
+        <AccountSettings user={user} onUpdated={refreshMe} />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

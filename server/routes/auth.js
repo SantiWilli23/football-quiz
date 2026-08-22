@@ -124,6 +124,91 @@ router.post("/login", async (req, res) => {
   }
 });
 
+router.put("/password", requireAuth, async (req, res) => {
+  const { current_password, new_password } = req.body || {};
+
+  if (!current_password || !new_password) {
+    return res.status(400).json({ error: "Faltan campos requeridos" });
+  }
+  if (new_password.length < 6) {
+    return res.status(400).json({ error: "La contraseña nueva debe tener al menos 6 caracteres" });
+  }
+  if (new_password === current_password) {
+    return res.status(400).json({ error: "La contraseña nueva tiene que ser distinta" });
+  }
+
+  try {
+    const result = await db.execute({ sql: "SELECT * FROM users WHERE id = ?", args: [req.userId] });
+    const user = result.rows[0];
+    if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
+
+    // Se pide la actual aunque ya estés logueado: si alguien te deja la sesión
+    // abierta, no debería poder cambiarte la contraseña y dejarte afuera.
+    if (!(await bcrypt.compare(current_password, user.password_hash))) {
+      return res.status(401).json({ error: "La contraseña actual no es correcta" });
+    }
+
+    await db.execute({
+      sql: "UPDATE users SET password_hash = ? WHERE id = ?",
+      args: [await bcrypt.hash(new_password, 10), req.userId],
+    });
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+router.put("/username", requireAuth, async (req, res) => {
+  const username = String(req.body?.username ?? "").trim();
+
+  if (username.length < 3 || username.length > 20) {
+    return res.status(400).json({ error: "El nombre debe tener entre 3 y 20 caracteres" });
+  }
+
+  try {
+    const taken = await db.execute({
+      sql: "SELECT id FROM users WHERE username = ? AND id != ?",
+      args: [username, req.userId],
+    });
+    if (taken.rows.length > 0) {
+      return res.status(409).json({ error: "Ese nombre ya está en uso" });
+    }
+
+    const currentResult = await db.execute({
+      sql: "SELECT username FROM users WHERE id = ?",
+      args: [req.userId],
+    });
+    const previous = currentResult.rows[0]?.username;
+
+    // La inicial del avatar se recalcula sola; sólo importa para quien todavía
+    // no armó su muñequito.
+    await db.execute({
+      sql: "UPDATE users SET username = ?, avatar = ? WHERE id = ?",
+      args: [username, username.charAt(0).toUpperCase(), req.userId],
+    });
+
+    // Las preguntas de personalidad guardan el nombre del protagonista y
+    // además lo tienen escrito dentro del texto ("Si willy fuera a la
+    // cárcel..."), así que hay que actualizar las dos cosas o quedan hablando
+    // de alguien que ya no existe.
+    if (previous && previous !== username) {
+      await db.execute({
+        sql: `UPDATE personality_questions
+              SET personality_name = ?, prompt_template = REPLACE(prompt_template, ?, ?)
+              WHERE personality_name = ?`,
+        args: [username, previous, username, previous],
+      });
+    }
+
+    res.json({ ok: true, username });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 router.get("/me", requireAuth, async (req, res) => {
   try {
     const result = await db.execute({ sql: "SELECT * FROM users WHERE id = ?", args: [req.userId] });

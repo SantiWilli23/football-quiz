@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CalendarDays, Copy, Crown, Plus, Trophy, Users } from "lucide-react";
+import { CalendarDays, Copy, Crown, LogOut, Plus, Trophy, Users } from "lucide-react";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -35,6 +35,9 @@ export default function Group() {
   const [joinLoading, setJoinLoading] = useState(false);
 
   const [copied, setCopied] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const [leaveError, setLeaveError] = useState("");
 
   // La lista de grupos y cuál está activo viven en el contexto (compartido con
   // el resto de la app); acá sólo se pide el detalle y el ranking del activo.
@@ -112,6 +115,22 @@ export default function Group() {
   // muestra a todo el grupo, como venía siendo.
   const shownRanking =
     scope === "mes" ? seasonRanking.filter((r) => r.points > 0 || r.answered > 0) : ranking;
+
+  const handleLeave = async () => {
+    setLeaving(true);
+    setLeaveError("");
+    try {
+      await api.post(`/groups/${activeGroupId}/leave`);
+      setConfirmLeave(false);
+      // El contexto vuelve a pedir la lista y cae al primer grupo que quede
+      // (o a ninguno), así que el resto de la app queda consistente sola.
+      await reloadGroups();
+    } catch (err) {
+      setLeaveError(err.response?.data?.error || "No se pudo salir del grupo");
+    } finally {
+      setLeaving(false);
+    }
+  };
 
   const copyCode = () => {
     if (!detail) return;
@@ -239,6 +258,48 @@ export default function Group() {
                   <Copy size={14} />
                   {copied ? "Copiado" : detail.invite_code}
                 </button>
+              </div>
+
+              {/* Salir es difícil de deshacer (hace falta el código para
+                  volver), y si sos el último el grupo se borra: por eso pide
+                  confirmación en vez de irse de una. */}
+              <div className="mb-5">
+                {!confirmLeave ? (
+                  <button
+                    onClick={() => setConfirmLeave(true)}
+                    className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-red-400 transition-colors"
+                  >
+                    <LogOut size={13} />
+                    Salir de este grupo
+                  </button>
+                ) : (
+                  <div className="rounded-card border border-red-500/40 bg-red-500/5 px-4 py-3">
+                    <p className="text-sm mb-1">
+                      ¿Seguro que querés salir de {detail.name}?
+                    </p>
+                    <p className="text-xs text-gray-500 mb-3">
+                      {ranking.length <= 1
+                        ? "Sos el único miembro, así que el grupo se va a borrar con todo su historial."
+                        : "Para volver vas a necesitar el código de invitación. Tus respuestas anteriores quedan en el historial del grupo."}
+                    </p>
+                    {leaveError && <p className="text-sm text-red-400 mb-2">{leaveError}</p>}
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={handleLeave}
+                        disabled={leaving}
+                        className="px-4 py-2 rounded-card text-sm font-semibold bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white transition-colors"
+                      >
+                        {leaving ? "Saliendo..." : "Sí, salir"}
+                      </button>
+                      <button
+                        onClick={() => setConfirmLeave(false)}
+                        className="text-sm text-gray-400 hover:text-white transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* La temporada del mes es la que se mira día a día: el histórico

@@ -29,9 +29,15 @@ export function GroupProvider({ children }) {
 
       const stored = Number(localStorage.getItem(STORAGE_KEY));
       // Si el grupo guardado ya no existe (te fuiste, o cambiaste de cuenta)
-      // se cae al primero en vez de dejar la app apuntando a la nada.
+      // se cae al primero en vez de dejar la app apuntando a la nada, y se
+      // reescribe lo guardado para no arrastrar un id muerto.
       const valid = data.groups.some((g) => g.id === stored);
-      setActiveGroupId(valid ? stored : data.groups[0]?.id ?? null);
+      const next = valid ? stored : data.groups[0]?.id ?? null;
+      setActiveGroupId(next);
+      if (!valid) {
+        if (next) localStorage.setItem(STORAGE_KEY, String(next));
+        else localStorage.removeItem(STORAGE_KEY);
+      }
     } catch {
       setGroups([]);
       setActiveGroupId(null);

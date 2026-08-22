@@ -108,6 +108,57 @@ router.post("/join", async (req, res) => {
   }
 });
 
+// Salir de un grupo. Las respuestas que ya diste quedan donde están: borrarlas
+// cambiaría los resultados de días ya cerrados para todos los demás.
+router.post("/:id/leave", async (req, res) => {
+  const groupId = Number(req.params.id);
+
+  try {
+    const membership = await db.execute({
+      sql: "SELECT id FROM group_members WHERE group_id = ? AND user_id = ?",
+      args: [groupId, req.userId],
+    });
+    if (membership.rows.length === 0) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+
+    await db.execute({
+      sql: "DELETE FROM group_members WHERE group_id = ? AND user_id = ?",
+      args: [groupId, req.userId],
+    });
+
+    // Si te ibas último, el grupo queda vacío y ya no lo puede ver nadie:
+    // se borra junto con lo que sólo tenía sentido dentro de él.
+    const remaining = await db.execute({
+      sql: "SELECT COUNT(*) AS total FROM group_members WHERE group_id = ?",
+      args: [groupId],
+    });
+
+    if (Number(remaining.rows[0].total) === 0) {
+      for (const sql of [
+        "DELETE FROM mode_b_reactions WHERE group_id = ?",
+        "DELETE FROM mode_b_predictions WHERE group_id = ?",
+        "DELETE FROM mode_b_scores WHERE group_id = ?",
+        "DELETE FROM special_answers WHERE group_id = ?",
+        "DELETE FROM personality_answers WHERE group_id = ?",
+        "DELETE FROM group_question_answers WHERE group_id = ?",
+        "DELETE FROM personality_questions WHERE group_id = ?",
+        "DELETE FROM group_questions WHERE group_id = ?",
+        "DELETE FROM bonus_votes WHERE group_id = ?",
+        "DELETE FROM groups_t WHERE id = ?",
+      ]) {
+        await db.execute({ sql, args: [groupId] });
+      }
+      return res.json({ ok: true, group_deleted: true });
+    }
+
+    res.json({ ok: true, group_deleted: false });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 router.get("/:id", async (req, res) => {
   const groupId = Number(req.params.id);
 
