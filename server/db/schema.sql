@@ -79,9 +79,23 @@ CREATE TABLE IF NOT EXISTS special_questions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   type TEXT NOT NULL CHECK (type IN ('quien_es_mas', 'que_prefieres')),
   prompt TEXT NOT NULL,
+  option_a TEXT,
+  option_b TEXT,
   scheduled_date TEXT NOT NULL,
   UNIQUE(type, scheduled_date)
 );
+
+CREATE TABLE IF NOT EXISTS special_answers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  special_question_id INTEGER NOT NULL REFERENCES special_questions(id),
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  answer_value TEXT NOT NULL,
+  answered_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(special_question_id, group_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_special_answers_lookup ON special_answers(special_question_id, group_id);
 
 CREATE TABLE IF NOT EXISTS personality_questions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -98,3 +112,15 @@ CREATE TABLE IF NOT EXISTS personality_questions (
 
 CREATE INDEX IF NOT EXISTS idx_special_questions_date ON special_questions(scheduled_date);
 CREATE INDEX IF NOT EXISTS idx_personality_questions_date ON personality_questions(scheduled_date);
+
+CREATE TABLE IF NOT EXISTS personality_answers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  personality_question_id INTEGER NOT NULL REFERENCES personality_questions(id),
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  answer TEXT NOT NULL CHECK (answer IN ('a','b','c','d')),
+  answered_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(personality_question_id, group_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_personality_answers_lookup ON personality_answers(personality_question_id, group_id);

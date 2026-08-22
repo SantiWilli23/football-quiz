@@ -30,6 +30,7 @@ export async function initSchema() {
     await db.execute(statement);
   }
   await migrateQuestionsTable();
+  await migrateSpecialQuestionsTable();
 }
 
 // Older deployments have a `questions` table with one row per day
@@ -70,4 +71,16 @@ async function migrateQuestionsTable() {
   await db.execute("ALTER TABLE questions_new RENAME TO questions");
   await db.execute("CREATE INDEX IF NOT EXISTS idx_questions_date ON questions(scheduled_date)");
   await db.execute("PRAGMA foreign_keys = ON");
+}
+
+// Older deployments created special_questions before it had
+// option_a/option_b (needed for "¿Qué prefieres?"). Nullable columns can
+// be added in place with ALTER TABLE, no rebuild required.
+async function migrateSpecialQuestionsTable() {
+  const info = await db.execute("PRAGMA table_info(special_questions)");
+  const hasOptionA = info.rows.some((r) => r.name === "option_a");
+  if (hasOptionA) return;
+
+  await db.execute("ALTER TABLE special_questions ADD COLUMN option_a TEXT");
+  await db.execute("ALTER TABLE special_questions ADD COLUMN option_b TEXT");
 }

@@ -6,28 +6,36 @@ import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import QuestionCard from "../components/QuestionCard.jsx";
 import BonusCard from "../components/BonusCard.jsx";
-import SpecialQuestionCard from "../components/SpecialQuestionCard.jsx";
+import QuienEsMasCard from "../components/QuienEsMasCard.jsx";
+import QuePrefieresCard from "../components/QuePrefieresCard.jsx";
 import PersonalityCard from "../components/PersonalityCard.jsx";
 
 export default function Dashboard() {
   const { stats, refreshMe } = useAuth();
   const [questions, setQuestions] = useState(null);
+  const [modeBData, setModeBData] = useState(null);
   const [groups, setGroups] = useState([]);
   const [mode, setMode] = useState("a");
 
-  const loadToday = async () => {
-    if (mode === "b" && groups.length === 0) {
-      setQuestions([]);
-      return;
-    }
+  const loadTrivia = async () => {
     try {
-      const { data } =
-        mode === "a"
-          ? await api.get("/questions/today")
-          : await api.get("/mode-b/today", { params: { groupId: groups[0].id } });
+      const { data } = await api.get("/questions/today");
       setQuestions(data.questions);
     } catch {
       setQuestions([]);
+    }
+  };
+
+  const loadModeB = async () => {
+    if (groups.length === 0) {
+      setModeBData(null);
+      return;
+    }
+    try {
+      const { data } = await api.get("/mode-b/today", { params: { groupId: groups[0].id } });
+      setModeBData(data);
+    } catch {
+      setModeBData(null);
     }
   };
 
@@ -42,10 +50,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadGroups();
+    loadTrivia();
   }, []);
 
   useEffect(() => {
-    loadToday();
+    if (mode === "b") loadModeB();
   }, [mode, groups]);
 
   const handleAnswered = (index, result) => {
@@ -54,8 +63,6 @@ export default function Dashboard() {
     );
     refreshMe();
   };
-
-  const answeredCount = questions?.filter((q) => q.answered).length ?? 0;
 
   return (
     <Layout>
@@ -90,9 +97,15 @@ export default function Dashboard() {
             {new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}
           </p>
 
-          {questions && questions.length === 0 && (
+          {mode === "a" && questions && questions.length === 0 && (
             <Card>
               <p className="text-gray-400">No hay preguntas disponibles por ahora. Volvé más tarde.</p>
+            </Card>
+          )}
+
+          {mode === "b" && groups.length === 0 && (
+            <Card>
+              <p className="text-gray-400">Necesitás estar en un grupo para ver las preguntas especiales.</p>
             </Card>
           )}
 
@@ -111,28 +124,14 @@ export default function Dashboard() {
                 {groups.length > 0 && <BonusCard groupId={groups[0].id} />}
               </>
             ) : (
-              <>
-                {questions?.map((item, i) => {
-                  if (item.type === "quien_es_mas" || item.type === "que_prefieres") {
-                    return (
-                      <SpecialQuestionCard
-                        key={`${item.type}-${i}`}
-                        item={item}
-                        onAnswered={(result) => handleAnswered(i, result)}
-                      />
-                    );
-                  } else if (item.type === "personalidad") {
-                    return (
-                      <PersonalityCard
-                        key={`personalidad-${i}`}
-                        item={item}
-                        onAnswered={(result) => handleAnswered(i, result)}
-                      />
-                    );
-                  }
-                  return null;
-                })}
-              </>
+              modeBData &&
+              groups.length > 0 && (
+                <>
+                  <QuienEsMasCard data={modeBData.quien_es_mas} groupId={groups[0].id} onVoted={loadModeB} />
+                  <QuePrefieresCard data={modeBData.que_prefieres} groupId={groups[0].id} onVoted={loadModeB} />
+                  <PersonalityCard data={modeBData.personalidad} groupId={groups[0].id} onVoted={loadModeB} />
+                </>
+              )
             )}
           </div>
         </div>

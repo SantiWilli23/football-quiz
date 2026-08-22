@@ -643,29 +643,29 @@ const QUIEN_ES_MAS_POOL = [
   "¿Quién es más probable que llame llorando después de una derrota?",
 ];
 
-// Modo B: Pool de "¿Qué prefieres...?"
+// Modo B: Pool de "¿Qué prefieres...?" (prompt fijo + 2 opciones concretas)
 const QUE_PREFIERES_POOL = [
-  "¿Qué prefieres: que tu equipo pierda 5-0 en casa o 1-0 de visitante?",
-  "¿Qué prefieres: tener un goleador inconsistente o un portero que falla a veces?",
-  "¿Qué prefieres: ver un partido aburrido 1-0 o un 4-4 caótico?",
-  "¿Qué prefieres: que se suspenda tu partido favorito o que lo gane el rival?",
-  "¿Qué prefieres: perder una final o perder al mejor jugador antes del torneo?",
-  "¿Qué prefieres: un arbitraje que te beneficie o uno que sea justo?",
-  "¿Qué prefieres: un equipo joven y prometedor o uno veterano ganador?",
-  "¿Qué prefieres: el ataque espectacular o la defensa de acero?",
-  "¿Qué prefieres: una goleada en tu contra o perder 1-0 en los últimos segundos?",
-  "¿Qué prefieres: ver a tu equipo perder o no poder verlo jugar?",
-  "¿Qué prefieres: ser campeón aburrido o subcampeón emocionante?",
-  "¿Qué prefieres: un técnico exigente o uno permisivo?",
-  "¿Qué prefieres: muchos partidos aburridos o pocos partidos espectaculares?",
-  "¿Qué prefieres: un equipo local malo o uno extranjero ganador?",
-  "¿Qué prefieres: un gol de suerte o uno hermoso de tu rival?",
-  "¿Qué prefieres: ganar de forma fea o perder de forma hermosa?",
-  "¿Qué prefieres: un fichaje star o un equipo equilibrado?",
-  "¿Qué prefieres: jugar siempre o entrenar bajo presión?",
-  "¿Qué prefieres: un rival clásico o uno impredecible?",
-  "¿Qué prefieres: empatada controvertida o derrota justa?",
-];
+  { option_a: "Perder 5-0 en casa", option_b: "Perder 1-0 de visitante" },
+  { option_a: "Un goleador inconsistente", option_b: "Un portero que falla a veces" },
+  { option_a: "Un partido aburrido 1-0", option_b: "Un partido caótico 4-4" },
+  { option_a: "Que se suspenda tu partido", option_b: "Que lo gane el rival" },
+  { option_a: "Perder una final", option_b: "Perder al mejor jugador antes del torneo" },
+  { option_a: "Un arbitraje que te beneficie", option_b: "Un arbitraje justo" },
+  { option_a: "Un equipo joven y prometedor", option_b: "Un equipo veterano ganador" },
+  { option_a: "El ataque espectacular", option_b: "La defensa de acero" },
+  { option_a: "Una goleada en contra", option_b: "Perder 1-0 en el último minuto" },
+  { option_a: "Ver a tu equipo perder", option_b: "No poder verlo jugar" },
+  { option_a: "Ser campeón aburrido", option_b: "Ser subcampeón emocionante" },
+  { option_a: "Un técnico exigente", option_b: "Un técnico permisivo" },
+  { option_a: "Muchos partidos aburridos", option_b: "Pocos partidos espectaculares" },
+  { option_a: "Un equipo local malo", option_b: "Un equipo extranjero ganador" },
+  { option_a: "Un gol de suerte propio", option_b: "Un gol hermoso del rival" },
+  { option_a: "Ganar de forma fea", option_b: "Perder de forma hermosa" },
+  { option_a: "Un fichaje estrella", option_b: "Un equipo equilibrado" },
+  { option_a: "Jugar siempre", option_b: "Entrenar bajo presión" },
+  { option_a: "Un rival clásico", option_b: "Un rival impredecible" },
+  { option_a: "Un empate controvertido", option_b: "Una derrota justa" },
+].map((o) => ({ prompt: "¿Qué prefieres?", option_a: o.option_a, option_b: o.option_b }));
 
 // Personalidades por liga (se elegirá una al azar cada día)
 const PERSONALITY_TEMPLATES = [
@@ -759,16 +759,53 @@ async function upsertQuestion(q, scheduled_date, slot) {
   }
 }
 
-async function upsertSpecialQuestion(type, prompt, scheduled_date) {
+async function upsertSpecialQuestion(type, prompt, scheduled_date, option_a = null, option_b = null) {
   const updateResult = await db.execute({
-    sql: "UPDATE special_questions SET prompt = ? WHERE type = ? AND scheduled_date = ?",
-    args: [prompt, type, scheduled_date],
+    sql: "UPDATE special_questions SET prompt = ?, option_a = ?, option_b = ? WHERE type = ? AND scheduled_date = ?",
+    args: [prompt, option_a, option_b, type, scheduled_date],
   });
 
   if (updateResult.rowsAffected === 0) {
     await db.execute({
-      sql: "INSERT INTO special_questions (type, prompt, scheduled_date) VALUES (?, ?, ?)",
-      args: [type, prompt, scheduled_date],
+      sql: "INSERT INTO special_questions (type, prompt, option_a, option_b, scheduled_date) VALUES (?, ?, ?, ?, ?)",
+      args: [type, prompt, option_a, option_b, scheduled_date],
+    });
+  }
+}
+
+async function upsertPersonalityQuestion(groupId, personalityName, template, scheduled_date) {
+  const updateResult = await db.execute({
+    sql: `UPDATE personality_questions SET
+            personality_name = ?, prompt_template = ?,
+            option_a = ?, option_b = ?, option_c = ?, option_d = ?
+          WHERE group_id = ? AND scheduled_date = ?`,
+    args: [
+      personalityName,
+      template.prompt,
+      template.options[0],
+      template.options[1],
+      template.options[2],
+      template.options[3],
+      groupId,
+      scheduled_date,
+    ],
+  });
+
+  if (updateResult.rowsAffected === 0) {
+    await db.execute({
+      sql: `INSERT INTO personality_questions
+        (group_id, personality_name, prompt_template, option_a, option_b, option_c, option_d, scheduled_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        groupId,
+        personalityName,
+        template.prompt,
+        template.options[0],
+        template.options[1],
+        template.options[2],
+        template.options[3],
+        scheduled_date,
+      ],
     });
   }
 }
@@ -784,13 +821,38 @@ async function seed() {
     await upsertQuestion(SLOT2_POOL[day % SLOT2_POOL.length], scheduled_date, 2);
     await upsertQuestion(SLOT3_POOL[day % SLOT3_POOL.length], scheduled_date, 3);
 
-    // Modo B: preguntas especiales
+    // Modo B: preguntas especiales (comunes a todos los grupos)
     await upsertSpecialQuestion("quien_es_mas", QUIEN_ES_MAS_POOL[day % QUIEN_ES_MAS_POOL.length], scheduled_date);
-    await upsertSpecialQuestion("que_prefieres", QUE_PREFIERES_POOL[day % QUE_PREFIERES_POOL.length], scheduled_date);
+    const qp = QUE_PREFIERES_POOL[day % QUE_PREFIERES_POOL.length];
+    await upsertSpecialQuestion("que_prefieres", qp.prompt, scheduled_date, qp.option_a, qp.option_b);
+  }
+
+  // Modo B: pregunta de personalidad, una por grupo y día (elige un
+  // integrante real del grupo + plantilla, y la fija para que no cambie
+  // en cada request).
+  const groupsResult = await db.execute("SELECT id FROM groups_t");
+  for (const group of groupsResult.rows) {
+    const membersResult = await db.execute({
+      sql: `SELECT u.username FROM group_members gm JOIN users u ON u.id = gm.user_id WHERE gm.group_id = ?`,
+      args: [group.id],
+    });
+    if (membersResult.rows.length === 0) continue;
+
+    for (let day = 0; day < NUM_DAYS; day++) {
+      const scheduled_date = dateOffset(day);
+      const member = membersResult.rows[day % membersResult.rows.length];
+      const template = PERSONALITY_TEMPLATES[day % PERSONALITY_TEMPLATES.length];
+      await upsertPersonalityQuestion(
+        group.id,
+        member.username,
+        { prompt: template.prompt.replace("{name}", member.username), options: template.options },
+        scheduled_date
+      );
+    }
   }
 
   console.log(
-    `Seed completado: ${NUM_DAYS} días x 3 preguntas trivia (Modo A) + 2 preguntas especiales (Modo B).`
+    `Seed completado: ${NUM_DAYS} días x 3 preguntas trivia (Modo A) + 2 preguntas especiales + 1 personalidad por grupo (Modo B).`
   );
   console.log(`Modo A: General / Liga Chilena / Europa (Aumentada dificultad)`);
   console.log(`Modo B: ¿Quién es más? / ¿Qué prefieres? / Pregunta personalizada (por liga)`);
