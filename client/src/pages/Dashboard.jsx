@@ -16,14 +16,16 @@ export default function Dashboard() {
   const [mode, setMode] = useState("a");
 
   const loadToday = async () => {
+    if (mode === "b" && groups.length === 0) {
+      setQuestions([]);
+      return;
+    }
     try {
-      if (mode === "a") {
-        const { data } = await api.get("/questions/today");
-        setQuestions(data.questions);
-      } else if (mode === "b" && groups.length > 0) {
-        const { data } = await api.get("/mode-b/today", { params: { groupId: groups[0].id } });
-        setQuestions(data.questions);
-      }
+      const { data } =
+        mode === "a"
+          ? await api.get("/questions/today")
+          : await api.get("/mode-b/today", { params: { groupId: groups[0].id } });
+      setQuestions(data.questions);
     } catch {
       setQuestions([]);
     }
@@ -43,9 +45,7 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    if (groups.length > 0) {
-      loadToday();
-    }
+    loadToday();
   }, [mode, groups]);
 
   const handleAnswered = (index, result) => {

@@ -12,6 +12,7 @@ function publicQuestion(q) {
     question: q.question,
     category: q.category,
     difficulty: q.difficulty,
+    slot: q.slot,
     option_a: q.option_a,
     option_b: q.option_b,
     option_c: q.option_c,
