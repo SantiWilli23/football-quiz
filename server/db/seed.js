@@ -719,26 +719,26 @@ const PERSONALITY_TEMPLATES = [
 const NUM_DAYS = 20;
 
 async function upsertQuestion(q, scheduled_date, slot) {
-  try {
-    await db.execute({
-      sql: `UPDATE questions SET
-              question = ?, category = ?, difficulty = ?,
-              option_a = ?, option_b = ?, option_c = ?, option_d = ?, correct_answer = ?
-            WHERE scheduled_date = ? AND slot = ?`,
-      args: [
-        q.question,
-        q.category,
-        q.difficulty,
-        q.option_a,
-        q.option_b,
-        q.option_c,
-        q.option_d,
-        q.correct_answer,
-        scheduled_date,
-        slot,
-      ],
-    });
-  } catch {
+  const updateResult = await db.execute({
+    sql: `UPDATE questions SET
+            question = ?, category = ?, difficulty = ?,
+            option_a = ?, option_b = ?, option_c = ?, option_d = ?, correct_answer = ?
+          WHERE scheduled_date = ? AND slot = ?`,
+    args: [
+      q.question,
+      q.category,
+      q.difficulty,
+      q.option_a,
+      q.option_b,
+      q.option_c,
+      q.option_d,
+      q.correct_answer,
+      scheduled_date,
+      slot,
+    ],
+  });
+
+  if (updateResult.rowsAffected === 0) {
     await db.execute({
       sql: `INSERT INTO questions
         (question, category, difficulty, option_a, option_b, option_c, option_d, correct_answer, scheduled_date, slot)
@@ -760,12 +760,12 @@ async function upsertQuestion(q, scheduled_date, slot) {
 }
 
 async function upsertSpecialQuestion(type, prompt, scheduled_date) {
-  try {
-    await db.execute({
-      sql: "UPDATE special_questions SET prompt = ? WHERE type = ? AND scheduled_date = ?",
-      args: [prompt, type, scheduled_date],
-    });
-  } catch {
+  const updateResult = await db.execute({
+    sql: "UPDATE special_questions SET prompt = ? WHERE type = ? AND scheduled_date = ?",
+    args: [prompt, type, scheduled_date],
+  });
+
+  if (updateResult.rowsAffected === 0) {
     await db.execute({
       sql: "INSERT INTO special_questions (type, prompt, scheduled_date) VALUES (?, ?, ?)",
       args: [type, prompt, scheduled_date],
