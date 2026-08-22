@@ -56,3 +56,21 @@ CREATE TABLE IF NOT EXISTS answers (
 CREATE INDEX IF NOT EXISTS idx_answers_user ON answers(user_id);
 CREATE INDEX IF NOT EXISTS idx_group_members_group ON group_members(group_id);
 CREATE INDEX IF NOT EXISTS idx_group_members_user ON group_members(user_id);
+
+CREATE TABLE IF NOT EXISTS bonus_questions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  prompt TEXT NOT NULL,
+  scheduled_date TEXT UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS bonus_votes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  bonus_question_id INTEGER NOT NULL REFERENCES bonus_questions(id),
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  voter_id INTEGER NOT NULL REFERENCES users(id),
+  voted_for_id INTEGER NOT NULL REFERENCES users(id),
+  voted_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(bonus_question_id, group_id, voter_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_bonus_votes_lookup ON bonus_votes(bonus_question_id, group_id);

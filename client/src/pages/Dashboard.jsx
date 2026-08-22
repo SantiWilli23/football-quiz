@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import QuestionCard from "../components/QuestionCard.jsx";
+import BonusCard from "../components/BonusCard.jsx";
 
 export default function Dashboard() {
   const { stats, refreshMe } = useAuth();
@@ -75,6 +76,7 @@ export default function Dashboard() {
                 onAnswered={(result) => handleAnswered(i, result)}
               />
             ))}
+            {groups.length > 0 && <BonusCard groupId={groups[0].id} />}
           </div>
         </div>
 
