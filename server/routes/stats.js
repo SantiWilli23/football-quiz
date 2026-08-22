@@ -25,7 +25,7 @@ async function requireMembership(groupId, userId) {
 
 async function groupMembers(groupId) {
   const result = await db.execute({
-    sql: `SELECT u.id, u.username, u.avatar FROM group_members gm
+    sql: `SELECT u.id, u.username, u.avatar, u.avatar_config FROM group_members gm
           JOIN users u ON u.id = gm.user_id
           WHERE gm.group_id = ? ORDER BY u.username`,
     args: [groupId],
@@ -125,6 +125,7 @@ async function rankingBetween(groupId, from, to) {
         id: m.id,
         username: m.username,
         avatar: m.avatar,
+        avatar_config: m.avatar_config,
         trivia_points,
         mode_b_points,
         points: trivia_points + mode_b_points,
@@ -198,6 +199,7 @@ router.get("/champions", async (req, res) => {
         month: row.month,
         username: winner.username,
         avatar: winner.avatar,
+        avatar_config: winner.avatar_config,
         points: winner.points,
         // Un empate en el primer puesto es posible: se avisa en vez de
         // inventar un desempate.
@@ -251,6 +253,7 @@ router.get("/mode-b", async (req, res) => {
           id: m.id,
           username: m.username,
           avatar: m.avatar,
+          avatar_config: m.avatar_config,
           points: score ? Number(score.points) : 0,
           answered: score ? Number(score.answered) : 0,
           days: score ? Number(score.days) : 0,
@@ -277,6 +280,7 @@ router.get("/mode-b", async (req, res) => {
         id: m.id,
         username: m.username,
         avatar: m.avatar,
+        avatar_config: m.avatar_config,
         votes: votesByUid.get(String(m.id)) || 0,
       }))
       .sort((a, b) => b.votes - a.votes);
@@ -599,6 +603,7 @@ router.get("/compatibility", async (req, res) => {
           id: m.id,
           username: m.username,
           avatar: m.avatar,
+          avatar_config: m.avatar_config,
           shared: entry.shared,
           same: entry.same,
           agreement: entry.shared > 0 ? Math.round((entry.same / entry.shared) * 100) : null,

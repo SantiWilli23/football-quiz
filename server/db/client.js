@@ -32,6 +32,15 @@ export async function initSchema() {
   await migrateQuestionsTable();
   await migrateSpecialQuestionsTable();
   await migrateModeBKindConstraint();
+  await migrateAvatarConfig();
+}
+
+// Instalaciones anteriores tienen `users` sin la columna del avatar dibujado.
+// Es una columna nueva y nullable, así que entra con un ALTER TABLE simple.
+async function migrateAvatarConfig() {
+  const info = await db.execute("PRAGMA table_info(users)");
+  if (info.rows.some((r) => r.name === "avatar_config")) return;
+  await db.execute("ALTER TABLE users ADD COLUMN avatar_config TEXT");
 }
 
 // Las tablas de predicciones y reacciones nacieron con un CHECK que sólo

@@ -3,6 +3,7 @@ import { Sparkles } from "lucide-react";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import Card from "./Card.jsx";
+import Avatar from "./Avatar.jsx";
 
 export default function BonusCard({ groupId }) {
   const { user } = useAuth();
@@ -89,9 +90,7 @@ export default function BonusCard({ groupId }) {
                   style={{ width: `${pct}%` }}
                 />
               )}
-              <span className="w-8 h-8 shrink-0 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center text-accent text-xs font-semibold relative">
-                {c.avatar || c.username.charAt(0).toUpperCase()}
-              </span>
+              <Avatar user={c} size={32} className="relative" />
               <span className="text-sm flex-1 relative">
                 {c.username}
                 {c.id === user?.id && <span className="text-gray-500"> (vos)</span>}

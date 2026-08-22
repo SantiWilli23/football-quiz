@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { BarChart3, Flame, History, Home, LogOut, User, Users } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
+import Avatar from "./Avatar.jsx";
 
 // En el teléfono el sidebar de 256px no entra: se reemplaza por una barra
 // arriba con la identidad y una barra de navegación abajo, al alcance del pulgar.
@@ -27,9 +28,7 @@ export default function MobileNav() {
           <Flame size={13} />
           {stats?.current_streak ?? 0}
         </span>
-        <div className="w-8 h-8 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center text-accent text-xs font-semibold shrink-0">
-          {user?.avatar || "?"}
-        </div>
+        <Avatar user={user} size={32} />
         <button
           onClick={logout}
           aria-label="Cerrar sesión"

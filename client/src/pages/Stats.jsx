@@ -4,6 +4,7 @@ import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
+import Avatar from "../components/Avatar.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 
@@ -211,9 +212,7 @@ export default function Stats() {
                       <div className="w-5 text-center text-sm font-semibold text-gray-400">
                         {r.position === 1 ? <Crown size={15} className="text-accent mx-auto" /> : r.position}
                       </div>
-                      <div className="w-8 h-8 rounded-full bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 text-xs font-semibold shrink-0">
-                        {r.avatar || r.username.charAt(0).toUpperCase()}
-                      </div>
+                      <Avatar user={r} size={32} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{r.username}</p>
                         <p className="text-xs text-gray-500">
@@ -265,9 +264,7 @@ export default function Stats() {
                 <div className="space-y-3">
                   {compatibility.map((c) => (
                     <div key={c.id} className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center text-accent text-xs font-semibold shrink-0">
-                        {c.avatar || c.username.charAt(0).toUpperCase()}
-                      </div>
+                      <Avatar user={c} size={32} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2 mb-1">
                           <span className="text-sm truncate">{c.username}</span>

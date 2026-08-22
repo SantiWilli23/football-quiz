@@ -3,6 +3,7 @@ import { Check, GitCompare, PenLine, Sparkles, Target, UserCircle2, Users, X } f
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import Card from "./Card.jsx";
+import Avatar from "./Avatar.jsx";
 
 const KINDS = {
   quien_es_mas: { color: "#3b82f6", icon: Users, label: "¿Quién es más?" },
@@ -166,14 +167,16 @@ export default function ModeBCard({ data, groupId, onChanged }) {
                   />
                 )}
 
-                <span
-                  className="w-8 h-8 shrink-0 rounded-full border flex items-center justify-center text-xs font-semibold relative"
-                  style={{ borderColor: `${kind.color}66`, color: kind.color, background: `${kind.color}14` }}
-                >
-                  {data.kind === "quien_es_mas"
-                    ? option.avatar || option.label.charAt(0).toUpperCase()
-                    : OPTION_LETTERS[idx]}
-                </span>
+                {data.kind === "quien_es_mas" ? (
+                  <Avatar user={{ ...option, username: option.label }} size={32} className="relative" />
+                ) : (
+                  <span
+                    className="w-8 h-8 shrink-0 rounded-full border flex items-center justify-center text-xs font-semibold relative"
+                    style={{ borderColor: `${kind.color}66`, color: kind.color, background: `${kind.color}14` }}
+                  >
+                    {OPTION_LETTERS[idx]}
+                  </span>
+                )}
 
                 <span className="text-sm flex-1 relative">
                   {option.label}

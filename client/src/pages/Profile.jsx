@@ -4,9 +4,12 @@ import { useGroups } from "../context/GroupContext.jsx";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
+import Avatar from "../components/Avatar.jsx";
+import AvatarEditor from "../components/AvatarEditor.jsx";
+import PushToggle from "../components/PushToggle.jsx";
 
 export default function Profile() {
-  const { user, stats } = useAuth();
+  const { user, stats, refreshMe } = useAuth();
   const { activeGroupId, activeGroup } = useGroups();
   const [position, setPosition] = useState(null);
 
@@ -49,9 +52,7 @@ export default function Profile() {
 
       <Card className="mb-6">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center text-accent text-2xl font-semibold">
-            {user.avatar}
-          </div>
+          <Avatar user={user} size={64} />
           <div>
             <p className="text-lg font-semibold">{user.username}</p>
             <p className="text-sm text-gray-400">{user.email}</p>
@@ -66,6 +67,14 @@ export default function Profile() {
           </div>
         </div>
       </Card>
+
+      <div className="mb-6">
+        <AvatarEditor user={user} onSaved={refreshMe} />
+      </div>
+
+      <div className="mb-6">
+        <PushToggle />
+      </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {items.map((item) => (

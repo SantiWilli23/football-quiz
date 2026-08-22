@@ -288,7 +288,7 @@ router.get("/today", async (req, res) => {
     }
 
     const membersResult = await db.execute({
-      sql: `SELECT u.id, u.username, u.avatar FROM group_members gm
+      sql: `SELECT u.id, u.username, u.avatar, u.avatar_config FROM group_members gm
             JOIN users u ON u.id = gm.user_id
             WHERE gm.group_id = ?
             ORDER BY u.username`,
@@ -307,7 +307,12 @@ router.get("/today", async (req, res) => {
         dayQuestions.quien_es_mas,
         groupId,
         req.userId,
-        members.map((m) => ({ value: String(m.id), label: m.username, avatar: m.avatar }))
+        members.map((m) => ({
+          value: String(m.id),
+          label: m.username,
+          avatar: m.avatar,
+          avatar_config: m.avatar_config,
+        }))
       ),
       buildQuestionPayload("que_prefieres", dayQuestions.que_prefieres, groupId, req.userId, [
         { value: "a", label: dayQuestions.que_prefieres.option_a },

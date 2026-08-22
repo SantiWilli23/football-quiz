@@ -12,6 +12,7 @@ import questionsRoutes from "./routes/questions.js";
 import bonusRoutes from "./routes/bonus.js";
 import modeBRoutes from "./routes/mode-b.js";
 import statsRoutes from "./routes/stats.js";
+import pushRoutes from "./routes/push.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -30,6 +31,7 @@ app.use("/api/questions", questionsRoutes);
 app.use("/api/bonus", bonusRoutes);
 app.use("/api/mode-b", modeBRoutes);
 app.use("/api/stats", statsRoutes);
+app.use("/api/push", pushRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
@@ -43,10 +45,36 @@ if (fs.existsSync(clientDist)) {
 
 const PORT = process.env.PORT || 4000;
 
+// Recordatorio diario. Es un temporizador dentro del proceso, con la salvedad
+// de que en un plan gratuito el servicio se duerme cuando no hay tráfico: si
+// está dormido a la hora señalada, el aviso sale cuando despierta. Para que
+// llegue puntual hay que apuntar un cron externo a POST /api/push/send-daily.
+const REMINDER_HOUR = Number(process.env.REMINDER_HOUR ?? 19);
+const CHECK_EVERY_MS = 15 * 60 * 1000;
+
+function startReminderTimer() {
+  const tick = async () => {
+    if (new Date().getHours() < REMINDER_HOUR) return;
+    try {
+      const { sendDailyReminder } = await import("./utils/push.js");
+      const result = await sendDailyReminder();
+      if (!result.skipped) {
+        console.log(`Recordatorio diario enviado a ${result.sent} dispositivos.`);
+      }
+    } catch (err) {
+      console.error("No se pudo enviar el recordatorio diario:", err.message);
+    }
+  };
+
+  setInterval(tick, CHECK_EVERY_MS).unref();
+  tick();
+}
+
 initSchema()
   .then(() => {
     app.listen(PORT, () => {
       console.log(`Football Quiz API escuchando en el puerto ${PORT}`);
+      startReminderTimer();
     });
   })
   .catch((err) => {

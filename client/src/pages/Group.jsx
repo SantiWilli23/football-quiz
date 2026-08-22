@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
+import Avatar from "../components/Avatar.jsx";
 
 const currentMonth = new Date().toISOString().slice(0, 7);
 
@@ -282,9 +283,7 @@ export default function Group() {
                     <div className="w-6 text-center text-sm font-semibold text-gray-400 flex items-center justify-center gap-1">
                       {r.position === 1 ? <Crown size={16} className="text-accent" /> : r.position}
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center text-accent text-xs font-semibold shrink-0">
-                      {r.avatar || r.username.charAt(0).toUpperCase()}
-                    </div>
+                    <Avatar user={r} size={32} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{r.username}</p>
                       <p className="text-xs text-gray-500">
@@ -313,9 +312,7 @@ export default function Group() {
                         <span className="text-xs text-gray-500 w-24 shrink-0 capitalize">
                           {monthLabel(c.month)}
                         </span>
-                        <span className="w-6 h-6 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 text-[10px] font-semibold shrink-0">
-                          {c.avatar || c.username.charAt(0).toUpperCase()}
-                        </span>
+                        <Avatar user={c} size={24} />
                         <span className="flex-1 min-w-0 truncate">
                           {c.username}
                           {c.tied && <span className="text-gray-500 text-xs"> (empatado)</span>}

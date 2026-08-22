@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { Home, Users, History, BarChart3, User, LogOut, Flame } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
+import Avatar from "./Avatar.jsx";
 
 const links = [
   { to: "/", label: "Inicio", icon: Home, end: true },
@@ -44,9 +45,7 @@ export default function Sidebar() {
 
       <div className="border-t border-border pt-4 mt-4">
         <div className="flex items-center gap-3 px-2 mb-3">
-          <div className="w-9 h-9 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center text-accent font-semibold text-sm">
-            {user?.avatar || "?"}
-          </div>
+          <Avatar user={user} size={36} />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{user?.username}</p>
             <div className="flex items-center gap-1 text-xs text-orange-400">

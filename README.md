@@ -88,3 +88,30 @@ Si preferís no usar Turso, dejá `DATABASE_URL` sin definir: el servidor usa un
 | `JWT_SECRET` | Secreto para firmar los JWT |
 | `DATABASE_URL` | `file:./data/football.db` en local, o `libsql://...` de Turso en producción |
 | `DATABASE_AUTH_TOKEN` | Token de Turso (solo si usás Turso) |
+| `REMINDER_HOUR` | Hora (0-23) desde la que sale el recordatorio diario. Por defecto 19 |
+| `PUSH_CRON_SECRET` | Secreto para que un cron externo dispare el recordatorio |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Claves de push. Si no las definís, se generan solas y quedan en la base |
+| `PUSH_CONTACT` | Mail de contacto que se envía a los servicios de push |
+
+## Recordatorio diario (notificaciones push)
+
+Cada usuario las activa desde **Mi perfil → Recordatorio diario**. El aviso sale
+sólo para quien todavía no respondió las preguntas del día, una vez por día.
+
+No hace falta configurar nada: si no definís las claves VAPID, el servidor
+genera un par la primera vez que alguien se suscribe y lo guarda en la base.
+
+**Advertencia sobre la puntualidad.** El envío lo dispara un temporizador dentro
+del proceso, y en el plan gratuito de Render el servicio se duerme cuando no hay
+tráfico. Si está dormido a la hora señalada, el recordatorio sale recién cuando
+alguien entra a la app y lo despierta. Para que llegue puntual, apuntá un cron
+externo gratuito (por ejemplo [cron-job.org](https://cron-job.org)) a:
+
+```
+POST https://tu-app.onrender.com/api/push/send-daily
+Header: x-cron-secret: <el valor de PUSH_CRON_SECRET>
+```
+
+En iPhone, Apple sólo permite notificaciones web si la app está agregada a la
+pantalla de inicio (Compartir → Agregar a inicio). La app lo avisa antes de
+pedir el permiso.

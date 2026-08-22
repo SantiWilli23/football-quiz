@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   avatar TEXT,
+  avatar_config TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -192,3 +193,26 @@ CREATE TABLE IF NOT EXISTS group_question_answers (
 
 CREATE INDEX IF NOT EXISTS idx_group_questions_date ON group_questions(group_id, scheduled_date);
 CREATE INDEX IF NOT EXISTS idx_group_question_answers_lookup ON group_question_answers(group_question_id, group_id);
+
+CREATE TABLE IF NOT EXISTS app_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  endpoint TEXT UNIQUE NOT NULL,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions(user_id);
+
+CREATE TABLE IF NOT EXISTS push_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  scheduled_date TEXT UNIQUE NOT NULL,
+  sent_count INTEGER NOT NULL DEFAULT 0,
+  sent_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

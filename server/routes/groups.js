@@ -126,7 +126,7 @@ router.get("/:id", async (req, res) => {
 
     const rankingResult = await db.execute({
       sql: `SELECT
-              u.id, u.username, u.avatar,
+              u.id, u.username, u.avatar, u.avatar_config,
               COALESCE(SUM(a.points), 0) AS points,
               COUNT(a.id) AS answered,
               COALESCE(SUM(a.is_correct), 0) AS correct
@@ -156,6 +156,7 @@ router.get("/:id", async (req, res) => {
           id: r.id,
           username: r.username,
           avatar: r.avatar,
+          avatar_config: r.avatar_config,
           trivia_points,
           mode_b_points,
           points: trivia_points + mode_b_points,

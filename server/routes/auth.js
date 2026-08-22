@@ -17,9 +17,48 @@ function publicUser(u) {
     username: u.username,
     email: u.email,
     avatar: u.avatar,
+    avatar_config: u.avatar_config,
     created_at: u.created_at,
   };
 }
+
+// El avatar es un muñequito dibujado con SVG en el cliente; acá sólo se guarda
+// su configuración. Se valida contra listas cerradas para que nadie meta
+// cualquier cosa en un campo que después se pinta en la pantalla de todos.
+const AVATAR_OPTIONS = {
+  bg: ["#22c55e", "#3b82f6", "#a855f7", "#f59e0b", "#ef4444", "#14b8a6"],
+  skin: ["#f2d0b4", "#e0ac82", "#c68642", "#8d5524", "#5c3317"],
+  hairColor: ["#2c1b18", "#5a3825", "#a55728", "#d6b370", "#b9b9b9", "#2f6fa8"],
+  hair: ["corto", "rulos", "largo", "gorro", "pelado"],
+  face: ["sonrisa", "seria", "grito", "picara"],
+  accessory: ["ninguno", "anteojos", "vincha", "barba"],
+};
+
+router.put("/avatar", requireAuth, async (req, res) => {
+  const config = req.body?.config;
+  if (!config || typeof config !== "object") {
+    return res.status(400).json({ error: "Falta la configuración del avatar" });
+  }
+
+  const clean = {};
+  for (const [key, allowed] of Object.entries(AVATAR_OPTIONS)) {
+    if (!allowed.includes(config[key])) {
+      return res.status(400).json({ error: `Valor inválido para ${key}` });
+    }
+    clean[key] = config[key];
+  }
+
+  try {
+    await db.execute({
+      sql: "UPDATE users SET avatar_config = ? WHERE id = ?",
+      args: [JSON.stringify(clean), req.userId],
+    });
+    res.json({ avatar_config: JSON.stringify(clean) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
 
 router.post("/register", async (req, res) => {
   const { username, email, password } = req.body || {};
