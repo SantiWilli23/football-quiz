@@ -3,6 +3,8 @@ import { CheckCircle2, Target, XCircle } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
+import GroupSelector from "../components/GroupSelector.jsx";
+import { useGroups } from "../context/GroupContext.jsx";
 
 function formatLocalDate(dateStr) {
   const [year, month, day] = dateStr.split("-").map(Number);
@@ -223,14 +225,7 @@ function ModeBHistory({ groupId }) {
 
 export default function History() {
   const [tab, setTab] = useState("trivia");
-  const [groupId, setGroupId] = useState(null);
-
-  useEffect(() => {
-    api
-      .get("/groups")
-      .then(({ data }) => setGroupId(data.groups[0]?.id ?? null))
-      .catch(() => setGroupId(null));
-  }, []);
+  const { activeGroupId: groupId } = useGroups();
 
   return (
     <Layout>
@@ -239,7 +234,8 @@ export default function History() {
           <h1 className="text-2xl font-bold mb-1">Mis preguntas</h1>
           <p className="text-gray-400 text-sm">Todo lo que respondiste hasta ahora</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          {tab === "especial" && <GroupSelector className="mr-1" />}
           <button
             onClick={() => setTab("trivia")}
             className={`px-3 py-1 text-sm font-medium rounded border ${

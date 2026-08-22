@@ -2,15 +2,15 @@ import { useEffect, useState } from "react";
 import { Copy, Crown, Plus, Users } from "lucide-react";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useGroups } from "../context/GroupContext.jsx";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 
 export default function Group() {
   const { user } = useAuth();
-  const [groups, setGroups] = useState([]);
-  const [activeGroup, setActiveGroup] = useState(null);
+  const { groups, activeGroupId, selectGroup, loading, reloadGroups } = useGroups();
+  const [detail, setDetail] = useState(null);
   const [ranking, setRanking] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
@@ -25,32 +25,25 @@ export default function Group() {
 
   const [copied, setCopied] = useState(false);
 
-  const loadGroups = async () => {
-    setLoading(true);
-    try {
-      const { data } = await api.get("/groups");
-      setGroups(data.groups);
-      if (data.groups.length > 0) {
-        selectGroup(data.groups[0].id);
-      } else {
-        setActiveGroup(null);
-        setRanking([]);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const selectGroup = async (id) => {
-    const { data } = await api.get(`/groups/${id}`);
-    setActiveGroup(data.group);
-    setRanking(data.ranking);
-  };
-
+  // La lista de grupos y cuál está activo viven en el contexto (compartido con
+  // el resto de la app); acá sólo se pide el detalle y el ranking del activo.
   useEffect(() => {
-    loadGroups();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!activeGroupId) {
+      setDetail(null);
+      setRanking([]);
+      return;
+    }
+    api
+      .get(`/groups/${activeGroupId}`)
+      .then(({ data }) => {
+        setDetail(data.group);
+        setRanking(data.ranking);
+      })
+      .catch(() => {
+        setDetail(null);
+        setRanking([]);
+      });
+  }, [activeGroupId]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -65,7 +58,7 @@ export default function Group() {
       setNewName("");
       setNewDescription("");
       setShowCreate(false);
-      await loadGroups();
+      await reloadGroups();
     } catch (err) {
       setCreateError(err.response?.data?.error || "No se pudo crear el grupo");
     } finally {
@@ -85,7 +78,7 @@ export default function Group() {
       const { data } = await api.post("/groups/join", { invite_code: joinCode.trim() });
       setJoinCode("");
       setShowJoin(false);
-      await loadGroups();
+      await reloadGroups();
       selectGroup(data.group.id);
     } catch (err) {
       setJoinError(err.response?.data?.error || "No se pudo unir al grupo");
@@ -95,8 +88,8 @@ export default function Group() {
   };
 
   const copyCode = () => {
-    if (!activeGroup) return;
-    navigator.clipboard.writeText(activeGroup.invite_code);
+    if (!detail) return;
+    navigator.clipboard.writeText(detail.invite_code);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
@@ -193,7 +186,7 @@ export default function Group() {
                 key={g.id}
                 onClick={() => selectGroup(g.id)}
                 className={`w-full text-left px-4 py-3 rounded-card border transition-colors ${
-                  activeGroup?.id === g.id
+                  activeGroupId === g.id
                     ? "border-accent/40 bg-accent/10"
                     : "border-border bg-panel hover:border-white/30"
                 }`}
@@ -204,13 +197,13 @@ export default function Group() {
             ))}
           </div>
 
-          {activeGroup && (
+          {detail && (
             <Card>
               <div className="flex items-start justify-between mb-6">
                 <div>
-                  <h2 className="text-lg font-semibold">{activeGroup.name}</h2>
-                  {activeGroup.description && (
-                    <p className="text-sm text-gray-400 mt-0.5">{activeGroup.description}</p>
+                  <h2 className="text-lg font-semibold">{detail.name}</h2>
+                  {detail.description && (
+                    <p className="text-sm text-gray-400 mt-0.5">{detail.description}</p>
                   )}
                 </div>
                 <button
@@ -218,7 +211,7 @@ export default function Group() {
                   className="flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-card border border-border text-gray-300 hover:text-white hover:border-white/30 transition-colors shrink-0"
                 >
                   <Copy size={14} />
-                  {copied ? "Copiado" : activeGroup.invite_code}
+                  {copied ? "Copiado" : detail.invite_code}
                 </button>
               </div>
 

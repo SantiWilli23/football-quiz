@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { Flame, Radio, Target, Users } from "lucide-react";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useGroups } from "../context/GroupContext.jsx";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
+import GroupSelector from "../components/GroupSelector.jsx";
 import QuestionCard from "../components/QuestionCard.jsx";
 import BonusCard from "../components/BonusCard.jsx";
 import ModeBCard from "../components/ModeBCard.jsx";
@@ -12,12 +14,10 @@ const LIVE_REFRESH_MS = 15000;
 
 export default function Dashboard() {
   const { stats, refreshMe } = useAuth();
+  const { groups, activeGroupId: groupId } = useGroups();
   const [questions, setQuestions] = useState(null);
   const [modeBData, setModeBData] = useState(null);
-  const [groups, setGroups] = useState([]);
   const [mode, setMode] = useState("a");
-
-  const groupId = groups[0]?.id ?? null;
 
   const loadTrivia = async () => {
     try {
@@ -41,17 +41,7 @@ export default function Dashboard() {
     }
   }, [groupId]);
 
-  const loadGroups = async () => {
-    try {
-      const { data } = await api.get("/groups");
-      setGroups(data.groups);
-    } catch {
-      setGroups([]);
-    }
-  };
-
   useEffect(() => {
-    loadGroups();
     loadTrivia();
   }, []);
 
@@ -88,7 +78,8 @@ export default function Dashboard() {
         <div>
           <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
             <h1 className="text-xl sm:text-2xl font-bold">Preguntas del día</h1>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              <GroupSelector className="mr-1" />
               <button
                 onClick={() => setMode("a")}
                 className={`px-3 py-1 text-sm font-medium rounded border ${

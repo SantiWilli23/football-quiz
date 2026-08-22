@@ -4,6 +4,8 @@ import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
+import GroupSelector from "../components/GroupSelector.jsx";
+import { useGroups } from "../context/GroupContext.jsx";
 
 const KIND_LABELS = {
   quien_es_mas: "¿Quién es más?",
@@ -38,8 +40,7 @@ function Stat({ label, value, sub, accent }) {
 
 export default function Stats() {
   const { user } = useAuth();
-  const [groups, setGroups] = useState([]);
-  const [groupId, setGroupId] = useState(null);
+  const { groups, activeGroupId: groupId, loading: groupsLoading } = useGroups();
   const [modeB, setModeB] = useState(null);
   const [weekly, setWeekly] = useState(null);
   const [compatibility, setCompatibility] = useState([]);
@@ -47,19 +48,11 @@ export default function Stats() {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
 
-  useEffect(() => {
-    api
-      .get("/groups")
-      .then(({ data }) => {
-        setGroups(data.groups);
-        if (data.groups.length > 0) setGroupId(data.groups[0].id);
-        else setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
-
   const loadAll = useCallback(async () => {
-    if (!groupId) return;
+    if (!groupId) {
+      if (!groupsLoading) setLoading(false);
+      return;
+    }
     setLoading(true);
     const params = { groupId };
     const settle = (promise, fallback) => promise.then((r) => r.data).catch(() => fallback);
@@ -74,7 +67,7 @@ export default function Stats() {
     setCompatibility(compatData.compatibility);
     setAchievements(achData);
     setLoading(false);
-  }, [groupId]);
+  }, [groupId, groupsLoading]);
 
   useEffect(() => {
     loadAll();
@@ -121,19 +114,7 @@ export default function Stats() {
           <p className="text-gray-400 text-sm">Cómo viene la temporada del grupo</p>
         </div>
         <div className="flex items-center gap-3">
-          {groups.length > 1 && (
-            <select
-              value={groupId ?? ""}
-              onChange={(e) => setGroupId(Number(e.target.value))}
-              className="bg-panel border border-border rounded-card px-3 py-2 text-sm focus:outline-none focus:border-accent"
-            >
-              {groups.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name}
-                </option>
-              ))}
-            </select>
-          )}
+          <GroupSelector />
           <button
             onClick={handleExport}
             disabled={exporting}

@@ -1,19 +1,23 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useGroups } from "../context/GroupContext.jsx";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 
 export default function Profile() {
   const { user, stats } = useAuth();
+  const { activeGroupId, activeGroup } = useGroups();
   const [position, setPosition] = useState(null);
 
   useEffect(() => {
     const loadPosition = async () => {
+      if (!activeGroupId) {
+        setPosition(null);
+        return;
+      }
       try {
-        const { data: groupsData } = await api.get("/groups");
-        if (groupsData.groups.length === 0) return;
-        const { data } = await api.get(`/groups/${groupsData.groups[0].id}`);
+        const { data } = await api.get(`/groups/${activeGroupId}`);
         const mine = data.ranking.find((r) => r.id === user?.id);
         setPosition(mine ? mine.position : null);
       } catch {
@@ -21,7 +25,7 @@ export default function Profile() {
       }
     };
     if (user) loadPosition();
-  }, [user]);
+  }, [user, activeGroupId]);
 
   if (!user || !stats) return null;
 
@@ -33,7 +37,10 @@ export default function Profile() {
     { label: "Respondidas", value: stats.answered },
     { label: "Racha actual", value: `${stats.current_streak} días` },
     { label: "Mejor racha", value: `${stats.best_streak} días` },
-    { label: "Posición en grupo", value: position ? `#${position}` : "—" },
+    {
+      label: activeGroup ? `Posición en ${activeGroup.name}` : "Posición en grupo",
+      value: position ? `#${position}` : "—",
+    },
   ];
 
   return (
