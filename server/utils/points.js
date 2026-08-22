@@ -16,9 +16,12 @@ function diffDays(a, b) {
   return Math.round((da - db_) / 86400000);
 }
 
+// Distinct dates (DESC) on which the user answered at least one question
+// correctly. A day counts toward the streak once, regardless of how many
+// of that day's questions were answered correctly.
 async function getCorrectDates(userId) {
   const result = await db.execute({
-    sql: `SELECT q.scheduled_date AS date FROM answers a
+    sql: `SELECT DISTINCT q.scheduled_date AS date FROM answers a
           JOIN questions q ON q.id = a.question_id
           WHERE a.user_id = ? AND a.is_correct = 1
           ORDER BY q.scheduled_date DESC`,

@@ -35,8 +35,12 @@ CREATE TABLE IF NOT EXISTS questions (
   option_c TEXT NOT NULL,
   option_d TEXT NOT NULL,
   correct_answer TEXT NOT NULL CHECK (correct_answer IN ('a','b','c','d')),
-  scheduled_date TEXT UNIQUE NOT NULL
+  scheduled_date TEXT NOT NULL,
+  slot INTEGER NOT NULL DEFAULT 1,
+  UNIQUE(scheduled_date, slot)
 );
+
+CREATE INDEX IF NOT EXISTS idx_questions_date ON questions(scheduled_date);
 
 CREATE TABLE IF NOT EXISTS answers (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

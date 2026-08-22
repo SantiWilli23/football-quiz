@@ -24,34 +24,37 @@ router.get("/today", async (req, res) => {
   try {
     const today = todayStr();
     const qResult = await db.execute({
-      sql: "SELECT * FROM questions WHERE scheduled_date = ?",
+      sql: "SELECT * FROM questions WHERE scheduled_date = ? ORDER BY slot ASC",
       args: [today],
     });
-    const question = qResult.rows[0];
-    if (!question) {
-      return res.status(404).json({ error: "No hay pregunta programada para hoy" });
+    if (qResult.rows.length === 0) {
+      return res.status(404).json({ error: "No hay preguntas programadas para hoy" });
     }
 
-    const answerResult = await db.execute({
-      sql: "SELECT * FROM answers WHERE user_id = ? AND question_id = ?",
-      args: [req.userId, question.id],
+    const answersResult = await db.execute({
+      sql: `SELECT * FROM answers WHERE user_id = ? AND question_id IN (${qResult.rows.map(() => "?").join(",")})`,
+      args: [req.userId, ...qResult.rows.map((q) => q.id)],
     });
-    const answered = answerResult.rows[0];
+    const answersByQuestionId = new Map(answersResult.rows.map((a) => [a.question_id, a]));
 
-    if (answered) {
-      return res.json({
-        question: publicQuestion(question),
-        answered: true,
-        result: {
-          answer: answered.answer,
-          is_correct: !!answered.is_correct,
-          points: answered.points,
-          correct_answer: question.correct_answer,
-        },
-      });
-    }
+    const questions = qResult.rows.map((question) => {
+      const answered = answersByQuestionId.get(question.id);
+      if (answered) {
+        return {
+          question: publicQuestion(question),
+          answered: true,
+          result: {
+            answer: answered.answer,
+            is_correct: !!answered.is_correct,
+            points: answered.points,
+            correct_answer: question.correct_answer,
+          },
+        };
+      }
+      return { question: publicQuestion(question), answered: false };
+    });
 
-    res.json({ question: publicQuestion(question), answered: false });
+    res.json({ questions });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });
@@ -142,7 +145,7 @@ router.get("/history", async (req, res) => {
             FROM answers a
             JOIN questions q ON q.id = a.question_id
             WHERE a.user_id = ? ${filterSql}
-            ORDER BY q.scheduled_date DESC
+            ORDER BY q.scheduled_date DESC, q.slot DESC
             LIMIT ? OFFSET ?`,
       args: [req.userId, pageSize, offset],
     });
