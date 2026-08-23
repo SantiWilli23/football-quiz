@@ -55,12 +55,15 @@ async function configure() {
 // navegador contesta 404/410 la suscripción ya no existe (desinstalaron la app,
 // limpiaron el sitio) y se borra para no reintentar por siempre.
 export async function sendToUser(userId, payload) {
-  await configure();
-
   const result = await db.execute({
     sql: "SELECT id, endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ?",
     args: [userId],
   });
+  // Sin dispositivos no hay nada que mandar, y así se evita generar y guardar
+  // las claves VAPID por gente que nunca activó las notificaciones.
+  if (result.rows.length === 0) return 0;
+
+  await configure();
 
   let sent = 0;
   for (const row of result.rows) {

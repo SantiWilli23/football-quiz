@@ -1,6 +1,23 @@
 import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
+import { sendToUser } from "../utils/push.js";
+
+// Un duelo depende de que el otro se entere. Si el aviso falla (no tiene
+// notificaciones activadas, se le venció la suscripción) el duelo sigue su
+// curso igual: nunca debe romper la jugada.
+async function notify(userId, body) {
+  try {
+    await sendToUser(userId, { title: "Football Quiz", body, url: "/duelos" });
+  } catch (err) {
+    console.error("no se pudo avisar del duelo:", err.message);
+  }
+}
+
+async function usernameOf(userId) {
+  const result = await db.execute({ sql: "SELECT username FROM users WHERE id = ?", args: [userId] });
+  return result.rows[0]?.username ?? "Alguien";
+}
 
 const router = Router();
 router.use(requireAuth);
@@ -76,6 +93,30 @@ async function resolveIfComplete(duel) {
     args: [challengerCorrect, opponentCorrect, winnerId, duel.id],
   });
 
+  // El aviso sale una sola vez: el UPDATE de arriba deja el duelo en
+  // 'terminado' y esta función corta al principio si ya lo estaba.
+  const [challengerName, opponentName] = await Promise.all([
+    usernameOf(duel.challenger_id),
+    usernameOf(duel.opponent_id),
+  ]);
+  const resultado = (rival, miScore, suScore) =>
+    miScore === suScore
+      ? `Empataste ${miScore}-${suScore} con ${rival}.`
+      : miScore > suScore
+        ? `¡Le ganaste a ${rival} ${miScore}-${suScore}!`
+        : `${rival} te ganó ${suScore}-${miScore}.`;
+
+  await Promise.all([
+    notify(
+      duel.challenger_id,
+      `Terminó tu duelo. ${resultado(opponentName, challengerCorrect, opponentCorrect)}`
+    ),
+    notify(
+      duel.opponent_id,
+      `Terminó tu duelo. ${resultado(challengerName, opponentCorrect, challengerCorrect)}`
+    ),
+  ]);
+
   return {
     ...duel,
     challenger_correct: challengerCorrect,
@@ -141,6 +182,11 @@ router.post("/", async (req, res) => {
         difficulty,
       ],
     });
+
+    await notify(
+      opponentId,
+      `${await usernameOf(req.userId)} te desafió a un duelo ${DUEL_DIFFICULTIES[difficulty].label}.`
+    );
 
     res.status(201).json({ id: Number(inserted.lastInsertRowid) });
   } catch (err) {
