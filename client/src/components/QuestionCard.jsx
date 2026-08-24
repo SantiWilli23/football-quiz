@@ -2,13 +2,15 @@ import { useState } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
 import api from "../api.js";
 import Card from "./Card.jsx";
+import { SLOT_CHALK, chalkFill } from "../theme.js";
 
 const OPTION_LABELS = { a: "A", b: "B", c: "C", d: "D" };
-const SLOT_COLORS = {
-  1: { border: "#3b82f6", bg: "rgba(59,130,246,0.05)", label: "🌍 General" },
-  2: { border: "#10b981", bg: "rgba(16,185,129,0.05)", label: "🇨🇱 Liga Chilena" },
-  3: { border: "#f59e0b", bg: "rgba(245,158,11,0.05)", label: "⚽ Europa" },
-};
+const SLOT_COLORS = Object.fromEntries(
+  Object.entries(SLOT_CHALK).map(([slot, { color, label }]) => [
+    slot,
+    { border: color, bg: chalkFill(color, "0d"), label },
+  ])
+);
 
 export default function QuestionCard({ item, index, total, onAnswered }) {
   const { question } = item;

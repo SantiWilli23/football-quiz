@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,13 +11,26 @@ body,
 }
 
 body {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: Archivo, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background-color: #10231b;
+
+  /* Polvo de tiza: dos manchas muy tenues para que el verde no quede plano.
+     Van fijas al viewport así no se mueven al hacer scroll, como el pizarrón. */
+  background-image:
+    radial-gradient(ellipse 80% 50% at 20% 0%, rgba(223, 240, 230, 0.04), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 85% 100%, rgba(223, 240, 230, 0.03), transparent 70%);
+  background-attachment: fixed;
 }
 
 ::-webkit-scrollbar {
   width: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1c1c30;
+  background: #2f5243;
   border-radius: 8px;
+}
+
+/* Los separadores del tema son de tiza: trazo punteado en vez de línea llena. */
+.chalk-line {
+  border-bottom: 1px dashed #2f5243;
 }

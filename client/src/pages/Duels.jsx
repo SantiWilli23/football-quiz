@@ -7,13 +7,14 @@ import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import Avatar from "../components/Avatar.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
+import { CHALK, DUEL_CHALK } from "../theme.js";
 
-const COLOR = "#ef4444";
+const COLOR = CHALK.red;
 
 const DIFFICULTY_STYLE = {
-  dificil: { label: "Difícil", emoji: "🔥", color: "#f59e0b" },
-  ultra: { label: "Ultra difícil", emoji: "💀", color: "#ef4444" },
-  demonio: { label: "Demonio", emoji: "😈", color: "#a855f7" },
+  dificil: { label: "Difícil", emoji: "🔥", color: DUEL_CHALK.dificil },
+  ultra: { label: "Ultra difícil", emoji: "💀", color: DUEL_CHALK.ultra },
+  demonio: { label: "Demonio", emoji: "😈", color: DUEL_CHALK.demonio },
 };
 const LETTERS = { a: "A", b: "B", c: "C", d: "D" };
 

@@ -4,6 +4,7 @@ import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
+import { KIND_CHALK } from "../theme.js";
 import { useGroups } from "../context/GroupContext.jsx";
 
 function formatLocalDate(dateStr) {
@@ -21,10 +22,10 @@ const FILTERS = [
 ];
 
 const KIND_LABELS = {
-  quien_es_mas: { label: "¿Quién es más?", color: "#3b82f6" },
-  que_prefieres: { label: "¿Qué prefieres?", color: "#10b981" },
-  personalidad: { label: "Personalidad", color: "#a855f7" },
-  grupal: { label: "Pregunta del grupo", color: "#f59e0b" },
+  quien_es_mas: { label: "¿Quién es más?", color: KIND_CHALK.quien_es_mas },
+  que_prefieres: { label: "¿Qué prefieres?", color: KIND_CHALK.que_prefieres },
+  personalidad: { label: "Personalidad", color: KIND_CHALK.personalidad },
+  grupal: { label: "Pregunta del grupo", color: KIND_CHALK.grupal },
 };
 
 function Pagination({ page, totalPages, onChange }) {

@@ -3,13 +3,14 @@ import { Check, GitCompare, PenLine, Sparkles, Target, UserCircle2, Users, X } f
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import Card from "./Card.jsx";
+import { CHALK, KIND_CHALK } from "../theme.js";
 import Avatar from "./Avatar.jsx";
 
 const KINDS = {
-  quien_es_mas: { color: "#3b82f6", icon: Users, label: "¿Quién es más?" },
-  que_prefieres: { color: "#10b981", icon: GitCompare, label: "¿Qué prefieres?" },
-  personalidad: { color: "#a855f7", icon: UserCircle2, label: "Personalidad" },
-  grupal: { color: "#f59e0b", icon: PenLine, label: "Pregunta del grupo" },
+  quien_es_mas: { color: KIND_CHALK.quien_es_mas, icon: Users, label: "¿Quién es más?" },
+  que_prefieres: { color: KIND_CHALK.que_prefieres, icon: GitCompare, label: "¿Qué prefieres?" },
+  personalidad: { color: KIND_CHALK.personalidad, icon: UserCircle2, label: "Personalidad" },
+  grupal: { color: KIND_CHALK.grupal, icon: PenLine, label: "Pregunta del grupo" },
 };
 
 const OPTION_LETTERS = ["A", "B", "C", "D"];
@@ -21,13 +22,13 @@ function Step({ n, label, active, done, color }) {
         className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold"
         style={{
           background: done || active ? color : "transparent",
-          color: done || active ? "#000" : "#6b7280",
-          border: done || active ? "none" : "1px solid #374151",
+          color: done || active ? CHALK.board : CHALK.faint,
+          border: done || active ? "none" : `1px dashed ${CHALK.line}`,
         }}
       >
         {done ? "✓" : n}
       </span>
-      <span className="text-[11px] hidden sm:inline" style={{ color: active ? color : "#6b7280" }}>
+      <span className="text-[11px] hidden sm:inline" style={{ color: active ? color : CHALK.faint }}>
         {label}
       </span>
     </div>
@@ -129,7 +130,7 @@ export default function ModeBCard({ data, groupId, onChanged }) {
 
         <h2 className="text-xl font-semibold mb-2">{data.prompt}</h2>
 
-        <p className="text-xs mb-5" style={{ color: answered && !predicted ? kind.color : "#6b7280" }}>
+        <p className="text-xs mb-5" style={{ color: answered && !predicted ? kind.color : CHALK.faint }}>
           {!answered && "Elegí tu respuesta."}
           {answered && !predicted && "Ahora adiviná: ¿qué va a votar la mayoría del grupo? (+15 pts si acertás)"}
           {data.revealed && "Resultados del grupo"}

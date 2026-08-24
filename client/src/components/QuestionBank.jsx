@@ -2,8 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { Check, PenLine, Plus, Trash2 } from "lucide-react";
 import api from "../api.js";
 import Card from "./Card.jsx";
+import { CHALK } from "../theme.js";
 
-const COLOR = "#f59e0b";
+const COLOR = CHALK.yellow;
 const LETTERS = ["A", "B", "C", "D"];
 
 export default function QuestionBank({ groupId }) {

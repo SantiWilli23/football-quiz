@@ -2,8 +2,9 @@ import { useState } from "react";
 import { PenLine, Plus, Trash2 } from "lucide-react";
 import api from "../api.js";
 import Card from "./Card.jsx";
+import { CHALK } from "../theme.js";
 
-const COLOR = "#f59e0b";
+const COLOR = CHALK.yellow;
 const MAX_OPTIONS = 4;
 
 // Se muestra cuando todavía nadie del grupo escribió la pregunta del día.
