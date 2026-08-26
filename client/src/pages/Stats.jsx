@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { Award, Crown, Download, Heart, Sparkles, TrendingUp, Trophy } from "lucide-react";
+import { Award, Crown, Download, Heart, History, Sparkles, TrendingUp, Trophy } from "lucide-react";
 import api from "../api.js";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
@@ -117,6 +118,13 @@ export default function Stats() {
         </div>
         <div className="flex items-center gap-3">
           <GroupSelector />
+          <Link
+            to="/historial"
+            className="lg:hidden flex items-center gap-2 px-4 py-2 rounded-card text-sm font-medium border border-border text-gray-300 hover:text-white hover:border-white/30 transition-colors"
+          >
+            <History size={15} />
+            Historial
+          </Link>
           <button
             onClick={handleExport}
             disabled={exporting}

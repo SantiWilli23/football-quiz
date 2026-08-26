@@ -14,6 +14,7 @@ import modeBRoutes from "./routes/mode-b.js";
 import statsRoutes from "./routes/stats.js";
 import pushRoutes from "./routes/push.js";
 import duelsRoutes from "./routes/duels.js";
+import footballRoutes from "./routes/football.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -34,6 +35,7 @@ app.use("/api/mode-b", modeBRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/push", pushRoutes);
 app.use("/api/duels", duelsRoutes);
+app.use("/api/football", footballRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 

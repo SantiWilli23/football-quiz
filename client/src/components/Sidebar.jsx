@@ -1,11 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { Home, Users, History, BarChart3, Swords, User, LogOut, Flame } from "lucide-react";
+import { Home, Users, History, BarChart3, Swords, Newspaper, User, LogOut, Flame } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import Avatar from "./Avatar.jsx";
 
 const links = [
   { to: "/", label: "Inicio", icon: Home, end: true },
   { to: "/grupo", label: "Mi grupo", icon: Users },
+  { to: "/futbol", label: "Fútbol", icon: Newspaper },
   { to: "/historial", label: "Mis preguntas", icon: History },
   { to: "/duelos", label: "Duelos", icon: Swords },
   { to: "/estadisticas", label: "Estadísticas", icon: BarChart3 },

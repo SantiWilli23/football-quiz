@@ -8,6 +8,7 @@ import History from "./pages/History.jsx";
 import Profile from "./pages/Profile.jsx";
 import Stats from "./pages/Stats.jsx";
 import Duels from "./pages/Duels.jsx";
+import Football from "./pages/Football.jsx";
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -69,6 +70,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <History />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/futbol"
+        element={
+          <PrivateRoute>
+            <Football />
           </PrivateRoute>
         }
       />

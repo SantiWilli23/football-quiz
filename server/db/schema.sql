@@ -273,3 +273,9 @@ CREATE TABLE IF NOT EXISTS duel_answers (
 );
 
 CREATE INDEX IF NOT EXISTS idx_duel_answers_lookup ON duel_answers(duel_id, user_id);
+
+CREATE TABLE IF NOT EXISTS football_cache (
+  cache_key TEXT PRIMARY KEY,
+  payload TEXT NOT NULL,
+  fetched_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
