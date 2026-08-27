@@ -63,7 +63,7 @@ router.get("/:league/live", async (req, res) => {
   if (!league) return;
   try {
     const { data, stale } = await getLiveFixtures(league);
-    res.json({ fixtures: data.map(publicFixture), stale });
+    res.json({ fixtures: data.map(publicFixture), stale, demo: false });
   } catch (err) {
     handleFootballError(err, res);
   }
@@ -74,8 +74,8 @@ router.get("/:league/fixtures", async (req, res) => {
   if (!league) return;
   const date = /^\d{4}-\d{2}-\d{2}$/.test(req.query.date || "") ? req.query.date : todayStr();
   try {
-    const { data, stale } = await getFixturesByDate(league, date);
-    res.json({ date, fixtures: data.map(publicFixture), stale });
+    const { data, blocked_by_plan } = await getFixturesByDate(league, date);
+    res.json({ date, fixtures: data.map(publicFixture), blocked_by_plan });
   } catch (err) {
     handleFootballError(err, res);
   }
@@ -85,10 +85,11 @@ router.get("/:league/standings", async (req, res) => {
   const league = requireLeague(req, res);
   if (!league) return;
   try {
-    const { data, stale } = await getStandings(league);
+    const { data, demo } = await getStandings(league);
     const table = data[0]?.league?.standings?.[0] ?? [];
     res.json({
-      stale,
+      demo,
+      demo_season: demo ? "2023-24" : null,
       table: table.map((row) => ({
         position: row.rank,
         team: { id: row.team.id, name: row.team.name, logo: row.team.logo },
@@ -112,9 +113,10 @@ router.get("/:league/scorers", async (req, res) => {
   const league = requireLeague(req, res);
   if (!league) return;
   try {
-    const { data, stale } = await getTopScorers(league);
+    const { data, demo } = await getTopScorers(league);
     res.json({
-      stale,
+      demo,
+      demo_season: demo ? "2023-24" : null,
       scorers: data.map((entry) => ({
         player: { id: entry.player.id, name: entry.player.name, photo: entry.player.photo },
         team: entry.statistics[0]?.team

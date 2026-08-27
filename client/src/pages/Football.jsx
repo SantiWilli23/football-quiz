@@ -65,6 +65,41 @@ function NotConfigured() {
   );
 }
 
+// El plan gratis de la API sólo deja ver tabla y goleadores de una temporada
+// vieja (2023-24), no la actual. Se avisa siempre que se esté mostrando esa
+// muestra: en vivo el partido de arriba puede ser real y esta tabla de abajo
+// puede ser de hace dos años, así que hay que decirlo clarísimo.
+function DemoBanner({ season }) {
+  return (
+    <div className="flex items-start gap-2.5 mb-4 px-3.5 py-2.5 rounded-card border border-amber-500/30 bg-amber-500/5">
+      <AlertTriangle size={15} className="text-amber-400 shrink-0 mt-0.5" />
+      <p className="text-xs text-amber-200/90">
+        Esto es de la temporada {season}, no la actual: el plan gratis de la API no llega a la de
+        ahora. Se pasa a datos reales solos apenas se active un plan pago.
+      </p>
+    </div>
+  );
+}
+
+// Para esta vista puntual (partidos de un día elegido) no existe ninguna
+// combinación de fecha y temporada que el plan gratis deje pasar — a
+// diferencia de tabla y goleadores, acá no hay una muestra vieja que mostrar.
+function BlockedByPlan() {
+  return (
+    <div className="flex items-start gap-3">
+      <AlertTriangle size={20} className="text-amber-400 shrink-0 mt-0.5" />
+      <div>
+        <p className="text-sm font-medium mb-1">Esta vista necesita un plan pago</p>
+        <p className="text-sm text-gray-400">
+          El plan gratis de la API no deja consultar partidos por fecha fuera de una ventana muy
+          chica alrededor de hoy, ni siquiera de temporadas viejas. Mientras tanto, la pestaña
+          "En vivo" sí funciona con datos reales.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function Football() {
   const [leagues, setLeagues] = useState([]);
   const [configured, setConfigured] = useState(true);
@@ -75,8 +110,11 @@ export default function Football() {
 
   const [live, setLive] = useState(null);
   const [fixtures, setFixtures] = useState(null);
+  const [fixturesBlocked, setFixturesBlocked] = useState(false);
   const [standings, setStandings] = useState(null);
+  const [standingsDemo, setStandingsDemo] = useState(null);
   const [scorers, setScorers] = useState(null);
+  const [scorersDemo, setScorersDemo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -102,12 +140,15 @@ export default function Football() {
       } else if (tab === "hoy") {
         const { data } = await api.get(`/football/${league}/fixtures`, { params: { date } });
         setFixtures(data.fixtures);
+        setFixturesBlocked(data.blocked_by_plan);
       } else if (tab === "tabla") {
         const { data } = await api.get(`/football/${league}/standings`);
         setStandings(data.table);
+        setStandingsDemo(data.demo ? data.demo_season : null);
       } else if (tab === "goleadores") {
         const { data } = await api.get(`/football/${league}/scorers`);
         setScorers(data.scorers);
+        setScorersDemo(data.demo ? data.demo_season : null);
       }
     } catch (err) {
       setError(err.response?.data?.error || "No se pudo cargar la información");
@@ -211,7 +252,9 @@ export default function Football() {
             )}
 
             {!loading && !error && tab === "hoy" && (
-              fixtures && fixtures.length > 0 ? (
+              fixturesBlocked ? (
+                <BlockedByPlan />
+              ) : fixtures && fixtures.length > 0 ? (
                 <div className="space-y-2">
                   {fixtures.map((f) => (
                     <FixtureCard key={f.id} fixture={f} />
@@ -222,8 +265,18 @@ export default function Football() {
               )
             )}
 
-            {!loading && !error && tab === "tabla" && standings && <StandingsTable table={standings} />}
-            {!loading && !error && tab === "goleadores" && scorers && <ScorersList scorers={scorers} />}
+            {!loading && !error && tab === "tabla" && standings && (
+              <>
+                {standingsDemo && <DemoBanner season={standingsDemo} />}
+                <StandingsTable table={standings} />
+              </>
+            )}
+            {!loading && !error && tab === "goleadores" && scorers && (
+              <>
+                {scorersDemo && <DemoBanner season={scorersDemo} />}
+                <ScorersList scorers={scorers} />
+              </>
+            )}
           </Card>
         </>
       )}
