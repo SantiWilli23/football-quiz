@@ -432,7 +432,7 @@
       { n: "Heredia", p: "ZAG", r: 78 }, { n: "Wolff", p: "LE", r: 75 },
       { n: "Pavoni", p: "LD", r: 74 }, { n: "Babington", p: "MEI", r: 84 },
       { n: "Telch", p: "MEI", r: 77 }, { n: "Kempes", p: "CA", r: 88 },
-      { n: "Houseman", p: "PE", r: 81 }, { n: "Yazalde", p: "CA", r: 79 },
+      { n: "Houseman", p: "PD/PE", r: 81 }, { n: "Yazalde", p: "CA", r: 79 },
       { n: "Brindisi", p: "MEI", r: 76 }, { n: "Fillol", p: "GOL", r: 78 },
       { n: "Carrascosa", p: "LD/LE", r: 76 }, { n: "Chazarreta", p: "CA", r: 73 }
     ]},
@@ -448,7 +448,7 @@
     { nation: "Argentina", year: 2014, flag: "🇦🇷", players: [
       { n: "Romero", p: "GOL", r: 85 }, { n: "Garay", p: "ZAG", r: 84 },
       { n: "Zabaleta", p: "LD", r: 82 }, { n: "Rojo", p: "LE", r: 79 },
-      { n: "Mascherano", p: "MEI", r: 88 }, { n: "Di María", p: "MEI/PE", r: 89 },
+      { n: "Mascherano", p: "MEI", r: 88 }, { n: "Di María", p: "MEI/PD/PE", r: 89 },
       { n: "Messi", p: "CA/PE/MEI", r: 96 }, { n: "Higuaín", p: "CA", r: 86 },
       { n: "Agüero", p: "CA", r: 87 }, { n: "Banega", p: "MEI", r: 80 },
       { n: "Lavezzi", p: "PE", r: 81 }, { n: "Enzo Pérez", p: "MEI", r: 78 },
@@ -460,7 +460,7 @@
       { n: "Montero Castillo", p: "MEI", r: 80 }, { n: "Cortés", p: "MEI", r: 77 },
       { n: "Cubilla", p: "PD/PE", r: 83 }, { n: "Morales", p: "CA", r: 82 },
       { n: "Espárrago", p: "CA/PE", r: 80 }, { n: "Maneiro", p: "PE", r: 78 },
-      { n: "Fontes", p: "ZAG", r: 75 }, { n: "Rocha", p: "MEI/PE", r: 85 },
+      { n: "Fontes", p: "ZAG/LE", r: 75 }, { n: "Rocha", p: "MEI/PE", r: 85 },
       { n: "Mujica", p: "GOL", r: 73 }
     ]},
     { nation: "Uruguay", year: 1974, flag: "🇺🇾", players: [
@@ -468,7 +468,7 @@
       { n: "Sánchez", p: "ZAG", r: 74 }, { n: "Masnik", p: "LD", r: 74 },
       { n: "Olivera", p: "LE", r: 73 }, { n: "Montero Castillo", p: "ZAG/MEI", r: 80 },
       { n: "Bareño", p: "MEI", r: 76 }, { n: "Rocha", p: "MEI/PE", r: 84 },
-      { n: "Morena", p: "CA", r: 82 }, { n: "Losada", p: "PE", r: 75 },
+      { n: "Morena", p: "CA", r: 82 }, { n: "Losada", p: "PD/PE", r: 75 },
       { n: "Garisto", p: "MEI", r: 74 }, { n: "Pavoni", p: "LD", r: 73 }
     ]},
     { nation: "Costa de Marfil", year: 2010, flag: "🇨🇮", players: [
@@ -486,7 +486,7 @@
       { n: "Agoos", p: "LE", r: 73 }, { n: "Harkes", p: "MEI", r: 78 },
       { n: "Ramos T.", p: "MEI", r: 76 }, { n: "Dooley", p: "MEI/LD", r: 77 },
       { n: "Wynalda", p: "CA/PE", r: 80 }, { n: "Stewart", p: "CA", r: 78 },
-      { n: "Jones", p: "PE", r: 74 }, { n: "Sorber", p: "ZAG", r: 73 },
+      { n: "Jones", p: "PD/PE", r: 74 }, { n: "Sorber", p: "ZAG", r: 73 },
       { n: "Vermes", p: "LD/MEI", r: 74 }
     ]},
     { nation: "Ghana", year: 2014, flag: "🇬🇭", players: [
@@ -504,7 +504,7 @@
       { n: "Akita", p: "LE", r: 73 }, { n: "Nakata H.", p: "MEI", r: 87 },
       { n: "Fukunishi", p: "MEI", r: 76 }, { n: "Ono", p: "MEI", r: 78 },
       { n: "Suzuki", p: "CA", r: 79 }, { n: "Nishizawa", p: "CA", r: 77 },
-      { n: "Inamoto", p: "PE/MEI", r: 76 }, { n: "Toda", p: "LD", r: 74 },
+      { n: "Inamoto", p: "PD/PE/MEI", r: 76 }, { n: "Toda", p: "LD", r: 74 },
       { n: "Morishima", p: "LE", r: 73 }, { n: "Yanagisawa", p: "CA/PE", r: 75 }
     ]},
     { nation: "España", year: 2010, flag: "🇪🇸", players: [
@@ -520,13 +520,11 @@
       { n: "Bonner", p: "GOL", r: 78 }, { n: "Moran", p: "ZAG", r: 79 },
       { n: "McGrath", p: "ZAG/MEI", r: 83 }, { n: "Morris", p: "LD", r: 74 },
       { n: "Staunton", p: "LE/ZAG", r: 77 }, { n: "Houghton", p: "MEI", r: 78 },
-      { n: "McGrath II" /* placeholder retirado */, p: "MEI", r: 0 }
-    ].filter(function (x) { return x.r > 0; }).concat([
-      { n: "Townsend", p: "MEI", r: 76 }, { n: "Sheedy", p: "MEI/PE", r: 77 },
+      { n: "Townsend", p: "MEI", r: 76 }, { n: "Sheedy", p: "MEI/PD/PE", r: 77 },
       { n: "Cascarino", p: "CA", r: 78 }, { n: "Aldridge", p: "CA", r: 80 },
       { n: "Quinn", p: "CA", r: 76 }, { n: "Whelan", p: "MEI", r: 79 },
       { n: "O'Leary", p: "ZAG", r: 77 }
-    ])},
+    ]},
     { nation: "Portugal", year: 2022, flag: "🇵🇹", players: [
       { n: "Costa D.", p: "GOL", r: 82 }, { n: "Rúben Dias", p: "ZAG", r: 87 },
       { n: "Pepe", p: "ZAG", r: 83 }, { n: "Cancelo", p: "LD/LE", r: 86 },
@@ -541,7 +539,7 @@
       { n: "Guzmán", p: "ZAG", r: 73 }, { n: "Vantolrá", p: "LD", r: 74 },
       { n: "Peña", p: "LE", r: 73 }, { n: "Del Águila", p: "MEI", r: 76 },
       { n: "González Gonzalo", p: "MEI", r: 75 }, { n: "Padilla", p: "CA", r: 78 },
-      { n: "Valdivia", p: "PE", r: 74 }, { n: "Basaguren", p: "CA", r: 73 },
+      { n: "Valdivia", p: "PD/PE", r: 74 }, { n: "Basaguren", p: "CA", r: 73 },
       { n: "Fragoso", p: "ZAG", r: 72 }, { n: "Nájera", p: "MEI", r: 73 }
     ]},
     { nation: "Francia", year: 2014, flag: "🇫🇷", players: [
@@ -551,7 +549,7 @@
       { n: "Matuidi", p: "MEI", r: 82 }, { n: "Cabaye", p: "MEI", r: 79 },
       { n: "Benzema", p: "CA", r: 88 }, { n: "Griezmann", p: "CA/ME/MEI", r: 87 },
       { n: "Valbuena", p: "PE/MEI", r: 80 }, { n: "Koscielny", p: "ZAG", r: 82 },
-      { n: "Cabella", p: "PE/MEI", r: 76 }
+      { n: "Cabella", p: "PD/PE/MEI", r: 76 }
     ]},
     { nation: "Francia", year: 2018, flag: "🇫🇷", players: [
       { n: "Lloris", p: "GOL", r: 88 }, { n: "Varane", p: "ZAG", r: 88 },
@@ -576,7 +574,7 @@
       { n: "Oscar", p: "ZAG", r: 84 }, { n: "Luizinho", p: "ZAG", r: 80 },
       { n: "Júnior", p: "LE", r: 87 }, { n: "Cerezo", p: "MEI", r: 86 },
       { n: "Falcão", p: "MEI", r: 91 }, { n: "Sócrates", p: "MEI/CA", r: 92 },
-      { n: "Zico", p: "MEI/PE", r: 93 }, { n: "Éder", p: "PE/CA", r: 86 },
+      { n: "Zico", p: "MEI/PE", r: 93 }, { n: "Éder", p: "PD/PE/CA", r: 86 },
       { n: "Serginho", p: "CA", r: 78 }, { n: "Paulo Isidoro", p: "MEI/PE", r: 80 },
       { n: "Edevaldo", p: "ZAG", r: 76 }
     ]},
@@ -586,7 +584,7 @@
       { n: "Roberto Carlos", p: "LE", r: 91 }, { n: "Dunga", p: "MEI", r: 84 },
       { n: "César Sampaio", p: "MEI", r: 79 }, { n: "Rivaldo", p: "MEI/PE/CA", r: 92 },
       { n: "Ronaldo", p: "CA", r: 96 }, { n: "Bebeto", p: "CA/PE", r: 85 },
-      { n: "Leonardo", p: "PE/LE", r: 82 }, { n: "Denílson", p: "PE/MEI", r: 81 },
+      { n: "Leonardo", p: "PE/LE", r: 82 }, { n: "Denílson", p: "PD/PE/MEI", r: 81 },
       { n: "Doriva", p: "MEI", r: 74 }
     ]},
     { nation: "Brasil", year: 2002, flag: "🇧🇷", players: [
@@ -634,7 +632,7 @@
       { n: "Zoff", p: "GOL", r: 91 }, { n: "Scirea", p: "ZAG", r: 89 },
       { n: "Collovati", p: "ZAG", r: 82 }, { n: "Cabrini", p: "LE", r: 85 },
       { n: "Bergomi", p: "LD", r: 83 }, { n: "Tardelli", p: "MEI", r: 87 },
-      { n: "Oriali", p: "MEI", r: 78 }, { n: "Conti", p: "PE/MEI", r: 82 },
+      { n: "Oriali", p: "MEI", r: 78 }, { n: "Conti", p: "PD/PE/MEI", r: 82 },
       { n: "Rossi P.", p: "CA", r: 91 }, { n: "Graziani", p: "CA", r: 82 },
       { n: "Antognoni", p: "MEI", r: 85 }, { n: "Gentile", p: "LD/ZAG", r: 84 },
       { n: "Altobelli", p: "CA", r: 82 }
@@ -643,7 +641,7 @@
       { n: "Pagliuca", p: "GOL", r: 83 }, { n: "Baresi F.", p: "ZAG", r: 91 },
       { n: "Maldini", p: "LE/ZAG", r: 92 }, { n: "Costacurta", p: "ZAG", r: 84 },
       { n: "Mussi", p: "LD", r: 76 }, { n: "Albertini", p: "MEI", r: 84 },
-      { n: "Donadoni", p: "PE/MEI", r: 84 }, { n: "R. Baggio", p: "CA/ME/PE", r: 93 },
+      { n: "Donadoni", p: "PD/PE/MEI", r: 84 }, { n: "R. Baggio", p: "CA/ME/PE", r: 93 },
       { n: "Signori", p: "CA", r: 85 }, { n: "D. Baggio", p: "MEI", r: 81 },
       { n: "Massaro", p: "CA", r: 79 }, { n: "Benarrivo", p: "LE", r: 76 },
       { n: "Berti", p: "MEI", r: 78 }
@@ -663,7 +661,7 @@
       { n: "Haan", p: "MEI/ZAG", r: 85 }, { n: "Jansen W.", p: "MEI", r: 83 },
       { n: "Neeskens", p: "MEI", r: 90 }, { n: "Van Hanegem", p: "MEI", r: 86 },
       { n: "Cruyff", p: "CA/MEI/PE", r: 96 }, { n: "Rep", p: "CA", r: 84 },
-      { n: "Rensenbrink", p: "PE", r: 85 }, { n: "Jansen A.", p: "GOL", r: 76 },
+      { n: "Rensenbrink", p: "PD/PE", r: 85 }, { n: "Jansen A.", p: "GOL", r: 76 },
       { n: "Van Beveren", p: "GOL", r: 78 }
     ]},
     { nation: "Países Bajos", year: 1998, flag: "🇳🇱", players: [
@@ -672,7 +670,7 @@
       { n: "Reiziger", p: "LD", r: 80 }, { n: "R. de Boer", p: "MEI", r: 84 },
       { n: "Davids", p: "MEI", r: 87 }, { n: "Cocu", p: "MEI", r: 82 },
       { n: "Bergkamp", p: "CA/MEI", r: 91 }, { n: "Kluivert", p: "CA", r: 88 },
-      { n: "Overmars", p: "PE", r: 85 }, { n: "Seedorf", p: "MEI", r: 86 },
+      { n: "Overmars", p: "PD/PE", r: 85 }, { n: "Seedorf", p: "MEI", r: 86 },
       { n: "Zenden", p: "PE/LE", r: 79 }
     ]},
     { nation: "Inglaterra", year: 1966, flag: "🏴", players: [
@@ -690,7 +688,7 @@
       { n: "Butcher", p: "ZAG", r: 82 }, { n: "Gascoigne", p: "MEI", r: 89 },
       { n: "Robson B.", p: "MEI", r: 86 }, { n: "Platt", p: "MEI/CA", r: 83 },
       { n: "Lineker", p: "CA", r: 89 }, { n: "Beardsley", p: "CA/MEI", r: 82 },
-      { n: "Waddle", p: "PE", r: 83 }, { n: "Barnes J.", p: "PE/MEI", r: 84 },
+      { n: "Waddle", p: "PD/PE", r: 83 }, { n: "Barnes J.", p: "PE/MEI", r: 84 },
       { n: "Wright I.", p: "CA", r: 80 }
     ]},
     { nation: "Colombia", year: 1990, flag: "🇨🇴", players: [
@@ -699,7 +697,7 @@
       { n: "Gómez L.C.", p: "LE", r: 76 }, { n: "Valderrama", p: "MEI", r: 89 },
       { n: "Redín", p: "MEI", r: 76 }, { n: "Álvarez", p: "MEI", r: 74 },
       { n: "Rincón F.", p: "MEI/CA", r: 82 }, { n: "Iguarán", p: "CA", r: 79 },
-      { n: "Valenciano", p: "CA/PE", r: 78 }, { n: "Fajardo", p: "LD", r: 74 },
+      { n: "Valenciano", p: "PD/CA/PE", r: 78 }, { n: "Fajardo", p: "LD", r: 74 },
       { n: "Gaviria", p: "MEI", r: 75 }
     ]},
     { nation: "Colombia", year: 1994, flag: "🇨🇴", players: [
@@ -716,7 +714,7 @@
       { n: "Renquin", p: "ZAG", r: 78 }, { n: "Demol", p: "ZAG", r: 77 },
       { n: "De Wolf", p: "LE", r: 79 }, { n: "Vandereycken", p: "MEI", r: 82 },
       { n: "Vercauteren", p: "MEI", r: 83 }, { n: "Scifo", p: "MEI", r: 87 },
-      { n: "Ceulemans", p: "CA/MEI", r: 86 }, { n: "Vandenbergh", p: "CA", r: 79 },
+      { n: "Ceulemans", p: "CA/MEI", r: 86 }, { n: "Vandenbergh", p: "PD/PE/CA", r: 79 },
       { n: "Claesen", p: "CA", r: 78 }, { n: "Grün", p: "ZAG", r: 76 },
       { n: "Veyt", p: "MEI", r: 75 }
     ]},
@@ -736,7 +734,7 @@
       { n: "Tielemans", p: "MEI", r: 83 }, { n: "Onana A.", p: "MEI", r: 80 },
       { n: "Lukaku", p: "CA", r: 85 }, { n: "Hazard E.", p: "PE/CA", r: 79 },
       { n: "Carrasco", p: "PE/LE", r: 82 }, { n: "Batshuayi", p: "CA", r: 78 },
-      { n: "Vertessen", p: "PE", r: 74 }
+      { n: "Vertessen", p: "PD/PE", r: 74 }
     ]},
     { nation: "Croacia", year: 1998, flag: "🇭🇷", players: [
       { n: "Ladić", p: "GOL", r: 80 }, { n: "Štimac", p: "ZAG", r: 84 },
