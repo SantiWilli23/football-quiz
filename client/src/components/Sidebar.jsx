@@ -14,7 +14,8 @@ const links = [
 ];
 
 // Juego autocontenido servido como HTML estático (no es parte del SPA), así
-// que va como link normal con target _blank en vez de NavLink de react-router.
+// que va como link normal en vez de NavLink de react-router. Se abre en la
+// misma pestaña; para volver a la app se usa el botón atrás del navegador.
 const externalLink = { href: "/draft-mundial.html", label: "Draft Mundial", icon: Gamepad2 };
 
 export default function Sidebar() {
@@ -49,8 +50,6 @@ export default function Sidebar() {
         ))}
         <a
           href={externalLink.href}
-          target="_blank"
-          rel="noreferrer"
           className="flex items-center gap-3 px-3 py-2.5 rounded-card text-sm font-medium transition-colors text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
         >
           <externalLink.icon size={18} />

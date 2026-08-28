@@ -185,8 +185,6 @@ export default function Football() {
 
       <a
         href="/draft-mundial.html"
-        target="_blank"
-        rel="noreferrer"
         className="flex items-center gap-3 mb-6 px-4 py-3.5 rounded-card border border-purple-500/30 bg-gradient-to-r from-purple-500/10 via-fuchsia-500/10 to-amber-400/10 hover:border-purple-400/50 transition-colors"
       >
         <div className="w-9 h-9 rounded-card bg-purple-500/15 border border-purple-500/30 flex items-center justify-center shrink-0">
@@ -195,7 +193,7 @@ export default function Football() {
         <div>
           <p className="text-sm font-semibold">Draft Mundial</p>
           <p className="text-xs text-gray-400">
-            Armá tu XI ideal con jugadores de 20 selecciones históricas de Mundiales. Un juego aparte, se abre en pestaña nueva.
+            Armá tu XI ideal con jugadores de selecciones históricas de Mundiales. Un juego aparte.
           </p>
         </div>
       </a>
