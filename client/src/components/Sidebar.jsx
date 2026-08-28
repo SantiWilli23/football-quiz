@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Home, Users, History, BarChart3, Swords, Newspaper, User, LogOut, Flame } from "lucide-react";
+import { Home, Users, History, BarChart3, Swords, Newspaper, User, LogOut, Flame, Gamepad2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import Avatar from "./Avatar.jsx";
 
@@ -12,6 +12,10 @@ const links = [
   { to: "/estadisticas", label: "Estadísticas", icon: BarChart3 },
   { to: "/perfil", label: "Mi perfil", icon: User },
 ];
+
+// Juego autocontenido servido como HTML estático (no es parte del SPA), así
+// que va como link normal con target _blank en vez de NavLink de react-router.
+const externalLink = { href: "/draft-mundial.html", label: "Draft Mundial", icon: Gamepad2 };
 
 export default function Sidebar() {
   const { user, stats, logout } = useAuth();
@@ -43,6 +47,15 @@ export default function Sidebar() {
             {label}
           </NavLink>
         ))}
+        <a
+          href={externalLink.href}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-card text-sm font-medium transition-colors text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
+        >
+          <externalLink.icon size={18} />
+          {externalLink.label}
+        </a>
       </nav>
 
       <div className="border-t border-border pt-4 mt-4">
