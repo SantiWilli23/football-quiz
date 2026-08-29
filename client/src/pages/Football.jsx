@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Gamepad2, Radio, Table2, Trophy } from "lucide-react";
+import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Gamepad2, Radio, Star, Table2, Trophy } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
@@ -194,6 +194,21 @@ export default function Football() {
           <p className="text-sm font-semibold">Draft Mundial</p>
           <p className="text-xs text-gray-400">
             Armá tu XI ideal con jugadores de selecciones históricas de Mundiales. Un juego aparte.
+          </p>
+        </div>
+      </a>
+
+      <a
+        href="/champions-draft.html"
+        className="flex items-center gap-3 mb-6 px-4 py-3.5 rounded-card border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-violet-500/10 to-sky-400/10 hover:border-amber-400/50 transition-colors"
+      >
+        <div className="w-9 h-9 rounded-card bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0">
+          <Star size={18} className="text-amber-300" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold">Champions Draft</p>
+          <p className="text-xs text-gray-400">
+            Armá tu XI con jugadores de 138 planteles históricos de la Champions League. Un juego aparte.
           </p>
         </div>
       </a>

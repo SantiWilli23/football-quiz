@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Champions Draft</title>
+<style>
+  :root {
+    --void: #05060d;
+    --void-2: #0b0e1c;
+    --panel: rgba(255,255,255,0.045);
+    --panel-border: rgba(255,255,255,0.09);
+    --gold: #d4af37;
+    --silver: #a9c1e0;
+    --violet: #7c5cff;
+    --holo: linear-gradient(115deg, var(--gold), var(--violet) 50%, var(--silver) 85%, var(--gold));
+    --text: #f2f0ff;
+    --text-dim: #9ea3c4;
+    --text-faint: #62678c;
+    --ok: #38d996;
+    --rev: #ff8a3d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: radial-gradient(ellipse 120% 80% at 50% -10%, #141a33 0%, var(--void) 55%), var(--void);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Inter, Arial, sans-serif;
+    min-height: 100%;
+    overflow-x: hidden;
+  }
+  .mono { font-family: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace; }
+
+  .gridbg {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(212,175,55,0.5) 100%, transparent),
+      radial-gradient(1px 1px at 70% 60%, rgba(124,92,255,0.5) 100%, transparent),
+      radial-gradient(1px 1px at 40% 80%, rgba(169,193,224,0.5) 100%, transparent),
+      radial-gradient(1px 1px at 85% 20%, rgba(212,175,55,0.4) 100%, transparent),
+      radial-gradient(1px 1px at 10% 65%, rgba(124,92,255,0.4) 100%, transparent);
+    background-size: 100% 100%;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 20%, black 30%, transparent 75%);
+    animation: twinkle 4s ease-in-out infinite alternate;
+  }
+  @keyframes twinkle { from { opacity: 0.5; } to { opacity: 1; } }
+
+  .wrap { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 22px 16px 60px; }
+
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+  .brand .mark {
+    width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center;
+    background: var(--holo); background-size: 220% 220%; animation: holoshift 6s ease infinite;
+    font-weight: 800; color: #05060d; font-size: 15px;
+  }
+  .brand h1 {
+    font-size: 19px; font-weight: 800; letter-spacing: 0.02em;
+    background: var(--holo); background-size: 220% 220%; animation: holoshift 6s ease infinite;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  @keyframes holoshift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--panel-border); border-radius: 18px;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); padding: 22px;
+  }
+  .panel + .panel { margin-top: 16px; }
+
+  h2 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .sub { font-size: 12.5px; color: var(--text-dim); margin-bottom: 16px; line-height: 1.5; }
+
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadein 0.35s ease; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .chiprow { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .chip {
+    border: 1px solid var(--panel-border); background: rgba(255,255,255,0.03); color: var(--text-dim);
+    font-size: 12.5px; font-weight: 600; padding: 9px 14px; border-radius: 999px;
+    cursor: pointer; transition: all 0.15s ease;
+  }
+  .chip:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
+  .chip.active {
+    color: #05060d; border-color: transparent;
+    background: var(--holo); background-size: 220% 220%; animation: holoshift 5s ease infinite;
+    font-weight: 800;
+  }
+  .chip small { display: block; font-weight: 500; opacity: 0.75; font-size: 10.5px; margin-top: 1px; }
+
+  .formation-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; margin-bottom: 18px; }
+  .formation-card {
+    border: 1px solid var(--panel-border); background: rgba(255,255,255,0.03);
+    border-radius: 12px; padding: 10px 8px; text-align: center; cursor: pointer; transition: all 0.15s ease;
+  }
+  .formation-card:hover { border-color: rgba(255,255,255,0.25); }
+  .formation-card.active { border-color: var(--silver); background: rgba(169,193,224,0.08); box-shadow: 0 0 0 1px var(--silver) inset; }
+  .formation-card .name { font-weight: 800; font-size: 13px; }
+  .formation-card .desc { font-size: 9.5px; color: var(--text-faint); margin-top: 2px; letter-spacing: 0.02em; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    border: none; border-radius: 12px; padding: 13px 22px; font-size: 13.5px; font-weight: 800;
+    letter-spacing: 0.01em; cursor: pointer; transition: transform 0.12s ease, opacity 0.12s ease;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-holo { color: #05060d; background: var(--holo); background-size: 220% 220%; animation: holoshift 5s ease infinite; }
+  .btn-holo:disabled { opacity: 0.3; cursor: not-allowed; animation: none; }
+  .btn-ghost { color: var(--text); background: rgba(255,255,255,0.05); border: 1px solid var(--panel-border); }
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.3); }
+  .btn-ghost:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-block { width: 100%; }
+
+  .draft-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .round-badge { font-family: ui-monospace, monospace; font-size: 11.5px; font-weight: 700; color: var(--text-dim); letter-spacing: 0.06em; }
+  .round-badge b { color: var(--gold); }
+
+  .squad-banner {
+    display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin-bottom: 16px;
+    border-radius: 14px; border: 1px solid var(--panel-border);
+    background: linear-gradient(120deg, rgba(212,175,55,0.08), rgba(124,92,255,0.08));
+    position: relative; overflow: hidden;
+  }
+  .squad-banner .flag { font-size: 30px; line-height: 1; }
+  .squad-banner .info b { font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .squad-banner .info span { font-size: 11.5px; color: var(--text-dim); }
+  .squad-banner .info .note { font-size: 10.5px; color: var(--text-faint); font-style: italic; margin-top: 2px; display: block; }
+  .rev-badge {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.06em; color: var(--rev);
+    border: 1px solid var(--rev); border-radius: 999px; padding: 2px 7px;
+  }
+
+  .reroll-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .reroll-btn {
+    flex: 1; min-width: 140px; text-align: left; background: rgba(255,255,255,0.04);
+    border: 1px solid var(--panel-border); border-radius: 12px; padding: 10px 12px; cursor: pointer;
+    color: var(--text); transition: all 0.15s ease;
+  }
+  .reroll-btn:hover:not(:disabled) { border-color: var(--violet); }
+  .reroll-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .reroll-btn .t { font-size: 12px; font-weight: 700; }
+  .reroll-btn .n { font-size: 10.5px; color: var(--text-faint); font-family: ui-monospace, monospace; }
+
+  .pool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 22px; }
+
+  .pcard {
+    position: relative; border-radius: 14px; padding: 14px 12px 12px;
+    background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+    border: 1px solid var(--panel-border); cursor: pointer; overflow: hidden;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+    min-height: 108px; display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .pcard::before {
+    content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity 0.25s ease;
+    background: var(--holo); background-size: 260% 260%; mix-blend-mode: overlay; animation: holoshift 4s ease infinite;
+  }
+  .pcard:hover::before { opacity: 0.35; }
+  .pcard:hover { transform: translateY(-3px); }
+  .pcard.selected { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 8px 24px rgba(212,175,55,0.18); }
+  .pcard.dim { opacity: 0.35; filter: grayscale(0.4); }
+  .pcard .pname { font-weight: 800; font-size: 13.5px; position: relative; z-index: 1; }
+  .pcard .ppos { font-size: 10.5px; color: var(--text-dim); font-family: ui-monospace, monospace; margin-top: 2px; position: relative; z-index: 1; }
+  .pcard .prating { align-self: flex-end; font-family: ui-monospace, monospace; font-weight: 800; font-size: 18px; position: relative; z-index: 1; }
+  .pcard .prating.bonus::after { content: " +3"; font-size: 10px; color: var(--ok); }
+  .pcard .phidden { align-self: flex-end; font-family: ui-monospace, monospace; font-weight: 700; font-size: 13px; color: var(--text-faint); letter-spacing: 0.12em; position: relative; z-index: 1; }
+
+  .pitch-wrap { border-radius: 18px; padding: 3px; background: var(--holo); background-size: 260% 260%; animation: holoshift 8s ease infinite; }
+  .pitch {
+    border-radius: 16px; padding: 18px 10px;
+    background: radial-gradient(ellipse 90% 60% at 50% 0%, #10162e 0%, #060812 70%);
+    position: relative; min-height: 380px;
+  }
+  .pitch::before { content: ""; position: absolute; inset: 10px; border: 1px dashed rgba(255,255,255,0.14); border-radius: 10px; }
+  .pitch::after { content: ""; position: absolute; left: 50%; top: 10px; bottom: 10px; width: 1px; background: rgba(255,255,255,0.14); transform: translateX(-50%); }
+  .slot-layer { position: relative; height: 380px; }
+  .slot { position: absolute; transform: translate(-50%, -50%); width: 74px; text-align: center; cursor: default; }
+  .slot .dot {
+    width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 4px; display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 800; font-family: ui-monospace, monospace; border: 2px dashed rgba(255,255,255,0.3);
+    color: var(--text-faint); transition: all 0.2s ease;
+  }
+  .slot.targetable { cursor: pointer; }
+  .slot.targetable .dot {
+    border-style: solid; border-color: var(--gold); color: var(--gold); animation: pulse 1.1s ease-in-out infinite;
+    box-shadow: 0 0 14px rgba(212,175,55,0.35);
+  }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+  .slot.filled .dot {
+    border-style: solid; border-color: var(--silver);
+    background: linear-gradient(160deg, rgba(169,193,224,0.22), rgba(124,92,255,0.14));
+    color: var(--text); font-size: 15px;
+  }
+  .slot .lbl { font-size: 9.5px; font-weight: 700; color: var(--text); line-height: 1.15; }
+  .slot .lbl small { display: block; color: var(--text-faint); font-weight: 500; font-size: 8.5px; }
+
+  .result-head { text-align: center; margin-bottom: 20px; }
+  .result-head .avg {
+    font-family: ui-monospace, monospace; font-weight: 800; font-size: 56px; line-height: 1;
+    background: var(--holo); background-size: 220% 220%; animation: holoshift 5s ease infinite;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .result-head .avglbl { font-size: 11.5px; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px; }
+
+  .result-list { display: grid; gap: 8px; margin: 20px 0; }
+  .result-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--panel-border); border-radius: 10px; background: rgba(255,255,255,0.03); }
+  .result-row .pos-badge {
+    width: 36px; height: 26px; border-radius: 7px; display: grid; place-items: center;
+    font-size: 10px; font-weight: 800; font-family: ui-monospace, monospace; background: rgba(169,193,224,0.14); color: var(--silver); flex-shrink: 0;
+  }
+  .result-row .rname { flex: 1; font-weight: 700; font-size: 13px; }
+  .result-row .rmeta { font-size: 10.5px; color: var(--text-faint); }
+  .result-row .rrating { font-family: ui-monospace, monospace; font-weight: 800; font-size: 15px; }
+
+  .stats-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+  .stat-pill { flex: 1; min-width: 100px; text-align: center; padding: 10px; border-radius: 12px; border: 1px solid var(--panel-border); background: rgba(255,255,255,0.03); }
+  .stat-pill b { display: block; font-family: ui-monospace, monospace; font-size: 17px; }
+  .stat-pill span { font-size: 10px; color: var(--text-faint); letter-spacing: 0.04em; }
+
+  .foot-note { text-align: center; font-size: 11px; color: var(--text-faint); margin-top: 24px; line-height: 1.6; }
+
+  @media (max-width: 480px) {
+    .pitch { min-height: 420px; } .slot-layer { height: 420px; } .result-head .avg { font-size: 44px; }
+  }
+</style>
+</head>
+<body>
+<div class="gridbg"></div>
+<div class="wrap">
+
+  <div class="brand">
+    <div class="mark">★</div>
+    <h1>CHAMPIONS DRAFT</h1>
+  </div>
+
+  <div id="screen-start" class="screen active">
+    <div class="panel">
+      <h2>Armá tu XI ideal</h2>
+      <p class="sub">
+        Cada ronda aparece un equipo al azar de una temporada de Champions League (1998–2025).
+        Elegís un jugador que encaje en un puesto vacío de tu formación. 11 rondas, 3 rerolls, un equipo.
+      </p>
+
+      <h2 style="margin-top:4px">Formación</h2>
+      <p class="sub" style="margin-bottom:10px">4-2-3-1 por defecto</p>
+      <div class="formation-grid" id="formation-grid"></div>
+
+      <h2>Modo</h2>
+      <div class="chiprow" id="mode-row">
+        <div class="chip active" data-mode="clasico">Clásico<small>ratings ocultos</small></div>
+        <div class="chip" data-mode="almanaque">De almanaque<small>ratings visibles</small></div>
+      </div>
+
+      <h2>Estilo táctico</h2>
+      <div class="chiprow" id="style-row">
+        <div class="chip" data-style="defensivo">Defensivo<small>+3 GOL·ZAG·LD·LE</small></div>
+        <div class="chip active" data-style="equilibrado">Equilibrado<small>sin bonus</small></div>
+        <div class="chip" data-style="ofensivo">Ofensivo<small>+3 CA·PE·PD·MEI of.</small></div>
+      </div>
+
+      <button class="btn btn-holo btn-block" id="btn-start" style="margin-top:6px">Empezar copa</button>
+    </div>
+    <p class="foot-note">138 equipos-temporada de Champions League · 8 formaciones · datos con fines de juego, no oficiales.</p>
+  </div>
+
+  <div id="screen-draft" class="screen">
+    <div class="draft-head">
+      <span class="round-badge">RONDA <b id="round-num">1</b>/11</span>
+      <span class="round-badge" id="mode-badge"></span>
+    </div>
+
+    <div class="squad-banner">
+      <span class="flag" id="sq-flag">🏳️</span>
+      <div class="info">
+        <b id="sq-club">— <span id="sq-rev" class="rev-badge" style="display:none">REVELACIÓN</span></b>
+        <span id="sq-season">—</span>
+        <span class="note" id="sq-note"></span>
+      </div>
+    </div>
+
+    <div class="reroll-row">
+      <button class="reroll-btn" id="btn-reroll-club">
+        <div class="t">🔀 Otro equipo</div>
+        <div class="n" id="reroll-club-count">2 usos</div>
+      </button>
+      <button class="reroll-btn" id="btn-reroll-season">
+        <div class="t">📅 Otra temporada</div>
+        <div class="n" id="reroll-season-count">1 uso</div>
+      </button>
+    </div>
+
+    <div class="panel" style="padding:16px">
+      <h2 style="margin-bottom:12px">Pool de jugadores</h2>
+      <div class="pool-grid" id="pool-grid"></div>
+    </div>
+
+    <div class="pitch-wrap" style="margin-top:16px">
+      <div class="pitch"><div class="slot-layer" id="slot-layer"></div></div>
+    </div>
+  </div>
+
+  <div id="screen-result" class="screen">
+    <div class="panel">
+      <div class="result-head">
+        <div class="avg" id="final-avg">0.0</div>
+        <div class="avglbl">Media del equipo</div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-pill"><b id="stat-formation">—</b><span>FORMACIÓN</span></div>
+        <div class="stat-pill"><b id="stat-style">—</b><span>ESTILO</span></div>
+        <div class="stat-pill"><b id="stat-rerolls">0</b><span>REROLLS USADOS</span></div>
+      </div>
+      <div class="result-list" id="result-list"></div>
+      <button class="btn btn-holo btn-block" id="btn-new-cup">Nueva copa</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ============ DATOS ============ */
+
+  var POSITION_ALIASES = { LI: "LE", MD: "MEI", ME: "MEI", MEC: "MEI", MED: "MEI", MC: "MEI" };
+  var ATTACKING_MID_RAW = { MD: true, ME: true, MEC: true, MEI: true };
+
+  function normalizePositions(raw) {
+    return raw.split("/").map(function (p) { p = p.trim(); return POSITION_ALIASES[p] || p; });
+  }
+
+  var FORMATIONS = {
+    "4-3-3":   ["GOL","LD","ZAG","ZAG","LE","MEI","MEI","MEI","PD","CA","PE"],
+    "4-4-2":   ["GOL","LD","ZAG","ZAG","LE","MEI","MEI","MEI","MEI","CA","PE"],
+    "4-2-3-1": ["GOL","LD","ZAG","ZAG","LE","MEI","MEI","MEI","PD","CA","PE"],
+    "4-2-4":   ["GOL","LD","ZAG","ZAG","LE","MEI","MEI","PD","PE","CA","CA"],
+    "3-5-2":   ["GOL","ZAG","ZAG","ZAG","MEI","MEI","MEI","MEI","MEI","CA","PE"],
+    "5-3-2":   ["GOL","LD","ZAG","ZAG","ZAG","LE","MEI","MEI","MEI","CA","PE"],
+    "4-5-1":   ["GOL","LD","ZAG","ZAG","LE","MEI","MEI","MEI","MEI","MEI","CA"],
+    "3-4-3":   ["GOL","ZAG","ZAG","ZAG","MEI","MEI","MEI","MEI","PD","CA","PE"]
+  };
+
+  var LAYOUTS = {
+    "4-3-3":   [[50,92],[84,74],[62,78],[38,78],[16,74],[70,50],[50,54],[30,50],[80,20],[50,12],[20,20]],
+    "4-4-2":   [[50,92],[84,74],[62,78],[38,78],[16,74],[80,46],[58,50],[42,50],[20,46],[62,14],[38,14]],
+    "4-2-3-1": [[50,92],[84,74],[62,78],[38,78],[16,74],[62,58],[38,58],[50,38],[80,20],[50,10],[20,20]],
+    "4-2-4":   [[50,92],[84,74],[62,78],[38,78],[16,74],[62,54],[38,54],[80,22],[20,22],[62,10],[38,10]],
+    "3-5-2":   [[50,92],[68,78],[50,80],[32,78],[85,50],[65,44],[50,48],[35,44],[15,50],[62,14],[38,14]],
+    "5-3-2":   [[50,92],[86,76],[66,80],[50,82],[34,80],[14,76],[68,50],[50,54],[32,50],[62,14],[38,14]],
+    "4-5-1":   [[50,92],[84,74],[62,78],[38,78],[16,74],[84,46],[64,42],[50,50],[36,42],[16,46],[50,12]],
+    "3-4-3":   [[50,92],[68,80],[50,82],[32,80],[80,50],[60,46],[40,46],[20,50],[80,18],[50,10],[20,18]]
+  };
+
+  var POS_LABEL = {
+    GOL: "Portero", ZAG: "Central", LD: "Lat. Der.", LE: "Lat. Izq.",
+    MEI: "Mediocampo", PD: "Ext. Der.", CA: "Delantero", PE: "Ext. Izq."
+  };
+
+  var FLAGS = {
+    "BAYERN MÚNICH":"🇩🇪","DYNAMO KYIV":"🇺🇦","INTER MILÁN":"🇮🇹","JUVENTUS":"🇮🇹",
+    "MANCHESTER UNITED":"🏴","CHELSEA":"🏴","GALATASARAY":"🇹🇷","LAZIO":"🇮🇹","PORTO":"🇵🇹",
+    "VALENCIA":"🇪🇸","ARSENAL":"🏴","DEPORTIVO":"🇪🇸","LEEDS UNITED":"🏴","BAYER LEVERKUSEN":"🇩🇪",
+    "LIVERPOOL":"🏴","REAL MADRID":"🇪🇸","AC MILAN":"🇮🇹","AJAX":"🇳🇱","LYON":"🇫🇷","MÓNACO":"🇲🇨",
+    "PSV":"🇳🇱","BARCELONA":"🇪🇸","VILLARREAL":"🇪🇸","ROMA":"🇮🇹","BORDEAUX":"🇫🇷","SCHALKE 04":"🇩🇪",
+    "TOTTENHAM":"🏴","APOEL":"🇨🇾","BENFICA":"🇵🇹","MARSEILLE":"🇫🇷","BORUSSIA DORTMUND":"🇩🇪",
+    "MALAGA":"🇪🇸","ATLÉTICO DE MADRID":"🇪🇸","PSG":"🇫🇷","MANCHESTER CITY":"🏴","LEICESTER CITY":"🏴",
+    "SEVILLA":"🇪🇸","ATALANTA":"🇮🇹","SHERIFF TIRASPOL":"🇲🇩","BODØ/GLIMT":"🇳🇴","NAPOLI":"🇮🇹"
+  };
+
+  // Ratings inventados con fines de juego: no representan un puntaje oficial.
+  // Datos reales de 138 equipos-temporada de la Champions League (1998-2025).
+  var TEAMS = [
+{club:"BAYERN MÚNICH",season:"1998-99",revelacion:false,note:"Finalista — Camp Nou, goles en el 91' y 93' de Sheringham y Solskjaer",players:[{n:"Kahn",p:"GOL",r:88},{n:"Matthäus",p:"ZAG/MEC",r:87},{n:"Linke",p:"ZAG",r:80},{n:"Babbel",p:"LD/ZAG",r:81},{n:"Lizarazu",p:"LE",r:82},{n:"Tarnat",p:"LE",r:78},{n:"Effenberg",p:"MEI/ME",r:86},{n:"Jeremies",p:"MEC/MD",r:79},{n:"Basler",p:"PD/PE/MEI",r:82},{n:"Jancker",p:"CA",r:79},{n:"Zickler",p:"CA",r:77},{n:"Scholl",p:"MEI/ME",r:84},{n:"Strunz",p:"MEI/MD",r:76}]},
+{club:"DYNAMO KYIV",season:"1998-99",revelacion:true,note:"Semifinalista — Lobanovsky, eliminaron al Real Madrid",players:[{n:"Shovkovskiy",p:"GOL",r:79},{n:"Holovko",p:"ZAG",r:77},{n:"Vashchuk",p:"ZAG",r:76},{n:"Luzhny",p:"LD",r:77},{n:"Dmytrulin",p:"LE",r:74},{n:"Gusin",p:"MEC/MD",r:76},{n:"Khatskevich",p:"MEI",r:75},{n:"Kosovsky",p:"MEI/ME",r:77},{n:"Rebrov",p:"CA/PD/PE",r:82},{n:"Shevchenko",p:"CA",r:88},{n:"Belkevich",p:"MEI/ME",r:80},{n:"Kaladze",p:"ZAG/LE",r:77}]},
+{club:"INTER MILÁN",season:"1998-99",revelacion:false,note:"Cuartos — era Ronaldo, eliminados por ManUtd",players:[{n:"Pagliuca",p:"GOL",r:80},{n:"Bergomi",p:"ZAG",r:78},{n:"Colonnese",p:"ZAG",r:76},{n:"West",p:"ZAG",r:75},{n:"Zanetti",p:"LD/MEI",r:86},{n:"Silvestre",p:"LE",r:76},{n:"Cauet",p:"MEC/MD",r:77},{n:"Simeone",p:"MEC/MD",r:82},{n:"Djorkaeff",p:"MEI/ME",r:83},{n:"Baggio",p:"ME/MEI/CA/PE",r:86},{n:"Ronaldo",p:"CA",r:96},{n:"Ventola",p:"CA/PD",r:76},{n:"Winter",p:"MEI/MD",r:76}]},
+{club:"JUVENTUS",season:"1998-99",revelacion:false,note:"Semifinalista — Zidane/Del Piero, eliminados por ManUtd",players:[{n:"Peruzzi",p:"GOL",r:87},{n:"Iuliano",p:"ZAG",r:79},{n:"Montero",p:"ZAG",r:82},{n:"Ferrara",p:"ZAG",r:80},{n:"Pessotto",p:"LE",r:77},{n:"Birindelli",p:"LD",r:76},{n:"Deschamps",p:"MEC",r:83},{n:"Davids",p:"MEI/MD",r:87},{n:"Zidane",p:"MEI/ME",r:93},{n:"Conte",p:"MEI/MEC",r:81},{n:"Del Piero",p:"CA/PE/MEI",r:90},{n:"Inzaghi",p:"CA",r:85},{n:"Di Livio",p:"PD/PE",r:79}]},
+{club:"MANCHESTER UNITED",season:"1998-99",revelacion:false,note:"Campeón — triplete, Camp Nou",players:[{n:"Schmeichel",p:"GOL",r:89},{n:"Stam",p:"ZAG",r:88},{n:"Johnsen",p:"ZAG",r:80},{n:"G. Neville",p:"LD",r:82},{n:"Irwin",p:"LE",r:81},{n:"Beckham",p:"PD/MEI",r:88},{n:"Keane",p:"MEI/MD",r:89},{n:"Scholes",p:"MEI/ME",r:88},{n:"Giggs",p:"PE/MEI",r:87},{n:"Butt",p:"MEI/MD",r:78},{n:"Cole",p:"CA",r:85},{n:"Yorke",p:"CA",r:86},{n:"Sheringham",p:"CA/ME",r:82},{n:"Blomqvist",p:"PE",r:75},{n:"P. Neville",p:"LD/LE",r:76}]},
+{club:"CHELSEA",season:"1999-00",revelacion:false,note:"Cuartos — Zola/Desailly",players:[{n:"De Goey",p:"GOL",r:78},{n:"Desailly",p:"ZAG",r:86},{n:"Leboeuf",p:"ZAG",r:80},{n:"Babayaro",p:"LE",r:76},{n:"Ferrer",p:"LD",r:77},{n:"Deschamps",p:"MEC",r:82},{n:"Wise",p:"MEI/MD",r:77},{n:"Poyet",p:"MEI/ME",r:81},{n:"Di Matteo",p:"MEI/MEC",r:79},{n:"Zola",p:"CA/ME/PE",r:86},{n:"Flo",p:"CA",r:78},{n:"Sutton",p:"CA",r:76},{n:"Morris",p:"PD",r:73}]},
+{club:"GALATASARAY",season:"1999-00",revelacion:false,note:"Grupo + UEFA Cup campeón — era Hagi/Terim",players:[{n:"Taffarel",p:"GOL",r:83},{n:"Popescu",p:"ZAG/MEC",r:82},{n:"Bülent Korkmaz",p:"ZAG",r:79},{n:"Capone",p:"LD",r:76},{n:"Ergün",p:"LE",r:75},{n:"Emre Belözoğlu",p:"MEI/ME",r:80},{n:"Okan",p:"MEC/MD",r:78},{n:"Hagi",p:"MEI/ME",r:87},{n:"Ümit Davala",p:"PD/LE",r:77},{n:"Hakan Şükür",p:"CA",r:84},{n:"Jardel",p:"CA",r:82},{n:"Arif",p:"PD/PE",r:76}]},
+{club:"LAZIO",season:"1999-00",revelacion:true,note:"Segunda fase de grupos — equipo poderoso de Eriksson",players:[{n:"Marchegiani",p:"GOL",r:79},{n:"Nesta",p:"ZAG",r:88},{n:"Mihajlović",p:"ZAG/LE",r:83},{n:"Pancaro",p:"LE",r:77},{n:"Negro",p:"ZAG",r:80},{n:"Simeone",p:"MEC/MD",r:83},{n:"Verón",p:"MEI/ME",r:86},{n:"Nedvěd",p:"MEI/PD/PE",r:87},{n:"Stanković",p:"MEI/ME",r:79},{n:"Salas",p:"CA",r:82},{n:"Inzaghi",p:"CA",r:80},{n:"Almeyda",p:"MEC/MD",r:79},{n:"Favalli",p:"LD/LE",r:76}]},
+{club:"PORTO",season:"1999-00",revelacion:false,note:"Cuartos — eliminados por Bayern",players:[{n:"Vítor Baía",p:"GOL",r:83},{n:"Jorge Costa",p:"ZAG",r:80},{n:"Secretário",p:"ZAG",r:78},{n:"Dimas",p:"LE",r:76},{n:"Paredes",p:"LD",r:75},{n:"Costinha",p:"MEC/MD",r:77},{n:"Capucho",p:"PD/ME",r:79},{n:"Zahović",p:"CA/PE",r:81},{n:"Jardel",p:"CA",r:85},{n:"Clayton",p:"PE/PD",r:76},{n:"Rui Barros",p:"MEI/ME",r:77},{n:"Drulovic",p:"PE/MEI",r:78},{n:"Folha",p:"MEI",r:74}]},
+{club:"VALENCIA",season:"1999-00",revelacion:false,note:"Finalista — París, perdieron vs Real Madrid, era Cúper",players:[{n:"Cañizares",p:"GOL",r:84},{n:"Ayala",p:"ZAG",r:85},{n:"Pellegrino",p:"ZAG",r:80},{n:"Angloma",p:"LD",r:78},{n:"Carboni",p:"LE",r:76},{n:"Mendieta",p:"PD/MEI",r:85},{n:"Baraja",p:"MEC/MEI",r:81},{n:"Kily González",p:"PE/MEI",r:80},{n:"Gerard",p:"CA",r:78},{n:"Claudio López",p:"CA/PE",r:82},{n:"Angulo",p:"PE/PD",r:77},{n:"Djukić",p:"ZAG",r:78},{n:"Farinós",p:"MEI",r:76}]},
+{club:"ARSENAL",season:"2000-01",revelacion:false,note:"Cuartos — eliminados por Valencia",players:[{n:"Seaman",p:"GOL",r:82},{n:"Adams",p:"ZAG",r:82},{n:"Keown",p:"ZAG",r:80},{n:"Lauren",p:"LD",r:78},{n:"Silvinho",p:"LE",r:77},{n:"Vieira",p:"MEC/MD",r:87},{n:"Petit",p:"MEC/MD",r:82},{n:"Pires",p:"PE/ME",r:85},{n:"Ljungberg",p:"PD/PE",r:82},{n:"Henry",p:"CA/PE",r:92},{n:"Bergkamp",p:"CA/MEI",r:88},{n:"Wiltord",p:"CA/PE",r:79},{n:"Grimandi",p:"MEC/MD",r:76}]},
+{club:"BAYERN MÚNICH",season:"2000-01",revelacion:false,note:"Campeón — Milán, penales vs Valencia",players:[{n:"Kahn",p:"GOL",r:90},{n:"Kuffour",p:"ZAG",r:81},{n:"Linke",p:"ZAG",r:80},{n:"Sagnol",p:"LD",r:80},{n:"Lizarazu",p:"LE",r:83},{n:"Effenberg",p:"MEI/ME",r:85},{n:"Hargreaves",p:"MEC/MD",r:78},{n:"Scholl",p:"MEI/ME",r:83},{n:"Salihamidžić",p:"PE/PD",r:79},{n:"Elber",p:"CA",r:83},{n:"Zickler",p:"CA",r:77},{n:"Sergio",p:"MEI",r:76},{n:"Jeremies",p:"MEC/MD",r:79}]},
+{club:"DEPORTIVO",season:"2000-01",revelacion:false,note:"Cuartos — Super Depor",players:[{n:"Molina",p:"GOL",r:79},{n:"Naybet",p:"ZAG",r:80},{n:"César",p:"ZAG",r:77},{n:"Romero",p:"LD",r:76},{n:"Scaloni",p:"LD",r:75},{n:"Mauro Silva",p:"MEC",r:82},{n:"Valerón",p:"MEI/ME",r:84},{n:"Fran",p:"MEI",r:79},{n:"Djalminha",p:"PE/MEI",r:81},{n:"Diego Tristán",p:"CA",r:82},{n:"Pandiani",p:"CA/PE",r:76},{n:"Donato",p:"ZAG/LE",r:76},{n:"Sergio",p:"PD/PE",r:77}]},
+{club:"LEEDS UNITED",season:"2000-01",revelacion:true,note:"Semifinalista — O'Leary, última gran CL de Leeds",players:[{n:"Martyn",p:"GOL",r:78},{n:"Ferdinand",p:"ZAG",r:82},{n:"Radebe",p:"ZAG",r:79},{n:"Mills",p:"LD",r:75},{n:"Harte",p:"LE",r:76},{n:"Dacourt",p:"MEC/MD",r:79},{n:"Batty",p:"MEC/MD",r:76},{n:"Bowyer",p:"MEI/MD",r:78},{n:"Kewell",p:"PD/PE/CA",r:82},{n:"Viduka",p:"CA",r:81},{n:"Smith",p:"CA",r:78},{n:"Bakke",p:"MEI",r:75},{n:"Matteo",p:"MEI/MD",r:74}]},
+{club:"VALENCIA",season:"2000-01",revelacion:false,note:"Finalista — segunda final consecutiva, perdieron vs Bayern",players:[{n:"Cañizares",p:"GOL",r:85},{n:"Ayala",p:"ZAG",r:86},{n:"Pellegrino",p:"ZAG",r:81},{n:"Angloma",p:"LD",r:78},{n:"Carboni",p:"LE",r:76},{n:"Mendieta",p:"PD/MEI",r:86},{n:"Baraja",p:"MEC/MEI",r:82},{n:"Kily González",p:"PE/MEI",r:81},{n:"Aimar",p:"ME/MEI",r:83},{n:"Carew",p:"CA",r:79},{n:"Sánchez",p:"CA/PE",r:77},{n:"Albelda",p:"MEC",r:80},{n:"Gerard",p:"CA",r:78}]},
+{club:"BAYER LEVERKUSEN",season:"2001-02",revelacion:true,note:"Finalista — Glasgow, subcampeón triple, Ballack",players:[{n:"Butt",p:"GOL",r:79},{n:"Lucio",p:"ZAG",r:83},{n:"Nowotny",p:"ZAG",r:79},{n:"Zé Roberto",p:"LE/MEI",r:82},{n:"Schneider",p:"PD/MEI",r:81},{n:"Sebescen",p:"LE/LD",r:74},{n:"Ramelow",p:"MEC/MD",r:78},{n:"Ballack",p:"MEI/ME",r:87},{n:"Bastürk",p:"ME/PD",r:80},{n:"Neuville",p:"CA/PE",r:79},{n:"Kirsten",p:"CA",r:80},{n:"Berbatov",p:"CA",r:78},{n:"Brdarić",p:"CA",r:74}]},
+{club:"BAYERN MÚNICH",season:"2001-02",revelacion:false,note:"Cuartos — eliminados por Real Madrid",players:[{n:"Kahn",p:"GOL",r:90},{n:"Kuffour",p:"ZAG",r:81},{n:"Linke",p:"ZAG",r:79},{n:"Sagnol",p:"LD",r:81},{n:"Lizarazu",p:"LE",r:82},{n:"Effenberg",p:"MEI/ME",r:84},{n:"Hargreaves",p:"MEC/MD",r:79},{n:"Scholl",p:"MEI/ME",r:82},{n:"Salihamidžić",p:"PE/PD",r:79},{n:"Élber",p:"CA",r:82},{n:"Pizarro",p:"CA",r:80},{n:"Jeremies",p:"MEC/MD",r:78},{n:"Santa Cruz",p:"CA",r:76}]},
+{club:"DEPORTIVO",season:"2001-02",revelacion:false,note:"Cuartos — Super Depor, eliminados por Manchester United",players:[{n:"Molina",p:"GOL",r:79},{n:"Naybet",p:"ZAG",r:80},{n:"César",p:"ZAG",r:78},{n:"Romero",p:"LD",r:76},{n:"Manuel Pablo",p:"LD",r:77},{n:"Mauro Silva",p:"MEC",r:82},{n:"Valerón",p:"MEI/ME",r:84},{n:"Fran",p:"MEI",r:79},{n:"Sergio",p:"PD/PE",r:78},{n:"Diego Tristán",p:"CA",r:82},{n:"Pandiani",p:"CA/PE",r:77},{n:"Víctor",p:"PE/MEI",r:76},{n:"Scaloni",p:"LD",r:75},{n:"Donato",p:"ZAG/LE",r:77}]},
+{club:"LIVERPOOL",season:"2001-02",revelacion:false,note:"Cuartos — eliminados por Leverkusen",players:[{n:"Dudek",p:"GOL",r:80},{n:"Hyypiä",p:"ZAG",r:83},{n:"Henchoz",p:"ZAG",r:79},{n:"Carragher",p:"ZAG/LD",r:81},{n:"Babbel",p:"LD",r:78},{n:"Riise",p:"LE",r:79},{n:"Gerrard",p:"MEI/ME",r:86},{n:"Hamann",p:"MD",r:81},{n:"Murphy",p:"MEI/PD",r:77},{n:"Heskey",p:"CA/PE",r:78},{n:"Owen",p:"CA",r:85},{n:"Šmicer",p:"PD/PE",r:77},{n:"Berger",p:"MEI/PE",r:76}]},
+{club:"REAL MADRID",season:"2001-02",revelacion:false,note:"Campeón — gol de Zidane en Glasgow",players:[{n:"Casillas",p:"GOL",r:88},{n:"César",p:"GOL",r:79},{n:"Hierro",p:"ZAG",r:88},{n:"Helguera",p:"ZAG/MEC",r:84},{n:"Salgado",p:"LD",r:83},{n:"Roberto Carlos",p:"LE",r:91},{n:"Makelélé",p:"MEC",r:86},{n:"Zidane",p:"MEI/ME",r:95},{n:"Figo",p:"PD",r:93},{n:"Raúl",p:"CA/PE",r:92},{n:"Morientes",p:"CA",r:85},{n:"McManaman",p:"ME/PD",r:80},{n:"Solari",p:"PE/MEI",r:79},{n:"Guti",p:"MEI/ME",r:84}]},
+{club:"AC MILAN",season:"2002-03",revelacion:false,note:"Campeón — penales vs Juventus en Old Trafford",players:[{n:"Dida",p:"GOL",r:85},{n:"Maldini",p:"ZAG/LE",r:92},{n:"Nesta",p:"ZAG",r:91},{n:"Costacurta",p:"ZAG",r:82},{n:"Cafu",p:"LD",r:87},{n:"Kaladze",p:"ZAG/LE",r:80},{n:"Seedorf",p:"MEI",r:87},{n:"Pirlo",p:"MEI/MEC",r:88},{n:"Gattuso",p:"MD",r:85},{n:"Rui Costa",p:"ME/MEI/PD",r:86},{n:"Rivaldo",p:"PE/CA/MEI",r:88},{n:"Shevchenko",p:"CA",r:90},{n:"Inzaghi",p:"CA",r:84}]},
+{club:"AJAX",season:"2002-03",revelacion:false,note:"Cuartos — eliminados por Milan, joven Ibrahimović",players:[{n:"Lobont",p:"GOL",r:76},{n:"Pasanen",p:"ZAG",r:74},{n:"Chivu",p:"ZAG/LE",r:79},{n:"Trabelsi",p:"LD",r:76},{n:"Maxwell",p:"LE",r:77},{n:"De Jong",p:"MEC/MD",r:76},{n:"Van der Vaart",p:"MEI/ME",r:82},{n:"Sneijder",p:"MEI/ME",r:78},{n:"Galásek",p:"MEC/MD",r:76},{n:"Litmanen",p:"MEI/CA",r:82},{n:"Ibrahimović",p:"CA",r:79},{n:"Van der Meyde",p:"PD",r:77},{n:"Pienaar",p:"PE/MEI",r:76}]},
+{club:"INTER MILÁN",season:"2002-03",revelacion:false,note:"Segunda fase — sin brillo, era post-Ronaldo",players:[{n:"Toldo",p:"GOL",r:82},{n:"Cannavaro",p:"ZAG",r:86},{n:"Córdoba",p:"ZAG",r:83},{n:"Materazzi",p:"ZAG",r:80},{n:"Zanetti",p:"LD/MEI",r:87},{n:"Coco",p:"LE",r:76},{n:"Emre",p:"MEI/MD",r:77},{n:"Di Biagio",p:"MEI",r:79},{n:"Almeyda",p:"MEC/MD",r:79},{n:"Conceicao",p:"PD",r:79},{n:"Vieri",p:"CA",r:88},{n:"Recoba",p:"PE/CA/MEI",r:84},{n:"Crespo",p:"CA",r:85},{n:"Dalmat",p:"MEI",r:75}]},
+{club:"JUVENTUS",season:"2002-03",revelacion:false,note:"Finalista — Old Trafford, penales vs Milan",players:[{n:"Buffon",p:"GOL",r:89},{n:"Thuram",p:"ZAG/LD",r:87},{n:"Ferrara",p:"ZAG",r:80},{n:"Tudor",p:"ZAG",r:79},{n:"Montero",p:"ZAG",r:81},{n:"Zambrotta",p:"LD/LE",r:84},{n:"Davids",p:"MEI/MD",r:86},{n:"Nedved",p:"MEI/PE",r:90},{n:"Camoranesi",p:"PD",r:82},{n:"Trezeguet",p:"CA",r:87},{n:"Del Piero",p:"CA/PE/MEI",r:88},{n:"Di Vaio",p:"CA",r:78},{n:"Conte",p:"MEI/MEC",r:82}]},
+{club:"VALENCIA",season:"2002-03",revelacion:false,note:"Cuartos — eliminados por Inter",players:[{n:"Cañizares",p:"GOL",r:84},{n:"Ayala",p:"ZAG",r:84},{n:"Marchena",p:"ZAG",r:79},{n:"Curro Torres",p:"LD",r:76},{n:"Carboni",p:"LE",r:75},{n:"Baraja",p:"MEC/MEI",r:82},{n:"Albelda",p:"MEC",r:81},{n:"Aimar",p:"ME/MEI",r:83},{n:"Vicente",p:"PE/MEI",r:80},{n:"Carew",p:"CA",r:79},{n:"Mista",p:"CA",r:77},{n:"Rufete",p:"PD",r:76},{n:"Angulo",p:"PE/PD",r:76}]},
+{club:"CHELSEA",season:"2003-04",revelacion:false,note:"Semifinalista — Ranieri, primer año Abramovich",players:[{n:"Cudicini",p:"GOL",r:80},{n:"Terry",p:"ZAG",r:84},{n:"Desailly",p:"ZAG",r:82},{n:"Gallas",p:"ZAG/LE",r:80},{n:"Bridge",p:"LE",r:77},{n:"Johnson",p:"LD",r:76},{n:"Makelélé",p:"MEC",r:84},{n:"Lampard",p:"MEI/ME",r:87},{n:"Duff",p:"PE/PD",r:80},{n:"Gudjohnsen",p:"CA/ME",r:80},{n:"Hasselbaink",p:"CA",r:81},{n:"Crespo",p:"CA",r:84},{n:"Geremi",p:"LD/MEC",r:77}]},
+{club:"DEPORTIVO",season:"2003-04",revelacion:false,note:"Cuartos — remontada épica 4-0 vs Milan",players:[{n:"Molina",p:"GOL",r:80},{n:"Andrade",p:"ZAG",r:79},{n:"Naybet",p:"ZAG",r:79},{n:"César",p:"ZAG",r:77},{n:"Manuel Pablo",p:"LD",r:77},{n:"Romero",p:"LD/LE",r:76},{n:"Mauro Silva",p:"MEC",r:81},{n:"Valerón",p:"MEI/ME",r:85},{n:"Fran",p:"MEI",r:78},{n:"Sergio",p:"PD/PE",r:79},{n:"Pandiani",p:"CA/PE",r:78},{n:"Diego Tristán",p:"CA",r:81},{n:"Luque",p:"CA",r:79},{n:"Víctor",p:"PE/MEI",r:76}]},
+{club:"LYON",season:"2003-04",revelacion:false,note:"Cuartos — eliminados por Porto",players:[{n:"Coupet",p:"GOL",r:82},{n:"Edmilson",p:"ZAG/MEC",r:80},{n:"Müller",p:"ZAG",r:78},{n:"Réveillère",p:"LD",r:77},{n:"Berthod",p:"LE",r:73},{n:"Essien",p:"MEC/MD",r:82},{n:"Juninho",p:"MEI/ME",r:84},{n:"Malouda",p:"PE/MEI",r:78},{n:"Govou",p:"PD/PE",r:77},{n:"Luyindula",p:"CA",r:76},{n:"Elber",p:"CA",r:78},{n:"Diarra",p:"MEC/MD",r:76},{n:"Dhorasoo",p:"MEI",r:76}]},
+{club:"MÓNACO",season:"2003-04",revelacion:false,note:"Finalista — eliminaron al Real Madrid",players:[{n:"Roma",p:"GOL",r:80},{n:"Givet",p:"ZAG",r:78},{n:"Ibarra",p:"ZAG",r:76},{n:"Évra",p:"LE",r:78},{n:"Rodriguez",p:"LD",r:77},{n:"Bernardi",p:"PD/ME",r:79},{n:"Zikos",p:"MEC",r:77},{n:"Rothen",p:"PE/MEI",r:80},{n:"Giuly",p:"PD",r:83},{n:"Prso",p:"CA",r:82},{n:"Morientes",p:"CA",r:85},{n:"Nonda",p:"CA/PE",r:79},{n:"Cissé",p:"CA",r:78},{n:"Squillaci",p:"ZAG",r:75}]},
+{club:"PORTO",season:"2003-04",revelacion:false,note:"Campeón — Mourinho conquista Europa",players:[{n:"Vítor Baía",p:"GOL",r:84},{n:"Jorge Costa",p:"ZAG",r:80},{n:"Ricardo Carvalho",p:"ZAG",r:85},{n:"Paulo Ferreira",p:"LD",r:80},{n:"Nuno Valente",p:"LE",r:78},{n:"Costinha",p:"MEC/MD",r:79},{n:"Maniche",p:"MEI",r:84},{n:"Deco",p:"MEI/ME",r:89},{n:"Pedro Mendes",p:"MEI/MD",r:78},{n:"Carlos Alberto",p:"PD",r:76},{n:"Derlei",p:"CA",r:80},{n:"McCarthy",p:"CA",r:78},{n:"Alenichev",p:"ME/PD/PE",r:77},{n:"Bosingwa",p:"LD",r:75}]},
+{club:"AC MILAN",season:"2004-05",revelacion:false,note:"Finalista — Estambul, ventaja de 3-0 perdida en penales",players:[{n:"Dida",p:"GOL",r:84},{n:"Maldini",p:"ZAG/LE",r:90},{n:"Nesta",p:"ZAG",r:90},{n:"Stam",p:"ZAG",r:85},{n:"Cafu",p:"LD",r:86},{n:"Jankulovski",p:"LE",r:77},{n:"Gattuso",p:"MD",r:85},{n:"Pirlo",p:"MEI/MEC",r:88},{n:"Seedorf",p:"MEI",r:86},{n:"Kaká",p:"ME/MEI/PD",r:90},{n:"Crespo",p:"CA",r:86},{n:"Shevchenko",p:"CA",r:89},{n:"Tomasson",p:"CA",r:77},{n:"Serginho",p:"LE/PE",r:78}]},
+{club:"CHELSEA",season:"2004-05",revelacion:false,note:"Semifinalista — primer Mourinho, gol fantasma vs Liverpool",players:[{n:"Cech",p:"GOL",r:86},{n:"Terry",p:"ZAG",r:86},{n:"Carvalho",p:"ZAG",r:84},{n:"Gallas",p:"ZAG/LE",r:80},{n:"Paulo Ferreira",p:"LD",r:79},{n:"Bridge",p:"LE",r:77},{n:"Makelélé",p:"MEC",r:84},{n:"Lampard",p:"MEI/ME",r:88},{n:"Tiago",p:"MEI",r:79},{n:"Duff",p:"PE/PD",r:80},{n:"Gudjohnsen",p:"CA/ME",r:80},{n:"Drogba",p:"CA",r:84},{n:"Robben",p:"PD/PE",r:84},{n:"Cole",p:"PE",r:79}]},
+{club:"JUVENTUS",season:"2004-05",revelacion:false,note:"Cuartos — eliminados por Liverpool en penales",players:[{n:"Buffon",p:"GOL",r:90},{n:"Thuram",p:"ZAG/LD",r:85},{n:"Cannavaro",p:"ZAG",r:86},{n:"Zambrotta",p:"LD/LE",r:83},{n:"Zebina",p:"LD",r:76},{n:"Pessotto",p:"LE",r:76},{n:"Emerson",p:"MEC/MD",r:82},{n:"Camoranesi",p:"PD",r:81},{n:"Nedvěd",p:"MEI/PE",r:87},{n:"Del Piero",p:"CA/PE/MEI",r:86},{n:"Ibrahimović",p:"CA",r:83},{n:"Trezeguet",p:"CA",r:86},{n:"Appiah",p:"MEI/MD",r:78},{n:"Blasi",p:"MEI",r:75}]},
+{club:"LIVERPOOL",season:"2004-05",revelacion:false,note:"Campeón — Milagro de Estambul",players:[{n:"Dudek",p:"GOL",r:80},{n:"Carragher",p:"ZAG",r:84},{n:"Hyypiä",p:"ZAG",r:83},{n:"Finnan",p:"LD",r:78},{n:"Traoré",p:"LE",r:75},{n:"Riise",p:"LE",r:80},{n:"Gerrard",p:"MEI/ME",r:90},{n:"Xabi Alonso",p:"MEI/MEC",r:87},{n:"Hamann",p:"MD",r:82},{n:"Luis García",p:"ME/PE",r:80},{n:"Šmicer",p:"PD/PE",r:77},{n:"Baroš",p:"CA",r:79},{n:"Kewell",p:"PE/CA",r:78},{n:"Cissé",p:"CA",r:80}]},
+{club:"PSV",season:"2004-05",revelacion:true,note:"Semifinalista — Cocu y Park, eliminados por Milan",players:[{n:"Gomes",p:"GOL",r:78},{n:"Ooijer",p:"ZAG",r:77},{n:"Alex",p:"ZAG",r:79},{n:"Lee Young-pyo",p:"LE",r:75},{n:"Bouma",p:"LD",r:74},{n:"Cocu",p:"MEI/MEC",r:82},{n:"Van Bommel",p:"MEC/MD",r:81},{n:"Park",p:"PD/PE",r:79},{n:"Farfán",p:"PD",r:77},{n:"Hesselink",p:"CA",r:76},{n:"Vennegoor of Hesselink",p:"CA",r:76},{n:"Beasley",p:"PE/PD",r:74},{n:"Vogel",p:"MEI/MD",r:76}]},
+{club:"ARSENAL",season:"2005-06",revelacion:false,note:"Finalista — última temporada en Highbury",players:[{n:"Lehmann",p:"GOL",r:84},{n:"Campbell",p:"ZAG",r:84},{n:"Touré",p:"ZAG",r:83},{n:"Eboué",p:"LD/PD",r:76},{n:"Flamini",p:"LE/MEI",r:77},{n:"Fàbregas",p:"MEI/ME",r:82},{n:"Gilberto",p:"MEC",r:83},{n:"Hleb",p:"PD/ME",r:80},{n:"Ljungberg",p:"PD/PE",r:82},{n:"Pires",p:"PE/ME",r:86},{n:"Henry",p:"CA/PE",r:94},{n:"Bergkamp",p:"CA/MEI",r:87},{n:"Reyes",p:"PE/CA",r:79}]},
+{club:"BARCELONA",season:"2005-06",revelacion:false,note:"Campeón — París, Ronaldinho era",players:[{n:"Valdés",p:"GOL",r:84},{n:"Puyol",p:"ZAG",r:88},{n:"Márquez",p:"ZAG",r:83},{n:"Oleguer",p:"LD",r:74},{n:"Van Bronckhorst",p:"LE/MEI",r:82},{n:"Xavi",p:"MEI",r:90},{n:"Iniesta",p:"MEI/ME",r:86},{n:"Edmílson",p:"MEC",r:80},{n:"Deco",p:"MEI/ME",r:87},{n:"Ronaldinho",p:"PE/CA/MEI",r:95},{n:"Eto'o",p:"CA",r:91},{n:"Giuly",p:"PD",r:80},{n:"Larsson",p:"CA",r:82},{n:"Belletti",p:"LD/LE",r:78}]},
+{club:"INTER MILÁN",season:"2005-06",revelacion:false,note:"Cuartos — eliminados por Villarreal",players:[{n:"Julio César",p:"GOL",r:84},{n:"Córdoba",p:"ZAG",r:82},{n:"Samuel",p:"ZAG",r:82},{n:"Materazzi",p:"ZAG",r:79},{n:"Zanetti",p:"LD/MEI",r:85},{n:"Favalli",p:"LE",r:75},{n:"Figo",p:"PD/ME",r:85},{n:"Cambiasso",p:"MEC/MEI",r:82},{n:"Stankovic",p:"MEI/MD",r:81},{n:"Vieri",p:"CA",r:84},{n:"Adriano",p:"CA",r:83},{n:"Martins",p:"CA/PE",r:78},{n:"Cruz",p:"CA",r:80},{n:"Solari",p:"PE/MEI",r:77}]},
+{club:"LYON",season:"2005-06",revelacion:false,note:"Cuartos — eliminados por Milan",players:[{n:"Coupet",p:"GOL",r:82},{n:"Cris",p:"ZAG",r:81},{n:"Caçapa",p:"ZAG",r:78},{n:"Réveillère",p:"LD",r:78},{n:"Abidal",p:"LE",r:80},{n:"Diarra",p:"MEC/MD",r:78},{n:"Juninho",p:"MEI/ME",r:85},{n:"Tiago",p:"MEI",r:80},{n:"Malouda",p:"PE/MEI",r:81},{n:"Wiltord",p:"CA/PE",r:79},{n:"Fred",p:"CA",r:80},{n:"Govou",p:"PD/PE",r:78},{n:"Ben Arfa",p:"PD/PE",r:74}]},
+{club:"VILLARREAL",season:"2005-06",revelacion:true,note:"Semifinalista — a un penal de la final, Pellegrini",players:[{n:"Barbosa",p:"GOL",r:78},{n:"Gonzalo",p:"ZAG",r:77},{n:"Quique Álvarez",p:"ZAG",r:79},{n:"Arruabarrena",p:"LE",r:76},{n:"Javi Venta",p:"LD",r:76},{n:"Senna",p:"MEC/MEI",r:83},{n:"Riquelme",p:"MEI/ME",r:88},{n:"Josico",p:"MEC/MD",r:77},{n:"Sorin",p:"LE",r:79},{n:"Forlán",p:"CA/PE",r:84},{n:"Guayre",p:"PD/PE",r:76},{n:"Roger",p:"CA",r:78},{n:"Cazorla",p:"MEI/ME",r:77}]},
+{club:"AC MILAN",season:"2006-07",revelacion:false,note:"Campeón — revancha vs Liverpool en Atenas",players:[{n:"Dida",p:"GOL",r:84},{n:"Nesta",p:"ZAG",r:90},{n:"Maldini",p:"ZAG/LE",r:89},{n:"Kaladze",p:"ZAG/LE",r:79},{n:"Oddo",p:"LD",r:78},{n:"Jankulovski",p:"LE",r:77},{n:"Gattuso",p:"MD",r:84},{n:"Pirlo",p:"MEI/MEC",r:89},{n:"Ambrosini",p:"MEI/MD",r:80},{n:"Seedorf",p:"MEI/PE",r:86},{n:"Kaká",p:"ME/MEI/PD",r:95},{n:"Inzaghi",p:"CA",r:83},{n:"Gilardino",p:"CA",r:80}]},
+{club:"BAYERN MÚNICH",season:"2006-07",revelacion:false,note:"Cuartos — eliminados por Milan",players:[{n:"Kahn",p:"GOL",r:85},{n:"Lucio",p:"ZAG",r:84},{n:"Van Buyten",p:"ZAG",r:79},{n:"Sagnol",p:"LD",r:81},{n:"Lahm",p:"LD/MEI",r:83},{n:"Lizarazu",p:"LE",r:79},{n:"Hargreaves",p:"MEC/MD",r:81},{n:"Ze Roberto",p:"MEI/PE",r:80},{n:"Schweinsteiger",p:"MEI/MEC",r:82},{n:"Makaay",p:"CA",r:82},{n:"Podolski",p:"CA/PD/PE",r:79},{n:"Pizarro",p:"CA",r:80},{n:"Santa Cruz",p:"CA",r:77}]},
+{club:"CHELSEA",season:"2006-07",revelacion:false,note:"Semifinalista — eliminados por Liverpool",players:[{n:"Cech",p:"GOL",r:89},{n:"Terry",p:"ZAG",r:88},{n:"Carvalho",p:"ZAG",r:85},{n:"Ashley Cole",p:"LE",r:85},{n:"Paulo Ferreira",p:"LD",r:78},{n:"Essien",p:"MD/LD",r:85},{n:"Makelélé",p:"MEC",r:82},{n:"Lampard",p:"MEI/ME",r:89},{n:"Ballack",p:"MEI/ME",r:86},{n:"Robben",p:"PD/PE",r:86},{n:"Drogba",p:"CA",r:88},{n:"Shevchenko",p:"CA",r:82},{n:"Wright-Phillips",p:"PD",r:76}]},
+{club:"LIVERPOOL",season:"2006-07",revelacion:false,note:"Finalista — Atenas, revancha perdida vs Milan",players:[{n:"Reina",p:"GOL",r:84},{n:"Carragher",p:"ZAG",r:84},{n:"Agger",p:"ZAG",r:81},{n:"Finnan",p:"LD",r:78},{n:"Riise",p:"LE",r:80},{n:"Arbeloa",p:"LD",r:77},{n:"Gerrard",p:"MEI/ME",r:90},{n:"Xabi Alonso",p:"MEI/MEC",r:87},{n:"Mascherano",p:"MEC/MD",r:84},{n:"Pennant",p:"PD",r:76},{n:"Kuyt",p:"PD/CA",r:81},{n:"Crouch",p:"CA",r:78},{n:"Bellamy",p:"PE/CA",r:79},{n:"Zenden",p:"PE/LE",r:76}]},
+{club:"MANCHESTER UNITED",season:"2006-07",revelacion:false,note:"Semifinalista — eliminados por Milan en San Siro",players:[{n:"Van der Sar",p:"GOL",r:85},{n:"Vidić",p:"ZAG",r:85},{n:"Ferdinand",p:"ZAG",r:87},{n:"Neville",p:"LD",r:80},{n:"Evra",p:"LE",r:82},{n:"Carrick",p:"MEI/MEC",r:82},{n:"Scholes",p:"MEI/ME",r:87},{n:"Giggs",p:"PE/MEI",r:83},{n:"Ronaldo",p:"PD/PE",r:90},{n:"Rooney",p:"CA/PE",r:88},{n:"Solskjaer",p:"CA",r:78},{n:"Fletcher",p:"MEI/MD",r:78},{n:"Park",p:"PD/PE",r:78},{n:"Richardson",p:"PE/LE",r:74}]},
+{club:"ARSENAL",season:"2007-08",revelacion:false,note:"Cuartos — eliminados por Liverpool",players:[{n:"Almunia",p:"GOL",r:78},{n:"Touré",p:"ZAG",r:82},{n:"Gallas",p:"ZAG",r:80},{n:"Sagna",p:"LD",r:81},{n:"Clichy",p:"LE",r:78},{n:"Fàbregas",p:"MEI/ME",r:84},{n:"Flamini",p:"MEI/MD",r:79},{n:"Hleb",p:"PD/ME",r:80},{n:"Rosický",p:"MEI/ME",r:81},{n:"Adebayor",p:"CA",r:82},{n:"Van Persie",p:"CA/PE",r:84},{n:"Eduardo",p:"CA/PE",r:79},{n:"Walcott",p:"PD/PE",r:78}]},
+{club:"CHELSEA",season:"2007-08",revelacion:false,note:"Finalista — Moscú, penal de Terry, perdieron vs Man Utd",players:[{n:"Cech",p:"GOL",r:89},{n:"Terry",p:"ZAG",r:88},{n:"Carvalho",p:"ZAG",r:85},{n:"Essien",p:"MD/LD",r:84},{n:"Ashley Cole",p:"LE",r:86},{n:"Makelélé",p:"MEC",r:83},{n:"Lampard",p:"MEI/ME",r:89},{n:"Ballack",p:"MEI/ME",r:86},{n:"Joe Cole",p:"PE/ME",r:81},{n:"Malouda",p:"PE/MEI",r:80},{n:"Drogba",p:"CA",r:88},{n:"Anelka",p:"CA/PE",r:82},{n:"Kalou",p:"PD/PE/CA",r:77}]},
+{club:"LIVERPOOL",season:"2007-08",revelacion:false,note:"Semifinalista — Torres debut, eliminados por Chelsea",players:[{n:"Reina",p:"GOL",r:84},{n:"Carragher",p:"ZAG",r:83},{n:"Skrtel",p:"ZAG",r:79},{n:"Arbeloa",p:"LD",r:79},{n:"Riise",p:"LE",r:79},{n:"Aurelio",p:"LE",r:77},{n:"Gerrard",p:"MEI/ME",r:89},{n:"Mascherano",p:"MEC/MD",r:85},{n:"Lucas",p:"MEI/MD",r:76},{n:"Babel",p:"PE/CA",r:76},{n:"Kuyt",p:"PD/CA",r:80},{n:"Torres",p:"CA",r:87},{n:"Crouch",p:"CA",r:78},{n:"Benayoun",p:"PD/ME",r:78}]},
+{club:"MANCHESTER UNITED",season:"2007-08",revelacion:false,note:"Campeón — Moscú, penales vs Chelsea",players:[{n:"Van der Sar",p:"GOL",r:86},{n:"Vidić",p:"ZAG",r:88},{n:"Ferdinand",p:"ZAG",r:90},{n:"Evra",p:"LE",r:84},{n:"Brown",p:"LD/ZAG",r:78},{n:"Hargreaves",p:"MD",r:82},{n:"Scholes",p:"MEI",r:88},{n:"Carrick",p:"MEI/MEC",r:84},{n:"Giggs",p:"PE/MEI",r:85},{n:"C. Ronaldo",p:"PD/PE/CA",r:93},{n:"Rooney",p:"CA/PE",r:89},{n:"Tevez",p:"CA",r:87},{n:"Park",p:"PD/PE",r:79},{n:"Nani",p:"PD/PE",r:80}]},
+{club:"ROMA",season:"2007-08",revelacion:true,note:"Cuartos — Spalletti, eliminados por Manchester United",players:[{n:"Doni",p:"GOL",r:78},{n:"Mexès",p:"ZAG",r:80},{n:"Panucci",p:"ZAG/LD",r:78},{n:"Juan",p:"ZAG",r:77},{n:"Tonetto",p:"LE",r:75},{n:"Cicinho",p:"LD",r:77},{n:"De Rossi",p:"MEC/MD",r:83},{n:"Taddei",p:"PD/ME",r:77},{n:"Perrotta",p:"MEI/MD",r:80},{n:"Mancini",p:"PE/PD",r:78},{n:"Totti",p:"CA/ME/MEI",r:88},{n:"Vucinić",p:"CA/PE",r:80},{n:"Aquilani",p:"MEI",r:77},{n:"Giuly",p:"PD",r:76}]},
+{club:"ARSENAL",season:"2008-09",revelacion:false,note:"Semifinalista — el Arsenal joven de Wenger, eliminados por Man Utd",players:[{n:"Almunia",p:"GOL",r:78},{n:"Touré",p:"ZAG",r:82},{n:"Gallas",p:"ZAG",r:81},{n:"Sagna",p:"LD",r:81},{n:"Clichy",p:"LE",r:78},{n:"Fàbregas",p:"MEI/ME",r:86},{n:"Song",p:"MEC/MD",r:78},{n:"Nasri",p:"PE/ME/PD",r:82},{n:"Walcott",p:"PD/PE",r:80},{n:"Adebayor",p:"CA",r:83},{n:"Van Persie",p:"CA/PE",r:86},{n:"Arshavin",p:"PE/CA/PD",r:82},{n:"Diaby",p:"MEI/MD",r:76}]},
+{club:"BARCELONA",season:"2008-09",revelacion:false,note:"Campeón — triplete, Roma vs Man United",players:[{n:"Valdés",p:"GOL",r:84},{n:"Puyol",p:"ZAG",r:87},{n:"Piqué",p:"ZAG",r:84},{n:"Dani Alves",p:"LD",r:89},{n:"Abidal",p:"LE",r:82},{n:"Busquets",p:"MEC",r:83},{n:"Xavi",p:"MEI",r:92},{n:"Iniesta",p:"MEI/ME",r:91},{n:"Touré",p:"MEI/ZAG",r:85},{n:"Henry",p:"PE/CA",r:88},{n:"Messi",p:"PD/CA/PE",r:96},{n:"Eto'o",p:"CA",r:90},{n:"Keita",p:"MEI/MD",r:79},{n:"Sylvinho",p:"LE",r:76}]},
+{club:"CHELSEA",season:"2008-09",revelacion:false,note:"Semifinalista — gol de Iniesta en el 93', eliminados por Barcelona",players:[{n:"Cech",p:"GOL",r:88},{n:"Terry",p:"ZAG",r:88},{n:"Alex",p:"ZAG",r:82},{n:"Ashley Cole",p:"LE",r:86},{n:"Bosingwa",p:"LD",r:79},{n:"Essien",p:"MD/LD",r:84},{n:"Ballack",p:"MEI/ME",r:85},{n:"Lampard",p:"MEI/ME",r:89},{n:"Malouda",p:"PE/MEI",r:82},{n:"Anelka",p:"CA/PE",r:82},{n:"Drogba",p:"CA",r:89},{n:"Kalou",p:"PD/PE/CA",r:77},{n:"Belletti",p:"LD",r:76}]},
+{club:"MANCHESTER UNITED",season:"2008-09",revelacion:false,note:"Finalista — perdieron vs Barcelona en Roma",players:[{n:"Van der Sar",p:"GOL",r:85},{n:"Vidić",p:"ZAG",r:89},{n:"Ferdinand",p:"ZAG",r:89},{n:"Evra",p:"LE",r:84},{n:"O'Shea",p:"LD/ZAG",r:77},{n:"Carrick",p:"MEI/MEC",r:84},{n:"Anderson",p:"MEI/MD",r:78},{n:"Fletcher",p:"MEI/MD",r:81},{n:"Park",p:"PD/PE",r:79},{n:"C. Ronaldo",p:"PD/PE/CA",r:95},{n:"Rooney",p:"CA/PE",r:89},{n:"Berbatov",p:"CA",r:84},{n:"Tevez",p:"CA",r:87},{n:"Nani",p:"PD/PE",r:81},{n:"Giggs",p:"PE/MEI",r:82}]},
+{club:"PORTO",season:"2008-09",revelacion:false,note:"Cuartos — eliminados por Manchester United",players:[{n:"Helton",p:"GOL",r:78},{n:"Bruno Alves",p:"ZAG",r:81},{n:"Rolando",p:"ZAG",r:78},{n:"Cissokho",p:"LE",r:76},{n:"Bosingwa",p:"LD",r:79},{n:"Fucile",p:"LD",r:76},{n:"Lucho González",p:"MEI/ME",r:81},{n:"Raul Meireles",p:"MEI/MD",r:80},{n:"Fernando",p:"MEC/MD",r:77},{n:"Hulk",p:"PD/CA",r:80},{n:"Lisandro López",p:"CA",r:82},{n:"Mariano González",p:"PD/ME",r:77},{n:"Rodríguez",p:"PE",r:75}]},
+{club:"ARSENAL",season:"2009-10",revelacion:false,note:"Cuartos — eliminados por Barcelona",players:[{n:"Almunia",p:"GOL",r:77},{n:"Vermaelen",p:"ZAG",r:81},{n:"Gallas",p:"ZAG",r:79},{n:"Sagna",p:"LD",r:81},{n:"Clichy",p:"LE",r:78},{n:"Song",p:"MEC/MD",r:79},{n:"Fàbregas",p:"MEI/ME",r:87},{n:"Nasri",p:"PE/ME/PD",r:83},{n:"Walcott",p:"PD/PE",r:80},{n:"Arshavin",p:"PE/CA/PD",r:82},{n:"Van Persie",p:"CA/PE",r:86},{n:"Bendtner",p:"CA",r:76},{n:"Denilson",p:"MEI/MD",r:75}]},
+{club:"BAYERN MÚNICH",season:"2009-10",revelacion:false,note:"Finalista — Madrid, el Bayern de Van Gaal",players:[{n:"Butt",p:"GOL",r:82},{n:"Demichelis",p:"ZAG",r:80},{n:"Van Buyten",p:"ZAG",r:79},{n:"Lahm",p:"LD/MEI",r:87},{n:"Badstuber",p:"ZAG",r:78},{n:"Contento",p:"LE",r:74},{n:"Schweinsteiger",p:"MEI/MEC",r:86},{n:"Van Bommel",p:"MEC/MD",r:82},{n:"Robben",p:"PD/PE",r:89},{n:"Ribéry",p:"PE",r:90},{n:"Müller",p:"PD/CA/MEI",r:82},{n:"Olić",p:"CA/PE",r:79},{n:"Klose",p:"CA",r:82},{n:"Altintop",p:"PD/ME",r:76}]},
+{club:"BORDEAUX",season:"2009-10",revelacion:true,note:"Cuartos — Laurent Blanc",players:[{n:"Carrasso",p:"GOL",r:76},{n:"Planus",p:"ZAG",r:76},{n:"Ciani",p:"ZAG",r:75},{n:"Trémoulinas",p:"LE",r:76},{n:"Chalme",p:"LD",r:74},{n:"Fernando",p:"MEC/MD",r:77},{n:"Diarra",p:"MEC/MD",r:76},{n:"Gourcuff",p:"MEI/ME",r:82},{n:"Chamakh",p:"CA",r:79},{n:"Cavenaghi",p:"CA",r:76},{n:"Wendel",p:"PE/MEI",r:75},{n:"Gouffran",p:"PD/PE",r:74},{n:"Jurietti",p:"LD",r:73}]},
+{club:"INTER MILÁN",season:"2009-10",revelacion:false,note:"Campeón — triplete de Mourinho",players:[{n:"Julio César",p:"GOL",r:88},{n:"Lúcio",p:"ZAG",r:85},{n:"Samuel",p:"ZAG",r:83},{n:"Maicon",p:"LD",r:88},{n:"Zanetti",p:"LD/MEI",r:86},{n:"Chivu",p:"LE/ZAG",r:80},{n:"Cambiasso",p:"MEI/MEC",r:84},{n:"Sneijder",p:"MEI/ME",r:90},{n:"Stankovic",p:"MEI",r:82},{n:"Muntari",p:"MEI/MD",r:77},{n:"Eto'o",p:"CA/PD/PE",r:87},{n:"Milito",p:"CA",r:86},{n:"Pandev",p:"CA/PE",r:79}]},
+{club:"LYON",season:"2009-10",revelacion:false,note:"Semifinalista — eliminaron al Real Madrid",players:[{n:"Lloris",p:"GOL",r:83},{n:"Cris",p:"ZAG",r:82},{n:"Boumsong",p:"ZAG",r:78},{n:"Réveillère",p:"LD",r:79},{n:"Grosso",p:"LE",r:77},{n:"Toulalan",p:"MEC",r:82},{n:"Makoun",p:"MEI/MD",r:79},{n:"Pjanic",p:"MEI",r:80},{n:"Govou",p:"PD/PE",r:78},{n:"Lisandro López",p:"CA",r:83},{n:"Gomis",p:"CA",r:79},{n:"Bastos",p:"PE/PD",r:78},{n:"Ederson",p:"MEI",r:77},{n:"Delgado",p:"MEI",r:76}]},
+{club:"CHELSEA",season:"2010-11",revelacion:false,note:"Cuartos — eliminados por ManUtd",players:[{n:"Cech",p:"GOL",r:88},{n:"Terry",p:"ZAG",r:86},{n:"Alex",p:"ZAG",r:81},{n:"Ivanović",p:"LD/ZAG",r:82},{n:"Ashley Cole",p:"LE",r:85},{n:"Essien",p:"MD/LD",r:83},{n:"Mikel",p:"MEC",r:79},{n:"Lampard",p:"MEI/ME",r:88},{n:"Ramires",p:"MEI/MD",r:81},{n:"Kalou",p:"PD/PE/CA",r:77},{n:"Drogba",p:"CA",r:87},{n:"Torres",p:"CA",r:80},{n:"Anelka",p:"CA/PE",r:80},{n:"Zhirkov",p:"LE/PE",r:76}]},
+{club:"INTER MILÁN",season:"2010-11",revelacion:false,note:"Octavos — defendían título, eliminados por Schalke",players:[{n:"Julio César",p:"GOL",r:85},{n:"Lúcio",p:"ZAG",r:82},{n:"Samuel",p:"ZAG",r:81},{n:"Maicon",p:"LD",r:84},{n:"Zanetti",p:"LD/MEI",r:83},{n:"Chivu",p:"LE/ZAG",r:78},{n:"Cambiasso",p:"MEC/MEI",r:82},{n:"Sneijder",p:"MEI/ME",r:87},{n:"Stankovic",p:"MEI/MD",r:80},{n:"Eto'o",p:"CA/PD/PE",r:86},{n:"Milito",p:"CA",r:83},{n:"Pandev",p:"CA/PE",r:78},{n:"Muntari",p:"MEI/MD",r:76}]},
+{club:"MANCHESTER UNITED",season:"2010-11",revelacion:false,note:"Finalista — Wembley, perdieron 3-1 vs Barcelona",players:[{n:"Van der Sar",p:"GOL",r:85},{n:"Vidić",p:"ZAG",r:88},{n:"Ferdinand",p:"ZAG",r:86},{n:"Evra",p:"LE",r:83},{n:"Rafael",p:"LD",r:79},{n:"O'Shea",p:"ZAG/LD",r:77},{n:"Carrick",p:"MEI/MEC",r:84},{n:"Fletcher",p:"MEI/MD",r:80},{n:"Giggs",p:"PE/MEI",r:82},{n:"Park",p:"PD/PE",r:80},{n:"Nani",p:"PD/PE",r:82},{n:"Rooney",p:"CA/PE",r:89},{n:"Berbatov",p:"CA",r:84},{n:"Hernández",p:"CA",r:80},{n:"Valencia",p:"PD",r:83}]},
+{club:"SCHALKE 04",season:"2010-11",revelacion:true,note:"Semifinalista — Raúl, sorpresa alemana, eliminados por Man Utd",players:[{n:"Neuer",p:"GOL",r:86},{n:"Höwedes",p:"ZAG",r:79},{n:"Metzelder",p:"ZAG",r:77},{n:"Uchida",p:"LD",r:76},{n:"Schmitz",p:"LE",r:73},{n:"Matip",p:"ZAG/MD",r:74},{n:"Jones",p:"MEC/MD",r:78},{n:"Draxler",p:"PD/ME",r:72},{n:"Farfán",p:"PD/PE",r:80},{n:"Raúl",p:"CA",r:84},{n:"Huntelaar",p:"CA",r:82},{n:"Jurado",p:"MEI/ME",r:76},{n:"Edu",p:"MEC",r:75}]},
+{club:"TOTTENHAM",season:"2010-11",revelacion:false,note:"Cuartos — eliminados por Real Madrid, Bale breakout",players:[{n:"Gomes",p:"GOL",r:78},{n:"Dawson",p:"ZAG",r:78},{n:"Gallas",p:"ZAG",r:77},{n:"Corluka",p:"LD/ZAG",r:77},{n:"Assou-Ekotto",p:"LE",r:76},{n:"Lennon",p:"PD",r:79},{n:"Modric",p:"MEI/ME",r:85},{n:"Van der Vaart",p:"MEI/ME",r:83},{n:"Bale",p:"PE/PD",r:84},{n:"Defoe",p:"CA",r:80},{n:"Crouch",p:"CA",r:77},{n:"Huddlestone",p:"MEI/MD",r:77},{n:"Palacios",p:"MEI/MD",r:75},{n:"Pavlyuchenko",p:"CA",r:76}]},
+{club:"APOEL",season:"2011-12",revelacion:true,note:"Cuartos — milagro chipriota, eliminaron a Lyon",players:[{n:"Chiotis",p:"GOL",r:72},{n:"Paulo Jorge",p:"ZAG",r:70},{n:"Kaka",p:"ZAG",r:69},{n:"Poursaitidis",p:"ZAG",r:68},{n:"Mario Sergio",p:"LD",r:68},{n:"Boaventura",p:"LE",r:67},{n:"Morais",p:"MEC/MD",r:71},{n:"Aloneftis",p:"MEI",r:70},{n:"Tričkovski",p:"PD/PE",r:72},{n:"Manduca",p:"CA",r:73},{n:"Solari",p:"PE/CA",r:71},{n:"Charalambidis",p:"MEI/ME",r:69},{n:"Alexandrou",p:"PD",r:68},{n:"Hélio Pinto",p:"MEI",r:67}]},
+{club:"BAYERN MÚNICH",season:"2011-12",revelacion:false,note:"Finalista — perdieron vs Chelsea en Allianz Arena",players:[{n:"Neuer",p:"GOL",r:89},{n:"Lahm",p:"LD/MEI",r:88},{n:"Boateng",p:"ZAG",r:84},{n:"Badstuber",p:"ZAG",r:80},{n:"Alaba",p:"LE/ZAG/MEI",r:80},{n:"Contento",p:"LE",r:75},{n:"Schweinsteiger",p:"MEI/MEC",r:87},{n:"Kroos",p:"MEI",r:82},{n:"Müller",p:"PD/CA/MEI",r:85},{n:"Robben",p:"PD/PE",r:89},{n:"Ribéry",p:"PE",r:90},{n:"Gomez",p:"CA",r:84},{n:"Gustavo",p:"MD",r:79},{n:"Tymoschuk",p:"MEC/MD",r:76}]},
+{club:"BENFICA",season:"2011-12",revelacion:true,note:"Cuartos — eliminados por Chelsea, Cardozo y compañía",players:[{n:"Artur",p:"GOL",r:77},{n:"Luisão",p:"ZAG",r:79},{n:"Garay",p:"ZAG",r:80},{n:"Maxi Pereira",p:"LD",r:78},{n:"Emerson",p:"LE",r:74},{n:"Javi García",p:"MEC/MD",r:79},{n:"Witsel",p:"MEI/MD",r:80},{n:"Aimar",p:"ME/MEI",r:79},{n:"Gaitán",p:"PE/MEI",r:80},{n:"Cardozo",p:"CA",r:81},{n:"Rodrigo",p:"CA/PE",r:76},{n:"Bruno César",p:"PD/PE",r:74},{n:"Nolito",p:"PE",r:74}]},
+{club:"CHELSEA",season:"2011-12",revelacion:false,note:"Campeón — Múnich, cabezazo de Drogba",players:[{n:"Cech",p:"GOL",r:88},{n:"Terry",p:"ZAG",r:86},{n:"Cahill",p:"ZAG",r:82},{n:"Ivanović",p:"LD/ZAG",r:83},{n:"Ashley Cole",p:"LE",r:86},{n:"Mikel",p:"MEC",r:79},{n:"Lampard",p:"MEI/ME",r:88},{n:"Ramires",p:"MEI/MD",r:82},{n:"Mata",p:"PD/ME/MEI",r:85},{n:"Kalou",p:"PE/CA",r:77},{n:"Drogba",p:"CA",r:87},{n:"Torres",p:"CA",r:82},{n:"Malouda",p:"PE/MEI",r:79}]},
+{club:"MARSEILLE",season:"2011-12",revelacion:true,note:"Cuartos — eliminados por Bayern",players:[{n:"Mandanda",p:"GOL",r:81},{n:"Diawara",p:"ZAG",r:76},{n:"N'Koulou",p:"ZAG",r:78},{n:"Azpilicueta",p:"LD",r:76},{n:"Morel",p:"LE",r:74},{n:"M'Bia",p:"MEC/MD",r:77},{n:"Cheyrou",p:"MEI",r:75},{n:"Valbuena",p:"PD/ME",r:80},{n:"Rémy",p:"CA",r:80},{n:"A. Ayew",p:"PE/CA",r:78},{n:"Brandão",p:"CA",r:75},{n:"Amalfitano",p:"MEI/PD",r:74},{n:"Diarra",p:"MEC/MD",r:76}]},
+{club:"AC MILAN",season:"2012-13",revelacion:false,note:"Octavos — eliminados 0-4 por Barcelona, Milan en decadencia",players:[{n:"Abbiati",p:"GOL",r:78},{n:"Mexes",p:"ZAG",r:78},{n:"Zapata",p:"ZAG",r:76},{n:"Constant",p:"LE",r:73},{n:"Abate",p:"LD",r:77},{n:"De Sciglio",p:"LD/LE",r:75},{n:"Montolivo",p:"MEI",r:80},{n:"Ambrosini",p:"MEI/MD",r:77},{n:"Muntari",p:"MEI/MD",r:76},{n:"Boateng",p:"ME/PD",r:79},{n:"El Shaarawy",p:"PE/CA",r:80},{n:"Niang",p:"CA/PE",r:74},{n:"Balotelli",p:"CA",r:83},{n:"Robinho",p:"PE/CA",r:78},{n:"Pazzini",p:"CA",r:77}]},
+{club:"BAYERN MÚNICH",season:"2012-13",revelacion:false,note:"Campeón — triplete de Heynckes, Wembley",players:[{n:"Neuer",p:"GOL",r:91},{n:"Boateng",p:"ZAG",r:86},{n:"Dante",p:"ZAG",r:82},{n:"Lahm",p:"LD/MEI",r:89},{n:"Alaba",p:"LE/ZAG/MEI",r:84},{n:"Schweinsteiger",p:"MEI/MEC",r:87},{n:"Martínez",p:"MEC/ZAG",r:85},{n:"Müller",p:"PD/CA/MEI",r:88},{n:"Robben",p:"PD/PE",r:90},{n:"Ribéry",p:"PE",r:92},{n:"Mandžukić",p:"CA",r:84},{n:"Kroos",p:"MEI",r:83},{n:"Gustavo",p:"MD",r:81}]},
+{club:"BORUSSIA DORTMUND",season:"2012-13",revelacion:false,note:"Finalista — el Dortmund de Klopp",players:[{n:"Weidenfeller",p:"GOL",r:80},{n:"Hummels",p:"ZAG",r:86},{n:"Subotic",p:"ZAG",r:80},{n:"Felipe Santana",p:"ZAG",r:76},{n:"Piszczek",p:"LD",r:82},{n:"Schmelzer",p:"LE",r:78},{n:"Gundogan",p:"MEI",r:84},{n:"Bender",p:"MEI/MD",r:80},{n:"Reus",p:"PE/CA/PD",r:87},{n:"Gotze",p:"ME/MEI/PD",r:84},{n:"Blaszczykowski",p:"PD",r:80},{n:"Lewandowski",p:"CA",r:86},{n:"Grosskreutz",p:"PD/LE",r:75}]},
+{club:"GALATASARAY",season:"2012-13",revelacion:false,note:"Cuartos — Sneijder/Drogba, eliminados por Real Madrid",players:[{n:"Muslera",p:"GOL",r:80},{n:"Semih Kaya",p:"ZAG",r:76},{n:"Eboué",p:"LD/PD",r:76},{n:"Riera",p:"LE",r:75},{n:"Chedjou",p:"ZAG",r:77},{n:"Selçuk İnan",p:"MEI/MEC",r:79},{n:"Melo",p:"MEC/MD",r:80},{n:"Sneijder",p:"MEI/ME",r:84},{n:"Burak Yılmaz",p:"CA",r:82},{n:"Drogba",p:"CA",r:83},{n:"Elmander",p:"CA/PE",r:77},{n:"Amrabat",p:"PD",r:76},{n:"Altintop",p:"PD/ME",r:76}]},
+{club:"MALAGA",season:"2012-13",revelacion:true,note:"Cuartos — eliminados por Dortmund en el minuto 93",players:[{n:"Caballero",p:"GOL",r:79},{n:"Demichelis",p:"ZAG",r:79},{n:"Weligton",p:"ZAG",r:76},{n:"Gamez",p:"LD",r:76},{n:"Antunes",p:"LE",r:74},{n:"Toulalan",p:"MEC",r:80},{n:"Isco",p:"MEI/ME",r:82},{n:"Joaquín",p:"PD",r:79},{n:"Portillo",p:"MEI",r:76},{n:"Eliseu",p:"PE/LE",r:76},{n:"Santa Cruz",p:"CA",r:78},{n:"Saviola",p:"CA/PE",r:79},{n:"Baptista",p:"CA/PE",r:77}]},
+{club:"ATLÉTICO DE MADRID",season:"2013-14",revelacion:false,note:"Finalista — Lisboa, gol de Ramos en el 93'",players:[{n:"Courtois",p:"GOL",r:86},{n:"Godín",p:"ZAG",r:87},{n:"Miranda",p:"ZAG",r:85},{n:"Juanfran",p:"LD",r:83},{n:"Filipe Luis",p:"LE",r:84},{n:"Gabi",p:"MEI/MEC",r:83},{n:"Tiago",p:"MEI/MEC",r:80},{n:"Koke",p:"MEI/ME",r:83},{n:"Arda Turan",p:"PD/ME",r:84},{n:"Villa",p:"CA/PE",r:83},{n:"Diego Costa",p:"CA",r:86},{n:"Adrián",p:"CA/PE",r:77},{n:"Raúl García",p:"CA/MEI",r:80}]},
+{club:"BAYERN MÚNICH",season:"2013-14",revelacion:false,note:"Semifinalista — Guardiola, eliminados 0-4 por Real Madrid",players:[{n:"Neuer",p:"GOL",r:91},{n:"Boateng",p:"ZAG",r:87},{n:"Dante",p:"ZAG",r:82},{n:"Lahm",p:"LD/MEI",r:89},{n:"Alaba",p:"LE/ZAG/MEI",r:85},{n:"Rafinha",p:"LD",r:79},{n:"Schweinsteiger",p:"MEI/MEC",r:86},{n:"Kroos",p:"MEI",r:86},{n:"Müller",p:"PD/CA/MEI",r:87},{n:"Robben",p:"PD/PE",r:90},{n:"Ribéry",p:"PE",r:89},{n:"Mandžukić",p:"CA",r:83},{n:"Götze",p:"ME/MEI/PD",r:82},{n:"Thiago",p:"MEI/MEC",r:84}]},
+{club:"BORUSSIA DORTMUND",season:"2013-14",revelacion:false,note:"Cuartos — eliminados por Real Madrid, grupo con Arsenal",players:[{n:"Weidenfeller",p:"GOL",r:80},{n:"Hummels",p:"ZAG",r:85},{n:"Subotić",p:"ZAG",r:80},{n:"Piszczek",p:"LD",r:81},{n:"Schmelzer",p:"LE",r:78},{n:"Gündoğan",p:"MEI/ME",r:83},{n:"Bender",p:"MEC/MD",r:80},{n:"Blaszczykowski",p:"PD/PE",r:79},{n:"Reus",p:"ME/MEI/PD",r:86},{n:"Lewandowski",p:"CA",r:88},{n:"Mkhitaryan",p:"PD/ME",r:82},{n:"Sahin",p:"MEI/MEC",r:78},{n:"Großkreutz",p:"PD/PE",r:76}]},
+{club:"CHELSEA",season:"2013-14",revelacion:false,note:"Semifinalista — retorno de Mourinho, eliminados por Atlético",players:[{n:"Cech",p:"GOL",r:87},{n:"Terry",p:"ZAG",r:84},{n:"Cahill",p:"ZAG",r:82},{n:"Ivanović",p:"LD/ZAG",r:83},{n:"Azpilicueta",p:"LD/LE",r:82},{n:"Ashley Cole",p:"LE",r:82},{n:"Matic",p:"MEC/MD",r:83},{n:"Lampard",p:"MEI/ME",r:85},{n:"Oscar",p:"MEI/ME",r:82},{n:"Hazard",p:"PE/MEI",r:87},{n:"Willian",p:"PD/PE",r:82},{n:"Torres",p:"CA",r:80},{n:"Eto'o",p:"CA",r:79},{n:"Schürrle",p:"PE/PD",r:78}]},
+{club:"REAL MADRID",season:"2013-14",revelacion:false,note:"Campeón — La Décima, Lisboa",players:[{n:"Casillas",p:"GOL",r:87},{n:"Ramos",p:"ZAG/LD",r:89},{n:"Varane",p:"ZAG",r:83},{n:"Pepe",p:"ZAG",r:85},{n:"Carvajal",p:"LD",r:83},{n:"Marcelo",p:"LE",r:87},{n:"Modric",p:"MEI",r:90},{n:"Kroos",p:"MEI",r:87},{n:"Di María",p:"PD/PE/MEI",r:88},{n:"Xabi Alonso",p:"MEC/MEI",r:86},{n:"Bale",p:"PD/PE/CA",r:90},{n:"C. Ronaldo",p:"PE/CA/PD",r:96},{n:"Benzema",p:"CA",r:88},{n:"Isco",p:"ME/MEI",r:84}]},
+{club:"ATLÉTICO DE MADRID",season:"2014-15",revelacion:false,note:"Cuartos — eliminados por Real Madrid",players:[{n:"Oblak",p:"GOL",r:85},{n:"Godín",p:"ZAG",r:87},{n:"Giménez",p:"ZAG",r:80},{n:"Miranda",p:"ZAG",r:84},{n:"Juanfran",p:"LD",r:82},{n:"Filipe Luis",p:"LE",r:83},{n:"Gabi",p:"MEI/MEC",r:82},{n:"Tiago",p:"MEI/MEC",r:80},{n:"Koke",p:"MEI/ME",r:83},{n:"Arda Turan",p:"PD/ME",r:83},{n:"Griezmann",p:"CA/PE/ME",r:86},{n:"Mandžukić",p:"CA",r:82},{n:"Torres",p:"CA",r:79},{n:"Saúl",p:"MEI/ME",r:78}]},
+{club:"BARCELONA",season:"2014-15",revelacion:false,note:"Campeón — MSN, Berlín",players:[{n:"Ter Stegen",p:"GOL",r:84},{n:"Piqué",p:"ZAG",r:87},{n:"Mascherano",p:"ZAG/MEC",r:84},{n:"Dani Alves",p:"LD",r:86},{n:"Jordi Alba",p:"LE",r:85},{n:"Busquets",p:"MEC",r:88},{n:"Rakitić",p:"MEI",r:86},{n:"Iniesta",p:"MEI/ME",r:89},{n:"Xavi",p:"MEI",r:87},{n:"Neymar",p:"PE/CA",r:92},{n:"Messi",p:"PD/CA/PE",r:95},{n:"Suárez",p:"CA",r:92},{n:"Pedro",p:"PD/PE/CA",r:82}]},
+{club:"JUVENTUS",season:"2014-15",revelacion:false,note:"Finalista — Berlín, perdieron vs Barcelona",players:[{n:"Buffon",p:"GOL",r:90},{n:"Bonucci",p:"ZAG",r:86},{n:"Chiellini",p:"ZAG",r:87},{n:"Barzagli",p:"ZAG",r:84},{n:"Lichtsteiner",p:"LD",r:82},{n:"Evra",p:"LE",r:80},{n:"Pirlo",p:"MEI/MEC",r:86},{n:"Marchisio",p:"MEI",r:84},{n:"Vidal",p:"MEI/MD",r:87},{n:"Pogba",p:"MEI",r:83},{n:"Tevez",p:"CA",r:86},{n:"Morata",p:"CA",r:82},{n:"Pereyra",p:"MEI/PD/PE",r:78}]},
+{club:"MÓNACO",season:"2014-15",revelacion:false,note:"Cuartos — eliminaron a Arsenal, Jardim defensivo",players:[{n:"Subasic",p:"GOL",r:79},{n:"Abdennour",p:"ZAG",r:78},{n:"Carvalho",p:"ZAG",r:77},{n:"Kurzawa",p:"LE",r:75},{n:"Fabinho",p:"LD/MEC",r:77},{n:"Kondogbia",p:"MEC/MD",r:79},{n:"Moutinho",p:"MEI/MEC",r:82},{n:"Bernardo Silva",p:"PD/MEI",r:77},{n:"Ferreira-Carrasco",p:"PE/PD",r:76},{n:"Martial",p:"CA/PE",r:76},{n:"Berbatov",p:"CA",r:79},{n:"Dirar",p:"PD",r:74},{n:"Toulalan",p:"MEC",r:78}]},
+{club:"PSG",season:"2014-15",revelacion:false,note:"Cuartos — eliminados por Barcelona",players:[{n:"Sirigu",p:"GOL",r:82},{n:"Thiago Silva",p:"ZAG",r:87},{n:"Marquinhos",p:"ZAG/MEC",r:82},{n:"Van der Wiel",p:"LD",r:78},{n:"Maxwell",p:"LE",r:77},{n:"Verratti",p:"MEI/MEC",r:84},{n:"Matuidi",p:"MEI/MD",r:83},{n:"Motta",p:"MEC",r:81},{n:"Pastore",p:"MEI/ME",r:81},{n:"Di María",p:"PD/PE",r:86},{n:"Cavani",p:"CA",r:87},{n:"Lavezzi",p:"PE/CA",r:80},{n:"Lucas Moura",p:"PD/PE",r:79}]},
+{club:"ATLÉTICO DE MADRID",season:"2015-16",revelacion:false,note:"Finalista — Simeone, Milán",players:[{n:"Oblak",p:"GOL",r:89},{n:"Godín",p:"ZAG",r:88},{n:"Giménez",p:"ZAG",r:82},{n:"Savić",p:"ZAG",r:79},{n:"Juanfran",p:"LD",r:82},{n:"Filipe Luis",p:"LE",r:83},{n:"Gabi",p:"MEI/MEC",r:82},{n:"Koke",p:"MEI/ME",r:85},{n:"Saúl",p:"MEI/ME",r:83},{n:"Carrasco",p:"PE/PD",r:81},{n:"Griezmann",p:"CA/PE/ME",r:90},{n:"Torres",p:"CA",r:80},{n:"Correa",p:"CA/PE",r:76}]},
+{club:"BAYERN MÚNICH",season:"2015-16",revelacion:false,note:"Semifinalista — despedida de Guardiola, eliminados por Atlético",players:[{n:"Neuer",p:"GOL",r:92},{n:"Boateng",p:"ZAG",r:88},{n:"Alaba",p:"LE/ZAG/MEI",r:86},{n:"Lahm",p:"LD/MEI",r:87},{n:"Bernat",p:"LE",r:78},{n:"Martínez",p:"MEC/ZAG",r:84},{n:"Vidal",p:"MEI/MD",r:86},{n:"Thiago",p:"MEI/MEC",r:87},{n:"Müller",p:"PD/CA/MEI",r:87},{n:"Costa",p:"PD/PE",r:83},{n:"Robben",p:"PD/PE",r:88},{n:"Lewandowski",p:"CA",r:91},{n:"Coman",p:"PE/PD",r:79},{n:"Götze",p:"ME/MEI/PD",r:80}]},
+{club:"BENFICA",season:"2015-16",revelacion:true,note:"Cuartos — eliminados por Bayern, equipo de Renato Sanches",players:[{n:"Ederson",p:"GOL",r:78},{n:"Jardel",p:"ZAG",r:77},{n:"Lindelöf",p:"ZAG",r:76},{n:"André Almeida",p:"LD",r:75},{n:"Eliseu",p:"LE",r:75},{n:"Renato Sanches",p:"MEI/MD",r:77},{n:"Samaris",p:"MEC/MD",r:78},{n:"Pizzi",p:"MEI/ME",r:80},{n:"Salvio",p:"PD/PE",r:79},{n:"Jonas",p:"CA",r:81},{n:"Gaitán",p:"PE/MEI",r:81},{n:"Talisca",p:"MEI/CA",r:78},{n:"Fejsa",p:"MEC",r:78}]},
+{club:"MANCHESTER CITY",season:"2015-16",revelacion:false,note:"Semifinalista — primera semifinal CL del City, Pellegrini",players:[{n:"Hart",p:"GOL",r:82},{n:"Kompany",p:"ZAG",r:85},{n:"Otamendi",p:"ZAG",r:82},{n:"Zabaleta",p:"LD",r:80},{n:"Clichy",p:"LE",r:77},{n:"Sagna",p:"LD",r:78},{n:"Fernandinho",p:"MEC/MD",r:83},{n:"Touré",p:"MEI/ME",r:84},{n:"De Bruyne",p:"MEI/ME",r:87},{n:"Silva",p:"MEI/ME",r:87},{n:"Sterling",p:"PD/PE",r:81},{n:"Agüero",p:"CA",r:89},{n:"Bony",p:"CA",r:76},{n:"Navas",p:"PD",r:79}]},
+{club:"PSG",season:"2015-16",revelacion:false,note:"Cuartos — eliminados por ManCity, última temporada de Ibrahimović",players:[{n:"Trapp",p:"GOL",r:80},{n:"Thiago Silva",p:"ZAG",r:87},{n:"Marquinhos",p:"ZAG/MEC",r:83},{n:"Van der Wiel",p:"LD",r:77},{n:"Maxwell",p:"LE",r:76},{n:"Aurier",p:"LD",r:79},{n:"Verratti",p:"MEI/MEC",r:86},{n:"Matuidi",p:"MEI/MD",r:83},{n:"Rabiot",p:"MEI/MD",r:77},{n:"Di María",p:"PD/PE",r:87},{n:"Cavani",p:"CA",r:87},{n:"Ibrahimović",p:"CA",r:90},{n:"Lucas Moura",p:"PD/PE",r:79},{n:"Motta",p:"MEC",r:80}]},
+{club:"BORUSSIA DORTMUND",season:"2016-17",revelacion:false,note:"Cuartos — eliminados por Mónaco",players:[{n:"Bürki",p:"GOL",r:79},{n:"Sokratis",p:"ZAG",r:81},{n:"Bartra",p:"ZAG",r:79},{n:"Piszczek",p:"LD",r:80},{n:"Schmelzer",p:"LE",r:77},{n:"Weigl",p:"MEC/MD",r:79},{n:"Guerreiro",p:"LE/MEI",r:80},{n:"Dembélé",p:"PD/PE",r:83},{n:"Reus",p:"ME/MEI/PD",r:86},{n:"Pulisic",p:"PD/PE",r:76},{n:"Aubameyang",p:"CA",r:87},{n:"Schürrle",p:"PE/PD",r:77},{n:"Kagawa",p:"MEI/ME",r:80}]},
+{club:"JUVENTUS",season:"2016-17",revelacion:false,note:"Finalista — Cardiff",players:[{n:"Buffon",p:"GOL",r:91},{n:"Bonucci",p:"ZAG",r:88},{n:"Chiellini",p:"ZAG",r:87},{n:"Barzagli",p:"ZAG",r:84},{n:"Dani Alves",p:"LD",r:84},{n:"Alex Sandro",p:"LE",r:84},{n:"Pjanić",p:"MEI/MEC",r:85},{n:"Khedira",p:"MEI/MD",r:82},{n:"Marchisio",p:"MEI",r:82},{n:"Cuadrado",p:"PD",r:83},{n:"Dybala",p:"CA/PE/MEI",r:86},{n:"Higuaín",p:"CA",r:88},{n:"Mandžukić",p:"CA/PE",r:83}]},
+{club:"LEICESTER CITY",season:"2016-17",revelacion:true,note:"Cuartos — vigente campeón de la Premier",players:[{n:"Schmeichel",p:"GOL",r:82},{n:"Morgan",p:"ZAG",r:76},{n:"Huth",p:"ZAG",r:77},{n:"Simpson",p:"LD",r:74},{n:"Fuchs",p:"LE",r:76},{n:"Ndidi",p:"MEC/MD",r:78},{n:"Drinkwater",p:"MEI/MD",r:78},{n:"Mahrez",p:"PD",r:84},{n:"Albrighton",p:"PE/PD",r:76},{n:"Okazaki",p:"CA/PE",r:75},{n:"Vardy",p:"CA",r:83},{n:"Slimani",p:"CA",r:77},{n:"Gray",p:"PE/PD",r:74},{n:"Amartey",p:"ZAG/MD",r:73}]},
+{club:"MÓNACO",season:"2016-17",revelacion:false,note:"Semifinalista — la cantera dorada de Jardim",players:[{n:"Subasic",p:"GOL",r:82},{n:"Glik",p:"ZAG",r:82},{n:"Jemerson",p:"ZAG",r:78},{n:"Sidibé",p:"LD",r:79},{n:"Mendy",p:"LE",r:77},{n:"Fabinho",p:"MEC/LD",r:82},{n:"Bakayoko",p:"MEI/MD",r:78},{n:"Bernardo Silva",p:"PD/MEI",r:84},{n:"Lemar",p:"PE/MEI",r:80},{n:"Mbappé",p:"CA/PD",r:86},{n:"Falcao",p:"CA",r:86},{n:"Germain",p:"CA",r:74}]},
+{club:"PSG",season:"2016-17",revelacion:false,note:"Octavos — remontada del Barcelona 6-1, humillación en Camp Nou",players:[{n:"Trapp",p:"GOL",r:80},{n:"Thiago Silva",p:"ZAG",r:87},{n:"Marquinhos",p:"ZAG/MEC",r:83},{n:"Meunier",p:"LD",r:79},{n:"Maxwell",p:"LE",r:77},{n:"Kurzawa",p:"LE",r:76},{n:"Verratti",p:"MEI/MEC",r:85},{n:"Rabiot",p:"MEI/MD",r:78},{n:"Matuidi",p:"MEI/MD",r:82},{n:"Di María",p:"PD/PE",r:87},{n:"Cavani",p:"CA",r:88},{n:"Lucas Moura",p:"PD/PE",r:80},{n:"Draxler",p:"ME/PD/PE",r:80}]},
+{club:"BAYERN MÚNICH",season:"2017-18",revelacion:false,note:"Semifinalista — eliminados por Real Madrid, Neuer lesionado",players:[{n:"Ulreich",p:"GOL",r:77},{n:"Boateng",p:"ZAG",r:85},{n:"Hummels",p:"ZAG",r:87},{n:"Kimmich",p:"LD/MEI",r:85},{n:"Alaba",p:"LE/ZAG/MEI",r:85},{n:"Martínez",p:"MEC/ZAG",r:83},{n:"Vidal",p:"MEI/MD",r:84},{n:"James",p:"MEI/ME",r:85},{n:"Thiago",p:"MEI/MEC",r:86},{n:"Müller",p:"PD/CA/MEI",r:85},{n:"Lewandowski",p:"CA",r:92},{n:"Robben",p:"PD/PE",r:86},{n:"Ribéry",p:"PE",r:84},{n:"Coman",p:"PE/PD",r:80}]},
+{club:"LIVERPOOL",season:"2017-18",revelacion:false,note:"Finalista — Kyiv, lesión de Salah, perdieron vs Real Madrid",players:[{n:"Karius",p:"GOL",r:75},{n:"Van Dijk",p:"ZAG",r:86},{n:"Lovren",p:"ZAG",r:80},{n:"Alexander-Arnold",p:"LD",r:79},{n:"Robertson",p:"LE",r:81},{n:"Henderson",p:"MEI/MD",r:82},{n:"Milner",p:"MEI/LE",r:80},{n:"Oxlade-Chamberlain",p:"MEI/MD",r:79},{n:"Salah",p:"PD/PE",r:90},{n:"Mané",p:"PE/CA",r:87},{n:"Firmino",p:"CA/ME",r:85},{n:"Wijnaldum",p:"MEI/MD",r:81},{n:"Can",p:"MEC/MD",r:79}]},
+{club:"MANCHESTER CITY",season:"2017-18",revelacion:false,note:"Cuartos — eliminados por Liverpool",players:[{n:"Ederson",p:"GOL",r:84},{n:"Stones",p:"ZAG",r:80},{n:"Otamendi",p:"ZAG",r:81},{n:"Walker",p:"LD",r:83},{n:"Delph",p:"LE",r:77},{n:"Mendy",p:"LE",r:78},{n:"Fernandinho",p:"MEC/MD",r:84},{n:"De Bruyne",p:"MEI/ME",r:90},{n:"Silva",p:"MEI/ME",r:88},{n:"Sterling",p:"PD/PE",r:83},{n:"Sané",p:"PE/PD",r:84},{n:"Agüero",p:"CA",r:89},{n:"Jesus",p:"CA/PE",r:79}]},
+{club:"ROMA",season:"2017-18",revelacion:true,note:"Semifinalista — remontada 3-0 vs Barcelona en cuartos",players:[{n:"Alisson",p:"GOL",r:84},{n:"Manolas",p:"ZAG",r:83},{n:"Fazio",p:"ZAG",r:79},{n:"Kolarov",p:"LE/ZAG",r:79},{n:"Florenzi",p:"LD/PD",r:79},{n:"De Rossi",p:"MEC/MD",r:83},{n:"Nainggolan",p:"MEI/MD",r:84},{n:"Strootman",p:"MEI",r:80},{n:"El Shaarawy",p:"PE/CA",r:78},{n:"Dzeko",p:"CA",r:83},{n:"Ünder",p:"PD",r:77},{n:"Perotti",p:"PE/MEI",r:77},{n:"Pellegrini",p:"MEI/ME",r:76}]},
+{club:"SEVILLA",season:"2017-18",revelacion:true,note:"Cuartos — eliminados por Bayern, Montella",players:[{n:"Sergio Rico",p:"GOL",r:77},{n:"Mercado",p:"ZAG/LD",r:76},{n:"Lenglet",p:"ZAG",r:78},{n:"Escudero",p:"LE",r:75},{n:"Navas",p:"PD",r:77},{n:"Pizarro",p:"MEC/MD",r:76},{n:"Banega",p:"MEI/ME",r:82},{n:"N'Zonzi",p:"MEC/MD",r:80},{n:"Sarabia",p:"PD/MEI",r:79},{n:"Ben Yedder",p:"CA",r:80},{n:"Correa",p:"CA/PE",r:77},{n:"Muriel",p:"PE/CA",r:78},{n:"Vázquez",p:"PE/PD",r:74}]},
+{club:"AJAX",season:"2018-19",revelacion:false,note:"Semifinalista — la sorpresa de ten Hag",players:[{n:"Onana",p:"GOL",r:80},{n:"De Ligt",p:"ZAG",r:85},{n:"Blind",p:"ZAG/LE/MEI",r:80},{n:"Mazraoui",p:"LD",r:78},{n:"Tagliafico",p:"LE",r:80},{n:"De Jong",p:"MEI/MEC",r:85},{n:"Schöne",p:"MEI",r:76},{n:"Van de Beek",p:"MEI/ME",r:82},{n:"Ziyech",p:"PD/ME",r:84},{n:"Neres",p:"PE/PD",r:79},{n:"Tadić",p:"CA/PE/PD",r:85},{n:"Huntelaar",p:"CA",r:77},{n:"Dolberg",p:"CA",r:76}]},
+{club:"LIVERPOOL",season:"2018-19",revelacion:false,note:"Campeón — Madrid, remontada al Barça",players:[{n:"Alisson",p:"GOL",r:89},{n:"Van Dijk",p:"ZAG",r:92},{n:"Matip",p:"ZAG",r:82},{n:"Alexander-Arnold",p:"LD",r:84},{n:"Robertson",p:"LE",r:86},{n:"Fabinho",p:"MEC",r:87},{n:"Henderson",p:"MEI/MD",r:83},{n:"Wijnaldum",p:"MEI",r:83},{n:"Milner",p:"MEI/LE",r:80},{n:"Salah",p:"PD/CA",r:90},{n:"Mané",p:"PE/CA",r:89},{n:"Firmino",p:"CA/ME",r:86},{n:"Shaqiri",p:"PD/PE",r:78},{n:"Origi",p:"CA/PE",r:76}]},
+{club:"MANCHESTER CITY",season:"2018-19",revelacion:false,note:"Cuartos — eliminados por Tottenham, VAR",players:[{n:"Ederson",p:"GOL",r:85},{n:"Stones",p:"ZAG",r:82},{n:"Laporte",p:"ZAG",r:84},{n:"Walker",p:"LD",r:84},{n:"Zinchenko",p:"LE",r:78},{n:"Mendy",p:"LE",r:79},{n:"Fernandinho",p:"MEC/MD",r:84},{n:"De Bruyne",p:"MEI/ME",r:91},{n:"Silva",p:"MEI/ME",r:88},{n:"Bernardo Silva",p:"MEI/PD",r:86},{n:"Sterling",p:"PD/PE",r:85},{n:"Agüero",p:"CA",r:90},{n:"Sané",p:"PE/PD",r:85},{n:"Mahrez",p:"PD",r:83}]},
+{club:"REAL MADRID",season:"2018-19",revelacion:false,note:"Octavos — eliminados 1-4 por Ajax, fin de una era",players:[{n:"Courtois",p:"GOL",r:88},{n:"Ramos",p:"ZAG",r:89},{n:"Varane",p:"ZAG",r:85},{n:"Nacho",p:"ZAG",r:80},{n:"Carvajal",p:"LD",r:84},{n:"Reguilón",p:"LE",r:76},{n:"Marcelo",p:"LE",r:84},{n:"Casemiro",p:"MEC",r:86},{n:"Modric",p:"MEI",r:89},{n:"Kroos",p:"MEI",r:88},{n:"Lucas Vázquez",p:"PD",r:78},{n:"Bale",p:"PD/PE/CA",r:86},{n:"Benzema",p:"CA",r:86},{n:"Vinícius",p:"PE/CA",r:78},{n:"Asensio",p:"PE/PD",r:81}]},
+{club:"TOTTENHAM",season:"2018-19",revelacion:false,note:"Finalista — Madrid, remontada vs Ajax",players:[{n:"Lloris",p:"GOL",r:85},{n:"Vertonghen",p:"ZAG/LE",r:84},{n:"Alderweireld",p:"ZAG",r:85},{n:"Trippier",p:"LD",r:80},{n:"Rose",p:"LE",r:79},{n:"Dier",p:"MEC/ZAG",r:79},{n:"Wanyama",p:"MD",r:78},{n:"Eriksen",p:"MEI/ME",r:87},{n:"Sissoko",p:"MEI/MD",r:80},{n:"Dele Alli",p:"ME/MEI",r:83},{n:"Son",p:"PE/CA/PD",r:89},{n:"Kane",p:"CA",r:89},{n:"Lucas Moura",p:"PD/PE/CA",r:82},{n:"Llorente",p:"CA",r:76}]},
+{club:"ATALANTA",season:"2019-20",revelacion:true,note:"Cuartos — primera CL en su historia, Gasperini",players:[{n:"Gollini",p:"GOL",r:77},{n:"Toloi",p:"ZAG/LD",r:79},{n:"Palomino",p:"ZAG",r:78},{n:"Djimsiti",p:"ZAG",r:77},{n:"Hateboer",p:"LD/MD",r:78},{n:"Gosens",p:"LE/PE",r:80},{n:"De Roon",p:"MEC/MD",r:80},{n:"Freuler",p:"MEI/MD",r:79},{n:"Gómez",p:"ME/MEI/PD",r:84},{n:"Iličić",p:"CA/PE/MEI",r:83},{n:"Zapata",p:"CA",r:83},{n:"Muriel",p:"CA/PE",r:80},{n:"Pašalić",p:"MEI/ME",r:78},{n:"Castagne",p:"LD/LE",r:78}]},
+{club:"BARCELONA",season:"2019-20",revelacion:false,note:"Cuartos — 2-8 vs Bayern, humillación histórica",players:[{n:"Ter Stegen",p:"GOL",r:87},{n:"Piqué",p:"ZAG",r:83},{n:"Lenglet",p:"ZAG",r:79},{n:"Semedo",p:"LD",r:78},{n:"Jordi Alba",p:"LE",r:84},{n:"Busquets",p:"MEC",r:86},{n:"De Jong",p:"MEI/MEC",r:84},{n:"Rakitić",p:"MEI",r:82},{n:"Vidal",p:"MEI/MD",r:80},{n:"Sergi Roberto",p:"LD/MEI",r:78},{n:"Messi",p:"PD/CA/PE",r:95},{n:"Suárez",p:"CA",r:87},{n:"Griezmann",p:"CA/PE/ME",r:85},{n:"Ansu Fati",p:"PE/CA",r:76}]},
+{club:"BAYERN MÚNICH",season:"2019-20",revelacion:false,note:"Campeón — sextete, Lisboa",players:[{n:"Neuer",p:"GOL",r:90},{n:"Boateng",p:"ZAG",r:82},{n:"Alaba",p:"ZAG/LE/MEI",r:86},{n:"Davies",p:"LE",r:82},{n:"Kimmich",p:"LD/MEI",r:88},{n:"Goretzka",p:"MEI",r:85},{n:"Thiago",p:"MEI/MEC",r:87},{n:"Müller",p:"ME/CA/PD",r:88},{n:"Gnabry",p:"PD/PE",r:85},{n:"Coman",p:"PE/PD",r:82},{n:"Lewandowski",p:"CA",r:94},{n:"Perisic",p:"PE/CA",r:80},{n:"Pavard",p:"LD/ZAG",r:79}]},
+{club:"LYON",season:"2019-20",revelacion:false,note:"Cuartos — eliminaron a Manchester City en Lisboa",players:[{n:"Lopes",p:"GOL",r:80},{n:"Marcelo",p:"ZAG",r:79},{n:"Denayer",p:"ZAG",r:78},{n:"Dubois",p:"LD",r:77},{n:"Cornet",p:"LE/PE",r:77},{n:"Caqueret",p:"MEC/MD",r:76},{n:"Aouar",p:"MEI/ME",r:80},{n:"Bruno Guimarães",p:"MEI/MEC",r:79},{n:"Toko Ekambi",p:"PE/CA",r:79},{n:"Memphis",p:"CA/PD/PE",r:83},{n:"Moussa Dembélé",p:"CA",r:79},{n:"Kadewere",p:"CA/PE",r:75},{n:"Reine-Adélaïde",p:"MEI",r:76}]},
+{club:"PSG",season:"2019-20",revelacion:false,note:"Finalista — primera final de su historia",players:[{n:"Navas",p:"GOL",r:86},{n:"Marquinhos",p:"ZAG/MEC",r:86},{n:"Thiago Silva",p:"ZAG",r:87},{n:"Kimpembe",p:"ZAG",r:80},{n:"Meunier",p:"LD",r:79},{n:"Bernat",p:"LE",r:77},{n:"Verratti",p:"MEI/MEC",r:87},{n:"Herrera",p:"MEI/MD",r:80},{n:"Paredes",p:"MEI/MEC",r:79},{n:"Di María",p:"PD/PE",r:87},{n:"Neymar",p:"PE/CA/MEI",r:93},{n:"Mbappé",p:"CA/PD/PE",r:90},{n:"Icardi",p:"CA",r:82},{n:"Sarabia",p:"PD/PE/ME",r:79}]},
+{club:"CHELSEA",season:"2020-21",revelacion:false,note:"Campeón — Oporto, Tuchel transforma al equipo",players:[{n:"Mendy",p:"GOL",r:84},{n:"Thiago Silva",p:"ZAG",r:86},{n:"Rüdiger",p:"ZAG",r:82},{n:"Azpilicueta",p:"LD/ZAG",r:83},{n:"Chilwell",p:"LE",r:80},{n:"James",p:"LD",r:82},{n:"Jorginho",p:"MEI/MEC",r:84},{n:"Kovačić",p:"MEI",r:83},{n:"Kanté",p:"MEI/MD",r:91},{n:"Mount",p:"ME/MEI/PD",r:85},{n:"Havertz",p:"CA/ME",r:83},{n:"Werner",p:"CA/PE",r:82},{n:"Pulisic",p:"PE/PD",r:79},{n:"Giroud",p:"CA",r:78},{n:"Hudson-Odoi",p:"PE/PD",r:76}]},
+{club:"JUVENTUS",season:"2020-21",revelacion:false,note:"Octavos — eliminados por Porto, Pirlo entrenador",players:[{n:"Szczesny",p:"GOL",r:82},{n:"De Ligt",p:"ZAG",r:83},{n:"Bonucci",p:"ZAG",r:82},{n:"Chiellini",p:"ZAG",r:83},{n:"Cuadrado",p:"LD/PD",r:81},{n:"Alex Sandro",p:"LE",r:78},{n:"Arthur",p:"MEI/MEC",r:77},{n:"Bentancur",p:"MEI/MD",r:78},{n:"Rabiot",p:"MEI/MD",r:79},{n:"Chiesa",p:"PD/PE/CA",r:84},{n:"Morata",p:"CA",r:81},{n:"C. Ronaldo",p:"CA/PE/PD",r:92},{n:"Kulusevski",p:"PD/PE",r:77},{n:"McKennie",p:"MEI/MD",r:76}]},
+{club:"MANCHESTER CITY",season:"2020-21",revelacion:false,note:"Finalista — Oporto vs Chelsea",players:[{n:"Ederson",p:"GOL",r:86},{n:"Stones",p:"ZAG/MEC",r:83},{n:"Dias",p:"ZAG",r:85},{n:"Zinchenko",p:"LE/MEI",r:79},{n:"Walker",p:"LD",r:84},{n:"Cancelo",p:"LD/LE",r:85},{n:"Rodri",p:"MEC",r:88},{n:"Gündoğan",p:"MEI/ME",r:85},{n:"De Bruyne",p:"MEI/ME",r:91},{n:"Bernardo Silva",p:"MEI/PD",r:87},{n:"Mahrez",p:"PD",r:84},{n:"Foden",p:"PD/PE/MEI",r:82},{n:"Sterling",p:"PE/PD",r:83},{n:"Jesus",p:"CA/PE",r:80}]},
+{club:"PORTO",season:"2020-21",revelacion:false,note:"Cuartos — eliminaron a Juventus",players:[{n:"Marchesín",p:"GOL",r:81},{n:"Pepe",p:"ZAG",r:82},{n:"Mbemba",p:"ZAG",r:79},{n:"Manafá",p:"LD",r:75},{n:"Zaidu",p:"LE",r:74},{n:"Sérgio Oliveira",p:"MEI",r:80},{n:"Uribe",p:"MEC/MD",r:79},{n:"Otávio",p:"MEI/PD",r:81},{n:"Corona",p:"PD/LD",r:80},{n:"Luis Díaz",p:"PE/CA",r:82},{n:"Taremi",p:"CA",r:82},{n:"Marega",p:"CA",r:77},{n:"Grujic",p:"MEI/MD",r:76}]},
+{club:"PSG",season:"2020-21",revelacion:false,note:"Semifinalista — eliminados por Manchester City",players:[{n:"Navas",p:"GOL",r:85},{n:"Marquinhos",p:"ZAG/MEC",r:86},{n:"Kimpembe",p:"ZAG",r:80},{n:"Florenzi",p:"LD",r:78},{n:"Diallo",p:"LE",r:75},{n:"Bakker",p:"LE",r:73},{n:"Verratti",p:"MEI/MEC",r:87},{n:"Paredes",p:"MEI/MEC",r:80},{n:"Herrera",p:"MEI/MD",r:79},{n:"Di María",p:"PD/PE",r:86},{n:"Neymar",p:"PE/CA/MEI",r:91},{n:"Mbappé",p:"CA/PD/PE",r:92},{n:"Icardi",p:"CA",r:81},{n:"Kean",p:"CA",r:77}]},
+{club:"ATLÉTICO DE MADRID",season:"2021-22",revelacion:false,note:"Cuartos — eliminados por Man City",players:[{n:"Oblak",p:"GOL",r:87},{n:"Savić",p:"ZAG",r:81},{n:"Giménez",p:"ZAG",r:83},{n:"Felipe",p:"ZAG",r:78},{n:"Llorente",p:"LD/MEI/PD",r:85},{n:"Reinildo",p:"LE",r:78},{n:"Koke",p:"MEI/ME",r:83},{n:"De Paul",p:"MEI",r:82},{n:"Herrera",p:"MEI/MD",r:79},{n:"Lemar",p:"PE/MEI",r:79},{n:"Griezmann",p:"CA/PE/ME",r:87},{n:"Correa",p:"CA/PE",r:79},{n:"Cunha",p:"CA/PE",r:78},{n:"João Félix",p:"CA/ME",r:82}]},
+{club:"BAYERN MÚNICH",season:"2021-22",revelacion:false,note:"Cuartos — eliminados por Villarreal, sorpresa",players:[{n:"Neuer",p:"GOL",r:89},{n:"Upamecano",p:"ZAG",r:80},{n:"Süle",p:"ZAG",r:79},{n:"Hernández",p:"ZAG/LE",r:82},{n:"Pavard",p:"LD/ZAG",r:79},{n:"Davies",p:"LE",r:82},{n:"Kimmich",p:"MEI/LD",r:89},{n:"Goretzka",p:"MEI",r:84},{n:"Müller",p:"ME/CA/PD",r:86},{n:"Sané",p:"PE/PD",r:84},{n:"Musiala",p:"ME/MEI/PD",r:81},{n:"Gnabry",p:"PD/PE",r:83},{n:"Lewandowski",p:"CA",r:93},{n:"Coman",p:"PE/PD",r:81}]},
+{club:"MANCHESTER UNITED",season:"2021-22",revelacion:false,note:"Octavos — eliminados por Atlético, Rangnick interino",players:[{n:"De Gea",p:"GOL",r:84},{n:"Varane",p:"ZAG",r:84},{n:"Maguire",p:"ZAG",r:77},{n:"Wan-Bissaka",p:"LD",r:76},{n:"Shaw",p:"LE",r:80},{n:"Telles",p:"LE",r:77},{n:"Fred",p:"MEC/MD",r:77},{n:"McTominay",p:"MEI/MD",r:78},{n:"Bruno Fernandes",p:"MEI/ME",r:86},{n:"Pogba",p:"MEI",r:82},{n:"Sancho",p:"PE/PD",r:80},{n:"Rashford",p:"PE/CA",r:82},{n:"C. Ronaldo",p:"CA/PE/PD",r:90},{n:"Elanga",p:"PE/PD",r:73}]},
+{club:"REAL MADRID",season:"2021-22",revelacion:false,note:"Campeón — remontadas épicas, París",players:[{n:"Courtois",p:"GOL",r:90},{n:"Militão",p:"ZAG",r:84},{n:"Alaba",p:"ZAG/LE",r:85},{n:"Carvajal",p:"LD",r:84},{n:"Mendy",p:"LE",r:83},{n:"Casemiro",p:"MEC",r:87},{n:"Modric",p:"MEI",r:90},{n:"Kroos",p:"MEI",r:88},{n:"Valverde",p:"MEI/PD/MD",r:85},{n:"Vinícius",p:"PE/CA",r:89},{n:"Benzema",p:"CA",r:93},{n:"Rodrygo",p:"PD/CA/PE",r:82},{n:"Asensio",p:"PD/PE",r:80},{n:"Camavinga",p:"MEI/MD",r:79}]},
+{club:"SHERIFF TIRASPOL",season:"2021-22",revelacion:true,note:"Fase de grupos — ganaron al Real Madrid en el Bernabéu",players:[{n:"Athanasiadis",p:"GOL",r:74},{n:"Arboleda",p:"ZAG",r:72},{n:"Dulanto",p:"ZAG",r:70},{n:"Costanza",p:"LD",r:68},{n:"Cristiano",p:"LE",r:69},{n:"Addo",p:"MEC/MD",r:71},{n:"Thill",p:"MEI",r:75},{n:"Kolovos",p:"MEI/ME",r:70},{n:"Traoré",p:"PD/PE",r:72},{n:"Castañeda",p:"PE/CA",r:71},{n:"Yakhshiboev",p:"CA/PD",r:70},{n:"Bruno",p:"MEI/MD",r:69},{n:"Nikolov",p:"PD",r:68}]},
+{club:"VILLARREAL",season:"2021-22",revelacion:true,note:"Semifinalista — eliminaron a Juventus y Bayern",players:[{n:"Rulli",p:"GOL",r:79},{n:"Albiol",p:"ZAG",r:81},{n:"Pau Torres",p:"ZAG",r:82},{n:"Foyth",p:"LD/ZAG",r:79},{n:"Pedraza",p:"LE",r:78},{n:"Parejo",p:"MEI/MEC",r:83},{n:"Capoue",p:"MEC/MD",r:80},{n:"Lo Celso",p:"MEI/ME",r:82},{n:"Chukwueze",p:"PD/PE",r:78},{n:"Gerard Moreno",p:"CA/PE",r:83},{n:"Danjuma",p:"PE/CA",r:80},{n:"Dia",p:"CA/PE",r:77},{n:"Trigueros",p:"MEI",r:78}]},
+{club:"BODØ/GLIMT",season:"2022-23",revelacion:true,note:"Fase de grupos — club noruego debutante en CL",players:[{n:"Haikin",p:"GOL",r:72},{n:"Moe",p:"LD",r:69},{n:"Lode",p:"ZAG",r:71},{n:"Hoibraten",p:"ZAG",r:70},{n:"Sampsted",p:"LD",r:70},{n:"Brunstad Fet",p:"MEI/MD",r:73},{n:"Aursnes",p:"MEI",r:74},{n:"Berg",p:"MEI/ME",r:72},{n:"Solbakken",p:"PD/PE",r:75},{n:"Pellegrino",p:"CA",r:72},{n:"Espejord",p:"CA/PE",r:71},{n:"Bjorkan",p:"LE",r:70},{n:"Saltnes",p:"MEI/MD",r:70}]},
+{club:"CHELSEA",season:"2022-23",revelacion:false,note:"Octavos — eliminados por Real Madrid, caos post-Abramovich",players:[{n:"Kepa",p:"GOL",r:78},{n:"Thiago Silva",p:"ZAG",r:84},{n:"Koulibaly",p:"ZAG",r:80},{n:"Cucurella",p:"LE",r:78},{n:"James",p:"LD",r:83},{n:"Chilwell",p:"LE",r:79},{n:"Jorginho",p:"MEI/MEC",r:82},{n:"Enzo Fernández",p:"MEI",r:82},{n:"Kovačić",p:"MEI",r:81},{n:"Mount",p:"ME/MEI/PD",r:82},{n:"Havertz",p:"CA/ME",r:80},{n:"Sterling",p:"PE/PD",r:80},{n:"Mudryk",p:"PE/PD",r:76},{n:"Aubameyang",p:"CA",r:79},{n:"Pulisic",p:"PE/PD",r:78}]},
+{club:"INTER MILÁN",season:"2022-23",revelacion:false,note:"Finalista — Estambul vs Man City",players:[{n:"Onana",p:"GOL",r:83},{n:"Bastoni",p:"ZAG",r:85},{n:"Acerbi",p:"ZAG",r:82},{n:"De Vrij",p:"ZAG",r:80},{n:"Dumfries",p:"LD",r:81},{n:"Dimarco",p:"LE/MEI",r:82},{n:"Barella",p:"MEI/MD",r:87},{n:"Calhanoglu",p:"MEC/MEI/PE",r:85},{n:"Mkhitaryan",p:"MEI",r:82},{n:"Lautaro",p:"CA",r:87},{n:"Dzeko",p:"CA/PD",r:82},{n:"Lukaku",p:"CA",r:85},{n:"Darmian",p:"LD/LE",r:77}]},
+{club:"LIVERPOOL",season:"2022-23",revelacion:false,note:"Octavos — eliminados por Real Madrid, temporada irregular",players:[{n:"Alisson",p:"GOL",r:88},{n:"Van Dijk",p:"ZAG",r:88},{n:"Konaté",p:"ZAG",r:82},{n:"Alexander-Arnold",p:"LD",r:85},{n:"Robertson",p:"LE",r:84},{n:"Fabinho",p:"MEC",r:84},{n:"Henderson",p:"MEI/MD",r:80},{n:"Thiago",p:"MEI/MEC",r:83},{n:"Elliott",p:"MEI/PD",r:77},{n:"Salah",p:"PD/CA",r:89},{n:"Firmino",p:"CA/ME",r:82},{n:"Nunez",p:"CA/PE",r:80},{n:"Gakpo",p:"PE/CA",r:79},{n:"Díaz",p:"PE/CA",r:81}]},
+{club:"MANCHESTER CITY",season:"2022-23",revelacion:false,note:"Campeón — triplete de Guardiola, Estambul",players:[{n:"Ederson",p:"GOL",r:87},{n:"Dias",p:"ZAG",r:87},{n:"Stones",p:"ZAG/MEC",r:84},{n:"Akanji",p:"ZAG",r:82},{n:"Walker",p:"LD",r:85},{n:"Aké",p:"LE/ZAG",r:81},{n:"Rodri",p:"MEC",r:90},{n:"De Bruyne",p:"MEI/ME",r:92},{n:"Bernardo Silva",p:"MEI/PD",r:88},{n:"Gündoğan",p:"MEI/ME",r:86},{n:"Grealish",p:"PE",r:82},{n:"Foden",p:"PD/PE/MEI",r:86},{n:"Haaland",p:"CA",r:91},{n:"Mahrez",p:"PD",r:84},{n:"Álvarez",p:"CA/PE",r:82}]},
+{club:"NAPOLI",season:"2022-23",revelacion:true,note:"Cuartos — la mejor Liga + CL de Spalletti",players:[{n:"Meret",p:"GOL",r:82},{n:"Kim",p:"ZAG",r:85},{n:"Rrahmani",p:"ZAG",r:81},{n:"Di Lorenzo",p:"LD",r:83},{n:"Mario Rui",p:"LE",r:78},{n:"Lobotka",p:"MEC",r:85},{n:"Anguissa",p:"MEI/MD",r:83},{n:"Zieliński",p:"MEI/ME",r:84},{n:"Politano",p:"PD",r:80},{n:"Kvaratskhelia",p:"PE/CA",r:86},{n:"Osimhen",p:"CA",r:87},{n:"Raspadori",p:"CA/PE/ME",r:78},{n:"Lozano",p:"PD/PE",r:78},{n:"Elmas",p:"MEI/PE",r:76}]},
+{club:"TOTTENHAM",season:"2022-23",revelacion:false,note:"Fase de grupos — eliminados bajo Conte",players:[{n:"Lloris",p:"GOL",r:83},{n:"Romero",p:"ZAG",r:83},{n:"Dier",p:"ZAG/MEC",r:79},{n:"Lenglet",p:"ZAG",r:78},{n:"Emerson",p:"LD",r:77},{n:"Perisic",p:"LE/PE",r:80},{n:"Hojbjerg",p:"MEC/MD",r:80},{n:"Bentancur",p:"MEI/MD",r:80},{n:"Richarlison",p:"CA/PE",r:82},{n:"Son",p:"PE/CA/PD",r:88},{n:"Kane",p:"CA",r:89},{n:"Kulusevski",p:"PD/PE",r:81},{n:"Sessegnon",p:"LE",r:76}]},
+{club:"ARSENAL",season:"2023-24",revelacion:false,note:"Cuartos — retorno a la élite con Arteta",players:[{n:"Raya",p:"GOL",r:85},{n:"Saliba",p:"ZAG",r:86},{n:"Gabriel",p:"ZAG",r:84},{n:"White",p:"LD/ZAG",r:83},{n:"Zinchenko",p:"LE/MEI",r:80},{n:"Timber",p:"LD/ZAG",r:80},{n:"Rice",p:"MEC/MEI",r:88},{n:"Ødegaard",p:"MEI/ME",r:89},{n:"Havertz",p:"CA/ME",r:83},{n:"Saka",p:"PD/PE",r:88},{n:"Martinelli",p:"PE/CA",r:84},{n:"Trossard",p:"PE/PD/CA",r:82},{n:"Jesus",p:"CA/PE",r:81}]},
+{club:"BORUSSIA DORTMUND",season:"2023-24",revelacion:false,note:"Finalista — Wembley vs Real Madrid",players:[{n:"Kobel",p:"GOL",r:84},{n:"Hummels",p:"ZAG",r:83},{n:"Schlotterbeck",p:"ZAG",r:80},{n:"Ryerson",p:"LD",r:78},{n:"Maatsen",p:"LE",r:77},{n:"Can",p:"MEC/ZAG",r:79},{n:"Sabitzer",p:"MEI/MD",r:82},{n:"Brandt",p:"MEI/ME",r:83},{n:"Adeyemi",p:"PD/PE/CA",r:80},{n:"Sancho",p:"PE/PD",r:81},{n:"Füllkrug",p:"CA",r:82},{n:"Reus",p:"ME/MEI/PD",r:82},{n:"Malen",p:"CA/PE",r:79}]},
+{club:"GALATASARAY",season:"2023-24",revelacion:false,note:"Fase de grupos — grupo de la muerte con Bayern y United",players:[{n:"Muslera",p:"GOL",r:79},{n:"Nelsson",p:"ZAG",r:79},{n:"Abdülkerim",p:"ZAG",r:76},{n:"Boey",p:"LD",r:76},{n:"Angeliño",p:"LE/MEI",r:78},{n:"Torreira",p:"MEC",r:80},{n:"Mertens",p:"ME/MEI",r:79},{n:"Ziyech",p:"PD/ME",r:80},{n:"Barış Yılmaz",p:"PD/PE",r:74},{n:"Icardi",p:"CA",r:80},{n:"Kerem Aktürkoğlu",p:"PE/CA",r:77},{n:"Oliveira",p:"MEI",r:76},{n:"Tete",p:"PD",r:75}]},
+{club:"MANCHESTER CITY",season:"2023-24",revelacion:false,note:"Cuartos — eliminados por Real Madrid en penales",players:[{n:"Ederson",p:"GOL",r:85},{n:"Dias",p:"ZAG",r:86},{n:"Akanji",p:"ZAG",r:83},{n:"Walker",p:"LD",r:83},{n:"Gvardiol",p:"LE/ZAG",r:82},{n:"Rodri",p:"MEC",r:91},{n:"De Bruyne",p:"MEI/ME",r:90},{n:"Bernardo Silva",p:"MEI/PD",r:87},{n:"Foden",p:"PD/PE/MEI",r:87},{n:"Doku",p:"PE/PD",r:80},{n:"Haaland",p:"CA",r:92},{n:"Grealish",p:"PE",r:81},{n:"Álvarez",p:"CA/PE",r:83},{n:"Kovacic",p:"MEI",r:82}]},
+{club:"PSG",season:"2023-24",revelacion:false,note:"Semifinalista — última temporada de Mbappé",players:[{n:"Donnarumma",p:"GOL",r:85},{n:"Marquinhos",p:"ZAG/MEC",r:85},{n:"Skriniar",p:"ZAG",r:82},{n:"Hakimi",p:"LD",r:87},{n:"Nuno Mendes",p:"LE",r:82},{n:"Vitinha",p:"MEI",r:83},{n:"Zaïre-Emery",p:"MEI/MD",r:78},{n:"Ugarte",p:"MEC/MD",r:80},{n:"Dembélé",p:"PD/PE/CA",r:85},{n:"Mbappé",p:"CA/PD/PE",r:93},{n:"Kolo Muani",p:"CA/PE",r:80},{n:"Barcola",p:"PE/CA",r:77},{n:"Lee Kang-in",p:"PD/ME",r:79},{n:"Ramos",p:"ZAG",r:80}]},
+{club:"ATALANTA",season:"2024-25",revelacion:true,note:"Fase Liga — vigente campeón Europa League",players:[{n:"Carnesecchi",p:"GOL",r:79},{n:"Djimsiti",p:"ZAG",r:78},{n:"Hien",p:"ZAG",r:79},{n:"Kolasinac",p:"ZAG/LE",r:77},{n:"Zappacosta",p:"LD",r:77},{n:"Ruggeri",p:"LE",r:77},{n:"De Roon",p:"MEC/MD",r:80},{n:"Ederson",p:"MEI/MD",r:81},{n:"Pašalić",p:"MEI/ME",r:79},{n:"Lookman",p:"PD/PE/CA",r:84},{n:"De Ketelaere",p:"CA/ME",r:80},{n:"Retegui",p:"CA",r:79},{n:"Samardzic",p:"MEI/ME",r:77}]},
+{club:"BODØ/GLIMT",season:"2024-25",revelacion:true,note:"Fase Liga — segunda participación en CL",players:[{n:"Blazevic",p:"GOL",r:73},{n:"Bjortuft",p:"ZAG",r:71},{n:"Hoibraten",p:"ZAG",r:71},{n:"Wembangomo",p:"LD",r:69},{n:"Sørmo",p:"LE",r:68},{n:"Berg",p:"MEI/ME",r:73},{n:"Evjen",p:"PD/PE",r:73},{n:"Hauge",p:"PE/CA",r:75},{n:"Zinckernagel",p:"MEI/PD",r:74},{n:"Høgh",p:"CA",r:72},{n:"Bjorkan",p:"LE",r:71},{n:"Hagen",p:"MEC/MD",r:70},{n:"Grønbæk",p:"MEI",r:74}]},
+{club:"INTER MILÁN",season:"2024-25",revelacion:false,note:"Octavos — nuevo formato de fase liga",players:[{n:"Sommer",p:"GOL",r:82},{n:"Bastoni",p:"ZAG",r:86},{n:"Acerbi",p:"ZAG",r:80},{n:"De Vrij",p:"ZAG",r:79},{n:"Dumfries",p:"LD",r:81},{n:"Dimarco",p:"LE/MEI",r:83},{n:"Barella",p:"MEI/MD",r:88},{n:"Calhanoglu",p:"MEC/MEI/PE",r:85},{n:"Mkhitaryan",p:"MEI",r:81},{n:"Lautaro",p:"CA",r:88},{n:"Thuram",p:"CA",r:84},{n:"Arnautovic",p:"CA/PD",r:76},{n:"Asllani",p:"MEI/MEC",r:76},{n:"Darmian",p:"LD/LE",r:76}]},
+{club:"MANCHESTER CITY",season:"2024-25",revelacion:false,note:"Fase Liga — temporada irregular post-triplete, Rodri lesionado",players:[{n:"Ederson",p:"GOL",r:85},{n:"Dias",p:"ZAG",r:85},{n:"Akanji",p:"ZAG",r:82},{n:"Gvardiol",p:"LE/ZAG",r:83},{n:"Walker",p:"LD",r:80},{n:"Lewis",p:"LE",r:77},{n:"Kovacic",p:"MEI",r:82},{n:"De Bruyne",p:"MEI/ME",r:89},{n:"Bernardo Silva",p:"MEI/PD",r:87},{n:"Foden",p:"PD/PE/MEI",r:86},{n:"Doku",p:"PE/PD",r:80},{n:"Haaland",p:"CA",r:92},{n:"Grealish",p:"PE",r:79},{n:"Savinho",p:"PD/PE",r:79},{n:"Nunes",p:"MEI/MD",r:78}]},
+{club:"NAPOLI",season:"2024-25",revelacion:true,note:"Octavos — vuelta a CL con Conte",players:[{n:"Meret",p:"GOL",r:81},{n:"Di Lorenzo",p:"LD",r:82},{n:"Rrahmani",p:"ZAG",r:80},{n:"Buongiorno",p:"ZAG",r:82},{n:"Olivera",p:"LE",r:79},{n:"Lobotka",p:"MEC",r:84},{n:"Anguissa",p:"MEI/MD",r:82},{n:"McTominay",p:"MEI/MD",r:81},{n:"Politano",p:"PD",r:79},{n:"Kvaratskhelia",p:"PE/CA",r:85},{n:"Lukaku",p:"CA",r:82},{n:"Neres",p:"PD/PE",r:80},{n:"Raspadori",p:"CA/PE/ME",r:77}]}
+];
+
+  TEAMS.forEach(function (t) { t.flag = FLAGS[t.club] || "🏳️"; });
+
+  var SEASON_COUNT_BY_CLUB = {};
+  TEAMS.forEach(function (t) { SEASON_COUNT_BY_CLUB[t.club] = (SEASON_COUNT_BY_CLUB[t.club] || 0) + 1; });
+
+  /* ============ ESTADO ============ */
+
+  var state = null;
+
+  function freshState() {
+    return {
+      formation: "4-2-3-1", mode: "clasico", style: "equilibrado", round: 0,
+      slots: [], team: null, pool: [], selectedIdx: null,
+      rerollsClub: 0, rerollsSeason: 0, excludeClub: null, excludeSeason: null
+    };
+  }
+
+  function rerollsTotal() { return state.rerollsClub + state.rerollsSeason; }
+  function canRerollClub() { return state.rerollsClub < 2 && rerollsTotal() < 3; }
+  function canRerollSeason() {
+    if (!state.team) return false;
+    if (SEASON_COUNT_BY_CLUB[state.team.club] < 2) return false;
+    return state.rerollsSeason < 1 && rerollsTotal() < 3;
+  }
+
+  /* ============ UTILIDADES ============ */
+
+  function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function pickTeam(opts) {
+    opts = opts || {};
+    var pool = TEAMS.filter(function (t) {
+      if (opts.sameClub && t.club !== opts.sameClub) return false;
+      if (opts.sameSeason !== undefined && t.season !== opts.sameSeason) return false;
+      if (opts.excludeClub && t.club === opts.excludeClub && !opts.sameClub) return false;
+      if (opts.excludeSeason !== undefined && t.season === opts.excludeSeason && opts.sameSeason === undefined) return false;
+      return true;
+    });
+    if (pool.length === 0) pool = TEAMS;
+    return rand(pool);
+  }
+
+  function samplePool(team, size) {
+    var arr = team.players.slice();
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr.slice(0, Math.min(size, arr.length));
+  }
+
+  function effectiveRating(playerRaw, rawPosString) {
+    var base = playerRaw.r;
+    if (state.style === "equilibrado") return base;
+    var rawTokens = rawPosString.split("/").map(function (s) { return s.trim(); });
+    var normed = normalizePositions(rawPosString);
+    if (state.style === "defensivo") {
+      var defHit = normed.some(function (p) { return p === "GOL" || p === "ZAG" || p === "LD" || p === "LE"; });
+      return defHit ? base + 3 : base;
+    }
+    var attHit = normed.some(function (p) { return p === "CA" || p === "PE" || p === "PD"; }) ||
+                 rawTokens.some(function (p) { return ATTACKING_MID_RAW[p]; });
+    return attHit ? base + 3 : base;
+  }
+
+  function emptySlotTypes() {
+    var types = {};
+    state.slots.forEach(function (s) { if (!s.filled) types[s.type] = true; });
+    return types;
+  }
+
+  function poolFitsAnySlot(pool) {
+    var empties = emptySlotTypes();
+    return pool.some(function (pl) {
+      var norm = normalizePositions(pl.p);
+      return norm.some(function (t) { return empties[t]; });
+    });
+  }
+
+  /* ============ DIBUJO: INICIO ============ */
+
+  var formationGrid = document.getElementById("formation-grid");
+  Object.keys(FORMATIONS).forEach(function (name) {
+    var el = document.createElement("div");
+    el.className = "formation-card" + (name === "4-2-3-1" ? " active" : "");
+    el.dataset.formation = name;
+    el.innerHTML = '<div class="name">' + name + '</div><div class="desc">' + FORMATIONS[name].length + ' puestos</div>';
+    el.addEventListener("click", function () {
+      document.querySelectorAll(".formation-card").forEach(function (c) { c.classList.remove("active"); });
+      el.classList.add("active");
+      selectedFormation = name;
+    });
+    formationGrid.appendChild(el);
+  });
+
+  var selectedFormation = "4-2-3-1";
+  var selectedMode = "clasico";
+  var selectedStyle = "equilibrado";
+
+  document.getElementById("mode-row").addEventListener("click", function (e) {
+    var chip = e.target.closest(".chip");
+    if (!chip) return;
+    document.querySelectorAll("#mode-row .chip").forEach(function (c) { c.classList.remove("active"); });
+    chip.classList.add("active");
+    selectedMode = chip.dataset.mode;
+  });
+
+  document.getElementById("style-row").addEventListener("click", function (e) {
+    var chip = e.target.closest(".chip");
+    if (!chip) return;
+    document.querySelectorAll("#style-row .chip").forEach(function (c) { c.classList.remove("active"); });
+    chip.classList.add("active");
+    selectedStyle = chip.dataset.style;
+  });
+
+  document.getElementById("btn-start").addEventListener("click", startCup);
+  document.getElementById("btn-new-cup").addEventListener("click", function () { showScreen("start"); });
+  document.getElementById("btn-reroll-club").addEventListener("click", function () { doReroll("club"); });
+  document.getElementById("btn-reroll-season").addEventListener("click", function () { doReroll("season"); });
+
+  function showScreen(name) {
+    document.querySelectorAll(".screen").forEach(function (s) { s.classList.remove("active"); });
+    document.getElementById("screen-" + name).classList.add("active");
+  }
+
+  /* ============ FLUJO DE COPA ============ */
+
+  function startCup() {
+    state = freshState();
+    state.formation = selectedFormation;
+    state.mode = selectedMode;
+    state.style = selectedStyle;
+    state.slots = FORMATIONS[state.formation].map(function (t) { return { type: t, filled: null }; });
+    document.getElementById("mode-badge").textContent = state.mode === "clasico" ? "MODO CLÁSICO" : "MODO ALMANAQUE";
+    showScreen("draft");
+    drawNewTeam({});
+  }
+
+  function drawNewTeam(opts, attempt) {
+    attempt = attempt || 0;
+    var pickOpts = {};
+    if (opts.keepClub && state.team) pickOpts.sameClub = state.team.club;
+    if (opts.keepSeason && state.team) pickOpts.sameSeason = state.team.season;
+    if (!opts.keepClub && state.excludeClub) pickOpts.excludeClub = state.excludeClub;
+    if (!opts.keepSeason && state.excludeSeason !== null) pickOpts.excludeSeason = state.excludeSeason;
+
+    var team = pickTeam(pickOpts);
+    var poolSize = 5 + Math.floor(Math.random() * 4);
+    var pool = samplePool(team, poolSize);
+
+    if (!poolFitsAnySlot(pool) && attempt < 15) {
+      return drawNewTeam({}, attempt + 1);
+    }
+
+    state.team = team;
+    state.pool = pool;
+    state.excludeClub = team.club;
+    state.excludeSeason = team.season;
+    state.selectedIdx = null;
+    state.round += 1;
+    renderDraft();
+  }
+
+  function doReroll(type) {
+    if (type === "club") {
+      if (!canRerollClub()) return;
+      state.rerollsClub += 1;
+      state.round -= 1;
+      drawNewTeam({ keepSeason: true });
+    } else {
+      if (!canRerollSeason()) return;
+      state.rerollsSeason += 1;
+      state.round -= 1;
+      drawNewTeam({ keepClub: true });
+    }
+  }
+
+  function renderDraft() {
+    document.getElementById("round-num").textContent = state.round;
+    document.getElementById("sq-flag").textContent = state.team.flag;
+    document.getElementById("sq-club").innerHTML = state.team.club +
+      (state.team.revelacion ? ' <span class="rev-badge">REVELACIÓN</span>' : "");
+    document.getElementById("sq-season").textContent = "Temporada " + state.team.season;
+    document.getElementById("sq-note").textContent = state.team.note || "";
+
+    var clubLeft = 2 - state.rerollsClub;
+    document.getElementById("reroll-club-count").textContent = clubLeft + (clubLeft === 1 ? " uso" : " usos");
+    var seasonLeft = SEASON_COUNT_BY_CLUB[state.team.club] < 2 ? "sin temporadas extra" : (1 - state.rerollsSeason) + (1 - state.rerollsSeason === 1 ? " uso" : " usos");
+    document.getElementById("reroll-season-count").textContent = seasonLeft;
+    document.getElementById("btn-reroll-club").disabled = !canRerollClub();
+    document.getElementById("btn-reroll-season").disabled = !canRerollSeason();
+
+    renderPool();
+    renderPitch();
+  }
+
+  function renderPool() {
+    var grid = document.getElementById("pool-grid");
+    grid.innerHTML = "";
+    var empties = emptySlotTypes();
+
+    state.pool.forEach(function (pl, idx) {
+      var norm = normalizePositions(pl.p);
+      var fits = norm.some(function (t) { return empties[t]; });
+      var card = document.createElement("div");
+      card.className = "pcard" + (fits ? "" : " dim") + (state.selectedIdx === idx ? " selected" : "");
+
+      var ratingHtml;
+      if (state.mode === "almanaque") {
+        var eff = effectiveRating(pl, pl.p);
+        ratingHtml = '<div class="prating' + (eff > pl.r ? " bonus" : "") + '">' + pl.r + '</div>';
+      } else {
+        ratingHtml = '<div class="phidden">? ? ?</div>';
+      }
+
+      card.innerHTML = '<div><div class="pname">' + pl.n + '</div><div class="ppos">' + pl.p + '</div></div>' + ratingHtml;
+
+      if (fits) card.addEventListener("click", function () { selectPlayer(idx); });
+      grid.appendChild(card);
+    });
+  }
+
+  function selectPlayer(idx) {
+    state.selectedIdx = idx;
+    renderPool();
+    renderPitch();
+  }
+
+  function renderPitch() {
+    var layer = document.getElementById("slot-layer");
+    layer.innerHTML = "";
+    var coords = LAYOUTS[state.formation];
+    var selectedPlayer = state.selectedIdx !== null ? state.pool[state.selectedIdx] : null;
+    var selNorm = selectedPlayer ? normalizePositions(selectedPlayer.p) : [];
+
+    state.slots.forEach(function (slot, i) {
+      var xy = coords[i] || [50, 50];
+      var el = document.createElement("div");
+      el.className = "slot";
+      el.style.left = xy[0] + "%";
+      el.style.top = xy[1] + "%";
+
+      var canTarget = !slot.filled && selectedPlayer && selNorm.indexOf(slot.type) !== -1;
+      if (slot.filled) el.classList.add("filled");
+      if (canTarget) el.classList.add("targetable");
+
+      var dotContent = slot.filled ? initials(slot.filled.n) : slot.type;
+      var lbl = slot.filled
+        ? '<div class="lbl">' + slot.filled.n + '<small>' + slot.type + '</small></div>'
+        : '<div class="lbl" style="color:var(--text-faint)">' + POS_LABEL[slot.type] + '</div>';
+
+      el.innerHTML = '<div class="dot">' + dotContent + '</div>' + lbl;
+      if (canTarget) el.addEventListener("click", function () { assignToSlot(i); });
+      layer.appendChild(el);
+    });
+  }
+
+  function initials(name) {
+    var parts = name.replace(/\./g, "").split(" ");
+    return (parts[0][0] + (parts[1] ? parts[1][0] : "")).toUpperCase();
+  }
+
+  function assignToSlot(slotIndex) {
+    if (state.selectedIdx === null) return;
+    var player = state.pool[state.selectedIdx];
+    state.slots[slotIndex].filled = {
+      n: player.n, p: player.p, r: player.r, eff: effectiveRating(player, player.p),
+      club: state.team.club, season: state.team.season
+    };
+    state.selectedIdx = null;
+
+    var allFilled = state.slots.every(function (s) { return s.filled; });
+    if (allFilled) { finishCup(); return; }
+    drawNewTeam({});
+  }
+
+  /* ============ RESULTADO ============ */
+
+  function finishCup() {
+    var total = 0;
+    state.slots.forEach(function (s) { total += s.filled.eff; });
+    var avg = total / state.slots.length;
+
+    document.getElementById("final-avg").textContent = avg.toFixed(1);
+    document.getElementById("stat-formation").textContent = state.formation;
+    document.getElementById("stat-style").textContent =
+      state.style === "equilibrado" ? "Equilibrado" : state.style === "defensivo" ? "Defensivo" : "Ofensivo";
+    document.getElementById("stat-rerolls").textContent = rerollsTotal() + "/3";
+
+    var list = document.getElementById("result-list");
+    list.innerHTML = "";
+    state.slots.forEach(function (s) {
+      var row = document.createElement("div");
+      row.className = "result-row";
+      var bonusTag = s.filled.eff > s.filled.r ? ' <span style="color:var(--ok)">+3</span>' : "";
+      row.innerHTML =
+        '<div class="pos-badge">' + s.type + '</div>' +
+        '<div style="flex:1"><div class="rname">' + s.filled.n + '</div>' +
+        '<div class="rmeta">' + s.filled.club + " " + s.filled.season + '</div></div>' +
+        '<div class="rrating">' + s.filled.eff + bonusTag + '</div>';
+      list.appendChild(row);
+    });
+
+    showScreen("result");
+  }
+
+})();
+</script>
+</body>
+</html>
