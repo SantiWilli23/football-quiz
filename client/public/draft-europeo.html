@@ -550,6 +550,10 @@
     return rand(pool);
   }
 
+  // Cuántos jugadores del plantel se muestran por ronda. Cada plantel tiene 13
+  // o más cargados, así que siempre salen 11 distintos, sin repetir.
+  var POOL_SIZE = 11;
+
   function samplePool(team, size) {
     var arr = team.players.slice();
     for (var i = arr.length - 1; i > 0; i--) {
@@ -655,8 +659,7 @@
     if (!opts.keepSeason && state.excludeSeason !== null) pickOpts.excludeSeason = state.excludeSeason;
 
     var team = pickTeam(pickOpts);
-    var poolSize = 5 + Math.floor(Math.random() * 4);
-    var pool = samplePool(team, poolSize);
+    var pool = samplePool(team, POOL_SIZE);
 
     if (!poolFitsAnySlot(pool) && attempt < 15) {
       return drawNewTeam({}, attempt + 1);
