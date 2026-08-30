@@ -371,8 +371,8 @@
   <!-- ===== ELEGIR ENTRENAMIENTO ===== -->
   <div id="screen-training" class="screen">
     <div class="panel">
-      <h2>Pretemporada</h2>
-      <p class="sub">Elegí un entrenamiento para esta temporada.</p>
+      <h2 id="training-prompt">Pretemporada</h2>
+      <p class="sub">Elegí cómo prepararte. No hay números: lo que se viene depende de esto.</p>
       <div class="choice-grid" id="training-grid"></div>
     </div>
   </div>
@@ -540,21 +540,32 @@
   var CONTRACT_YEARS = { grande: 3, mediano: 2, chico: 1 };
   var TIER_BASE_SALARY = { grande: 3200000, mediano: 650000, chico: 150000 };
 
-  // Entrenamientos del modo Simple: 3 se muestran al azar (ponderado por
-  // rareza) cada temporada, se elige 1. La rareza define cuánto se sabe de
-  // antemano sobre el riesgo: en Common el "y si sale mal" ya está en la
-  // descripción; en Rare y Legendary sólo se entera después de elegir.
-  var TRAININGS_SIMPLE = [
-    { key: "basico", name: "Trabajo básico de finalización", rarity: "common", weight: 6, pos: [3, 4], negChance: 0.25, neg: 1, negText: "Terminaste algo cansado" },
-    { key: "pretemp", name: "Pretemporada estándar", rarity: "common", weight: 6, pos: [2, 3], negChance: 0.2, neg: 1, negText: "Nada grave, un par de molestias" },
-    { key: "gimnasio", name: "Rutina de gimnasio", rarity: "common", weight: 5, pos: [3, 4], negChance: 0.3, neg: 1, negText: "Sobrecarga muscular leve" },
-    { key: "tactico", name: "Entrenamiento táctico grupal", rarity: "common", weight: 5, pos: [2, 3], negChance: 0.15, neg: 1, negText: "Te costó adaptarte al esquema nuevo" },
-    { key: "prepfisico", name: "Preparador físico personal", rarity: "rare", weight: 3, pos: [5, 6], negChance: 0.35, neg: 2, negText: "El cuerpo pasó factura después de la exigencia", resist: 1 },
-    { key: "campus", name: "Campus de verano con una figura", rarity: "rare", weight: 3, pos: [6, 7], negChance: 0.4, neg: 2, negText: "Cambiaste hábitos de golpe y no sentaron bien al principio" },
-    { key: "dieta", name: "Cambio de rutina alimenticia", rarity: "rare", weight: 2, pos: [5, 6], negChance: 0.3, neg: 2, negText: "El cuerpo tardó en acostumbrarse", resist: 1 },
-    { key: "leyenda", name: "Entrenás con una leyenda retirada", rarity: "legendary", weight: 1, pos: [9, 12], negChance: 0.45, neg: 3, negText: "Te exigió tanto que la temporada arrancó cuesta arriba" },
-    { key: "metodo", name: "Método revolucionario experimental", rarity: "legendary", weight: 1, pos: [8, 11], negChance: 0.5, neg: 4, negText: "El método no terminó de funcionar como prometían" },
-    { key: "bootcamp", name: "Bootcamp de élite", rarity: "legendary", weight: 1, pos: [10, 13], negChance: 0.55, neg: 3, negText: "Saliste roto físicamente de tanta exigencia" }
+  // Cada 2-3 temporadas (no todas) aparece una decisión de entrenamiento.
+  // A propósito no se muestra ningún número antes de elegir: las opciones
+  // están ordenadas de menos a más esfuerzo, y a más esfuerzo más sube el
+  // overall — pero también más riesgo de que algo salga mal. El jugador
+  // elige por lo que dice el texto, no por una cifra.
+  var TRAINING_SCENARIOS = [
+    { prompt: "Arranca la pretemporada. ¿Cómo la encarás?", options: [
+      { label: "Como uno más del plantel", desc: "Cumplís con lo que pide el cuerpo técnico, ni más ni menos.", pos: [2, 4], negChance: 0.05, neg: 1, negText: "Una molestia sin importancia", resist: 1 },
+      { label: "Metiéndole horas extra", desc: "Te quedás después de los entrenamientos a trabajar por tu cuenta.", pos: [5, 8], negChance: 0.22, neg: 2, negText: "El cuerpo empezó a resentirse" },
+      { label: "A fondo, sin frenar", desc: "Buscás un preparador personal y no le das descanso al cuerpo.", pos: [9, 13], negChance: 0.42, neg: 4, negText: "Te pasaste de rosca y la temporada arrancó cuesta arriba", resist: -1 }
+    ]},
+    { prompt: "Un club te invita a un campus de verano exigente. ¿Qué hacés?", options: [
+      { label: "Rechazar y descansar", desc: "Preferís llegar fresco a la temporada que forzar el cuerpo en las vacaciones.", pos: [1, 3], negChance: 0.05, neg: 1, negText: "Volviste un poco flojo de ritmo", resist: 1 },
+      { label: "Ir, pero con cuidado", desc: "Participás pero dosificás el esfuerzo.", pos: [4, 7], negChance: 0.2, neg: 2, negText: "El cambio de rutina te costó adaptarlo" },
+      { label: "Meterte de lleno", desc: "Aprovechás cada minuto del campus al máximo.", pos: [8, 12], negChance: 0.4, neg: 3, negText: "Terminaste física y mentalmente agotado", resist: -1 }
+    ]},
+    { prompt: "Tenés que elegir un enfoque para esta pretemporada.", options: [
+      { label: "Foco en no lesionarte", desc: "Priorizás cuidar el cuerpo por sobre todo.", pos: [2, 4], negChance: 0.05, neg: 1, negText: "Rendiste algo por debajo de lo esperado", resist: 1 },
+      { label: "Equilibrio entre físico y descanso", desc: "Un plan parejo, sin extremos.", pos: [5, 8], negChance: 0.2, neg: 2, negText: "Alguna sobrecarga menor" },
+      { label: "Todo o nada", desc: "Apostás fuerte a mejorar de golpe, cueste lo que cueste.", pos: [9, 13], negChance: 0.42, neg: 4, negText: "El riesgo no salió gratis", resist: -1 }
+    ]},
+    { prompt: "Llega un preparador físico nuevo al club con un plan distinto.", options: [
+      { label: "Seguir con lo de siempre", desc: "No cambiás nada de tu rutina habitual.", pos: [2, 4], negChance: 0.05, neg: 1, negText: "Te estancaste un poco", resist: 1 },
+      { label: "Probar el plan, con reservas", desc: "Te sumás pero sin comprometerte del todo.", pos: [5, 8], negChance: 0.22, neg: 2, negText: "El método no terminó de sentarte bien" },
+      { label: "Confiar ciegamente en el plan", desc: "Te entregás por completo al método nuevo.", pos: [9, 13], negChance: 0.42, neg: 4, negText: "El plan resultó demasiado exigente", resist: -1 }
+    ]}
   ];
 
   var EVENTS_SIMPLE = [
@@ -612,6 +623,7 @@
         clearSave();
         return null;
       }
+      if (typeof data.nextTrainingAt === "undefined") data.nextTrainingAt = data.seasonsPlayed + randInt(2, 3);
       return data;
     } catch (e) { return null; }
   }
@@ -686,6 +698,7 @@
       declinePhase: 0, retireAge: clamp(declineStart + randInt(5, 9), 32, 40),
       seasonsPlayed: 0, careerGoals: 0, careerMatches: 0, careerAssists: 0,
       titles: [], clubsPlayed: [], seasonLog: [],
+      nextTrainingAt: randInt(2, 3),
       pendingNeg: null, _retired: false
     };
     player.peakOvr = player.ovr;
@@ -843,52 +856,43 @@
   }
 
   document.getElementById("btn-start-season").addEventListener("click", function () {
-    showTrainingChoices();
+    var seasonNum = player.seasonsPlayed + 1;
+    if (seasonNum >= player.nextTrainingAt) {
+      showTrainingChoices();
+    } else {
+      player.lastTrainingName = null;
+      maybeShowEvent();
+    }
   });
 
   /* ============ ENTRENAMIENTO ============ */
 
-  function pickWeighted(pool, n) {
-    var copy = pool.slice();
-    var chosen = [];
-    for (var i = 0; i < n && copy.length; i++) {
-      var total = copy.reduce(function (a, x) { return a + x.weight; }, 0);
-      var roll = Math.random() * total;
-      for (var j = 0; j < copy.length; j++) {
-        roll -= copy[j].weight;
-        if (roll <= 0) { chosen.push(copy[j]); copy.splice(j, 1); break; }
-      }
-    }
-    return chosen;
-  }
-
   function showTrainingChoices() {
-    var options = pickWeighted(TRAININGS_SIMPLE, 3);
+    var scenario = rand(TRAINING_SCENARIOS);
+    document.getElementById("training-prompt").textContent = scenario.prompt;
     var grid = document.getElementById("training-grid");
     grid.innerHTML = "";
-    options.forEach(function (t) {
+    scenario.options.forEach(function (opt) {
       var card = document.createElement("div");
-      card.className = "choice-card " + t.rarity;
-      var riskText = t.rarity === "common"
-        ? "+" + t.pos[0] + " a +" + t.pos[1] + " overall. " + Math.round(t.negChance * 100) + "% de posibilidad de -" + t.neg + " por " + t.negText.toLowerCase() + "."
-        : "+" + t.pos[0] + " a +" + t.pos[1] + " overall. Hay algo de riesgo, pero no se sabe hasta terminar la temporada.";
+      card.className = "choice-card";
       card.innerHTML =
-        '<div class="ctitle">' + esc(t.name) + '<span class="rarity-tag ' + t.rarity + '">' + t.rarity + "</span></div>" +
-        '<div class="cdesc">' + riskText + "</div>";
-      card.addEventListener("click", function () { applyTraining(t); });
+        '<div class="ctitle">' + esc(opt.label) + "</div>" +
+        '<div class="cdesc">' + esc(opt.desc) + "</div>";
+      card.addEventListener("click", function () { applyTrainingChoice(opt); });
       grid.appendChild(card);
     });
     showScreen("training");
   }
 
-  function applyTraining(t) {
-    var gain = randInt(t.pos[0], t.pos[1]);
+  function applyTrainingChoice(opt) {
+    var gain = randInt(opt.pos[0], opt.pos[1]);
     player.ovr = clamp(player.ovr + gain, 40, 99);
-    var negHit = Math.random() < t.negChance;
-    player.pendingNeg = negHit ? { amount: t.neg, text: t.negText, rarity: t.rarity } : null;
-    if (t.resist) player.resistAccum += t.resist;
+    var negHit = Math.random() < opt.negChance;
+    player.pendingNeg = negHit ? { amount: opt.neg, text: opt.negText } : null;
+    if (opt.resist) player.resistAccum += opt.resist;
     player.lastTrainingGain = gain;
-    player.lastTrainingName = t.name;
+    player.lastTrainingName = opt.label;
+    player.nextTrainingAt = (player.seasonsPlayed + 1) + randInt(2, 3);
     maybeShowEvent();
   }
 
@@ -971,7 +975,7 @@
         (delta ? ' <span class="delta ' + (delta > 0 ? "pos" : "neg") + '">' + (delta > 0 ? "+" : "") + delta + "</span>" : "") + "</span>";
       lines.appendChild(d);
     }
-    line("Entrenamiento elegido", player.lastTrainingName, player.lastTrainingGain);
+    if (player.lastTrainingName) line("Entrenamiento elegido", player.lastTrainingName, player.lastTrainingGain);
     if (negLine) line("Efecto secundario", negLine.text, -negLine.amount);
     line("Titularidad", isStarter ? "Fuiste titular" : "Rol secundario");
     line("Partidos jugados", matches);
