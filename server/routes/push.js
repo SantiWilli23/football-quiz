@@ -97,7 +97,7 @@ router.post("/unsubscribe", async (req, res) => {
 router.post("/test", async (req, res) => {
   try {
     const sent = await sendToUser(req.userId, {
-      title: "Football Quiz",
+      title: "Futotal",
       body: "Listo, las notificaciones funcionan.",
       url: "/",
     });

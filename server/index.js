@@ -77,7 +77,7 @@ function startReminderTimer() {
 initSchema()
   .then(() => {
     app.listen(PORT, () => {
-      console.log(`Football Quiz API escuchando en el puerto ${PORT}`);
+      console.log(`Futotal API escuchando en el puerto ${PORT}`);
       startReminderTimer();
     });
   })

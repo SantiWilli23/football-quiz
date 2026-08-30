@@ -11,7 +11,7 @@ const KIND_EMOJI = {
 // Resumen del día en texto plano, estilo Wordle: se puede pegar en el grupo
 // sin spoilear las respuestas, sólo si acertaste la predicción.
 export function buildShareText({ trivia, modeB, date }) {
-  const lines = [`⚽ Football Quiz · ${date}`];
+  const lines = [`⚽ Futotal · ${date}`];
 
   if (trivia?.length) {
     const marks = trivia

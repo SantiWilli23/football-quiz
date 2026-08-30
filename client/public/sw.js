@@ -2,7 +2,7 @@
 // No cachea nada — la app se sigue sirviendo normalmente desde la red.
 
 self.addEventListener("push", (event) => {
-  let payload = { title: "Football Quiz", body: "Tenés preguntas nuevas.", url: "/" };
+  let payload = { title: "Futotal", body: "Tenés preguntas nuevas.", url: "/" };
   try {
     if (event.data) payload = { ...payload, ...event.data.json() };
   } catch {

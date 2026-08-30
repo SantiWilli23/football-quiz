@@ -8,7 +8,7 @@ import { sendToUser } from "../utils/push.js";
 // curso igual: nunca debe romper la jugada.
 async function notify(userId, body) {
   try {
-    await sendToUser(userId, { title: "Football Quiz", body, url: "/duelos" });
+    await sendToUser(userId, { title: "Futotal", body, url: "/duelos" });
   } catch (err) {
     console.error("no se pudo avisar del duelo:", err.message);
   }

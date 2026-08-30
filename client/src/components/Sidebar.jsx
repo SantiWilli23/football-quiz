@@ -25,9 +25,9 @@ export default function Sidebar() {
     <aside className="hidden lg:flex w-64 shrink-0 h-screen sticky top-0 flex-col border-r border-border bg-panel px-4 py-6">
       <div className="flex items-center gap-2 px-2 mb-8">
         <div className="w-9 h-9 rounded-card bg-accent/15 border border-accent/30 flex items-center justify-center text-accent font-bold">
-          FQ
+          FT
         </div>
-        <span className="font-semibold text-lg tracking-tight">Football Quiz</span>
+        <span className="font-semibold text-lg tracking-tight">Futotal</span>
       </div>
 
       <nav className="flex-1 flex flex-col gap-1">

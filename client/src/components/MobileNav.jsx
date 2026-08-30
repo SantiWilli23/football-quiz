@@ -24,9 +24,9 @@ export default function MobileNav() {
     <>
       <header className="lg:hidden sticky top-0 z-20 flex items-center gap-3 px-4 py-3 border-b border-border bg-panel/95 backdrop-blur">
         <div className="w-8 h-8 rounded-card bg-accent/15 border border-accent/30 flex items-center justify-center text-accent font-bold text-sm shrink-0">
-          FQ
+          FT
         </div>
-        <span className="font-semibold tracking-tight truncate">Football Quiz</span>
+        <span className="font-semibold tracking-tight truncate">Futotal</span>
 
         <span className="ml-auto flex items-center gap-1 text-xs text-orange-400 shrink-0">
           <Flame size={13} />

@@ -19,6 +19,8 @@
     --text-faint: #62678c;
     --ok: #38d996;
     --rev: #ff8a3d;
+    --best: #35f0a4;
+    --idol: #4ea6ff;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
@@ -129,6 +131,29 @@
     border: 1px solid var(--rev); border-radius: 999px; padding: 2px 7px;
   }
 
+  /* Equipo sorpresa: el banner entero vira a naranja, no sólo la etiqueta. */
+  .squad-banner.sorpresa {
+    border-color: rgba(255,138,61,0.45);
+    background: linear-gradient(120deg, rgba(255,138,61,0.16), rgba(255,138,61,0.04));
+  }
+  /* Salieron justo los 11 de mejor promedio del plantel. Se superpone al color
+     de sorpresa en vez de reemplazarlo, así un sorpresa con su mejor 11 muestra
+     las dos cosas. */
+  .squad-banner.best11 {
+    border-color: var(--best);
+    box-shadow: 0 0 0 1px var(--best), 0 0 26px rgba(56,217,150,0.28);
+    background: linear-gradient(120deg, rgba(56,217,150,0.18), rgba(56,217,150,0.04));
+  }
+  .squad-banner.best11.sorpresa {
+    background: linear-gradient(120deg, rgba(56,217,150,0.18), rgba(255,138,61,0.12));
+  }
+  .best-badge {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.06em; color: var(--best);
+    border: 1px solid var(--best); border-radius: 999px; padding: 2px 7px;
+    animation: bestpulse 1.6s ease-in-out infinite;
+  }
+  @keyframes bestpulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
+
   .reroll-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
   .reroll-btn {
     flex: 1; min-width: 140px; text-align: left; background: rgba(255,255,255,0.04);
@@ -162,6 +187,52 @@
   .pcard .prating { align-self: flex-end; font-family: ui-monospace, monospace; font-weight: 800; font-size: 18px; position: relative; z-index: 1; }
   .pcard .prating.bonus::after { content: " +3"; font-size: 10px; color: var(--ok); }
   .pcard .phidden { align-self: flex-end; font-family: ui-monospace, monospace; font-weight: 700; font-size: 13px; color: var(--text-faint); letter-spacing: 0.12em; position: relative; z-index: 1; }
+
+  /* --- jerarquía de cartas ---
+     88 o más  -> dorado
+     ídolo     -> azul
+     los dos   -> borde dorado con el nombre en azul
+     El dorado depende del rating, así que en modo Clásico (ratings ocultos)
+     no se pinta: delataría quién es bueno antes de tiempo. Se ve igual en el
+     modo Almanaque y siempre en la pantalla final. El azul no delata nada
+     porque no sale del rating, así que va en los dos modos. */
+  .pcard.gold {
+    border-color: var(--gold);
+    background: linear-gradient(160deg, rgba(212,175,55,0.18), rgba(212,175,55,0.03));
+  }
+  .pcard.gold .pname, .pcard.gold .prating { color: var(--gold); }
+
+  .pcard.idol {
+    border-color: var(--idol);
+    background: linear-gradient(160deg, rgba(78,166,255,0.16), rgba(78,166,255,0.03));
+  }
+  .pcard.idol .pname { color: var(--idol); }
+
+  .pcard.gold.idol {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 1px var(--gold), 0 6px 20px rgba(212,175,55,0.2);
+    background: linear-gradient(160deg, rgba(78,166,255,0.18), rgba(212,175,55,0.07));
+  }
+  .pcard.gold.idol .pname, .pcard.gold.idol .prating { color: var(--idol); }
+
+  .idol-dot {
+    display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+    background: var(--idol); margin-left: 5px; vertical-align: middle;
+  }
+
+  .result-row.gold { border-color: rgba(212,175,55,0.5); }
+  .result-row.gold .rname, .result-row.gold .rrating { color: var(--gold); }
+  .result-row.idol { border-color: rgba(78,166,255,0.5); }
+  .result-row.idol .rname { color: var(--idol); }
+  .result-row.gold.idol { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(212,175,55,0.5); }
+  .result-row.gold.idol .rname, .result-row.gold.idol .rrating { color: var(--idol); }
+
+  .legend-row {
+    display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+    font-size: 10.5px; color: var(--text-faint); margin-top: 14px;
+  }
+  .legend-row i { font-style: normal; display: inline-flex; align-items: center; gap: 5px; }
+  .legend-row .sw { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
 
   .pitch-wrap { border-radius: 18px; padding: 3px; background: var(--holo); background-size: 260% 260%; animation: holoshift 8s ease infinite; }
   .pitch {
@@ -267,10 +338,10 @@
       <span class="round-badge" id="mode-badge"></span>
     </div>
 
-    <div class="squad-banner">
+    <div class="squad-banner" id="squad-banner">
       <span class="flag" id="sq-flag">🏳️</span>
       <div class="info">
-        <b id="sq-club">— <span id="sq-rev" class="rev-badge" style="display:none">REVELACIÓN</span></b>
+        <b id="sq-club">—</b>
         <span id="sq-season">—</span>
         <span class="note" id="sq-note"></span>
       </div>
@@ -294,6 +365,13 @@
 
     <div class="pitch-wrap" style="margin-top:16px">
       <div class="pitch"><div class="slot-layer" id="slot-layer"></div></div>
+    </div>
+
+    <div class="legend-row">
+      <i><span class="sw" style="background:var(--gold)"></span>88 o más</i>
+      <i><span class="sw" style="background:var(--idol)"></span>ídolo del club</i>
+      <i><span class="sw" style="background:var(--rev)"></span>equipo revelación</i>
+      <i><span class="sw" style="background:var(--best)"></span>mejor XI del plantel</i>
     </div>
   </div>
 
@@ -366,6 +444,56 @@
     "SEVILLA":"🇪🇸","ATALANTA":"🇮🇹","SHERIFF TIRASPOL":"🇲🇩","BODØ/GLIMT":"🇳🇴","NAPOLI":"🇮🇹"
   };
 
+  // Ídolos de cada club: la hinchada los identifica como propios, no
+  // cualquier buen jugador que pasó por ahí. Se marcan en azul. Lista corta
+  // a propósito — si medio plantel fuera "ídolo" el color no distinguiría nada.
+  var IDOLS = {
+    "BAYERN MÚNICH":["Kahn","Lahm","Schweinsteiger","Neuer","Robben","Ribéry","Müller","Effenberg","Lizarazu"],
+    "REAL MADRID":["Casillas","Raúl","Hierro","Roberto Carlos","Ramos","Marcelo","Modric","Benzema","Guti"],
+    "BARCELONA":["Xavi","Iniesta","Messi","Puyol","Valdés","Busquets","Piqué","Ronaldinho"],
+    "AC MILAN":["Maldini","Nesta","Pirlo","Gattuso","Seedorf","Shevchenko","Kaká","Inzaghi","Costacurta"],
+    "INTER MILÁN":["Zanetti","Ronaldo","Julio César","Materazzi","Cambiasso","Milito","Bergomi","Recoba","Lautaro"],
+    "JUVENTUS":["Del Piero","Buffon","Nedved","Nedvěd","Chiellini","Bonucci","Trezeguet","Marchisio"],
+    "LIVERPOOL":["Gerrard","Carragher","Salah","Van Dijk","Alexander-Arnold","Hyypiä","Owen","Reina"],
+    "MANCHESTER UNITED":["Giggs","Scholes","Keane","Schmeichel","Beckham","Ferdinand","Vidić","Rooney","Van der Sar"],
+    "CHELSEA":["Terry","Lampard","Drogba","Cech","Ashley Cole","Zola","Azpilicueta"],
+    "ARSENAL":["Henry","Bergkamp","Vieira","Pires","Ljungberg","Adams","Seaman","Saka"],
+    "ATLÉTICO DE MADRID":["Godín","Koke","Griezmann","Oblak","Gabi","Torres"],
+    "PSG":["Marquinhos","Verratti","Thiago Silva","Cavani","Mbappé","Neymar"],
+    "MANCHESTER CITY":["Kompany","Silva","Agüero","De Bruyne","Fernandinho","Hart","Foden"],
+    "BORUSSIA DORTMUND":["Reus","Hummels","Weidenfeller","Piszczek","Lewandowski","Kehl","Gotze"],
+    "VALENCIA":["Cañizares","Ayala","Mendieta","Baraja","Albelda","Aimar"],
+    "DEPORTIVO":["Valerón","Fran","Mauro Silva","Molina","Manuel Pablo","Djalminha"],
+    "PORTO":["Vítor Baía","Jorge Costa","Deco","Costinha","Maniche","Helton"],
+    "AJAX":["Van der Vaart","Sneijder","Ibrahimović","Litmanen","De Ligt","Tadić","Blind"],
+    "LYON":["Juninho","Coupet","Cris","Govou","Lloris"],
+    "ROMA":["Totti","De Rossi","Perrotta","Mexès"],
+    "LAZIO":["Nesta","Mihajlović","Nedvěd","Verón"],
+    "TOTTENHAM":["Kane","Son","Lloris","Vertonghen","Alderweireld"],
+    "NAPOLI":["Meret","Di Lorenzo","Lobotka","Kvaratskhelia","Osimhen"],
+    "BENFICA":["Luisão","Maxi Pereira","Aimar","Cardozo"],
+    "GALATASARAY":["Hagi","Taffarel","Hakan Şükür","Bülent Korkmaz","Muslera","Popescu"],
+    "SEVILLA":["Navas","Banega"],
+    "VILLARREAL":["Riquelme","Senna","Pau Torres","Gerard Moreno"],
+    "ATALANTA":["Gómez","De Roon","Toloi","Djimsiti","Iličić"],
+    "MÓNACO":["Giuly","Évra","Subasic","Falcao"],
+    "SCHALKE 04":["Neuer","Höwedes","Raúl","Farfán"],
+    "PSV":["Cocu","Van Bommel","Gomes"],
+    "LEEDS UNITED":["Radebe","Martyn","Harte","Batty"],
+    "MARSEILLE":["Mandanda","Valbuena"],
+    "BORDEAUX":["Gourcuff","Planus"],
+    "MALAGA":["Caballero","Weligton","Isco"],
+    "LEICESTER CITY":["Vardy","Schmeichel","Morgan","Mahrez"],
+    "APOEL":["Charalambidis","Poursaitidis","Chiotis"],
+    "DYNAMO KYIV":["Shevchenko","Rebrov","Shovkovskiy","Luzhny"],
+    "BAYER LEVERKUSEN":["Ballack","Nowotny","Butt","Schneider"],
+    "BODØ/GLIMT":["Berg","Bjorkan","Hoibraten"],
+    "SHERIFF TIRASPOL":["Thill"]
+  };
+
+  var GOLD_MIN = 88;
+  function isIdol(club, name) { return (IDOLS[club] || []).indexOf(name) !== -1; }
+
   // Ratings inventados con fines de juego: no representan un puntaje oficial.
   // Datos reales de 138 equipos-temporada de la Champions League (1998-2025).
   var TEAMS = [
@@ -407,7 +535,7 @@
 {club:"ARSENAL",season:"2005-06",revelacion:false,note:"Finalista — última temporada en Highbury",players:[{n:"Lehmann",p:"GOL",r:84},{n:"Campbell",p:"ZAG",r:84},{n:"Touré",p:"ZAG",r:83},{n:"Eboué",p:"LD/PD",r:76},{n:"Flamini",p:"LE/MEI",r:77},{n:"Fàbregas",p:"MEI/ME",r:82},{n:"Gilberto",p:"MEC",r:83},{n:"Hleb",p:"PD/ME",r:80},{n:"Ljungberg",p:"PD/PE",r:82},{n:"Pires",p:"PE/ME",r:86},{n:"Henry",p:"CA/PE",r:94},{n:"Bergkamp",p:"CA/MEI",r:87},{n:"Reyes",p:"PE/CA",r:79},{n:"Senderos",p:"ZAG",r:77}]},
 {club:"BARCELONA",season:"2005-06",revelacion:false,note:"Campeón — París, Ronaldinho era",players:[{n:"Valdés",p:"GOL",r:84},{n:"Puyol",p:"ZAG",r:88},{n:"Márquez",p:"ZAG",r:83},{n:"Oleguer",p:"LD",r:74},{n:"Van Bronckhorst",p:"LE/MEI",r:82},{n:"Xavi",p:"MEI",r:90},{n:"Iniesta",p:"MEI/ME",r:86},{n:"Edmílson",p:"MEC",r:80},{n:"Deco",p:"MEI/ME",r:87},{n:"Ronaldinho",p:"PE/CA/MEI",r:95},{n:"Eto'o",p:"CA",r:91},{n:"Giuly",p:"PD",r:80},{n:"Larsson",p:"CA",r:82},{n:"Belletti",p:"LD/LE",r:78},{n:"Thuram",p:"ZAG/LD",r:82}]},
 {club:"INTER MILÁN",season:"2005-06",revelacion:false,note:"Cuartos — eliminados por Villarreal",players:[{n:"Julio César",p:"GOL",r:84},{n:"Córdoba",p:"ZAG",r:82},{n:"Samuel",p:"ZAG",r:82},{n:"Materazzi",p:"ZAG",r:79},{n:"Zanetti",p:"LD/MEI",r:85},{n:"Favalli",p:"LE",r:75},{n:"Figo",p:"PD/ME",r:85},{n:"Cambiasso",p:"MEC/MEI",r:82},{n:"Stankovic",p:"MEI/MD",r:81},{n:"Vieri",p:"CA",r:84},{n:"Adriano",p:"CA",r:83},{n:"Martins",p:"CA/PE",r:78},{n:"Cruz",p:"CA",r:80},{n:"Solari",p:"PE/MEI",r:77},{n:"Burdisso",p:"LD/ZAG",r:79}]},
-{club:"LYON",season:"2005-06",revelacion:false,note:"Cuartos — eliminados por Milan",players:[{n:"Coupet",p:"GOL",r:82},{n:"Cris",p:"ZAG",r:81},{n:"Caçapa",p:"ZAG",r:78},{n:"Réveillère",p:"LD",r:78},{n:"Abidal",p:"LE",r:80},{n:"Diarra",p:"MEC/MD",r:78},{n:"Juninho",p:"MEI/ME",r:85},{n:"Tiago",p:"MEI",r:80},{n:"Malouda",p:"PE/MEI",r:81},{n:"Wiltord",p:"CA/PE",r:79},{n:"Fred",p:"CA",r:80},{n:"Govou",p:"PD/PE",r:78},{n:"Ben Arfa",p:"PD/PE",r:74},{n:"Cacapa",p:"ZAG",r:78},{n:"Källström",p:"MEI",r:78}]},
+{club:"LYON",season:"2005-06",revelacion:false,note:"Cuartos — eliminados por Milan",players:[{n:"Coupet",p:"GOL",r:82},{n:"Cris",p:"ZAG",r:81},{n:"Caçapa",p:"ZAG",r:78},{n:"Réveillère",p:"LD",r:78},{n:"Abidal",p:"LE",r:80},{n:"Diarra",p:"MEC/MD",r:78},{n:"Juninho",p:"MEI/ME",r:85},{n:"Tiago",p:"MEI",r:80},{n:"Malouda",p:"PE/MEI",r:81},{n:"Wiltord",p:"CA/PE",r:79},{n:"Fred",p:"CA",r:80},{n:"Govou",p:"PD/PE",r:78},{n:"Ben Arfa",p:"PD/PE",r:74},{n:"Clerc",p:"LD/ZAG",r:76},{n:"Källström",p:"MEI",r:78}]},
 {club:"VILLARREAL",season:"2005-06",revelacion:true,note:"Semifinalista — a un penal de la final, Pellegrini",players:[{n:"Barbosa",p:"GOL",r:78},{n:"Gonzalo",p:"ZAG",r:77},{n:"Quique Álvarez",p:"ZAG",r:79},{n:"Arruabarrena",p:"LE",r:76},{n:"Javi Venta",p:"LD",r:76},{n:"Senna",p:"MEC/MEI",r:83},{n:"Riquelme",p:"MEI/ME",r:88},{n:"Josico",p:"MEC/MD",r:77},{n:"Sorin",p:"LE",r:79},{n:"Forlán",p:"CA/PE",r:84},{n:"Guayre",p:"PD/PE",r:76},{n:"Roger",p:"CA",r:78},{n:"Cazorla",p:"MEI/ME",r:77},{n:"Peña",p:"ZAG",r:75},{n:"Tacchinardi",p:"MEI",r:77},{n:"Figueroa",p:"PD/PE",r:74}]},
 {club:"AC MILAN",season:"2006-07",revelacion:false,note:"Campeón — revancha vs Liverpool en Atenas",players:[{n:"Dida",p:"GOL",r:84},{n:"Nesta",p:"ZAG",r:90},{n:"Maldini",p:"ZAG/LE",r:89},{n:"Kaladze",p:"ZAG/LE",r:79},{n:"Oddo",p:"LD",r:78},{n:"Jankulovski",p:"LE",r:77},{n:"Gattuso",p:"MD",r:84},{n:"Pirlo",p:"MEI/MEC",r:89},{n:"Ambrosini",p:"MEI/MD",r:80},{n:"Seedorf",p:"MEI/PE",r:86},{n:"Kaká",p:"ME/MEI/PD",r:95},{n:"Inzaghi",p:"CA",r:83},{n:"Gilardino",p:"CA",r:80},{n:"Serginho",p:"LE/MEI",r:78}]},
 {club:"BAYERN MÚNICH",season:"2006-07",revelacion:false,note:"Cuartos — eliminados por Milan",players:[{n:"Kahn",p:"GOL",r:85},{n:"Lucio",p:"ZAG",r:84},{n:"Van Buyten",p:"ZAG",r:79},{n:"Sagnol",p:"LD",r:81},{n:"Lahm",p:"LD/MEI",r:83},{n:"Lizarazu",p:"LE",r:79},{n:"Hargreaves",p:"MEC/MD",r:81},{n:"Ze Roberto",p:"MEI/PE",r:80},{n:"Schweinsteiger",p:"MEI/MEC",r:82},{n:"Makaay",p:"CA",r:82},{n:"Podolski",p:"CA/PD/PE",r:79},{n:"Pizarro",p:"CA",r:80},{n:"Santa Cruz",p:"CA",r:77},{n:"Demichelis",p:"ZAG",r:79},{n:"Van Bommel",p:"MEI",r:81}]},
@@ -428,7 +556,7 @@
 {club:"BAYERN MÚNICH",season:"2009-10",revelacion:false,note:"Finalista — Madrid, el Bayern de Van Gaal",players:[{n:"Butt",p:"GOL",r:82},{n:"Demichelis",p:"ZAG",r:80},{n:"Van Buyten",p:"ZAG",r:79},{n:"Lahm",p:"LD/MEI",r:87},{n:"Badstuber",p:"ZAG",r:78},{n:"Contento",p:"LE",r:74},{n:"Schweinsteiger",p:"MEI/MEC",r:86},{n:"Van Bommel",p:"MEC/MD",r:82},{n:"Robben",p:"PD/PE",r:89},{n:"Ribéry",p:"PE",r:90},{n:"Müller",p:"PD/CA/MEI",r:82},{n:"Olić",p:"CA/PE",r:79},{n:"Klose",p:"CA",r:82},{n:"Altintop",p:"PD/ME",r:76},{n:"Sagnol",p:"LD",r:78}]},
 {club:"BORDEAUX",season:"2009-10",revelacion:true,note:"Cuartos — Laurent Blanc",players:[{n:"Carrasso",p:"GOL",r:76},{n:"Planus",p:"ZAG",r:76},{n:"Ciani",p:"ZAG",r:75},{n:"Trémoulinas",p:"LE",r:76},{n:"Chalme",p:"LD",r:74},{n:"Fernando",p:"MEC/MD",r:77},{n:"Diarra",p:"MEC/MD",r:76},{n:"Gourcuff",p:"MEI/ME",r:82},{n:"Chamakh",p:"CA",r:79},{n:"Cavenaghi",p:"CA",r:76},{n:"Wendel",p:"PE/MEI",r:75},{n:"Gouffran",p:"PD/PE",r:74},{n:"Jurietti",p:"LD",r:73},{n:"Henrique",p:"ZAG",r:75},{n:"Obertan",p:"MEI/PD",r:73}]},
 {club:"INTER MILÁN",season:"2009-10",revelacion:false,note:"Campeón — triplete de Mourinho",players:[{n:"Julio César",p:"GOL",r:88},{n:"Lúcio",p:"ZAG",r:85},{n:"Samuel",p:"ZAG",r:83},{n:"Maicon",p:"LD",r:88},{n:"Zanetti",p:"LD/MEI",r:86},{n:"Chivu",p:"LE/ZAG",r:80},{n:"Cambiasso",p:"MEI/MEC",r:84},{n:"Sneijder",p:"MEI/ME",r:90},{n:"Stankovic",p:"MEI",r:82},{n:"Muntari",p:"MEI/MD",r:77},{n:"Eto'o",p:"CA/PD/PE",r:87},{n:"Milito",p:"CA",r:86},{n:"Pandev",p:"CA/PE",r:79},{n:"Materazzi",p:"ZAG",r:79},{n:"Quaresma",p:"PD/PE",r:78}]},
-{club:"LYON",season:"2009-10",revelacion:false,note:"Semifinalista — eliminaron al Real Madrid",players:[{n:"Lloris",p:"GOL",r:83},{n:"Cris",p:"ZAG",r:82},{n:"Boumsong",p:"ZAG",r:78},{n:"Réveillère",p:"LD",r:79},{n:"Grosso",p:"LE",r:77},{n:"Toulalan",p:"MEC",r:82},{n:"Makoun",p:"MEI/MD",r:79},{n:"Pjanic",p:"MEI",r:80},{n:"Govou",p:"PD/PE",r:78},{n:"Lisandro López",p:"CA",r:83},{n:"Gomis",p:"CA",r:79},{n:"Bastos",p:"PE/PD",r:78},{n:"Ederson",p:"MEI",r:77},{n:"Delgado",p:"MEI",r:76},{n:"Cacapa",p:"ZAG",r:76}]},
+{club:"LYON",season:"2009-10",revelacion:false,note:"Semifinalista — eliminaron al Real Madrid",players:[{n:"Lloris",p:"GOL",r:83},{n:"Cris",p:"ZAG",r:82},{n:"Boumsong",p:"ZAG",r:78},{n:"Réveillère",p:"LD",r:79},{n:"Grosso",p:"LE",r:77},{n:"Toulalan",p:"MEC",r:82},{n:"Makoun",p:"MEI/MD",r:79},{n:"Pjanic",p:"MEI",r:80},{n:"Govou",p:"PD/PE",r:78},{n:"Lisandro López",p:"CA",r:83},{n:"Gomis",p:"CA",r:79},{n:"Bastos",p:"PE/PD",r:78},{n:"Ederson",p:"MEI",r:77},{n:"Delgado",p:"MEI",r:76},{n:"Bodmer",p:"ZAG/MEI",r:77}]},
 {club:"CHELSEA",season:"2010-11",revelacion:false,note:"Cuartos — eliminados por ManUtd",players:[{n:"Cech",p:"GOL",r:88},{n:"Terry",p:"ZAG",r:86},{n:"Alex",p:"ZAG",r:81},{n:"Ivanović",p:"LD/ZAG",r:82},{n:"Ashley Cole",p:"LE",r:85},{n:"Essien",p:"MD/LD",r:83},{n:"Mikel",p:"MEC",r:79},{n:"Lampard",p:"MEI/ME",r:88},{n:"Ramires",p:"MEI/MD",r:81},{n:"Kalou",p:"PD/PE/CA",r:77},{n:"Drogba",p:"CA",r:87},{n:"Torres",p:"CA",r:80},{n:"Anelka",p:"CA/PE",r:80},{n:"Zhirkov",p:"LE/PE",r:76},{n:"Malouda",p:"MEI/PE",r:82}]},
 {club:"INTER MILÁN",season:"2010-11",revelacion:false,note:"Octavos — defendían título, eliminados por Schalke",players:[{n:"Julio César",p:"GOL",r:85},{n:"Lúcio",p:"ZAG",r:82},{n:"Samuel",p:"ZAG",r:81},{n:"Maicon",p:"LD",r:84},{n:"Zanetti",p:"LD/MEI",r:83},{n:"Chivu",p:"LE/ZAG",r:78},{n:"Cambiasso",p:"MEC/MEI",r:82},{n:"Sneijder",p:"MEI/ME",r:87},{n:"Stankovic",p:"MEI/MD",r:80},{n:"Eto'o",p:"CA/PD/PE",r:86},{n:"Milito",p:"CA",r:83},{n:"Pandev",p:"CA/PE",r:78},{n:"Muntari",p:"MEI/MD",r:76},{n:"Materazzi",p:"ZAG",r:77},{n:"Biabiany",p:"PD/PE",r:75}]},
 {club:"MANCHESTER UNITED",season:"2010-11",revelacion:false,note:"Finalista — Wembley, perdieron 3-1 vs Barcelona",players:[{n:"Van der Sar",p:"GOL",r:85},{n:"Vidić",p:"ZAG",r:88},{n:"Ferdinand",p:"ZAG",r:86},{n:"Evra",p:"LE",r:83},{n:"Rafael",p:"LD",r:79},{n:"O'Shea",p:"ZAG/LD",r:77},{n:"Carrick",p:"MEI/MEC",r:84},{n:"Fletcher",p:"MEI/MD",r:80},{n:"Giggs",p:"PE/MEI",r:82},{n:"Park",p:"PD/PE",r:80},{n:"Nani",p:"PD/PE",r:82},{n:"Rooney",p:"CA/PE",r:89},{n:"Berbatov",p:"CA",r:84},{n:"Hernández",p:"CA",r:80},{n:"Valencia",p:"PD",r:83},{n:"Scholes",p:"MEI",r:83},{n:"Anderson",p:"MEI",r:78}]},
@@ -470,6 +598,7 @@
 {club:"ROMA",season:"2017-18",revelacion:true,note:"Semifinalista — remontada 3-0 vs Barcelona en cuartos",players:[{n:"Alisson",p:"GOL",r:84},{n:"Manolas",p:"ZAG",r:83},{n:"Fazio",p:"ZAG",r:79},{n:"Kolarov",p:"LE/ZAG",r:79},{n:"Florenzi",p:"LD/PD",r:79},{n:"De Rossi",p:"MEC/MD",r:83},{n:"Nainggolan",p:"MEI/MD",r:84},{n:"Strootman",p:"MEI",r:80},{n:"El Shaarawy",p:"PE/CA",r:78},{n:"Dzeko",p:"CA",r:83},{n:"Ünder",p:"PD",r:77},{n:"Perotti",p:"PE/MEI",r:77},{n:"Pellegrini",p:"MEI/ME",r:76},{n:"Juan Jesus",p:"ZAG/LE",r:76}]},
 {club:"SEVILLA",season:"2017-18",revelacion:true,note:"Cuartos — eliminados por Bayern, Montella",players:[{n:"Sergio Rico",p:"GOL",r:77},{n:"Mercado",p:"ZAG/LD",r:76},{n:"Lenglet",p:"ZAG",r:78},{n:"Escudero",p:"LE",r:75},{n:"Navas",p:"PD",r:77},{n:"Pizarro",p:"MEC/MD",r:76},{n:"Banega",p:"MEI/ME",r:82},{n:"N'Zonzi",p:"MEC/MD",r:80},{n:"Sarabia",p:"PD/MEI",r:79},{n:"Ben Yedder",p:"CA",r:80},{n:"Correa",p:"CA/PE",r:77},{n:"Muriel",p:"PE/CA",r:78},{n:"Vázquez",p:"PE/PD",r:74},{n:"Kjær",p:"ZAG",r:79},{n:"Krohn-Dehli",p:"MEI",r:75},{n:"Carriço",p:"ZAG",r:76}]},
 {club:"AJAX",season:"2018-19",revelacion:false,note:"Semifinalista — la sorpresa de ten Hag",players:[{n:"Onana",p:"GOL",r:80},{n:"De Ligt",p:"ZAG",r:85},{n:"Blind",p:"ZAG/LE/MEI",r:80},{n:"Mazraoui",p:"LD",r:78},{n:"Tagliafico",p:"LE",r:80},{n:"De Jong",p:"MEI/MEC",r:85},{n:"Schöne",p:"MEI",r:76},{n:"Van de Beek",p:"MEI/ME",r:82},{n:"Ziyech",p:"PD/ME",r:84},{n:"Neres",p:"PE/PD",r:79},{n:"Tadić",p:"CA/PE/PD",r:85},{n:"Huntelaar",p:"CA",r:77},{n:"Dolberg",p:"CA",r:76},{n:"Veltman",p:"ZAG/LD",r:77},{n:"Wöber",p:"ZAG/LE",r:75}]},
+{club:"AJAX",season:"2021-22",revelacion:false,note:"Octavos — ganó los 6 partidos de grupo, eliminado por Benfica",players:[{n:"Pasveer",p:"GOL",r:78},{n:"Stekelenburg",p:"GOL",r:74},{n:"Mazraoui",p:"LD",r:81},{n:"Timber",p:"ZAG/LD",r:81},{n:"Martínez",p:"ZAG/MEI",r:83},{n:"Schuurs",p:"ZAG",r:78},{n:"Blind",p:"LE/ZAG",r:80},{n:"Tagliafico",p:"LE",r:79},{n:"Álvarez",p:"MEI/ZAG",r:80},{n:"Gravenberch",p:"MEI",r:81},{n:"Klaassen",p:"MEI",r:78},{n:"Berghuis",p:"MEI/PD",r:82},{n:"Antony",p:"PD/PE",r:83},{n:"Tadić",p:"PE/CA/MEI",r:84},{n:"Haller",p:"CA",r:84},{n:"Brobbey",p:"CA",r:75},{n:"Neres",p:"PE/PD",r:78}]},
 {club:"LIVERPOOL",season:"2018-19",revelacion:false,note:"Campeón — Madrid, remontada al Barça",players:[{n:"Alisson",p:"GOL",r:89},{n:"Van Dijk",p:"ZAG",r:92},{n:"Matip",p:"ZAG",r:82},{n:"Alexander-Arnold",p:"LD",r:84},{n:"Robertson",p:"LE",r:86},{n:"Fabinho",p:"MEC",r:87},{n:"Henderson",p:"MEI/MD",r:83},{n:"Wijnaldum",p:"MEI",r:83},{n:"Milner",p:"MEI/LE",r:80},{n:"Salah",p:"PD/CA",r:90},{n:"Mané",p:"PE/CA",r:89},{n:"Firmino",p:"CA/ME",r:86},{n:"Shaqiri",p:"PD/PE",r:78},{n:"Origi",p:"CA/PE",r:76},{n:"Lovren",p:"ZAG",r:79}]},
 {club:"MANCHESTER CITY",season:"2018-19",revelacion:false,note:"Cuartos — eliminados por Tottenham, VAR",players:[{n:"Ederson",p:"GOL",r:85},{n:"Stones",p:"ZAG",r:82},{n:"Laporte",p:"ZAG",r:84},{n:"Walker",p:"LD",r:84},{n:"Zinchenko",p:"LE",r:78},{n:"Mendy",p:"LE",r:79},{n:"Fernandinho",p:"MEC/MD",r:84},{n:"De Bruyne",p:"MEI/ME",r:91},{n:"Silva",p:"MEI/ME",r:88},{n:"Bernardo Silva",p:"MEI/PD",r:86},{n:"Sterling",p:"PD/PE",r:85},{n:"Agüero",p:"CA",r:90},{n:"Sané",p:"PE/PD",r:85},{n:"Mahrez",p:"PD",r:83},{n:"Kompany",p:"ZAG",r:82},{n:"Gündoğan",p:"MEI",r:84},{n:"Jesus",p:"CA/PE",r:80}]},
 {club:"REAL MADRID",season:"2018-19",revelacion:false,note:"Octavos — eliminados 1-4 por Ajax, fin de una era",players:[{n:"Courtois",p:"GOL",r:88},{n:"Ramos",p:"ZAG",r:89},{n:"Varane",p:"ZAG",r:85},{n:"Nacho",p:"ZAG",r:80},{n:"Carvajal",p:"LD",r:84},{n:"Reguilón",p:"LE",r:76},{n:"Marcelo",p:"LE",r:84},{n:"Casemiro",p:"MEC",r:86},{n:"Modric",p:"MEI",r:89},{n:"Kroos",p:"MEI",r:88},{n:"Lucas Vázquez",p:"PD",r:78},{n:"Bale",p:"PD/PE/CA",r:86},{n:"Benzema",p:"CA",r:86},{n:"Vinícius",p:"PE/CA",r:78},{n:"Asensio",p:"PE/PD",r:81},{n:"Isco",p:"MEI/PE",r:84},{n:"Llorente",p:"MEI",r:77}]},
@@ -507,8 +636,7 @@
 {club:"INTER MILÁN",season:"2024-25",revelacion:false,note:"Octavos — nuevo formato de fase liga",players:[{n:"Sommer",p:"GOL",r:82},{n:"Bastoni",p:"ZAG",r:86},{n:"Acerbi",p:"ZAG",r:80},{n:"De Vrij",p:"ZAG",r:79},{n:"Dumfries",p:"LD",r:81},{n:"Dimarco",p:"LE/MEI",r:83},{n:"Barella",p:"MEI/MD",r:88},{n:"Calhanoglu",p:"MEC/MEI/PE",r:85},{n:"Mkhitaryan",p:"MEI",r:81},{n:"Lautaro",p:"CA",r:88},{n:"Thuram",p:"CA",r:84},{n:"Arnautovic",p:"CA/PD",r:76},{n:"Asllani",p:"MEI/MEC",r:76},{n:"Darmian",p:"LD/LE",r:76},{n:"Frattesi",p:"MEI",r:80}]},
 {club:"MANCHESTER CITY",season:"2024-25",revelacion:false,note:"Fase Liga — temporada irregular post-triplete, Rodri lesionado",players:[{n:"Ederson",p:"GOL",r:85},{n:"Dias",p:"ZAG",r:85},{n:"Akanji",p:"ZAG",r:82},{n:"Gvardiol",p:"LE/ZAG",r:83},{n:"Walker",p:"LD",r:80},{n:"Lewis",p:"LE",r:77},{n:"Kovacic",p:"MEI",r:82},{n:"De Bruyne",p:"MEI/ME",r:89},{n:"Bernardo Silva",p:"MEI/PD",r:87},{n:"Foden",p:"PD/PE/MEI",r:86},{n:"Doku",p:"PE/PD",r:80},{n:"Haaland",p:"CA",r:92},{n:"Grealish",p:"PE",r:79},{n:"Savinho",p:"PD/PE",r:79},{n:"Nunes",p:"MEI/MD",r:78},{n:"Marmoush",p:"CA/PE",r:82}]},
 {club:"NAPOLI",season:"2024-25",revelacion:true,note:"Octavos — vuelta a CL con Conte",players:[{n:"Meret",p:"GOL",r:81},{n:"Di Lorenzo",p:"LD",r:82},{n:"Rrahmani",p:"ZAG",r:80},{n:"Buongiorno",p:"ZAG",r:82},{n:"Olivera",p:"LE",r:79},{n:"Lobotka",p:"MEC",r:84},{n:"Anguissa",p:"MEI/MD",r:82},{n:"McTominay",p:"MEI/MD",r:81},{n:"Politano",p:"PD",r:79},{n:"Kvaratskhelia",p:"PE/CA",r:85},{n:"Lukaku",p:"CA",r:82},{n:"Neres",p:"PD/PE",r:80},{n:"Raspadori",p:"CA/PE/ME",r:77},{n:"Juan Jesus",p:"ZAG",r:77},{n:"Gilmour",p:"MEI",r:77}]}
-];
-  TEAMS.forEach(function (t) { t.flag = FLAGS[t.club] || "🏳️"; });
+];  TEAMS.forEach(function (t) { t.flag = FLAGS[t.club] || "🏳️"; });
 
   var SEASON_COUNT_BY_CLUB = {};
   TEAMS.forEach(function (t) { SEASON_COUNT_BY_CLUB[t.club] = (SEASON_COUNT_BY_CLUB[t.club] || 0) + 1; });
@@ -591,6 +719,23 @@
     });
   }
 
+  // ¿El pool de 11 que salió es justo el de mejor promedio posible de ese
+  // plantel? Se compara contra el "corte" del jugador 11 en rating: todo el
+  // que quede por ENCIMA de ese corte tiene que estar en el pool (si falta
+  // alguno, existe una combinación mejor que la que salió) y nadie adentro
+  // puede estar por DEBAJO (si hay alguien más flojo, tampoco es la mejor).
+  // Con esa doble condición un empate en el corte no rompe la detección.
+  function isBestXI(team, pool) {
+    if (pool.length < 11 || team.players.length < 11) return false;
+    var sorted = team.players.slice().sort(function (a, b) { return b.r - a.r; });
+    var cutoff = sorted[10].r;
+    var poolNames = {};
+    pool.forEach(function (p) { poolNames[p.n] = true; });
+    var everyoneAboveIsIn = sorted.every(function (p) { return p.r <= cutoff || poolNames[p.n]; });
+    var noOneBelowCutoff = pool.every(function (p) { return p.r >= cutoff; });
+    return everyoneAboveIsIn && noOneBelowCutoff;
+  }
+
   /* ============ DIBUJO: INICIO ============ */
 
   var formationGrid = document.getElementById("formation-grid");
@@ -667,6 +812,7 @@
 
     state.team = team;
     state.pool = pool;
+    state.bestXI = isBestXI(team, pool);
     state.excludeClub = team.club;
     state.excludeSeason = team.season;
     state.selectedIdx = null;
@@ -692,9 +838,14 @@
     document.getElementById("round-num").textContent = state.round;
     document.getElementById("sq-flag").textContent = state.team.flag;
     document.getElementById("sq-club").innerHTML = state.team.club +
-      (state.team.revelacion ? ' <span class="rev-badge">REVELACIÓN</span>' : "");
+      (state.team.revelacion ? ' <span class="rev-badge">REVELACIÓN</span>' : "") +
+      (state.bestXI ? ' <span class="best-badge">MEJOR XI</span>' : "");
     document.getElementById("sq-season").textContent = "Temporada " + state.team.season;
     document.getElementById("sq-note").textContent = state.team.note || "";
+
+    var banner = document.getElementById("squad-banner");
+    banner.classList.toggle("sorpresa", !!state.team.revelacion);
+    banner.classList.toggle("best11", !!state.bestXI);
 
     var clubLeft = 2 - state.rerollsClub;
     document.getElementById("reroll-club-count").textContent = clubLeft + (clubLeft === 1 ? " uso" : " usos");
@@ -715,8 +866,14 @@
     state.pool.forEach(function (pl, idx) {
       var norm = normalizePositions(pl.p);
       var fits = norm.some(function (t) { return empties[t]; });
+      // El dorado depende del rating: en Clásico los ratings están ocultos, así
+      // que pintarlo delataría quién es bueno antes de tiempo. El ídolo no sale
+      // del rating, así que se ve en los dos modos.
+      var gold = state.mode === "almanaque" && pl.r >= GOLD_MIN;
+      var idol = isIdol(state.team.club, pl.n);
       var card = document.createElement("div");
-      card.className = "pcard" + (fits ? "" : " dim") + (state.selectedIdx === idx ? " selected" : "");
+      card.className = "pcard" + (fits ? "" : " dim") + (state.selectedIdx === idx ? " selected" : "") +
+        (gold ? " gold" : "") + (idol ? " idol" : "");
 
       var ratingHtml;
       if (state.mode === "almanaque") {
@@ -726,7 +883,8 @@
         ratingHtml = '<div class="phidden">? ? ?</div>';
       }
 
-      card.innerHTML = '<div><div class="pname">' + pl.n + '</div><div class="ppos">' + pl.p + '</div></div>' + ratingHtml;
+      card.innerHTML = '<div><div class="pname">' + pl.n + (idol ? '<span class="idol-dot"></span>' : "") +
+        '</div><div class="ppos">' + pl.p + '</div></div>' + ratingHtml;
 
       if (fits) card.addEventListener("click", function () { selectPlayer(idx); });
       grid.appendChild(card);
@@ -803,12 +961,14 @@
     var list = document.getElementById("result-list");
     list.innerHTML = "";
     state.slots.forEach(function (s) {
+      var gold = s.filled.r >= GOLD_MIN;
+      var idol = isIdol(s.filled.club, s.filled.n);
       var row = document.createElement("div");
-      row.className = "result-row";
+      row.className = "result-row" + (gold ? " gold" : "") + (idol ? " idol" : "");
       var bonusTag = s.filled.eff > s.filled.r ? ' <span style="color:var(--ok)">+3</span>' : "";
       row.innerHTML =
         '<div class="pos-badge">' + s.type + '</div>' +
-        '<div style="flex:1"><div class="rname">' + s.filled.n + '</div>' +
+        '<div style="flex:1"><div class="rname">' + s.filled.n + (idol ? '<span class="idol-dot"></span>' : "") + '</div>' +
         '<div class="rmeta">' + s.filled.club + " " + s.filled.season + '</div></div>' +
         '<div class="rrating">' + s.filled.eff + bonusTag + '</div>';
       list.appendChild(row);

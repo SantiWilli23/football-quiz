@@ -35,9 +35,9 @@ export default function Login() {
       <div className="hidden lg:flex flex-1 flex-col justify-between p-12 bg-panel border-r border-border">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 rounded-card bg-accent/15 border border-accent/30 flex items-center justify-center text-accent font-bold">
-            FQ
+            FT
           </div>
-          <span className="font-semibold text-xl tracking-tight">Football Quiz</span>
+          <span className="font-semibold text-xl tracking-tight">Futotal</span>
         </div>
         <div>
           <h1 className="text-4xl font-bold leading-tight mb-4">
@@ -50,7 +50,7 @@ export default function Login() {
             en tu grupo.
           </p>
         </div>
-        <p className="text-xs text-gray-600">Football Quiz © {new Date().getFullYear()}</p>
+        <p className="text-xs text-gray-600">Futotal © {new Date().getFullYear()}</p>
       </div>
 
       <div className="flex-1 flex items-center justify-center px-6 py-12">

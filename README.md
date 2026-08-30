@@ -1,4 +1,4 @@
-# Football Quiz
+# Futotal
 
 Plataforma de trivia de fútbol para grupos de amigos. Una pregunta nueva cada día, puntos, rachas y ranking grupal.
 
@@ -60,7 +60,7 @@ Render no ofrece disco persistente en el plan gratuito, así que para no perder 
 ```bash
 git init
 git add .
-git commit -m "Football Quiz: app completa"
+git commit -m "Futotal: app completa"
 gh repo create football-quiz --public --source=. --push
 ```
 

@@ -1,6 +1,6 @@
 {
-  "name": "Football Quiz",
-  "short_name": "Football Quiz",
+  "name": "Futotal",
+  "short_name": "Futotal",
   "description": "Trivia de fútbol para grupos de amigos: una tanda nueva cada día, puntos, rachas y ranking.",
   "lang": "es",
   "start_url": "/",

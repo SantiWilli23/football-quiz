@@ -113,7 +113,7 @@ export async function sendDailyReminder({ force = false } = {}) {
   let sent = 0;
   for (const row of pending.rows) {
     sent += await sendToUser(row.user_id, {
-      title: "Football Quiz",
+      title: "Futotal",
       body: "Ya están las preguntas de hoy. ¿Las respondés antes que el grupo?",
       url: "/",
     });
