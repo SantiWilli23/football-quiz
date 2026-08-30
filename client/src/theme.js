@@ -1,26 +1,27 @@
-// Paleta "Pizarra": la app como el pizarrón del técnico. Verde profundo de
-// fondo y tizas encima. Las tizas nunca son colores puros de pantalla — son
-// tonos lavados, como los de una caja de tizas de verdad, porque un #3b82f6
-// sobre verde oscuro se ve digital y rompe la idea.
+// Paleta unificada: el mismo esquema de color en Futotal, Draft Europeo 8a2
+// y Cotrero. Gris azulado oscuro de fondo, tres acentos (azul de marca,
+// verde azulado secundario, dorado para valores especiales). Reemplaza a
+// "Pizarra" (verde pizarrón + amarillo) — ver tailwind.config.js, que
+// mantiene estos mismos valores en paralelo para las clases de Tailwind.
 //
 // Los componentes importan de acá en vez de escribir el hex a mano, así
-// cambiar una tiza es un solo lugar. Lo que se puede resolver con clases de
+// cambiar un color es un solo lugar. Lo que se puede resolver con clases de
 // Tailwind vive en tailwind.config.js.
 export const CHALK = {
-  board: "#10231b",
-  boardLight: "#14291f",
-  line: "#2f5243",
+  board: "#2a2c30",
+  boardLight: "#34363b",
+  line: "#45474c",
 
-  white: "#dff0e6",
-  dim: "#a8c9b6",
-  faint: "#7fa691",
+  white: "#f2f2f0",
+  dim: "#a8a9ac",
+  faint: "#7c7d80",
 
-  yellow: "#f2c14e",
-  blue: "#8fc4e8",
-  green: "#a3dda8",
-  pink: "#e8a8d8",
+  yellow: "#d9a441",
+  blue: "#3b9dd6",
+  green: "#3fae9a",
+  pink: "#f0c674",
   red: "#f0907e",
-  orange: "#f2a65a",
+  orange: "#8a6423",
 };
 
 // Los tres slots de trivia. Antes eran azul/verde/ámbar de pantalla; ahora son

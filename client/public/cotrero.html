@@ -6,29 +6,35 @@
 <title>Cotrero</title>
 <style>
   :root {
-    --black: #070d0a;
-    --black-2: #0e1712;
-    --black-3: #142019;
-    --panel: rgba(47,132,98,0.055);
-    --panel-border: rgba(47,132,98,0.28);
-    --emerald: #2f8462;
-    --emerald-light: #5cbd94;
-    --emerald-dim: #1c5943;
-    --gold: #d4af37;
-    --gold-light: #f4e2a6;
-    --gold-dim: #8a6d1f;
-    --text: #eef1ea;
-    --text-dim: #9db3a8;
-    --text-faint: #5f7568;
+    --bg: #2a2c30;
+    --panel: #34363b;
+    --border: rgba(255,255,255,0.12);
+    --accent: #3b9dd6;
+    --accent2: #7cc4ea;
+    --accent-dark: #215e82;
+    --accent-bg: rgba(59,157,214,0.16);
+    --teal: #3fae9a;
+    --teal2: #82d3c3;
+    --teal-dark: #1f5f52;
+    --teal-bg: rgba(63,174,154,0.16);
+    --gold: #d9a441;
+    --gold2: #f0c674;
+    --gold-dark: #8a6423;
+    --gold-bg: rgba(217,164,65,0.16);
+    --text: #f2f2f0;
+    --text-dim: #a8a9ac;
+    --text-dim2: #7c7d80;
     --good: #4caf6e;
-    --bad: #c0392b;
-    --rare: #7ec8e3;
-    --legendary: #d98fd9;
+    --bad: #f0907e;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
   body {
-    background: radial-gradient(ellipse 120% 70% at 50% -10%, var(--black-3) 0%, var(--black) 60%), var(--black);
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 0%, rgba(242,242,240,0.04), transparent 70%),
+      radial-gradient(ellipse 60% 40% at 85% 100%, rgba(242,242,240,0.03), transparent 70%),
+      var(--bg);
+    background-attachment: fixed;
     color: var(--text);
     font-family: Georgia, "Times New Roman", serif;
     min-height: 100%;
@@ -40,8 +46,8 @@
   .goldline {
     position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.5;
     background-image:
-      linear-gradient(rgba(47,132,98,0.07) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(47,132,98,0.07) 1px, transparent 1px);
+      linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
     background-size: 60px 60px;
     mask-image: radial-gradient(ellipse 65% 55% at 50% 15%, black 20%, transparent 70%);
   }
@@ -51,28 +57,26 @@
   .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
   .brand .mark {
     width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center;
-    background: linear-gradient(150deg, var(--emerald-light), var(--emerald) 55%, var(--emerald-dim));
-    font-weight: 900; color: #06120c; font-size: 16px; font-family: Georgia, serif;
+    background: linear-gradient(150deg, var(--accent2), var(--accent) 55%, var(--accent-dark));
+    font-weight: 900; color: #04141d; font-size: 16px; font-family: Georgia, serif;
   }
   .brand h1 {
-    font-size: 22px; font-weight: 700; letter-spacing: 0.06em;
-    background: linear-gradient(120deg, var(--emerald-light), var(--gold) 50%, var(--emerald-light));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
+    font-size: 22px; font-weight: 700; letter-spacing: 0.06em; color: var(--accent2);
   }
   .brand .menu-btn {
     margin-left: auto; font-family: -apple-system, "Segoe UI", Arial, sans-serif;
     font-size: 11.5px; font-weight: 700; color: var(--text-dim); text-decoration: none;
-    border: 1px solid var(--panel-border); border-radius: 999px; padding: 7px 13px;
+    border: 1px solid var(--border); border-radius: 999px; padding: 7px 13px;
   }
-  .brand .menu-btn:hover { color: var(--emerald-light); border-color: var(--emerald); }
+  .brand .menu-btn:hover { color: var(--accent2); border-color: var(--accent); }
 
   .panel {
-    background: var(--panel); border: 1px solid var(--panel-border); border-radius: 14px;
-    padding: 20px; backdrop-filter: blur(6px);
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px;
   }
   .panel + .panel { margin-top: 14px; }
 
-  h2 { font-size: 17px; font-weight: 700; margin-bottom: 6px; color: var(--emerald-light); }
+  h2 { font-size: 17px; font-weight: 700; margin-bottom: 6px; color: var(--accent2); }
   h3 { font-size: 13.5px; font-weight: 700; margin-bottom: 4px; }
   p.sub { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12.5px; color: var(--text-dim); line-height: 1.55; margin-bottom: 14px; }
 
@@ -87,39 +91,41 @@
     cursor: pointer; transition: transform 0.12s ease, opacity 0.12s ease;
   }
   .btn:active { transform: scale(0.97); }
-  .btn-gold { color: #06120c; background: linear-gradient(120deg, var(--emerald-light), var(--emerald)); }
+  .btn-gold { color: #0a1614; background: linear-gradient(120deg, var(--teal2), var(--teal)); }
   .btn-gold:disabled { opacity: 0.35; cursor: not-allowed; }
-  .btn-ghost { color: var(--text); background: rgba(47,132,98,0.08); border: 1px solid var(--panel-border); }
-  .btn-ghost:hover { border-color: var(--emerald); }
+  .btn-ghost { color: var(--text); background: rgba(255,255,255,0.04); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); }
   .btn-block { width: 100%; }
 
   .field { margin-bottom: 14px; }
   .field label { display: block; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
   .field input, .field select {
     width: 100%; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 14px;
-    background: rgba(0,0,0,0.35); border: 1px solid var(--panel-border); border-radius: 8px;
+    background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 8px;
     color: var(--text); padding: 11px 12px; outline: none;
   }
-  .field input:focus, .field select:focus { border-color: var(--emerald); }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
 
   .chiprow { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
   .chip {
     font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12.5px; font-weight: 700;
-    border: 1px solid var(--panel-border); background: rgba(0,0,0,0.25); color: var(--text-dim);
+    border: 1px solid var(--border); background: rgba(0,0,0,0.2); color: var(--text-dim);
     border-radius: 999px; padding: 9px 15px; cursor: pointer; transition: all 0.15s ease;
   }
-  .chip:hover { border-color: var(--emerald); color: var(--text); }
-  .chip.active { color: #06120c; background: linear-gradient(120deg, var(--emerald-light), var(--emerald)); border-color: transparent; }
+  .chip:hover { border-color: var(--teal); color: var(--text); }
+  .chip.active { color: #0a1614; background: linear-gradient(120deg, var(--teal2), var(--teal)); border-color: transparent; }
 
   /* ---- pantalla de modos ---- */
   .mode-card {
-    border: 1px solid var(--panel-border); border-radius: 14px; padding: 16px; margin-bottom: 12px;
-    cursor: pointer; transition: all 0.15s ease; background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px;
+    cursor: pointer; transition: all 0.15s ease; background: rgba(255,255,255,0.02);
   }
-  .mode-card:hover { border-color: var(--emerald); }
+  .mode-card:not(.locked) { border-color: var(--teal); }
+  .mode-card:not(.locked):hover { border-color: var(--teal2); }
   .mode-card.locked { opacity: 0.55; cursor: not-allowed; }
-  .mode-card .mtitle { font-size: 16px; font-weight: 700; color: var(--emerald-light); display: flex; align-items: center; gap: 8px; }
-  .mode-card .mtitle .soon { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em; background: rgba(47,132,98,0.18); color: var(--emerald-light); border-radius: 999px; padding: 2px 8px; }
+  .mode-card .mtitle { font-size: 16px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .mode-card:not(.locked) .mtitle { color: var(--teal2); }
+  .mode-card .mtitle .soon { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em; background: rgba(255,255,255,0.08); color: var(--text-dim2); border-radius: 999px; padding: 2px 8px; }
   .mode-card p { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12px; color: var(--text-dim); margin-top: 4px; line-height: 1.5; }
 
   /* ---- hub: dashboard de jugador ---- */
@@ -129,46 +135,47 @@
   .dash-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
   .ovr-box {
     width: 58px; height: 58px; border-radius: 14px; flex-shrink: 0;
-    background: linear-gradient(150deg, var(--gold-light), var(--gold) 60%, var(--gold-dim));
+    background: linear-gradient(150deg, var(--accent2), var(--accent) 60%, var(--accent-dark));
     display: flex; flex-direction: column; align-items: center; justify-content: center;
   }
-  .ovr-box b { font-family: ui-monospace, monospace; font-size: 20px; font-weight: 800; color: #2a1f04; line-height: 1; }
-  .ovr-box span { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 8px; font-weight: 800; color: #4a3a0c; letter-spacing: 0.05em; margin-top: 1px; }
+  .ovr-box b { font-family: ui-monospace, monospace; font-size: 20px; font-weight: 800; color: #04141d; line-height: 1; }
+  .ovr-box span { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 8px; font-weight: 800; color: #04141d; letter-spacing: 0.05em; margin-top: 1px; }
 
   .dash-id { min-width: 0; flex: 1; }
   .dash-flagrow { display: flex; align-items: center; gap: 7px; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12px; font-weight: 700; color: var(--text-dim); }
   .pos-pill {
     font-family: ui-monospace, monospace; font-size: 9.5px; font-weight: 800; letter-spacing: 0.03em;
-    background: var(--emerald); color: #04140d; border-radius: 999px; padding: 2px 8px;
+    background: var(--gold-bg); color: var(--gold2); border-radius: 999px; padding: 2px 8px;
   }
   .dash-club { font-size: 15px; font-weight: 700; color: var(--text); margin-top: 4px; }
-  .dash-club.pending { color: var(--text-faint); font-style: italic; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12.5px; }
-  .dash-contract { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 10.5px; color: var(--text-faint); margin-top: 2px; }
+  .dash-club.pending { color: var(--text-dim2); font-style: italic; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12.5px; }
+  .dash-contract { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 10.5px; color: var(--text-dim2); margin-top: 2px; }
 
   .dash-meta { display: flex; flex-direction: column; gap: 6px; text-align: right; flex-shrink: 0; }
-  .dash-meta-item span { display: block; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 8.5px; color: var(--text-faint); letter-spacing: 0.05em; text-transform: uppercase; }
+  .dash-meta-item span { display: block; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 8.5px; color: var(--text-dim2); letter-spacing: 0.05em; text-transform: uppercase; }
   .dash-meta-item b { font-family: ui-monospace, monospace; font-size: 15px; color: var(--text); }
-  .dash-meta-item.gold b { color: var(--gold-light); }
+  .dash-meta-item.teal b { color: var(--teal2); }
+  .dash-meta-item.gold b { color: var(--gold2); }
 
   .stat-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
   .stat-pill {
     flex: 1; min-width: 68px; text-align: center; padding: 10px 6px; border-radius: 10px;
-    border: 1px solid var(--panel-border); background: rgba(0,0,0,0.25);
+    border: 1px solid var(--border); background: rgba(0,0,0,0.2);
   }
   .stat-pill b { display: block; font-family: ui-monospace, monospace; font-size: 18px; color: var(--text); }
-  .stat-pill span { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 9px; color: var(--text-faint); letter-spacing: 0.05em; text-transform: uppercase; }
+  .stat-pill span { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 9px; color: var(--text-dim2); letter-spacing: 0.05em; text-transform: uppercase; }
 
-  .vitrina { text-align: center; padding-top: 8px; border-top: 1px solid var(--panel-border); }
-  .vitrina-empty { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 10.5px; color: var(--text-faint); letter-spacing: 0.06em; text-transform: uppercase; padding: 10px 0 2px; }
+  .vitrina { text-align: center; padding-top: 8px; border-top: 1px solid var(--border); }
+  .vitrina-empty { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 10.5px; color: var(--text-dim2); letter-spacing: 0.06em; text-transform: uppercase; padding: 10px 0 2px; }
   .vitrina-empty .vicon { font-size: 20px; display: block; margin-bottom: 4px; opacity: 0.5; }
   .vitrina-list { display: flex; flex-direction: column; gap: 5px; text-align: left; padding-top: 4px; }
   .vitrina-item { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; }
-  .vitrina-item .vicon { color: var(--gold-light); flex-shrink: 0; }
+  .vitrina-item .vicon { color: var(--gold2); flex-shrink: 0; }
 
   .timeline-head {
     display: flex; align-items: center; gap: 4px; font-family: -apple-system, "Segoe UI", Arial, sans-serif;
-    font-size: 9px; font-weight: 800; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.04em;
-    padding: 0 6px 8px; border-bottom: 1px solid var(--panel-border); margin-bottom: 4px;
+    font-size: 9px; font-weight: 800; color: var(--text-dim2); text-transform: uppercase; letter-spacing: 0.04em;
+    padding: 0 6px 8px; border-bottom: 1px solid var(--border); margin-bottom: 4px;
   }
   .timeline-head .col-age { width: 26px; }
   .timeline-head .col-club { flex: 1; }
@@ -182,67 +189,58 @@
   .trow .col-age { width: 26px; font-family: ui-monospace, monospace; font-weight: 700; flex-shrink: 0; }
   .trow .col-club { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .trow .col-num { width: 28px; text-align: right; font-family: ui-monospace, monospace; flex-shrink: 0; }
-  .trow.active { background: var(--emerald); color: #04140d; font-weight: 700; }
-  .trow.active .col-num.ovrnum { color: #04140d; font-weight: 800; }
+  .trow.active { background: var(--teal-bg); color: var(--text); font-weight: 700; }
+  .trow.active .col-num.ovrnum { color: var(--gold2); font-weight: 800; }
   .trow:not(.active) { color: var(--text-dim); }
-  .trow:not(.active) .col-num.ovrnum { color: var(--gold-light); font-weight: 700; }
-  .trow.pending { color: var(--text-faint); font-style: italic; }
+  .trow:not(.active) .col-num.ovrnum { color: var(--gold2); font-weight: 700; }
+  .trow.pending { color: var(--text-dim2); font-style: italic; }
 
   /* ---- cartas de entrenamiento / oferta ---- */
   .choice-grid { display: grid; gap: 10px; margin-bottom: 6px; }
   .choice-card {
-    border: 1px solid var(--panel-border); border-radius: 12px; padding: 14px; cursor: pointer;
-    background: rgba(0,0,0,0.22); transition: all 0.15s ease;
+    border: 1px solid var(--border); border-radius: 12px; padding: 14px; cursor: pointer;
+    background: rgba(0,0,0,0.18); transition: all 0.15s ease;
   }
-  .choice-card:hover { border-color: var(--emerald); transform: translateY(-2px); }
+  .choice-card:hover { border-color: var(--accent); transform: translateY(-2px); }
   .choice-card .ctitle { font-size: 14.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
   .choice-card .cdesc { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; color: var(--text-dim); margin-top: 5px; line-height: 1.5; }
-  .rarity-tag {
-    font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 9px; font-weight: 800;
-    letter-spacing: 0.06em; text-transform: uppercase; border-radius: 999px; padding: 2px 8px;
-  }
-  .rarity-tag.common { background: rgba(184,169,126,0.18); color: var(--text-dim); }
-  .rarity-tag.rare { background: rgba(126,200,227,0.18); color: var(--rare); }
-  .rarity-tag.legendary { background: rgba(217,143,217,0.18); color: var(--legendary); }
-  .choice-card.rare { border-color: rgba(126,200,227,0.35); }
-  .choice-card.legendary { border-color: rgba(217,143,217,0.4); }
 
   .result-line {
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    padding: 9px 12px; border-radius: 9px; background: rgba(0,0,0,0.2); margin-bottom: 7px;
+    padding: 9px 12px; border-radius: 9px; background: rgba(0,0,0,0.18); margin-bottom: 7px;
     font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12.5px;
   }
   .result-line b { color: var(--text); }
-  .result-line b.gold { color: var(--gold-light); }
+  .result-line b.gold { color: var(--gold2); }
   .delta.pos { color: var(--good); font-weight: 800; }
   .delta.neg { color: var(--bad); font-weight: 800; }
 
   .flavor-box {
-    border-left: 3px solid var(--emerald); background: rgba(47,132,98,0.08); border-radius: 0 10px 10px 0;
+    border-left: 3px solid var(--accent); background: rgba(59,157,214,0.08); border-radius: 0 10px 10px 0;
     padding: 12px 14px; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12.5px;
     color: var(--text-dim); line-height: 1.55; margin-bottom: 14px;
   }
 
   .offer-card {
-    border: 1px solid var(--panel-border); border-radius: 12px; padding: 14px; margin-bottom: 10px;
-    background: rgba(0,0,0,0.22);
+    border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px;
+    background: rgba(0,0,0,0.18);
   }
   .offer-card .oclub { font-size: 15px; font-weight: 700; color: var(--text); }
   .offer-card .ometa { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; color: var(--text-dim); margin: 4px 0 10px; line-height: 1.5; }
 
   .legacy-head { text-align: center; margin-bottom: 18px; }
-  .legacy-head .rank { font-size: 26px; font-weight: 800; color: var(--emerald-light); }
-  .legacy-head .score { font-family: ui-monospace, monospace; font-size: 15px; color: var(--gold-light); margin-top: 4px; }
+  .legacy-head .rank { font-size: 26px; font-weight: 800; color: var(--accent2); }
+  .legacy-head .score { font-family: ui-monospace, monospace; font-size: 15px; color: var(--gold2); margin-top: 4px; }
 
   .history-row {
     display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 9px;
-    background: rgba(0,0,0,0.2); margin-bottom: 6px; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12px;
+    background: rgba(0,0,0,0.18); margin-bottom: 6px; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12px;
   }
-  .history-row .hrank { font-family: ui-monospace, monospace; font-weight: 800; color: var(--emerald-dim); width: 22px; flex-shrink: 0; }
+  .history-row .hrank { font-family: ui-monospace, monospace; font-weight: 800; color: var(--accent-dark); width: 22px; flex-shrink: 0; }
   .history-row .hname { flex: 1; font-weight: 700; }
-  .history-row .hscore { font-family: ui-monospace, monospace; color: var(--gold-light); font-weight: 800; }
+  .history-row .hscore { font-family: ui-monospace, monospace; color: var(--gold2); font-weight: 800; }
 
-  .foot-note { text-align: center; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 10.5px; color: var(--text-faint); margin-top: 22px; line-height: 1.6; }
+  .foot-note { text-align: center; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 10.5px; color: var(--text-dim2); margin-top: 22px; line-height: 1.6; }
 
   @media (max-width: 420px) {
     .dash-top { flex-wrap: wrap; }
@@ -320,7 +318,7 @@
           </div>
           <div class="dash-meta">
             <div class="dash-meta-item"><span>Edad</span><b id="hub-age">—</b></div>
-            <div class="dash-meta-item gold"><span>Forma</span><b id="hub-forma">—</b></div>
+            <div class="dash-meta-item teal"><span>Forma</span><b id="hub-forma">—</b></div>
             <div class="dash-meta-item gold"><span>Valor</span><b id="hub-value">—</b></div>
           </div>
         </div>
