@@ -915,7 +915,26 @@
 
   function tierCompetitionFactor(tier) { return tier === "grande" ? 0.72 : tier === "mediano" ? 0.88 : 1.0; }
 
+  // Progreso natural: jugar te hace mejor aunque no toque una decisión de
+  // entrenamiento esa temporada. Más fuerte de joven, se va apagando cerca
+  // de la plenitud, y no aporta nada una vez que arrancó el declive — de ahí
+  // en más el overall se sostiene o baja, no sube solo.
+  function naturalProgress(age, declinePhase) {
+    if (declinePhase !== 0) return 0;
+    if (age <= 18) return randInt(2, 4);
+    if (age <= 21) return randInt(2, 3);
+    if (age <= 24) return randInt(1, 2);
+    if (age <= 27) return randInt(0, 1);
+    return 0;
+  }
+
   function simulateSeason() {
+    // El progreso natural entra siempre, haya o no una decisión de
+    // entrenamiento esta temporada: los entrenamientos suman encima, no son
+    // la única forma de mejorar.
+    var natGain = naturalProgress(player.age, player.declinePhase);
+    if (natGain > 0) player.ovr = clamp(player.ovr + natGain, 40, 99);
+
     // Si el entrenamiento tuvo un lado negativo oculto/explícito, se resuelve
     // ahora, al arrancar la temporada.
     var negLine = null;
@@ -975,6 +994,7 @@
         (delta ? ' <span class="delta ' + (delta > 0 ? "pos" : "neg") + '">' + (delta > 0 ? "+" : "") + delta + "</span>" : "") + "</span>";
       lines.appendChild(d);
     }
+    if (natGain > 0) line("Progreso natural", "Vas ganando experiencia con la edad", natGain);
     if (player.lastTrainingName) line("Entrenamiento elegido", player.lastTrainingName, player.lastTrainingGain);
     if (negLine) line("Efecto secundario", negLine.text, -negLine.amount);
     line("Titularidad", isStarter ? "Fuiste titular" : "Rol secundario");
