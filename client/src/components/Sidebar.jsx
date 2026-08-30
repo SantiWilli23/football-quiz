@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Home, Users, History, BarChart3, Swords, Newspaper, User, LogOut, Flame, Star } from "lucide-react";
+import { Home, Users, History, BarChart3, Swords, Newspaper, User, LogOut, Flame, Star, Crown } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import Avatar from "./Avatar.jsx";
 
@@ -16,7 +16,10 @@ const links = [
 // Juego autocontenido servido como HTML estático (no es parte del SPA), así
 // que va como link normal en vez de NavLink de react-router. Se abre en la
 // misma pestaña; para volver a la app se usa el botón atrás del navegador.
-const externalLink = { href: "/draft-europeo.html", label: "Draft Europeo 8a2", icon: Star };
+const externalLinks = [
+  { href: "/draft-europeo.html", label: "Draft Europeo 8a2", icon: Star },
+  { href: "/cotrero.html", label: "Cotrero", icon: Crown },
+];
 
 export default function Sidebar() {
   const { user, stats, logout } = useAuth();
@@ -48,13 +51,16 @@ export default function Sidebar() {
             {label}
           </NavLink>
         ))}
-        <a
-          href={externalLink.href}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-card text-sm font-medium transition-colors text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
-        >
-          <externalLink.icon size={18} />
-          {externalLink.label}
-        </a>
+        {externalLinks.map(({ href, label, icon: Icon }) => (
+          <a
+            key={href}
+            href={href}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-card text-sm font-medium transition-colors text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
+          >
+            <Icon size={18} />
+            {label}
+          </a>
+        ))}
       </nav>
 
       <div className="border-t border-border pt-4 mt-4">

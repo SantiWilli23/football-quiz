@@ -1,0 +1,1009 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Cotrero</title>
+<style>
+  :root {
+    --black: #0a0806;
+    --black-2: #14100a;
+    --black-3: #1c160d;
+    --panel: rgba(212,175,55,0.045);
+    --panel-border: rgba(212,175,55,0.22);
+    --gold: #d4af37;
+    --gold-light: #f4e2a6;
+    --gold-dim: #8a6d1f;
+    --text: #f3ecd9;
+    --text-dim: #b8a97e;
+    --text-faint: #7a6f52;
+    --good: #4caf6e;
+    --bad: #c0392b;
+    --rare: #7ec8e3;
+    --legendary: #d98fd9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: radial-gradient(ellipse 120% 70% at 50% -10%, var(--black-3) 0%, var(--black) 60%), var(--black);
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+    min-height: 100%;
+    overflow-x: hidden;
+  }
+  .sans { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  .mono { font-family: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace; }
+
+  .goldline {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.5;
+    background-image:
+      linear-gradient(rgba(212,175,55,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(212,175,55,0.05) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 65% 55% at 50% 15%, black 20%, transparent 70%);
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .brand .mark {
+    width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center;
+    background: linear-gradient(150deg, var(--gold-light), var(--gold) 55%, var(--gold-dim));
+    font-weight: 900; color: #14100a; font-size: 16px; font-family: Georgia, serif;
+  }
+  .brand h1 {
+    font-size: 22px; font-weight: 700; letter-spacing: 0.06em;
+    background: linear-gradient(120deg, var(--gold-light), var(--gold) 50%, var(--gold-light));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .brand .menu-btn {
+    margin-left: auto; font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    font-size: 11.5px; font-weight: 700; color: var(--text-dim); text-decoration: none;
+    border: 1px solid var(--panel-border); border-radius: 999px; padding: 7px 13px;
+  }
+  .brand .menu-btn:hover { color: var(--gold-light); border-color: var(--gold); }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--panel-border); border-radius: 14px;
+    padding: 20px; backdrop-filter: blur(6px);
+  }
+  .panel + .panel { margin-top: 14px; }
+
+  h2 { font-size: 17px; font-weight: 700; margin-bottom: 6px; color: var(--gold-light); }
+  h3 { font-size: 13.5px; font-weight: 700; margin-bottom: 4px; }
+  p.sub { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12.5px; color: var(--text-dim); line-height: 1.55; margin-bottom: 14px; }
+
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadein 0.3s ease; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .btn {
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    border: none; border-radius: 10px; padding: 13px 20px; font-size: 13.5px; font-weight: 700;
+    cursor: pointer; transition: transform 0.12s ease, opacity 0.12s ease;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-gold { color: #14100a; background: linear-gradient(120deg, var(--gold-light), var(--gold)); }
+  .btn-gold:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-ghost { color: var(--text); background: rgba(212,175,55,0.06); border: 1px solid var(--panel-border); }
+  .btn-ghost:hover { border-color: var(--gold); }
+  .btn-block { width: 100%; }
+
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .field input, .field select {
+    width: 100%; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 14px;
+    background: rgba(0,0,0,0.35); border: 1px solid var(--panel-border); border-radius: 8px;
+    color: var(--text); padding: 11px 12px; outline: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--gold); }
+
+  .chiprow { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .chip {
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12.5px; font-weight: 700;
+    border: 1px solid var(--panel-border); background: rgba(0,0,0,0.25); color: var(--text-dim);
+    border-radius: 999px; padding: 9px 15px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .chip:hover { border-color: var(--gold); color: var(--text); }
+  .chip.active { color: #14100a; background: linear-gradient(120deg, var(--gold-light), var(--gold)); border-color: transparent; }
+
+  /* ---- pantalla de modos ---- */
+  .mode-card {
+    border: 1px solid var(--panel-border); border-radius: 14px; padding: 16px; margin-bottom: 12px;
+    cursor: pointer; transition: all 0.15s ease; background: rgba(0,0,0,0.2);
+  }
+  .mode-card:hover { border-color: var(--gold); }
+  .mode-card.locked { opacity: 0.55; cursor: not-allowed; }
+  .mode-card .mtitle { font-size: 16px; font-weight: 700; color: var(--gold-light); display: flex; align-items: center; gap: 8px; }
+  .mode-card .mtitle .soon { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em; background: rgba(212,175,55,0.15); color: var(--gold); border-radius: 999px; padding: 2px 8px; }
+  .mode-card p { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12px; color: var(--text-dim); margin-top: 4px; line-height: 1.5; }
+
+  /* ---- hub / tarjeta de jugador ---- */
+  .player-card {
+    display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 14px;
+    border: 1px solid var(--panel-border); background: linear-gradient(120deg, rgba(212,175,55,0.09), transparent);
+    margin-bottom: 16px;
+  }
+  .player-avatar {
+    width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(150deg, var(--gold-light), var(--gold-dim));
+    display: grid; place-items: center; font-size: 22px; font-weight: 800; color: #14100a;
+  }
+  .player-info { min-width: 0; flex: 1; }
+  .player-info .pname { font-size: 17px; font-weight: 700; color: var(--gold-light); }
+  .player-info .pmeta { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; color: var(--text-dim); margin-top: 2px; }
+
+  .stat-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .stat-pill {
+    flex: 1; min-width: 78px; text-align: center; padding: 10px 6px; border-radius: 10px;
+    border: 1px solid var(--panel-border); background: rgba(0,0,0,0.25);
+  }
+  .stat-pill b { display: block; font-family: ui-monospace, monospace; font-size: 18px; color: var(--gold-light); }
+  .stat-pill span { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 9px; color: var(--text-faint); letter-spacing: 0.05em; text-transform: uppercase; }
+
+  /* ---- cartas de entrenamiento / oferta ---- */
+  .choice-grid { display: grid; gap: 10px; margin-bottom: 6px; }
+  .choice-card {
+    border: 1px solid var(--panel-border); border-radius: 12px; padding: 14px; cursor: pointer;
+    background: rgba(0,0,0,0.22); transition: all 0.15s ease;
+  }
+  .choice-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+  .choice-card .ctitle { font-size: 14.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .choice-card .cdesc { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; color: var(--text-dim); margin-top: 5px; line-height: 1.5; }
+  .rarity-tag {
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 9px; font-weight: 800;
+    letter-spacing: 0.06em; text-transform: uppercase; border-radius: 999px; padding: 2px 8px;
+  }
+  .rarity-tag.common { background: rgba(184,169,126,0.18); color: var(--text-dim); }
+  .rarity-tag.rare { background: rgba(126,200,227,0.18); color: var(--rare); }
+  .rarity-tag.legendary { background: rgba(217,143,217,0.18); color: var(--legendary); }
+  .choice-card.rare { border-color: rgba(126,200,227,0.35); }
+  .choice-card.legendary { border-color: rgba(217,143,217,0.4); }
+
+  .result-line {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 9px 12px; border-radius: 9px; background: rgba(0,0,0,0.2); margin-bottom: 7px;
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12.5px;
+  }
+  .result-line b { color: var(--gold-light); }
+  .delta.pos { color: var(--good); font-weight: 800; }
+  .delta.neg { color: var(--bad); font-weight: 800; }
+
+  .flavor-box {
+    border-left: 3px solid var(--gold); background: rgba(212,175,55,0.06); border-radius: 0 10px 10px 0;
+    padding: 12px 14px; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12.5px;
+    color: var(--text-dim); line-height: 1.55; margin-bottom: 14px;
+  }
+
+  .offer-card {
+    border: 1px solid var(--panel-border); border-radius: 12px; padding: 14px; margin-bottom: 10px;
+    background: rgba(0,0,0,0.22);
+  }
+  .offer-card .oclub { font-size: 15px; font-weight: 700; color: var(--gold-light); }
+  .offer-card .ometa { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; color: var(--text-dim); margin: 4px 0 10px; line-height: 1.5; }
+
+  .legacy-head { text-align: center; margin-bottom: 18px; }
+  .legacy-head .rank { font-size: 26px; font-weight: 800; color: var(--gold-light); }
+  .legacy-head .score { font-family: ui-monospace, monospace; font-size: 15px; color: var(--text-dim); margin-top: 4px; }
+
+  .history-row {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 9px;
+    background: rgba(0,0,0,0.2); margin-bottom: 6px; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12px;
+  }
+  .history-row .hrank { font-family: ui-monospace, monospace; font-weight: 800; color: var(--gold-dim); width: 22px; flex-shrink: 0; }
+  .history-row .hname { flex: 1; font-weight: 700; }
+  .history-row .hscore { font-family: ui-monospace, monospace; color: var(--gold-light); font-weight: 800; }
+
+  .foot-note { text-align: center; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 10.5px; color: var(--text-faint); margin-top: 22px; line-height: 1.6; }
+
+  @media (max-width: 420px) {
+    .player-card { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<div class="goldline"></div>
+<div class="wrap">
+
+  <div class="brand">
+    <div class="mark">C</div>
+    <h1>COTRERO</h1>
+    <a class="menu-btn" href="/">← Menú principal</a>
+  </div>
+
+  <!-- ===== SELECCIÓN DE MODO ===== -->
+  <div id="screen-mode" class="screen active">
+    <div class="panel">
+      <h2>Elegí tu modo</h2>
+      <p class="sub">Una carrera futbolística de potrero a leyenda. Vas tomando decisiones, entrenás, subís (o bajás) y al final se arma la historia de tu jugador.</p>
+
+      <div class="mode-card" data-mode="simple">
+        <div class="mtitle">Simple</div>
+        <p>Carrera rápida (5-10 min). Solo tu overall general, solo delantero. Un entrenamiento por temporada y listo.</p>
+      </div>
+      <div class="mode-card locked" data-mode="medio">
+        <div class="mtitle">Medio <span class="soon">PRÓXIMAMENTE</span></div>
+        <p>5 stats por posición, tienda, personalidad oculta y relación con el DT. En construcción.</p>
+      </div>
+      <div class="mode-card locked" data-mode="especialista">
+        <div class="mtitle">Especialista <span class="soon">PRÓXIMAMENTE</span></div>
+        <p>Todo lo del modo Medio más partidos importantes con cancha 2D y lesiones. En construcción.</p>
+      </div>
+
+      <button class="btn btn-ghost btn-block" id="btn-view-history" style="margin-top:6px">Ver mis mejores carreras</button>
+    </div>
+    <p class="foot-note">Cotrero · simulador de carrera futbolística · los datos son de juego, no representan clubes o selecciones reales de forma oficial.</p>
+  </div>
+
+  <!-- ===== CREACIÓN DE JUGADOR ===== -->
+  <div id="screen-create" class="screen">
+    <div class="panel">
+      <h2>Creá tu jugador</h2>
+      <p class="sub">Modo Simple: arrancás de delantero, con 16 años y todo por delante.</p>
+
+      <div class="field">
+        <label>Nombre</label>
+        <input type="text" id="inp-name" placeholder="Tu nombre de jugador" maxlength="24">
+      </div>
+
+      <div class="field">
+        <label>Nacionalidad</label>
+        <select id="inp-nationality"></select>
+      </div>
+
+      <h3 style="margin-top:10px">Club inicial</h3>
+      <div class="chiprow" id="club-mode-row">
+        <div class="chip active" data-clubmode="random">Aleatorio</div>
+        <div class="chip" data-clubmode="pick">Elegir país y club</div>
+      </div>
+
+      <div id="club-picker" style="display:none">
+        <div class="field">
+          <label>País</label>
+          <select id="inp-country"></select>
+        </div>
+        <div class="field">
+          <label>Club</label>
+          <select id="inp-club"></select>
+        </div>
+      </div>
+
+      <button class="btn btn-gold btn-block" id="btn-create-player" style="margin-top:6px">Empezar carrera</button>
+    </div>
+  </div>
+
+  <!-- ===== HUB DE TEMPORADA ===== -->
+  <div id="screen-hub" class="screen">
+    <div class="player-card">
+      <div class="player-avatar" id="hub-avatar">?</div>
+      <div class="player-info">
+        <div class="pname" id="hub-name">—</div>
+        <div class="pmeta" id="hub-meta">—</div>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-pill"><b id="hub-ovr">—</b><span>Overall</span></div>
+      <div class="stat-pill"><b id="hub-forma">—</b><span>Forma</span></div>
+      <div class="stat-pill"><b id="hub-age">—</b><span>Edad</span></div>
+      <div class="stat-pill"><b id="hub-contract">—</b><span>Contrato</span></div>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <h3 id="hub-headline">Temporada nueva</h3>
+      <p class="sub" id="hub-sub">Elegí cómo prepararte para lo que viene.</p>
+      <button class="btn btn-gold btn-block" id="btn-start-season">Empezar temporada</button>
+    </div>
+  </div>
+
+  <!-- ===== ELEGIR ENTRENAMIENTO ===== -->
+  <div id="screen-training" class="screen">
+    <div class="panel">
+      <h2>Pretemporada</h2>
+      <p class="sub">Elegí un entrenamiento para esta temporada.</p>
+      <div class="choice-grid" id="training-grid"></div>
+    </div>
+  </div>
+
+  <!-- ===== EVENTO ALEATORIO ===== -->
+  <div id="screen-event" class="screen">
+    <div class="panel">
+      <h2 id="event-title">Algo pasó...</h2>
+      <div class="flavor-box" id="event-text"></div>
+      <button class="btn btn-gold btn-block" id="btn-event-continue">Seguir</button>
+    </div>
+  </div>
+
+  <!-- ===== RESULTADO DE TEMPORADA ===== -->
+  <div id="screen-season-result" class="screen">
+    <div class="panel">
+      <h2>Así te fue esta temporada</h2>
+      <div id="season-lines"></div>
+      <button class="btn btn-gold btn-block" id="btn-season-continue" style="margin-top:8px">Seguir</button>
+    </div>
+  </div>
+
+  <!-- ===== SELECCIÓN NACIONAL ===== -->
+  <div id="screen-national" class="screen">
+    <div class="panel">
+      <h2 id="national-title">Selección nacional</h2>
+      <div class="flavor-box" id="national-text"></div>
+      <button class="btn btn-gold btn-block" id="btn-national-continue">Seguir</button>
+    </div>
+  </div>
+
+  <!-- ===== MERCADO ===== -->
+  <div id="screen-market" class="screen">
+    <div class="panel">
+      <h2>Ventana de pases</h2>
+      <p class="sub" id="market-sub">Se venció tu contrato. Elegí a dónde vas.</p>
+      <div id="offers-grid"></div>
+    </div>
+  </div>
+
+  <!-- ===== RESUMEN / LEGADO ===== -->
+  <div id="screen-legacy" class="screen">
+    <div class="panel">
+      <div class="legacy-head">
+        <div class="rank" id="legacy-rank">—</div>
+        <div class="score" id="legacy-score">—</div>
+      </div>
+      <div id="legacy-lines"></div>
+      <button class="btn btn-gold btn-block" id="btn-legacy-newcareer" style="margin-top:10px">Nueva carrera</button>
+      <button class="btn btn-ghost btn-block" id="btn-legacy-history" style="margin-top:8px">Ver mis mejores carreras</button>
+    </div>
+  </div>
+
+  <!-- ===== HISTORIAL ===== -->
+  <div id="screen-history" class="screen">
+    <div class="panel">
+      <h2>Mejores carreras</h2>
+      <div id="history-list"></div>
+      <button class="btn btn-ghost btn-block" id="btn-history-back" style="margin-top:10px">Volver</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var SAVE_KEY = "cotrero_save_v1";
+  var HISTORY_KEY = "cotrero_history_v1";
+
+  /* ============ DATOS ============ */
+
+  var NATIONALITIES = [
+    { n: "Argentina", flag: "🇦🇷", tier: 3 }, { n: "Brasil", flag: "🇧🇷", tier: 3 },
+    { n: "Francia", flag: "🇫🇷", tier: 3 }, { n: "Alemania", flag: "🇩🇪", tier: 3 },
+    { n: "España", flag: "🇪🇸", tier: 3 }, { n: "Inglaterra", flag: "🏴", tier: 3 },
+    { n: "Portugal", flag: "🇵🇹", tier: 3 }, { n: "Italia", flag: "🇮🇹", tier: 3 },
+    { n: "Países Bajos", flag: "🇳🇱", tier: 3 }, { n: "Bélgica", flag: "🇧🇪", tier: 3 },
+    { n: "Uruguay", flag: "🇺🇾", tier: 2 }, { n: "Colombia", flag: "🇨🇴", tier: 2 },
+    { n: "Croacia", flag: "🇭🇷", tier: 2 }, { n: "Marruecos", flag: "🇲🇦", tier: 2 },
+    { n: "Estados Unidos", flag: "🇺🇸", tier: 2 }, { n: "México", flag: "🇲🇽", tier: 2 },
+    { n: "Japón", flag: "🇯🇵", tier: 2 }, { n: "Senegal", flag: "🇸🇳", tier: 2 },
+    { n: "Dinamarca", flag: "🇩🇰", tier: 2 }, { n: "Suiza", flag: "🇨🇭", tier: 2 },
+    { n: "Chile", flag: "🇨🇱", tier: 1 }, { n: "Perú", flag: "🇵🇪", tier: 1 },
+    { n: "Ecuador", flag: "🇪🇨", tier: 1 }, { n: "Costa Rica", flag: "🇨🇷", tier: 1 },
+    { n: "Corea del Sur", flag: "🇰🇷", tier: 1 }, { n: "Nigeria", flag: "🇳🇬", tier: 1 },
+    { n: "Ghana", flag: "🇬🇭", tier: 1 }, { n: "Polonia", flag: "🇵🇱", tier: 1 },
+    { n: "Serbia", flag: "🇷🇸", tier: 1 }, { n: "Gales", flag: "🏴", tier: 1 }
+  ];
+
+  var CLUBS = [
+    { name: "Real Madrid", country: "España", league: "LaLiga", tier: "grande", cantera: false },
+    { name: "Barcelona", country: "España", league: "LaLiga", tier: "grande", cantera: true },
+    { name: "Atlético de Madrid", country: "España", league: "LaLiga", tier: "grande", cantera: false },
+    { name: "Sevilla", country: "España", league: "LaLiga", tier: "mediano", cantera: false },
+    { name: "Real Sociedad", country: "España", league: "LaLiga", tier: "mediano", cantera: true },
+    { name: "Athletic Club", country: "España", league: "LaLiga", tier: "mediano", cantera: true },
+    { name: "Valencia", country: "España", league: "LaLiga", tier: "mediano", cantera: false },
+    { name: "Celta de Vigo", country: "España", league: "LaLiga", tier: "chico", cantera: false },
+    { name: "Getafe", country: "España", league: "LaLiga", tier: "chico", cantera: false },
+    { name: "Cádiz", country: "España", league: "LaLiga", tier: "chico", cantera: false },
+
+    { name: "Manchester City", country: "Inglaterra", league: "Premier League", tier: "grande", cantera: false },
+    { name: "Manchester United", country: "Inglaterra", league: "Premier League", tier: "grande", cantera: false },
+    { name: "Liverpool", country: "Inglaterra", league: "Premier League", tier: "grande", cantera: false },
+    { name: "Arsenal", country: "Inglaterra", league: "Premier League", tier: "grande", cantera: true },
+    { name: "Chelsea", country: "Inglaterra", league: "Premier League", tier: "grande", cantera: false },
+    { name: "Tottenham", country: "Inglaterra", league: "Premier League", tier: "mediano", cantera: false },
+    { name: "Newcastle", country: "Inglaterra", league: "Premier League", tier: "mediano", cantera: false },
+    { name: "West Ham", country: "Inglaterra", league: "Premier League", tier: "mediano", cantera: false },
+    { name: "Brighton", country: "Inglaterra", league: "Premier League", tier: "chico", cantera: true },
+    { name: "Everton", country: "Inglaterra", league: "Premier League", tier: "chico", cantera: false },
+
+    { name: "Juventus", country: "Italia", league: "Serie A", tier: "grande", cantera: false },
+    { name: "Inter de Milán", country: "Italia", league: "Serie A", tier: "grande", cantera: false },
+    { name: "AC Milan", country: "Italia", league: "Serie A", tier: "grande", cantera: false },
+    { name: "Napoli", country: "Italia", league: "Serie A", tier: "mediano", cantera: false },
+    { name: "Roma", country: "Italia", league: "Serie A", tier: "mediano", cantera: false },
+    { name: "Atalanta", country: "Italia", league: "Serie A", tier: "mediano", cantera: true },
+    { name: "Fiorentina", country: "Italia", league: "Serie A", tier: "chico", cantera: false },
+    { name: "Torino", country: "Italia", league: "Serie A", tier: "chico", cantera: false },
+
+    { name: "Bayern Múnich", country: "Alemania", league: "Bundesliga", tier: "grande", cantera: false },
+    { name: "Borussia Dortmund", country: "Alemania", league: "Bundesliga", tier: "grande", cantera: true },
+    { name: "RB Leipzig", country: "Alemania", league: "Bundesliga", tier: "mediano", cantera: false },
+    { name: "Bayer Leverkusen", country: "Alemania", league: "Bundesliga", tier: "mediano", cantera: false },
+    { name: "Eintracht Frankfurt", country: "Alemania", league: "Bundesliga", tier: "chico", cantera: false },
+    { name: "Wolfsburgo", country: "Alemania", league: "Bundesliga", tier: "chico", cantera: false },
+
+    { name: "PSG", country: "Francia", league: "Ligue 1", tier: "grande", cantera: false },
+    { name: "Marsella", country: "Francia", league: "Ligue 1", tier: "mediano", cantera: false },
+    { name: "Lyon", country: "Francia", league: "Ligue 1", tier: "mediano", cantera: true },
+    { name: "Mónaco", country: "Francia", league: "Ligue 1", tier: "mediano", cantera: false },
+    { name: "Lille", country: "Francia", league: "Ligue 1", tier: "chico", cantera: false },
+    { name: "Rennes", country: "Francia", league: "Ligue 1", tier: "chico", cantera: false },
+
+    { name: "Ajax", country: "Países Bajos", league: "Eredivisie", tier: "mediano", cantera: true },
+    { name: "PSV", country: "Países Bajos", league: "Eredivisie", tier: "mediano", cantera: false },
+    { name: "Feyenoord", country: "Países Bajos", league: "Eredivisie", tier: "mediano", cantera: false },
+    { name: "AZ Alkmaar", country: "Países Bajos", league: "Eredivisie", tier: "chico", cantera: false },
+
+    { name: "Benfica", country: "Portugal", league: "Primeira Liga", tier: "mediano", cantera: true },
+    { name: "Porto", country: "Portugal", league: "Primeira Liga", tier: "mediano", cantera: true },
+    { name: "Sporting CP", country: "Portugal", league: "Primeira Liga", tier: "mediano", cantera: false },
+    { name: "Braga", country: "Portugal", league: "Primeira Liga", tier: "chico", cantera: false },
+
+    { name: "Flamengo", country: "Brasil", league: "Brasileirão", tier: "mediano", cantera: false },
+    { name: "Palmeiras", country: "Brasil", league: "Brasileirão", tier: "mediano", cantera: true },
+    { name: "São Paulo", country: "Brasil", league: "Brasileirão", tier: "chico", cantera: true },
+    { name: "Corinthians", country: "Brasil", league: "Brasileirão", tier: "chico", cantera: false },
+    { name: "Grêmio", country: "Brasil", league: "Brasileirão", tier: "chico", cantera: false },
+
+    { name: "River Plate", country: "Argentina", league: "Liga Profesional", tier: "mediano", cantera: true },
+    { name: "Boca Juniors", country: "Argentina", league: "Liga Profesional", tier: "mediano", cantera: false },
+    { name: "Racing Club", country: "Argentina", league: "Liga Profesional", tier: "chico", cantera: false },
+    { name: "Independiente", country: "Argentina", league: "Liga Profesional", tier: "chico", cantera: false },
+
+    { name: "Universidad de Chile", country: "Chile", league: "Primera División", tier: "chico", cantera: true },
+    { name: "Colo-Colo", country: "Chile", league: "Primera División", tier: "chico", cantera: true },
+    { name: "Universidad Católica", country: "Chile", league: "Primera División", tier: "chico", cantera: false },
+    { name: "Cobresal", country: "Chile", league: "Primera División", tier: "chico", cantera: false }
+  ];
+
+  var CONTRACT_YEARS = { grande: 3, mediano: 2, chico: 1 };
+  var TIER_BASE_SALARY = { grande: 3200000, mediano: 650000, chico: 150000 };
+
+  // Entrenamientos del modo Simple: 3 se muestran al azar (ponderado por
+  // rareza) cada temporada, se elige 1. La rareza define cuánto se sabe de
+  // antemano sobre el riesgo: en Common el "y si sale mal" ya está en la
+  // descripción; en Rare y Legendary sólo se entera después de elegir.
+  var TRAININGS_SIMPLE = [
+    { key: "basico", name: "Trabajo básico de finalización", rarity: "common", weight: 6, pos: [3, 4], negChance: 0.25, neg: 1, negText: "Terminaste algo cansado" },
+    { key: "pretemp", name: "Pretemporada estándar", rarity: "common", weight: 6, pos: [2, 3], negChance: 0.2, neg: 1, negText: "Nada grave, un par de molestias" },
+    { key: "gimnasio", name: "Rutina de gimnasio", rarity: "common", weight: 5, pos: [3, 4], negChance: 0.3, neg: 1, negText: "Sobrecarga muscular leve" },
+    { key: "tactico", name: "Entrenamiento táctico grupal", rarity: "common", weight: 5, pos: [2, 3], negChance: 0.15, neg: 1, negText: "Te costó adaptarte al esquema nuevo" },
+    { key: "prepfisico", name: "Preparador físico personal", rarity: "rare", weight: 3, pos: [5, 6], negChance: 0.35, neg: 2, negText: "El cuerpo pasó factura después de la exigencia", resist: 1 },
+    { key: "campus", name: "Campus de verano con una figura", rarity: "rare", weight: 3, pos: [6, 7], negChance: 0.4, neg: 2, negText: "Cambiaste hábitos de golpe y no sentaron bien al principio" },
+    { key: "dieta", name: "Cambio de rutina alimenticia", rarity: "rare", weight: 2, pos: [5, 6], negChance: 0.3, neg: 2, negText: "El cuerpo tardó en acostumbrarse", resist: 1 },
+    { key: "leyenda", name: "Entrenás con una leyenda retirada", rarity: "legendary", weight: 1, pos: [9, 12], negChance: 0.45, neg: 3, negText: "Te exigió tanto que la temporada arrancó cuesta arriba" },
+    { key: "metodo", name: "Método revolucionario experimental", rarity: "legendary", weight: 1, pos: [8, 11], negChance: 0.5, neg: 4, negText: "El método no terminó de funcionar como prometían" },
+    { key: "bootcamp", name: "Bootcamp de élite", rarity: "legendary", weight: 1, pos: [10, 13], negChance: 0.55, neg: 3, negText: "Saliste roto físicamente de tanta exigencia" }
+  ];
+
+  var EVENTS_SIMPLE = [
+    { title: "Problema con el DT", text: "Tuviste una discusión fuerte con el entrenador por minutos de juego. Tu forma bajó un poco.", forma: -4 },
+    { title: "Buena racha personal", text: "Todo te está saliendo bien fuera de la cancha. Llegás a los entrenamientos con otra cabeza.", forma: 3 },
+    { title: "Lesión de un compañero", text: "Un titular se lesionó y te tocó sumar más minutos de los esperados. Ganaste ritmo.", forma: 2 },
+    { title: "Rumor de pase", text: "Un club grande preguntó por vos. No pasó nada más, pero quedaste con la cabeza en otro lado un tiempo.", forma: -2 },
+    { title: "Reconocimiento del barrio", text: "Te homenajearon en tu barrio de siempre. Llegaste a la cancha con el pecho inflado.", forma: 3 },
+    { title: "Viaje largo", text: "Una gira interminable te dejó agotado antes de arrancar la temporada.", forma: -3 },
+    { title: "Nuevo objeto de valor", text: "Encontraste tu ritual antes de cada partido. Te sentís más entero.", forma: 2 }
+  ];
+
+  var RANKS = [
+    { min: 94, label: "Leyenda del fútbol" },
+    { min: 90, label: "Crack mundial" },
+    { min: 86, label: "Muy buen jugador" },
+    { min: 80, label: "Buen profesional" },
+    { min: 70, label: "Jugador correcto" },
+    { min: 0, label: "Carrera discreta" }
+  ];
+
+  function esc(s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+  function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function fmtMoney(n) {
+    if (n >= 1000000) return "€" + (n / 1000000).toFixed(n % 1000000 === 0 ? 0 : 1) + "M";
+    return "€" + Math.round(n / 1000) + "k";
+  }
+
+  /* ============ ESTADO ============ */
+
+  var player = null;
+
+  function showScreen(id) {
+    document.querySelectorAll(".screen").forEach(function (s) { s.classList.remove("active"); });
+    document.getElementById("screen-" + id).classList.add("active");
+    window.scrollTo(0, 0);
+  }
+
+  function saveGame() {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(player)); } catch (e) {}
+  }
+  function clearSave() {
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+  }
+  function loadSave() {
+    try {
+      var raw = localStorage.getItem(SAVE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  function loadHistory() {
+    try {
+      var raw = localStorage.getItem(HISTORY_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+  function saveHistoryEntry(entry) {
+    var hist = loadHistory();
+    hist.push(entry);
+    hist.sort(function (a, b) { return b.score - a.score; });
+    hist = hist.slice(0, 20);
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(hist)); } catch (e) {}
+    return hist;
+  }
+
+  /* ============ INICIO / SELECTOR DE MODO ============ */
+
+  document.querySelectorAll(".mode-card").forEach(function (card) {
+    card.addEventListener("click", function () {
+      if (card.classList.contains("locked")) return;
+      startNewCareerFlow();
+    });
+  });
+
+  document.getElementById("btn-view-history").addEventListener("click", function () { renderHistoryScreen(); showScreen("history"); });
+  document.getElementById("btn-history-back").addEventListener("click", function () { showScreen(player ? "hub" : "mode"); });
+
+  function startNewCareerFlow() {
+    var existing = loadSave();
+    if (existing && !existing._retired) {
+      var cont = confirm("Tenés una carrera de \"" + existing.name + "\" en curso. ¿Continuar esa carrera? Cancelá para empezar una nueva (se pierde la anterior).");
+      if (cont) { player = existing; renderHub(); showScreen("hub"); return; }
+      clearSave();
+    }
+    showScreen("create");
+    populateCreateScreen();
+  }
+
+  /* ============ CREACIÓN DE JUGADOR ============ */
+
+  function populateCreateScreen() {
+    var natSel = document.getElementById("inp-nationality");
+    natSel.innerHTML = NATIONALITIES.map(function (n) { return '<option value="' + esc(n.n) + '">' + n.flag + " " + esc(n.n) + "</option>"; }).join("");
+
+    var countrySel = document.getElementById("inp-country");
+    var countries = [];
+    CLUBS.forEach(function (c) { if (countries.indexOf(c.country) === -1) countries.push(c.country); });
+    countrySel.innerHTML = countries.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + "</option>"; }).join("");
+    populateClubSelect(countries[0]);
+    countrySel.onchange = function () { populateClubSelect(countrySel.value); };
+
+    document.getElementById("inp-name").value = "";
+  }
+
+  function populateClubSelect(country) {
+    var clubSel = document.getElementById("inp-club");
+    var clubs = CLUBS.filter(function (c) { return c.country === country; });
+    clubSel.innerHTML = clubs.map(function (c) { return '<option value="' + esc(c.name) + '">' + esc(c.name) + " (" + c.tier + ")</option>"; }).join("");
+  }
+
+  document.getElementById("club-mode-row").addEventListener("click", function (e) {
+    var chip = e.target.closest(".chip");
+    if (!chip) return;
+    document.querySelectorAll("#club-mode-row .chip").forEach(function (c) { c.classList.remove("active"); });
+    chip.classList.add("active");
+    document.getElementById("club-picker").style.display = chip.dataset.clubmode === "pick" ? "" : "none";
+  });
+
+  document.getElementById("btn-create-player").addEventListener("click", function () {
+    var name = document.getElementById("inp-name").value.trim() || "Jugador Anónimo";
+    var nationality = document.getElementById("inp-nationality").value;
+    var clubMode = document.querySelector("#club-mode-row .chip.active").dataset.clubmode;
+    var club;
+    if (clubMode === "pick") {
+      var clubName = document.getElementById("inp-club").value;
+      club = CLUBS.filter(function (c) { return c.name === clubName; })[0];
+    } else {
+      club = rand(CLUBS.filter(function (c) { return c.tier === "chico"; }));
+    }
+    createPlayer(name, nationality, club);
+  });
+
+  function createPlayer(name, nationality, club) {
+    var declineStart = randInt(27, 35);
+    player = {
+      name: name, nationality: nationality, mode: "simple",
+      club: club.name, clubTier: club.tier, clubCountry: club.country, clubLeague: club.league,
+      age: 16, ovr: randInt(55, 62), forma: randInt(60, 75),
+      contractYearsLeft: CONTRACT_YEARS[club.tier],
+      declineBaseAge: declineStart, resistAccum: club.cantera ? 1 : 0,
+      declinePhase: 0, retireAge: clamp(declineStart + randInt(5, 9), 32, 40),
+      seasonsPlayed: 0, careerGoals: 0, titles: [], clubsPlayed: [club.name],
+      pendingNeg: null, _retired: false
+    };
+    player.peakOvr = player.ovr;
+    saveGame();
+    renderHub();
+    showScreen("hub");
+  }
+
+  /* ============ HUB ============ */
+
+  function renderHub() {
+    document.getElementById("hub-avatar").textContent = player.name.charAt(0).toUpperCase();
+    document.getElementById("hub-name").textContent = player.name;
+    var natFlag = (NATIONALITIES.filter(function (n) { return n.n === player.nationality; })[0] || {}).flag || "";
+    document.getElementById("hub-meta").textContent = natFlag + " " + player.nationality + " · " + player.club + " (" + player.clubLeague + ") · Delantero";
+    document.getElementById("hub-ovr").textContent = player.ovr;
+    document.getElementById("hub-forma").textContent = player.forma;
+    document.getElementById("hub-age").textContent = player.age;
+    document.getElementById("hub-contract").textContent = player.contractYearsLeft + (player.contractYearsLeft === 1 ? " año" : " años");
+    document.getElementById("hub-headline").textContent = "Temporada " + (player.seasonsPlayed + 1);
+    document.getElementById("hub-sub").textContent = "Tenés " + player.age + " años en " + player.club + ". Elegí cómo prepararte para lo que viene.";
+  }
+
+  document.getElementById("btn-start-season").addEventListener("click", function () {
+    showTrainingChoices();
+  });
+
+  /* ============ ENTRENAMIENTO ============ */
+
+  function pickWeighted(pool, n) {
+    var copy = pool.slice();
+    var chosen = [];
+    for (var i = 0; i < n && copy.length; i++) {
+      var total = copy.reduce(function (a, x) { return a + x.weight; }, 0);
+      var roll = Math.random() * total;
+      for (var j = 0; j < copy.length; j++) {
+        roll -= copy[j].weight;
+        if (roll <= 0) { chosen.push(copy[j]); copy.splice(j, 1); break; }
+      }
+    }
+    return chosen;
+  }
+
+  function showTrainingChoices() {
+    var options = pickWeighted(TRAININGS_SIMPLE, 3);
+    var grid = document.getElementById("training-grid");
+    grid.innerHTML = "";
+    options.forEach(function (t) {
+      var card = document.createElement("div");
+      card.className = "choice-card " + t.rarity;
+      var riskText = t.rarity === "common"
+        ? "+" + t.pos[0] + " a +" + t.pos[1] + " overall. " + Math.round(t.negChance * 100) + "% de posibilidad de -" + t.neg + " por " + t.negText.toLowerCase() + "."
+        : "+" + t.pos[0] + " a +" + t.pos[1] + " overall. Hay algo de riesgo, pero no se sabe hasta terminar la temporada.";
+      card.innerHTML =
+        '<div class="ctitle">' + esc(t.name) + '<span class="rarity-tag ' + t.rarity + '">' + t.rarity + "</span></div>" +
+        '<div class="cdesc">' + riskText + "</div>";
+      card.addEventListener("click", function () { applyTraining(t); });
+      grid.appendChild(card);
+    });
+    showScreen("training");
+  }
+
+  function applyTraining(t) {
+    var gain = randInt(t.pos[0], t.pos[1]);
+    player.ovr = clamp(player.ovr + gain, 40, 99);
+    var negHit = Math.random() < t.negChance;
+    player.pendingNeg = negHit ? { amount: t.neg, text: t.negText, rarity: t.rarity } : null;
+    if (t.resist) player.resistAccum += t.resist;
+    player.lastTrainingGain = gain;
+    player.lastTrainingName = t.name;
+    maybeShowEvent();
+  }
+
+  /* ============ EVENTO ALEATORIO ============ */
+
+  function maybeShowEvent() {
+    if (Math.random() < 0.4) {
+      var ev = rand(EVENTS_SIMPLE);
+      player.forma = clamp(player.forma + ev.forma, 30, 99);
+      document.getElementById("event-title").textContent = ev.title;
+      document.getElementById("event-text").textContent = ev.text;
+      showScreen("event");
+    } else {
+      simulateSeason();
+    }
+  }
+  document.getElementById("btn-event-continue").addEventListener("click", simulateSeason);
+
+  /* ============ SIMULACIÓN DE TEMPORADA ============ */
+
+  function tierCompetitionFactor(tier) { return tier === "grande" ? 0.72 : tier === "mediano" ? 0.88 : 1.0; }
+
+  function simulateSeason() {
+    // Si el entrenamiento tuvo un lado negativo oculto/explícito, se resuelve
+    // ahora, al arrancar la temporada.
+    var negLine = null;
+    if (player.pendingNeg) {
+      player.ovr = clamp(player.ovr - player.pendingNeg.amount, 40, 99);
+      negLine = player.pendingNeg;
+      player.pendingNeg = null;
+    }
+
+    // Forma del año: ronda alrededor del overall con ruido; en declive fase 1
+    // el ruido es mayor (rendimiento inestable).
+    var noiseRange = player.declinePhase === 1 ? 16 : 9;
+    player.forma = clamp(player.ovr + randInt(-noiseRange, noiseRange), 30, 99);
+
+    var compFactor = tierCompetitionFactor(player.clubTier);
+    var startingChance = clamp((player.ovr - 45) / 55, 0.15, 0.97) * compFactor;
+    var isStarter = Math.random() < startingChance;
+    var matches = isStarter ? randInt(24, 34) : randInt(6, 16);
+    var goalRate = clamp(((player.ovr - 50) / 50) * (player.forma / 85), 0.08, 0.95);
+    var goals = 0;
+    for (var i = 0; i < matches; i++) if (Math.random() < goalRate) goals++;
+    player.careerGoals += goals;
+
+    // Rendimiento del equipo: mejor overall relativo al nivel del club, mejor
+    // posición en la tabla.
+    var teamRoll = Math.random() + (player.ovr - 65) / 200;
+    var teamResult, wonLeague = false;
+    if (teamRoll > 0.93) { teamResult = "Campeones de la liga"; wonLeague = true; }
+    else if (teamRoll > 0.72) teamResult = "Terminaron peleando arriba de la tabla";
+    else if (teamRoll > 0.35) teamResult = "Terminaron en la mitad de la tabla";
+    else if (teamRoll > 0.15) teamResult = "Pelearon el descenso hasta el final";
+    else teamResult = "Descendieron de categoría";
+    if (wonLeague) player.titles.push(player.club + " — Liga " + player.clubLeague + " (temporada " + (player.seasonsPlayed + 1) + ")");
+
+    var topScorer = goals >= 20 && Math.random() < 0.5;
+    if (topScorer) player.titles.push("Goleador de " + player.clubLeague + " (temporada " + (player.seasonsPlayed + 1) + ")");
+
+    player.peakOvr = Math.max(player.peakOvr, player.ovr);
+
+    var lines = document.getElementById("season-lines");
+    lines.innerHTML = "";
+    function line(label, value, delta) {
+      var d = document.createElement("div");
+      d.className = "result-line";
+      d.innerHTML = "<span>" + esc(label) + "</span><span><b>" + esc(String(value)) + "</b>" +
+        (delta ? ' <span class="delta ' + (delta > 0 ? "pos" : "neg") + '">' + (delta > 0 ? "+" : "") + delta + "</span>" : "") + "</span>";
+      lines.appendChild(d);
+    }
+    line("Entrenamiento elegido", player.lastTrainingName, player.lastTrainingGain);
+    if (negLine) line("Efecto secundario", negLine.text, -negLine.amount);
+    line("Titularidad", isStarter ? "Fuiste titular" : "Rol secundario");
+    line("Partidos jugados", matches);
+    line("Goles en la temporada", goals);
+    line("Tu equipo", teamResult);
+    if (topScorer) line("Premio", "Goleador de " + player.clubLeague);
+    if (wonLeague) line("Premio", "Campeón de " + player.clubLeague);
+    line("Overall actual", player.ovr);
+    line("Forma", player.forma);
+
+    // No se guarda acá a propósito: la temporada recién queda "cerrada" en
+    // afterSeasonProgress. Si se recarga la página en medio del flujo de
+    // resultado/selección, se vuelve al hub de esta misma temporada en vez
+    // de arrastrar un entrenamiento ya aplicado pero no confirmado.
+    showScreen("season-result");
+  }
+
+  document.getElementById("btn-season-continue").addEventListener("click", checkNationalTeam);
+
+  /* ============ SELECCIÓN NACIONAL ============ */
+
+  function checkNationalTeam() {
+    var seasonNum = player.seasonsPlayed + 1;
+    var isWorldCup = seasonNum % 4 === 0;
+    var isContinental = seasonNum % 4 === 2;
+    if (!isWorldCup && !isContinental) { afterSeasonProgress(); return; }
+
+    var nat = NATIONALITIES.filter(function (n) { return n.n === player.nationality; })[0] || { tier: 1 };
+    var callupThreshold = 58 + nat.tier * 8;
+    var calledUp = player.ovr >= callupThreshold;
+    var tourName = isWorldCup ? "el Mundial" : "la Copa continental";
+
+    document.getElementById("national-title").textContent = isWorldCup ? "Mundial" : "Copa continental";
+    if (!calledUp) {
+      document.getElementById("national-text").textContent =
+        "No llegaste a la convocatoria de " + player.nationality + " para " + tourName + " esta vez. Te quedó la espina.";
+      showScreen("national");
+      player._pendingAfterNational = true;
+      return;
+    }
+
+    var strength = clamp((player.ovr - 60) / 40 + nat.tier * 0.12, 0.05, 0.9);
+    var roll = Math.random();
+    var stage, won = false;
+    if (roll < strength * 0.25) { stage = "¡Ganaron " + tourName + "!"; won = true; }
+    else if (roll < strength * 0.6) stage = "Llegaron a semifinales";
+    else if (roll < strength) stage = "Quedaron eliminados en cuartos de final";
+    else if (roll < strength + 0.3) stage = "Quedaron eliminados en octavos de final";
+    else stage = "Quedaron eliminados en la fase de grupos";
+
+    if (won) player.titles.push(tourName + " con " + player.nationality + " (temporada " + seasonNum + ")");
+
+    document.getElementById("national-text").textContent =
+      "Fuiste convocado a la selección de " + player.nationality + " para " + tourName + ". " + stage;
+    showScreen("national");
+    player._pendingAfterNational = true;
+  }
+
+  document.getElementById("btn-national-continue").addEventListener("click", function () {
+    player._pendingAfterNational = false;
+    afterSeasonProgress();
+  });
+
+  /* ============ PROGRESO / DECLIVE / RETIRO ============ */
+
+  function currentDeclineAge() { return clamp(player.declineBaseAge + player.resistAccum, 27, 36); }
+
+  function afterSeasonProgress() {
+    player.seasonsPlayed++;
+    player.age++;
+
+    var declineAge = currentDeclineAge();
+    if (player.declinePhase === 0 && player.age >= declineAge) player.declinePhase = 1;
+    if (player.declinePhase === 1 && player.age >= declineAge + 3) player.declinePhase = 2;
+    if (player.declinePhase === 2) player.ovr = clamp(player.ovr - randInt(2, 4), 40, 99);
+
+    if (player.age >= player.retireAge) { retirePlayer(); return; }
+
+    player.contractYearsLeft--;
+    saveGame();
+    if (player.contractYearsLeft <= 0) { showMarket(); return; }
+    renderHub();
+    showScreen("hub");
+  }
+
+  /* ============ MERCADO ============ */
+
+  function salaryFor(ovr, tier) {
+    var base = TIER_BASE_SALARY[tier];
+    var mult = Math.pow(ovr / 65, 2.2);
+    return Math.round((base * mult) / 10000) * 10000;
+  }
+
+  function showMarket() {
+    var currentSalary = salaryFor(player.ovr, player.clubTier);
+    var offers = [];
+
+    // renovar con el club actual siempre es una opción
+    offers.push({
+      club: player.club, country: player.clubCountry, league: player.clubLeague, tier: player.clubTier,
+      salary: Math.round(currentSalary * 1.1), years: CONTRACT_YEARS[player.clubTier], renewal: true
+    });
+
+    var candidates = CLUBS.filter(function (c) { return c.name !== player.club; });
+    // sesgo: clubes cuyo nivel razonablemente calza con tu overall
+    var tierPref = player.ovr >= 84 ? "grande" : player.ovr >= 74 ? "mediano" : "chico";
+    var weighted = candidates.map(function (c) {
+      var w = c.tier === tierPref ? 5 : 2;
+      return { c: c, w: w };
+    });
+    var numOffers = randInt(1, 2);
+    for (var i = 0; i < numOffers && weighted.length; i++) {
+      var total = weighted.reduce(function (a, x) { return a + x.w; }, 0);
+      var roll = Math.random() * total;
+      for (var j = 0; j < weighted.length; j++) {
+        roll -= weighted[j].w;
+        if (roll <= 0) {
+          var chosen = weighted[j].c;
+          offers.push({
+            club: chosen.name, country: chosen.country, league: chosen.league, tier: chosen.tier,
+            salary: salaryFor(player.ovr, chosen.tier), years: CONTRACT_YEARS[chosen.tier], renewal: false
+          });
+          weighted.splice(j, 1);
+          break;
+        }
+      }
+    }
+
+    var grid = document.getElementById("offers-grid");
+    grid.innerHTML = "";
+    offers.forEach(function (o) {
+      var card = document.createElement("div");
+      card.className = "offer-card";
+      card.innerHTML =
+        '<div class="oclub">' + (o.renewal ? "Renovar con " : "") + esc(o.club) + "</div>" +
+        '<div class="ometa">' + esc(o.league) + " (" + esc(o.country) + ") · " + o.tier + "<br>" +
+        "Salario: " + fmtMoney(o.salary) + "/año · Contrato: " + o.years + (o.years === 1 ? " año" : " años") + "</div>";
+      var btn = document.createElement("button");
+      btn.className = "btn btn-gold btn-block";
+      btn.textContent = o.renewal ? "Renovar" : "Firmar";
+      btn.addEventListener("click", function () { pickOffer(o); });
+      card.appendChild(btn);
+      grid.appendChild(card);
+    });
+
+    document.getElementById("market-sub").textContent = "Se venció tu contrato con " + player.club + ". Elegí a dónde vas.";
+    showScreen("market");
+  }
+
+  function pickOffer(o) {
+    player.club = o.club;
+    player.clubCountry = o.country;
+    player.clubLeague = o.league;
+    player.clubTier = o.tier;
+    player.contractYearsLeft = o.years;
+    if (player.clubsPlayed.indexOf(o.club) === -1) player.clubsPlayed.push(o.club);
+    saveGame();
+    renderHub();
+    showScreen("hub");
+  }
+
+  /* ============ RETIRO / LEGADO ============ */
+
+  function retirePlayer() {
+    player._retired = true;
+    var rank = RANKS.filter(function (r) { return player.peakOvr >= r.min; })[0];
+    var score = player.peakOvr * 10 + player.titles.length * 60 + player.careerGoals * 2 + player.seasonsPlayed * 5;
+
+    document.getElementById("legacy-rank").textContent = rank.label;
+    document.getElementById("legacy-score").textContent = "Puntaje de carrera: " + score;
+
+    var lines = document.getElementById("legacy-lines");
+    lines.innerHTML = "";
+    function line(label, value) {
+      var d = document.createElement("div");
+      d.className = "result-line";
+      d.innerHTML = "<span>" + esc(label) + "</span><span><b>" + esc(String(value)) + "</b></span>";
+      lines.appendChild(d);
+    }
+    line("Nombre", player.name);
+    line("Retiro a los", player.age + " años");
+    line("Temporadas jugadas", player.seasonsPlayed);
+    line("Overall pico", player.peakOvr);
+    line("Goles en la carrera", player.careerGoals);
+    line("Clubes", player.clubsPlayed.join(", "));
+    line("Títulos", player.titles.length ? player.titles.length : "Ninguno");
+    if (player.titles.length) {
+      var titleBox = document.createElement("div");
+      titleBox.className = "flavor-box";
+      titleBox.innerHTML = player.titles.map(esc).join("<br>");
+      lines.appendChild(titleBox);
+    }
+
+    saveHistoryEntry({
+      name: player.name, mode: "Simple", position: "Delantero", score: score,
+      rank: rank.label, peakOvr: player.peakOvr, seasons: player.seasonsPlayed, date: new Date().toISOString()
+    });
+    clearSave();
+    showScreen("legacy");
+  }
+
+  document.getElementById("btn-legacy-newcareer").addEventListener("click", function () { player = null; showScreen("create"); populateCreateScreen(); });
+  document.getElementById("btn-legacy-history").addEventListener("click", function () { renderHistoryScreen(); showScreen("history"); });
+
+  /* ============ HISTORIAL ============ */
+
+  function renderHistoryScreen() {
+    var hist = loadHistory();
+    var list = document.getElementById("history-list");
+    if (!hist.length) {
+      list.innerHTML = '<p class="sub">Todavía no terminaste ninguna carrera.</p>';
+      return;
+    }
+    list.innerHTML = "";
+    hist.forEach(function (h, i) {
+      var row = document.createElement("div");
+      row.className = "history-row";
+      row.innerHTML =
+        '<span class="hrank">#' + (i + 1) + "</span>" +
+        '<span class="hname">' + esc(h.name) + " — " + esc(h.rank) + " (" + esc(h.mode) + ")</span>" +
+        '<span class="hscore">' + h.score + "</span>";
+      list.appendChild(row);
+    });
+  }
+
+  /* ============ ARRANQUE ============ */
+
+  var existingSave = loadSave();
+  if (existingSave && !existingSave._retired) {
+    player = existingSave;
+    renderHub();
+    showScreen("hub");
+  }
+
+})();
+</script>
+</body>
+</html>

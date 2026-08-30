@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Radio, Star, Table2, Trophy } from "lucide-react";
+import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Crown, Radio, Star, Table2, Trophy } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
@@ -194,6 +194,21 @@ export default function Football() {
           <p className="text-sm font-semibold">Draft Europeo 8a2</p>
           <p className="text-xs text-gray-400">
             Armá tu XI con jugadores de 138 planteles históricos de la Champions League. Un juego aparte.
+          </p>
+        </div>
+      </a>
+
+      <a
+        href="/cotrero.html"
+        className="flex items-center gap-3 mb-6 px-4 py-3.5 rounded-card border border-yellow-600/30 bg-gradient-to-r from-yellow-600/10 via-neutral-500/10 to-yellow-500/5 hover:border-yellow-500/50 transition-colors"
+      >
+        <div className="w-9 h-9 rounded-card bg-yellow-600/15 border border-yellow-600/30 flex items-center justify-center shrink-0">
+          <Crown size={18} className="text-yellow-500" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold">Cotrero</p>
+          <p className="text-xs text-gray-400">
+            De potrero a leyenda: simulá toda la carrera de un jugador, temporada a temporada. Un juego aparte.
           </p>
         </div>
       </a>
