@@ -363,6 +363,11 @@
       <h3 id="hub-headline">Temporada nueva</h3>
       <p class="sub" id="hub-sub">Elegí cómo prepararte para lo que viene.</p>
       <button class="btn btn-gold btn-block" id="btn-start-season">Empezar temporada</button>
+      <button class="btn btn-ghost btn-block" id="btn-retire-early" style="margin-top:8px; display:none; font-size:12px; opacity:0.7">Retirarme</button>
+    </div>
+
+    <div style="text-align:right; margin-top:10px">
+      <button id="btn-delete-career" style="font-family:-apple-system,'Segoe UI',Arial,sans-serif; font-size:11px; color:var(--text-dim2); background:none; border:none; cursor:pointer; text-decoration:underline;">Eliminar carrera actual</button>
     </div>
   </div>
 
@@ -529,14 +534,34 @@
     { name: "Racing Club", country: "Argentina", league: "Liga Profesional", tier: "chico", cantera: false },
     { name: "Independiente", country: "Argentina", league: "Liga Profesional", tier: "chico", cantera: false },
 
-    { name: "Universidad de Chile", country: "Chile", league: "Primera División", tier: "chico", cantera: true },
+    { name: "Universidad de Chile", country: "Chile", league: "Primera División", tier: "chico", cantera: true, canteraBonus: 2 },
     { name: "Colo-Colo", country: "Chile", league: "Primera División", tier: "chico", cantera: true },
     { name: "Universidad Católica", country: "Chile", league: "Primera División", tier: "chico", cantera: false },
     { name: "Cobresal", country: "Chile", league: "Primera División", tier: "chico", cantera: false }
   ];
 
   var CONTRACT_YEARS = { grande: 3, mediano: 2, chico: 1 };
-  var TIER_BASE_SALARY = { grande: 3200000, mediano: 650000, chico: 150000 };
+
+  // Íconos para tipos de título
+  var TITLE_ICONS = {
+    liga: "🏆", copa: "🥇", libertadores: "🌎", champions: "⭐",
+    mundial_clubes: "🌍", mundial: "🌍", continental: "🌎",
+    goleador: "⚽", balon_oro: "🥇", puskas: "🎬", golden_boy: "🌟"
+  };
+
+  // Escudos por club (emoji representativo)
+  var CLUB_ICONS = {
+    "Real Madrid": "⬜", "Barcelona": "🔵", "Atlético de Madrid": "🔴",
+    "Manchester City": "🔵", "Manchester United": "🔴", "Liverpool": "🔴",
+    "Arsenal": "🔴", "Chelsea": "🔵", "Bayern Múnich": "🔴",
+    "Borussia Dortmund": "🟡", "PSG": "🔵", "Juventus": "⬜",
+    "Inter de Milán": "🔵", "AC Milan": "🔴", "Ajax": "🔴",
+    "Benfica": "🔴", "Porto": "🔵", "River Plate": "⬜",
+    "Boca Juniors": "🔵", "Flamengo": "🔴", "Universidad de Chile": "🔵",
+    "Colo-Colo": "⬜"
+  };
+
+  function clubIcon(name) { return CLUB_ICONS[name] || "🏟️"; }
 
   // Cada 2-3 temporadas (no todas) aparece una decisión de entrenamiento.
   // A propósito no se muestra ningún número antes de elegir: las opciones
@@ -544,44 +569,54 @@
   // overall — pero también más riesgo de que algo salga mal. El jugador
   // elige por lo que dice el texto, no por una cifra.
   var TRAINING_SCENARIOS = [
-    { prompt: "Arranca la pretemporada. ¿Cómo la encarás?", options: [
-      { label: "Como uno más del plantel", desc: "Cumplís con lo que pide el cuerpo técnico, ni más ni menos.", pos: [2, 4], negChance: 0.05, neg: 1, negText: "Una molestia sin importancia", resist: 1 },
-      { label: "Metiéndole horas extra", desc: "Te quedás después de los entrenamientos a trabajar por tu cuenta.", pos: [5, 8], negChance: 0.22, neg: 2, negText: "El cuerpo empezó a resentirse" },
-      { label: "A fondo, sin frenar", desc: "Buscás un preparador personal y no le das descanso al cuerpo.", pos: [9, 13], negChance: 0.42, neg: 4, negText: "Te pasaste de rosca y la temporada arrancó cuesta arriba", resist: -1 }
+    { prompt: "El cuerpo técnico te pide que elijas un bloque para la pretemporada.", options: [
+      { label: "Trabajo con pelota", desc: "Rondos, pressing, movimiento. Lo tuyo es con la pelota en los pies.", pos: [1, 3], negChance: 0.08, neg: 1, negText: "El físico no acompañó igual de bien", resist: 1, progressBonus: 1 },
+      { label: "Físico puro", desc: "Cuestas, bicicleta, atletismo. El profe dice que el que aguanta, gana.", pos: [1, 4], negChance: 0.28, neg: 2, negText: "Te sobrecargaste antes de arrancar" },
+      { label: "Individual con preparador externo", desc: "Un ex jugador te ofrece un plan secreto que nadie sabe bien de qué va.", pos: [2, 5], negChance: 0.35, neg: 3, negText: "El método no terminó de encajar con el ritmo del plantel", resist: -1 }
     ]},
-    { prompt: "Un club te invita a un campus de verano exigente. ¿Qué hacés?", options: [
-      { label: "Rechazar y descansar", desc: "Preferís llegar fresco a la temporada que forzar el cuerpo en las vacaciones.", pos: [1, 3], negChance: 0.05, neg: 1, negText: "Volviste un poco flojo de ritmo", resist: 1 },
-      { label: "Ir, pero con cuidado", desc: "Participás pero dosificás el esfuerzo.", pos: [4, 7], negChance: 0.2, neg: 2, negText: "El cambio de rutina te costó adaptarlo" },
-      { label: "Meterte de lleno", desc: "Aprovechás cada minuto del campus al máximo.", pos: [8, 12], negChance: 0.4, neg: 3, negText: "Terminaste física y mentalmente agotado", resist: -1 }
+    { prompt: "Te llega una propuesta inesperada en el mercado de invierno.", options: [
+      { label: "Ignorarla y concentrarte en el equipo", desc: "Decidís no hacerle caso. El equipo lo nota y te responde.", pos: [2, 4], negChance: 0.06, neg: 1, negText: "El año fue sólido pero sin sobresaltos", resist: 1 },
+      { label: "Escucharla sin comprometerte", desc: "Te reunís con los representantes pero no firmás nada. La cabeza queda dividida.", pos: [2, 5], negChance: 0.25, neg: 2, negText: "La incertidumbre te afectó por meses" },
+      { label: "Presionar para que se concrete", desc: "Querés ir, y lo hacés saber. El club de destino frena: quedaste en el medio.", pos: [0, 4], negChance: 0.45, neg: 3, negText: "El club actual te marginó por un tiempo" }
     ]},
-    { prompt: "Tenés que elegir un enfoque para esta pretemporada.", options: [
-      { label: "Foco en no lesionarte", desc: "Priorizás cuidar el cuerpo por sobre todo.", pos: [2, 4], negChance: 0.05, neg: 1, negText: "Rendiste algo por debajo de lo esperado", resist: 1 },
-      { label: "Equilibrio entre físico y descanso", desc: "Un plan parejo, sin extremos.", pos: [5, 8], negChance: 0.2, neg: 2, negText: "Alguna sobrecarga menor" },
-      { label: "Todo o nada", desc: "Apostás fuerte a mejorar de golpe, cueste lo que cueste.", pos: [9, 13], negChance: 0.42, neg: 4, negText: "El riesgo no salió gratis", resist: -1 }
+    { prompt: "El DT te propone un cambio de rol dentro del esquema.", options: [
+      { label: "Aceptar y adaptarte", desc: "No es lo que esperabas pero le entrás con todo.", pos: [1, 4], negChance: 0.12, neg: 1, negText: "Te costó más de lo previsto encontrarte", resist: 1 },
+      { label: "Negociar tu posición", desc: "Pedís seguir donde rendís mejor, y el cuerpo técnico cede a medias.", pos: [2, 5], negChance: 0.22, neg: 2, negText: "La relación con el DT quedó tirante" },
+      { label: "Rechazarlo de plano", desc: "Decís que no. El técnico sigue en el cargo y eso tiene consecuencias.", pos: [0, 3], negChance: 0.50, neg: 4, negText: "Pasaste meses sin jugar de titular", resist: -1 }
     ]},
-    { prompt: "Llega un preparador físico nuevo al club con un plan distinto.", options: [
-      { label: "Seguir con lo de siempre", desc: "No cambiás nada de tu rutina habitual.", pos: [2, 4], negChance: 0.05, neg: 1, negText: "Te estancaste un poco", resist: 1 },
-      { label: "Probar el plan, con reservas", desc: "Te sumás pero sin comprometerte del todo.", pos: [5, 8], negChance: 0.22, neg: 2, negText: "El método no terminó de sentarte bien" },
-      { label: "Confiar ciegamente en el plan", desc: "Te entregás por completo al método nuevo.", pos: [9, 13], negChance: 0.42, neg: 4, negText: "El plan resultó demasiado exigente", resist: -1 }
+    { prompt: "En la pretemporada aparece la oportunidad de hacer trabajo doble.", options: [
+      { label: "Pasás, que el cuerpo descanse", desc: "Llegás fresco a la temporada. El DT no hace comentarios.", pos: [1, 3], negChance: 0.05, neg: 1, negText: "Empezaste un poco por debajo del ritmo", resist: 1 },
+      { label: "Un par de días extra, no más", desc: "No querés pasarte, pero tampoco quedarte quieto.", pos: [2, 5], negChance: 0.18, neg: 2, negText: "Alguna sobrecarga muscular menor" },
+      { label: "Todo el bloque disponible", desc: "Si hay que mejorar, hay que mejorar. Sin excusas.", pos: [2, 5], negChance: 0.40, neg: 3, negText: "El cuerpo empezó la temporada resentido", resist: -1 }
+    ]},
+    { prompt: "Se abre un mercado de invierno y tu agente trae opciones.", options: [
+      { label: "Quedarte y renovar la confianza", desc: "El club valora la lealtad. El vestuario también.", pos: [2, 4], negChance: 0.08, neg: 1, negText: "Perdiste una chance de dar el salto", resist: 1 },
+      { label: "Explorar sin decir nada", desc: "Mandás sondeos en silencio. El club lo termina sabiendo.", pos: [1, 4], negChance: 0.30, neg: 2, negText: "La relación con la directiva se enfrió" },
+      { label: "Pedir el traspaso abiertamente", desc: "Decís que querés irte. El club respeta, pero te ponen precio.", pos: [0, 5], negChance: 0.38, neg: 3, negText: "No llegó la oferta esperada y quedaste en una situación rara" }
     ]}
   ];
 
   var EVENTS_SIMPLE = [
-    { title: "Problema con el DT", text: "Tuviste una discusión fuerte con el entrenador por minutos de juego. Tu forma bajó un poco.", forma: -4 },
-    { title: "Buena racha personal", text: "Todo te está saliendo bien fuera de la cancha. Llegás a los entrenamientos con otra cabeza.", forma: 3 },
-    { title: "Lesión de un compañero", text: "Un titular se lesionó y te tocó sumar más minutos de los esperados. Ganaste ritmo.", forma: 2 },
-    { title: "Rumor de pase", text: "Un club grande preguntó por vos. No pasó nada más, pero quedaste con la cabeza en otro lado un tiempo.", forma: -2 },
-    { title: "Reconocimiento del barrio", text: "Te homenajearon en tu barrio de siempre. Llegaste a la cancha con el pecho inflado.", forma: 3 },
-    { title: "Viaje largo", text: "Una gira interminable te dejó agotado antes de arrancar la temporada.", forma: -3 },
-    { title: "Nuevo objeto de valor", text: "Encontraste tu ritual antes de cada partido. Te sentís más entero.", forma: 2 }
+    { title: "Cortocircuito con el DT", text: "Hubo una reunión incómoda por los minutos de juego. Nada se resolvió del todo.", forma: -4 },
+    { title: "La cabeza en otro lado", text: "Algo personal te absorbió varias semanas. El cuerpo estaba en la cancha, la cabeza no siempre.", forma: -3 },
+    { title: "El barrio no te olvida", text: "Volviste al potrero de siempre y jugaste un rato con los pibes. Llegaste a la cancha más liviano.", forma: 3 },
+    { title: "Gira internacional", text: "El club hizo una gira larga. Los vuelos te destrozaron, pero el roce con otros estilos de juego sumó.", forma: 1 },
+    { title: "Racha personal", text: "Estás en un momento bueno fuera de la cancha. Se nota en el entrenamiento.", forma: 3 },
+    { title: "Lesión de un compañero", text: "Un titular se lesionó y tuviste más minutos de los esperados. El cuerpo respondió.", forma: 2 },
+    { title: "Rumor que se apagó", text: "Circuló que te querían en otro club. No pasó nada. El ambiente se puso raro por unas semanas.", forma: -2 },
+    { title: "Ritual nuevo", text: "Encontraste algo que te acomoda antes de los partidos. Llegás más entero a cada juego.", forma: 2 },
+    { title: "Conflicto en el vestuario", text: "El plantel tiene interna. Vos tratás de no meterte, pero el clima pesa igual.", forma: -2 },
+    { title: "Cámara que sobra", text: "Saliste en varios medios esta semana. La atención te motivó. O te presionó. Difícil saberlo.", forma: 1 },
+    { title: "Cambio de cuerpo técnico", text: "El DT de toda la temporada se fue. El interino no tiene el mismo ojo. Los primeros meses, inciertos.", forma: -3 }
   ];
 
   var RANKS = [
-    { min: 94, label: "Leyenda del fútbol" },
-    { min: 90, label: "Crack mundial" },
-    { min: 86, label: "Muy buen jugador" },
-    { min: 80, label: "Buen profesional" },
-    { min: 70, label: "Jugador correcto" },
+    { min: 96, label: "Leyenda del fútbol" },
+    { min: 92, label: "Crack mundial" },
+    { min: 87, label: "Figura continental" },
+    { min: 82, label: "Muy buen jugador" },
+    { min: 75, label: "Buen profesional" },
+    { min: 65, label: "Jugador correcto" },
     { min: 0, label: "Carrera discreta" }
   ];
 
@@ -687,13 +722,21 @@
   });
 
   function createPlayerPending(name, nationality) {
-    var declineStart = randInt(27, 35);
+    var declineStart = randInt(28, 34);
+    // ceiling determina el potencial máximo del jugador (85-96)
+    // La mayoría llega a 85-91; solo unos pocos llegan al 95+
+    var ceilingRoll = Math.random();
+    var ceiling = ceilingRoll < 0.05 ? randInt(94, 96) :
+                  ceilingRoll < 0.20 ? randInt(91, 93) :
+                  ceilingRoll < 0.55 ? randInt(87, 90) :
+                  randInt(82, 86);
     player = {
       name: name, nationality: nationality, mode: "simple", number: rand(NUMBER_POOL),
       club: null, clubTier: null, clubCountry: null, clubLeague: null, contractYearsLeft: 0,
-      age: 16, ovr: randInt(55, 62), forma: randInt(60, 75),
+      age: randInt(16, 17), ovr: randInt(52, 60), forma: randInt(58, 72),
+      ceiling: ceiling,
       declineBaseAge: declineStart, resistAccum: 0,
-      declinePhase: 0, retireAge: clamp(declineStart + randInt(5, 9), 32, 40),
+      declinePhase: 0, retireAge: clamp(declineStart + randInt(4, 8), 33, 40),
       seasonsPlayed: 0, careerGoals: 0, careerMatches: 0, careerAssists: 0,
       titles: [], clubsPlayed: [], seasonLog: [],
       nextTrainingAt: randInt(2, 3),
@@ -756,6 +799,7 @@
     player.club = club.name; player.clubTier = club.tier; player.clubCountry = club.country; player.clubLeague = club.league;
     player.contractYearsLeft = CONTRACT_YEARS[club.tier];
     player.resistAccum = club.cantera ? 1 : 0;
+    if (club.canteraBonus) player.resistAccum += club.canteraBonus;
     player.clubsPlayed = [club.name];
     saveGame();
     renderHub();
@@ -779,7 +823,8 @@
     var clubEl = document.getElementById("hub-club-status");
     var contractEl = document.getElementById("hub-contract");
     if (player.club) {
-      clubEl.textContent = player.club + " (" + player.clubLeague + ")";
+      var cicon = clubIcon(player.club);
+      clubEl.textContent = (cicon ? cicon + " " : "") + player.club + " (" + player.clubLeague + ")";
       clubEl.classList.remove("pending");
       contractEl.textContent = "Contrato: " + player.contractYearsLeft + (player.contractYearsLeft === 1 ? " año" : " años");
     } else {
@@ -794,6 +839,7 @@
     var offerPanel = document.getElementById("panel-youth-offer");
     var manualPanel = document.getElementById("panel-youth-manual");
     var seasonPanel = document.getElementById("panel-season-action");
+    var retireBtn = document.getElementById("btn-retire-early");
     if (!player.club) {
       seasonPanel.style.display = "none";
       manualPanel.style.display = "none";
@@ -805,7 +851,19 @@
       seasonPanel.style.display = "";
       document.getElementById("hub-headline").textContent = "Temporada " + (player.seasonsPlayed + 1);
       document.getElementById("hub-sub").textContent = "Tenés " + player.age + " años en " + player.club + ". Elegí cómo prepararte para lo que viene.";
+      retireBtn.style.display = player.age >= 35 ? "" : "none";
     }
+  }
+
+  var TITLE_ICONS = {
+    liga: "🏆", copa: "🥇", champions: "⭐", libertadores: "🌎",
+    goleador: "⚽", golden_boy: "🌟", puskas: "🎬", balon_oro: "🥇"
+  };
+
+  function titleText(t) { return typeof t === "string" ? t : t.text; }
+  function titleIcon(t) {
+    if (typeof t === "string") return "🏆";
+    return TITLE_ICONS[t.icon] || "🏆";
   }
 
   function renderVitrina() {
@@ -815,7 +873,9 @@
       return;
     }
     box.innerHTML = '<div class="vitrina-list">' +
-      player.titles.map(function (t) { return '<div class="vitrina-item"><span class="vicon">🏆</span>' + esc(t) + "</div>"; }).join("") +
+      player.titles.map(function (t) {
+        return '<div class="vitrina-item"><span class="vicon">' + titleIcon(t) + "</span>" + esc(titleText(t)) + "</div>";
+      }).join("") +
       "</div>";
   }
 
@@ -853,6 +913,18 @@
     rows.scrollTop = rows.scrollHeight;
   }
 
+  document.getElementById("btn-delete-career").addEventListener("click", function () {
+    if (!confirm('¿Eliminar la carrera de "' + player.name + '" y empezar de cero?')) return;
+    clearSave();
+    player = null;
+    showScreen("mode");
+  });
+
+  document.getElementById("btn-retire-early").addEventListener("click", function () {
+    if (!confirm("¿Seguro que querés retirarte ahora?")) return;
+    retirePlayer();
+  });
+
   document.getElementById("btn-start-season").addEventListener("click", function () {
     var seasonNum = player.seasonsPlayed + 1;
     if (seasonNum >= player.nextTrainingAt) {
@@ -884,7 +956,15 @@
 
   function applyTrainingChoice(opt) {
     var gain = randInt(opt.pos[0], opt.pos[1]);
-    player.ovr = clamp(player.ovr + gain, 40, 99);
+    // Después de los 21 años las decisiones tienen impacto reducido (máx +6)
+    if (player.age > 21) gain = Math.min(gain, 6);
+    // El OVR no puede superar el ceiling del jugador
+    var ceiling = player.ceiling || 88;
+    var prevOvr = player.ovr;
+    player.ovr = clamp(player.ovr + gain, 40, ceiling);
+    gain = player.ovr - prevOvr; // gain real (puede ser menor por el techo)
+    // progressBonus retrasa el declive
+    if (opt.progressBonus) player.resistAccum += opt.progressBonus;
     var negHit = Math.random() < opt.negChance;
     player.pendingNeg = negHit ? { amount: opt.neg, text: opt.negText } : null;
     if (opt.resist) player.resistAccum += opt.resist;
@@ -913,46 +993,56 @@
 
   function tierCompetitionFactor(tier) { return tier === "grande" ? 0.72 : tier === "mediano" ? 0.88 : 1.0; }
 
-  // Progreso natural: jugar te hace mejor aunque no toque una decisión de
-  // entrenamiento esa temporada. Más fuerte de joven, se va apagando cerca
-  // de la plenitud, y no aporta nada una vez que arrancó el declive — de ahí
-  // en más el overall se sostiene o baja, no sube solo.
+  // Progreso natural: la curva de desarrollo varía según el ceiling del jugador.
+  // Los jugadores de alto potencial crecen más rápido de jóvenes; todos se
+  // estancan al acercarse a su techo. Una vez arranca el declive, el natural
+  // no suma — de ahí en más el overall se sostiene o baja solo.
   function naturalProgress(age, declinePhase) {
     if (declinePhase !== 0) return 0;
-    if (age <= 18) return randInt(2, 4);
-    if (age <= 21) return randInt(2, 3);
-    if (age <= 24) return randInt(1, 2);
-    if (age <= 27) return randInt(0, 1);
+    var ceiling = player.ceiling || 88;
+    var gap = ceiling - player.ovr; // cuánto le falta al techo
+    // Si ya está muy cerca del techo (menos de 5 puntos), el progreso se frena
+    if (gap <= 2) return 0;
+    if (gap <= 5) return Math.random() < 0.4 ? 1 : 0;
+    // Curva por edad
+    if (age <= 17) return randInt(3, 6);
+    if (age <= 20) return randInt(2, 5);
+    if (age <= 23) return randInt(1, 3);
+    if (age <= 26) return randInt(0, 2);
+    if (age <= 28) return Math.random() < 0.35 ? 1 : 0;
     return 0;
   }
 
   function simulateSeason() {
-    // El progreso natural entra siempre, haya o no una decisión de
-    // entrenamiento esta temporada: los entrenamientos suman encima, no son
-    // la única forma de mejorar.
+    var ceiling = player.ceiling || 88;
+    // Progreso natural respeta el ceiling
     var natGain = naturalProgress(player.age, player.declinePhase);
-    if (natGain > 0) player.ovr = clamp(player.ovr + natGain, 40, 99);
+    if (natGain > 0) player.ovr = clamp(player.ovr + natGain, 40, ceiling);
 
-    // Si el entrenamiento tuvo un lado negativo oculto/explícito, se resuelve
-    // ahora, al arrancar la temporada.
     var negLine = null;
     if (player.pendingNeg) {
-      player.ovr = clamp(player.ovr - player.pendingNeg.amount, 40, 99);
+      player.ovr = clamp(player.ovr - player.pendingNeg.amount, 40, ceiling);
       negLine = player.pendingNeg;
       player.pendingNeg = null;
     }
 
-    // Forma del año: ronda alrededor del overall con ruido; en declive fase 1
-    // el ruido es mayor (rendimiento inestable).
-    var noiseRange = player.declinePhase === 1 ? 16 : 9;
-    player.forma = clamp(player.ovr + randInt(-noiseRange, noiseRange), 30, 99);
+    // Forma del año. En declive fase 1 el ruido es mayor (inestable).
+    // Forma 100 significa que juega ligeramente sobre su OVR.
+    var noiseRange = player.declinePhase === 1 ? 14 : 8;
+    player.forma = clamp(player.ovr + randInt(-noiseRange, noiseRange), 30, 100);
+    var effectiveOvr = player.forma === 100 ? Math.min(player.ovr + 2, 99) : player.ovr;
 
     var compFactor = tierCompetitionFactor(player.clubTier);
-    var startingChance = clamp((player.ovr - 45) / 55, 0.15, 0.97) * compFactor;
+    var startingChance = clamp((effectiveOvr - 45) / 55, 0.15, 0.97) * compFactor;
     var isStarter = Math.random() < startingChance;
-    var matches = isStarter ? randInt(24, 34) : randInt(6, 16);
-    var goalRate = clamp(((player.ovr - 50) / 50) * (player.forma / 85), 0.08, 0.95);
-    var assistRate = goalRate * 0.5;
+    var matches = isStarter ? randInt(26, 36) : randInt(5, 14);
+
+    // Tasa de goles coherente con OVR: un jugador de 70 OVR hace ~0.3 goles/partido,
+    // un 85 hace ~0.55, un 95+ hace ~0.75.
+    var ovrFactor = clamp((effectiveOvr - 50) / 50, 0, 1);
+    var formFactor = clamp(player.forma / 90, 0.6, 1.1);
+    var goalRate = clamp(ovrFactor * 0.65 * formFactor, 0.05, 0.82);
+    var assistRate = goalRate * clamp(0.45 + Math.random() * 0.2, 0.35, 0.65);
     var goals = 0, assists = 0;
     for (var i = 0; i < matches; i++) {
       if (Math.random() < goalRate) goals++;
@@ -962,25 +1052,48 @@
     player.careerMatches += matches;
     player.careerAssists += assists;
 
-    // Rendimiento del equipo: mejor overall relativo al nivel del club, mejor
-    // posición en la tabla.
-    var teamRoll = Math.random() + (player.ovr - 65) / 200;
-    var teamResult, wonLeague = false;
-    if (teamRoll > 0.93) { teamResult = "Campeones de la liga"; wonLeague = true; }
-    else if (teamRoll > 0.72) teamResult = "Terminaron peleando arriba de la tabla";
-    else if (teamRoll > 0.35) teamResult = "Terminaron en la mitad de la tabla";
-    else if (teamRoll > 0.15) teamResult = "Pelearon el descenso hasta el final";
+    // Rendimiento del equipo
+    var teamRoll = Math.random() + (effectiveOvr - 65) / 180;
+    var teamResult, wonLeague = false, wonCup = false;
+    if (teamRoll > 0.95) { teamResult = "Campeones de la liga"; wonLeague = true; }
+    else if (teamRoll > 0.80) { teamResult = "Ganaron la copa nacional"; wonCup = true; }
+    else if (teamRoll > 0.60) teamResult = "Terminaron peleando arriba de la tabla";
+    else if (teamRoll > 0.30) teamResult = "Temporada pareja en la mitad";
+    else if (teamRoll > 0.12) teamResult = "Pelearon el descenso hasta el final";
     else teamResult = "Descendieron de categoría";
-    if (wonLeague) player.titles.push(player.club + " — Liga " + player.clubLeague + " (temporada " + (player.seasonsPlayed + 1) + ")");
 
-    var topScorer = goals >= 20 && Math.random() < 0.5;
-    if (topScorer) player.titles.push("Goleador de " + player.clubLeague + " (temporada " + (player.seasonsPlayed + 1) + ")");
+    if (wonLeague) player.titles.push({ text: "🏆 Liga: " + player.clubLeague + " (temp. " + (player.seasonsPlayed + 1) + ")", icon: "liga" });
+    if (wonCup) player.titles.push({ text: "🥇 Copa: " + player.clubLeague.replace("Liga","Copa").replace("Bundesliga","DFB-Pokal").replace("Premier League","FA Cup").replace("LaLiga","Copa del Rey").replace("Serie A","Coppa Italia").replace("Ligue 1","Coupe de France") + " (temp. " + (player.seasonsPlayed + 1) + ")", icon: "copa" });
+
+    // Copa internacional (Champions/Libertadores) — si el club es grande o mediano
+    if ((player.clubTier === "grande" || player.clubTier === "mediano") && Math.random() < 0.12 && wonLeague) {
+      var isChampions = ["España","Inglaterra","Alemania","Francia","Italia","Portugal","Países Bajos"].indexOf(player.clubCountry) !== -1;
+      var cupLabel = isChampions ? "⭐ Champions League" : "🌎 Copa Libertadores";
+      player.titles.push({ text: cupLabel + " (temp. " + (player.seasonsPlayed + 1) + ")", icon: isChampions ? "champions" : "libertadores" });
+    }
+
+    var topScorer = isStarter && goals >= Math.round(18 + (90 - effectiveOvr) * 0.3) && Math.random() < 0.55;
+    if (topScorer) player.titles.push({ text: "⚽ Goleador: " + player.clubLeague + " (temp. " + (player.seasonsPlayed + 1) + ")", icon: "goleador" });
+
+    // Golden Boy (18-21 años, buen rendimiento, primera vez)
+    var hasGoldenBoy = player.titles.some(function(t) { return t.icon === "golden_boy"; });
+    if (!hasGoldenBoy && player.age >= 18 && player.age <= 22 && player.ovr >= 72 && goals >= 10 && Math.random() < 0.18) {
+      player.titles.push({ text: "🌟 Golden Boy (temp. " + (player.seasonsPlayed + 1) + ")", icon: "golden_boy" });
+    }
+
+    // Puskas: un golazo memorable
+    var hasPuskas = player.titles.some(function(t) { return t.icon === "puskas"; });
+    if (!hasPuskas && goals >= 12 && Math.random() < 0.08) {
+      player.titles.push({ text: "🎬 Premio Puskás (temp. " + (player.seasonsPlayed + 1) + ")", icon: "puskas" });
+    }
+
+    // Balón de Oro (25-33, OVR muy alto, temporada excepcional)
+    var hasBalonOro = player.titles.some(function(t) { return t.icon === "balon_oro"; });
+    if (!hasBalonOro && player.age >= 25 && player.age <= 33 && player.ovr >= 90 && goals >= 20 && Math.random() < 0.2) {
+      player.titles.push({ text: "🥇 Balón de Oro (temp. " + (player.seasonsPlayed + 1) + ")", icon: "balon_oro" });
+    }
 
     player.peakOvr = Math.max(player.peakOvr, player.ovr);
-
-    // Snapshot para la línea de tiempo del hub. Se guarda igual que el resto
-    // del estado de la temporada: en memoria acá, recién persiste en
-    // afterSeasonProgress.
     player.seasonLog.push({ age: player.age, club: player.club, ovr: player.ovr, pj: matches, gls: goals, ast: assists });
 
     var lines = document.getElementById("season-lines");
@@ -989,26 +1102,23 @@
       var d = document.createElement("div");
       d.className = "result-line";
       d.innerHTML = "<span>" + esc(label) + "</span><span><b" + (gold ? ' class="gold"' : "") + ">" + esc(String(value)) + "</b>" +
-        (delta ? ' <span class="delta ' + (delta > 0 ? "pos" : "neg") + '">' + (delta > 0 ? "+" : "") + delta + "</span>" : "") + "</span>";
+        (delta !== undefined && delta !== null ? ' <span class="delta ' + (delta > 0 ? "pos" : "neg") + '">' + (delta > 0 ? "+" : "") + delta + "</span>" : "") + "</span>";
       lines.appendChild(d);
     }
-    if (natGain > 0) line("Progreso natural", "Vas ganando experiencia con la edad", natGain);
-    if (player.lastTrainingName) line("Entrenamiento elegido", player.lastTrainingName, player.lastTrainingGain);
+    if (natGain > 0) line("Progreso natural", "Ganando experiencia", natGain);
+    if (player.lastTrainingName) line("Decisión tomada", player.lastTrainingName, player.lastTrainingGain || 0);
     if (negLine) line("Efecto secundario", negLine.text, -negLine.amount);
     line("Titularidad", isStarter ? "Fuiste titular" : "Rol secundario");
     line("Partidos jugados", matches);
     line("Goles en la temporada", goals);
     line("Asistencias en la temporada", assists);
     line("Tu equipo", teamResult);
-    if (topScorer) line("Premio", "Goleador de " + player.clubLeague);
-    if (wonLeague) line("Premio", "Campeón de " + player.clubLeague);
+    if (topScorer) line("Premio", "⚽ Goleador de " + player.clubLeague);
+    if (wonLeague) line("Premio", "🏆 Campeón de liga");
+    if (wonCup) line("Premio", "🥇 Campeón de copa");
     line("Overall actual", player.ovr, null, true);
-    line("Forma", player.forma, null, true);
+    line("Forma", player.forma + (player.forma === 100 ? " ★" : ""), null, true);
 
-    // No se guarda acá a propósito: la temporada recién queda "cerrada" en
-    // afterSeasonProgress. Si se recarga la página en medio del flujo de
-    // resultado/selección, se vuelve al hub de esta misma temporada en vez
-    // de arrastrar un entrenamiento ya aplicado pero no confirmado.
     showScreen("season-result");
   }
 
@@ -1095,24 +1205,24 @@
   }
 
   function showMarket() {
-    var currentSalary = salaryFor(player.ovr, player.clubTier);
     var offers = [];
 
-    // renovar con el club actual siempre es una opción
+    // Renovar con el club actual siempre es la primera opción
     offers.push({
       club: player.club, country: player.clubCountry, league: player.clubLeague, tier: player.clubTier,
-      salary: Math.round(currentSalary * 1.1), years: CONTRACT_YEARS[player.clubTier], renewal: true
+      years: CONTRACT_YEARS[player.clubTier], renewal: true
     });
 
     var candidates = CLUBS.filter(function (c) { return c.name !== player.club; });
-    // sesgo: clubes cuyo nivel razonablemente calza con tu overall
     var tierPref = player.ovr >= 84 ? "grande" : player.ovr >= 74 ? "mediano" : "chico";
     var weighted = candidates.map(function (c) {
       var w = c.tier === tierPref ? 5 : 2;
       return { c: c, w: w };
     });
-    var numOffers = randInt(1, 2);
-    for (var i = 0; i < numOffers && weighted.length; i++) {
+
+    // Últimos años (35+): solo llega 1 oferta externa; antes siempre 2
+    var numExternal = player.age >= 35 ? 1 : 2;
+    for (var i = 0; i < numExternal && weighted.length; i++) {
       var total = weighted.reduce(function (a, x) { return a + x.w; }, 0);
       var roll = Math.random() * total;
       for (var j = 0; j < weighted.length; j++) {
@@ -1121,7 +1231,7 @@
           var chosen = weighted[j].c;
           offers.push({
             club: chosen.name, country: chosen.country, league: chosen.league, tier: chosen.tier,
-            salary: salaryFor(player.ovr, chosen.tier), years: CONTRACT_YEARS[chosen.tier], renewal: false
+            years: CONTRACT_YEARS[chosen.tier], renewal: false
           });
           weighted.splice(j, 1);
           break;
@@ -1134,10 +1244,11 @@
     offers.forEach(function (o) {
       var card = document.createElement("div");
       card.className = "offer-card";
+      var icon = clubIcon(o.club);
       card.innerHTML =
-        '<div class="oclub">' + (o.renewal ? "Renovar con " : "") + esc(o.club) + "</div>" +
-        '<div class="ometa">' + esc(o.league) + " (" + esc(o.country) + ") · " + o.tier + "<br>" +
-        "Salario: " + fmtMoney(o.salary) + "/año · Contrato: " + o.years + (o.years === 1 ? " año" : " años") + "</div>";
+        '<div class="oclub">' + (icon ? icon + " " : "") + (o.renewal ? "Renovar con " : "") + esc(o.club) + "</div>" +
+        '<div class="ometa">' + esc(o.league) + " — " + esc(o.country) + "<br>" +
+        "Contrato: " + o.years + (o.years === 1 ? " año" : " años") + "</div>";
       var btn = document.createElement("button");
       btn.className = "btn btn-gold btn-block";
       btn.textContent = o.renewal ? "Renovar" : "Firmar";
@@ -1145,6 +1256,24 @@
       card.appendChild(btn);
       grid.appendChild(card);
     });
+
+    // Opción de retiro a los 35+
+    if (player.age >= 35) {
+      var retireCard = document.createElement("div");
+      retireCard.className = "offer-card";
+      retireCard.innerHTML =
+        '<div class="oclub">👟 Retirarse del fútbol</div>' +
+        '<div class="ometa">Tenés ' + player.age + ' años. Podés cerrar la carrera acá.</div>';
+      var retireBtn = document.createElement("button");
+      retireBtn.className = "btn btn-block";
+      retireBtn.style.cssText = "background:#555;color:#eee;";
+      retireBtn.textContent = "Retirarme";
+      retireBtn.addEventListener("click", function () {
+        if (confirm("¿Seguro que querés retirarte?")) retirePlayer();
+      });
+      retireCard.appendChild(retireBtn);
+      grid.appendChild(retireCard);
+    }
 
     document.getElementById("market-sub").textContent = "Se venció tu contrato con " + player.club + ". Elegí a dónde vas.";
     showScreen("market");
@@ -1192,7 +1321,7 @@
     if (player.titles.length) {
       var titleBox = document.createElement("div");
       titleBox.className = "flavor-box";
-      titleBox.innerHTML = player.titles.map(esc).join("<br>");
+      titleBox.innerHTML = player.titles.map(function (t) { return esc(titleText(t)); }).join("<br>");
       lines.appendChild(titleBox);
     }
 

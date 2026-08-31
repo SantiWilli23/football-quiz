@@ -304,6 +304,15 @@
 
   .foot-note { text-align: center; font-size: 11px; color: var(--text-faint); margin-top: 24px; line-height: 1.6; }
 
+  .weekly-table { border: 1px solid var(--gold); border-radius: 14px; padding: 14px 16px; background: rgba(217,164,65,0.06); }
+  .weekly-table h3 { font-size: 12px; font-weight: 800; color: var(--gold2); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+  .weekly-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--panel-border); font-size: 12.5px; }
+  .weekly-row:last-child { border-bottom: none; }
+  .weekly-pos { font-family: ui-monospace, monospace; font-weight: 800; color: var(--gold2); width: 20px; flex-shrink: 0; }
+  .weekly-name { flex: 1; min-width: 0; }
+  .weekly-score { font-family: ui-monospace, monospace; font-weight: 700; color: var(--text-dim); font-size: 12px; }
+  .weekly-locked { text-align: center; font-size: 12px; color: var(--text-faint); padding: 10px 0; }
+
   /* ============ CHAMPIONS: PARTIDO EN VIVO ============ */
 
   .cup-head { text-align: center; margin-bottom: 14px; }
@@ -420,6 +429,7 @@
       <div class="chiprow" id="mode-row">
         <div class="chip active" data-mode="clasico">Clásico<small>ratings ocultos</small></div>
         <div class="chip" data-mode="almanaque">De almanaque<small>ratings visibles</small></div>
+        <div class="chip" data-mode="clasico_facil">Clásico Fácil<small>6 cambios · rivales duros</small></div>
       </div>
 
       <h2>Estilo táctico</h2>
@@ -528,6 +538,7 @@
   <div id="screen-bracket" class="screen">
     <div class="panel">
       <div id="bracket-champion-slot"></div>
+      <div id="weekly-table" style="margin-bottom:18px"></div>
       <h2 style="margin-bottom:14px" id="bracket-title">Cuadro de la Champions</h2>
       <div id="bracket-rounds"></div>
       <button class="btn btn-holo btn-block" id="btn-cup-new" style="margin-top:6px">Nueva copa</button>
@@ -934,7 +945,7 @@
     state.mode = selectedMode;
     state.style = selectedStyle;
     state.slots = FORMATIONS[state.formation].map(function (t) { return { type: t, filled: null }; });
-    document.getElementById("mode-badge").textContent = state.mode === "clasico" ? "MODO CLÁSICO" : "MODO ALMANAQUE";
+    document.getElementById("mode-badge").textContent = state.mode === "almanaque" ? "MODO ALMANAQUE" : state.mode === "clasico_facil" ? "CLÁSICO FÁCIL" : "MODO CLÁSICO";
     showScreen("draft");
     drawNewTeam({});
   }
@@ -1013,7 +1024,7 @@
       // El dorado depende del rating: en Clásico los ratings están ocultos, así
       // que pintarlo delataría quién es bueno antes de tiempo. El ídolo no sale
       // del rating, así que se ve en los dos modos.
-      var gold = state.mode === "almanaque" && pl.r >= GOLD_MIN;
+      var gold = (state.mode === "almanaque") && pl.r >= GOLD_MIN;
       var idol = isIdol(state.team.club, pl.n);
       var card = document.createElement("div");
       card.className = "pcard" + (fits ? "" : " dim") + (state.selectedIdx === idx ? " selected" : "") +
@@ -1135,7 +1146,19 @@
     return a;
   }
 
+  function teamAvgRating(team) {
+    if (!team.players || !team.players.length) return 75;
+    var sum = team.players.reduce(function (a, p) { return a + p.r; }, 0);
+    return sum / team.players.length;
+  }
+
   function pickRandomOpponents(n) {
+    if (state.mode === "clasico_facil") {
+      // Clásico Fácil: solo equipos con promedio >= 82 (plantillas de élite)
+      var elite = TEAMS.filter(function (t) { return teamAvgRating(t) >= 82; });
+      var pool = elite.length >= n ? elite : TEAMS;
+      return shuffleArr(pool).slice(0, n);
+    }
     return shuffleArr(TEAMS).slice(0, n);
   }
 
@@ -1228,7 +1251,9 @@
     var base = 1.3;
     var gap = (myAttack - oppDefense) / 10;
     var midGap = (myMid - oppMid) / 10;
-    var xg = base * Math.pow(1.16, gap) * Math.pow(1.04, midGap);
+    // Factor más sensible (1.22 vs 1.16): una brecha de 10 pts da un 22% más de xG
+    // en vez del 16% anterior — los resultados reflejan mejor la diferencia real de nivel.
+    var xg = base * Math.pow(1.22, gap) * Math.pow(1.05, midGap);
     return Math.max(0.2, Math.min(5.5, xg));
   }
 
@@ -1252,21 +1277,22 @@
     return weighted[weighted.length - 1].p;
   }
 
-  // 4 cambios por equipo, siempre — es la variante que elegí para que la
-  // sustitución tenga peso real en vez de ser sólo un cartelito: al que entra
-  // se le suman +2 de rating (aire fresco) y a partir de ahí se recalcula la
-  // fuerza del equipo, así el resto del partido corre con la nueva mezcla.
+  function subsPerTeam() {
+    return state.mode === "clasico_facil" ? 6 : 4;
+  }
+
   function pickSubMinutes() {
+    var count = subsPerTeam();
     var mins = [];
-    while (mins.length < 4) {
-      var m = 55 + Math.floor(Math.random() * 35);
+    while (mins.length < count) {
+      var m = 50 + Math.floor(Math.random() * 40);
       if (mins.indexOf(m) === -1) mins.push(m);
     }
     return mins.sort(function (a, b) { return a - b; });
   }
 
   function trySubstitute(team, minute, events, side) {
-    if (team.bench.length === 0 || team.subsUsed >= 4) return false;
+    if (team.bench.length === 0 || team.subsUsed >= subsPerTeam()) return false;
     var order = team.starters.map(function (_, i) { return i; });
     for (var i = order.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = order[i]; order[i] = order[j]; order[j] = t; }
     for (var oi = 0; oi < order.length; oi++) {
@@ -1588,6 +1614,10 @@
   function showBracketScreen() {
     showScreen("bracket");
     var champ = state.cup.championPack;
+    var isChampion = !!(champ && champ.isYou);
+    if (isChampion) markChampionsWon();
+    registerRunInWeeklyTable(isChampion);
+
     var champSlot = document.getElementById("bracket-champion-slot");
     if (champ) {
       champSlot.innerHTML =
@@ -1598,6 +1628,7 @@
     } else {
       champSlot.innerHTML = "";
     }
+    renderWeeklyTable(isChampion);
 
     var container = document.getElementById("bracket-rounds");
     container.innerHTML = "";
@@ -1624,6 +1655,93 @@
       container.appendChild(block);
     });
   }
+
+  /* ---- tabla semanal ---- */
+
+  var WEEKLY_KEY = "draft8a2_weekly";
+  var CHAMPIONS_KEY = "draft8a2_champions";
+
+  function getWeekKey() {
+    var d = new Date();
+    var day = d.getDay();
+    // Semana empieza el lunes
+    var monday = new Date(d);
+    monday.setDate(d.getDate() - ((day + 6) % 7));
+    return monday.toISOString().slice(0, 10);
+  }
+
+  function loadWeeklyScores() {
+    try {
+      var raw = localStorage.getItem(WEEKLY_KEY);
+      var all = raw ? JSON.parse(raw) : {};
+      return all[getWeekKey()] || [];
+    } catch (e) { return []; }
+  }
+
+  function saveWeeklyScore(entry) {
+    try {
+      var raw = localStorage.getItem(WEEKLY_KEY);
+      var all = raw ? JSON.parse(raw) : {};
+      var wk = getWeekKey();
+      var list = all[wk] || [];
+      list.push(entry);
+      list.sort(function (a, b) { return b.score - a.score; });
+      list = list.slice(0, 10);
+      all[wk] = list;
+      localStorage.setItem(WEEKLY_KEY, JSON.stringify(all));
+    } catch (e) {}
+  }
+
+  function hasWonChampions() {
+    try { return !!localStorage.getItem(CHAMPIONS_KEY); } catch (e) { return false; }
+  }
+
+  function markChampionsWon() {
+    try { localStorage.setItem(CHAMPIONS_KEY, "1"); } catch (e) {}
+  }
+
+  function calcRunScore() {
+    var starters = state.slots.map(function (s) { return s.filled ? s.filled.eff || s.filled.r : 0; });
+    var avg = starters.length ? starters.reduce(function (a, b) { return a + b; }, 0) / starters.length : 75;
+    // Gol diff total en todos los partidos disputados
+    var goalDiff = 0;
+    Object.keys(state.cup.results || {}).forEach(function (rnd) {
+      state.cup.results[rnd].forEach(function (e) {
+        if (e.isYourMatch) goalDiff += (e.scoreLeft - e.scoreRight) * (e.left.isYou ? 1 : -1);
+      });
+    });
+    return Math.round(avg * 10 + goalDiff * 3);
+  }
+
+  function renderWeeklyTable(isChampion) {
+    var box = document.getElementById("weekly-table");
+    if (!box) return;
+    if (!hasWonChampions()) {
+      box.innerHTML = '<div class="weekly-table"><div class="weekly-locked">🔒 Ganá la Champions al menos una vez para desbloquear la tabla semanal.</div></div>';
+      return;
+    }
+    var scores = loadWeeklyScores();
+    if (!scores.length) { box.innerHTML = ""; return; }
+    var top3 = scores.slice(0, 3);
+    var medals = ["🥇", "🥈", "🥉"];
+    var rows = top3.map(function (e, i) {
+      return '<div class="weekly-row">' +
+        '<div class="weekly-pos">' + medals[i] + "</div>" +
+        '<div class="weekly-name">' + (e.isChampion ? "⭐ " : "") + esc(e.label) + "</div>" +
+        '<div class="weekly-score">' + e.score + " pts</div>" +
+        "</div>";
+    }).join("");
+    box.innerHTML = '<div class="weekly-table"><h3>🏆 Tabla semanal — top 3</h3>' + rows + "</div>";
+  }
+
+  function registerRunInWeeklyTable(isChampion) {
+    if (!hasWonChampions() && !isChampion) return;
+    var score = calcRunScore();
+    var label = "Copa " + new Date().toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+    saveWeeklyScore({ score: score, label: label, isChampion: isChampion, ts: Date.now() });
+  }
+
+  /* ---- fin tabla semanal ---- */
 
   document.getElementById("btn-play-champions").addEventListener("click", startChampions);
   document.getElementById("btn-cup-new").addEventListener("click", function () { showScreen("start"); });

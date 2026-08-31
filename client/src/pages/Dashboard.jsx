@@ -1,219 +1,199 @@
 import { useCallback, useEffect, useState } from "react";
-import { Flame, Radio, Target, Users } from "lucide-react";
-import api from "../api.js";
+import { BarChart3, Crown, Flame, HelpCircle, Newspaper, Swords, Star, Users, Zap } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
-import QuestionCard from "../components/QuestionCard.jsx";
-import BonusCard from "../components/BonusCard.jsx";
-import ModeBCard from "../components/ModeBCard.jsx";
-import GroupQuestionComposer from "../components/GroupQuestionComposer.jsx";
-import ShareButton from "../components/ShareButton.jsx";
-import GroupStreakCard from "../components/GroupStreakCard.jsx";
+import api from "../api.js";
 
-const LIVE_REFRESH_MS = 15000;
+const INTERNAL_GAMES = [
+  {
+    to: "/trivia",
+    label: "Trivia",
+    icon: HelpCircle,
+    description: "Respondé las preguntas del día: trivia normal + preguntas especiales del grupo.",
+    color: "#3b9dd6",
+  },
+  {
+    to: "/futbol",
+    label: "Fútbol",
+    icon: Newspaper,
+    description: "Resultados en vivo, tabla de posiciones, goleadores y juegos de fútbol.",
+    color: "#3fae9a",
+  },
+  {
+    to: "/grupo",
+    label: "Grupos",
+    icon: Users,
+    description: "Competí con tus amigos, mirá el ranking del grupo y los campeones mensuales.",
+    color: "#d9a441",
+  },
+  {
+    to: "/duelos",
+    label: "Duelos",
+    icon: Swords,
+    description: "Desafiá a alguien del grupo uno contra uno con las preguntas más difíciles.",
+    color: "#f0907e",
+  },
+  {
+    to: "/estadisticas",
+    label: "Estadísticas",
+    icon: BarChart3,
+    description: "Resumen semanal, compatibilidad con el grupo y logros desbloqueados.",
+    color: "#a78bfa",
+  },
+];
+
+const EXTERNAL_GAMES = [
+  {
+    href: "/draft-europeo.html",
+    label: "Draft Europeo 8a2",
+    icon: Star,
+    description: "Armá tu XI con jugadores de 138 planteles históricos de la Champions League.",
+    color: "#d9a441",
+    badge: null,
+  },
+  {
+    href: "/cotrero.html",
+    label: "Cotrero",
+    icon: Crown,
+    description: "De potrero a leyenda: simulá toda la carrera de un jugador, temporada a temporada.",
+    color: "#3fae9a",
+    badge: null,
+  },
+  {
+    href: null,
+    label: "Adivina el Jugador",
+    icon: Zap,
+    description: "¿Podés adivinar quién es el jugador con pistas mínimas?",
+    color: "#a8a9ac",
+    badge: "Próximamente",
+  },
+];
 
 export default function Dashboard() {
-  const { stats, refreshMe } = useAuth();
+  const { user, stats } = useAuth();
   const { groups, activeGroupId: groupId } = useGroups();
-  const [questions, setQuestions] = useState(null);
-  const [modeBData, setModeBData] = useState(null);
-  const [mode, setMode] = useState("a");
+  const [groupDetail, setGroupDetail] = useState(null);
 
-  const loadTrivia = async () => {
-    try {
-      const { data } = await api.get("/questions/today");
-      setQuestions(data.questions);
-    } catch {
-      setQuestions([]);
-    }
-  };
-
-  const loadModeB = useCallback(async () => {
-    if (!groupId) {
-      setModeBData(null);
-      return;
-    }
-    try {
-      const { data } = await api.get("/mode-b/today", { params: { groupId } });
-      setModeBData(data);
-    } catch {
-      setModeBData(null);
-    }
+  useEffect(() => {
+    if (!groupId) { setGroupDetail(null); return; }
+    api.get(`/groups/${groupId}`)
+      .then(({ data }) => setGroupDetail(data.group))
+      .catch(() => setGroupDetail(null));
   }, [groupId]);
-
-  useEffect(() => {
-    loadTrivia();
-  }, []);
-
-  useEffect(() => {
-    if (mode === "b") loadModeB();
-  }, [mode, loadModeB]);
-
-  // Sincronización en vivo: mientras mirás el modo especial se refrescan los
-  // votos del resto del grupo. Se pausa si la pestaña no está visible para no
-  // pegarle al servidor de fondo.
-  useEffect(() => {
-    if (mode !== "b" || !groupId) return;
-    const id = setInterval(() => {
-      if (document.visibilityState === "visible") loadModeB();
-    }, LIVE_REFRESH_MS);
-    return () => clearInterval(id);
-  }, [mode, groupId, loadModeB]);
-
-  const handleAnswered = (index, result) => {
-    setQuestions((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, answered: true, result } : item))
-    );
-    refreshMe();
-  };
-
-  const handleModeBChanged = async () => {
-    await loadModeB();
-    refreshMe();
-  };
 
   return (
     <Layout>
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
         <div>
-          <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-            <h1 className="text-xl sm:text-2xl font-bold">Preguntas del día</h1>
-            <div className="flex items-center gap-2">
-              <ShareButton trivia={questions} modeB={modeBData} />
-              <GroupSelector className="mr-1" />
-              <button
-                onClick={() => setMode("a")}
-                className={`px-3 py-1 text-sm font-medium rounded border ${
-                  mode === "a"
-                    ? "bg-blue-500/20 border-blue-500 text-blue-400"
-                    : "bg-transparent border-gray-600 text-gray-400 hover:border-gray-500"
-                }`}
-              >
-                Trivia
-              </button>
-              <button
-                onClick={() => setMode("b")}
-                className={`px-3 py-1 text-sm font-medium rounded border ${
-                  mode === "b"
-                    ? "bg-purple-500/20 border-purple-500 text-purple-400"
-                    : "bg-transparent border-gray-600 text-gray-400 hover:border-gray-500"
-                }`}
-              >
-                Especial
-              </button>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 mb-6">
-            <p className="text-gray-400 text-sm">
-              {new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+              Hola{user?.username ? `, ${user.username}` : ""} 👋
+            </h1>
+            <p className="text-gray-400 text-sm max-w-xl leading-relaxed">
+              Futotal es tu plataforma de fútbol con amigos: trivia diaria, duelos 1v1, estadísticas
+              del grupo y simuladores de carrera. Elegí por dónde empezar.
             </p>
-            {mode === "b" && modeBData && (
-              <span className="text-[11px] text-gray-500 flex items-center gap-1.5">
-                <Radio size={11} className="text-purple-400 animate-pulse" />
-                en vivo
-              </span>
-            )}
           </div>
 
-          {mode === "a" && questions && questions.length === 0 && (
-            <Card>
-              <p className="text-gray-400">No hay preguntas disponibles por ahora. Volvé más tarde.</p>
-            </Card>
-          )}
+          {/* Secciones principales */}
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
+            Secciones
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+            {INTERNAL_GAMES.map(({ to, label, icon: Icon, description, color }) => (
+              <Link
+                key={to}
+                to={to}
+                className="flex items-start gap-3.5 px-4 py-4 rounded-card border border-border bg-panel hover:border-white/20 hover:bg-white/5 transition-colors group"
+              >
+                <div
+                  className="w-9 h-9 rounded-card flex items-center justify-center shrink-0 mt-0.5"
+                  style={{ background: `${color}22`, border: `1px solid ${color}44` }}
+                >
+                  <Icon size={18} style={{ color }} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold mb-0.5 group-hover:text-white transition-colors">
+                    {label}
+                  </p>
+                  <p className="text-xs text-gray-500 leading-snug">{description}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
 
-          {mode === "b" && !groupId && (
-            <Card>
-              <p className="text-gray-400">Necesitás estar en un grupo para ver las preguntas especiales.</p>
-            </Card>
-          )}
-
-          <div className="space-y-6">
-            {mode === "a" ? (
-              <>
-                {questions?.map((item, i) => (
-                  <QuestionCard
-                    key={item.question.id}
-                    item={item}
-                    index={i}
-                    total={questions.length}
-                    onAnswered={(result) => handleAnswered(i, result)}
-                  />
-                ))}
-                {groupId && <BonusCard groupId={groupId} />}
-              </>
-            ) : (
-              modeBData &&
-              groupId && (
+          {/* Juegos externos */}
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
+            Juegos
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {EXTERNAL_GAMES.map(({ href, label, icon: Icon, description, color, badge }) => {
+              const inner = (
                 <>
-                  <ModeBCard
-                    data={modeBData.quien_es_mas}
-                    groupId={groupId}
-                    onChanged={handleModeBChanged}
-                  />
-                  <ModeBCard
-                    data={modeBData.que_prefieres}
-                    groupId={groupId}
-                    onChanged={handleModeBChanged}
-                  />
-                  <ModeBCard
-                    data={modeBData.personalidad}
-                    groupId={groupId}
-                    onChanged={handleModeBChanged}
-                  />
-                  {modeBData.grupal?.pending ? (
-                    <GroupQuestionComposer groupId={groupId} onCreated={handleModeBChanged} />
-                  ) : (
-                    <ModeBCard
-                      data={modeBData.grupal}
-                      groupId={groupId}
-                      onChanged={handleModeBChanged}
-                    />
-                  )}
+                  <div
+                    className="w-9 h-9 rounded-card flex items-center justify-center shrink-0 mt-0.5"
+                    style={{ background: `${color}22`, border: `1px solid ${color}44` }}
+                  >
+                    <Icon size={18} style={{ color }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className="text-sm font-semibold">{label}</p>
+                      {badge && (
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-gray-600/50 text-gray-400 border border-gray-600/50">
+                          {badge}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 leading-snug">{description}</p>
+                  </div>
                 </>
-              )
-            )}
+              );
+
+              if (!href) {
+                return (
+                  <div
+                    key={label}
+                    className="flex items-start gap-3.5 px-4 py-4 rounded-card border border-border bg-panel opacity-60 cursor-default"
+                  >
+                    {inner}
+                  </div>
+                );
+              }
+
+              return (
+                <a
+                  key={href}
+                  href={href}
+                  className="flex items-start gap-3.5 px-4 py-4 rounded-card border border-border bg-panel hover:border-white/20 hover:bg-white/5 transition-colors group"
+                >
+                  {inner}
+                </a>
+              );
+            })}
           </div>
         </div>
 
-        <div className="space-y-6">
-          {groupId && <GroupStreakCard groupId={groupId} />}
+        {/* Panel lateral */}
+        <div className="space-y-5">
+          <GroupSelector />
+
           <Card>
-            <div className="flex items-center gap-2 text-orange-400 mb-1">
-              <Flame size={18} />
-              <span className="text-sm font-medium">Racha actual</span>
+            <div className="flex items-center gap-2 text-orange-400 mb-2">
+              <Flame size={16} />
+              <span className="text-sm font-medium">Racha</span>
             </div>
             <p className="text-3xl font-bold">{stats?.current_streak ?? 0} días</p>
-            <p className="text-xs text-gray-500 mt-1">Mejor racha: {stats?.best_streak ?? 0} días</p>
+            <p className="text-xs text-gray-500 mt-1">Mejor: {stats?.best_streak ?? 0} días</p>
           </Card>
 
           <Card>
-            <div className="flex items-center gap-2 text-gray-300 mb-3">
-              <Users size={18} />
-              <span className="text-sm font-medium">Mi grupo</span>
-            </div>
-            {groups.length === 0 ? (
-              <p className="text-sm text-gray-500">Todavía no estás en ningún grupo.</p>
-            ) : (
-              <div className="space-y-2">
-                {groups.slice(0, 3).map((g) => (
-                  <div key={g.id} className="flex items-center justify-between text-sm">
-                    <span className="truncate">{g.name}</span>
-                    <span className="text-gray-500 text-xs shrink-0 ml-2">{g.member_count} miembros</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
-
-          <Card>
-            <div className="flex items-center gap-2 text-gray-300 mb-3">
-              <Target size={18} />
-              <span className="text-sm font-medium">Mis stats</span>
-            </div>
+            <p className="text-sm font-medium mb-3">Mis stats</p>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-gray-500 text-xs mb-1">Puntos</p>
@@ -233,6 +213,29 @@ export default function Dashboard() {
               </div>
             </div>
           </Card>
+
+          {groups.length > 0 && (
+            <Card>
+              <p className="text-sm font-medium mb-3">Mi grupo</p>
+              {groupDetail ? (
+                <div>
+                  <p className="font-semibold text-accent">{groupDetail.name}</p>
+                  {groupDetail.description && (
+                    <p className="text-xs text-gray-500 mt-0.5">{groupDetail.description}</p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {groups.slice(0, 3).map((g) => (
+                    <div key={g.id} className="flex items-center justify-between text-sm">
+                      <span className="truncate">{g.name}</span>
+                      <span className="text-gray-500 text-xs shrink-0 ml-2">{g.member_count} miembros</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          )}
         </div>
       </div>
     </Layout>

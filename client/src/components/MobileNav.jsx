@@ -1,19 +1,14 @@
 import { NavLink } from "react-router-dom";
-import { BarChart3, Flame, History, Home, LogOut, Newspaper, Swords, User, Users } from "lucide-react";
+import { BarChart3, Flame, Home, HelpCircle, LogOut, Newspaper, Swords, User, Users } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import Avatar from "./Avatar.jsx";
 
-// En el teléfono el sidebar de 256px no entra: se reemplaza por una barra
-// arriba con la identidad y una barra de navegación abajo, al alcance del pulgar.
-// Con 7 secciones ya no entran todas cómodas abajo: Historial se saca de acá
-// (sigue estando en Estadísticas y en el sidebar de escritorio) para que el
-// resto no quede apretado.
 const links = [
   { to: "/", label: "Inicio", icon: Home, end: true },
+  { to: "/trivia", label: "Trivia", icon: HelpCircle },
   { to: "/futbol", label: "Fútbol", icon: Newspaper },
   { to: "/grupo", label: "Grupo", icon: Users },
   { to: "/duelos", label: "Duelos", icon: Swords },
-  { to: "/estadisticas", label: "Stats", icon: BarChart3 },
   { to: "/perfil", label: "Perfil", icon: User },
 ];
 

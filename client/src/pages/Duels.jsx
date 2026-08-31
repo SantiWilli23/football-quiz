@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Check, Flame, Swords, X } from "lucide-react";
+import { Check, Circle, Flame, HelpCircle, Star, Sword, Swords, Trophy, X, Zap } from "lucide-react";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -227,6 +227,30 @@ export default function Duels() {
     }
   };
 
+  const GAME_TYPES = [
+    {
+      key: "trivia",
+      label: "Trivia",
+      icon: HelpCircle,
+      description: "Preguntas de trivia uno a uno",
+      available: true,
+    },
+    {
+      key: "8a2",
+      label: "Draft 8a2",
+      icon: Star,
+      description: "Armá tu equipo y enfrentate",
+      available: false,
+    },
+    {
+      key: "mentiroso",
+      label: "Mentiroso",
+      icon: Zap,
+      description: "¿Sabés más jugadores que el otro?",
+      available: false,
+    },
+  ];
+
   if (groups.length === 0) {
     return (
       <Layout>
@@ -266,9 +290,36 @@ export default function Duels() {
       <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold mb-1">Duelos</h1>
-          <p className="text-gray-400 text-sm">Uno contra uno, con las preguntas más difíciles</p>
+          <p className="text-gray-400 text-sm">Uno contra uno — elegí el juego</p>
         </div>
         <GroupSelector />
+      </div>
+
+      {/* Selector de tipo de duelo */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        {GAME_TYPES.map(({ key, label, icon: Icon, description, available }) => (
+          <div
+            key={key}
+            className={`px-4 py-3.5 rounded-card border transition-colors ${
+              available
+                ? "border-accent/40 bg-accent/5 cursor-default"
+                : "border-border bg-panel opacity-50 cursor-default"
+            }`}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <Icon size={16} className={available ? "text-accent" : "text-gray-500"} />
+              <span className={`text-sm font-semibold ${available ? "text-white" : "text-gray-500"}`}>
+                {label}
+              </span>
+              {!available && (
+                <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-gray-700/60 text-gray-500 border border-gray-600/40">
+                  Pronto
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-gray-500">{description}</p>
+          </div>
+        ))}
       </div>
 
       {record && (
@@ -375,8 +426,17 @@ export default function Duels() {
                 key={m.id}
                 className="flex items-center gap-3 px-4 py-3 rounded-card border border-border"
               >
-                <Avatar user={m} size={32} />
-                <span className="text-sm flex-1 min-w-0 truncate">{m.username}</span>
+                <div className="relative shrink-0">
+                  <Avatar user={m} size={32} />
+                  <span
+                    className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-panel bg-gray-600"
+                    title="Desconectado"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm truncate block">{m.username}</span>
+                  <span className="text-[10px] text-gray-600">Sin actividad reciente</span>
+                </div>
                 <button
                   onClick={() => challenge(m.id)}
                   disabled={challenging}

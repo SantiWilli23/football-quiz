@@ -3,6 +3,7 @@ import { useAuth } from "./context/AuthContext.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
+import Trivia from "./pages/Trivia.jsx";
 import Group from "./pages/Group.jsx";
 import History from "./pages/History.jsx";
 import Profile from "./pages/Profile.jsx";
@@ -54,6 +55,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <Dashboard />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/trivia"
+        element={
+          <PrivateRoute>
+            <Trivia />
           </PrivateRoute>
         }
       />

@@ -66,6 +66,12 @@ export const HAIRS = [
   "jopo",
   "colita",
   "raya",
+  "ondulado",
+  "trenzas",
+  "flequillo",
+  "punta",
+  "recogido",
+  "media",
 ];
 
 export const FACES = ["sonrisa", "seria", "grito", "picara", "enojada", "sorprendida", "guino", "triste"];
@@ -169,6 +175,58 @@ function Hair({ style, color }) {
   }
   if (style === "largo") {
     return <path d="M20 40 Q50 6 80 40 L80 70 Q74 54 72 40 L28 40 Q26 54 20 70 Z" fill={color} />;
+  }
+  if (style === "ondulado") {
+    return (
+      <>
+        <path d="M22 38 Q50 10 78 38 Q70 26 50 26 Q30 26 22 38 Z" fill={color} />
+        <path d="M22 38 Q30 44 36 38 Q42 32 48 38 Q54 44 60 38 Q66 32 72 38 Q76 40 78 38" stroke={color} strokeWidth="5" fill="none" strokeLinecap="round"/>
+      </>
+    );
+  }
+  if (style === "trenzas") {
+    return (
+      <>
+        <path d="M22 38 Q50 10 78 38 Q70 26 50 26 Q30 26 22 38 Z" fill={color} />
+        <path d="M38 38 Q40 50 38 62 Q36 70 38 78" stroke={color} strokeWidth="5" fill="none" strokeLinecap="round"/>
+        <path d="M62 38 Q60 50 62 62 Q64 70 62 78" stroke={color} strokeWidth="5" fill="none" strokeLinecap="round"/>
+      </>
+    );
+  }
+  if (style === "flequillo") {
+    return (
+      <>
+        <path d="M22 38 Q50 10 78 38 Q70 26 50 26 Q30 26 22 38 Z" fill={color} />
+        <path d="M28 36 Q40 46 52 36 Q60 30 78 38" stroke={color} strokeWidth="8" fill="none" strokeLinecap="round"/>
+      </>
+    );
+  }
+  if (style === "punta") {
+    return (
+      <>
+        <path d="M22 38 Q50 20 78 38 Q70 30 50 30 Q30 30 22 38 Z" fill={color} />
+        <path d="M38 30 L34 12 L42 28 Z" fill={color} />
+        <path d="M50 28 L50 8 L56 26 Z" fill={color} />
+        <path d="M62 30 L66 12 L58 28 Z" fill={color} />
+      </>
+    );
+  }
+  if (style === "recogido") {
+    return (
+      <>
+        <path d="M22 38 Q50 16 78 38 Q70 28 50 28 Q30 28 22 38 Z" fill={color} />
+        <circle cx="50" cy="20" r="8" fill={color} />
+      </>
+    );
+  }
+  if (style === "media") {
+    return (
+      <>
+        <path d="M22 38 Q50 10 78 38 Q70 26 50 26 Q30 26 22 38 Z" fill={color} />
+        <path d="M22 38 L22 55 Q26 46 28 38" fill={color} />
+        <path d="M78 38 L78 55 Q74 46 72 38" fill={color} />
+      </>
+    );
   }
   return <path d="M22 38 Q50 10 78 38 Q70 26 50 26 Q30 26 22 38 Z" fill={color} />;
 }

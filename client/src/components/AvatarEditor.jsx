@@ -27,6 +27,12 @@ const HAIR_LABELS = {
   jopo: "Jopo",
   colita: "Colita",
   raya: "Con raya",
+  ondulado: "Ondulado",
+  trenzas: "Trenzas",
+  flequillo: "Flequillo",
+  punta: "De punta",
+  recogido: "Recogido",
+  media: "Media melena",
 };
 
 const FACE_LABELS = {
