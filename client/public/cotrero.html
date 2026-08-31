@@ -657,6 +657,15 @@
         return null;
       }
       if (typeof data.nextTrainingAt === "undefined") data.nextTrainingAt = data.seasonsPlayed + randInt(2, 3);
+      if (typeof data.peakOvr === "undefined") data.peakOvr = data.ovr || 60;
+      if (typeof data.ceiling === "undefined") data.ceiling = 88;
+      if (typeof data.retireAge === "undefined") data.retireAge = 35;
+      if (typeof data.declineBaseAge === "undefined") data.declineBaseAge = 30;
+      if (typeof data.resistAccum === "undefined") data.resistAccum = 0;
+      if (!Array.isArray(data.clubsPlayed)) data.clubsPlayed = data.club ? [data.club] : [];
+      if (typeof data.careerMatches === "undefined") data.careerMatches = 0;
+      if (typeof data.careerGoals === "undefined") data.careerGoals = 0;
+      if (typeof data.careerAssists === "undefined") data.careerAssists = 0;
       return data;
     } catch (e) { return null; }
   }
@@ -1295,7 +1304,7 @@
 
   function retirePlayer() {
     player._retired = true;
-    var rank = RANKS.filter(function (r) { return player.peakOvr >= r.min; })[0];
+    var rank = RANKS.filter(function (r) { return player.peakOvr >= r.min; })[0] || RANKS[RANKS.length - 1];
     var score = player.peakOvr * 10 + player.titles.length * 60 + player.careerGoals * 2 + player.seasonsPlayed * 5;
 
     document.getElementById("legacy-rank").textContent = rank.label;
@@ -1327,7 +1336,7 @@
 
     saveHistoryEntry({
       name: player.name, mode: "Simple", position: "Delantero", score: score,
-      rank: rank.label, peakOvr: player.peakOvr, seasons: player.seasonsPlayed, date: new Date().toISOString()
+      rank: rank ? rank.label : RANKS[RANKS.length - 1].label, peakOvr: player.peakOvr, seasons: player.seasonsPlayed, date: new Date().toISOString()
     });
     clearSave();
     showScreen("legacy");
