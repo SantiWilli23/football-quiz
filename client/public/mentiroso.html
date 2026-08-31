@@ -1,0 +1,1061 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Mentiroso</title>
+<style>
+  :root {
+    --bg: #2a2c30;
+    --panel: #34363b;
+    --border: rgba(255,255,255,0.12);
+    --accent: #3b9dd6;
+    --accent2: #7cc4ea;
+    --accent-dark: #215e82;
+    --accent-bg: rgba(59,157,214,0.16);
+    --teal: #3fae9a;
+    --teal2: #82d3c3;
+    --teal-dark: #1f5f52;
+    --teal-bg: rgba(63,174,154,0.16);
+    --gold: #d9a441;
+    --gold2: #f0c674;
+    --gold-dark: #8a6423;
+    --gold-bg: rgba(217,164,65,0.16);
+    --text: #f2f2f0;
+    --text-dim: #a8a9ac;
+    --text-dim2: #7c7d80;
+    --good: #4caf6e;
+    --bad: #f0907e;
+    --red: #e05252;
+    --red-bg: rgba(224,82,82,0.16);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 0%, rgba(242,242,240,0.04), transparent 70%),
+      radial-gradient(ellipse 60% 40% at 85% 100%, rgba(242,242,240,0.03), transparent 70%),
+      var(--bg);
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+    min-height: 100%;
+    overflow-x: hidden;
+  }
+  .sans { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+
+  .goldline {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.5;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 65% 55% at 50% 15%, black 20%, transparent 70%);
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 600px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .brand .mark {
+    width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center;
+    background: linear-gradient(150deg, var(--bad), var(--red) 55%, #a03030);
+    font-weight: 900; color: #fff; font-size: 16px; font-family: Georgia, serif;
+  }
+  .brand h1 {
+    font-size: 22px; font-weight: 700; letter-spacing: 0.06em; color: var(--bad);
+  }
+  .brand .menu-btn {
+    margin-left: auto; font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    font-size: 11.5px; font-weight: 700; color: var(--text-dim); text-decoration: none;
+    border: 1px solid var(--border); border-radius: 999px; padding: 7px 13px;
+  }
+  .brand .menu-btn:hover { color: var(--bad); border-color: var(--bad); }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px; margin-bottom: 16px;
+  }
+  .panel h2 { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .sub { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12.5px; color: var(--text-dim); line-height: 1.6; margin-bottom: 14px; }
+
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadein 0.3s ease; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    font-size: 13px; font-weight: 700; border: none; border-radius: 10px;
+    padding: 12px 20px; cursor: pointer; transition: all 0.15s ease; color: #0a1614;
+  }
+  .btn-block { width: 100%; }
+  .btn-red {
+    background: linear-gradient(135deg, var(--bad), var(--red));
+    color: #fff;
+  }
+  .btn-red:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn-teal {
+    background: linear-gradient(135deg, var(--teal2), var(--teal));
+  }
+  .btn-teal:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .btn-gold {
+    background: linear-gradient(135deg, var(--gold2), var(--gold));
+  }
+  .btn-gold:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .btn-ghost {
+    background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+  }
+  .btn-ghost:hover { border-color: var(--text-dim); color: var(--text); }
+  .btn:disabled { opacity: 0.4; pointer-events: none; }
+
+  /* Topic card */
+  .topic-card {
+    background: var(--accent-bg); border: 1px solid var(--accent); border-radius: 12px;
+    padding: 18px; text-align: center; margin-bottom: 16px;
+  }
+  .topic-label { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent2); margin-bottom: 8px; }
+  .topic-text { font-size: 16px; font-weight: 700; color: var(--text); line-height: 1.5; }
+
+  /* Bidding */
+  .bid-area { text-align: center; padding: 10px 0; }
+  .bid-number { font-size: 64px; font-weight: 900; color: var(--gold2); font-variant-numeric: tabular-nums; line-height: 1; margin: 10px 0; }
+  .bid-label { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12px; color: var(--text-dim); margin-bottom: 16px; }
+  .bid-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+  .bid-buttons .btn { min-width: 110px; }
+
+  /* Chat log */
+  .chat-log { max-height: 200px; overflow-y: auto; margin-bottom: 14px; }
+  .chat-msg {
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12px;
+    padding: 8px 12px; border-radius: 10px; margin-bottom: 6px; line-height: 1.5;
+  }
+  .chat-msg.player { background: var(--teal-bg); color: var(--teal2); text-align: right; }
+  .chat-msg.ai { background: var(--red-bg); color: var(--bad); }
+  .chat-msg.system { background: rgba(255,255,255,0.04); color: var(--text-dim); text-align: center; font-style: italic; }
+
+  /* Naming phase */
+  .naming-input {
+    width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border);
+    background: rgba(0,0,0,0.3); color: var(--text); font-size: 14px;
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    outline: none; transition: border-color 0.15s;
+  }
+  .naming-input:focus { border-color: var(--accent); }
+  .naming-input::placeholder { color: var(--text-dim2); }
+
+  .named-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; min-height: 30px; }
+  .named-chip {
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; font-weight: 700;
+    padding: 6px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;
+  }
+  .named-chip.correct { background: var(--teal-bg); color: var(--teal2); border: 1px solid var(--teal); }
+  .named-chip.wrong { background: var(--red-bg); color: var(--bad); border: 1px solid var(--red); text-decoration: line-through; }
+
+  .timer-bar {
+    height: 4px; border-radius: 2px; background: var(--border); margin: 10px 0; overflow: hidden;
+  }
+  .timer-bar .fill { height: 100%; border-radius: 2px; background: var(--teal); transition: width 0.3s linear; }
+  .timer-bar .fill.danger { background: var(--bad); }
+
+  .counter { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 13px; color: var(--text-dim); text-align: center; margin-bottom: 8px; }
+  .counter b { color: var(--gold2); font-size: 18px; }
+
+  /* Result */
+  .result-icon { font-size: 56px; text-align: center; margin: 10px 0; }
+  .result-title { font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 6px; }
+  .result-sub { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 13px; color: var(--text-dim); text-align: center; margin-bottom: 18px; line-height: 1.6; }
+  .result-title.win { color: var(--teal2); }
+  .result-title.lose { color: var(--bad); }
+
+  .valid-list { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12px; color: var(--text-dim); line-height: 1.8; margin: 10px 0; }
+  .valid-list b { color: var(--text); }
+
+  /* Stats bar */
+  .stats-row {
+    display: flex; justify-content: center; gap: 24px; margin: 14px 0;
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12px; color: var(--text-dim);
+  }
+  .stats-row .stat-val { font-size: 20px; font-weight: 900; color: var(--gold2); display: block; text-align: center; }
+
+  .footer { text-align: center; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 10px; color: var(--text-dim2); margin-top: 30px; }
+
+  /* AI thinking animation */
+  .thinking { display: inline-block; }
+  .thinking::after { content: ""; animation: dots 1.2s steps(4) infinite; }
+  @keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+
+  /* Difficulty selector */
+  .diff-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 14px 0; }
+  .diff-card {
+    border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center;
+    cursor: pointer; transition: all 0.15s; background: rgba(0,0,0,0.15);
+  }
+  .diff-card:hover { border-color: var(--accent); }
+  .diff-card.selected { border-color: var(--bad); background: var(--red-bg); }
+  .diff-card .dlabel { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 13px; font-weight: 700; color: var(--text); }
+  .diff-card .ddesc { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="goldline"></div>
+<div class="wrap">
+  <div class="brand">
+    <div class="mark">M</div>
+    <h1>MENTIROSO</h1>
+    <a class="menu-btn" href="/">Menú principal</a>
+  </div>
+
+  <!-- MENU -->
+  <div class="screen active" id="screen-menu">
+    <div class="panel">
+      <h2>Mentiroso</h2>
+      <p class="sub">El juego de faroleo futbolero. Se elige un tema, vas subiendo la apuesta de cuántos jugadores conocés que lo cumplen, y cuando alguien dice <b style="color:var(--bad)">¡MENTIROSO!</b>, hay que demostrar.</p>
+
+      <div class="stats-row" id="menu-stats"></div>
+
+      <div style="margin-bottom:10px">
+        <p class="sub" style="margin-bottom:8px; font-weight:700; color:var(--text)">Dificultad</p>
+        <div class="diff-grid" id="diff-grid">
+          <div class="diff-card" data-diff="facil"><div class="dlabel">Fácil</div><div class="ddesc">IA cautelosa</div></div>
+          <div class="diff-card selected" data-diff="normal"><div class="dlabel">Normal</div><div class="ddesc">IA equilibrada</div></div>
+          <div class="diff-card" data-diff="dificil"><div class="dlabel">Difícil</div><div class="ddesc">IA agresiva</div></div>
+        </div>
+      </div>
+
+      <button class="btn btn-red btn-block" id="btn-play">Jugar</button>
+    </div>
+  </div>
+
+  <!-- TOPIC REVEAL -->
+  <div class="screen" id="screen-topic">
+    <div class="panel">
+      <div class="topic-card">
+        <div class="topic-label">Tema de la ronda</div>
+        <div class="topic-text" id="topic-text"></div>
+      </div>
+      <p class="sub" style="text-align:center" id="topic-count-hint"></p>
+      <button class="btn btn-red btn-block" id="btn-start-bid">Empezar</button>
+    </div>
+  </div>
+
+  <!-- BIDDING -->
+  <div class="screen" id="screen-bid">
+    <div class="panel">
+      <div class="topic-card" style="padding:12px">
+        <div class="topic-text" style="font-size:13px" id="bid-topic"></div>
+      </div>
+      <div class="chat-log" id="chat-log"></div>
+      <div class="bid-area" id="bid-area">
+        <div class="bid-label">Apuesta actual</div>
+        <div class="bid-number" id="bid-number">0</div>
+        <div id="bid-turn-label" class="sub" style="margin-bottom:8px"></div>
+        <div class="bid-buttons" id="bid-buttons">
+          <button class="btn btn-teal" id="btn-bid-plus1">+1</button>
+          <button class="btn btn-teal" id="btn-bid-plus2">+2</button>
+          <button class="btn btn-red" id="btn-call">¡MENTIROSO!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAMING -->
+  <div class="screen" id="screen-naming">
+    <div class="panel">
+      <div class="topic-card" style="padding:12px">
+        <div class="topic-text" style="font-size:13px" id="naming-topic"></div>
+      </div>
+      <div class="counter" id="naming-counter">Nombrados: <b>0</b> / <b>0</b></div>
+      <div class="timer-bar"><div class="fill" id="naming-timer-fill" style="width:100%"></div></div>
+      <div class="named-list" id="named-list"></div>
+      <div style="display:flex;gap:8px">
+        <input class="naming-input" id="naming-input" placeholder="Escribí un nombre..." autocomplete="off">
+        <button class="btn btn-teal" id="btn-submit-name" style="flex-shrink:0">OK</button>
+      </div>
+      <p class="sub" style="margin-top:10px; text-align:center" id="naming-feedback"></p>
+      <button class="btn btn-ghost btn-block" id="btn-give-up" style="margin-top:8px">Me rindo</button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="screen" id="screen-result">
+    <div class="panel">
+      <div class="result-icon" id="result-icon"></div>
+      <div class="result-title" id="result-title"></div>
+      <div class="result-sub" id="result-sub"></div>
+      <div id="result-details"></div>
+      <button class="btn btn-red btn-block" id="btn-play-again">Jugar de nuevo</button>
+      <button class="btn btn-ghost btn-block" id="btn-back-menu" style="margin-top:8px">Volver al menú</button>
+    </div>
+  </div>
+
+  <div class="footer">Mentiroso · juego de faroleo futbolero · los datos son de juego</div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ============ PLAYER DATABASE ============ */
+  var P = [
+    {n:"Cristiano Ronaldo",c:["Sporting CP","Manchester United","Real Madrid","Juventus"],nat:"Portugal",a:["CR7","Cristiano"]},
+    {n:"Lionel Messi",c:["Barcelona","PSG","Inter Miami"],nat:"Argentina",a:["Messi","Leo Messi"]},
+    {n:"Neymar",c:["Santos","Barcelona","PSG","Al Hilal"],nat:"Brasil",a:["Neymar Jr"]},
+    {n:"Kylian Mbappé",c:["Mónaco","PSG","Real Madrid"],nat:"Francia",a:["Mbappé"]},
+    {n:"Erling Haaland",c:["Molde","Red Bull Salzburgo","Borussia Dortmund","Manchester City"],nat:"Noruega"},
+    {n:"Luka Modrić",c:["Dinamo Zagreb","Tottenham","Real Madrid"],nat:"Croacia",a:["Modric"]},
+    {n:"Toni Kroos",c:["Bayern Múnich","Bayer Leverkusen","Real Madrid"],nat:"Alemania"},
+    {n:"Karim Benzema",c:["Lyon","Real Madrid","Al-Ittihad"],nat:"Francia"},
+    {n:"Robert Lewandowski",c:["Borussia Dortmund","Bayern Múnich","Barcelona"],nat:"Polonia"},
+    {n:"Luis Suárez",c:["Ajax","Liverpool","Barcelona","Atlético de Madrid","Inter Miami"],nat:"Uruguay",a:["Suárez","Suarez"]},
+    {n:"Antoine Griezmann",c:["Real Sociedad","Atlético de Madrid","Barcelona"],nat:"Francia"},
+    {n:"Eden Hazard",c:["Lille","Chelsea","Real Madrid"],nat:"Bélgica"},
+    {n:"Gareth Bale",c:["Tottenham","Real Madrid"],nat:"Gales"},
+    {n:"Sergio Ramos",c:["Sevilla","Real Madrid","PSG"],nat:"España"},
+    {n:"Raphaël Varane",c:["Lens","Real Madrid","Manchester United"],nat:"Francia",a:["Varane"]},
+    {n:"David Beckham",c:["Manchester United","Real Madrid","LA Galaxy","AC Milan","PSG"],nat:"Inglaterra"},
+    {n:"Ronaldinho",c:["Grêmio","PSG","Barcelona","AC Milan","Flamengo"],nat:"Brasil"},
+    {n:"Zinedine Zidane",c:["Cannes","Bordeaux","Juventus","Real Madrid"],nat:"Francia",a:["Zidane"]},
+    {n:"Thierry Henry",c:["Mónaco","Juventus","Arsenal","Barcelona"],nat:"Francia"},
+    {n:"Zlatan Ibrahimović",c:["Malmö","Ajax","Juventus","Inter de Milán","Barcelona","AC Milan","PSG","Manchester United","LA Galaxy"],nat:"Suecia",a:["Ibrahimovic","Zlatan","Ibra"]},
+    {n:"Ronaldo Nazário",c:["Cruzeiro","PSV","Barcelona","Inter de Milán","Real Madrid","AC Milan","Corinthians"],nat:"Brasil",a:["Ronaldo","R9","Ronaldo Fenómeno"]},
+    {n:"Rivaldo",c:["Palmeiras","Barcelona","AC Milan","Cruzeiro"],nat:"Brasil"},
+    {n:"Samuel Eto'o",c:["Real Madrid","Barcelona","Inter de Milán","Chelsea","Anzhi"],nat:"Camerún",a:["Etoo","Eto'o"]},
+    {n:"Deco",c:["Porto","Barcelona","Chelsea"],nat:"Portugal"},
+    {n:"Xavi Hernández",c:["Barcelona","Al Sadd"],nat:"España",a:["Xavi"]},
+    {n:"Andrés Iniesta",c:["Barcelona","Vissel Kobe"],nat:"España",a:["Iniesta"]},
+    {n:"Sergio Busquets",c:["Barcelona","Inter Miami"],nat:"España",a:["Busquets"]},
+    {n:"Gerard Piqué",c:["Manchester United","Barcelona"],nat:"España",a:["Piqué","Pique"]},
+    {n:"Carles Puyol",c:["Barcelona"],nat:"España",a:["Puyol"]},
+    {n:"Dani Alves",c:["Sevilla","Barcelona","Juventus","PSG","São Paulo"],nat:"Brasil",a:["Daniel Alves"]},
+    {n:"Jordi Alba",c:["Valencia","Barcelona","Inter Miami"],nat:"España"},
+    {n:"David Villa",c:["Valencia","Barcelona","Atlético de Madrid"],nat:"España"},
+    {n:"Fernando Torres",c:["Atlético de Madrid","Liverpool","Chelsea","AC Milan"],nat:"España"},
+    {n:"Raúl González",c:["Real Madrid","Schalke 04"],nat:"España",a:["Raúl","Raul"]},
+    {n:"Iker Casillas",c:["Real Madrid","Porto"],nat:"España",a:["Casillas"]},
+    {n:"Gianluigi Buffon",c:["Parma","Juventus","PSG"],nat:"Italia",a:["Buffon"]},
+    {n:"Paolo Maldini",c:["AC Milan"],nat:"Italia",a:["Maldini"]},
+    {n:"Alessandro Nesta",c:["Lazio","AC Milan"],nat:"Italia",a:["Nesta"]},
+    {n:"Andrea Pirlo",c:["Inter de Milán","AC Milan","Juventus"],nat:"Italia",a:["Pirlo"]},
+    {n:"Francesco Totti",c:["Roma"],nat:"Italia",a:["Totti"]},
+    {n:"Alessandro Del Piero",c:["Juventus","Sydney FC"],nat:"Italia",a:["Del Piero"]},
+    {n:"Gonzalo Higuaín",c:["River Plate","Real Madrid","Napoli","Juventus","AC Milan","Chelsea","Inter Miami"],nat:"Argentina",a:["Higuaín","Higuain","Pipita"]},
+    {n:"Ángel Di María",c:["Rosario Central","Benfica","Real Madrid","Manchester United","PSG","Juventus","Benfica"],nat:"Argentina",a:["Di María","Di Maria","Fideo"]},
+    {n:"Sergio Agüero",c:["Independiente","Atlético de Madrid","Manchester City","Barcelona"],nat:"Argentina",a:["Agüero","Aguero","Kun Agüero"]},
+    {n:"Carlos Tévez",c:["Boca Juniors","Corinthians","West Ham","Manchester United","Manchester City","Juventus","Boca Juniors"],nat:"Argentina",a:["Tévez","Tevez"]},
+    {n:"Javier Mascherano",c:["River Plate","Corinthians","West Ham","Liverpool","Barcelona"],nat:"Argentina",a:["Mascherano"]},
+    {n:"Juan Román Riquelme",c:["Boca Juniors","Barcelona","Villarreal"],nat:"Argentina",a:["Riquelme"]},
+    {n:"Diego Maradona",c:["Argentinos Juniors","Boca Juniors","Barcelona","Napoli","Sevilla"],nat:"Argentina",a:["Maradona"]},
+    {n:"Gabriel Batistuta",c:["River Plate","Fiorentina","Roma","Inter de Milán"],nat:"Argentina",a:["Batistuta","Batigol"]},
+    {n:"Hernán Crespo",c:["River Plate","Parma","Lazio","Inter de Milán","Chelsea","AC Milan"],nat:"Argentina",a:["Crespo"]},
+    {n:"Javier Zanetti",c:["Inter de Milán"],nat:"Argentina",a:["Zanetti","Pupi"]},
+    {n:"Diego Forlán",c:["Independiente","Manchester United","Villarreal","Atlético de Madrid","Inter de Milán"],nat:"Uruguay",a:["Forlán","Forlan"]},
+    {n:"Edinson Cavani",c:["Palermo","Napoli","PSG","Manchester United"],nat:"Uruguay",a:["Cavani"]},
+    {n:"James Rodríguez",c:["Porto","Mónaco","Real Madrid","Bayern Múnich","Everton"],nat:"Colombia",a:["James"]},
+    {n:"Radamel Falcao",c:["River Plate","Porto","Atlético de Madrid","Mónaco","Manchester United","Chelsea"],nat:"Colombia",a:["Falcao"]},
+    {n:"Alexis Sánchez",c:["Udinese","Barcelona","Arsenal","Manchester United","Inter de Milán","Marsella"],nat:"Chile",a:["Alexis"]},
+    {n:"Arturo Vidal",c:["Bayer Leverkusen","Juventus","Bayern Múnich","Barcelona","Inter de Milán","Flamengo"],nat:"Chile"},
+    {n:"Gary Medel",c:["Universidad Católica","Sevilla","Cardiff City","Inter de Milán","Besiktas","Bologna"],nat:"Chile",a:["Medel"]},
+    {n:"Claudio Bravo",c:["Real Sociedad","Barcelona","Manchester City"],nat:"Chile"},
+    {n:"Marcelo Salas",c:["Universidad de Chile","River Plate","Lazio","Juventus"],nat:"Chile",a:["Salas","Matador"]},
+    {n:"Iván Zamorano",c:["Real Madrid","Inter de Milán","América"],nat:"Chile",a:["Zamorano","Bam Bam"]},
+    {n:"Wayne Rooney",c:["Everton","Manchester United"],nat:"Inglaterra",a:["Rooney"]},
+    {n:"Frank Lampard",c:["West Ham","Chelsea","Manchester City"],nat:"Inglaterra",a:["Lampard"]},
+    {n:"Steven Gerrard",c:["Liverpool"],nat:"Inglaterra",a:["Gerrard"]},
+    {n:"Rio Ferdinand",c:["West Ham","Leeds United","Manchester United"],nat:"Inglaterra"},
+    {n:"John Terry",c:["Chelsea"],nat:"Inglaterra",a:["Terry"]},
+    {n:"Michael Owen",c:["Liverpool","Real Madrid","Manchester United"],nat:"Inglaterra",a:["Owen"]},
+    {n:"Alan Shearer",c:["Southampton","Blackburn","Newcastle"],nat:"Inglaterra",a:["Shearer"]},
+    {n:"Harry Kane",c:["Tottenham","Bayern Múnich"],nat:"Inglaterra"},
+    {n:"Raheem Sterling",c:["Liverpool","Manchester City","Chelsea"],nat:"Inglaterra"},
+    {n:"Mohamed Salah",c:["Basel","Chelsea","Fiorentina","Roma","Liverpool"],nat:"Egipto",a:["Salah"]},
+    {n:"Sadio Mané",c:["Red Bull Salzburgo","Southampton","Liverpool","Bayern Múnich","Al-Nassr"],nat:"Senegal",a:["Mané","Mane"]},
+    {n:"Virgil van Dijk",c:["Celtic","Southampton","Liverpool"],nat:"Países Bajos",a:["Van Dijk"]},
+    {n:"Kevin De Bruyne",c:["Chelsea","Wolfsburgo","Manchester City"],nat:"Bélgica",a:["De Bruyne","KDB"]},
+    {n:"Romelu Lukaku",c:["Chelsea","West Brom","Everton","Manchester United","Inter de Milán","Chelsea","Roma","Napoli"],nat:"Bélgica"},
+    {n:"Thibaut Courtois",c:["Atlético de Madrid","Chelsea","Real Madrid"],nat:"Bélgica",a:["Courtois"]},
+    {n:"Vinícius Jr",c:["Flamengo","Real Madrid"],nat:"Brasil",a:["Vinicius","Vini Jr"]},
+    {n:"Casemiro",c:["São Paulo","Real Madrid","Manchester United"],nat:"Brasil"},
+    {n:"Marcelo",c:["Fluminense","Real Madrid"],nat:"Brasil"},
+    {n:"Thiago Silva",c:["Fluminense","AC Milan","PSG","Chelsea"],nat:"Brasil"},
+    {n:"Neymar",c:["Santos","Barcelona","PSG","Al Hilal"],nat:"Brasil"},
+    {n:"Roberto Firmino",c:["Hoffenheim","Liverpool","Al-Ahli"],nat:"Brasil",a:["Firmino"]},
+    {n:"Philippe Coutinho",c:["Inter de Milán","Liverpool","Barcelona","Bayern Múnich","Aston Villa"],nat:"Brasil",a:["Coutinho"]},
+    {n:"Alisson Becker",c:["Roma","Liverpool"],nat:"Brasil",a:["Alisson"]},
+    {n:"Ederson",c:["Benfica","Manchester City"],nat:"Brasil"},
+    {n:"David de Gea",c:["Atlético de Madrid","Manchester United"],nat:"España",a:["De Gea"]},
+    {n:"Jan Oblak",c:["Benfica","Atlético de Madrid"],nat:"Eslovenia",a:["Oblak"]},
+    {n:"Manuel Neuer",c:["Schalke 04","Bayern Múnich"],nat:"Alemania",a:["Neuer"]},
+    {n:"Marc-André ter Stegen",c:["Borussia Mönchengladbach","Barcelona"],nat:"Alemania",a:["Ter Stegen"]},
+    {n:"Thomas Müller",c:["Bayern Múnich"],nat:"Alemania",a:["Müller","Muller","Thomas Muller"]},
+    {n:"Joshua Kimmich",c:["RB Leipzig","Bayern Múnich"],nat:"Alemania",a:["Kimmich"]},
+    {n:"Jude Bellingham",c:["Birmingham City","Borussia Dortmund","Real Madrid"],nat:"Inglaterra",a:["Bellingham"]},
+    {n:"Pedri",c:["Las Palmas","Barcelona"],nat:"España"},
+    {n:"Gavi",c:["Barcelona"],nat:"España"},
+    {n:"Bukayo Saka",c:["Arsenal"],nat:"Inglaterra",a:["Saka"]},
+    {n:"Phil Foden",c:["Manchester City"],nat:"Inglaterra",a:["Foden"]},
+    {n:"Jamal Musiala",c:["Bayern Múnich"],nat:"Alemania",a:["Musiala"]},
+    {n:"Florian Wirtz",c:["Bayer Leverkusen"],nat:"Alemania",a:["Wirtz"]},
+    {n:"Lamine Yamal",c:["Barcelona"],nat:"España",a:["Yamal"]},
+    {n:"Ousmane Dembélé",c:["Rennes","Borussia Dortmund","Barcelona","PSG"],nat:"Francia",a:["Dembélé","Dembele"]},
+    {n:"Paul Pogba",c:["Manchester United","Juventus"],nat:"Francia",a:["Pogba"]},
+    {n:"N'Golo Kanté",c:["Leicester City","Chelsea","Al-Ittihad"],nat:"Francia",a:["Kanté","Kante"]},
+    {n:"Kalidou Koulibaly",c:["Napoli","Chelsea","Al-Hilal"],nat:"Senegal",a:["Koulibaly"]},
+    {n:"Marquinhos",c:["Roma","PSG"],nat:"Brasil"},
+    {n:"Marco Verratti",c:["PSG","Al-Arabi"],nat:"Italia",a:["Verratti"]},
+    {n:"Giorgio Chiellini",c:["Juventus","Los Angeles FC"],nat:"Italia",a:["Chiellini"]},
+    {n:"Leonardo Bonucci",c:["Juventus","AC Milan"],nat:"Italia",a:["Bonucci"]},
+    {n:"Paulo Dybala",c:["Palermo","Juventus","Roma"],nat:"Argentina",a:["Dybala"]},
+    {n:"Lautaro Martínez",c:["Racing Club","Inter de Milán"],nat:"Argentina",a:["Lautaro"]},
+    {n:"Julián Álvarez",c:["River Plate","Manchester City","Atlético de Madrid"],nat:"Argentina"},
+    {n:"Enzo Fernández",c:["River Plate","Benfica","Chelsea"],nat:"Argentina",a:["Enzo"]},
+    {n:"Nicolás Otamendi",c:["Porto","Valencia","Manchester City","Benfica"],nat:"Argentina",a:["Otamendi"]},
+    {n:"David Trezeguet",c:["Mónaco","Juventus"],nat:"Francia",a:["Trezeguet"]},
+    {n:"Patrick Vieira",c:["AC Milan","Arsenal","Juventus","Inter de Milán","Manchester City"],nat:"Francia",a:["Vieira"]},
+    {n:"Didier Drogba",c:["Marsella","Chelsea","Galatasaray","Shanghai Shenhua"],nat:"Costa de Marfil",a:["Drogba"]},
+    {n:"Ruud van Nistelrooy",c:["PSV","Manchester United","Real Madrid"],nat:"Países Bajos",a:["Van Nistelrooy"]},
+    {n:"Arjen Robben",c:["PSV","Chelsea","Real Madrid","Bayern Múnich"],nat:"Países Bajos",a:["Robben"]},
+    {n:"Wesley Sneijder",c:["Ajax","Real Madrid","Inter de Milán","Galatasaray"],nat:"Países Bajos",a:["Sneijder"]},
+    {n:"Robin van Persie",c:["Feyenoord","Arsenal","Manchester United","Fenerbahçe"],nat:"Países Bajos",a:["Van Persie"]},
+    {n:"Dennis Bergkamp",c:["Ajax","Inter de Milán","Arsenal"],nat:"Países Bajos",a:["Bergkamp"]},
+    {n:"Edwin van der Sar",c:["Ajax","Juventus","Manchester United"],nat:"Países Bajos",a:["Van der Sar"]},
+    {n:"Frenkie de Jong",c:["Ajax","Barcelona"],nat:"Países Bajos",a:["De Jong"]},
+    {n:"Matthijs de Ligt",c:["Ajax","Juventus","Bayern Múnich","Manchester United"],nat:"Países Bajos",a:["De Ligt"]},
+    {n:"Cesc Fàbregas",c:["Arsenal","Barcelona","Chelsea","Mónaco"],nat:"España",a:["Fàbregas","Fabregas","Cesc"]},
+    {n:"Fernando Redondo",c:["River Plate","Real Madrid","AC Milan"],nat:"Argentina",a:["Redondo"]},
+    {n:"Juan Sebastián Verón",c:["Estudiantes","Sampdoria","Parma","Lazio","Manchester United","Chelsea","Inter de Milán"],nat:"Argentina",a:["Verón","Veron"]},
+    {n:"Esteban Cambiasso",c:["River Plate","Real Madrid","Inter de Milán","Leicester City"],nat:"Argentina",a:["Cambiasso"]},
+    {n:"Diego Simeone",c:["Vélez","Sevilla","Atlético de Madrid","Inter de Milán","Lazio"],nat:"Argentina",a:["Simeone"]},
+    {n:"Riquelme",c:["Boca Juniors","Barcelona","Villarreal"],nat:"Argentina"},
+    {n:"Pablo Aimar",c:["River Plate","Valencia","Benfica"],nat:"Argentina",a:["Aimar"]},
+    {n:"Óscar Ruggeri",c:["Boca Juniors","River Plate","Real Madrid"],nat:"Argentina",a:["Ruggeri"]},
+    {n:"Alfredo Di Stéfano",c:["River Plate","Real Madrid","Espanyol"],nat:"Argentina",a:["Di Stéfano","Di Stefano"]},
+    {n:"Pelé",c:["Santos","New York Cosmos"],nat:"Brasil"},
+    {n:"Romário",c:["Vasco da Gama","PSV","Barcelona","Flamengo","Valencia"],nat:"Brasil",a:["Romario"]},
+    {n:"Kaká",c:["São Paulo","AC Milan","Real Madrid"],nat:"Brasil",a:["Kaka"]},
+    {n:"Adriano",c:["Flamengo","Inter de Milán","Roma"],nat:"Brasil"},
+    {n:"Roberto Carlos",c:["Palmeiras","Real Madrid","Fenerbahçe"],nat:"Brasil"},
+    {n:"Cafu",c:["São Paulo","Roma","AC Milan"],nat:"Brasil"},
+    {n:"Rivaldo",c:["Palmeiras","Barcelona","AC Milan"],nat:"Brasil"},
+    {n:"Robinho",c:["Santos","Real Madrid","Manchester City","AC Milan"],nat:"Brasil"},
+    {n:"Oscar",c:["Internacional","Chelsea","Shanghai SIPG"],nat:"Brasil"},
+    {n:"Willian",c:["Shakhtar Donetsk","Chelsea","Arsenal","Corinthians"],nat:"Brasil"},
+    {n:"Douglas Costa",c:["Shakhtar Donetsk","Bayern Múnich","Juventus","Grêmio"],nat:"Brasil"},
+    {n:"Pepe",c:["Porto","Real Madrid"],nat:"Portugal"},
+    {n:"Luís Figo",c:["Sporting CP","Barcelona","Real Madrid","Inter de Milán"],nat:"Portugal",a:["Figo"]},
+    {n:"Rui Costa",c:["Benfica","Fiorentina","AC Milan"],nat:"Portugal"},
+    {n:"Bernardo Silva",c:["Benfica","Mónaco","Manchester City"],nat:"Portugal"},
+    {n:"Bruno Fernandes",c:["Sporting CP","Manchester United"],nat:"Portugal"},
+    {n:"Diogo Jota",c:["Porto","Wolverhampton","Liverpool"],nat:"Portugal"},
+    {n:"João Félix",c:["Benfica","Atlético de Madrid","Barcelona","Chelsea"],nat:"Portugal"},
+    {n:"Mesut Özil",c:["Schalke 04","Werder Bremen","Real Madrid","Arsenal","Fenerbahçe"],nat:"Alemania",a:["Özil","Ozil"]},
+    {n:"Timo Werner",c:["Stuttgart","RB Leipzig","Chelsea","Tottenham"],nat:"Alemania"},
+    {n:"Leroy Sané",c:["Schalke 04","Manchester City","Bayern Múnich"],nat:"Alemania",a:["Sané","Sane"]},
+    {n:"Pierre-Emerick Aubameyang",c:["Saint-Étienne","Borussia Dortmund","Arsenal","Barcelona","Chelsea","Marsella"],nat:"Gabón",a:["Aubameyang"]},
+    {n:"Henrikh Mkhitaryan",c:["Borussia Dortmund","Manchester United","Arsenal","Roma","Inter de Milán"],nat:"Armenia",a:["Mkhitaryan"]},
+    {n:"Keylor Navas",c:["Real Madrid","PSG"],nat:"Costa Rica",a:["Navas"]},
+    {n:"Fabinho",c:["Mónaco","Liverpool","Al-Ittihad"],nat:"Brasil"},
+    {n:"Son Heung-min",c:["Hamburgo","Bayer Leverkusen","Tottenham"],nat:"Corea del Sur",a:["Son"]},
+
+    {n:"Mauro Icardi",c:["Sampdoria","Inter de Milán","PSG","Galatasaray"],nat:"Argentina",a:["Icardi"]},
+    {n:"Edinson Cavani",c:["Palermo","Napoli","PSG","Manchester United"],nat:"Uruguay"},
+    {n:"Diego Godín",c:["Villarreal","Atlético de Madrid","Inter de Milán","Cagliari"],nat:"Uruguay",a:["Godín","Godin"]},
+    {n:"Radamel Falcao",c:["River Plate","Porto","Atlético de Madrid","Mónaco","Manchester United","Chelsea"],nat:"Colombia"},
+    {n:"Charles Aránguiz",c:["Universidad de Chile","Inter de Milán","Bayer Leverkusen"],nat:"Chile",a:["Aránguiz","Aranguiz"]},
+    {n:"Eduardo Vargas",c:["Universidad de Chile","Napoli","Valencia","Hoffenheim","Tigres"],nat:"Chile",a:["Vargas"]},
+    {n:"Matías Fernández",c:["Colo-Colo","Villarreal","Sporting CP","Fiorentina"],nat:"Chile"},
+    {n:"Jorge Valdivia",c:["Colo-Colo","Palmeiras","Al-Wahda"],nat:"Chile",a:["Valdivia","Mago Valdivia"]},
+    {n:"Samir Nasri",c:["Marsella","Arsenal","Manchester City","Sevilla"],nat:"Francia",a:["Nasri"]},
+    {n:"Eric Cantona",c:["Marsella","Leeds United","Manchester United"],nat:"Francia",a:["Cantona"]},
+    {n:"Nicolas Anelka",c:["PSG","Arsenal","Real Madrid","Liverpool","Manchester City","Chelsea","Juventus","West Brom"],nat:"Francia",a:["Anelka"]},
+    {n:"Yaya Touré",c:["Mónaco","Barcelona","Manchester City"],nat:"Costa de Marfil",a:["Yaya Touré","Yaya Toure"]},
+    {n:"Michael Ballack",c:["Bayer Leverkusen","Bayern Múnich","Chelsea"],nat:"Alemania",a:["Ballack"]},
+    {n:"Miroslav Klose",c:["Kaiserslautern","Werder Bremen","Bayern Múnich","Lazio"],nat:"Alemania",a:["Klose"]},
+    {n:"Bastian Schweinsteiger",c:["Bayern Múnich","Manchester United","Chicago Fire"],nat:"Alemania",a:["Schweinsteiger"]},
+    {n:"Philipp Lahm",c:["Bayern Múnich","Stuttgart"],nat:"Alemania",a:["Lahm"]},
+    {n:"Xabi Alonso",c:["Real Sociedad","Liverpool","Real Madrid","Bayern Múnich"],nat:"España",a:["Xabi Alonso"]},
+    {n:"Fernando Hierro",c:["Real Madrid","Al-Rayyan","Bolton"],nat:"España",a:["Hierro"]},
+    {n:"Pedri",c:["Las Palmas","Barcelona"],nat:"España"}
+  ];
+
+  // Remove duplicates by name
+  var seen = {};
+  P = P.filter(function(p) {
+    var k = norm(p.n);
+    if (seen[k]) return false;
+    seen[k] = true;
+    return true;
+  });
+
+  /* ============ TOPICS ============ */
+
+  var CLUB_PAIRS = [
+    ["Real Madrid","Barcelona"],["Real Madrid","Juventus"],["Real Madrid","Manchester United"],
+    ["Real Madrid","Bayern Múnich"],["Real Madrid","Chelsea"],["Real Madrid","PSG"],
+    ["Real Madrid","Inter de Milán"],["Real Madrid","AC Milan"],["Real Madrid","Arsenal"],
+    ["Barcelona","PSG"],["Barcelona","Atlético de Madrid"],["Barcelona","Chelsea"],
+    ["Barcelona","Arsenal"],["Barcelona","Inter de Milán"],["Barcelona","AC Milan"],
+    ["Barcelona","Juventus"],["Barcelona","Bayern Múnich"],["Barcelona","Manchester City"],
+    ["Manchester United","Chelsea"],["Manchester United","Arsenal"],["Manchester United","Manchester City"],
+    ["Manchester United","Juventus"],["Manchester United","Real Madrid"],["Manchester United","Inter de Milán"],
+    ["Liverpool","Chelsea"],["Liverpool","Manchester City"],["Liverpool","Arsenal"],
+    ["Liverpool","Barcelona"],["Liverpool","Real Madrid"],["Liverpool","Bayern Múnich"],
+    ["Chelsea","Arsenal"],["Chelsea","Manchester City"],["Chelsea","Atlético de Madrid"],
+    ["Chelsea","Roma"],["Chelsea","Barcelona"],
+    ["Juventus","AC Milan"],["Juventus","Inter de Milán"],["Juventus","Bayern Múnich"],
+    ["Inter de Milán","AC Milan"],["Inter de Milán","Roma"],
+    ["PSG","Mónaco"],["PSG","Marsella"],["PSG","Chelsea"],
+    ["Atlético de Madrid","Chelsea"],["Atlético de Madrid","Barcelona"],["Atlético de Madrid","Inter de Milán"],
+    ["Bayern Múnich","Borussia Dortmund"],["Bayern Múnich","Manchester City"],
+    ["Borussia Dortmund","Real Madrid"],["Borussia Dortmund","Manchester City"],
+    ["River Plate","Real Madrid"],["River Plate","Inter de Milán"],["Boca Juniors","Inter de Milán"],
+    ["Napoli","PSG"],["Napoli","Chelsea"],
+    ["Benfica","Manchester United"],["Porto","Chelsea"],
+    ["Ajax","Barcelona"],["Ajax","Juventus"],["Ajax","Manchester United"]
+  ];
+
+  var NAT_CLUB = [
+    {nat:"Argentina",club:"Real Madrid"},{nat:"Argentina",club:"Barcelona"},{nat:"Argentina",club:"Inter de Milán"},
+    {nat:"Argentina",club:"Manchester City"},{nat:"Argentina",club:"Juventus"},{nat:"Argentina",club:"PSG"},
+    {nat:"Argentina",club:"Chelsea"},{nat:"Argentina",club:"Atlético de Madrid"},{nat:"Argentina",club:"AC Milan"},
+    {nat:"Brasil",club:"Real Madrid"},{nat:"Brasil",club:"Barcelona"},{nat:"Brasil",club:"AC Milan"},
+    {nat:"Brasil",club:"Inter de Milán"},{nat:"Brasil",club:"PSG"},{nat:"Brasil",club:"Manchester City"},
+    {nat:"Brasil",club:"Chelsea"},{nat:"Brasil",club:"Liverpool"},{nat:"Brasil",club:"Juventus"},
+    {nat:"Francia",club:"Real Madrid"},{nat:"Francia",club:"Barcelona"},{nat:"Francia",club:"Chelsea"},
+    {nat:"Francia",club:"Arsenal"},{nat:"Francia",club:"Juventus"},{nat:"Francia",club:"Manchester City"},
+    {nat:"España",club:"Barcelona"},{nat:"España",club:"Real Madrid"},{nat:"España",club:"Chelsea"},
+    {nat:"Alemania",club:"Bayern Múnich"},{nat:"Alemania",club:"Real Madrid"},{nat:"Alemania",club:"Chelsea"},
+    {nat:"Portugal",club:"Real Madrid"},{nat:"Portugal",club:"Manchester United"},{nat:"Portugal",club:"Barcelona"},
+    {nat:"Países Bajos",club:"Real Madrid"},{nat:"Países Bajos",club:"Barcelona"},{nat:"Países Bajos",club:"Inter de Milán"},
+    {nat:"Países Bajos",club:"Manchester United"},{nat:"Países Bajos",club:"Arsenal"},{nat:"Países Bajos",club:"Chelsea"},
+    {nat:"Uruguay",club:"Barcelona"},{nat:"Uruguay",club:"Atlético de Madrid"},{nat:"Uruguay",club:"Inter de Milán"},
+    {nat:"Chile",club:"Barcelona"},{nat:"Chile",club:"Inter de Milán"},{nat:"Chile",club:"Real Madrid"},
+    {nat:"Colombia",club:"Real Madrid"},{nat:"Italia",club:"Juventus"},{nat:"Italia",club:"PSG"},
+    {nat:"Inglaterra",club:"Real Madrid"},{nat:"Inglaterra",club:"Barcelona"},
+    {nat:"Croacia",club:"Real Madrid"}
+  ];
+
+  var NAT_LEAGUE_MAP = {
+    "LaLiga": ["Real Madrid","Barcelona","Atlético de Madrid","Sevilla","Real Sociedad","Athletic Club","Valencia","Celta de Vigo","Getafe","Cádiz","Villarreal","Espanyol"],
+    "Premier League": ["Manchester City","Manchester United","Liverpool","Arsenal","Chelsea","Tottenham","Newcastle","West Ham","Brighton","Everton","Leicester City","Southampton","Wolverhampton","Leeds United","Aston Villa","West Brom","Cardiff City","Blackburn"],
+    "Serie A": ["Juventus","Inter de Milán","AC Milan","Napoli","Roma","Atalanta","Fiorentina","Torino","Lazio","Parma","Sampdoria","Bologna","Cagliari","Palermo","Udinese"],
+    "Bundesliga": ["Bayern Múnich","Borussia Dortmund","RB Leipzig","Bayer Leverkusen","Eintracht Frankfurt","Wolfsburgo","Schalke 04","Werder Bremen","Stuttgart","Hamburgo","Hoffenheim","Borussia Mönchengladbach","Kaiserslautern"],
+    "Ligue 1": ["PSG","Marsella","Lyon","Mónaco","Lille","Rennes","Saint-Étienne","Bordeaux","Cannes"]
+  };
+
+  var NAT_LEAGUE = [
+    {nat:"Argentina",league:"Premier League"},{nat:"Argentina",league:"Serie A"},{nat:"Argentina",league:"LaLiga"},
+    {nat:"Brasil",league:"Serie A"},{nat:"Brasil",league:"Premier League"},{nat:"Brasil",league:"LaLiga"},
+    {nat:"Francia",league:"Premier League"},{nat:"Francia",league:"LaLiga"},{nat:"Francia",league:"Serie A"},
+    {nat:"Chile",league:"Serie A"},{nat:"Chile",league:"LaLiga"},
+    {nat:"Uruguay",league:"Serie A"},{nat:"Uruguay",league:"LaLiga"},{nat:"Uruguay",league:"Premier League"},
+    {nat:"Países Bajos",league:"Serie A"},{nat:"Países Bajos",league:"LaLiga"},{nat:"Países Bajos",league:"Premier League"},
+    {nat:"Portugal",league:"Premier League"},{nat:"Portugal",league:"LaLiga"},
+    {nat:"Alemania",league:"Premier League"},{nat:"Colombia",league:"LaLiga"},
+    {nat:"Corea del Sur",league:"Bundesliga"},{nat:"Corea del Sur",league:"Premier League"},
+    {nat:"Suecia",league:"Serie A"},{nat:"Suecia",league:"LaLiga"}
+  ];
+
+  function norm(s) {
+    return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+  }
+
+  function playersForClubPair(a, b) {
+    return P.filter(function(p) {
+      var hasA = p.c.some(function(cl) { return cl === a; });
+      var hasB = p.c.some(function(cl) { return cl === b; });
+      return hasA && hasB;
+    });
+  }
+
+  function playersForNatClub(nat, club) {
+    return P.filter(function(p) {
+      return p.nat === nat && p.c.some(function(cl) { return cl === club; });
+    });
+  }
+
+  function playersForNatLeague(nat, league) {
+    var clubs = NAT_LEAGUE_MAP[league] || [];
+    return P.filter(function(p) {
+      return p.nat === nat && p.c.some(function(cl) { return clubs.indexOf(cl) !== -1; });
+    });
+  }
+
+  var GENTILICIO = {
+    "Argentina":"argentinos","Brasil":"brasileños","Francia":"franceses",
+    "España":"españoles","Alemania":"alemanes","Portugal":"portugueses",
+    "Italia":"italianos","Inglaterra":"ingleses","Países Bajos":"neerlandeses",
+    "Uruguay":"uruguayos","Chile":"chilenos","Colombia":"colombianos",
+    "Croacia":"croatas","Bélgica":"belgas","Suecia":"suecos",
+    "Noruega":"noruegos","Egipto":"egipcios","Senegal":"senegaleses",
+    "Costa de Marfil":"marfileños","Camerún":"cameruneses","Gabón":"gaboneses",
+    "Costa Rica":"costarricenses","Corea del Sur":"surcoreanos",
+    "Eslovenia":"eslovenos","Armenia":"armenios","Polonia":"polacos","Gales":"galeses"
+  };
+  function gentilicio(nat) { return GENTILICIO[nat] || nat.toLowerCase() + "s"; }
+
+  function generateTopic() {
+    var topics = [];
+
+    CLUB_PAIRS.forEach(function(pair) {
+      var ps = playersForClubPair(pair[0], pair[1]);
+      if (ps.length >= 3) {
+        topics.push({
+          text: "Jugadores que jugaron en " + pair[0] + " y " + pair[1],
+          players: ps, count: ps.length
+        });
+      }
+    });
+
+    NAT_CLUB.forEach(function(nc) {
+      var ps = playersForNatClub(nc.nat, nc.club);
+      if (ps.length >= 3) {
+        topics.push({
+          text: "Jugadores " + gentilicio(nc.nat) + " que jugaron en " + nc.club,
+          players: ps, count: ps.length
+        });
+      }
+    });
+
+    NAT_LEAGUE.forEach(function(nl) {
+      var ps = playersForNatLeague(nl.nat, nl.league);
+      if (ps.length >= 3) {
+        topics.push({
+          text: "Jugadores " + gentilicio(nl.nat) + " que jugaron en la " + nl.league,
+          players: ps, count: ps.length
+        });
+      }
+    });
+
+    // Pick random topic, prefer ones with 4-15 valid answers
+    var good = topics.filter(function(t) { return t.count >= 4 && t.count <= 15; });
+    var pool = good.length >= 5 ? good : topics;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  /* ============ GAME STATE ============ */
+  var game = null;
+  var difficulty = "normal";
+  var stats = loadStats();
+
+  function loadStats() {
+    try {
+      var raw = localStorage.getItem("mentiroso_stats");
+      return raw ? JSON.parse(raw) : { played: 0, won: 0, streak: 0, bestStreak: 0 };
+    } catch (e) { return { played: 0, won: 0, streak: 0, bestStreak: 0 }; }
+  }
+  function saveStats() {
+    try { localStorage.setItem("mentiroso_stats", JSON.stringify(stats)); } catch (e) {}
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll(".screen").forEach(function(s) { s.classList.remove("active"); });
+    document.getElementById("screen-" + id).classList.add("active");
+    window.scrollTo(0, 0);
+  }
+
+  function esc(s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+  function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+
+  /* ============ MENU ============ */
+
+  function renderMenuStats() {
+    var el = document.getElementById("menu-stats");
+    el.innerHTML =
+      '<div><span class="stat-val">' + stats.played + '</span>Jugadas</div>' +
+      '<div><span class="stat-val">' + stats.won + '</span>Ganadas</div>' +
+      '<div><span class="stat-val">' + stats.bestStreak + '</span>Mejor racha</div>';
+  }
+
+  document.querySelectorAll("#diff-grid .diff-card").forEach(function(card) {
+    card.addEventListener("click", function() {
+      document.querySelectorAll("#diff-grid .diff-card").forEach(function(c) { c.classList.remove("selected"); });
+      card.classList.add("selected");
+      difficulty = card.dataset.diff;
+    });
+  });
+
+  document.getElementById("btn-play").addEventListener("click", startGame);
+  document.getElementById("btn-play-again").addEventListener("click", startGame);
+  document.getElementById("btn-back-menu").addEventListener("click", function() { renderMenuStats(); showScreen("menu"); });
+
+  /* ============ GAME FLOW ============ */
+
+  function startGame() {
+    var topic = generateTopic();
+    if (!topic) { alert("No hay temas disponibles"); return; }
+
+    game = {
+      topic: topic,
+      currentBid: 0,
+      lastBidder: null, // "player" or "ai"
+      playerStarts: Math.random() < 0.5,
+      chatMessages: [],
+      phase: "bid", // bid, naming, result
+      namedPlayers: [],
+      namingTarget: 0,
+      namingWho: null, // "player" or "ai"
+      timerInterval: null,
+      timeLeft: 0
+    };
+
+    document.getElementById("topic-text").textContent = topic.text;
+    document.getElementById("topic-count-hint").textContent =
+      "Hay al menos " + Math.max(3, topic.count - randInt(1, 3)) + " jugadores que cumplen esta condición.";
+
+    showScreen("topic");
+  }
+
+  document.getElementById("btn-start-bid").addEventListener("click", function() {
+    showScreen("bid");
+    document.getElementById("bid-topic").textContent = game.topic.text;
+    document.getElementById("chat-log").innerHTML = "";
+    game.chatMessages = [];
+    game.currentBid = 0;
+    updateBidDisplay();
+
+    if (!game.playerStarts) {
+      setPlayerTurn(false);
+      setTimeout(aiBid, 800);
+    } else {
+      setPlayerTurn(true);
+    }
+  });
+
+  function addChatMsg(who, text) {
+    var cls = who === "player" ? "player" : who === "ai" ? "ai" : "system";
+    game.chatMessages.push({ who: who, text: text });
+    var log = document.getElementById("chat-log");
+    var div = document.createElement("div");
+    div.className = "chat-msg " + cls;
+    div.innerHTML = text;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function updateBidDisplay() {
+    document.getElementById("bid-number").textContent = game.currentBid;
+  }
+
+  function setPlayerTurn(isPlayer) {
+    var btns = document.getElementById("bid-buttons");
+    var label = document.getElementById("bid-turn-label");
+    if (isPlayer) {
+      btns.style.display = "flex";
+      label.innerHTML = '<b style="color:var(--teal2)">Tu turno</b> — subí la apuesta o llamá mentiroso';
+      document.getElementById("btn-call").disabled = game.currentBid === 0;
+    } else {
+      btns.style.display = "none";
+      label.innerHTML = '<span class="thinking">La IA está pensando</span>';
+    }
+  }
+
+  /* Player bid buttons */
+  document.getElementById("btn-bid-plus1").addEventListener("click", function() { playerBid(1); });
+  document.getElementById("btn-bid-plus2").addEventListener("click", function() { playerBid(2); });
+  document.getElementById("btn-call").addEventListener("click", function() { playerCallMentiroso(); });
+
+  function playerBid(increment) {
+    game.currentBid += increment;
+    game.lastBidder = "player";
+    addChatMsg("player", "Yo sé <b>" + game.currentBid + "</b>");
+    updateBidDisplay();
+    setPlayerTurn(false);
+    setTimeout(aiBid, randInt(800, 1800));
+  }
+
+  function playerCallMentiroso() {
+    addChatMsg("player", "¡MENTIROSO! 🔥");
+    addChatMsg("system", "La IA debe nombrar " + game.currentBid + " jugadores");
+    setTimeout(function() { startNamingPhase("ai"); }, 1200);
+  }
+
+  /* AI logic */
+  function aiBid() {
+    var total = game.topic.count;
+    var bid = game.currentBid;
+
+    // AI knowledge varies by difficulty
+    var knowledge;
+    if (difficulty === "facil") {
+      knowledge = total - randInt(1, 3);
+    } else if (difficulty === "dificil") {
+      knowledge = total + randInt(-1, 1);
+    } else {
+      knowledge = total - randInt(0, 2);
+    }
+    knowledge = Math.max(knowledge, 2);
+
+    // AI decides: bid higher or call mentiroso
+    var callThreshold;
+    if (difficulty === "facil") {
+      callThreshold = knowledge - 1;
+    } else if (difficulty === "dificil") {
+      callThreshold = knowledge + 1;
+    } else {
+      callThreshold = knowledge;
+    }
+
+    if (bid > 0 && bid >= callThreshold) {
+      addChatMsg("ai", "¡MENTIROSO! 🔥");
+      addChatMsg("system", "Debés nombrar " + game.currentBid + " jugadores");
+      setTimeout(function() { startNamingPhase("player"); }, 1200);
+      return;
+    }
+
+    // AI bids higher
+    var increment = (bid < 3 || Math.random() < 0.6) ? 1 : 2;
+    if (bid + increment > knowledge) increment = 1;
+    game.currentBid = bid + increment;
+    game.lastBidder = "ai";
+
+    addChatMsg("ai", "Yo sé <b>" + game.currentBid + "</b>");
+    updateBidDisplay();
+    setPlayerTurn(true);
+  }
+
+  /* ============ NAMING PHASE ============ */
+
+  function startNamingPhase(who) {
+    game.phase = "naming";
+    game.namingWho = who;
+    game.namingTarget = game.currentBid;
+    game.namedPlayers = [];
+
+    document.getElementById("naming-topic").textContent = game.topic.text;
+    updateNamingCounter();
+    document.getElementById("named-list").innerHTML = "";
+    document.getElementById("naming-feedback").textContent = "";
+    document.getElementById("naming-input").value = "";
+
+    if (who === "player") {
+      document.getElementById("naming-input").style.display = "";
+      document.getElementById("btn-submit-name").style.display = "";
+      document.getElementById("btn-give-up").style.display = "";
+      document.getElementById("naming-input").focus();
+      startTimer(20 * game.namingTarget);
+    } else {
+      document.getElementById("naming-input").style.display = "none";
+      document.getElementById("btn-submit-name").style.display = "none";
+      document.getElementById("btn-give-up").style.display = "none";
+      aiNamePlayers();
+    }
+
+    showScreen("naming");
+  }
+
+  function updateNamingCounter() {
+    var correct = game.namedPlayers.filter(function(p) { return p.correct; }).length;
+    document.getElementById("naming-counter").innerHTML =
+      "Nombrados: <b>" + correct + "</b> / <b>" + game.namingTarget + "</b>";
+  }
+
+  function startTimer(seconds) {
+    game.timeLeft = seconds;
+    var total = seconds;
+    var fill = document.getElementById("naming-timer-fill");
+    fill.style.width = "100%";
+    fill.classList.remove("danger");
+
+    if (game.timerInterval) clearInterval(game.timerInterval);
+    game.timerInterval = setInterval(function() {
+      game.timeLeft--;
+      var pct = (game.timeLeft / total) * 100;
+      fill.style.width = pct + "%";
+      if (pct < 25) fill.classList.add("danger");
+      if (game.timeLeft <= 0) {
+        clearInterval(game.timerInterval);
+        endNaming(false);
+      }
+    }, 1000);
+  }
+
+  function matchPlayerInput(input) {
+    var n = norm(input);
+    if (n.length < 2) return null;
+    for (var i = 0; i < game.topic.players.length; i++) {
+      var p = game.topic.players[i];
+      // Already named?
+      var alreadyNamed = game.namedPlayers.some(function(np) { return np.correct && norm(np.player.n) === norm(p.n); });
+      if (alreadyNamed) continue;
+
+      // Full name match
+      if (norm(p.n) === n) return p;
+      // Alias match
+      if (p.a) {
+        for (var j = 0; j < p.a.length; j++) {
+          if (norm(p.a[j]) === n) return p;
+        }
+      }
+      // Last name match
+      var parts = norm(p.n).split(" ");
+      if (parts.length >= 2) {
+        var lastName = parts[parts.length - 1];
+        if (lastName === n && lastName.length >= 3) return p;
+      }
+      // First name match (only for single-name players like Pelé, Neymar)
+      if (parts.length <= 2 && parts[0] === n && parts[0].length >= 4) return p;
+    }
+    return null;
+  }
+
+  function submitPlayerName() {
+    var input = document.getElementById("naming-input");
+    var name = input.value.trim();
+    if (!name) return;
+    input.value = "";
+
+    var matched = matchPlayerInput(name);
+    var list = document.getElementById("named-list");
+    var chip = document.createElement("span");
+
+    if (matched) {
+      chip.className = "named-chip correct";
+      chip.textContent = "✓ " + matched.n;
+      game.namedPlayers.push({ player: matched, correct: true });
+      document.getElementById("naming-feedback").innerHTML = '<span style="color:var(--teal2)">¡Correcto!</span>';
+    } else {
+      chip.className = "named-chip wrong";
+      chip.textContent = "✗ " + name;
+      game.namedPlayers.push({ player: { n: name }, correct: false });
+      document.getElementById("naming-feedback").innerHTML = '<span style="color:var(--bad)">No válido o no cumple la condición</span>';
+    }
+    list.appendChild(chip);
+    updateNamingCounter();
+
+    var correct = game.namedPlayers.filter(function(p) { return p.correct; }).length;
+    if (correct >= game.namingTarget) {
+      if (game.timerInterval) clearInterval(game.timerInterval);
+      setTimeout(function() { endNaming(true); }, 600);
+    }
+
+    input.focus();
+  }
+
+  document.getElementById("btn-submit-name").addEventListener("click", submitPlayerName);
+  document.getElementById("naming-input").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") { e.preventDefault(); submitPlayerName(); }
+  });
+  document.getElementById("btn-give-up").addEventListener("click", function() {
+    if (game.timerInterval) clearInterval(game.timerInterval);
+    endNaming(false);
+  });
+
+  /* AI naming */
+  function aiNamePlayers() {
+    var validPlayers = game.topic.players.slice();
+    // Shuffle
+    for (var i = validPlayers.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = validPlayers[i]; validPlayers[i] = validPlayers[j]; validPlayers[j] = t;
+    }
+
+    // AI "knows" a subset based on difficulty
+    var known;
+    if (difficulty === "facil") {
+      known = Math.max(1, validPlayers.length - randInt(2, 4));
+    } else if (difficulty === "dificil") {
+      known = validPlayers.length;
+    } else {
+      known = Math.max(1, validPlayers.length - randInt(0, 2));
+    }
+
+    var toName = Math.min(game.namingTarget, known);
+    var list = document.getElementById("named-list");
+    var idx = 0;
+
+    var interval = setInterval(function() {
+      if (idx >= game.namingTarget) {
+        clearInterval(interval);
+        setTimeout(function() { endNaming(true); }, 800);
+        return;
+      }
+
+      if (idx < toName && idx < validPlayers.length) {
+        // AI names correctly
+        var p = validPlayers[idx];
+        var chip = document.createElement("span");
+        chip.className = "named-chip correct";
+        chip.textContent = "✓ " + p.n;
+        list.appendChild(chip);
+        game.namedPlayers.push({ player: p, correct: true });
+      } else {
+        // AI fails
+        clearInterval(interval);
+        var chip2 = document.createElement("span");
+        chip2.className = "named-chip wrong";
+        chip2.textContent = "✗ ...no sé más";
+        list.appendChild(chip2);
+        game.namedPlayers.push({ player: { n: "..." }, correct: false });
+        setTimeout(function() { endNaming(false); }, 800);
+        return;
+      }
+      idx++;
+      updateNamingCounter();
+    }, 1200);
+  }
+
+  function endNaming(success) {
+    game.phase = "result";
+    var playerWins;
+
+    if (game.namingWho === "player") {
+      playerWins = success;
+    } else {
+      playerWins = !success;
+    }
+
+    stats.played++;
+    if (playerWins) {
+      stats.won++;
+      stats.streak++;
+      if (stats.streak > stats.bestStreak) stats.bestStreak = stats.streak;
+    } else {
+      stats.streak = 0;
+    }
+    saveStats();
+
+    // Show result
+    var icon = document.getElementById("result-icon");
+    var title = document.getElementById("result-title");
+    var sub = document.getElementById("result-sub");
+    var details = document.getElementById("result-details");
+
+    if (playerWins) {
+      icon.textContent = "🏆";
+      title.textContent = "¡Ganaste!";
+      title.className = "result-title win";
+      if (game.namingWho === "player") {
+        sub.textContent = "Nombraste los " + game.namingTarget + " jugadores correctamente.";
+      } else {
+        sub.textContent = "La IA no pudo nombrar los " + game.currentBid + " jugadores. ¡Buena lectura!";
+      }
+    } else {
+      icon.textContent = "😤";
+      title.textContent = "Perdiste";
+      title.className = "result-title lose";
+      if (game.namingWho === "player") {
+        sub.textContent = "No pudiste nombrar los " + game.namingTarget + " jugadores.";
+      } else {
+        sub.textContent = "La IA nombró los " + game.currentBid + " jugadores. ¡Atrapado!";
+      }
+    }
+
+    // Show all valid players
+    details.innerHTML = '<p class="sub" style="font-weight:700; color:var(--text); margin-bottom:4px">Respuestas válidas (' + game.topic.count + '):</p>' +
+      '<div class="valid-list">' + game.topic.players.map(function(p) {
+        var wasNamed = game.namedPlayers.some(function(np) { return np.correct && norm(np.player.n) === norm(p.n); });
+        return (wasNamed ? '<b style="color:var(--teal2)">✓ ' : '') + esc(p.n) +
+          ' <span style="color:var(--text-dim2)">(' + p.c.join(", ") + ')</span>' +
+          (wasNamed ? '</b>' : '');
+      }).join("<br>") + '</div>';
+
+    showScreen("result");
+  }
+
+  /* ============ INIT ============ */
+  renderMenuStats();
+
+})();
+</script>
+</body>
+</html>
