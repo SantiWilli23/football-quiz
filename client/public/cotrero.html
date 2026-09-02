@@ -1091,9 +1091,16 @@
     return 0;
   }
 
-  function simulateSeason() {
+  function addSeasonResultLine(lines, label, value, delta, gold) {
+    var d = document.createElement("div");
+    d.className = "result-line";
+    d.innerHTML = "<span>" + esc(label) + "</span><span><b" + (gold ? ' class="gold"' : "") + ">" + esc(String(value)) + "</b>" +
+      (delta !== undefined && delta !== null ? ' <span class="delta ' + (delta > 0 ? "pos" : "neg") + '">' + (delta > 0 ? "+" : "") + delta + "</span>" : "") + "</span>";
+    lines.appendChild(d);
+  }
+
+  function runSeasonCalc(trainingName, trainingGain) {
     var ceiling = player.ceiling || 88;
-    // Progreso natural respeta el ceiling
     var natGain = naturalProgress(player.age, player.declinePhase);
     if (natGain > 0) player.ovr = clamp(player.ovr + natGain, 40, ceiling);
 
@@ -1104,8 +1111,6 @@
       player.pendingNeg = null;
     }
 
-    // Forma del año. En declive fase 1 el ruido es mayor (inestable).
-    // Forma 100 significa que juega ligeramente sobre su OVR.
     var noiseRange = player.declinePhase === 1 ? 14 : 8;
     player.forma = clamp(player.ovr + randInt(-noiseRange, noiseRange), 30, 100);
     var effectiveOvr = player.forma === 100 ? Math.min(player.ovr + 2, 99) : player.ovr;
@@ -1115,8 +1120,6 @@
     var isStarter = Math.random() < startingChance;
     var matches = isStarter ? randInt(26, 36) : randInt(5, 14);
 
-    // Tasa de goles coherente con OVR: un jugador de 70 OVR hace ~0.3 goles/partido,
-    // un 85 hace ~0.55, un 95+ hace ~0.75.
     var ovrFactor = clamp((effectiveOvr - 50) / 50, 0, 1);
     var formFactor = clamp(player.forma / 90, 0.6, 1.1);
     var goalRate = clamp(ovrFactor * 0.65 * formFactor, 0.05, 0.82);
@@ -1130,7 +1133,6 @@
     player.careerMatches += matches;
     player.careerAssists += assists;
 
-    // Rendimiento del equipo
     var teamRoll = Math.random() + (effectiveOvr - 65) / 180;
     var teamResult, wonLeague = false, wonCup = false;
     if (teamRoll > 0.95) { teamResult = "Campeones de la liga"; wonLeague = true; }
@@ -1140,79 +1142,56 @@
     else if (teamRoll > 0.12) teamResult = "Pelearon el descenso hasta el final";
     else teamResult = "Descendieron de categoría";
 
-    if (wonLeague) player.titles.push({ text: "🏆 Liga: " + player.clubLeague + " (temp. " + (player.seasonsPlayed + 1) + ")", icon: "liga" });
-    if (wonCup) player.titles.push({ text: "🥇 Copa: " + player.clubLeague.replace("Liga","Copa").replace("Bundesliga","DFB-Pokal").replace("Premier League","FA Cup").replace("LaLiga","Copa del Rey").replace("Serie A","Coppa Italia").replace("Ligue 1","Coupe de France") + " (temp. " + (player.seasonsPlayed + 1) + ")", icon: "copa" });
-
-    // Copa internacional (Champions/Libertadores) — si el club es grande o mediano
-    if ((player.clubTier === "grande" || player.clubTier === "mediano") && Math.random() < 0.12 && wonLeague) {
-      var isChampions = ["España","Inglaterra","Alemania","Francia","Italia","Portugal","Países Bajos"].indexOf(player.clubCountry) !== -1;
-      var cupLabel = isChampions ? "⭐ Champions League" : "🌎 Copa Libertadores";
-      player.titles.push({ text: cupLabel + " (temp. " + (player.seasonsPlayed + 1) + ")", icon: isChampions ? "champions" : "libertadores" });
+    var newTitlesForSeason = [];
+    var seasonNum = player.seasonsPlayed + 1;
+    if (wonLeague) {
+      var t = { text: "🏆 Liga: " + player.clubLeague + " (temp. " + seasonNum + ")", icon: "liga" };
+      player.titles.push(t); newTitlesForSeason.push(t.text);
     }
-
+    if (wonCup) {
+      var cupName = player.clubLeague.replace("Liga","Copa").replace("Bundesliga","DFB-Pokal").replace("Premier League","FA Cup").replace("LaLiga","Copa del Rey").replace("Serie A","Coppa Italia").replace("Ligue 1","Coupe de France");
+      var t2 = { text: "🥇 Copa: " + cupName + " (temp. " + seasonNum + ")", icon: "copa" };
+      player.titles.push(t2); newTitlesForSeason.push(t2.text);
+    }
+    if ((player.clubTier === "grande" || player.clubTier === "mediano") && Math.random() < 0.12 && wonLeague) {
+      var isChamp = ["España","Inglaterra","Alemania","Francia","Italia","Portugal","Países Bajos"].indexOf(player.clubCountry) !== -1;
+      var t3 = { text: (isChamp ? "⭐ Champions League" : "🌎 Copa Libertadores") + " (temp. " + seasonNum + ")", icon: isChamp ? "champions" : "libertadores" };
+      player.titles.push(t3); newTitlesForSeason.push(t3.text);
+    }
     var topScorer = isStarter && goals >= Math.round(18 + (90 - effectiveOvr) * 0.3) && Math.random() < 0.55;
-    if (topScorer) player.titles.push({ text: "⚽ Goleador: " + player.clubLeague + " (temp. " + (player.seasonsPlayed + 1) + ")", icon: "goleador" });
-
-    // Golden Boy (18-21 años, buen rendimiento, primera vez)
+    if (topScorer) {
+      var t4 = { text: "⚽ Goleador: " + player.clubLeague + " (temp. " + seasonNum + ")", icon: "goleador" };
+      player.titles.push(t4); newTitlesForSeason.push(t4.text);
+    }
     var hasGoldenBoy = player.titles.some(function(t) { return t.icon === "golden_boy"; });
     if (!hasGoldenBoy && player.age >= 18 && player.age <= 22 && player.ovr >= 72 && goals >= 10 && Math.random() < 0.18) {
-      player.titles.push({ text: "🌟 Golden Boy (temp. " + (player.seasonsPlayed + 1) + ")", icon: "golden_boy" });
+      var t5 = { text: "🌟 Golden Boy (temp. " + seasonNum + ")", icon: "golden_boy" };
+      player.titles.push(t5); newTitlesForSeason.push(t5.text);
     }
-
-    // Puskas: un golazo memorable
     var hasPuskas = player.titles.some(function(t) { return t.icon === "puskas"; });
     if (!hasPuskas && goals >= 12 && Math.random() < 0.08) {
-      player.titles.push({ text: "🎬 Premio Puskás (temp. " + (player.seasonsPlayed + 1) + ")", icon: "puskas" });
+      var t6 = { text: "🎬 Premio Puskás (temp. " + seasonNum + ")", icon: "puskas" };
+      player.titles.push(t6); newTitlesForSeason.push(t6.text);
     }
-
-    // Balón de Oro (25-33, OVR muy alto, temporada excepcional)
     var hasBalonOro = player.titles.some(function(t) { return t.icon === "balon_oro"; });
     if (!hasBalonOro && player.age >= 25 && player.age <= 33 && player.ovr >= 90 && goals >= 20 && Math.random() < 0.2) {
-      player.titles.push({ text: "🥇 Balón de Oro (temp. " + (player.seasonsPlayed + 1) + ")", icon: "balon_oro" });
+      var t7 = { text: "🥇 Balón de Oro (temp. " + seasonNum + ")", icon: "balon_oro" };
+      player.titles.push(t7); newTitlesForSeason.push(t7.text);
     }
 
     player.peakOvr = Math.max(player.peakOvr, player.ovr);
     player.seasonLog.push({ age: player.age, club: player.club, ovr: player.ovr, pj: matches, gls: goals, ast: assists });
 
-    var lines = document.getElementById("season-lines");
-    lines.innerHTML = "";
-    function line(label, value, delta, gold) {
-      var d = document.createElement("div");
-      d.className = "result-line";
-      d.innerHTML = "<span>" + esc(label) + "</span><span><b" + (gold ? ' class="gold"' : "") + ">" + esc(String(value)) + "</b>" +
-        (delta !== undefined && delta !== null ? ' <span class="delta ' + (delta > 0 ? "pos" : "neg") + '">' + (delta > 0 ? "+" : "") + delta + "</span>" : "") + "</span>";
-      lines.appendChild(d);
-    }
-    if (natGain > 0) line("Progreso natural", "Ganando experiencia", natGain);
-    if (player.lastTrainingName) line("Decisión tomada", player.lastTrainingName, player.lastTrainingGain || 0);
-    if (negLine) line("Efecto secundario", negLine.text, -negLine.amount);
-    line("Titularidad", isStarter ? "Fuiste titular" : "Rol secundario");
-    line("Partidos jugados", matches);
-    line("Goles en la temporada", goals);
-    line("Asistencias en la temporada", assists);
-    line("Tu equipo", teamResult);
-    if (topScorer) line("Premio", "⚽ Goleador de " + player.clubLeague);
-    if (wonLeague) line("Premio", "🏆 Campeón de liga");
-    if (wonCup) line("Premio", "🥇 Campeón de copa");
-    line("Overall actual", player.ovr, null, true);
-    line("Forma", player.forma + (player.forma === 100 ? " ★" : ""), null, true);
-
-    // Label which season of the block this is
-    var seasonResultLabel = document.getElementById("season-result-subtitle");
-    if (seasonResultLabel) {
-      var totalSeason = player.seasonsPlayed + 1;
-      seasonResultLabel.textContent = seasonBlock === 0
-        ? "Temporada " + totalSeason + " de " + (totalSeason + 1) + " — primera parte del bloque"
-        : "Temporada " + totalSeason + " — segunda parte · ¡bloque completado!";
-    }
-
-    showScreen("season-result");
+    return {
+      goals: goals, assists: assists, matches: matches, teamResult: teamResult,
+      wonLeague: wonLeague, wonCup: wonCup, topScorer: topScorer,
+      natGain: natGain, negLine: negLine, isStarter: isStarter,
+      trainingName: trainingName, trainingGain: trainingGain,
+      newTitles: newTitlesForSeason, ovr: player.ovr, forma: player.forma
+    };
   }
 
-  var seasonBlock = 0; // 0 = first of pair, 1 = second of pair
-
-  function afterSeasonSilent() {
-    // Advance without showing hub/market — used between the two seasons of a block
+  function advanceSeasonSilent() {
     player.seasonsPlayed++;
     player.age++;
     var declineAge = currentDeclineAge();
@@ -1224,25 +1203,62 @@
     return true;
   }
 
+  function simulateSeason() {
+    var startAge = player.age;
+    var ovrBefore = player.ovr;
+    var seasonNum1 = player.seasonsPlayed + 1;
+
+    // — Temporada 1 —
+    var s1 = runSeasonCalc(player.lastTrainingName, player.lastTrainingGain);
+
+    // Avance silencioso entre temporadas
+    var alive = advanceSeasonSilent();
+    if (!alive) return;
+
+    // — Temporada 2 — sin training extra (ya se eligió al inicio del bloque)
+    player.lastTrainingName = null;
+    var s2 = runSeasonCalc(null, 0);
+
+    var endAge = startAge + 2; // tras ambas temporadas + afterSeasonProgress
+    var seasonNum2 = player.seasonsPlayed + 1;
+    var ovrDelta = player.ovr - ovrBefore;
+
+    // Render combined
+    var lines = document.getElementById("season-lines");
+    lines.innerHTML = "";
+    function line(label, value, delta, gold) { addSeasonResultLine(lines, label, value, delta, gold); }
+
+    // Encabezado de progresión de edad
+    line("Período", seasonNum1 + "–" + seasonNum2 + "  ·  de " + startAge + " a " + endAge + " años");
+    if (s1.natGain > 0 || s2.natGain > 0) line("Progreso natural", "Ganando experiencia", Math.max(s1.natGain, s2.natGain));
+    if (s1.trainingName) line("Decisión del bloque", s1.trainingName, s1.trainingGain || 0);
+    if (s1.negLine) line("Efecto secundario", s1.negLine.text, -s1.negLine.amount);
+    // Temp 1
+    line("Temp. " + seasonNum1 + " · partidos", s1.matches);
+    line("Temp. " + seasonNum1 + " · goles", s1.goals + (s1.topScorer ? " ⚽ (goleador)" : ""));
+    line("Temp. " + seasonNum1 + " · asistencias", s1.assists);
+    line("Temp. " + seasonNum1 + " · equipo", s1.teamResult);
+    // Temp 2
+    line("Temp. " + seasonNum2 + " · partidos", s2.matches);
+    line("Temp. " + seasonNum2 + " · goles", s2.goals + (s2.topScorer ? " ⚽ (goleador)" : ""));
+    line("Temp. " + seasonNum2 + " · asistencias", s2.assists);
+    line("Temp. " + seasonNum2 + " · equipo", s2.teamResult);
+    // Totales del bloque
+    line("Goles del bloque", s1.goals + s2.goals, null, false);
+    line("Asistencias del bloque", s1.assists + s2.assists, null, false);
+    // Premios
+    var allTitles = s1.newTitles.concat(s2.newTitles);
+    for (var ti = 0; ti < allTitles.length; ti++) line("Premio", allTitles[ti]);
+    line("Overall", player.ovr, ovrDelta, true);
+
+    var sub = document.getElementById("season-result-subtitle");
+    if (sub) sub.textContent = "Temporadas " + seasonNum1 + " y " + seasonNum2 + " · de " + startAge + " a " + endAge + " años";
+
+    showScreen("season-result");
+  }
+
   document.getElementById("btn-season-continue").addEventListener("click", function() {
-    if (seasonBlock === 0) {
-      // End of season 1: advance silently and run season 2
-      var ok = afterSeasonSilent();
-      if (!ok) return; // retired
-      seasonBlock = 1;
-      // Training check for season 2
-      var seasonNum2 = player.seasonsPlayed + 1;
-      if (seasonNum2 >= player.nextTrainingAt) {
-        showTrainingChoices();
-      } else {
-        player.lastTrainingName = null;
-        maybeShowEvent();
-      }
-    } else {
-      // End of season 2: normal national + full progress
-      seasonBlock = 0;
-      checkNationalTeam();
-    }
+    checkNationalTeam();
   });
 
   /* ============ SELECCIÓN NACIONAL ============ */

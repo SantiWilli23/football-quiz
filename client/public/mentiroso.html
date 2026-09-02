@@ -143,6 +143,19 @@
   .naming-input:focus { border-color: var(--accent); }
   .naming-input::placeholder { color: var(--text-dim2); }
 
+  #naming-suggestions {
+    display: none; position: absolute; top: calc(100% + 2px); left: 0; right: 0;
+    background: var(--bg2); border: 1px solid var(--accent); border-radius: 8px;
+    z-index: 20; max-height: 160px; overflow-y: auto; box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+  .sugg-item {
+    padding: 9px 13px; font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    font-size: 12.5px; cursor: pointer; color: var(--text); border-bottom: 1px solid var(--border);
+  }
+  .sugg-item:last-child { border-bottom: none; }
+  .sugg-item:hover, .sugg-item.active { background: var(--accent); color: #fff; }
+  .sugg-match { font-weight: 700; }
+
   .named-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; min-height: 30px; }
   .named-chip {
     font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; font-weight: 700;
@@ -283,8 +296,11 @@
       <div class="counter" id="naming-counter">Nombrados: <b>0</b> / <b>0</b></div>
       <div class="timer-bar"><div class="fill" id="naming-timer-fill" style="width:100%"></div></div>
       <div class="named-list" id="named-list"></div>
-      <div style="display:flex;gap:8px">
-        <input class="naming-input" id="naming-input" placeholder="Escribí un nombre..." autocomplete="off">
+      <div style="display:flex;gap:8px;align-items:flex-start">
+        <div style="position:relative;flex:1">
+          <input class="naming-input" id="naming-input" placeholder="Escribí un nombre..." autocomplete="off" style="width:100%">
+          <div id="naming-suggestions"></div>
+        </div>
         <button class="btn btn-teal" id="btn-submit-name" style="flex-shrink:0">OK</button>
       </div>
       <p class="sub" style="margin-top:10px; text-align:center" id="naming-feedback"></p>
@@ -715,7 +731,14 @@
 
   document.getElementById("btn-play").addEventListener("click", startGame);
   document.getElementById("btn-play-again").addEventListener("click", startGame);
-  document.getElementById("btn-back-menu").addEventListener("click", function() { renderMenuStats(); showScreen("menu"); });
+  document.getElementById("btn-back-menu").addEventListener("click", function() {
+    if (window.parent !== window) {
+      window.parent.postMessage("mentiroso:close", "*");
+    } else {
+      renderMenuStats();
+      showScreen("menu");
+    }
+  });
 
   /* ============ GAME FLOW ============ */
 
@@ -1052,9 +1075,93 @@
     input.focus();
   }
 
-  document.getElementById("btn-submit-name").addEventListener("click", submitPlayerName);
+  document.getElementById("btn-submit-name").addEventListener("click", function() {
+    hideSuggestions();
+    submitPlayerName();
+  });
+
+  /* ===== AUTOCOMPLETE ===== */
+  var activeSuggIdx = -1;
+
+  function hideSuggestions() {
+    var box = document.getElementById("naming-suggestions");
+    box.style.display = "none";
+    box.innerHTML = "";
+    activeSuggIdx = -1;
+  }
+
+  function pickSuggestion(name) {
+    document.getElementById("naming-input").value = name;
+    hideSuggestions();
+    submitPlayerName();
+  }
+
+  function showSuggestions(matches) {
+    var box = document.getElementById("naming-suggestions");
+    if (!matches.length) { hideSuggestions(); return; }
+    activeSuggIdx = -1;
+    box.innerHTML = matches.map(function(p, i) {
+      return '<div class="sugg-item" data-name="' + esc(p.n) + '" data-i="' + i + '">' + esc(p.n) + '</div>';
+    }).join("");
+    box.style.display = "block";
+    box.querySelectorAll(".sugg-item").forEach(function(el) {
+      el.addEventListener("mousedown", function(e) {
+        e.preventDefault();
+        pickSuggestion(el.getAttribute("data-name"));
+      });
+    });
+  }
+
+  document.getElementById("naming-input").addEventListener("input", function() {
+    var val = this.value.trim();
+    if (!game || !game.topic || val.length < 3) { hideSuggestions(); return; }
+    var n = norm(val);
+    var matches = [];
+    for (var i = 0; i < game.topic.players.length && matches.length < 7; i++) {
+      var p = game.topic.players[i];
+      if (game.namedPlayers.some(function(np) { return np.correct && norm(np.player.n) === norm(p.n); })) continue;
+      var pn = norm(p.n);
+      var hit = pn.indexOf(n) === 0;
+      if (!hit && p.a) {
+        for (var j = 0; j < p.a.length; j++) { if (norm(p.a[j]).indexOf(n) === 0) { hit = true; break; } }
+      }
+      if (!hit) {
+        var parts = pn.split(" ");
+        if (parts.length >= 2 && parts[parts.length - 1].indexOf(n) === 0 && parts[parts.length - 1].length >= 3) hit = true;
+      }
+      if (hit) matches.push(p);
+    }
+    showSuggestions(matches);
+  });
+
   document.getElementById("naming-input").addEventListener("keydown", function(e) {
-    if (e.key === "Enter") { e.preventDefault(); submitPlayerName(); }
+    var box = document.getElementById("naming-suggestions");
+    var items = box.querySelectorAll(".sugg-item");
+    if (box.style.display !== "none" && items.length) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        activeSuggIdx = Math.min(activeSuggIdx + 1, items.length - 1);
+        items.forEach(function(el, i) { el.classList.toggle("active", i === activeSuggIdx); });
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        activeSuggIdx = Math.max(activeSuggIdx - 1, -1);
+        items.forEach(function(el, i) { el.classList.toggle("active", i === activeSuggIdx); });
+        return;
+      }
+      if (e.key === "Enter" && activeSuggIdx >= 0) {
+        e.preventDefault();
+        pickSuggestion(items[activeSuggIdx].getAttribute("data-name"));
+        return;
+      }
+      if (e.key === "Escape") { hideSuggestions(); return; }
+    }
+    if (e.key === "Enter") { e.preventDefault(); hideSuggestions(); submitPlayerName(); }
+  });
+
+  document.getElementById("naming-input").addEventListener("blur", function() {
+    setTimeout(hideSuggestions, 150);
   });
   document.getElementById("btn-give-up").addEventListener("click", function() {
     if (game.timerInterval) clearInterval(game.timerInterval);

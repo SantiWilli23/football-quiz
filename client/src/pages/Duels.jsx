@@ -193,6 +193,14 @@ export default function Duels() {
   const [difficulty, setDifficulty] = useState("dificil");
   const [selectedGame, setSelectedGame] = useState(null);
 
+  useEffect(() => {
+    const handleMessage = (e) => {
+      if (e.data === "mentiroso:close") setSelectedGame(null);
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
   const load = useCallback(async () => {
     if (!groupId) {
       setData(null);
