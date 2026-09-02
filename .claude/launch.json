@@ -7,6 +7,13 @@
       "runtimeArgs": ["index.js"],
       "cwd": "server",
       "port": 4000
+    },
+    {
+      "name": "football-quiz-client",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "client",
+      "port": 5173
     }
   ]
 }

@@ -277,8 +277,21 @@
     background: var(--accent-bg);
     color: var(--text); font-size: 15px;
   }
+  .slot.filled { cursor: pointer; }
+  .slot.moving-source .dot {
+    border-style: solid; border-color: var(--gold2); background: var(--gold-bg);
+    box-shadow: 0 0 14px rgba(217,164,65,0.5); animation: pulse 1.1s ease-in-out infinite;
+  }
+  .slot.move-target .dot {
+    border-style: dashed; border-color: var(--teal2); color: var(--teal2);
+    box-shadow: 0 0 12px rgba(63,174,154,0.4); animation: pulse 1.1s ease-in-out infinite;
+  }
   .slot .lbl { font-size: 9.5px; font-weight: 700; color: var(--text); line-height: 1.15; }
   .slot .lbl small { display: block; color: var(--text-faint); font-weight: 500; font-size: 8.5px; }
+  .move-hint {
+    text-align: center; font-size: 12px; color: var(--gold2); font-weight: 700;
+    margin-bottom: 8px; min-height: 16px;
+  }
 
   .result-head { text-align: center; margin-bottom: 20px; }
   .result-head .avg {
@@ -439,9 +452,47 @@
         <div class="chip" data-style="ofensivo">Ofensivo<small>+3 CA·PE·PD·MEI of.</small></div>
       </div>
 
+      <h2>Jugadores</h2>
+      <div class="chiprow" id="players-row">
+        <div class="chip active" data-players="1">1 Jugador<small>vs. la copa</small></div>
+        <div class="chip" data-players="2">2 Jugadores<small>local · mismo dispositivo</small></div>
+      </div>
+
       <button class="btn btn-holo btn-block" id="btn-start" style="margin-top:6px">Empezar copa</button>
     </div>
     <p class="foot-note">138 equipos-temporada de Champions League · 8 formaciones · datos con fines de juego, no oficiales.</p>
+  </div>
+
+  <div id="screen-pass" class="screen">
+    <div class="panel" style="text-align:center">
+      <div style="font-size:48px; margin:10px 0">📱</div>
+      <h2 id="pass-title" style="font-size:20px; margin-bottom:10px">Pasale el dispositivo</h2>
+      <p class="sub" id="pass-sub">El otro jugador arma su equipo.</p>
+      <button class="btn btn-holo btn-block" id="btn-pass-ready" style="margin-top:10px">Listo, es mi turno</button>
+    </div>
+  </div>
+
+  <div id="screen-vs-result" class="screen">
+    <div class="panel">
+      <h2 id="vs-winner-banner" style="text-align:center; font-size:18px; margin-bottom:16px"></h2>
+      <div class="vs-cols" style="display:grid; grid-template-columns:1fr 1fr; gap:14px">
+        <div>
+          <div class="result-head" style="margin-bottom:8px">
+            <div class="avg" id="vs-avg-1" style="font-size:32px">0.0</div>
+            <div class="avglbl" id="vs-name-1">Jugador 1</div>
+          </div>
+          <div class="result-list" id="vs-list-1" style="font-size:11px"></div>
+        </div>
+        <div>
+          <div class="result-head" style="margin-bottom:8px">
+            <div class="avg" id="vs-avg-2" style="font-size:32px">0.0</div>
+            <div class="avglbl" id="vs-name-2">Jugador 2</div>
+          </div>
+          <div class="result-list" id="vs-list-2" style="font-size:11px"></div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-block" id="btn-vs-new-cup" style="margin-top:16px">Nueva copa</button>
+    </div>
   </div>
 
   <div id="screen-draft" class="screen">
@@ -475,6 +526,7 @@
       <div class="pool-grid" id="pool-grid"></div>
     </div>
 
+    <div class="move-hint" id="move-hint"></div>
     <div class="pitch-wrap" style="margin-top:16px">
       <div class="pitch"><div class="slot-layer" id="slot-layer"></div></div>
     </div>
@@ -804,7 +856,8 @@
     return {
       formation: "4-2-3-1", mode: "clasico", style: "equilibrado", round: 0,
       slots: [], team: null, pool: [], selectedIdx: null,
-      rerollsClub: 0, rerollsSeason: 0, excludeClub: null, excludeSeason: null
+      rerollsClub: 0, rerollsSeason: 0, excludeClub: null, excludeSeason: null,
+      movingSlotIndex: null
     };
   }
 
@@ -910,6 +963,7 @@
   var selectedFormation = "4-2-3-1";
   var selectedMode = "clasico";
   var selectedStyle = "equilibrado";
+  var selectedPlayers = "1";
 
   document.getElementById("mode-row").addEventListener("click", function (e) {
     var chip = e.target.closest(".chip");
@@ -927,6 +981,33 @@
     selectedStyle = chip.dataset.style;
   });
 
+  document.getElementById("players-row").addEventListener("click", function (e) {
+    var chip = e.target.closest(".chip");
+    if (!chip) return;
+    document.querySelectorAll("#players-row .chip").forEach(function (c) { c.classList.remove("active"); });
+    chip.classList.add("active");
+    selectedPlayers = chip.dataset.players;
+  });
+
+  /* ===== MULTIJUGADOR LOCAL (2P, pasar dispositivo) ===== */
+  var twoPlayerMode = false;
+  var activePlayerNum = 1;
+  var p1Result = null; // { avg, state }
+
+  document.getElementById("btn-pass-ready").addEventListener("click", function () {
+    activePlayerNum = 2;
+    state = freshState();
+    state.formation = p1Result.state.formation;
+    state.mode = p1Result.state.mode;
+    state.style = p1Result.state.style;
+    state.slots = FORMATIONS[state.formation].map(function (t) { return { type: t, filled: null }; });
+    document.getElementById("mode-badge").textContent = "JUGADOR 2 · " + (state.mode === "almanaque" ? "ALMANAQUE" : state.mode === "clasico_facil" ? "CLÁSICO FÁCIL" : "CLÁSICO");
+    showScreen("draft");
+    drawNewTeam({});
+  });
+
+  document.getElementById("btn-vs-new-cup").addEventListener("click", function () { showScreen("start"); });
+
   document.getElementById("btn-start").addEventListener("click", startCup);
   document.getElementById("btn-new-cup").addEventListener("click", function () { showScreen("start"); });
   document.getElementById("btn-reroll-club").addEventListener("click", function () { doReroll("club"); });
@@ -940,12 +1021,17 @@
   /* ============ FLUJO DE COPA ============ */
 
   function startCup() {
+    twoPlayerMode = selectedPlayers === "2";
+    activePlayerNum = 1;
+    p1Result = null;
     state = freshState();
     state.formation = selectedFormation;
     state.mode = selectedMode;
     state.style = selectedStyle;
     state.slots = FORMATIONS[state.formation].map(function (t) { return { type: t, filled: null }; });
-    document.getElementById("mode-badge").textContent = state.mode === "almanaque" ? "MODO ALMANAQUE" : state.mode === "clasico_facil" ? "CLÁSICO FÁCIL" : "MODO CLÁSICO";
+    document.getElementById("mode-badge").textContent =
+      (twoPlayerMode ? "JUGADOR 1 · " : "") +
+      (state.mode === "almanaque" ? "MODO ALMANAQUE" : state.mode === "clasico_facil" ? "CLÁSICO FÁCIL" : "MODO CLÁSICO");
     showScreen("draft");
     drawNewTeam({});
   }
@@ -1048,6 +1134,7 @@
 
   function selectPlayer(idx) {
     state.selectedIdx = idx;
+    state.movingSlotIndex = null;
     renderPool();
     renderPitch();
   }
@@ -1059,6 +1146,17 @@
     var selectedPlayer = state.selectedIdx !== null ? state.pool[state.selectedIdx] : null;
     var selNorm = selectedPlayer ? normalizePositions(selectedPlayer.p) : [];
 
+    var movingIdx = state.movingSlotIndex;
+    var movingPlayer = movingIdx !== null ? state.slots[movingIdx].filled : null;
+    var movingNorm = movingPlayer ? normalizePositions(movingPlayer.p) : [];
+
+    var hint = document.getElementById("move-hint");
+    if (hint) {
+      hint.textContent = movingPlayer
+        ? "Reubicando a " + movingPlayer.n + " — elegí el nuevo puesto (o tocá su puesto actual para cancelar)"
+        : "";
+    }
+
     state.slots.forEach(function (slot, i) {
       var xy = coords[i] || [50, 50];
       var el = document.createElement("div");
@@ -1067,8 +1165,14 @@
       el.style.top = xy[1] + "%";
 
       var canTarget = !slot.filled && selectedPlayer && selNorm.indexOf(slot.type) !== -1;
+      var isMovingSource = movingIdx === i;
+      var canMoveHere = movingPlayer && !isMovingSource && movingNorm.indexOf(slot.type) !== -1 &&
+        (!slot.filled || normalizePositions(slot.filled.p).indexOf(state.slots[movingIdx].type) !== -1);
+
       if (slot.filled) el.classList.add("filled");
       if (canTarget) el.classList.add("targetable");
+      if (isMovingSource) el.classList.add("moving-source");
+      if (canMoveHere) el.classList.add("move-target");
 
       var dotContent = slot.filled ? initials(slot.filled.n) : slot.type;
       var lbl = slot.filled
@@ -1076,9 +1180,27 @@
         : '<div class="lbl" style="color:var(--text-faint)">' + POS_LABEL[slot.type] + '</div>';
 
       el.innerHTML = '<div class="dot">' + dotContent + '</div>' + lbl;
-      if (canTarget) el.addEventListener("click", function () { assignToSlot(i); });
+
+      if (canTarget) {
+        el.addEventListener("click", function () { assignToSlot(i); });
+      } else if (isMovingSource) {
+        el.addEventListener("click", function () { state.movingSlotIndex = null; renderPitch(); });
+      } else if (canMoveHere) {
+        el.addEventListener("click", function () { movePlayerToSlot(movingIdx, i); });
+      } else if (slot.filled && selectedPlayer === null && movingPlayer === null) {
+        el.addEventListener("click", function () { state.movingSlotIndex = i; renderPitch(); });
+      }
       layer.appendChild(el);
     });
+  }
+
+  function movePlayerToSlot(fromIdx, toIdx) {
+    var from = state.slots[fromIdx], to = state.slots[toIdx];
+    var tmp = to.filled;
+    to.filled = from.filled;
+    from.filled = tmp; // null si el destino estaba vacío, o el otro jugador si es un swap
+    state.movingSlotIndex = null;
+    renderPitch();
   }
 
   function initials(name) {
@@ -1107,6 +1229,18 @@
     state.slots.forEach(function (s) { total += s.filled.eff; });
     var avg = total / state.slots.length;
 
+    if (twoPlayerMode) {
+      if (activePlayerNum === 1) {
+        p1Result = { avg: avg, state: state };
+        document.getElementById("pass-title").textContent = "Pasale el dispositivo a Jugador 2";
+        document.getElementById("pass-sub").textContent = "Jugador 2 arma su propio equipo con la misma formación y estilo.";
+        showScreen("pass");
+      } else {
+        renderVsResult(p1Result, { avg: avg, state: state });
+      }
+      return;
+    }
+
     document.getElementById("final-avg").textContent = avg.toFixed(1);
     document.getElementById("stat-formation").textContent = state.formation;
     document.getElementById("stat-style").textContent =
@@ -1130,6 +1264,36 @@
     });
 
     showScreen("result");
+  }
+
+  function renderVsResult(r1, r2) {
+    var winner = r1.avg > r2.avg ? 1 : r2.avg > r1.avg ? 2 : 0;
+    document.getElementById("vs-winner-banner").textContent =
+      winner === 0 ? "¡Empate!" : "🏆 Ganó Jugador " + winner;
+    document.getElementById("vs-avg-1").textContent = r1.avg.toFixed(1);
+    document.getElementById("vs-avg-2").textContent = r2.avg.toFixed(1);
+    document.getElementById("vs-name-1").textContent = "Jugador 1" + (winner === 1 ? " 🏆" : "");
+    document.getElementById("vs-name-2").textContent = "Jugador 2" + (winner === 2 ? " 🏆" : "");
+
+    function renderList(elId, r) {
+      var list = document.getElementById(elId);
+      list.innerHTML = "";
+      r.state.slots.forEach(function (s) {
+        var gold = s.filled.r >= GOLD_MIN;
+        var row = document.createElement("div");
+        row.className = "result-row" + (gold ? " gold" : "");
+        row.innerHTML =
+          '<div class="pos-badge">' + s.type + '</div>' +
+          '<div style="flex:1"><div class="rname">' + s.filled.n + '</div>' +
+          '<div class="rmeta">' + s.filled.club + " " + s.filled.season + '</div></div>' +
+          '<div class="rrating">' + s.filled.eff + '</div>';
+        list.appendChild(row);
+      });
+    }
+    renderList("vs-list-1", r1);
+    renderList("vs-list-2", r2);
+
+    showScreen("vs-result");
   }
 
   /* ============ CHAMPIONS POST-DRAFT ============ */
