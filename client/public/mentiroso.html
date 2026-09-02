@@ -214,11 +214,27 @@
       <div class="stats-row" id="menu-stats"></div>
 
       <div style="margin-bottom:10px">
-        <p class="sub" style="margin-bottom:8px; font-weight:700; color:var(--text)">Dificultad</p>
+        <p class="sub" style="margin-bottom:8px; font-weight:700; color:var(--text)">Modo</p>
+        <div class="diff-grid" id="mode-grid" style="margin-bottom:10px">
+          <div class="diff-card selected" data-mode="ia"><div class="dlabel">vs IA</div><div class="ddesc">Jugador contra la computadora</div></div>
+          <div class="diff-card" data-mode="2p"><div class="dlabel">2 Jugadores</div><div class="ddesc">En la misma pantalla</div></div>
+        </div>
+      </div>
+
+      <div id="diff-section" style="margin-bottom:10px">
+        <p class="sub" style="margin-bottom:8px; font-weight:700; color:var(--text)">Dificultad IA</p>
         <div class="diff-grid" id="diff-grid">
           <div class="diff-card" data-diff="facil"><div class="dlabel">Fácil</div><div class="ddesc">IA cautelosa</div></div>
           <div class="diff-card selected" data-diff="normal"><div class="dlabel">Normal</div><div class="ddesc">IA equilibrada</div></div>
           <div class="diff-card" data-diff="dificil"><div class="dlabel">Difícil</div><div class="ddesc">IA agresiva</div></div>
+        </div>
+      </div>
+
+      <div id="p2-names-section" style="display:none; margin-bottom:14px">
+        <p class="sub" style="margin-bottom:8px; font-weight:700; color:var(--text)">Nombres de los jugadores</p>
+        <div style="display:flex; gap:8px">
+          <input class="naming-input" id="inp-p1" placeholder="Jugador 1" value="Jugador 1" style="flex:1">
+          <input class="naming-input" id="inp-p2" placeholder="Jugador 2" value="Jugador 2" style="flex:1">
         </div>
       </div>
 
@@ -273,6 +289,16 @@
       </div>
       <p class="sub" style="margin-top:10px; text-align:center" id="naming-feedback"></p>
       <button class="btn btn-ghost btn-block" id="btn-give-up" style="margin-top:8px">Me rindo</button>
+    </div>
+  </div>
+
+  <!-- PASS DEVICE (2P) -->
+  <div class="screen" id="screen-pass">
+    <div class="panel" style="text-align:center">
+      <div style="font-size:48px; margin:10px 0">📱</div>
+      <h2 id="pass-title" style="font-size:20px; margin-bottom:10px">Pasale el dispositivo</h2>
+      <p class="sub" id="pass-sub">El otro jugador debe hacer su apuesta.</p>
+      <button class="btn btn-red btn-block" id="btn-pass-ready" style="margin-top:10px">Listo, es mi turno</button>
     </div>
   </div>
 
@@ -635,6 +661,9 @@
   /* ============ GAME STATE ============ */
   var game = null;
   var difficulty = "normal";
+  var gameMode = "ia"; // "ia" or "2p"
+  var p1Name = "Jugador 1";
+  var p2Name = "Jugador 2";
   var stats = loadStats();
 
   function loadStats() {
@@ -666,6 +695,16 @@
       '<div><span class="stat-val">' + stats.bestStreak + '</span>Mejor racha</div>';
   }
 
+  document.querySelectorAll("#mode-grid .diff-card").forEach(function(card) {
+    card.addEventListener("click", function() {
+      document.querySelectorAll("#mode-grid .diff-card").forEach(function(c) { c.classList.remove("selected"); });
+      card.classList.add("selected");
+      gameMode = card.dataset.mode;
+      document.getElementById("diff-section").style.display = gameMode === "ia" ? "" : "none";
+      document.getElementById("p2-names-section").style.display = gameMode === "2p" ? "" : "none";
+    });
+  });
+
   document.querySelectorAll("#diff-grid .diff-card").forEach(function(card) {
     card.addEventListener("click", function() {
       document.querySelectorAll("#diff-grid .diff-card").forEach(function(c) { c.classList.remove("selected"); });
@@ -684,18 +723,26 @@
     var topic = generateTopic();
     if (!topic) { alert("No hay temas disponibles"); return; }
 
+    if (gameMode === "2p") {
+      p1Name = document.getElementById("inp-p1").value.trim() || "Jugador 1";
+      p2Name = document.getElementById("inp-p2").value.trim() || "Jugador 2";
+    }
+
     game = {
       topic: topic,
       currentBid: 0,
-      lastBidder: null, // "player" or "ai"
+      lastBidder: null,
       playerStarts: Math.random() < 0.5,
       chatMessages: [],
-      phase: "bid", // bid, naming, result
+      phase: "bid",
       namedPlayers: [],
       namingTarget: 0,
-      namingWho: null, // "player" or "ai"
+      namingWho: null,
       timerInterval: null,
-      timeLeft: 0
+      timeLeft: 0,
+      twoPlayer: gameMode === "2p",
+      // 2P: "p1" or "p2"
+      activeBidder: null
     };
 
     document.getElementById("topic-text").textContent = topic.text;
@@ -713,16 +760,35 @@
     game.currentBid = 0;
     updateBidDisplay();
 
-    if (!game.playerStarts) {
-      setPlayerTurn(false);
-      setTimeout(aiBid, 800);
+    if (game.twoPlayer) {
+      game.activeBidder = game.playerStarts ? "p1" : "p2";
+      set2PTurn(game.activeBidder);
     } else {
-      setPlayerTurn(true);
+      if (!game.playerStarts) {
+        setPlayerTurn(false);
+        setTimeout(aiBid, 800);
+      } else {
+        setPlayerTurn(true);
+      }
     }
   });
 
+  function pName(who) {
+    if (who === "p1") return p1Name;
+    if (who === "p2") return p2Name;
+    return who === "player" ? "Vos" : "IA";
+  }
+
+  function set2PTurn(who) {
+    var label = document.getElementById("bid-turn-label");
+    var btns = document.getElementById("bid-buttons");
+    btns.style.display = "flex";
+    label.innerHTML = '<b style="color:var(--teal2)">' + esc(pName(who)) + '</b> — subí la apuesta o llamá mentiroso';
+    document.getElementById("btn-call").disabled = game.currentBid === 0;
+  }
+
   function addChatMsg(who, text) {
-    var cls = who === "player" ? "player" : who === "ai" ? "ai" : "system";
+    var cls = who === "player" || who === "p1" ? "player" : who === "ai" || who === "p2" ? "ai" : "system";
     game.chatMessages.push({ who: who, text: text });
     var log = document.getElementById("chat-log");
     var div = document.createElement("div");
@@ -756,18 +822,63 @@
 
   function playerBid(increment) {
     game.currentBid += increment;
-    game.lastBidder = "player";
-    addChatMsg("player", "Yo sé <b>" + game.currentBid + "</b>");
-    updateBidDisplay();
-    setPlayerTurn(false);
-    setTimeout(aiBid, randInt(800, 1800));
+
+    if (game.twoPlayer) {
+      var who = game.activeBidder;
+      addChatMsg(who, esc(pName(who)) + " sabe <b>" + game.currentBid + "</b>");
+      updateBidDisplay();
+      var next = who === "p1" ? "p2" : "p1";
+      game.activeBidder = next;
+      // Pass device
+      document.getElementById("bid-buttons").style.display = "none";
+      document.getElementById("bid-turn-label").innerHTML = '';
+      showPassScreen(next, "bid");
+    } else {
+      game.lastBidder = "player";
+      addChatMsg("player", "Yo sé <b>" + game.currentBid + "</b>");
+      updateBidDisplay();
+      setPlayerTurn(false);
+      setTimeout(aiBid, randInt(800, 1800));
+    }
   }
 
   function playerCallMentiroso() {
-    addChatMsg("player", "¡MENTIROSO! 🔥");
-    addChatMsg("system", "La IA debe nombrar " + game.currentBid + " jugadores");
-    setTimeout(function() { startNamingPhase("ai"); }, 1200);
+    if (game.twoPlayer) {
+      var caller = game.activeBidder;
+      var accused = caller === "p1" ? "p2" : "p1";
+      addChatMsg(caller, "¡MENTIROSO! 🔥");
+      addChatMsg("system", esc(pName(accused)) + " debe nombrar " + game.currentBid + " jugadores");
+      document.getElementById("bid-buttons").style.display = "none";
+      showPassScreen(accused, "naming");
+    } else {
+      addChatMsg("player", "¡MENTIROSO! 🔥");
+      addChatMsg("system", "La IA debe nombrar " + game.currentBid + " jugadores");
+      setTimeout(function() { startNamingPhase("ai"); }, 1200);
+    }
   }
+
+  function showPassScreen(nextWho, afterAction) {
+    var title = document.getElementById("pass-title");
+    var sub = document.getElementById("pass-sub");
+    title.textContent = "Pasale el dispositivo a " + pName(nextWho);
+    sub.textContent = afterAction === "bid"
+      ? "Es el turno de " + pName(nextWho) + " para apostar."
+      : pName(nextWho) + " debe nombrar los jugadores.";
+    game._passNextWho = nextWho;
+    game._passAction = afterAction;
+    showScreen("pass");
+  }
+
+  document.getElementById("btn-pass-ready").addEventListener("click", function() {
+    var who = game._passNextWho;
+    var action = game._passAction;
+    if (action === "bid") {
+      showScreen("bid");
+      set2PTurn(who);
+    } else {
+      startNamingPhase(who);
+    }
+  });
 
   /* AI logic */
   function aiBid() {
@@ -822,12 +933,21 @@
     game.namedPlayers = [];
 
     document.getElementById("naming-topic").textContent = game.topic.text;
+
+    // Label who names in 2P
+    var counter = document.getElementById("naming-counter");
+    if (game.twoPlayer) {
+      counter.dataset.prefix = esc(pName(who)) + " — ";
+    } else {
+      counter.dataset.prefix = "";
+    }
     updateNamingCounter();
     document.getElementById("named-list").innerHTML = "";
     document.getElementById("naming-feedback").textContent = "";
     document.getElementById("naming-input").value = "";
 
-    if (who === "player") {
+    var isHuman = who === "player" || game.twoPlayer;
+    if (isHuman) {
       document.getElementById("naming-input").style.display = "";
       document.getElementById("btn-submit-name").style.display = "";
       document.getElementById("btn-give-up").style.display = "";
@@ -845,8 +965,9 @@
 
   function updateNamingCounter() {
     var correct = game.namedPlayers.filter(function(p) { return p.correct; }).length;
-    document.getElementById("naming-counter").innerHTML =
-      "Nombrados: <b>" + correct + "</b> / <b>" + game.namingTarget + "</b>";
+    var el = document.getElementById("naming-counter");
+    var prefix = el.dataset.prefix || "";
+    el.innerHTML = prefix + "Nombrados: <b>" + correct + "</b> / <b>" + game.namingTarget + "</b>";
   }
 
   function startTimer(seconds) {
@@ -996,8 +1117,38 @@
 
   function endNaming(success) {
     game.phase = "result";
-    var playerWins;
 
+    var icon = document.getElementById("result-icon");
+    var title = document.getElementById("result-title");
+    var sub = document.getElementById("result-sub");
+    var details = document.getElementById("result-details");
+
+    if (game.twoPlayer) {
+      // In 2P: namingWho is the accused. success = they completed it.
+      var accused = game.namingWho;
+      var accuser = accused === "p1" ? "p2" : "p1";
+      var winner = success ? accused : accuser;
+      icon.textContent = "🏆";
+      title.textContent = "¡Ganó " + pName(winner) + "!";
+      title.className = "result-title win";
+      if (success) {
+        sub.textContent = pName(accused) + " nombró los " + game.namingTarget + " jugadores. ¡Bien farolero!";
+      } else {
+        sub.textContent = pName(accused) + " no pudo nombrar los " + game.namingTarget + " jugadores. Punto para " + pName(accuser) + ".";
+      }
+
+      details.innerHTML = '<p class="sub" style="font-weight:700; color:var(--text); margin-bottom:4px">Respuestas válidas (' + game.topic.count + '):</p>' +
+        '<div class="valid-list">' + game.topic.players.map(function(p) {
+          var wasNamed = game.namedPlayers.some(function(np) { return np.correct && norm(np.player.n) === norm(p.n); });
+          return (wasNamed ? '<b style="color:var(--teal2)">✓ ' : '') + esc(p.n) +
+            ' <span style="color:var(--text-dim2)">(' + p.c.join(", ") + ')</span>' +
+            (wasNamed ? '</b>' : '');
+        }).join("<br>") + '</div>';
+      showScreen("result");
+      return;
+    }
+
+    var playerWins;
     if (game.namingWho === "player") {
       playerWins = success;
     } else {
@@ -1013,12 +1164,6 @@
       stats.streak = 0;
     }
     saveStats();
-
-    // Show result
-    var icon = document.getElementById("result-icon");
-    var title = document.getElementById("result-title");
-    var sub = document.getElementById("result-sub");
-    var details = document.getElementById("result-details");
 
     if (playerWins) {
       icon.textContent = "🏆";

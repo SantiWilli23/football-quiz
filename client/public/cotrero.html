@@ -396,6 +396,7 @@
   <div id="screen-season-result" class="screen">
     <div class="panel">
       <h2>Así te fue esta temporada</h2>
+      <p id="season-result-subtitle" class="sub" style="margin-top:-2px; margin-bottom:8px"></p>
       <div id="season-lines"></div>
       <button class="btn btn-gold btn-block" id="btn-season-continue" style="margin-top:8px">Seguir</button>
     </div>
@@ -923,15 +924,24 @@
     }
   }
 
-  var TITLE_ICONS = {
-    liga: "🏆", copa: "🥇", champions: "⭐", libertadores: "🌎",
-    goleador: "⚽", golden_boy: "🌟", puskas: "🎬", balon_oro: "🥇"
+  /* ===== TROFEOS SVG ===== */
+  var TROPHY_SVG = {
+    liga: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 52" width="28" height="28" style="display:inline-block;vertical-align:middle"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FDE68A"/><stop offset="50%" stop-color="#D97706"/><stop offset="100%" stop-color="#92400E"/></linearGradient><linearGradient id="lgs" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FDE68A"/><stop offset="100%" stop-color="#B45309"/></linearGradient></defs><path d="M12 5 Q5 5 5 12 Q5 18 12 20" fill="none" stroke="url(#lg)" stroke-width="3" stroke-linecap="round"/><path d="M28 5 Q35 5 35 12 Q35 18 28 20" fill="none" stroke="url(#lg)" stroke-width="3" stroke-linecap="round"/><path d="M11 3 L29 3 L27 24 Q23 30 20 30 Q17 30 13 24 Z" fill="url(#lg)"/><ellipse cx="20" cy="3" rx="9" ry="2" fill="#FEF3C7" opacity="0.4"/><path d="M14 8 Q18 6.5 22 8" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="18" y="30" width="4" height="8" fill="#B45309" rx="1"/><rect x="11" y="38" width="18" height="4" rx="2" fill="#B45309"/><rect x="13" y="42" width="14" height="3" rx="1.5" fill="#92400E"/></svg>',
+    copa: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 52" width="28" height="28" style="display:inline-block;vertical-align:middle"><defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#E0F2FE"/><stop offset="50%" stop-color="#7DD3FC"/><stop offset="100%" stop-color="#0369A1"/></linearGradient><linearGradient id="cg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#BAE6FD"/><stop offset="100%" stop-color="#0284C7"/></linearGradient></defs><path d="M12 5 Q5 5 5 12 Q5 18 12 20" fill="none" stroke="url(#cg)" stroke-width="3" stroke-linecap="round"/><path d="M28 5 Q35 5 35 12 Q35 18 28 20" fill="none" stroke="url(#cg)" stroke-width="3" stroke-linecap="round"/><path d="M11 3 L29 3 L27 24 Q23 30 20 30 Q17 30 13 24 Z" fill="url(#cg)"/><path d="M14 8 Q18 6.5 22 8" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" fill="none" stroke-linecap="round"/><text x="20" y="18" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.8)" font-weight="bold">★</text><rect x="18" y="30" width="4" height="8" fill="#0369A1" rx="1"/><rect x="11" y="38" width="18" height="4" rx="2" fill="#0369A1"/><rect x="13" y="42" width="14" height="3" rx="1.5" fill="#01579B"/></svg>',
+    champions: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 52" width="28" height="28" style="display:inline-block;vertical-align:middle"><defs><linearGradient id="chg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F1F5F9"/><stop offset="40%" stop-color="#94A3B8"/><stop offset="100%" stop-color="#334155"/></linearGradient><linearGradient id="chg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#CBD5E1"/><stop offset="100%" stop-color="#475569"/></linearGradient></defs><path d="M12 4 Q3 4 3 13 Q3 20 12 21" fill="none" stroke="url(#chg)" stroke-width="3.5" stroke-linecap="round"/><path d="M28 4 Q37 4 37 13 Q37 20 28 21" fill="none" stroke="url(#chg)" stroke-width="3.5" stroke-linecap="round"/><path d="M11 2 L29 2 L27 23 Q23 29 20 29 Q17 29 13 23 Z" fill="url(#chg)"/><path d="M14 7 Q18 5.5 22 7" stroke="rgba(255,255,255,0.65)" stroke-width="1.8" fill="none" stroke-linecap="round"/><text x="20" y="17" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.7)" font-weight="bold">UCL</text><rect x="18" y="29" width="4" height="9" fill="#475569" rx="1"/><rect x="10" y="38" width="20" height="4.5" rx="2" fill="#475569"/><rect x="12" y="42.5" width="16" height="3" rx="1.5" fill="#334155"/></svg>',
+    libertadores: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 52" width="28" height="28" style="display:inline-block;vertical-align:middle"><defs><linearGradient id="libg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FDE68A"/><stop offset="50%" stop-color="#D97706"/><stop offset="100%" stop-color="#92400E"/></linearGradient></defs><path d="M12 5 Q5 5 5 12 Q5 18 12 20" fill="none" stroke="url(#libg)" stroke-width="3" stroke-linecap="round"/><path d="M28 5 Q35 5 35 12 Q35 18 28 20" fill="none" stroke="url(#libg)" stroke-width="3" stroke-linecap="round"/><path d="M11 3 L29 3 L27 24 Q23 30 20 30 Q17 30 13 24 Z" fill="url(#libg)"/><path d="M14 8 Q18 6.5 22 8" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" fill="none" stroke-linecap="round"/><text x="20" y="18" text-anchor="middle" font-size="6" fill="rgba(255,255,255,0.8)" font-weight="bold">CSBL</text><rect x="18" y="30" width="4" height="8" fill="#B45309" rx="1"/><rect x="11" y="38" width="18" height="4" rx="2" fill="#B45309"/><rect x="13" y="42" width="14" height="3" rx="1.5" fill="#92400E"/></svg>',
+    goleador: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 52" width="28" height="28" style="display:inline-block;vertical-align:middle"><defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FDE68A"/><stop offset="100%" stop-color="#B45309"/></linearGradient></defs><ellipse cx="20" cy="15" rx="12" ry="12" fill="url(#gg)" stroke="#92400E" stroke-width="0.5"/><path d="M20 3 L22 9 L28 9 L23 13 L25 19 L20 15 L15 19 L17 13 L12 9 L18 9 Z" fill="#92400E" opacity="0.25"/><ellipse cx="15" cy="10" rx="3" ry="2" fill="rgba(255,255,255,0.25)" transform="rotate(-30 15 10)"/><path d="M14 30 L20 27 L26 30 L24 45 L20 47 L16 45 Z" fill="url(#gg)" stroke="#B45309" stroke-width="0.5"/><path d="M20 27 L20 47" stroke="#B45309" stroke-width="0.5"/><rect x="13" y="43" width="14" height="3" rx="1.5" fill="#92400E"/></svg>',
+    golden_boy: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 52" width="28" height="28" style="display:inline-block;vertical-align:middle"><defs><linearGradient id="gbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FDE68A"/><stop offset="100%" stop-color="#D97706"/></linearGradient></defs><path d="M20 2 L23.5 12 L34 12 L25.5 18.5 L28.5 29 L20 22.5 L11.5 29 L14.5 18.5 L6 12 L16.5 12 Z" fill="url(#gbg)" stroke="#B45309" stroke-width="0.5"/><ellipse cx="20" cy="15" rx="5" ry="5" fill="rgba(255,255,255,0.15)"/><rect x="18" y="31" width="4" height="8" fill="#B45309" rx="1"/><rect x="12" y="39" width="16" height="3.5" rx="2" fill="#B45309"/><rect x="14" y="42.5" width="12" height="2.5" rx="1.5" fill="#92400E"/></svg>',
+    puskas: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 52" width="28" height="28" style="display:inline-block;vertical-align:middle"><defs><linearGradient id="pkg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#A7F3D0"/><stop offset="100%" stop-color="#065F46"/></linearGradient></defs><rect x="8" y="4" width="24" height="18" rx="3" fill="url(#pkg)"/><rect x="11" y="7" width="18" height="12" rx="1" fill="#064E3B"/><path d="M17 9 L25 13 L17 17 Z" fill="#6EE7B7"/><circle cx="24" cy="28" r="8" fill="url(#pkg)" stroke="#065F46" stroke-width="0.5"/><path d="M20 28 L22.5 22 L25 28 L31 28 L26 32 L28 38 L24 34 L20 38 L22 32 L17 28 Z" fill="rgba(255,255,255,0.2)"/><rect x="18" y="36" width="4" height="5" fill="#065F46" rx="1"/><rect x="11" y="41" width="18" height="3.5" rx="2" fill="#065F46"/><rect x="13" y="44.5" width="14" height="2.5" rx="1.5" fill="#064E3B"/></svg>',
+    balon_oro: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 52" width="28" height="28" style="display:inline-block;vertical-align:middle"><defs><radialGradient id="bog" cx="35%" cy="30%" r="65%"><stop offset="0%" stop-color="#FDE68A"/><stop offset="60%" stop-color="#D97706"/><stop offset="100%" stop-color="#78350F"/></radialGradient><linearGradient id="bog2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FDE68A"/><stop offset="100%" stop-color="#B45309"/></linearGradient></defs><circle cx="20" cy="16" r="14" fill="url(#bog)"/><circle cx="20" cy="16" r="14" fill="none" stroke="#B45309" stroke-width="0.5"/><path d="M6 16 Q20 8 34 16" stroke="rgba(255,255,255,0.15)" stroke-width="0.8" fill="none"/><path d="M8 10 Q20 3 32 10" stroke="rgba(255,255,255,0.12)" stroke-width="0.8" fill="none"/><ellipse cx="15" cy="11" rx="5" ry="3" fill="rgba(255,255,255,0.2)" transform="rotate(-20 15 11)"/><text x="20" y="20" text-anchor="middle" font-size="7" fill="rgba(120,53,15,0.7)" font-weight="bold" font-family="serif">FIFA</text><rect x="18" y="30" width="4" height="9" fill="#B45309" rx="1"/><rect x="10" y="39" width="20" height="4.5" rx="2" fill="#B45309"/><rect x="12" y="43.5" width="16" height="3" rx="1.5" fill="#92400E"/></svg>'
   };
 
   function titleText(t) { return typeof t === "string" ? t : t.text; }
   function titleIcon(t) {
     if (typeof t === "string") return "🏆";
-    return TITLE_ICONS[t.icon] || "🏆";
+    var key = t.icon;
+    if (TROPHY_SVG[key]) return TROPHY_SVG[key];
+    return "🏆";
   }
 
   function renderVitrina() {
@@ -1187,10 +1197,53 @@
     line("Overall actual", player.ovr, null, true);
     line("Forma", player.forma + (player.forma === 100 ? " ★" : ""), null, true);
 
+    // Label which season of the block this is
+    var seasonResultLabel = document.getElementById("season-result-subtitle");
+    if (seasonResultLabel) {
+      var totalSeason = player.seasonsPlayed + 1;
+      seasonResultLabel.textContent = seasonBlock === 0
+        ? "Temporada " + totalSeason + " de " + (totalSeason + 1) + " — primera parte del bloque"
+        : "Temporada " + totalSeason + " — segunda parte · ¡bloque completado!";
+    }
+
     showScreen("season-result");
   }
 
-  document.getElementById("btn-season-continue").addEventListener("click", checkNationalTeam);
+  var seasonBlock = 0; // 0 = first of pair, 1 = second of pair
+
+  function afterSeasonSilent() {
+    // Advance without showing hub/market — used between the two seasons of a block
+    player.seasonsPlayed++;
+    player.age++;
+    var declineAge = currentDeclineAge();
+    if (player.declinePhase === 0 && player.age >= declineAge) player.declinePhase = 1;
+    if (player.declinePhase === 1 && player.age >= declineAge + 3) player.declinePhase = 2;
+    if (player.declinePhase === 2) player.ovr = clamp(player.ovr - randInt(2, 4), 40, 99);
+    player.peakOvr = Math.max(player.peakOvr, player.ovr);
+    if (player.age >= player.retireAge) { retirePlayer(); return false; }
+    return true;
+  }
+
+  document.getElementById("btn-season-continue").addEventListener("click", function() {
+    if (seasonBlock === 0) {
+      // End of season 1: advance silently and run season 2
+      var ok = afterSeasonSilent();
+      if (!ok) return; // retired
+      seasonBlock = 1;
+      // Training check for season 2
+      var seasonNum2 = player.seasonsPlayed + 1;
+      if (seasonNum2 >= player.nextTrainingAt) {
+        showTrainingChoices();
+      } else {
+        player.lastTrainingName = null;
+        maybeShowEvent();
+      }
+    } else {
+      // End of season 2: normal national + full progress
+      seasonBlock = 0;
+      checkNationalTeam();
+    }
+  });
 
   /* ============ SELECCIÓN NACIONAL ============ */
 
@@ -1399,7 +1452,14 @@
 
     saveHistoryEntry({
       name: player.name, mode: "Simple", position: "Delantero", score: score,
-      rank: rank ? rank.label : RANKS[RANKS.length - 1].label, peakOvr: player.peakOvr, seasons: player.seasonsPlayed, date: new Date().toISOString()
+      rank: rank ? rank.label : RANKS[RANKS.length - 1].label,
+      peakOvr: player.peakOvr, seasons: player.seasonsPlayed,
+      goals: player.careerGoals, assists: player.careerAssists, matches: player.careerMatches,
+      retireAge: player.age, nationality: player.nationality,
+      clubs: player.clubsPlayed ? player.clubsPlayed.slice() : [player.club],
+      titles: player.titles ? player.titles.length : 0,
+      titleList: player.titles ? player.titles.map(function(t) { return typeof t === "string" ? t : t.text; }) : [],
+      date: new Date().toISOString()
     });
     clearSave();
     showScreen("legacy");
@@ -1419,13 +1479,41 @@
     }
     list.innerHTML = "";
     hist.forEach(function (h, i) {
-      var row = document.createElement("div");
-      row.className = "history-row";
-      row.innerHTML =
-        '<span class="hrank">#' + (i + 1) + "</span>" +
-        '<span class="hname">' + esc(h.name) + " — " + esc(h.rank) + " (" + esc(h.mode) + ")</span>" +
-        '<span class="hscore">' + h.score + "</span>";
-      list.appendChild(row);
+      var dateStr = "";
+      try { dateStr = h.date ? new Date(h.date).toLocaleDateString("es-AR", { year: "numeric", month: "short" }) : ""; } catch(e){}
+
+      var clubsHtml = h.clubs && h.clubs.length
+        ? h.clubs.map(function(c) { return '<span style="display:inline-flex;align-items:center;gap:3px">' + clubIcon(c) + esc(c) + '</span>'; }).join(", ")
+        : (h.clubs || "");
+
+      var titlesHtml = h.titleList && h.titleList.length
+        ? '<div class="flavor-box sans" style="font-size:11px; margin-top:8px; line-height:1.7">' + h.titleList.map(function(t) { return esc(t); }).join("<br>") + "</div>"
+        : "";
+
+      var card = document.createElement("div");
+      card.style.cssText = "background:rgba(0,0,0,0.18);border-radius:12px;padding:12px 14px;margin-bottom:8px;";
+      card.innerHTML =
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+          '<span class="sans" style="font-family:ui-monospace,monospace;font-weight:800;color:var(--accent-dark);width:24px;flex-shrink:0">#' + (i + 1) + '</span>' +
+          '<span class="sans" style="font-weight:800;font-size:14px;flex:1">' + esc(h.name) + '</span>' +
+          '<span class="sans" style="font-size:11px;color:var(--gold2);font-weight:800;font-family:ui-monospace,monospace">' + h.score + ' pts</span>' +
+        '</div>' +
+        '<div class="sans" style="font-size:11px;color:var(--text-dim);margin-left:32px;margin-bottom:4px">' +
+          '<span style="color:var(--accent2);font-weight:700">' + esc(h.rank) + '</span>' +
+          ' · OVR pico ' + (h.peakOvr || "—") +
+          ' · ' + (h.seasons || "—") + ' temporadas' +
+          ' · Retirado a los ' + (h.retireAge || "—") + ' años' +
+          (dateStr ? ' · <span style="color:var(--text-dim2)">' + dateStr + '</span>' : '') +
+        '</div>' +
+        '<div class="sans" style="font-size:11px;color:var(--text-dim);margin-left:32px;margin-bottom:4px">' +
+          '⚽ ' + (h.goals || 0) + ' goles &nbsp;·&nbsp; 🎯 ' + (h.assists || 0) + ' asistencias' +
+          ' &nbsp;·&nbsp; 🎮 ' + (h.matches || 0) + ' partidos' +
+          (h.titles ? ' &nbsp;·&nbsp; 🏆 ' + h.titles + ' título' + (h.titles !== 1 ? 's' : '') : '') +
+        '</div>' +
+        (h.clubs && h.clubs.length ? '<div class="sans" style="font-size:11px;color:var(--text-dim);margin-left:32px;display:flex;flex-wrap:wrap;gap:4px;align-items:center">Clubes: ' + clubsHtml + '</div>' : '') +
+        titlesHtml;
+
+      list.appendChild(card);
     });
   }
 

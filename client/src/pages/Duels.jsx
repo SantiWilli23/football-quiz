@@ -191,6 +191,7 @@ export default function Duels() {
   const [error, setError] = useState("");
   const [challenging, setChallenging] = useState(false);
   const [difficulty, setDifficulty] = useState("dificil");
+  const [selectedGame, setSelectedGame] = useState(null);
 
   const load = useCallback(async () => {
     if (!groupId) {
@@ -247,7 +248,7 @@ export default function Duels() {
       label: "Mentiroso",
       icon: Zap,
       description: "¿Sabés más jugadores que el otro?",
-      available: false,
+      available: true,
     },
   ];
 
@@ -300,9 +301,12 @@ export default function Duels() {
         {GAME_TYPES.map(({ key, label, icon: Icon, description, available }) => (
           <div
             key={key}
+            onClick={() => available && key === "mentiroso" && setSelectedGame("mentiroso")}
             className={`px-4 py-3.5 rounded-card border transition-colors ${
               available
-                ? "border-accent/40 bg-accent/5 cursor-default"
+                ? key === "mentiroso"
+                  ? "border-accent/40 bg-accent/5 cursor-pointer hover:border-accent hover:bg-accent/10"
+                  : "border-accent/40 bg-accent/5 cursor-default"
                 : "border-border bg-panel opacity-50 cursor-default"
             }`}
           >
@@ -316,11 +320,41 @@ export default function Duels() {
                   Pronto
                 </span>
               )}
+              {available && key === "mentiroso" && (
+                <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-accent/20 text-accent border border-accent/30">
+                  Jugar
+                </span>
+              )}
             </div>
             <p className="text-xs text-gray-500">{description}</p>
           </div>
         ))}
       </div>
+
+      {/* Mentiroso embebido */}
+      {selectedGame === "mentiroso" && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold flex items-center gap-2">
+              <Zap size={16} className="text-accent" />
+              Mentiroso
+            </h2>
+            <button
+              onClick={() => setSelectedGame(null)}
+              className="text-xs text-gray-500 hover:text-white transition-colors border border-border rounded-full px-3 py-1.5"
+            >
+              ✕ Cerrar
+            </button>
+          </div>
+          <div className="rounded-card overflow-hidden border border-border" style={{ height: "600px" }}>
+            <iframe
+              src="/mentiroso.html"
+              style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+              title="Mentiroso"
+            />
+          </div>
+        </div>
+      )}
 
       {record && (
         <Card className="mb-6">
