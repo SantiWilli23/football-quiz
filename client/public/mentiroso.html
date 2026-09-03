@@ -70,6 +70,19 @@
     border: 1px solid var(--border); border-radius: 999px; padding: 7px 13px;
   }
   .brand .menu-btn:hover { color: var(--bad); border-color: var(--bad); }
+  .brand .leave-room-btn {
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    font-size: 11.5px; font-weight: 700; color: var(--bad); text-decoration: none;
+    border: 1px solid var(--red); background: var(--red-bg); border-radius: 999px; padding: 7px 13px;
+    cursor: pointer; margin-left: 8px;
+  }
+  .brand .leave-room-btn:hover { background: var(--bad); color: #fff; }
+  .online-status-pill {
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11px; font-weight: 700;
+    padding: 6px 11px; border-radius: 999px; margin-left: 8px; display: none; white-space: nowrap;
+  }
+  .online-status-pill.connected { color: var(--teal2); background: var(--teal-bg); border: 1px solid var(--teal); }
+  .online-status-pill.disconnected { color: var(--bad); background: var(--red-bg); border: 1px solid var(--red); }
 
   .panel {
     background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
@@ -216,6 +229,8 @@
     <div class="mark">M</div>
     <h1>MENTIROSO</h1>
     <a class="menu-btn" href="/" id="btn-brand-menu">Menú principal</a>
+    <span class="online-status-pill" id="online-status-pill">🟢 Rival conectado</span>
+    <button class="leave-room-btn" id="btn-leave-room" style="display:none">✕ Salir de la sala</button>
   </div>
 
   <!-- MENU -->
@@ -1068,7 +1083,25 @@
   function closeOnlineRelay() {
     if (onlineRelay) { onlineRelay.close(); onlineRelay = null; }
     onlineMyRole = null;
+    document.getElementById("btn-leave-room").style.display = "none";
+    setOnlineStatus(null);
   }
+
+  function setOnlineStatus(state) {
+    var pill = document.getElementById("online-status-pill");
+    if (!state) { pill.style.display = "none"; return; }
+    pill.className = "online-status-pill " + state;
+    pill.textContent = state === "connected" ? "🟢 Rival conectado" : "🔴 Rival desconectado";
+    pill.style.display = "inline-block";
+  }
+
+  document.getElementById("btn-leave-room").addEventListener("click", function () {
+    if (!confirm("¿Salir de la sala? La partida en curso se pierde para los dos.")) return;
+    closeOnlineRelay();
+    game = null;
+    renderMenuStats();
+    showScreen("menu");
+  });
 
   function showOnlineWait(title, sub, showCode, code) {
     document.getElementById("online-wait-title").textContent = title;
@@ -1149,9 +1182,9 @@
         onlineMyRole = "p2";
         showOnlineWait("Uniéndote a la sala...", "", false);
       },
-      onOpponentJoined: function () { onReady(); },
-      onOpponentLeft: function () { alert("El rival se desconectó."); closeOnlineRelay(); renderMenuStats(); showScreen("menu"); },
-      onDisconnected: function () { closeOnlineRelay(); },
+      onOpponentJoined: function () { setOnlineStatus("connected"); onReady(); },
+      onOpponentLeft: function () { setOnlineStatus("disconnected"); },
+      onDisconnected: function () { closeOnlineRelay(); renderMenuStats(); showScreen("menu"); },
       onMessage: onOnlineRelayMessage,
       onError: function (msg) { document.getElementById("online-setup-error").textContent = msg; showScreen("online-setup"); }
     });
@@ -1167,6 +1200,7 @@
       }
     });
     onlineRelay.createRoom();
+    document.getElementById("btn-leave-room").style.display = "inline-block";
   });
 
   document.getElementById("btn-online-join").addEventListener("click", function () {
@@ -1177,6 +1211,7 @@
       showOnlineWait("Esperando el tema de la ronda...", "", false);
     });
     onlineRelay.joinRoom(code);
+    document.getElementById("btn-leave-room").style.display = "inline-block";
   });
 
   document.getElementById("btn-online-back").addEventListener("click", function () { showScreen("menu"); });

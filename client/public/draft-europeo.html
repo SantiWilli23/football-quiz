@@ -70,6 +70,18 @@
     transition: all 0.15s ease;
   }
   .brand .menu-btn:hover { color: var(--accent2); border-color: var(--accent); }
+  .brand .leave-room-btn {
+    font-size: 12px; font-weight: 700; color: var(--rev); text-decoration: none;
+    border: 1px solid var(--rev); background: rgba(240,144,126,0.14); border-radius: 999px; padding: 7px 13px;
+    cursor: pointer; margin-left: 8px; font-family: inherit;
+  }
+  .brand .leave-room-btn:hover { background: var(--rev); color: #1a1408; }
+  .online-status-pill {
+    font-size: 11px; font-weight: 700; padding: 6px 11px; border-radius: 999px;
+    margin-left: 8px; display: none; white-space: nowrap;
+  }
+  .online-status-pill.connected { color: var(--teal2); background: var(--teal-bg); border: 1px solid var(--teal); }
+  .online-status-pill.disconnected { color: var(--rev); background: rgba(240,144,126,0.14); border: 1px solid var(--rev); }
   .brand .mark {
     width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center;
     background: linear-gradient(135deg, var(--gold2), var(--gold-dark));
@@ -424,6 +436,8 @@
     <div class="mark">★</div>
     <h1><span class="hl">DRAFT EUROPEO</span> 8A2</h1>
     <a class="menu-btn" href="/">← Menú principal</a>
+    <span class="online-status-pill" id="online-status-pill">🟢 Rival conectado</span>
+    <button class="leave-room-btn" id="btn-leave-room" style="display:none">✕ Salir de la sala</button>
   </div>
 
   <div id="screen-start" class="screen active">
@@ -519,7 +533,8 @@
           <div class="result-list" id="vs-list-2" style="font-size:11px"></div>
         </div>
       </div>
-      <button class="btn btn-ghost btn-block" id="btn-vs-new-cup" style="margin-top:16px">Nueva copa</button>
+      <button class="btn btn-holo btn-block" id="btn-vs-champions" style="margin-top:16px">🏆 Jugar la Champions</button>
+      <button class="btn btn-ghost btn-block" id="btn-vs-new-cup" style="margin-top:8px">Nueva copa</button>
     </div>
   </div>
 
@@ -1069,7 +1084,32 @@
     onlineMode = false;
     onlineMyResult = null;
     onlineOpponentResult = null;
+    document.getElementById("btn-leave-room").style.display = "none";
+    setOnlineStatus(null);
   }
+
+  function setOnlineStatus(state) {
+    var pill = document.getElementById("online-status-pill");
+    if (!state) { pill.style.display = "none"; return; }
+    pill.className = "online-status-pill " + state;
+    pill.textContent = state === "connected" ? "🟢 Rival conectado" : "🔴 Rival desconectado";
+    pill.style.display = "inline-block";
+  }
+
+  function onOpponentLeftHandler() {
+    setOnlineStatus("disconnected");
+    if (document.getElementById("screen-online-wait").classList.contains("active")) {
+      document.getElementById("online-wait-title").textContent = "El rival se desconectó";
+      document.getElementById("online-wait-sub").textContent = "No va a poder terminar. Podés salir de la sala.";
+      document.getElementById("room-code-box").style.display = "none";
+    }
+  }
+
+  document.getElementById("btn-leave-room").addEventListener("click", function () {
+    if (!confirm("¿Salir de la sala? La partida en curso se pierde para los dos.")) return;
+    closeOnlineRelay();
+    showScreen("start");
+  });
 
   function onOnlineRelayMessage(payload) {
     if (!payload || payload.kind !== "result") return;
@@ -1102,13 +1142,14 @@
         document.getElementById("room-code-display").textContent = code;
         showScreen("online-wait");
       },
-      onOpponentJoined: function () { beginOnlineDraft(); },
-      onOpponentLeft: function () { alert("El rival se desconectó."); closeOnlineRelay(); showScreen("start"); },
-      onDisconnected: function () { if (onlineMode || document.getElementById("screen-online-wait").classList.contains("active")) { closeOnlineRelay(); } },
+      onOpponentJoined: function () { setOnlineStatus("connected"); beginOnlineDraft(); },
+      onOpponentLeft: onOpponentLeftHandler,
+      onDisconnected: function () { if (onlineMode || document.getElementById("screen-online-wait").classList.contains("active")) { closeOnlineRelay(); showScreen("start"); } },
       onMessage: onOnlineRelayMessage,
       onError: function (msg) { document.getElementById("online-setup-error").textContent = msg; }
     });
     onlineRelay.createRoom();
+    document.getElementById("btn-leave-room").style.display = "inline-block";
   });
 
   document.getElementById("btn-online-join").addEventListener("click", function () {
@@ -1122,13 +1163,14 @@
         document.getElementById("room-code-box").style.display = "none";
         showScreen("online-wait");
       },
-      onOpponentJoined: function () { beginOnlineDraft(); },
-      onOpponentLeft: function () { alert("El rival se desconectó."); closeOnlineRelay(); showScreen("start"); },
-      onDisconnected: function () { closeOnlineRelay(); },
+      onOpponentJoined: function () { setOnlineStatus("connected"); beginOnlineDraft(); },
+      onOpponentLeft: onOpponentLeftHandler,
+      onDisconnected: function () { closeOnlineRelay(); showScreen("start"); },
       onMessage: onOnlineRelayMessage,
       onError: function (msg) { document.getElementById("online-setup-error").textContent = msg; showScreen("online-setup"); }
     });
     onlineRelay.joinRoom(code);
+    document.getElementById("btn-leave-room").style.display = "inline-block";
   });
 
   document.getElementById("btn-online-back").addEventListener("click", function () { showScreen("start"); });
@@ -1358,7 +1400,7 @@
     }
 
     if (onlineMode) {
-      onlineMyResult = { avg: avg, slots: state.slots.map(function (s) { return { type: s.type, filled: s.filled }; }) };
+      onlineMyResult = { avg: avg, slots: state.slots.map(function (s) { return { type: s.type, filled: s.filled }; }), formation: state.formation };
       if (onlineRelay) onlineRelay.send({ kind: "result", result: onlineMyResult });
       if (onlineOpponentResult) {
         renderVsResult(onlineMyResult, onlineOpponentResult, "Vos", "Rival");
@@ -1396,6 +1438,8 @@
     showScreen("result");
   }
 
+  var lastVsWinnerResult = null;
+
   function renderVsResult(r1, r2, label1, label2) {
     label1 = label1 || "Jugador 1";
     label2 = label2 || "Jugador 2";
@@ -1406,6 +1450,16 @@
     document.getElementById("vs-avg-2").textContent = r2.avg.toFixed(1);
     document.getElementById("vs-name-1").textContent = label1 + (winner === 1 ? " 🏆" : "");
     document.getElementById("vs-name-2").textContent = label2 + (winner === 2 ? " 🏆" : "");
+
+    var champBtn = document.getElementById("btn-vs-champions");
+    if (winner === 0) {
+      champBtn.style.display = "none";
+      lastVsWinnerResult = null;
+    } else {
+      champBtn.style.display = "";
+      champBtn.textContent = "🏆 Jugar la Champions con el equipo de " + (winner === 1 ? label1 : label2);
+      lastVsWinnerResult = winner === 1 ? r1 : r2;
+    }
 
     function renderList(elId, r) {
       var list = document.getElementById(elId);
@@ -1427,6 +1481,17 @@
 
     showScreen("vs-result");
   }
+
+  document.getElementById("btn-vs-champions").addEventListener("click", function () {
+    if (!lastVsWinnerResult) return;
+    closeOnlineRelay();
+    twoPlayerMode = false;
+    onlineMode = false;
+    state = freshState();
+    state.formation = lastVsWinnerResult.formation;
+    state.slots = lastVsWinnerResult.slots;
+    startChampions();
+  });
 
   /* ============ CHAMPIONS POST-DRAFT ============ */
 
