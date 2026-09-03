@@ -6,28 +6,33 @@
 <title>Cotrero · Modo Medio</title>
 <style>
   :root {
-    --bg: #131110;
-    --panel: #1c1916;
-    --panel2: #221e1a;
-    --border: rgba(212,175,55,0.22);
-    --gold: #d4af37;
-    --gold2: #f0d888;
-    --gold-dim: #a5822a;
-    --gold-bg: rgba(212,175,55,0.13);
-    --text: #f3ede0;
-    --text-dim: #b9ada0;
-    --text-dim2: #7d746a;
-    --good: #6dbf8a;
-    --bad: #d9695f;
-    --rare: #7ea8e8;
-    --rare-bg: rgba(126,168,232,0.13);
+    --bg: #2a2c30;
+    --panel: #34363b;
+    --border: rgba(255,255,255,0.12);
+    --accent: #3b9dd6;
+    --accent2: #7cc4ea;
+    --accent-dark: #215e82;
+    --accent-bg: rgba(59,157,214,0.16);
+    --teal: #3fae9a;
+    --teal2: #82d3c3;
+    --teal-dark: #1f5f52;
+    --teal-bg: rgba(63,174,154,0.16);
+    --gold: #d9a441;
+    --gold2: #f0c674;
+    --gold-dim: #8a6423;
+    --gold-bg: rgba(217,164,65,0.16);
+    --text: #f2f2f0;
+    --text-dim: #a8a9ac;
+    --text-dim2: #7c7d80;
+    --good: #4caf6e;
+    --bad: #f0907e;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
   body {
     background:
-      radial-gradient(ellipse 70% 45% at 25% 0%, rgba(212,175,55,0.06), transparent 70%),
-      radial-gradient(ellipse 55% 40% at 90% 100%, rgba(212,175,55,0.04), transparent 70%),
+      radial-gradient(ellipse 80% 50% at 20% 0%, rgba(242,242,240,0.04), transparent 70%),
+      radial-gradient(ellipse 60% 40% at 85% 100%, rgba(242,242,240,0.03), transparent 70%),
       var(--bg);
     background-attachment: fixed;
     color: var(--text);
@@ -41,22 +46,22 @@
   .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
   .brand .mark {
     width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center;
-    background: linear-gradient(150deg, var(--gold2), var(--gold) 55%, var(--gold-dim));
-    font-weight: 900; color: #1a1408; font-size: 16px; font-family: Georgia, serif;
+    background: linear-gradient(150deg, var(--accent2), var(--accent) 55%, var(--accent-dark));
+    font-weight: 900; color: #04141d; font-size: 16px; font-family: Georgia, serif;
   }
-  .brand h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.04em; color: var(--gold2); }
+  .brand h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.04em; color: var(--accent2); }
   .brand .menu-btn {
     margin-left: auto; font-family: -apple-system, "Segoe UI", Arial, sans-serif;
     font-size: 11.5px; font-weight: 700; color: var(--text-dim); text-decoration: none;
     border: 1px solid var(--border); border-radius: 999px; padding: 7px 13px;
   }
-  .brand .menu-btn:hover { color: var(--gold2); border-color: var(--gold); }
+  .brand .menu-btn:hover { color: var(--accent2); border-color: var(--accent); }
 
   .panel {
     background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
     padding: 20px; margin-bottom: 14px;
   }
-  h2 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--gold2); }
+  h2 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--accent2); }
   .sub { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12.5px; color: var(--text-dim); margin-bottom: 14px; line-height: 1.55; }
 
   .screen { display: none; }
@@ -68,11 +73,11 @@
     font-size: 14px; font-weight: 700; padding: 13px 18px; border-radius: 12px; border: none;
     cursor: pointer; transition: all 0.15s ease; color: var(--text);
   }
-  .btn-gold { background: linear-gradient(120deg, var(--gold2), var(--gold)); color: #1a1408; }
+  .btn-gold { background: linear-gradient(120deg, var(--teal2), var(--teal)); color: #0a1614; }
   .btn-gold:hover { filter: brightness(1.08); transform: translateY(-1px); }
   .btn-gold:disabled { opacity: 0.4; cursor: not-allowed; transform: none; filter: none; }
   .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
-  .btn-ghost:hover { border-color: var(--gold); color: var(--gold2); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--text); }
   .btn-block + .btn-block { margin-top: 8px; }
 
   input[type="text"], select {
@@ -80,7 +85,7 @@
     padding: 11px 13px; border-radius: 10px; border: 1px solid var(--border);
     background: rgba(0,0,0,0.25); color: var(--text); outline: none;
   }
-  input[type="text"]:focus, select:focus { border-color: var(--gold); }
+  input[type="text"]:focus, select:focus { border-color: var(--accent); }
   label.flabel { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 6px; }
   .field { margin-bottom: 14px; }
 
@@ -90,8 +95,8 @@
     border: 1px solid var(--border); border-radius: 12px; padding: 14px; cursor: pointer;
     background: rgba(0,0,0,0.15); transition: all 0.15s ease;
   }
-  .pick-card:hover { border-color: var(--gold-dim); }
-  .pick-card.selected { border-color: var(--gold); background: var(--gold-bg); }
+  .pick-card:hover { border-color: var(--teal); }
+  .pick-card.selected { border-color: var(--accent); background: var(--accent-bg); }
   .pick-card .ptitle { font-size: 14.5px; font-weight: 700; color: var(--text); }
   .pick-card .pdesc { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; color: var(--text-dim); margin-top: 4px; line-height: 1.5; }
   .pick-card .ptag {
@@ -99,17 +104,17 @@
     letter-spacing: 0.06em; text-transform: uppercase; border-radius: 999px; padding: 2px 9px; margin-top: 6px;
   }
   .ptag.comun { background: rgba(180,180,180,0.15); color: #c8c8c8; }
-  .ptag.raro { background: var(--rare-bg); color: var(--rare); }
-  .ptag.legendario { background: var(--gold-bg); color: var(--gold2); box-shadow: 0 0 8px rgba(212,175,55,0.25); }
+  .ptag.raro { background: var(--accent-bg); color: var(--accent2); }
+  .ptag.legendario { background: var(--gold-bg); color: var(--gold2); box-shadow: 0 0 8px rgba(217,164,65,0.25); }
 
   .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 13px; }
   .stat-row:last-child { border-bottom: none; }
-  .stat-row .sval { font-weight: 800; color: var(--gold2); font-family: ui-monospace, monospace; }
+  .stat-row .sval { font-weight: 800; color: var(--text); font-family: ui-monospace, monospace; }
   .stat-row .sdelta { font-size: 11px; margin-left: 6px; }
   .sdelta.pos { color: var(--good); } .sdelta.neg { color: var(--bad); }
 
   .hub-top { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
-  .hub-ovr { font-size: 40px; font-weight: 900; color: var(--gold2); font-family: Georgia, serif; line-height: 1; }
+  .hub-ovr { font-size: 40px; font-weight: 900; color: var(--accent2); font-family: Georgia, serif; line-height: 1; }
   .hub-ovr-lbl { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 10px; color: var(--text-dim2); text-transform: uppercase; letter-spacing: 0.06em; }
   .hub-meta { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12.5px; color: var(--text-dim); line-height: 1.6; }
   .hub-meta b { color: var(--text); }
@@ -119,12 +124,12 @@
     font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11px; font-weight: 700;
     background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 999px; padding: 6px 11px; color: var(--text-dim);
   }
-  .info-chip b { color: var(--gold2); }
+  .info-chip b { color: var(--accent2); }
 
   .bar-track { height: 8px; border-radius: 5px; background: rgba(255,255,255,0.08); overflow: hidden; margin-top: 4px; }
-  .bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--gold-dim), var(--gold2)); }
+  .bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--teal), var(--teal2)); }
 
-  .event-card { border-left: 3px solid var(--gold); padding: 12px 14px; background: rgba(0,0,0,0.18); border-radius: 8px; margin-bottom: 14px; }
+  .event-card { border-left: 3px solid var(--accent); padding: 12px 14px; background: rgba(0,0,0,0.18); border-radius: 8px; margin-bottom: 14px; }
   .event-card p { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 13px; color: var(--text); line-height: 1.6; }
 
   .club-offer { border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; background: rgba(0,0,0,0.15); }
@@ -137,7 +142,7 @@
     border: 2px solid rgba(255,255,255,0.15);
   }
   .mini-pitch .box { position: absolute; left: 20%; right: 20%; top: 0; height: 28%; border: 2px solid rgba(255,255,255,0.4); border-top: none; }
-  .mini-pitch .dot { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--gold2); box-shadow: 0 0 8px rgba(0,0,0,0.5); transform: translate(-50%,-50%); }
+  .mini-pitch .dot { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--accent2); box-shadow: 0 0 8px rgba(0,0,0,0.5); transform: translate(-50%,-50%); }
   .mini-pitch .dot.ball { width: 8px; height: 8px; background: #fff; }
 
   .award-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--gold-bg); border: 1px solid var(--gold-dim); border-radius: 999px; padding: 5px 11px; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; font-weight: 700; color: var(--gold2); margin: 3px 4px 3px 0; }
@@ -166,7 +171,7 @@
     <p class="footer sans">Cotrero · Modo Medio · datos con fines de juego, no oficiales.</p>
   </div>
 
-  <!-- CREACION -->
+  <!-- CREACION: todo en una sola página, progresiva -->
   <div class="screen" id="screen-crear">
     <div class="panel">
       <h2>Creá tu jugador</h2>
@@ -184,23 +189,16 @@
       </div>
       <button class="btn btn-gold btn-block" id="btn-crear-continuar">Continuar</button>
     </div>
-  </div>
 
-  <!-- ARQUETIPO -->
-  <div class="screen" id="screen-arquetipo">
-    <div class="panel">
+    <div class="panel" id="crear-step-arquetipo" style="display:none">
       <h2>Elegí tu arquetipo inicial</h2>
       <p class="sub">Define tu punto fuerte desde el arranque.</p>
       <div class="pick-grid" id="grid-arquetipo"></div>
-      <button class="btn btn-gold btn-block" id="btn-arquetipo-continuar" style="margin-top:10px" disabled>Continuar</button>
     </div>
-  </div>
 
-  <!-- ELECCION DE PAIS/CLUB -->
-  <div class="screen" id="screen-club-inicial">
-    <div class="panel">
+    <div class="panel" id="crear-step-club" style="display:none">
       <h2>¿Dónde arrancás?</h2>
-      <p class="sub">Elegí un país al azar dentro de tu camino, o elegí manualmente país y club.</p>
+      <p class="sub">Elegí un país al azar, o elegí manualmente país y club.</p>
       <div class="pick-grid cols2" style="margin-bottom:14px">
         <div class="pick-card" id="opt-club-random"><div class="ptitle">Aleatorio</div><div class="pdesc">Tres clubes al azar te ofrecen un lugar en su plantel juvenil.</div></div>
         <div class="pick-card" id="opt-club-manual"><div class="ptitle">Elegir manualmente</div><div class="pdesc">Elegís vos el país y el club de arranque.</div></div>
@@ -221,140 +219,129 @@
   </div>
 
   <!-- HUB -->
+  <!-- HUB: una sola pantalla mientras dura la carrera. Todo lo que pasa en
+       una temporada (entrenamiento, selección, eventos, tienda, mercado...)
+       se muestra dentro de #hub-step, sin salir de esta página. -->
   <div class="screen" id="screen-hub">
-    <div class="panel">
-      <div class="hub-top">
-        <div>
-          <div class="hub-ovr" id="hub-ovr">60</div>
-          <div class="hub-ovr-lbl">OVR</div>
+    <div id="hub-normal">
+      <div class="panel">
+        <div class="hub-top">
+          <div>
+            <div class="hub-ovr" id="hub-ovr">60</div>
+            <div class="hub-ovr-lbl">OVR</div>
+          </div>
+          <div class="hub-meta">
+            <div><b id="hub-nombre">—</b> · <span id="hub-edad">16</span> años · <span id="hub-posicion">—</span></div>
+            <div id="hub-club">Sin club</div>
+            <div id="hub-personalidad" style="display:none">Personalidad: <b id="hub-personalidad-val">—</b></div>
+          </div>
         </div>
-        <div class="hub-meta">
-          <div><b id="hub-nombre">—</b> · <span id="hub-edad">16</span> años · <span id="hub-posicion">—</span></div>
-          <div id="hub-club">Sin club</div>
-          <div id="hub-personalidad" style="display:none">Personalidad: <b id="hub-personalidad-val">—</b></div>
+        <div style="margin-top:10px">
+          <div class="sans" style="font-size:11px;color:var(--text-dim2);text-transform:uppercase;letter-spacing:0.06em">Forma</div>
+          <div class="bar-track"><div class="bar-fill" id="hub-forma-bar" style="width:60%"></div></div>
+        </div>
+        <div class="chip-row">
+          <span class="info-chip">Temporada <b id="hub-temporada">1</b></span>
+          <span class="info-chip">Valor <b id="hub-valor">—</b></span>
+          <span class="info-chip">Contrato <b id="hub-contrato">—</b></span>
+          <span class="info-chip">Dinero <b id="hub-dinero">—</b></span>
         </div>
       </div>
-      <div style="margin-top:10px">
-        <div class="sans" style="font-size:11px;color:var(--text-dim2);text-transform:uppercase;letter-spacing:0.06em">Forma</div>
-        <div class="bar-track"><div class="bar-fill" id="hub-forma-bar" style="width:60%"></div></div>
+      <div class="panel">
+        <h2 style="margin-bottom:10px">Atributos</h2>
+        <div id="hub-stats"></div>
       </div>
-      <div class="chip-row">
-        <span class="info-chip">Temporada <b id="hub-temporada">1</b></span>
-        <span class="info-chip">Valor <b id="hub-valor">—</b></span>
-        <span class="info-chip">Contrato <b id="hub-contrato">—</b></span>
-        <span class="info-chip">Dinero <b id="hub-dinero">—</b></span>
+      <div class="panel" id="hub-vitrina-panel">
+        <h2 style="margin-bottom:10px">Vitrina</h2>
+        <div id="hub-vitrina" class="sans" style="font-size:12px;color:var(--text-dim2)">Sin logros todavía.</div>
       </div>
+      <button class="btn btn-gold btn-block" id="btn-hub-avanzar">Empezar temporada</button>
+      <button class="btn btn-ghost btn-block" id="btn-hub-retirarse">Retirarse</button>
+      <button class="btn btn-ghost btn-block" id="btn-hub-borrar">Eliminar carrera</button>
     </div>
-    <div class="panel">
-      <h2 style="margin-bottom:10px">Atributos</h2>
-      <div id="hub-stats"></div>
-    </div>
-    <div class="panel" id="hub-vitrina-panel">
-      <h2 style="margin-bottom:10px">Vitrina</h2>
-      <div id="hub-vitrina" class="sans" style="font-size:12px;color:var(--text-dim2)">Sin logros todavía.</div>
-    </div>
-    <button class="btn btn-gold btn-block" id="btn-hub-avanzar">Empezar temporada</button>
-    <button class="btn btn-ghost btn-block" id="btn-hub-retirarse">Retirarse</button>
-    <button class="btn btn-ghost btn-block" id="btn-hub-borrar">Eliminar carrera</button>
-  </div>
 
-  <!-- ENTRENAMIENTO -->
-  <div class="screen" id="screen-entrenamiento">
-    <div class="panel">
-      <h2>Pretemporada</h2>
-      <p class="sub">Elegí <b style="color:var(--gold2)">2</b> de estas 4 opciones de entrenamiento.</p>
-      <div class="pick-grid cols2" id="grid-entrenamiento"></div>
-      <button class="btn btn-gold btn-block" id="btn-entrenamiento-confirmar" style="margin-top:10px" disabled>Confirmar (0/2)</button>
-    </div>
-  </div>
-
-  <!-- SELECCION NACIONAL -->
-  <div class="screen" id="screen-nacional">
-    <div class="panel">
-      <h2 id="nacional-titulo">Convocatoria</h2>
-      <p class="sub" id="nacional-texto"></p>
-      <div id="nacional-minijuego" style="display:none">
-        <div class="pick-grid cols2" id="grid-nacional-opciones"></div>
+    <div id="hub-step" style="display:none">
+      <!-- ENTRENAMIENTO -->
+      <div class="panel step-panel" id="step-entrenamiento">
+        <h2>Pretemporada</h2>
+        <p class="sub">Elegí <b style="color:var(--accent2)">2</b> de estas 4 opciones de entrenamiento.</p>
+        <div class="pick-grid cols2" id="grid-entrenamiento"></div>
+        <button class="btn btn-gold btn-block" id="btn-entrenamiento-confirmar" style="margin-top:10px" disabled>Confirmar (0/2)</button>
       </div>
-      <button class="btn btn-gold btn-block" id="btn-nacional-continuar">Continuar</button>
-    </div>
-  </div>
 
-  <!-- FINAL DE MUNDIAL (cancha 2D opcional) -->
-  <div class="screen" id="screen-final-mundial">
-    <div class="panel">
-      <h2>🏆 Final del Mundial</h2>
-      <p class="sub" id="final-mundial-texto">Estás en el campo, con la pelota. El partido está trabado.</p>
-      <div class="mini-pitch">
-        <div class="box"></div>
-        <div class="dot" id="fm-dot-jugador" style="left:50%;top:70%"></div>
-        <div class="dot ball" id="fm-dot-pelota" style="left:50%;top:66%"></div>
+      <!-- SELECCION NACIONAL -->
+      <div class="panel step-panel" id="step-nacional">
+        <h2 id="nacional-titulo">Convocatoria</h2>
+        <p class="sub" id="nacional-texto"></p>
+        <div id="nacional-minijuego" style="display:none">
+          <div class="pick-grid cols2" id="grid-nacional-opciones"></div>
+        </div>
+        <button class="btn btn-gold btn-block" id="btn-nacional-continuar">Continuar</button>
       </div>
-      <div class="pick-grid cols2" style="margin-bottom:10px">
-        <div class="pick-card" data-fm="centro"><div class="ptitle">Centro al área</div><div class="pdesc">Buscás a un compañero de cabeza.</div></div>
-        <div class="pick-card" data-fm="disparo"><div class="ptitle">Disparo de media distancia</div><div class="pdesc">Probás suerte vos mismo.</div></div>
+
+      <!-- FINAL DE MUNDIAL (cancha 2D opcional) -->
+      <div class="panel step-panel" id="step-final-mundial">
+        <h2>🏆 Final del Mundial</h2>
+        <p class="sub" id="final-mundial-texto">Estás en el campo, con la pelota. El partido está trabado.</p>
+        <div class="mini-pitch">
+          <div class="box"></div>
+          <div class="dot" id="fm-dot-jugador" style="left:50%;top:70%"></div>
+          <div class="dot ball" id="fm-dot-pelota" style="left:50%;top:66%"></div>
+        </div>
+        <div class="pick-grid cols2" style="margin-bottom:10px">
+          <div class="pick-card" data-fm="centro"><div class="ptitle">Centro al área</div><div class="pdesc">Buscás a un compañero de cabeza.</div></div>
+          <div class="pick-card" data-fm="disparo"><div class="ptitle">Disparo de media distancia</div><div class="pdesc">Probás suerte vos mismo.</div></div>
+        </div>
+        <button class="btn btn-ghost btn-block" id="btn-final-mundial-saltar">Simular directo (saltar)</button>
       </div>
-      <button class="btn btn-ghost btn-block" id="btn-final-mundial-saltar">Simular directo (saltar)</button>
-    </div>
-  </div>
 
-  <!-- MEDIO TIEMPO -->
-  <div class="screen" id="screen-mediotiempo">
-    <div class="panel">
-      <h2>Mitad de temporada</h2>
-      <p class="sub sans" id="mediotiempo-resumen"></p>
-      <p class="sub">¿Qué priorizás para lo que queda de temporada?</p>
-      <div class="pick-grid" id="grid-mediotiempo"></div>
-    </div>
-  </div>
+      <!-- MEDIO TIEMPO -->
+      <div class="panel step-panel" id="step-mediotiempo">
+        <h2>Mitad de temporada</h2>
+        <p class="sub sans" id="mediotiempo-resumen"></p>
+        <p class="sub">¿Qué priorizás para lo que queda de temporada?</p>
+        <div class="pick-grid" id="grid-mediotiempo"></div>
+      </div>
 
-  <!-- EVENTO -->
-  <div class="screen" id="screen-evento">
-    <div class="panel">
-      <h2 id="evento-titulo">Situación</h2>
-      <div class="event-card"><p id="evento-texto"></p></div>
-      <div class="pick-grid" id="grid-evento"></div>
-    </div>
-  </div>
+      <!-- EVENTO -->
+      <div class="panel step-panel" id="step-evento">
+        <h2 id="evento-titulo">Situación</h2>
+        <div class="event-card"><p id="evento-texto"></p></div>
+        <div class="pick-grid" id="grid-evento"></div>
+      </div>
 
-  <!-- RESULTADO DE TEMPORADA -->
-  <div class="screen" id="screen-resultado-temporada">
-    <div class="panel">
-      <h2>Así te fue esta temporada</h2>
-      <div id="resultado-lineas"></div>
-      <div id="resultado-premios" style="margin-top:10px"></div>
-      <button class="btn btn-gold btn-block" id="btn-resultado-continuar" style="margin-top:12px">Seguir</button>
-    </div>
-  </div>
+      <!-- RESULTADO DE TEMPORADA -->
+      <div class="panel step-panel" id="step-resultado-temporada">
+        <h2>Así te fue esta temporada</h2>
+        <div id="resultado-lineas"></div>
+        <div id="resultado-premios" style="margin-top:10px"></div>
+        <button class="btn btn-gold btn-block" id="btn-resultado-continuar" style="margin-top:12px">Seguir</button>
+      </div>
 
-  <!-- TIENDA -->
-  <div class="screen" id="screen-tienda">
-    <div class="panel">
-      <h2>Tienda</h2>
-      <p class="sub sans">Tenés <b id="tienda-dinero" style="color:var(--gold2)">€0</b> disponibles.</p>
-      <h2 style="font-size:13px;margin-top:6px">Permanentes</h2>
-      <div class="pick-grid" id="grid-tienda-permanente"></div>
-      <h2 style="font-size:13px;margin-top:14px">Temporales <span class="sans" style="font-size:11px;color:var(--text-dim2);font-weight:400" id="tienda-temp-restantes"></span></h2>
-      <div class="pick-grid" id="grid-tienda-temporal"></div>
-      <button class="btn btn-gold btn-block" id="btn-tienda-continuar" style="margin-top:14px">Seguir</button>
-    </div>
-  </div>
+      <!-- TIENDA -->
+      <div class="panel step-panel" id="step-tienda">
+        <h2>Tienda</h2>
+        <p class="sub sans">Tenés <b id="tienda-dinero" style="color:var(--accent2)">€0</b> disponibles.</p>
+        <h2 style="font-size:13px;margin-top:6px">Permanentes</h2>
+        <div class="pick-grid" id="grid-tienda-permanente"></div>
+        <h2 style="font-size:13px;margin-top:14px">Temporales <span class="sans" style="font-size:11px;color:var(--text-dim2);font-weight:400" id="tienda-temp-restantes"></span></h2>
+        <div class="pick-grid" id="grid-tienda-temporal"></div>
+        <button class="btn btn-gold btn-block" id="btn-tienda-continuar" style="margin-top:14px">Seguir</button>
+      </div>
 
-  <!-- MERCADO -->
-  <div class="screen" id="screen-mercado">
-    <div class="panel">
-      <h2>Mercado de pases</h2>
-      <p class="sub" id="mercado-texto"></p>
-      <div id="mercado-ofertas"></div>
-    </div>
-  </div>
+      <!-- MERCADO -->
+      <div class="panel step-panel" id="step-mercado">
+        <h2>Mercado de pases</h2>
+        <p class="sub" id="mercado-texto"></p>
+        <div id="mercado-ofertas"></div>
+      </div>
 
-  <!-- CAMBIO DE POSICION (evento especial) -->
-  <div class="screen" id="screen-cambio-posicion">
-    <div class="panel">
-      <h2>Oferta de cambio de posición</h2>
-      <p class="sub" id="cambio-posicion-texto"></p>
-      <div class="pick-grid cols2" id="grid-cambio-posicion"></div>
+      <!-- CAMBIO DE POSICION (evento especial) -->
+      <div class="panel step-panel" id="step-cambio-posicion">
+        <h2>Oferta de cambio de posición</h2>
+        <p class="sub" id="cambio-posicion-texto"></p>
+        <div class="pick-grid cols2" id="grid-cambio-posicion"></div>
+      </div>
     </div>
   </div>
 
@@ -413,6 +400,23 @@
   function showScreen(id) {
     document.querySelectorAll(".screen").forEach(function (s) { s.classList.remove("active"); });
     document.getElementById("screen-" + id).classList.add("active");
+    window.scrollTo(0, 0);
+  }
+
+  // Todo lo que pasa dentro de una carrera (entrenamiento, selección, eventos,
+  // tienda, mercado...) sucede en la misma página del hub: en vez de cambiar
+  // de pantalla, esto solo cambia qué panel se ve adentro de #hub-step.
+  function showStep(id) {
+    showScreen("hub");
+    if (!id) {
+      document.getElementById("hub-step").style.display = "none";
+      document.getElementById("hub-normal").style.display = "";
+      return;
+    }
+    document.getElementById("hub-normal").style.display = "none";
+    document.getElementById("hub-step").style.display = "";
+    document.querySelectorAll(".step-panel").forEach(function (p) { p.style.display = "none"; });
+    document.getElementById("step-" + id).style.display = "";
     window.scrollTo(0, 0);
   }
 
@@ -786,15 +790,17 @@
     if (!existing) return;
     M = existing;
     renderHub();
-    showScreen("hub");
+    showStep(null);
   });
   document.getElementById("btn-inicio-historial").addEventListener("click", function () { renderHistoryScreen(); showScreen("historial"); });
-  document.getElementById("btn-historial-volver").addEventListener("click", function () { showScreen(M ? "hub" : "inicio"); });
+  document.getElementById("btn-historial-volver").addEventListener("click", function () { if (M) { showStep(null); } else { showScreen("inicio"); } });
   document.getElementById("btn-legado-historial").addEventListener("click", function () { renderHistoryScreen(); showScreen("historial"); });
 
-  /* ============ CREACIÓN ============ */
+  /* ============ CREACIÓN (una sola página, progresiva) ============ */
   function startCreation() {
     creation = { position: null, archetypes: [], chosenArchetype: null, nationality: null };
+    document.getElementById("crear-step-arquetipo").style.display = "none";
+    document.getElementById("crear-step-club").style.display = "none";
     var natSel = document.getElementById("inp-nacionalidad");
     natSel.innerHTML = NATIONALITIES.map(function (n) { return '<option value="' + esc(n.n) + '">' + n.flag + " " + esc(n.n) + "</option>"; }).join("");
     document.getElementById("inp-nombre").value = "";
@@ -831,18 +837,18 @@
         grid.querySelectorAll(".pick-card").forEach(function (c) { c.classList.remove("selected"); });
         card.classList.add("selected");
         creation.chosenArchetype = creation.archetypes[Number(card.dataset.i)];
-        document.getElementById("btn-arquetipo-continuar").disabled = false;
+        // Al elegir arquetipo se revela directamente el paso del club, sin cambiar de página.
+        document.getElementById("club-random-offers").style.display = "none";
+        document.getElementById("club-manual-form").style.display = "none";
+        document.querySelectorAll("#crear-step-club .pick-card").forEach(function (c2) { c2.classList.remove("selected"); });
+        var clubStep = document.getElementById("crear-step-club");
+        clubStep.style.display = "";
+        clubStep.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     });
-    document.getElementById("btn-arquetipo-continuar").disabled = true;
-    showScreen("arquetipo");
-  });
-
-  document.getElementById("btn-arquetipo-continuar").addEventListener("click", function () {
-    document.getElementById("club-random-offers").style.display = "none";
-    document.getElementById("club-manual-form").style.display = "none";
-    document.querySelectorAll("#screen-club-inicial .pick-card").forEach(function (c) { c.classList.remove("selected"); });
-    showScreen("club-inicial");
+    var arqStep = document.getElementById("crear-step-arquetipo");
+    arqStep.style.display = "";
+    arqStep.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
   document.getElementById("opt-club-random").addEventListener("click", function () {
@@ -896,7 +902,7 @@
     M.marketValue = marketValueFor(M);
     saveGame();
     renderHub();
-    showScreen("hub");
+    showStep(null);
   }
 
   /* ============ HUB ============ */
@@ -998,7 +1004,7 @@
     });
     document.getElementById("btn-entrenamiento-confirmar").textContent = "Confirmar (0/2)";
     document.getElementById("btn-entrenamiento-confirmar").disabled = true;
-    showScreen("entrenamiento");
+    showStep("entrenamiento");
   }
 
   document.getElementById("btn-entrenamiento-confirmar").addEventListener("click", function () {
@@ -1056,7 +1062,7 @@
       });
       document.getElementById("nacional-minijuego").style.display = "";
     }
-    showScreen("nacional");
+    showStep("nacional");
   }
 
   function resolveNationalTournament(approach, isWorldCup) {
@@ -1091,7 +1097,7 @@
   }
 
   document.getElementById("btn-nacional-continuar").addEventListener("click", function () {
-    if (M._pendingFinalMundial) { M._pendingFinalMundial = false; showScreen("final-mundial"); return; }
+    if (M._pendingFinalMundial) { M._pendingFinalMundial = false; showStep("final-mundial"); return; }
     simulateFirstHalf();
   });
 
@@ -1160,7 +1166,7 @@
         runEvents();
       });
     });
-    showScreen("mediotiempo");
+    showStep("mediotiempo");
   }
 
   /* ============ EVENTOS ============ */
@@ -1183,7 +1189,7 @@
         nextEvent();
       });
     });
-    showScreen("evento");
+    showStep("evento");
   }
   function applyEventEffect(fx) {
     if (fx.forma) M.forma = clamp(M.forma + fx.forma, 5, effectiveFormaCeiling(M));
@@ -1231,7 +1237,7 @@
         simulateSecondHalf();
       });
     });
-    showScreen("cambio-posicion");
+    showStep("cambio-posicion");
     return true;
   }
 
@@ -1341,7 +1347,7 @@
     premiosBox.innerHTML = s.awardsThisSeason.length
       ? s.awardsThisSeason.map(function (a) { return '<span class="award-badge">🏆 ' + esc(a) + "</span>"; }).join("")
       : "";
-    showScreen("resultado-temporada");
+    showStep("resultado-temporada");
   }
 
   document.getElementById("btn-resultado-continuar").addEventListener("click", afterSeasonAdvance);
@@ -1368,7 +1374,7 @@
     if (M.contractYearsLeft <= 0) { showMarket(); return; }
 
     renderHub();
-    showScreen("hub");
+    showStep(null);
   }
 
   /* ============ TIENDA ============ */
@@ -1379,7 +1385,7 @@
     permGrid.innerHTML = availPerm.length ? availPerm.map(function (it) {
       var afford = M.money >= it.price;
       return '<div class="pick-card' + (afford ? "" : "") + '" data-perm="' + it.id + '" style="' + (afford ? "" : "opacity:0.5") + '"><div class="ptitle">' + esc(it.name) +
-        '</div><div class="pdesc">' + esc(it.desc) + '</div><div class="sans" style="margin-top:6px;font-weight:700;color:var(--gold2)">' + fmtMoney(it.price) + '</div></div>';
+        '</div><div class="pdesc">' + esc(it.desc) + '</div><div class="sans" style="margin-top:6px;font-weight:700;color:var(--accent2)">' + fmtMoney(it.price) + '</div></div>';
     }).join("") : '<p class="sub sans">Ya tenés todos los ítems permanentes.</p>';
     permGrid.querySelectorAll(".pick-card").forEach(function (card) {
       card.addEventListener("click", function () { buyPermanent(card.dataset.perm); });
@@ -1396,13 +1402,13 @@
       M._shopTempShown = shown;
       tempGrid.innerHTML = shown.length ? shown.map(function (it) {
         return '<div class="pick-card" data-temp="' + it.id + '"><div class="ptitle">' + esc(it.name) + '</div><div class="pdesc">' + esc(it.desc) +
-          '</div><div class="sans" style="margin-top:6px;font-weight:700;color:var(--gold2)">' + fmtMoney(it.price) + '</div></div>';
+          '</div><div class="sans" style="margin-top:6px;font-weight:700;color:var(--accent2)">' + fmtMoney(it.price) + '</div></div>';
       }).join("") : '<p class="sub sans">No quedan ítems temporales nuevos.</p>';
       tempGrid.querySelectorAll(".pick-card").forEach(function (card) {
         card.addEventListener("click", function () { buyTemporary(card.dataset.temp); });
       });
     }
-    showScreen("tienda");
+    showStep("tienda");
   }
 
   function buyPermanent(id) {
@@ -1451,7 +1457,7 @@
     if (M.contractYearsLeft <= 0) { showMarket(); return; }
     saveGame();
     renderHub();
-    showScreen("hub");
+    showStep(null);
   });
 
   /* ============ MERCADO ============ */
@@ -1481,7 +1487,7 @@
     box.querySelectorAll("button").forEach(function (btn, i) {
       btn.addEventListener("click", function () { acceptOffer(offers[i]); });
     });
-    showScreen("mercado");
+    showStep("mercado");
   }
 
   function acceptOffer(offer) {
@@ -1496,7 +1502,7 @@
     M.marketValue = marketValueFor(M);
     saveGame();
     renderHub();
-    showScreen("hub");
+    showStep(null);
   }
 
   /* ============ INICIO DE TEMPORADA ============ */
