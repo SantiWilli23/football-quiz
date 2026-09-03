@@ -271,9 +271,9 @@
         <div class="mtitle">Simple</div>
         <p>Carrera rápida (5-10 min). Solo tu overall general, solo delantero. Un entrenamiento por temporada y listo.</p>
       </div>
-      <div class="mode-card locked" data-mode="medio">
-        <div class="mtitle">Medio <span class="soon">PRÓXIMAMENTE</span></div>
-        <p>5 stats por posición, tienda, personalidad oculta y relación con el DT. En construcción.</p>
+      <div class="mode-card" data-mode="medio">
+        <div class="mtitle">Medio</div>
+        <p>5 stats por posición, entrenamientos con riesgo, tienda, personalidad oculta, mercado de pases y selección nacional (20-40 min).</p>
       </div>
       <div class="mode-card locked" data-mode="especialista">
         <div class="mtitle">Especialista <span class="soon">PRÓXIMAMENTE</span></div>
@@ -834,6 +834,7 @@
   document.querySelectorAll(".mode-card").forEach(function (card) {
     card.addEventListener("click", function () {
       if (card.classList.contains("locked")) return;
+      if (card.dataset.mode === "medio") { window.location.href = "/cotrero-medio.html"; return; }
       startNewCareerFlow();
     });
   });

@@ -1,0 +1,1579 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Cotrero · Modo Medio</title>
+<style>
+  :root {
+    --bg: #131110;
+    --panel: #1c1916;
+    --panel2: #221e1a;
+    --border: rgba(212,175,55,0.22);
+    --gold: #d4af37;
+    --gold2: #f0d888;
+    --gold-dim: #a5822a;
+    --gold-bg: rgba(212,175,55,0.13);
+    --text: #f3ede0;
+    --text-dim: #b9ada0;
+    --text-dim2: #7d746a;
+    --good: #6dbf8a;
+    --bad: #d9695f;
+    --rare: #7ea8e8;
+    --rare-bg: rgba(126,168,232,0.13);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background:
+      radial-gradient(ellipse 70% 45% at 25% 0%, rgba(212,175,55,0.06), transparent 70%),
+      radial-gradient(ellipse 55% 40% at 90% 100%, rgba(212,175,55,0.04), transparent 70%),
+      var(--bg);
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+    min-height: 100%;
+    overflow-x: hidden;
+  }
+  .sans { font-family: -apple-system, "Segoe UI", Arial, sans-serif; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 22px 16px 60px; }
+
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .brand .mark {
+    width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center;
+    background: linear-gradient(150deg, var(--gold2), var(--gold) 55%, var(--gold-dim));
+    font-weight: 900; color: #1a1408; font-size: 16px; font-family: Georgia, serif;
+  }
+  .brand h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.04em; color: var(--gold2); }
+  .brand .menu-btn {
+    margin-left: auto; font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    font-size: 11.5px; font-weight: 700; color: var(--text-dim); text-decoration: none;
+    border: 1px solid var(--border); border-radius: 999px; padding: 7px 13px;
+  }
+  .brand .menu-btn:hover { color: var(--gold2); border-color: var(--gold); }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px; margin-bottom: 14px;
+  }
+  h2 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--gold2); }
+  .sub { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12.5px; color: var(--text-dim); margin-bottom: 14px; line-height: 1.55; }
+
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadein 0.3s ease; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .btn {
+    display: block; width: 100%; text-align: center; font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    font-size: 14px; font-weight: 700; padding: 13px 18px; border-radius: 12px; border: none;
+    cursor: pointer; transition: all 0.15s ease; color: var(--text);
+  }
+  .btn-gold { background: linear-gradient(120deg, var(--gold2), var(--gold)); color: #1a1408; }
+  .btn-gold:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .btn-gold:disabled { opacity: 0.4; cursor: not-allowed; transform: none; filter: none; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold2); }
+  .btn-block + .btn-block { margin-top: 8px; }
+
+  input[type="text"], select {
+    width: 100%; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 14px;
+    padding: 11px 13px; border-radius: 10px; border: 1px solid var(--border);
+    background: rgba(0,0,0,0.25); color: var(--text); outline: none;
+  }
+  input[type="text"]:focus, select:focus { border-color: var(--gold); }
+  label.flabel { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 6px; }
+  .field { margin-bottom: 14px; }
+
+  .pick-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 6px; }
+  @media (min-width: 520px) { .pick-grid.cols2 { grid-template-columns: 1fr 1fr; } .pick-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; } }
+  .pick-card {
+    border: 1px solid var(--border); border-radius: 12px; padding: 14px; cursor: pointer;
+    background: rgba(0,0,0,0.15); transition: all 0.15s ease;
+  }
+  .pick-card:hover { border-color: var(--gold-dim); }
+  .pick-card.selected { border-color: var(--gold); background: var(--gold-bg); }
+  .pick-card .ptitle { font-size: 14.5px; font-weight: 700; color: var(--text); }
+  .pick-card .pdesc { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; color: var(--text-dim); margin-top: 4px; line-height: 1.5; }
+  .pick-card .ptag {
+    display: inline-block; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 9.5px; font-weight: 800;
+    letter-spacing: 0.06em; text-transform: uppercase; border-radius: 999px; padding: 2px 9px; margin-top: 6px;
+  }
+  .ptag.comun { background: rgba(180,180,180,0.15); color: #c8c8c8; }
+  .ptag.raro { background: var(--rare-bg); color: var(--rare); }
+  .ptag.legendario { background: var(--gold-bg); color: var(--gold2); box-shadow: 0 0 8px rgba(212,175,55,0.25); }
+
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 13px; }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-row .sval { font-weight: 800; color: var(--gold2); font-family: ui-monospace, monospace; }
+  .stat-row .sdelta { font-size: 11px; margin-left: 6px; }
+  .sdelta.pos { color: var(--good); } .sdelta.neg { color: var(--bad); }
+
+  .hub-top { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+  .hub-ovr { font-size: 40px; font-weight: 900; color: var(--gold2); font-family: Georgia, serif; line-height: 1; }
+  .hub-ovr-lbl { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 10px; color: var(--text-dim2); text-transform: uppercase; letter-spacing: 0.06em; }
+  .hub-meta { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12.5px; color: var(--text-dim); line-height: 1.6; }
+  .hub-meta b { color: var(--text); }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .info-chip {
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11px; font-weight: 700;
+    background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 999px; padding: 6px 11px; color: var(--text-dim);
+  }
+  .info-chip b { color: var(--gold2); }
+
+  .bar-track { height: 8px; border-radius: 5px; background: rgba(255,255,255,0.08); overflow: hidden; margin-top: 4px; }
+  .bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--gold-dim), var(--gold2)); }
+
+  .event-card { border-left: 3px solid var(--gold); padding: 12px 14px; background: rgba(0,0,0,0.18); border-radius: 8px; margin-bottom: 14px; }
+  .event-card p { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 13px; color: var(--text); line-height: 1.6; }
+
+  .club-offer { border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; background: rgba(0,0,0,0.15); }
+  .club-offer .cname { font-size: 15px; font-weight: 700; }
+  .club-offer .cmeta { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; color: var(--text-dim); margin: 4px 0 10px; line-height: 1.6; }
+
+  .mini-pitch {
+    position: relative; width: 100%; aspect-ratio: 3/2; border-radius: 10px; overflow: hidden; margin-bottom: 14px;
+    background: repeating-linear-gradient(180deg, #1f3d24, #1f3d24 20px, #234327 20px, #234327 40px);
+    border: 2px solid rgba(255,255,255,0.15);
+  }
+  .mini-pitch .box { position: absolute; left: 20%; right: 20%; top: 0; height: 28%; border: 2px solid rgba(255,255,255,0.4); border-top: none; }
+  .mini-pitch .dot { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--gold2); box-shadow: 0 0 8px rgba(0,0,0,0.5); transform: translate(-50%,-50%); }
+  .mini-pitch .dot.ball { width: 8px; height: 8px; background: #fff; }
+
+  .award-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--gold-bg); border: 1px solid var(--gold-dim); border-radius: 999px; padding: 5px 11px; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; font-weight: 700; color: var(--gold2); margin: 3px 4px 3px 0; }
+
+  .footer { text-align: center; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 10px; color: var(--text-dim2); margin-top: 30px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand">
+    <div class="mark">C</div>
+    <h1>COTRERO <span style="color:var(--text-dim);font-size:13px;font-weight:400">· Modo Medio</span></h1>
+    <a class="menu-btn" href="/cotrero.html" id="btn-brand-back">← Cotrero</a>
+  </div>
+
+  <!-- INICIO -->
+  <div class="screen active" id="screen-inicio">
+    <div class="panel">
+      <h2>Modo Medio</h2>
+      <p class="sub">Una carrera con más profundidad: entrenamientos con riesgo, forma, personalidad oculta, mercado de pases, selección nacional y torneos. Entre 20 y 40 minutos por carrera.</p>
+      <button class="btn btn-gold btn-block" id="btn-inicio-nueva">Nueva carrera</button>
+      <button class="btn btn-ghost btn-block" id="btn-inicio-continuar" style="display:none">Continuar carrera</button>
+      <button class="btn btn-ghost btn-block" id="btn-inicio-historial">Ver historial</button>
+    </div>
+    <p class="footer sans">Cotrero · Modo Medio · datos con fines de juego, no oficiales.</p>
+  </div>
+
+  <!-- CREACION -->
+  <div class="screen" id="screen-crear">
+    <div class="panel">
+      <h2>Creá tu jugador</h2>
+      <div class="field">
+        <label class="flabel">Nombre</label>
+        <input type="text" id="inp-nombre" placeholder="Tu nombre de jugador" maxlength="24">
+      </div>
+      <div class="field">
+        <label class="flabel">Nacionalidad</label>
+        <select id="inp-nacionalidad"></select>
+      </div>
+      <div class="field">
+        <label class="flabel">Posición</label>
+        <div class="pick-grid cols3" id="grid-posicion"></div>
+      </div>
+      <button class="btn btn-gold btn-block" id="btn-crear-continuar">Continuar</button>
+    </div>
+  </div>
+
+  <!-- ARQUETIPO -->
+  <div class="screen" id="screen-arquetipo">
+    <div class="panel">
+      <h2>Elegí tu arquetipo inicial</h2>
+      <p class="sub">Define tu punto fuerte desde el arranque.</p>
+      <div class="pick-grid" id="grid-arquetipo"></div>
+      <button class="btn btn-gold btn-block" id="btn-arquetipo-continuar" style="margin-top:10px" disabled>Continuar</button>
+    </div>
+  </div>
+
+  <!-- ELECCION DE PAIS/CLUB -->
+  <div class="screen" id="screen-club-inicial">
+    <div class="panel">
+      <h2>¿Dónde arrancás?</h2>
+      <p class="sub">Elegí un país al azar dentro de tu camino, o elegí manualmente país y club.</p>
+      <div class="pick-grid cols2" style="margin-bottom:14px">
+        <div class="pick-card" id="opt-club-random"><div class="ptitle">Aleatorio</div><div class="pdesc">Tres clubes al azar te ofrecen un lugar en su plantel juvenil.</div></div>
+        <div class="pick-card" id="opt-club-manual"><div class="ptitle">Elegir manualmente</div><div class="pdesc">Elegís vos el país y el club de arranque.</div></div>
+      </div>
+      <div id="club-random-offers" style="display:none"></div>
+      <div id="club-manual-form" style="display:none">
+        <div class="field">
+          <label class="flabel">País</label>
+          <select id="inp-manual-pais"></select>
+        </div>
+        <div class="field">
+          <label class="flabel">Club</label>
+          <select id="inp-manual-club"></select>
+        </div>
+        <button class="btn btn-gold btn-block" id="btn-manual-confirmar">Fichar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HUB -->
+  <div class="screen" id="screen-hub">
+    <div class="panel">
+      <div class="hub-top">
+        <div>
+          <div class="hub-ovr" id="hub-ovr">60</div>
+          <div class="hub-ovr-lbl">OVR</div>
+        </div>
+        <div class="hub-meta">
+          <div><b id="hub-nombre">—</b> · <span id="hub-edad">16</span> años · <span id="hub-posicion">—</span></div>
+          <div id="hub-club">Sin club</div>
+          <div id="hub-personalidad" style="display:none">Personalidad: <b id="hub-personalidad-val">—</b></div>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <div class="sans" style="font-size:11px;color:var(--text-dim2);text-transform:uppercase;letter-spacing:0.06em">Forma</div>
+        <div class="bar-track"><div class="bar-fill" id="hub-forma-bar" style="width:60%"></div></div>
+      </div>
+      <div class="chip-row">
+        <span class="info-chip">Temporada <b id="hub-temporada">1</b></span>
+        <span class="info-chip">Valor <b id="hub-valor">—</b></span>
+        <span class="info-chip">Contrato <b id="hub-contrato">—</b></span>
+        <span class="info-chip">Dinero <b id="hub-dinero">—</b></span>
+      </div>
+    </div>
+    <div class="panel">
+      <h2 style="margin-bottom:10px">Atributos</h2>
+      <div id="hub-stats"></div>
+    </div>
+    <div class="panel" id="hub-vitrina-panel">
+      <h2 style="margin-bottom:10px">Vitrina</h2>
+      <div id="hub-vitrina" class="sans" style="font-size:12px;color:var(--text-dim2)">Sin logros todavía.</div>
+    </div>
+    <button class="btn btn-gold btn-block" id="btn-hub-avanzar">Empezar temporada</button>
+    <button class="btn btn-ghost btn-block" id="btn-hub-retirarse">Retirarse</button>
+    <button class="btn btn-ghost btn-block" id="btn-hub-borrar">Eliminar carrera</button>
+  </div>
+
+  <!-- ENTRENAMIENTO -->
+  <div class="screen" id="screen-entrenamiento">
+    <div class="panel">
+      <h2>Pretemporada</h2>
+      <p class="sub">Elegí <b style="color:var(--gold2)">2</b> de estas 4 opciones de entrenamiento.</p>
+      <div class="pick-grid cols2" id="grid-entrenamiento"></div>
+      <button class="btn btn-gold btn-block" id="btn-entrenamiento-confirmar" style="margin-top:10px" disabled>Confirmar (0/2)</button>
+    </div>
+  </div>
+
+  <!-- SELECCION NACIONAL -->
+  <div class="screen" id="screen-nacional">
+    <div class="panel">
+      <h2 id="nacional-titulo">Convocatoria</h2>
+      <p class="sub" id="nacional-texto"></p>
+      <div id="nacional-minijuego" style="display:none">
+        <div class="pick-grid cols2" id="grid-nacional-opciones"></div>
+      </div>
+      <button class="btn btn-gold btn-block" id="btn-nacional-continuar">Continuar</button>
+    </div>
+  </div>
+
+  <!-- FINAL DE MUNDIAL (cancha 2D opcional) -->
+  <div class="screen" id="screen-final-mundial">
+    <div class="panel">
+      <h2>🏆 Final del Mundial</h2>
+      <p class="sub" id="final-mundial-texto">Estás en el campo, con la pelota. El partido está trabado.</p>
+      <div class="mini-pitch">
+        <div class="box"></div>
+        <div class="dot" id="fm-dot-jugador" style="left:50%;top:70%"></div>
+        <div class="dot ball" id="fm-dot-pelota" style="left:50%;top:66%"></div>
+      </div>
+      <div class="pick-grid cols2" style="margin-bottom:10px">
+        <div class="pick-card" data-fm="centro"><div class="ptitle">Centro al área</div><div class="pdesc">Buscás a un compañero de cabeza.</div></div>
+        <div class="pick-card" data-fm="disparo"><div class="ptitle">Disparo de media distancia</div><div class="pdesc">Probás suerte vos mismo.</div></div>
+      </div>
+      <button class="btn btn-ghost btn-block" id="btn-final-mundial-saltar">Simular directo (saltar)</button>
+    </div>
+  </div>
+
+  <!-- MEDIO TIEMPO -->
+  <div class="screen" id="screen-mediotiempo">
+    <div class="panel">
+      <h2>Mitad de temporada</h2>
+      <p class="sub sans" id="mediotiempo-resumen"></p>
+      <p class="sub">¿Qué priorizás para lo que queda de temporada?</p>
+      <div class="pick-grid" id="grid-mediotiempo"></div>
+    </div>
+  </div>
+
+  <!-- EVENTO -->
+  <div class="screen" id="screen-evento">
+    <div class="panel">
+      <h2 id="evento-titulo">Situación</h2>
+      <div class="event-card"><p id="evento-texto"></p></div>
+      <div class="pick-grid" id="grid-evento"></div>
+    </div>
+  </div>
+
+  <!-- RESULTADO DE TEMPORADA -->
+  <div class="screen" id="screen-resultado-temporada">
+    <div class="panel">
+      <h2>Así te fue esta temporada</h2>
+      <div id="resultado-lineas"></div>
+      <div id="resultado-premios" style="margin-top:10px"></div>
+      <button class="btn btn-gold btn-block" id="btn-resultado-continuar" style="margin-top:12px">Seguir</button>
+    </div>
+  </div>
+
+  <!-- TIENDA -->
+  <div class="screen" id="screen-tienda">
+    <div class="panel">
+      <h2>Tienda</h2>
+      <p class="sub sans">Tenés <b id="tienda-dinero" style="color:var(--gold2)">€0</b> disponibles.</p>
+      <h2 style="font-size:13px;margin-top:6px">Permanentes</h2>
+      <div class="pick-grid" id="grid-tienda-permanente"></div>
+      <h2 style="font-size:13px;margin-top:14px">Temporales <span class="sans" style="font-size:11px;color:var(--text-dim2);font-weight:400" id="tienda-temp-restantes"></span></h2>
+      <div class="pick-grid" id="grid-tienda-temporal"></div>
+      <button class="btn btn-gold btn-block" id="btn-tienda-continuar" style="margin-top:14px">Seguir</button>
+    </div>
+  </div>
+
+  <!-- MERCADO -->
+  <div class="screen" id="screen-mercado">
+    <div class="panel">
+      <h2>Mercado de pases</h2>
+      <p class="sub" id="mercado-texto"></p>
+      <div id="mercado-ofertas"></div>
+    </div>
+  </div>
+
+  <!-- CAMBIO DE POSICION (evento especial) -->
+  <div class="screen" id="screen-cambio-posicion">
+    <div class="panel">
+      <h2>Oferta de cambio de posición</h2>
+      <p class="sub" id="cambio-posicion-texto"></p>
+      <div class="pick-grid cols2" id="grid-cambio-posicion"></div>
+    </div>
+  </div>
+
+  <!-- LEGADO / RETIRO -->
+  <div class="screen" id="screen-legado">
+    <div class="panel">
+      <h2 id="legado-titulo">Fin de una carrera</h2>
+      <p class="sub" id="legado-subtitulo"></p>
+      <div id="legado-stats"></div>
+      <div id="legado-momentos" style="margin-top:10px"></div>
+      <div id="legado-premios" style="margin-top:10px"></div>
+      <div style="text-align:center;margin:16px 0">
+        <div class="hub-ovr" id="legado-puntaje" style="font-size:34px">0</div>
+        <div class="hub-ovr-lbl">Puntaje final</div>
+        <div class="sans" style="font-size:16px;font-weight:700;color:var(--gold2);margin-top:4px" id="legado-ranking"></div>
+      </div>
+      <button class="btn btn-gold btn-block" id="btn-legado-nueva">Nueva carrera</button>
+      <button class="btn btn-ghost btn-block" id="btn-legado-historial">Ver historial</button>
+    </div>
+  </div>
+
+  <!-- HISTORIAL -->
+  <div class="screen" id="screen-historial">
+    <div class="panel">
+      <h2>Historial de carreras</h2>
+      <div id="historial-lista"></div>
+      <button class="btn btn-ghost btn-block" id="btn-historial-volver" style="margin-top:10px">Volver</button>
+    </div>
+  </div>
+
+  <div class="footer sans" id="global-footer" style="display:none">Cotrero · Modo Medio · datos con fines de juego, no oficiales.</div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var SAVE_KEY = "cotrero_medio_save_v1";
+  var HISTORY_KEY = "cotrero_history_v1"; // historial compartido con el modo Simple
+
+  /* ============ HELPERS ============ */
+  function esc(s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+  function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function pickN(arr, n) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a.slice(0, n);
+  }
+  function fmtMoney(n) {
+    if (n >= 1000000) return "€" + (n / 1000000).toFixed(n % 1000000 === 0 ? 0 : 1) + "M";
+    if (n >= 1000) return "€" + Math.round(n / 1000) + "K";
+    return "€" + Math.round(n);
+  }
+  function showScreen(id) {
+    document.querySelectorAll(".screen").forEach(function (s) { s.classList.remove("active"); });
+    document.getElementById("screen-" + id).classList.add("active");
+    window.scrollTo(0, 0);
+  }
+
+  /* ============ DATOS: POSICIONES ============ */
+  var STAT_LABELS = {
+    disparo: "Disparo", pase: "Pase", velocidad: "Velocidad", regate: "Regate", resistencia: "Resistencia",
+    potencia: "Potencia", vision: "Visión", control: "Control",
+    fisico: "Físico", defensa: "Defensa", liderazgo: "Liderazgo"
+  };
+
+  var POSITIONS = {
+    delantero: {
+      label: "Delantero",
+      stats: ["disparo", "pase", "velocidad", "regate", "resistencia"],
+      weights: { disparo: 0.30, regate: 0.22, velocidad: 0.22, pase: 0.14, resistencia: 0.12 },
+      signature: "disparo"
+    },
+    mediocampista: {
+      label: "Mediocampista",
+      stats: ["potencia", "pase", "vision", "control", "resistencia"],
+      weights: { vision: 0.26, control: 0.26, potencia: 0.20, pase: 0.16, resistencia: 0.12 },
+      signature: "control"
+    },
+    defensa: {
+      label: "Defensa",
+      stats: ["fisico", "defensa", "liderazgo", "pase", "resistencia"],
+      weights: { defensa: 0.32, fisico: 0.24, liderazgo: 0.20, pase: 0.12, resistencia: 0.12 },
+      signature: "defensa"
+    }
+  };
+
+  var ARCHETYPES = {
+    delantero: [
+      { name: "Killer del área", stat: "disparo", amount: 8 },
+      { name: "Velocista", stat: "velocidad", amount: 8 },
+      { name: "Regateador nato", stat: "regate", amount: 8 },
+      { name: "Motor incansable", stat: "resistencia", amount: 8 },
+      { name: "Asistidor", stat: "pase", amount: 8 }
+    ],
+    mediocampista: [
+      { name: "Motor de mediocampo", stat: "potencia", amount: 8 },
+      { name: "Visionario", stat: "vision", amount: 8 },
+      { name: "Metrónomo", stat: "control", amount: 8 },
+      { name: "Todocampista", stat: "resistencia", amount: 8 },
+      { name: "Enganche", stat: "pase", amount: 8 }
+    ],
+    defensa: [
+      { name: "Muro", stat: "defensa", amount: 8 },
+      { name: "Capitán", stat: "liderazgo", amount: 8 },
+      { name: "Físico privilegiado", stat: "fisico", amount: 8 },
+      { name: "Maratonista", stat: "resistencia", amount: 8 },
+      { name: "Líbero", stat: "pase", amount: 8 }
+    ]
+  };
+
+  function archetypeDesc(a) { return "+" + a.amount + " " + STAT_LABELS[a.stat]; }
+
+  /* ============ DATOS: PAÍSES Y CLUBES ============ */
+  var NATIONALITIES = [
+    { n: "Argentina", flag: "🇦🇷", tier: 3 }, { n: "Brasil", flag: "🇧🇷", tier: 3 },
+    { n: "Francia", flag: "🇫🇷", tier: 3 }, { n: "Alemania", flag: "🇩🇪", tier: 3 },
+    { n: "España", flag: "🇪🇸", tier: 3 }, { n: "Inglaterra", flag: "🏴", tier: 3 },
+    { n: "Portugal", flag: "🇵🇹", tier: 3 }, { n: "Italia", flag: "🇮🇹", tier: 3 },
+    { n: "Países Bajos", flag: "🇳🇱", tier: 3 }, { n: "Uruguay", flag: "🇺🇾", tier: 2 },
+    { n: "Colombia", flag: "🇨🇴", tier: 2 }, { n: "Croacia", flag: "🇭🇷", tier: 2 },
+    { n: "México", flag: "🇲🇽", tier: 2 }, { n: "Estados Unidos", flag: "🇺🇸", tier: 2 },
+    { n: "Japón", flag: "🇯🇵", tier: 2 }, { n: "Chile", flag: "🇨🇱", tier: 1 },
+    { n: "Perú", flag: "🇵🇪", tier: 1 }, { n: "Corea del Sur", flag: "🇰🇷", tier: 1 },
+    { n: "Nigeria", flag: "🇳🇬", tier: 1 }, { n: "Polonia", flag: "🇵🇱", tier: 1 }
+  ];
+
+  // 12 países jugables, cada uno con su liga y 4 clubes (1ra división salvo grandes con 2da simplificada por tier "mediano/chico")
+  var LEAGUES_BY_COUNTRY = {
+    "España": "LaLiga", "Inglaterra": "Premier League", "Italia": "Serie A", "Alemania": "Bundesliga",
+    "Francia": "Ligue 1", "Portugal": "Primeira Liga", "Países Bajos": "Eredivisie",
+    "Brasil": "Brasileirão", "Argentina": "Liga Profesional", "México": "Liga MX",
+    "Estados Unidos": "MLS", "Japón": "J1 League"
+  };
+
+  var STYLES = ["ofensivo", "defensivo", "posesion", "contragolpe"];
+  var STYLE_LABELS = { ofensivo: "Ofensivo", defensivo: "Defensivo", posesion: "Posesión", contragolpe: "Contragolpe" };
+
+  var CLUBS = (function () {
+    var raw = {
+      "España": [["Real Madrid", "grande", true, "posesion"], ["Barcelona", "grande", true, "posesion"], ["Atlético de Madrid", "mediano", false, "defensivo"], ["Real Betis", "chico", false, "ofensivo"]],
+      "Inglaterra": [["Manchester City", "grande", false, "posesion"], ["Liverpool", "grande", false, "contragolpe"], ["Arsenal", "mediano", true, "ofensivo"], ["Brighton", "chico", true, "posesion"]],
+      "Italia": [["Juventus", "grande", false, "defensivo"], ["Inter de Milán", "grande", false, "contragolpe"], ["Napoli", "mediano", false, "ofensivo"], ["Atalanta", "chico", true, "ofensivo"]],
+      "Alemania": [["Bayern Múnich", "grande", false, "posesion"], ["Borussia Dortmund", "grande", true, "ofensivo"], ["Bayer Leverkusen", "mediano", false, "contragolpe"], ["Union Berlin", "chico", false, "defensivo"]],
+      "Francia": [["PSG", "grande", false, "ofensivo"], ["Mónaco", "mediano", false, "contragolpe"], ["Lyon", "mediano", true, "posesion"], ["Lille", "chico", false, "defensivo"]],
+      "Portugal": [["Benfica", "mediano", true, "posesion"], ["Porto", "mediano", true, "contragolpe"], ["Sporting CP", "mediano", false, "ofensivo"], ["Braga", "chico", false, "defensivo"]],
+      "Países Bajos": [["Ajax", "mediano", true, "posesion"], ["PSV", "mediano", false, "ofensivo"], ["Feyenoord", "mediano", false, "contragolpe"], ["AZ Alkmaar", "chico", true, "posesion"]],
+      "Brasil": [["Flamengo", "mediano", false, "ofensivo"], ["Palmeiras", "mediano", true, "posesion"], ["São Paulo", "chico", true, "defensivo"], ["Grêmio", "chico", false, "contragolpe"]],
+      "Argentina": [["River Plate", "mediano", true, "posesion"], ["Boca Juniors", "mediano", false, "defensivo"], ["Racing Club", "chico", false, "contragolpe"], ["Independiente", "chico", false, "ofensivo"]],
+      "México": [["América", "mediano", false, "ofensivo"], ["Chivas Guadalajara", "mediano", true, "defensivo"], ["Monterrey", "chico", false, "contragolpe"], ["Cruz Azul", "chico", false, "posesion"]],
+      "Estados Unidos": [["LA Galaxy", "chico", false, "ofensivo"], ["Inter Miami", "mediano", false, "posesion"], ["Seattle Sounders", "chico", true, "contragolpe"], ["NYCFC", "chico", false, "defensivo"]],
+      "Japón": [["Kashima Antlers", "chico", true, "defensivo"], ["Urawa Reds", "chico", false, "contragolpe"], ["Yokohama F. Marinos", "chico", false, "ofensivo"], ["Vissel Kobe", "chico", false, "posesion"]]
+    };
+    var list = [];
+    Object.keys(raw).forEach(function (country) {
+      var clubsInCountry = raw[country].map(function (c) { return c[0]; });
+      raw[country].forEach(function (c, i) {
+        var rivals = clubsInCountry.filter(function (n) { return n !== c[0]; });
+        list.push({
+          name: c[0], country: country, league: LEAGUES_BY_COUNTRY[country], tier: c[1],
+          cantera: c[2], style: c[3], rivals: i === 0 ? [rivals[0]] : [clubsInCountry[0]]
+        });
+      });
+    });
+    return list;
+  })();
+
+  var TIER_BUDGET = { grande: 1, mediano: 2, chico: 3 }; // usado solo como orden relativo
+  var TIER_SALARY_BASE = { grande: 3200000, mediano: 950000, chico: 260000 };
+  var TIER_CONTRACT_YEARS = { grande: 3, mediano: 2, chico: 1 };
+
+  function clubsInCountry(country) { return CLUBS.filter(function (c) { return c.country === country; }); }
+  function clubByName(name) { return CLUBS.filter(function (c) { return c.name === name; })[0] || null; }
+
+  /* ============ ESTADO ============ */
+  var M = null; // jugador de Modo Medio
+  var creation = { position: null, archetypes: [], chosenArchetype: null, nationality: null };
+
+  /* ============ ENTRENAMIENTOS ============ */
+  // delta: cambios visibles de una. hidden: cambios que se revelan después de elegir (Raro/Legendario).
+  // youngRecover: si el jugador es joven (<23), el negativo de un Legendario se recupera en ~1 temporada.
+  function buildTrainingPool(pos) {
+    var s = POSITIONS[pos].stats;
+    var sig = POSITIONS[pos].signature;
+    var other = s.filter(function (k) { return k !== sig && k !== "resistencia"; });
+    return [
+      { id: "com1", label: "Rutina técnica", rarity: "comun", delta: mk(sig, 3), sub: mk("resistencia", -1) },
+      { id: "com2", label: "Trabajo físico", rarity: "comun", delta: mk("resistencia", 3), sub: mk(other[0], -1) },
+      { id: "com3", label: "Táctica grupal", rarity: "comun", delta: mk(other[0], 3), sub: mk(other[1] || sig, -1) },
+      { id: "com4", label: "Sesión de video", rarity: "comun", delta: mk(other[1] || sig, 2), sub: mk("resistencia", -1) },
+      { id: "com5", label: "Gimnasio", rarity: "comun", delta: mk(other[2] || "resistencia", 3), sub: mk(sig, -1) },
+      { id: "raro1", label: "Entrenador personal", rarity: "raro", delta: mk(sig, 5), hidden: mk(other[0], -2) },
+      { id: "raro2", label: "Campamento de alto rendimiento", rarity: "raro", delta: mk("resistencia", 5), hidden: mk(sig, -2) },
+      { id: "raro3", label: "Método europeo", rarity: "raro", delta: mk(other[0], 5), hidden: mk("resistencia", -2) },
+      { id: "leg1", label: "Método revolucionario", rarity: "legendario", delta: mk(sig, 9), youngRecover: mk(other[0], -3) },
+      { id: "leg2", label: "Bootcamp extremo", rarity: "legendario", delta: mk("resistencia", 9), youngRecover: mk(sig, -3), formaHit: true },
+      { id: "leg3", label: "Preparador de un crack", rarity: "legendario", delta: mk(other[1] || sig, 9), youngRecover: mk(other[0], -3) }
+    ];
+    function mk(stat, amount) { var o = {}; o[stat] = amount; return o; }
+  }
+
+  var lastTrainingIds = [];
+  function drawTrainingOptions(pos) {
+    var pool = buildTrainingPool(pos);
+    var avail = pool.filter(function (t) { return lastTrainingIds.indexOf(t.id) === -1; });
+    if (avail.length < 4) avail = pool;
+    var chosen = pickN(avail, 4);
+    lastTrainingIds = chosen.map(function (t) { return t.id; });
+    return chosen;
+  }
+
+  /* ============ TIENDA ============ */
+  var SHOP_PERMANENT = [
+    { id: "p1", name: "Preparador físico personal", price: 900000, desc: "Retrasa 2 temporadas el inicio del declive.", effect: { declineDelay: 2 } },
+    { id: "p2", name: "Nutricionista de élite", price: 700000, desc: "+1 permanente a todos los atributos.", effect: { allStats: 1 } },
+    { id: "p3", name: "Representante estrella", price: 1100000, desc: "Mejora salarios y ofertas futuras (+12%).", effect: { salaryPct: 0.12 } },
+    { id: "p4", name: "Fisioterapeuta de confianza", price: 650000, desc: "Reduce el riesgo de eventos negativos.", effect: { negRiskPct: -0.15 } },
+    { id: "p5", name: "Cámara de recuperación", price: 800000, desc: "+5 permanente al techo de forma.", effect: { formaCeiling: 5 } },
+    { id: "p6", name: "Mentalidad ganadora", price: 950000, desc: "Rendís mejor en partidos importantes, para siempre.", effect: { bigGame: 1 } },
+    { id: "p7", name: "Ícono de marca", price: 1000000, desc: "+15% de valor de mercado, permanente.", effect: { marketValuePct: 0.15 } }
+  ];
+  var SHOP_TEMPORARY = [
+    { id: "t1", name: "Botines de la suerte", price: 220000, desc: "+4 a tu atributo de firma mientras dure el contrato." },
+    { id: "t2", name: "Súper vitaminas", price: 200000, desc: "+10 al techo de forma mientras dure el contrato." },
+    { id: "t3", name: "Psicólogo deportivo", price: 250000, desc: "Reduce mucho el riesgo de eventos negativos." },
+    { id: "t4", name: "Preparador de bloque", price: 300000, desc: "+3 a todos los atributos mientras dure el contrato." },
+    { id: "t5", name: "Agente mediático", price: 180000, desc: "+25% de valor de mercado mientras dure el contrato." },
+    { id: "t6", name: "Amuleto del gol", price: 210000, desc: "Más goles y asistencias mientras dure el contrato." },
+    { id: "t7", name: "Rutina secreta", price: 260000, desc: "Entrenamientos más efectivos mientras dure el contrato." },
+    { id: "t8", name: "Capitanía honoraria", price: 150000, desc: "Mejora tu relación con el DT actual." },
+    { id: "t9", name: "Vendaje mágico", price: 240000, desc: "Resistís mejor el declive mientras dure el contrato." },
+    { id: "t10", name: "Póster gigante", price: 130000, desc: "Acelera la definición de tu personalidad." },
+    { id: "t11", name: "Videoanalista personal", price: 190000, desc: "Reduce el negativo oculto de entrenamientos Raros." },
+    { id: "t12", name: "Cláusula de rendimiento", price: 170000, desc: "Sube tu salario si tenés una gran temporada." }
+  ];
+
+  /* ============ PERSONALIDAD ============ */
+  var PERSONALITY_TYPES = ["lider", "solitario", "fiestero", "profesional"];
+  var PERSONALITY_LABEL = { lider: "Líder", solitario: "Solitario", fiestero: "Fiestero", profesional: "Profesional" };
+  var PERSONALITY_DESC = {
+    lider: "Mejora el rendimiento colectivo y tus chances de capitanía/convocatoria, pero la presión mediática pega más fuerte en las crisis.",
+    solitario: "Más consistencia individual y resistencia a la presión, pero rendís menos en eventos grupales de vestuario.",
+    fiestero: "Tu forma vuela más alto cuando estás en racha, pero corrés más riesgo de escándalos y bajones.",
+    profesional: "Tus entrenamientos rinden más y los Legendarios fallan menos, pero generás menos momentos mediáticos."
+  };
+
+  /* ============ EVENTOS ============ */
+  // effect: {forma, dt, money, marketValuePct, personality:{tipo:pts}, statKey:amount}
+  function buildEventPool() {
+    return [
+      { id: "e1", title: "Rumores de pase", text: "Un club rival te sondea por la prensa. El DT te pregunta qué pensás.", options: [
+        { label: "Decir que estás comprometido con el club", effect: { dt: 8, personality: { profesional: 2 } } },
+        { label: "No desmentir los rumores", effect: { dt: -6, marketValuePct: 0.05, personality: { solitario: 2 } } }
+      ]},
+      { id: "e2", title: "Discusión en el vestuario", text: "Dos compañeros se pelean por quién debe patear un penal.", options: [
+        { label: "Poner paz y mediar", effect: { dt: 5, personality: { lider: 3 } } },
+        { label: "No meterte", effect: { personality: { solitario: 3 } } }
+      ]},
+      { id: "e3", title: "Invitación a una fiesta", text: "Te invitan a una fiesta la noche antes de un partido importante.", options: [
+        { label: "Ir igual", effect: { forma: 6, personality: { fiestero: 4 }, negRisk: true } },
+        { label: "Quedarte a descansar", effect: { forma: 3, personality: { profesional: 3 } } }
+      ]},
+      { id: "e4", title: "Propuesta de patrocinio", text: "Una marca deportiva te ofrece un contrato de imagen.", options: [
+        { label: "Firmar", effect: { money: 180000, marketValuePct: 0.04 } },
+        { label: "Rechazar por ahora", effect: { dt: 3, personality: { profesional: 1 } } }
+      ]},
+      { id: "e5", title: "Crítica en la prensa", text: "Un periodista cuestiona públicamente tu nivel.", options: [
+        { label: "Responder con la cara alta en cancha", effect: { forma: 5, personality: { lider: 2 } } },
+        { label: "Ignorarlo", effect: { personality: { solitario: 2 } } }
+      ]},
+      { id: "e6", title: "Problema familiar", text: "Un tema personal te tiene preocupado esta semana.", options: [
+        { label: "Pedir unos días", effect: { forma: -4, dt: -2 } },
+        { label: "Seguir como si nada", effect: { forma: -2, personality: { profesional: 2 } } }
+      ]},
+      { id: "e7", title: "El DT te pide un sacrificio táctico", text: "Te pide jugar en una posición más retrasada este partido para ayudar al equipo.", options: [
+        { label: "Aceptar", effect: { dt: 10, forma: -2, personality: { lider: 2 } } },
+        { label: "Preferir tu rol habitual", effect: { dt: -5 } }
+      ]},
+      { id: "e8", title: "Oferta de vestuario", text: "Los referentes del plantel te invitan a liderar una charla de motivación.", options: [
+        { label: "Aceptar el desafío", effect: { dt: 6, personality: { lider: 4 } } },
+        { label: "Declinar, preferís los hechos", effect: { personality: { solitario: 2, profesional: 1 } } }
+      ]},
+      { id: "e9", title: "Escándalo menor", text: "Una foto tuya circula en redes en un mal momento.", options: [
+        { label: "Salir a aclarar todo públicamente", effect: { dt: -3, forma: -3 } },
+        { label: "Dejar que pase solo", effect: { forma: -5 } }
+      ]},
+      { id: "e10", title: "Racha positiva", text: "Venís de varios partidos muy buenos y el ambiente está eufórico.", options: [
+        { label: "Disfrutarlo a fondo", effect: { forma: 8, personality: { fiestero: 3 } } },
+        { label: "Mantener los pies en la tierra", effect: { forma: 4, personality: { profesional: 3 } } }
+      ]},
+      { id: "e11", title: "Pedido de un compañero joven", text: "Un juvenil te pide consejos para progresar más rápido.", options: [
+        { label: "Dedicarle tiempo", effect: { dt: 4, personality: { lider: 3 } } },
+        { label: "Concentrarte en lo tuyo", effect: { personality: { solitario: 3 } } }
+      ]},
+      { id: "e12", title: "Cláusula de objetivos", text: "El club te ofrece un bono si cumplís cierta cantidad de partidos.", options: [
+        { label: "Aceptar el desafío", effect: { money: 90000, forma: -2 } },
+        { label: "Preferir tranquilidad", effect: { forma: 2 } }
+      ]},
+      { id: "e13", title: "Rival de toda la vida", text: "Se acerca el clásico contra el rival histórico del club.", options: [
+        { label: "Prometer públicamente ganar", effect: { forma: 6, dt: 4, negRisk: true, personality: { lider: 2 } } },
+        { label: "Bajar el perfil mediático", effect: { forma: 2, personality: { profesional: 1 } } }
+      ]},
+      { id: "e14", title: "Consultora de imagen", text: "Te ofrecen mejorar tu imagen pública con una consultora.", options: [
+        { label: "Contratarla", effect: { money: -60000, marketValuePct: 0.06 } },
+        { label: "No hace falta", effect: {} }
+      ]},
+      { id: "e15", title: "Lesión de un compañero", text: "Un titular en tu posición se lesiona: se abre una chance.", options: [
+        { label: "Aprovechar la oportunidad a fondo", effect: { dt: 8, forma: 3 } },
+        { label: "No presionar, tu momento llegará", effect: { personality: { solitario: 1 } } }
+      ]}
+    ];
+  }
+
+  /* ============ FUNCIONES DE JUGADOR ============ */
+  function computeOvr(stats, pos) {
+    var w = POSITIONS[pos].weights;
+    var sum = 0;
+    Object.keys(w).forEach(function (k) { sum += (stats[k] || 0) * w[k]; });
+    return Math.round(sum);
+  }
+
+  function freshPlayerFromCreation(name, nationality, pos, archetype) {
+    var stats = {};
+    POSITIONS[pos].stats.forEach(function (k) { stats[k] = randInt(51, 58); });
+    stats[archetype.stat] = clamp((stats[archetype.stat] || 48) + archetype.amount, 1, 99);
+
+    var p = {
+      name: name, nationality: nationality, position: pos, archetypeName: archetype.name,
+      stats: stats, ovr: 0, peakOvr: 0,
+      age: 16, seasonsPlayed: 0,
+      forma: 62, formaCeiling: 100,
+      declinePhase: 0, declineStartAge: randInt(27, 35), retireAge: randInt(32, 40),
+      club: null, clubData: null, contractYearsLeft: 0, salary: 0, marketValue: 0,
+      money: 0,
+      careerGoals: 0, careerAssists: 0, careerMatches: 0,
+      clubsPlayed: [], titles: [], awards: [],
+      dtRelationship: 0,
+      personality: null, personalityPoints: { lider: 0, solitario: 0, fiestero: 0, profesional: 0 },
+      permanentItems: [], temporaryItems: [], temporaryItemsBoughtTotal: 0, temporaryItemsBoughtHistory: [],
+      permanentEffects: { declineDelay: 0, allStats: 0, salaryPct: 0, negRiskPct: 0, formaCeiling: 0, bigGame: 0, marketValuePct: 0 },
+      temporaryEffects: {},
+      midSeasonFocus: null, midSeasonSummary: null,
+      seasonLog: [], nextTournamentCheck: 0,
+      moments: [], _retired: false
+    };
+    p.ovr = computeOvr(p.stats, p.position);
+    p.peakOvr = p.ovr;
+    return p;
+  }
+
+  function statsWithBonuses(p) {
+    var out = {};
+    POSITIONS[p.position].stats.forEach(function (k) {
+      var v = p.stats[k] + (p.permanentEffects.allStats || 0);
+      if (p.temporaryEffects.allStatsTemp) v += p.temporaryEffects.allStatsTemp;
+      if (p.temporaryEffects.signatureStat && k === POSITIONS[p.position].signature) v += p.temporaryEffects.signatureStat;
+      out[k] = clamp(v, 1, 99);
+    });
+    return out;
+  }
+
+  function recomputeOvr(p) {
+    p.ovr = clamp(computeOvr(statsWithBonuses(p), p.position), 30, 99);
+    p.peakOvr = Math.max(p.peakOvr, p.ovr);
+  }
+
+  function effectiveFormaCeiling(p) {
+    var c = p.formaCeiling + (p.permanentEffects.formaCeiling || 0) + (p.temporaryEffects.formaCeiling || 0);
+    if (p.declinePhase >= 1) c -= 12;
+    return clamp(c, 40, 115);
+  }
+
+  function marketValueFor(p) {
+    var base = Math.pow(1.19, p.ovr - 55) * 350000;
+    var ageFactor = p.age <= 24 ? 1.25 : p.age <= 29 ? 1.0 : p.age <= 33 ? 0.65 : 0.35;
+    var formaFactor = 0.7 + (p.forma / 100) * 0.5;
+    var v = base * ageFactor * formaFactor;
+    v *= 1 + (p.permanentEffects.marketValuePct || 0);
+    if (p.temporaryEffects.marketValuePct) v *= 1 + p.temporaryEffects.marketValuePct;
+    return Math.round(v / 10000) * 10000;
+  }
+
+  function salaryFor(p, club) {
+    var base = TIER_SALARY_BASE[club.tier] * (0.55 + p.ovr / 130);
+    base *= 1 + (p.permanentEffects.salaryPct || 0);
+    return Math.round(base / 5000) * 5000;
+  }
+
+  /* ============ GUARDADO ============ */
+  function saveGame() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(M)); } catch (e) {} }
+  function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} }
+  function loadSave() {
+    try {
+      var raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return null;
+      var data = JSON.parse(raw);
+      if (!data || typeof data.ovr === "undefined") return null;
+      return data;
+    } catch (e) { return null; }
+  }
+  function loadHistory() {
+    try { var raw = localStorage.getItem(HISTORY_KEY); return raw ? JSON.parse(raw) : []; } catch (e) { return []; }
+  }
+  function saveHistoryEntry(entry) {
+    var hist = loadHistory();
+    hist.push(entry);
+    hist.sort(function (a, b) { return b.score - a.score; });
+    hist = hist.slice(0, 20);
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(hist)); } catch (e) {}
+  }
+
+  /* ============ INICIO ============ */
+  function initInicio() {
+    var existing = loadSave();
+    document.getElementById("btn-inicio-continuar").style.display = existing && !existing._retired ? "" : "none";
+  }
+  document.getElementById("btn-inicio-nueva").addEventListener("click", function () {
+    var existing = loadSave();
+    if (existing && !existing._retired) {
+      if (!confirm('Tenés una carrera de "' + existing.name + '" en curso. ¿Empezar una nueva? Se pierde el progreso actual.')) return;
+      clearSave();
+    }
+    startCreation();
+  });
+  document.getElementById("btn-inicio-continuar").addEventListener("click", function () {
+    var existing = loadSave();
+    if (!existing) return;
+    M = existing;
+    renderHub();
+    showScreen("hub");
+  });
+  document.getElementById("btn-inicio-historial").addEventListener("click", function () { renderHistoryScreen(); showScreen("historial"); });
+  document.getElementById("btn-historial-volver").addEventListener("click", function () { showScreen(M ? "hub" : "inicio"); });
+  document.getElementById("btn-legado-historial").addEventListener("click", function () { renderHistoryScreen(); showScreen("historial"); });
+
+  /* ============ CREACIÓN ============ */
+  function startCreation() {
+    creation = { position: null, archetypes: [], chosenArchetype: null, nationality: null };
+    var natSel = document.getElementById("inp-nacionalidad");
+    natSel.innerHTML = NATIONALITIES.map(function (n) { return '<option value="' + esc(n.n) + '">' + n.flag + " " + esc(n.n) + "</option>"; }).join("");
+    document.getElementById("inp-nombre").value = "";
+    var posGrid = document.getElementById("grid-posicion");
+    posGrid.innerHTML = Object.keys(POSITIONS).map(function (k) {
+      return '<div class="pick-card" data-pos="' + k + '"><div class="ptitle">' + POSITIONS[k].label + '</div><div class="pdesc">' +
+        POSITIONS[k].stats.map(function (s) { return STAT_LABELS[s]; }).join(" · ") + '</div></div>';
+    }).join("");
+    posGrid.querySelectorAll(".pick-card").forEach(function (card) {
+      card.addEventListener("click", function () {
+        posGrid.querySelectorAll(".pick-card").forEach(function (c) { c.classList.remove("selected"); });
+        card.classList.add("selected");
+        creation.position = card.dataset.pos;
+      });
+    });
+    showScreen("crear");
+  }
+
+  document.getElementById("btn-crear-continuar").addEventListener("click", function () {
+    var name = document.getElementById("inp-nombre").value.trim();
+    if (!name) { alert("Poné un nombre para tu jugador."); return; }
+    if (!creation.position) { alert("Elegí una posición."); return; }
+    creation.name = name;
+    creation.nationality = document.getElementById("inp-nacionalidad").value;
+
+    creation.archetypes = pickN(ARCHETYPES[creation.position], 3);
+    creation.chosenArchetype = null;
+    var grid = document.getElementById("grid-arquetipo");
+    grid.innerHTML = creation.archetypes.map(function (a, i) {
+      return '<div class="pick-card" data-i="' + i + '"><div class="ptitle">' + esc(a.name) + '</div><div class="pdesc">' + archetypeDesc(a) + '</div></div>';
+    }).join("");
+    grid.querySelectorAll(".pick-card").forEach(function (card) {
+      card.addEventListener("click", function () {
+        grid.querySelectorAll(".pick-card").forEach(function (c) { c.classList.remove("selected"); });
+        card.classList.add("selected");
+        creation.chosenArchetype = creation.archetypes[Number(card.dataset.i)];
+        document.getElementById("btn-arquetipo-continuar").disabled = false;
+      });
+    });
+    document.getElementById("btn-arquetipo-continuar").disabled = true;
+    showScreen("arquetipo");
+  });
+
+  document.getElementById("btn-arquetipo-continuar").addEventListener("click", function () {
+    document.getElementById("club-random-offers").style.display = "none";
+    document.getElementById("club-manual-form").style.display = "none";
+    document.querySelectorAll("#screen-club-inicial .pick-card").forEach(function (c) { c.classList.remove("selected"); });
+    showScreen("club-inicial");
+  });
+
+  document.getElementById("opt-club-random").addEventListener("click", function () {
+    document.getElementById("opt-club-random").classList.add("selected");
+    document.getElementById("opt-club-manual").classList.remove("selected");
+    document.getElementById("club-manual-form").style.display = "none";
+    var offers = pickN(CLUBS, 3);
+    var box = document.getElementById("club-random-offers");
+    box.style.display = "";
+    box.innerHTML = offers.map(function (c, i) {
+      return '<div class="club-offer"><div class="cname">' + esc(c.name) + '</div><div class="cmeta">' + esc(c.league) + " · " + esc(c.country) +
+        " · " + STYLE_LABELS[c.style] + (c.cantera ? " · Buena cantera" : "") + '</div><button class="btn btn-gold" data-i="' + i + '">Fichar</button></div>';
+    }).join("");
+    box.querySelectorAll("button").forEach(function (btn, i) {
+      btn.addEventListener("click", function () { assignInitialClub(offers[i]); });
+    });
+  });
+
+  document.getElementById("opt-club-manual").addEventListener("click", function () {
+    document.getElementById("opt-club-manual").classList.add("selected");
+    document.getElementById("opt-club-random").classList.remove("selected");
+    document.getElementById("club-random-offers").style.display = "none";
+    var form = document.getElementById("club-manual-form");
+    form.style.display = "";
+    var paisSel = document.getElementById("inp-manual-pais");
+    paisSel.innerHTML = Object.keys(LEAGUES_BY_COUNTRY).map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + "</option>"; }).join("");
+    function refreshClubs() {
+      var clubSel = document.getElementById("inp-manual-club");
+      var opts = clubsInCountry(paisSel.value);
+      clubSel.innerHTML = opts.map(function (c) { return '<option value="' + esc(c.name) + '">' + esc(c.name) + " (" + c.tier + ")</option>"; }).join("");
+    }
+    paisSel.onchange = refreshClubs;
+    refreshClubs();
+  });
+
+  document.getElementById("btn-manual-confirmar").addEventListener("click", function () {
+    var clubName = document.getElementById("inp-manual-club").value;
+    var club = clubByName(clubName);
+    if (club) assignInitialClub(club);
+  });
+
+  function assignInitialClub(club) {
+    M = freshPlayerFromCreation(creation.name, creation.nationality, creation.position, creation.chosenArchetype);
+    M.club = club.name;
+    M.clubData = { country: club.country, league: club.league, tier: club.tier, style: club.style, cantera: club.cantera, rivals: club.rivals };
+    M.contractYearsLeft = TIER_CONTRACT_YEARS[club.tier];
+    M.clubsPlayed = [club.name];
+    M.goodCanteraStart = !!club.cantera;
+    if (M.goodCanteraStart) M.age = 16; // debut más temprano ya está representado por empezar carrera a los 16 igual
+    M.salary = salaryFor(M, club);
+    M.marketValue = marketValueFor(M);
+    saveGame();
+    renderHub();
+    showScreen("hub");
+  }
+
+  /* ============ HUB ============ */
+  function renderHub() {
+    recomputeOvr(M);
+    M.marketValue = marketValueFor(M);
+    document.getElementById("hub-ovr").textContent = M.ovr;
+    document.getElementById("hub-nombre").textContent = M.name;
+    document.getElementById("hub-edad").textContent = M.age;
+    document.getElementById("hub-posicion").textContent = POSITIONS[M.position].label;
+    document.getElementById("hub-club").innerHTML = M.club
+      ? esc(M.club) + '<span class="sans" style="color:var(--text-dim2)"> · ' + esc(M.clubData.league) + '</span>'
+      : "Sin club";
+    if (M.personality) {
+      document.getElementById("hub-personalidad").style.display = "";
+      document.getElementById("hub-personalidad-val").textContent = PERSONALITY_LABEL[M.personality];
+    } else {
+      document.getElementById("hub-personalidad").style.display = "none";
+    }
+    var ceiling = effectiveFormaCeiling(M);
+    document.getElementById("hub-forma-bar").style.width = clamp((M.forma / ceiling) * 100, 3, 100) + "%";
+    document.getElementById("hub-temporada").textContent = M.seasonsPlayed + 1;
+    document.getElementById("hub-valor").textContent = fmtMoney(M.marketValue);
+    document.getElementById("hub-contrato").textContent = M.contractYearsLeft + (M.contractYearsLeft === 1 ? " año" : " años");
+    document.getElementById("hub-dinero").textContent = fmtMoney(M.money);
+
+    var statsBox = document.getElementById("hub-stats");
+    var eff = statsWithBonuses(M);
+    statsBox.innerHTML = POSITIONS[M.position].stats.map(function (k) {
+      return '<div class="stat-row sans"><span>' + STAT_LABELS[k] + '</span><span class="sval">' + eff[k] + "</span></div>";
+    }).join("");
+
+    var vitrina = document.getElementById("hub-vitrina");
+    if (!M.titles.length && !M.awards.length) {
+      vitrina.textContent = "Sin logros todavía.";
+    } else {
+      vitrina.innerHTML = M.titles.concat(M.awards).map(function (t) { return '<span class="award-badge">🏆 ' + esc(t) + "</span>"; }).join("");
+    }
+  }
+
+  document.getElementById("btn-hub-borrar").addEventListener("click", function () {
+    if (!confirm('¿Eliminar la carrera de "' + M.name + '" y empezar de cero?')) return;
+    clearSave();
+    M = null;
+    showScreen("inicio");
+    initInicio();
+  });
+
+  document.getElementById("btn-hub-retirarse").addEventListener("click", function () {
+    if (!confirm("¿Seguro que querés retirarte ahora?")) return;
+    retirePlayer();
+  });
+
+  /* ============ UTILIDADES DE SIMULACIÓN ============ */
+  function applyStatDelta(delta) {
+    Object.keys(delta).forEach(function (k) {
+      if (k === "resistencia" || POSITIONS[M.position].stats.indexOf(k) !== -1) {
+        M.stats[k] = clamp((M.stats[k] || 40) + delta[k], 1, 99);
+      }
+    });
+  }
+  function describeDelta(delta) {
+    return Object.keys(delta).map(function (k) { return (delta[k] > 0 ? "+" : "") + delta[k] + " " + STAT_LABELS[k]; }).join(", ");
+  }
+  function tierCompetitionFactor(tier) { return tier === "grande" ? 0.72 : tier === "mediano" ? 0.85 : 1.0; }
+  function clubTierAvgFactor(tier) { return tier === "grande" ? 1.18 : tier === "mediano" ? 1.0 : 0.82; }
+
+  function preferredStyleFor(position) {
+    // qué estilo de club potencia más a cada posición
+    return position === "delantero" ? "ofensivo" : position === "mediocampista" ? "posesion" : "defensivo";
+  }
+
+  /* ============ TEMPORADA: ENTRENAMIENTO ============ */
+  var selectedTrainingIdx = [];
+  function showTrainingScreen() {
+    var opts = drawTrainingOptions(M.position);
+    M._currentTrainingOptions = opts;
+    selectedTrainingIdx = [];
+    var grid = document.getElementById("grid-entrenamiento");
+    grid.innerHTML = opts.map(function (t, i) {
+      var deltaTxt = describeDelta(t.delta) + (t.sub ? ", " + describeDelta(t.sub) : "");
+      var extra = t.rarity === "raro" ? " · puede haber un efecto oculto" : t.rarity === "legendario" ? " · gran mejora, con riesgo" : "";
+      return '<div class="pick-card" data-i="' + i + '"><div class="ptitle">' + esc(t.label) + '</div><div class="pdesc">' + deltaTxt + esc(extra) +
+        '</div><span class="ptag ' + t.rarity + '">' + t.rarity + '</span></div>';
+    }).join("");
+    grid.querySelectorAll(".pick-card").forEach(function (card) {
+      card.addEventListener("click", function () {
+        var i = Number(card.dataset.i);
+        var pos = selectedTrainingIdx.indexOf(i);
+        if (pos !== -1) { selectedTrainingIdx.splice(pos, 1); card.classList.remove("selected"); }
+        else {
+          if (selectedTrainingIdx.length >= 2) return;
+          selectedTrainingIdx.push(i); card.classList.add("selected");
+        }
+        var btn = document.getElementById("btn-entrenamiento-confirmar");
+        btn.textContent = "Confirmar (" + selectedTrainingIdx.length + "/2)";
+        btn.disabled = selectedTrainingIdx.length !== 2;
+      });
+    });
+    document.getElementById("btn-entrenamiento-confirmar").textContent = "Confirmar (0/2)";
+    document.getElementById("btn-entrenamiento-confirmar").disabled = true;
+    showScreen("entrenamiento");
+  }
+
+  document.getElementById("btn-entrenamiento-confirmar").addEventListener("click", function () {
+    var opts = M._currentTrainingOptions;
+    var chosen = selectedTrainingIdx.map(function (i) { return opts[i]; });
+    var profesionalBoost = (M.personality === "profesional" ? 1.15 : 1.0) * (M.temporaryEffects.trainingBoost ? 1.2 : 1.0);
+    M._trainingNames = chosen.map(function (t) { return t.label; });
+    chosen.forEach(function (t) {
+      var d = {}; Object.keys(t.delta).forEach(function (k) { d[k] = Math.round(t.delta[k] * profesionalBoost); });
+      applyStatDelta(d);
+      if (t.sub) applyStatDelta(t.sub);
+      if (t.hidden) {
+        var reduceHidden = M.temporaryEffects.hiddenReduce ? 0.5 : 1;
+        var h = {}; Object.keys(t.hidden).forEach(function (k) { h[k] = Math.round(t.hidden[k] * reduceHidden); });
+        applyStatDelta(h);
+      }
+      if (t.youngRecover) {
+        applyStatDelta(t.youngRecover);
+        if (M.age < 23) {
+          M._pendingRecover = M._pendingRecover || {};
+          Object.keys(t.youngRecover).forEach(function (k) { M._pendingRecover[k] = (M._pendingRecover[k] || 0) + Math.abs(t.youngRecover[k]); });
+        }
+        if (t.formaHit) M._pendingFormaHit = true;
+      }
+    });
+    recomputeOvr(M);
+    checkNationalTeamPre();
+  });
+
+  /* ============ SELECCIÓN NACIONAL ============ */
+  function checkNationalTeamPre() {
+    var seasonNum = M.seasonsPlayed + 1;
+    var isWorldCup = seasonNum % 4 === 0;
+    var isContinental = seasonNum % 4 === 2;
+    if (!isWorldCup && !isContinental) { simulateFirstHalf(); return; }
+
+    var nat = NATIONALITIES.filter(function (n) { return n.n === M.nationality; })[0] || { tier: 1 };
+    var threshold = 58 + nat.tier * 8 - (M.personality === "lider" ? 4 : 0);
+    var calledUp = M.ovr >= threshold;
+
+    document.getElementById("nacional-titulo").textContent = isWorldCup ? "Mundial" : "Torneo Continental";
+    document.getElementById("nacional-minijuego").style.display = "none";
+    M._pendingFinalMundial = false;
+
+    if (!calledUp) {
+      document.getElementById("nacional-texto").textContent = "No llegaste al nivel para ser convocado a la selección de " + M.nationality + " esta vez.";
+    } else {
+      document.getElementById("nacional-texto").textContent = "¡Fuiste convocado a la selección de " + M.nationality + "! ¿Cómo encarás el torneo?";
+      var grid = document.getElementById("grid-nacional-opciones");
+      grid.innerHTML =
+        '<div class="pick-card" data-approach="seguro"><div class="ptitle">Jugar con calma</div><div class="pdesc">Menos riesgo, menos gloria.</div></div>' +
+        '<div class="pick-card" data-approach="arriesgado"><div class="ptitle">Ir con todo</div><div class="pdesc">Más riesgo, más chances de pasar rondas.</div></div>';
+      grid.querySelectorAll(".pick-card").forEach(function (card) {
+        card.addEventListener("click", function () { resolveNationalTournament(card.dataset.approach, isWorldCup); });
+      });
+      document.getElementById("nacional-minijuego").style.display = "";
+    }
+    showScreen("nacional");
+  }
+
+  function resolveNationalTournament(approach, isWorldCup) {
+    var base = clamp((M.ovr - 60) / 40, 0.05, 0.9);
+    var riskBonus = approach === "arriesgado" ? 0.12 : 0;
+    var varAmt = approach === "arriesgado" ? 0.25 : 0.1;
+    var roll = clamp(base + riskBonus + (Math.random() * 2 - 1) * varAmt, 0.02, 0.97);
+    var stage = roll > 0.78 ? "final" : roll > 0.55 ? "semifinal" : roll > 0.3 ? "cuartos" : "grupos";
+    var textMap = {
+      grupos: "Quedaste eliminado en la fase de grupos",
+      cuartos: "Caíste en cuartos de final",
+      semifinal: "Quedaste eliminado en semifinales",
+      final: "¡Llegaste a la final!"
+    };
+    M.forma = clamp(M.forma + (stage === "grupos" ? -3 : 6), 10, effectiveFormaCeiling(M));
+    document.getElementById("nacional-minijuego").style.display = "none";
+
+    if (stage !== "final") {
+      document.getElementById("nacional-texto").textContent = textMap[stage] + " con la selección de " + M.nationality + ".";
+    } else if (!isWorldCup) {
+      var won = Math.random() < clamp(0.35 + (M.ovr - 70) / 100, 0.15, 0.75);
+      if (won) {
+        M.titles.push("🌎 Torneo Continental con " + M.nationality + " (temp. " + (M.seasonsPlayed + 1) + ")");
+        M.moments.push("Campeón continental con " + M.nationality + " a los " + M.age + " años.");
+        M.forma = clamp(M.forma + 8, 10, effectiveFormaCeiling(M));
+      }
+      document.getElementById("nacional-texto").textContent = won ? "¡Fuiste CAMPEÓN continental!" : "Llegaste a la final pero no pudiste ganarla.";
+    } else {
+      document.getElementById("nacional-texto").textContent = "¡Llegaste a la FINAL DEL MUNDIAL con " + M.nationality + "!";
+      M._pendingFinalMundial = true;
+    }
+  }
+
+  document.getElementById("btn-nacional-continuar").addEventListener("click", function () {
+    if (M._pendingFinalMundial) { M._pendingFinalMundial = false; showScreen("final-mundial"); return; }
+    simulateFirstHalf();
+  });
+
+  document.querySelectorAll("#screen-final-mundial [data-fm]").forEach(function (card) {
+    card.addEventListener("click", function () { resolveFinalMundial(card.dataset.fm); });
+  });
+  document.getElementById("btn-final-mundial-saltar").addEventListener("click", function () { resolveFinalMundial(null); });
+
+  function resolveFinalMundial(choice) {
+    var chance = choice === "centro" ? 0.55 : choice === "disparo" ? 0.5 : 0.42;
+    var won = Math.random() < chance;
+    if (won) {
+      M.titles.push("🌍 Mundial con " + M.nationality + " (temp. " + (M.seasonsPlayed + 1) + ")");
+      M.moments.push("¡Campeón del Mundo con " + M.nationality + " a los " + M.age + " años!");
+      M.forma = clamp(M.forma + 14, 10, effectiveFormaCeiling(M));
+    } else {
+      M.moments.push("Subcampeón del Mundo con " + M.nationality + " a los " + M.age + " años.");
+      M.forma = clamp(M.forma + 4, 10, effectiveFormaCeiling(M));
+    }
+    simulateFirstHalf();
+  }
+
+  /* ============ SIMULACIÓN DE PARTIDOS ============ */
+  function simulateStint(matchShare) {
+    var eff = statsWithBonuses(M);
+    var sig = POSITIONS[M.position].signature;
+    var dtFactor = 0.85 + clamp(M.dtRelationship, -50, 50) / 250; // 0.65 a 1.05
+    var startingChance = clamp((M.ovr - 45) / 55, 0.12, 0.97) * tierCompetitionFactor(M.clubData.tier) * dtFactor;
+    var isStarter = Math.random() < startingChance;
+    var totalMatches = isStarter ? randInt(26, 36) : randInt(6, 16);
+    var matches = Math.max(1, Math.round(totalMatches * matchShare));
+
+    var styleFit = M.clubData.style === preferredStyleFor(M.position) ? 1.15 : 1.0;
+    var formaFactor = clamp(M.forma / 85, 0.55, 1.2);
+    var bigGameBonus = M.midSeasonFocus === "momentos" ? 1.1 : 1.0;
+    var ovrFactor = clamp((M.ovr - 50) / 50, 0, 1);
+    var sigFactor = clamp((eff[sig] - 50) / 50, 0, 1);
+    var goalRate = clamp((ovrFactor * 0.5 + sigFactor * 0.3) * 0.7 * styleFit * formaFactor * bigGameBonus, 0.03, 0.85);
+    if (M.temporaryEffects.goalBoost) goalRate *= 1.25;
+    if (M.position === "defensa") goalRate *= 0.35;
+    if (M.position === "mediocampista") goalRate *= 0.65;
+    var assistRate = goalRate * clamp(0.4 + Math.random() * 0.25, 0.3, 0.7) * (M.position === "mediocampista" ? 1.3 : 1);
+
+    var goals = 0, assists = 0;
+    for (var i = 0; i < matches; i++) {
+      if (Math.random() < goalRate) goals++;
+      if (Math.random() < assistRate) assists++;
+    }
+    return { matches: matches, goals: goals, assists: assists, isStarter: isStarter };
+  }
+
+  function simulateFirstHalf() {
+    M._half1 = simulateStint(0.5);
+    document.getElementById("mediotiempo-resumen").innerHTML =
+      "Primera mitad de temporada: <b>" + M._half1.matches + "</b> partidos, <b>" + M._half1.goals + "</b> goles, <b>" + M._half1.assists + "</b> asistencias. Forma actual: <b>" + M.forma + "</b>. " +
+      (M._half1.isStarter ? "Fuiste titular." : "Rol secundario en el plantel.");
+    var grid = document.getElementById("grid-mediotiempo");
+    grid.innerHTML =
+      '<div class="pick-card" data-focus="mejora"><div class="ptitle">Mejorar para la próxima</div><div class="pdesc">Priorizás crecer a futuro, a costa del rendimiento inmediato.</div></div>' +
+      '<div class="pick-card" data-focus="consistencia"><div class="ptitle">Consistencia</div><div class="pdesc">Menos altibajos de forma el resto de la temporada.</div></div>' +
+      '<div class="pick-card" data-focus="momentos"><div class="ptitle">Momentos importantes</div><div class="pdesc">Rendís mejor en partidos grandes, a costa de consistencia general.</div></div>';
+    grid.querySelectorAll(".pick-card").forEach(function (card) {
+      card.addEventListener("click", function () {
+        M.midSeasonFocus = card.dataset.focus;
+        M.personalityPoints[card.dataset.focus === "mejora" ? "profesional" : card.dataset.focus === "consistencia" ? "solitario" : "lider"] += 2;
+        runEvents();
+      });
+    });
+    showScreen("mediotiempo");
+  }
+
+  /* ============ EVENTOS ============ */
+  var lastEventIds = [];
+  function runEvents() {
+    M._eventQueue = pickN(buildEventPool().filter(function (e) { return lastEventIds.indexOf(e.id) === -1; }), randInt(0, 3));
+    lastEventIds = M._eventQueue.map(function (e) { return e.id; });
+    nextEvent();
+  }
+  function nextEvent() {
+    if (!M._eventQueue.length) { simulateSecondHalf(); return; }
+    var ev = M._eventQueue.shift();
+    document.getElementById("evento-titulo").textContent = ev.title;
+    document.getElementById("evento-texto").textContent = ev.text;
+    var grid = document.getElementById("grid-evento");
+    grid.innerHTML = ev.options.map(function (o, i) { return '<div class="pick-card" data-i="' + i + '"><div class="ptitle">' + esc(o.label) + '</div></div>'; }).join("");
+    grid.querySelectorAll(".pick-card").forEach(function (card) {
+      card.addEventListener("click", function () {
+        applyEventEffect(ev.options[Number(card.dataset.i)].effect || {});
+        nextEvent();
+      });
+    });
+    showScreen("evento");
+  }
+  function applyEventEffect(fx) {
+    if (fx.forma) M.forma = clamp(M.forma + fx.forma, 5, effectiveFormaCeiling(M));
+    if (fx.dt) M.dtRelationship = clamp(M.dtRelationship + fx.dt, -100, 100);
+    if (fx.money) M.money = Math.max(0, M.money + fx.money);
+    if (fx.marketValuePct) M.marketValue = Math.round(M.marketValue * (1 + fx.marketValuePct));
+    if (fx.personality) Object.keys(fx.personality).forEach(function (k) { M.personalityPoints[k] += fx.personality[k]; });
+    if (fx.negRisk) {
+      var risk = 0.22 + (M.personality === "fiestero" ? 0.12 : 0) - (M.permanentEffects.negRiskPct || 0) - (M.temporaryEffects.negRiskPct || 0);
+      if (Math.random() < clamp(risk, 0.03, 0.6)) M.forma = clamp(M.forma - randInt(6, 14), 5, effectiveFormaCeiling(M));
+    }
+    checkPersonalityReveal();
+  }
+
+  function checkPersonalityReveal() {
+    if (M.personality) return;
+    if (M.seasonsPlayed < 2) return;
+    var pts = M.personalityPoints;
+    var sorted = PERSONALITY_TYPES.slice().sort(function (a, b) { return pts[b] - pts[a]; });
+    var top = sorted[0], second = sorted[1];
+    var threshold = M.temporaryEffects.personalityBoost ? 4 : 6;
+    if (pts[top] >= 8 && pts[top] - pts[second] >= threshold) {
+      M.personality = top;
+      M.moments.push("Tu personalidad se definió como " + PERSONALITY_LABEL[top] + ".");
+    }
+  }
+
+  /* ============ CAMBIO DE POSICIÓN (evento especial) ============ */
+  function maybeOfferPositionChange() {
+    if (M._positionChangeOfferedThisCareer) return false;
+    var chance = M.age < 21 ? 0.09 : 0.02;
+    if (Math.random() >= chance) return false;
+    M._positionChangeOfferedThisCareer = true;
+    var options = Object.keys(POSITIONS).filter(function (p) { return p !== M.position; });
+    var newPos = rand(options);
+    document.getElementById("cambio-posicion-texto").textContent =
+      "El cuerpo técnico ve condiciones en vos para jugar de " + POSITIONS[newPos].label + ". ¿Te animás a probar ese cambio, permanente, en tu carrera?";
+    var grid = document.getElementById("grid-cambio-posicion");
+    grid.innerHTML =
+      '<div class="pick-card" data-accept="1"><div class="ptitle">Aceptar el cambio</div><div class="pdesc">Pasás a jugar de ' + POSITIONS[newPos].label + ' de forma permanente.</div></div>' +
+      '<div class="pick-card" data-accept="0"><div class="ptitle">Seguir en tu posición</div><div class="pdesc">Preferís continuar como ' + POSITIONS[M.position].label + '.</div></div>';
+    grid.querySelectorAll(".pick-card").forEach(function (card) {
+      card.addEventListener("click", function () {
+        if (card.dataset.accept === "1") applyPositionChange(newPos);
+        simulateSecondHalf();
+      });
+    });
+    showScreen("cambio-posicion");
+    return true;
+  }
+
+  function applyPositionChange(newPos) {
+    var oldPos = M.position, oldOvr = M.ovr;
+    var newStats = {};
+    POSITIONS[newPos].stats.forEach(function (k) {
+      if (k === "resistencia" || k === "pase") newStats[k] = M.stats[k] || Math.round(oldOvr * 0.9);
+      else newStats[k] = clamp(Math.round(oldOvr * (0.82 + Math.random() * 0.15)), 30, 90);
+    });
+    M.position = newPos;
+    M.stats = newStats;
+    recomputeOvr(M);
+    M.moments.push("Cambiaste de posición: pasaste de " + POSITIONS[oldPos].label + " a " + POSITIONS[newPos].label + " a los " + M.age + " años.");
+  }
+
+  /* ============ SEGUNDA MITAD Y RESULTADO DE TEMPORADA ============ */
+  function simulateSecondHalf() {
+    var half2 = simulateStint(0.5);
+    var natGrowth = naturalGrowth();
+    applyStatDelta(natGrowth);
+    if (M._pendingRecover) {
+      Object.keys(M._pendingRecover).forEach(function (k) { M.stats[k] = clamp((M.stats[k] || 40) + M._pendingRecover[k], 1, 99); });
+      M._pendingRecover = null;
+    }
+    if (M._pendingFormaHit) { M.forma = clamp(M.forma - randInt(8, 16), 5, effectiveFormaCeiling(M)); M._pendingFormaHit = false; }
+
+    var consistBonus = M.midSeasonFocus === "consistencia" ? 1 : 0;
+    var noise = M.declinePhase === 1 ? 16 : (10 - consistBonus * 4);
+    M.forma = clamp(M.ovr + randInt(-noise, noise), 20, effectiveFormaCeiling(M));
+
+    recomputeOvr(M);
+
+    var totalGoals = M._half1.goals + half2.goals;
+    var totalAssists = M._half1.assists + half2.assists;
+    var totalMatches = M._half1.matches + half2.matches;
+    M.careerGoals += totalGoals; M.careerAssists += totalAssists; M.careerMatches += totalMatches;
+
+    var teamRoll = Math.random() + (M.ovr - 65) / 180;
+    var teamResult, wonLeague = false, wonCup = false;
+    var seasonNum = M.seasonsPlayed + 1;
+    if (teamRoll > 0.95) { teamResult = "Campeones de la liga"; wonLeague = true; }
+    else if (teamRoll > 0.80) { teamResult = "Ganaron la copa nacional"; wonCup = true; }
+    else if (teamRoll > 0.55) teamResult = "Terminaron peleando arriba de la tabla";
+    else if (teamRoll > 0.28) teamResult = "Temporada pareja en la mitad";
+    else teamResult = "Pelearon el descenso hasta el final";
+    if (wonLeague) { M.titles.push("🏆 Liga: " + M.clubData.league + " (temp. " + seasonNum + ")"); M.moments.push("Campeón de " + M.clubData.league + " con " + M.club + "."); }
+    if (wonCup) M.titles.push("🥇 Copa nacional con " + M.club + " (temp. " + seasonNum + ")");
+
+    var awardsThisSeason = computeAwards(totalGoals, totalMatches);
+    awardsThisSeason.forEach(function (a) { M.awards.push(a); M.moments.push("Ganaste: " + a + "."); });
+
+    M.seasonLog.push({ age: M.age, club: M.club, ovr: M.ovr, pj: totalMatches, gls: totalGoals, ast: totalAssists });
+    M._seasonSummary = { totalGoals: totalGoals, totalAssists: totalAssists, totalMatches: totalMatches, teamResult: teamResult, awardsThisSeason: awardsThisSeason };
+    showSeasonResult();
+  }
+
+  function naturalGrowth() {
+    var stats = POSITIONS[M.position].stats;
+    var out = {};
+    if (M.declinePhase >= 2) {
+      stats.forEach(function (k) { out[k] = -randInt(1, 3); });
+      return out;
+    }
+    var ageBonus = M.age <= 21 ? 1.3 : M.age <= 25 ? 1.0 : M.age <= 29 ? 0.55 : 0.15;
+    var canteraBonus = (M.goodCanteraStart && M.age >= 15 && M.age <= 19) ? 1.3 : 1.0;
+    stats.forEach(function (k) {
+      var cur = M.stats[k];
+      var softCap = cur >= 90 ? 0.08 : cur >= 85 ? 0.35 : cur >= 75 ? 0.75 : 1.0;
+      var g = Math.random() < 0.7 ? randInt(0, 2) : 0;
+      out[k] = Math.round(g * ageBonus * canteraBonus * softCap);
+    });
+    return out;
+  }
+
+  function computeAwards(totalGoals, totalMatches) {
+    var awards = [];
+    var seasonNum = M.seasonsPlayed + 1;
+    if (M.position === "delantero" && totalGoals >= 16 && M.ovr >= 74 && Math.random() < 0.4)
+      awards.push("⚽ Goleador de la " + M.clubData.league + " (temp. " + seasonNum + ")");
+    if (M.ovr >= 82 && totalMatches >= 20 && Math.random() < 0.3)
+      awards.push("🥇 Mejor jugador de la " + M.clubData.league + " (temp. " + seasonNum + ")");
+    if (M.ovr >= 88 && M.age >= 22 && Math.random() < 0.18)
+      awards.push("🌟 Balón de Oro (temp. " + seasonNum + ")");
+    if (M.age <= 21 && M.ovr >= 78 && Math.random() < 0.2)
+      awards.push("💎 Mejor jugador joven (temp. " + seasonNum + ")");
+    return awards;
+  }
+
+  function showSeasonResult() {
+    var s = M._seasonSummary;
+    var lines = document.getElementById("resultado-lineas");
+    lines.innerHTML = "";
+    function line(label, value) {
+      var d = document.createElement("div");
+      d.className = "stat-row sans";
+      d.innerHTML = "<span>" + esc(label) + "</span><span class='sval'>" + esc(String(value)) + "</span>";
+      lines.appendChild(d);
+    }
+    line("Partidos", s.totalMatches);
+    line("Goles", s.totalGoals);
+    line("Asistencias", s.totalAssists);
+    line("Tu equipo", s.teamResult);
+    line("Overall", M.ovr);
+    line("Forma", M.forma);
+    var premiosBox = document.getElementById("resultado-premios");
+    premiosBox.innerHTML = s.awardsThisSeason.length
+      ? s.awardsThisSeason.map(function (a) { return '<span class="award-badge">🏆 ' + esc(a) + "</span>"; }).join("")
+      : "";
+    showScreen("resultado-temporada");
+  }
+
+  document.getElementById("btn-resultado-continuar").addEventListener("click", afterSeasonAdvance);
+
+  function afterSeasonAdvance() {
+    M.seasonsPlayed++;
+    M.age++;
+    M.contractYearsLeft--;
+    M.money += M.salary;
+
+    var declineDelayEff = (M.permanentEffects.declineDelay || 0) + (M.temporaryEffects.declineResist ? 2 : 0);
+    if (M.declinePhase === 0 && M.age >= M.declineStartAge + declineDelayEff) M.declinePhase = 1;
+    if (M.declinePhase === 1 && M.age >= M.declineStartAge + declineDelayEff + 3) M.declinePhase = 2;
+    recomputeOvr(M);
+    M.marketValue = marketValueFor(M);
+    saveGame();
+
+    if (M.age >= M.retireAge) { retirePlayer(); return; }
+    if (M.declinePhase === 2 && M.age >= M.declineStartAge + 7) {
+      if (confirm("Con " + M.age + " años y en franco declive, ¿querés retirarte esta temporada?")) { retirePlayer(); return; }
+    }
+
+    if (M.seasonsPlayed % 2 === 0) { showShop(); return; }
+    if (M.contractYearsLeft <= 0) { showMarket(); return; }
+
+    renderHub();
+    showScreen("hub");
+  }
+
+  /* ============ TIENDA ============ */
+  function showShop() {
+    document.getElementById("tienda-dinero").textContent = fmtMoney(M.money);
+    var permGrid = document.getElementById("grid-tienda-permanente");
+    var availPerm = SHOP_PERMANENT.filter(function (it) { return M.permanentItems.indexOf(it.id) === -1; });
+    permGrid.innerHTML = availPerm.length ? availPerm.map(function (it) {
+      var afford = M.money >= it.price;
+      return '<div class="pick-card' + (afford ? "" : "") + '" data-perm="' + it.id + '" style="' + (afford ? "" : "opacity:0.5") + '"><div class="ptitle">' + esc(it.name) +
+        '</div><div class="pdesc">' + esc(it.desc) + '</div><div class="sans" style="margin-top:6px;font-weight:700;color:var(--gold2)">' + fmtMoney(it.price) + '</div></div>';
+    }).join("") : '<p class="sub sans">Ya tenés todos los ítems permanentes.</p>';
+    permGrid.querySelectorAll(".pick-card").forEach(function (card) {
+      card.addEventListener("click", function () { buyPermanent(card.dataset.perm); });
+    });
+
+    var tempLeft = 5 - M.temporaryItemsBoughtTotal;
+    document.getElementById("tienda-temp-restantes").textContent = "(" + Math.max(0, tempLeft) + " compras restantes en toda tu carrera)";
+    var tempGrid = document.getElementById("grid-tienda-temporal");
+    if (tempLeft <= 0) {
+      tempGrid.innerHTML = '<p class="sub sans">Ya usaste tus 5 compras temporales de la carrera.</p>';
+    } else {
+      var availTemp = SHOP_TEMPORARY.filter(function (it) { return M.temporaryItemsBoughtHistory.indexOf(it.id) === -1; });
+      var shown = pickN(availTemp, Math.min(5, availTemp.length));
+      M._shopTempShown = shown;
+      tempGrid.innerHTML = shown.length ? shown.map(function (it) {
+        return '<div class="pick-card" data-temp="' + it.id + '"><div class="ptitle">' + esc(it.name) + '</div><div class="pdesc">' + esc(it.desc) +
+          '</div><div class="sans" style="margin-top:6px;font-weight:700;color:var(--gold2)">' + fmtMoney(it.price) + '</div></div>';
+      }).join("") : '<p class="sub sans">No quedan ítems temporales nuevos.</p>';
+      tempGrid.querySelectorAll(".pick-card").forEach(function (card) {
+        card.addEventListener("click", function () { buyTemporary(card.dataset.temp); });
+      });
+    }
+    showScreen("tienda");
+  }
+
+  function buyPermanent(id) {
+    var it = SHOP_PERMANENT.filter(function (x) { return x.id === id; })[0];
+    if (!it || M.money < it.price) return;
+    M.money -= it.price;
+    M.permanentItems.push(id);
+    Object.keys(it.effect).forEach(function (k) { M.permanentEffects[k] = (M.permanentEffects[k] || 0) + it.effect[k]; });
+    recomputeOvr(M);
+    saveGame();
+    showShop();
+  }
+
+  function buyTemporary(id) {
+    var it = SHOP_TEMPORARY.filter(function (x) { return x.id === id; })[0];
+    if (!it || M.money < it.price || M.temporaryItemsBoughtTotal >= 5) return;
+    M.money -= it.price;
+    M.temporaryItems.push(id);
+    M.temporaryItemsBoughtHistory.push(id);
+    M.temporaryItemsBoughtTotal++;
+    applyTemporaryEffect(id);
+    recomputeOvr(M);
+    saveGame();
+    showShop();
+  }
+
+  function applyTemporaryEffect(id) {
+    var map = {
+      t1: function () { M.temporaryEffects.signatureStat = (M.temporaryEffects.signatureStat || 0) + 4; },
+      t2: function () { M.temporaryEffects.formaCeiling = (M.temporaryEffects.formaCeiling || 0) + 10; },
+      t3: function () { M.temporaryEffects.negRiskPct = (M.temporaryEffects.negRiskPct || 0) + 0.18; },
+      t4: function () { M.temporaryEffects.allStatsTemp = (M.temporaryEffects.allStatsTemp || 0) + 3; },
+      t5: function () { M.temporaryEffects.marketValuePct = (M.temporaryEffects.marketValuePct || 0) + 0.25; },
+      t6: function () { M.temporaryEffects.goalBoost = true; },
+      t7: function () { M.temporaryEffects.trainingBoost = true; },
+      t8: function () { M.dtRelationship = clamp(M.dtRelationship + 15, -100, 100); },
+      t9: function () { M.temporaryEffects.declineResist = true; },
+      t10: function () { M.temporaryEffects.personalityBoost = true; },
+      t11: function () { M.temporaryEffects.hiddenReduce = true; },
+      t12: function () { M.temporaryEffects.perfClause = true; }
+    };
+    if (map[id]) map[id]();
+  }
+
+  document.getElementById("btn-tienda-continuar").addEventListener("click", function () {
+    if (M.contractYearsLeft <= 0) { showMarket(); return; }
+    saveGame();
+    renderHub();
+    showScreen("hub");
+  });
+
+  /* ============ MERCADO ============ */
+  function generateOffers() {
+    var candidates = CLUBS.filter(function (c) { return c.name !== M.club; });
+    var byFit = candidates.map(function (c) {
+      var fit = Math.abs(TIER_BUDGET[c.tier] * 30 - (M.ovr - 40));
+      return { c: c, fit: fit };
+    }).sort(function (a, b) { return a.fit - b.fit; });
+    var pool = byFit.slice(0, 6).map(function (x) { return x.c; });
+    var chosen = pickN(pool, Math.min(2, pool.length));
+    var extra = pickN(candidates.filter(function (c) { return chosen.indexOf(c) === -1; }), 1);
+    return chosen.concat(extra).filter(Boolean).map(function (c) {
+      return { club: c, salary: salaryFor(M, c), years: TIER_CONTRACT_YEARS[c.tier] };
+    });
+  }
+
+  function showMarket() {
+    var offers = generateOffers();
+    document.getElementById("mercado-texto").textContent = "Tu contrato con " + M.club + " terminó. Elegí tu próximo destino.";
+    var box = document.getElementById("mercado-ofertas");
+    box.innerHTML = offers.map(function (o, i) {
+      return '<div class="club-offer"><div class="cname">' + esc(o.club.name) + '</div><div class="cmeta">' + esc(o.club.league) + " · " + esc(o.club.country) + " · " +
+        STYLE_LABELS[o.club.style] + (o.club.cantera ? " · Buena cantera" : "") + "<br>Salario: " + fmtMoney(o.salary) + " · Contrato: " + o.years + (o.years === 1 ? " año" : " años") +
+        '</div><button class="btn btn-gold" data-i="' + i + '">Fichar</button></div>';
+    }).join("");
+    box.querySelectorAll("button").forEach(function (btn, i) {
+      btn.addEventListener("click", function () { acceptOffer(offers[i]); });
+    });
+    showScreen("mercado");
+  }
+
+  function acceptOffer(offer) {
+    M.club = offer.club.name;
+    M.clubData = { country: offer.club.country, league: offer.club.league, tier: offer.club.tier, style: offer.club.style, cantera: offer.club.cantera, rivals: offer.club.rivals };
+    M.contractYearsLeft = offer.years;
+    M.salary = offer.salary;
+    if (M.clubsPlayed.indexOf(offer.club.name) === -1) M.clubsPlayed.push(offer.club.name);
+    M.temporaryItems = [];
+    M.temporaryEffects = {};
+    M.dtRelationship = 0;
+    M.marketValue = marketValueFor(M);
+    saveGame();
+    renderHub();
+    showScreen("hub");
+  }
+
+  /* ============ INICIO DE TEMPORADA ============ */
+  document.getElementById("btn-hub-avanzar").addEventListener("click", showTrainingScreen);
+
+  /* ============ RETIRO Y LEGADO ============ */
+  function computeFinalScore() {
+    var titleScore = M.titles.length * 45 + M.awards.length * 35;
+    var statScore = M.careerGoals * 1.1 + M.careerAssists * 0.9 + M.careerMatches * 0.25;
+    var ovrScore = M.peakOvr * 6;
+    var longevity = M.seasonsPlayed * 3;
+    return Math.round(titleScore + statScore + ovrScore + longevity);
+  }
+  function rankingFor(score) {
+    if (score >= 1400) return "Leyenda";
+    if (score >= 1000) return "Ídolo";
+    if (score >= 650) return "Crack";
+    if (score >= 350) return "Jugador correcto";
+    return "Jugador de paso";
+  }
+
+  function retirePlayer() {
+    M._retired = true;
+    var score = computeFinalScore();
+    var ranking = rankingFor(score);
+
+    document.getElementById("legado-titulo").textContent = M.name + " cuelga los botines";
+    document.getElementById("legado-subtitulo").textContent = "Retirado a los " + M.age + " años, tras " + M.seasonsPlayed + " temporadas.";
+
+    var statsBox = document.getElementById("legado-stats");
+    statsBox.innerHTML = [
+      ["Partidos", M.careerMatches], ["Goles", M.careerGoals], ["Asistencias", M.careerAssists],
+      ["Pico de OVR", M.peakOvr], ["Clubes", M.clubsPlayed.join(", ") || "—"],
+      ["Personalidad", M.personality ? PERSONALITY_LABEL[M.personality] : "No se definió"]
+    ].map(function (r) { return '<div class="stat-row sans"><span>' + esc(r[0]) + '</span><span class="sval">' + esc(String(r[1])) + '</span></div>'; }).join("");
+
+    var momBox = document.getElementById("legado-momentos");
+    momBox.innerHTML = M.moments.length
+      ? '<p class="sub" style="font-weight:700;color:var(--text);margin-bottom:6px">Mejores momentos</p>' + M.moments.slice(-4).map(function (m) { return '<p class="sub sans">• ' + esc(m) + '</p>'; }).join("")
+      : "";
+
+    var allT = M.titles.concat(M.awards);
+    document.getElementById("legado-premios").innerHTML = allT.length
+      ? allT.map(function (t) { return '<span class="award-badge">🏆 ' + esc(t) + "</span>"; }).join("")
+      : '<p class="sub sans">Sin títulos ni premios individuales.</p>';
+
+    document.getElementById("legado-puntaje").textContent = score;
+    document.getElementById("legado-ranking").textContent = ranking;
+
+    saveHistoryEntry({
+      name: M.name, mode: "Medio", position: POSITIONS[M.position].label, score: score, rank: ranking,
+      peakOvr: M.peakOvr, seasons: M.seasonsPlayed, goals: M.careerGoals, assists: M.careerAssists, matches: M.careerMatches,
+      retireAge: M.age, nationality: M.nationality, clubs: M.clubsPlayed.slice(),
+      titles: allT.length, titleList: allT, date: new Date().toISOString()
+    });
+    clearSave();
+    showScreen("legado");
+  }
+
+  document.getElementById("btn-legado-nueva").addEventListener("click", function () { M = null; startCreation(); });
+
+  /* ============ HISTORIAL ============ */
+  function renderHistoryScreen() {
+    var hist = loadHistory();
+    var box = document.getElementById("historial-lista");
+    if (!hist.length) { box.innerHTML = '<p class="sub sans">Sin carreras registradas todavía.</p>'; return; }
+    box.innerHTML = hist.map(function (h) {
+      return '<div class="club-offer"><div class="cname">' + esc(h.name) + ' <span class="sans" style="font-size:11px;color:var(--text-dim2);font-weight:400">(' + esc(h.mode || "?") + " · " + esc(h.position || "") + ')</span></div>' +
+        '<div class="cmeta">Puntaje ' + h.score + " · " + esc(h.rank || "") + " · Pico OVR " + h.peakOvr + " · " + h.seasons + " temporadas<br>" +
+        h.goals + " goles, " + h.assists + " asistencias, " + h.matches + " partidos</div></div>";
+    }).join("");
+  }
+
+  /* ============ INIT ============ */
+  initInicio();
+
+})();
+</script>
+</body>
+</html>
