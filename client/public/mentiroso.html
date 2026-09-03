@@ -231,6 +231,7 @@
         <div class="diff-grid" id="mode-grid" style="margin-bottom:10px">
           <div class="diff-card selected" data-mode="ia"><div class="dlabel">vs IA</div><div class="ddesc">Jugador contra la computadora</div></div>
           <div class="diff-card" data-mode="2p"><div class="dlabel">2 Jugadores</div><div class="ddesc">En la misma pantalla</div></div>
+          <div class="diff-card" data-mode="online"><div class="dlabel">Online</div><div class="ddesc">En vivo · con código</div></div>
         </div>
       </div>
 
@@ -252,6 +253,35 @@
       </div>
 
       <button class="btn btn-red btn-block" id="btn-play">Jugar</button>
+    </div>
+  </div>
+
+  <!-- ONLINE LOBBY -->
+  <div class="screen" id="screen-online-setup">
+    <div class="panel" style="text-align:center">
+      <h2>Mentiroso online</h2>
+      <p class="sub">Jugá en vivo contra otra persona, cada uno desde su dispositivo.</p>
+      <button class="btn btn-red btn-block" id="btn-online-create">Crear sala</button>
+      <div style="margin:16px 0; text-align:center; color:var(--text-dim2); font-size:12px">— o unite a una sala —</div>
+      <input id="online-code-input" placeholder="Código (ej: AB3XZ)" maxlength="8"
+        style="width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text); font-size:16px; text-align:center; letter-spacing:3px; text-transform:uppercase; font-family:ui-monospace,monospace;">
+      <button class="btn btn-ghost btn-block" id="btn-online-join" style="margin-top:8px">Unirse</button>
+      <p class="sub" id="online-setup-error" style="color:var(--bad); min-height:16px; margin-top:10px"></p>
+      <button class="btn btn-ghost btn-block" id="btn-online-back">← Volver</button>
+    </div>
+  </div>
+
+  <!-- ONLINE WAIT -->
+  <div class="screen" id="screen-online-wait">
+    <div class="panel" style="text-align:center">
+      <div style="font-size:40px; margin:10px 0">⏳</div>
+      <h2 id="online-wait-title" style="font-size:18px; margin-bottom:8px">Esperando...</h2>
+      <p class="sub" id="online-wait-sub"></p>
+      <div id="room-code-box" style="display:none; margin:14px 0">
+        <div style="font-size:11px; color:var(--text-dim2); text-transform:uppercase; letter-spacing:0.08em">Código de sala</div>
+        <div id="room-code-display" style="font-size:30px; font-weight:800; letter-spacing:5px; color:var(--teal2); margin-top:4px"></div>
+      </div>
+      <button class="btn btn-ghost btn-block" id="btn-online-cancel" style="margin-top:8px">Cancelar</button>
     </div>
   </div>
 
@@ -333,6 +363,7 @@
   <div class="footer">Mentiroso · juego de faroleo futbolero · los datos son de juego</div>
 </div>
 
+<script src="/js/online-relay.js"></script>
 <script>
 (function () {
   "use strict";
@@ -1030,6 +1061,127 @@
     });
   });
 
+  /* ===== MULTIJUGADOR ONLINE ===== */
+  var onlineRelay = null;
+  var onlineMyRole = null; // "p1" (host) o "p2" (guest)
+
+  function closeOnlineRelay() {
+    if (onlineRelay) { onlineRelay.close(); onlineRelay = null; }
+    onlineMyRole = null;
+  }
+
+  function showOnlineWait(title, sub, showCode, code) {
+    document.getElementById("online-wait-title").textContent = title;
+    document.getElementById("online-wait-sub").textContent = sub || "";
+    document.getElementById("room-code-box").style.display = showCode ? "block" : "none";
+    if (showCode) document.getElementById("room-code-display").textContent = code || "";
+    showScreen("online-wait");
+  }
+
+  function startOnlineGame(topic) {
+    game = {
+      topic: topic,
+      currentBid: 0,
+      lastBidder: null,
+      playerStarts: true,
+      chatMessages: [],
+      phase: "bid",
+      namedPlayers: [],
+      namingTarget: 0,
+      namingWho: null,
+      timerInterval: null,
+      timeLeft: 0,
+      twoPlayer: true,
+      online: true,
+      myRole: onlineMyRole,
+      activeBidder: null
+    };
+    document.getElementById("topic-text").textContent = topic.text;
+    document.getElementById("topic-count-hint").textContent =
+      "Hay al menos " + Math.max(3, topic.count - randInt(1, 3)) + " jugadores que cumplen esta condición.";
+    showScreen("topic");
+  }
+
+  function onOnlineRelayMessage(payload) {
+    if (!payload || !payload.kind) return;
+
+    if (payload.kind === "rematch-topic") {
+      startOnlineGame(payload.topic);
+      return;
+    }
+
+    if (!game) return;
+
+    if (payload.kind === "bid") {
+      game.currentBid += payload.increment;
+      var bidder = game.activeBidder; // quien acaba de apostar (el rival)
+      addChatMsg(bidder, esc(pName(bidder)) + " sabe <b>" + game.currentBid + "</b>");
+      updateBidDisplay();
+      game.activeBidder = game.myRole;
+      showScreen("bid");
+      set2PTurn(game.myRole);
+      return;
+    }
+
+    if (payload.kind === "call") {
+      var caller = game.activeBidder; // el rival llamó
+      var accused = game.myRole;
+      addChatMsg(caller, "¡MENTIROSO! 🔥");
+      addChatMsg("system", esc(pName(accused)) + " debe nombrar " + game.currentBid + " jugadores");
+      startNamingPhase(accused);
+      return;
+    }
+
+    if (payload.kind === "named-result") {
+      game.namedPlayers = payload.namedPlayers;
+      endNaming(payload.success);
+      return;
+    }
+  }
+
+  function connectOnlineRelay(onReady) {
+    return createOnlineRelay("mentiroso", {
+      onCreated: function (code) {
+        onlineMyRole = "p1";
+        showOnlineWait("Esperando al rival...", "Compartile este código para que se una.", true, code);
+      },
+      onJoined: function () {
+        onlineMyRole = "p2";
+        showOnlineWait("Uniéndote a la sala...", "", false);
+      },
+      onOpponentJoined: function () { onReady(); },
+      onOpponentLeft: function () { alert("El rival se desconectó."); closeOnlineRelay(); renderMenuStats(); showScreen("menu"); },
+      onDisconnected: function () { closeOnlineRelay(); },
+      onMessage: onOnlineRelayMessage,
+      onError: function (msg) { document.getElementById("online-setup-error").textContent = msg; showScreen("online-setup"); }
+    });
+  }
+
+  document.getElementById("btn-online-create").addEventListener("click", function () {
+    document.getElementById("online-setup-error").textContent = "";
+    onlineRelay = connectOnlineRelay(function () {
+      if (onlineMyRole === "p1") {
+        var topic = generateTopic();
+        onlineRelay.send({ kind: "rematch-topic", topic: topic });
+        startOnlineGame(topic);
+      }
+    });
+    onlineRelay.createRoom();
+  });
+
+  document.getElementById("btn-online-join").addEventListener("click", function () {
+    var code = document.getElementById("online-code-input").value.trim().toUpperCase();
+    if (!code) { document.getElementById("online-setup-error").textContent = "Ingresá un código de sala."; return; }
+    document.getElementById("online-setup-error").textContent = "";
+    onlineRelay = connectOnlineRelay(function () {
+      showOnlineWait("Esperando el tema de la ronda...", "", false);
+    });
+    onlineRelay.joinRoom(code);
+  });
+
+  document.getElementById("btn-online-back").addEventListener("click", function () { showScreen("menu"); });
+  document.getElementById("btn-online-cancel").addEventListener("click", function () { closeOnlineRelay(); showScreen("menu"); });
+
   document.querySelectorAll("#diff-grid .diff-card").forEach(function(card) {
     card.addEventListener("click", function() {
       document.querySelectorAll("#diff-grid .diff-card").forEach(function(c) { c.classList.remove("selected"); });
@@ -1038,9 +1190,32 @@
     });
   });
 
-  document.getElementById("btn-play").addEventListener("click", startGame);
-  document.getElementById("btn-play-again").addEventListener("click", startGame);
+  document.getElementById("btn-play").addEventListener("click", function() {
+    if (gameMode === "online") {
+      document.getElementById("online-setup-error").textContent = "";
+      document.getElementById("online-code-input").value = "";
+      showScreen("online-setup");
+    } else {
+      startGame();
+    }
+  });
+
+  document.getElementById("btn-play-again").addEventListener("click", function() {
+    if (game && game.online) {
+      if (onlineMyRole === "p1" && onlineRelay) {
+        var topic = generateTopic();
+        onlineRelay.send({ kind: "rematch-topic", topic: topic });
+        startOnlineGame(topic);
+      } else {
+        showOnlineWait("Esperando la revancha...", "El otro jugador arma el próximo tema.", false);
+      }
+      return;
+    }
+    startGame();
+  });
+
   document.getElementById("btn-back-menu").addEventListener("click", function() {
+    closeOnlineRelay();
     if (window.parent !== window) {
       window.parent.postMessage("mentiroso:close", "*");
     } else {
@@ -1093,13 +1268,24 @@
   }
 
   document.getElementById("btn-start-bid").addEventListener("click", function() {
-    showScreen("bid");
     document.getElementById("bid-topic").textContent = game.topic.text;
     document.getElementById("chat-log").innerHTML = "";
     game.chatMessages = [];
     game.currentBid = 0;
     updateBidDisplay();
 
+    if (game.online) {
+      game.activeBidder = "p1";
+      if (game.myRole === "p1") {
+        showScreen("bid");
+        set2PTurn("p1");
+      } else {
+        showOnlineWait("Esperando a que " + pName("p1") + " apueste...", "", false);
+      }
+      return;
+    }
+
+    showScreen("bid");
     if (game.twoPlayer) {
       game.activeBidder = game.playerStarts ? "p1" : "p2";
       set2PTurn(game.activeBidder);
@@ -1114,6 +1300,7 @@
   });
 
   function pName(who) {
+    if (game && game.online) return who === game.myRole ? "Vos" : "Rival";
     if (who === "p1") return p1Name;
     if (who === "p2") return p2Name;
     return who === "player" ? "Vos" : "IA";
@@ -1161,7 +1348,21 @@
   document.getElementById("btn-call").addEventListener("click", function() { playerCallMentiroso(); });
 
   function playerBid(increment) {
+    if (game.online && game.myRole !== game.activeBidder) return;
     game.currentBid += increment;
+
+    if (game.online) {
+      var mySelf = game.myRole;
+      addChatMsg(mySelf, esc(pName(mySelf)) + " sabe <b>" + game.currentBid + "</b>");
+      updateBidDisplay();
+      var oppRole = mySelf === "p1" ? "p2" : "p1";
+      game.activeBidder = oppRole;
+      document.getElementById("bid-buttons").style.display = "none";
+      document.getElementById("bid-turn-label").innerHTML = "";
+      if (onlineRelay) onlineRelay.send({ kind: "bid", increment: increment });
+      showOnlineWait("Esperando a que " + pName(oppRole) + " apueste o llame mentiroso...", "", false);
+      return;
+    }
 
     if (game.twoPlayer) {
       var who = game.activeBidder;
@@ -1183,6 +1384,20 @@
   }
 
   function playerCallMentiroso() {
+    if (game.online) {
+      if (game.myRole !== game.activeBidder || game.currentBid === 0) return;
+      var mySelfC = game.myRole;
+      var oppRoleC = mySelfC === "p1" ? "p2" : "p1";
+      game.namingWho = oppRoleC;
+      game.namingTarget = game.currentBid;
+      addChatMsg(mySelfC, "¡MENTIROSO! 🔥");
+      addChatMsg("system", esc(pName(oppRoleC)) + " debe nombrar " + game.currentBid + " jugadores");
+      document.getElementById("bid-buttons").style.display = "none";
+      if (onlineRelay) onlineRelay.send({ kind: "call" });
+      showOnlineWait(pName(oppRoleC) + " está nombrando jugadores...", "Esperá el resultado.", false);
+      return;
+    }
+
     if (game.twoPlayer) {
       var caller = game.activeBidder;
       var accused = caller === "p1" ? "p2" : "p1";
@@ -1541,6 +1756,10 @@
 
   function endNaming(success) {
     game.phase = "result";
+
+    if (game.online && game.namingWho === game.myRole && onlineRelay) {
+      onlineRelay.send({ kind: "named-result", success: success, namedPlayers: game.namedPlayers });
+    }
 
     var icon = document.getElementById("result-icon");
     var title = document.getElementById("result-title");

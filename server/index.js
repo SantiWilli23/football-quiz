@@ -4,8 +4,10 @@ import cors from "cors";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs";
+import http from "node:http";
 
 import { initSchema } from "./db/client.js";
+import { attachWsRelay } from "./ws-relay.js";
 import authRoutes from "./routes/auth.js";
 import groupsRoutes from "./routes/groups.js";
 import questionsRoutes from "./routes/questions.js";
@@ -47,6 +49,9 @@ if (fs.existsSync(clientDist)) {
   });
 }
 
+const httpServer = http.createServer(app);
+attachWsRelay(httpServer);
+
 const PORT = process.env.PORT || 4000;
 
 // Recordatorio diario. Es un temporizador dentro del proceso, con la salvedad
@@ -76,8 +81,8 @@ function startReminderTimer() {
 
 initSchema()
   .then(() => {
-    app.listen(PORT, () => {
-      console.log(`Futotal API escuchando en el puerto ${PORT}`);
+    httpServer.listen(PORT, () => {
+      console.log(`Futotal API escuchando en el puerto ${PORT} (con WS relay en /ws)`);
       startReminderTimer();
     });
   })
