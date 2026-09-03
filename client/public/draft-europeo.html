@@ -367,6 +367,15 @@
   .cup-head { text-align: center; margin-bottom: 14px; }
   .cup-round { font-size: 11.5px; font-weight: 800; letter-spacing: 0.1em; color: var(--gold2); text-transform: uppercase; }
   .cup-round small { display: block; font-size: 10px; font-weight: 600; color: var(--text-faint); letter-spacing: 0.04em; margin-top: 2px; }
+  .speed-row { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 10px; }
+  .speed-lbl { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; color: var(--text-faint); text-transform: uppercase; margin-right: 2px; }
+  .speed-chip {
+    font-family: inherit; font-size: 11px; font-weight: 700; color: var(--text-dim);
+    background: rgba(255,255,255,0.03); border: 1px solid var(--panel-border); border-radius: 999px;
+    padding: 4px 11px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .speed-chip:hover { border-color: var(--teal); color: var(--text); }
+  .speed-chip.active { color: #0a1614; background: linear-gradient(120deg, var(--teal2), var(--teal)); border-color: transparent; }
 
   .scoreboard {
     display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px;
@@ -459,7 +468,7 @@
   <div class="brand">
     <div class="mark">★</div>
     <h1><span class="hl">DRAFT EUROPEO</span> 8A2</h1>
-    <a class="menu-btn" href="/">← Menú principal</a>
+    <a class="menu-btn" href="/" id="btn-brand-menu">← Menú principal</a>
     <span class="online-status-pill" id="online-status-pill">🟢 Rival conectado</span>
     <button class="leave-room-btn" id="btn-leave-room" style="display:none">✕ Salir de la sala</button>
   </div>
@@ -644,6 +653,13 @@
   <div id="screen-match" class="screen">
     <div class="cup-head">
       <span class="cup-round" id="cup-round-label">OCTAVOS DE FINAL<small id="cup-round-sub">ida única</small></span>
+      <div class="speed-row" id="speed-row">
+        <span class="speed-lbl">Velocidad</span>
+        <button class="speed-chip" data-speed="0.5">0.5x</button>
+        <button class="speed-chip active" data-speed="1">1x</button>
+        <button class="speed-chip" data-speed="2">2x</button>
+        <button class="speed-chip" data-speed="4">4x</button>
+      </div>
     </div>
 
     <div class="scoreboard" id="scoreboard">
@@ -679,7 +695,16 @@
       <h2 style="margin-bottom:14px" id="bracket-title">Cuadro de la Champions</h2>
       <div id="bracket-rounds"></div>
       <button class="btn btn-holo btn-block" id="btn-cup-new" style="margin-top:6px">Nueva copa</button>
-      <a class="btn btn-ghost btn-block" href="/" style="margin-top:8px; text-decoration:none; text-align:center">Volver al menú principal</a>
+      <a class="btn btn-ghost btn-block" href="/" id="btn-bracket-menu" style="margin-top:8px; text-decoration:none; text-align:center">Volver al menú principal</a>
+    </div>
+  </div>
+
+  <div id="screen-2p-final-result" class="screen">
+    <div class="panel" style="text-align:center">
+      <div style="font-size:44px; margin:6px 0" id="finalresult-icon">🏆</div>
+      <h2 id="finalresult-title" style="font-size:22px; margin-bottom:8px">Ganó Jugador 1</h2>
+      <p class="sub" id="finalresult-score" style="font-size:16px"></p>
+      <button class="btn btn-holo btn-block" id="btn-finalresult-newcup" style="margin-top:14px">Nueva copa</button>
     </div>
   </div>
 
@@ -1222,6 +1247,18 @@
   document.getElementById("btn-online-back").addEventListener("click", function () { showScreen("start"); });
   document.getElementById("btn-online-cancel").addEventListener("click", function () { closeOnlineRelay(); showScreen("start"); });
 
+  /* ===== Cierre correcto cuando está embebido en un iframe (Duelos) ===== */
+  function handleEmbeddedMenuClick(e) {
+    if (window.parent !== window) {
+      e.preventDefault();
+      closeOnlineRelay();
+      window.parent.postMessage("draft8a2:close", "*");
+    }
+    // Si no está embebido, deja el href="/" normal (navega a Futotal).
+  }
+  document.getElementById("btn-brand-menu").addEventListener("click", handleEmbeddedMenuClick);
+  document.getElementById("btn-bracket-menu").addEventListener("click", handleEmbeddedMenuClick);
+
   /* ============ FLUJO DE COPA ============ */
 
   function startCup() {
@@ -1484,28 +1521,24 @@
     showScreen("result");
   }
 
-  var lastVsWinnerResult = null;
+  var lastVsR1 = null, lastVsR2 = null, lastVsLabel1 = "Jugador 1", lastVsLabel2 = "Jugador 2";
 
   function renderVsResult(r1, r2, label1, label2) {
     label1 = label1 || "Jugador 1";
     label2 = label2 || "Jugador 2";
-    var winner = r1.avg > r2.avg ? 1 : r2.avg > r1.avg ? 2 : 0;
+    lastVsR1 = r1; lastVsR2 = r2; lastVsLabel1 = label1; lastVsLabel2 = label2;
+
+    var betterAvg = r1.avg > r2.avg ? 1 : r2.avg > r1.avg ? 2 : 0;
     document.getElementById("vs-winner-banner").textContent =
-      winner === 0 ? "¡Empate!" : "🏆 Ganó " + (winner === 1 ? label1 : label2);
+      betterAvg === 0 ? "Mismo promedio — se define en la cancha" : "Mejor promedio: " + (betterAvg === 1 ? label1 : label2);
     document.getElementById("vs-avg-1").textContent = r1.avg.toFixed(1);
     document.getElementById("vs-avg-2").textContent = r2.avg.toFixed(1);
-    document.getElementById("vs-name-1").textContent = label1 + (winner === 1 ? " 🏆" : "");
-    document.getElementById("vs-name-2").textContent = label2 + (winner === 2 ? " 🏆" : "");
+    document.getElementById("vs-name-1").textContent = label1;
+    document.getElementById("vs-name-2").textContent = label2;
 
     var champBtn = document.getElementById("btn-vs-champions");
-    if (winner === 0) {
-      champBtn.style.display = "none";
-      lastVsWinnerResult = null;
-    } else {
-      champBtn.style.display = "";
-      champBtn.textContent = "🏆 Jugar la Champions con el equipo de " + (winner === 1 ? label1 : label2);
-      lastVsWinnerResult = winner === 1 ? r1 : r2;
-    }
+    champBtn.style.display = "";
+    champBtn.textContent = "🏆 Jugar la Final: " + label1 + " vs " + label2;
 
     function renderList(elId, r) {
       var list = document.getElementById(elId);
@@ -1529,15 +1562,31 @@
   }
 
   document.getElementById("btn-vs-champions").addEventListener("click", function () {
-    if (!lastVsWinnerResult) return;
+    if (!lastVsR1 || !lastVsR2) return;
     closeOnlineRelay();
     twoPlayerMode = false;
     onlineMode = false;
-    state = freshState();
-    state.formation = lastVsWinnerResult.formation;
-    state.slots = lastVsWinnerResult.slots;
-    startChampions();
+    playTwoPlayerFinal(lastVsR1, lastVsR2, lastVsLabel1, lastVsLabel2);
   });
+
+  /* ============ FINAL ENTRE LOS DOS JUGADORES (2P local / online) ============ */
+  function playTwoPlayerFinal(r1, r2, label1, label2) {
+    var packA = buildPackFromSlots(r1.slots, r1.formation, "🔵", label1);
+    var packB = buildPackFromSlots(r2.slots, r2.formation, "🔴", label2);
+    var result = simulateMatch(packA, packB);
+    showScreen("match");
+    animateMatch(result, packA, packB, "final", function () { onTwoPlayerFinalDone(result, packA, packB); });
+  }
+
+  function onTwoPlayerFinalDone(result, packA, packB) {
+    var winnerPack = result.winner === "A" ? packA : packB;
+    var scoreText = result.scoreA + " – " + result.scoreB + (result.wentToPens ? " (penales " + result.penA + "-" + result.penB + ")" : "");
+    document.getElementById("finalresult-title").textContent = "Ganó " + packName(winnerPack);
+    document.getElementById("finalresult-score").textContent = scoreText;
+    showScreen("2p-final-result");
+  }
+
+  document.getElementById("btn-finalresult-newcup").addEventListener("click", function () { showScreen("start"); });
 
   /* ============ CHAMPIONS POST-DRAFT ============ */
 
@@ -1570,6 +1619,7 @@
   }
 
   function packName(pack) {
+    if (pack.label) return pack.label;
     return pack.isYou ? "Tu Selección" : (pack.club + " " + pack.season);
   }
 
@@ -1600,13 +1650,13 @@
     return { starters: starters.filter(Boolean), bench: bench };
   }
 
-  function buildYourPack() {
-    var starters = state.slots.map(function (s) {
+  // Banco: el resto de cada plantel real del que salió alguno de los 11 —
+  // así los cambios de la selección también son jugadores que de verdad
+  // compartieron plantilla con quien sacás.
+  function buildPackFromSlots(slots, formation, flag, label) {
+    var starters = slots.map(function (s) {
       return { n: s.filled.n, p: s.filled.p, r: s.filled.eff, club: s.filled.club, season: s.filled.season };
     });
-    // Banco: el resto de cada plantel real del que salió alguno de tus 11 —
-    // así los cambios de tu selección también son jugadores que de verdad
-    // compartieron plantilla con quien sacás.
     var usedKeys = {};
     starters.forEach(function (p) { usedKeys[p.club + "|" + p.season + "|" + p.n] = true; });
     var seenClubSeason = {};
@@ -1622,7 +1672,11 @@
         bench.push({ n: tp.n, p: tp.p, r: tp.r, club: p.club, season: p.season });
       });
     });
-    return { isYou: true, club: null, season: null, flag: "⭐", formation: state.formation, starters: starters, bench: bench };
+    return { isYou: true, club: null, season: null, flag: flag || "⭐", label: label || null, formation: formation, starters: starters, bench: bench };
+  }
+
+  function buildYourPack() {
+    return buildPackFromSlots(state.slots, state.formation, "⭐");
   }
 
   function buildBotPack(teamEntry) {
@@ -1905,6 +1959,15 @@
   var MINUTE_DELAY = 70;
   var matchTimer = null;
   var revealAllRef = null;
+  var matchSpeed = 1; // 0.5x, 1x, 2x, 4x — divide los delays de animateMatch
+
+  document.getElementById("speed-row").addEventListener("click", function (e) {
+    var chip = e.target.closest(".speed-chip");
+    if (!chip) return;
+    document.querySelectorAll("#speed-row .speed-chip").forEach(function (c) { c.classList.remove("active"); });
+    chip.classList.add("active");
+    matchSpeed = parseFloat(chip.dataset.speed);
+  });
 
   function animateMatch(result, packA, packB, roundName, onDone) {
     document.getElementById("cup-round-label").innerHTML = ROUND_LABEL[roundName].toUpperCase() +
@@ -1988,7 +2051,7 @@
       function nextPen() {
         if (i >= penEvents.length) { finish(); return; }
         applyEvent(penEvents[i]); i++;
-        matchTimer = setTimeout(nextPen, 550);
+        matchTimer = setTimeout(nextPen, 550 / matchSpeed);
       }
       nextPen();
     }
@@ -2003,12 +2066,12 @@
       var evs = eventsByMinute[currentMinute] || [];
       var hadVisibleEvent = false;
       evs.forEach(function (ev) { applyEvent(ev); if (ev.type !== "sub") hadVisibleEvent = true; });
-      matchTimer = setTimeout(tick, hadVisibleEvent ? 700 : MINUTE_DELAY);
+      matchTimer = setTimeout(tick, (hadVisibleEvent ? 700 : MINUTE_DELAY) / matchSpeed);
     }
 
     renderMinute(0, false);
     document.getElementById("sb-score").textContent = "0 – 0";
-    matchTimer = setTimeout(tick, 250);
+    matchTimer = setTimeout(tick, 250 / matchSpeed);
   }
 
   document.getElementById("btn-skip-match").addEventListener("click", function () {

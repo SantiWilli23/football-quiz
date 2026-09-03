@@ -195,7 +195,7 @@ export default function Duels() {
 
   useEffect(() => {
     const handleMessage = (e) => {
-      if (e.data === "mentiroso:close") setSelectedGame(null);
+      if (e.data === "mentiroso:close" || e.data === "draft8a2:close") setSelectedGame(null);
     };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
@@ -248,8 +248,8 @@ export default function Duels() {
       key: "8a2",
       label: "Draft 8a2",
       icon: Star,
-      description: "Armá tu equipo y enfrentate",
-      available: false,
+      description: "Armá tu equipo y jugá la final 1 contra 1",
+      available: true,
     },
     {
       key: "mentiroso",
@@ -306,37 +306,40 @@ export default function Duels() {
 
       {/* Selector de tipo de duelo */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-        {GAME_TYPES.map(({ key, label, icon: Icon, description, available }) => (
-          <div
-            key={key}
-            onClick={() => available && key === "mentiroso" && setSelectedGame("mentiroso")}
-            className={`px-4 py-3.5 rounded-card border transition-colors ${
-              available
-                ? key === "mentiroso"
-                  ? "border-accent/40 bg-accent/5 cursor-pointer hover:border-accent hover:bg-accent/10"
-                  : "border-accent/40 bg-accent/5 cursor-default"
-                : "border-border bg-panel opacity-50 cursor-default"
-            }`}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <Icon size={16} className={available ? "text-accent" : "text-gray-500"} />
-              <span className={`text-sm font-semibold ${available ? "text-white" : "text-gray-500"}`}>
-                {label}
-              </span>
-              {!available && (
-                <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-gray-700/60 text-gray-500 border border-gray-600/40">
-                  Pronto
+        {GAME_TYPES.map(({ key, label, icon: Icon, description, available }) => {
+          const embeddable = key === "mentiroso" || key === "8a2";
+          return (
+            <div
+              key={key}
+              onClick={() => available && embeddable && setSelectedGame(key)}
+              className={`px-4 py-3.5 rounded-card border transition-colors ${
+                available
+                  ? embeddable
+                    ? "border-accent/40 bg-accent/5 cursor-pointer hover:border-accent hover:bg-accent/10"
+                    : "border-accent/40 bg-accent/5 cursor-default"
+                  : "border-border bg-panel opacity-50 cursor-default"
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <Icon size={16} className={available ? "text-accent" : "text-gray-500"} />
+                <span className={`text-sm font-semibold ${available ? "text-white" : "text-gray-500"}`}>
+                  {label}
                 </span>
-              )}
-              {available && key === "mentiroso" && (
-                <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-accent/20 text-accent border border-accent/30">
-                  Jugar
-                </span>
-              )}
+                {!available && (
+                  <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-gray-700/60 text-gray-500 border border-gray-600/40">
+                    Pronto
+                  </span>
+                )}
+                {available && embeddable && (
+                  <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-accent/20 text-accent border border-accent/30">
+                    Jugar
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-500">{description}</p>
             </div>
-            <p className="text-xs text-gray-500">{description}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Mentiroso embebido */}
@@ -359,6 +362,31 @@ export default function Duels() {
               src="/mentiroso.html"
               style={{ width: "100%", height: "100%", border: "none", display: "block" }}
               title="Mentiroso"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Draft 8a2 embebido */}
+      {selectedGame === "8a2" && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold flex items-center gap-2">
+              <Star size={16} className="text-accent" />
+              Draft 8a2
+            </h2>
+            <button
+              onClick={() => setSelectedGame(null)}
+              className="text-xs text-gray-500 hover:text-white transition-colors border border-border rounded-full px-3 py-1.5"
+            >
+              ✕ Cerrar
+            </button>
+          </div>
+          <div className="rounded-card overflow-hidden border border-border" style={{ height: "720px" }}>
+            <iframe
+              src="/draft-europeo.html"
+              style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+              title="Draft 8a2"
             />
           </div>
         </div>
