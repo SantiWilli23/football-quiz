@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./context/AuthContext.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
+import Splash from "./pages/Splash.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Trivia from "./pages/Trivia.jsx";
 import Group from "./pages/Group.jsx";
@@ -52,6 +53,14 @@ export default function App() {
       />
       <Route
         path="/"
+        element={
+          <PrivateRoute>
+            <Splash />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/panel"
         element={
           <PrivateRoute>
             <Dashboard />

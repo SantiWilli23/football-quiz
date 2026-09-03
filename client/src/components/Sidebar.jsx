@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import Avatar from "./Avatar.jsx";
 
 const links = [
-  { to: "/", label: "Inicio", icon: Home, end: true },
+  { to: "/panel", label: "Inicio", icon: Home, end: true },
   { to: "/trivia", label: "Trivia", icon: HelpCircle },
   { to: "/futbol", label: "Fútbol", icon: Newspaper },
   { to: "/grupo", label: "Mi grupo", icon: Users },
