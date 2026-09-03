@@ -118,6 +118,31 @@
   .trow .club-badge { height: 16px; margin-right: 2px; }
   .oclub .club-badge { height: 26px; margin-right: 4px; }
 
+  /* ---- hero de inicio ---- */
+  .hero-block { padding: 4px 2px 26px; }
+  .hero-eyebrow { font-family: ui-monospace, monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: var(--gold2); margin-bottom: 16px; }
+  .hero-title { font-weight: 700; line-height: 1.12; font-size: 38px; color: var(--text); margin-bottom: 14px; text-wrap: balance; }
+  .hero-title .hl { color: var(--teal2); }
+  .hero-sub { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 14px; color: var(--text-dim); line-height: 1.6; margin-bottom: 22px; max-width: 440px; }
+  .hero-card {
+    display: flex; align-items: center; gap: 14px; border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px; background: rgba(0,0,0,0.18); margin-bottom: 18px;
+  }
+  .hero-card .htitle { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 15px; font-weight: 700; color: var(--text); }
+  .hero-card .hmeta { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; color: var(--text-dim); margin-top: 1px; }
+  .hero-card .hstats { display: flex; gap: 16px; margin-left: auto; }
+  .hero-card .hstat { text-align: center; }
+  .hero-card .hstat b { display: block; font-family: ui-monospace, monospace; font-size: 16px; font-weight: 800; color: var(--text); }
+  .hero-card .hstat span { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 9.5px; color: var(--text-dim2); letter-spacing: 0.05em; }
+  .hero-footer-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+  .hero-footer-row .htag { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12px; font-style: italic; color: var(--text-dim2); }
+  .hero-pill {
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12px; font-weight: 700; color: var(--teal2);
+    background: var(--teal-bg); border: 1px solid var(--teal); border-radius: 999px; padding: 7px 15px; cursor: pointer;
+  }
+  .hero-pill:hover { background: var(--teal); color: #0a1614; }
+  @media (max-width: 480px) { .hero-title { font-size: 28px; } .hero-card { flex-wrap: wrap; } .hero-card .hstats { margin-left: 0; } }
+
   /* ---- pantalla de modos ---- */
   .mode-card {
     border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px;
@@ -263,6 +288,27 @@
 
   <!-- ===== SELECCIÓN DE MODO ===== -->
   <div id="screen-mode" class="screen active">
+    <div class="hero-block">
+      <div class="hero-eyebrow">SIMULADOR DE CARRERA</div>
+      <div class="hero-title">De potrero a <span class="hl">leyenda</span>.</div>
+      <p class="hero-sub">Tomá decisiones, entrenás, subís (o bajás) y al final se arma la historia de tu jugador.</p>
+      <div class="hero-card">
+        <div>
+          <div class="htitle">Tu jugador</div>
+          <div class="hmeta">Real Madrid • Temporada 14</div>
+        </div>
+        <div class="hstats">
+          <div class="hstat"><b>87</b><span>OVR</span></div>
+          <div class="hstat"><b>312</b><span>PJ</span></div>
+          <div class="hstat"><b>98</b><span>GLS</span></div>
+          <div class="hstat"><b>61</b><span>AST</span></div>
+        </div>
+      </div>
+      <div class="hero-footer-row">
+        <span class="htag">Cada carrera es una historia única</span>
+        <button class="hero-pill" id="btn-hero-mode-simple">Modo Simple</button>
+      </div>
+    </div>
     <div class="panel">
       <h2>Elegí tu modo</h2>
       <p class="sub">Una carrera futbolística de potrero a leyenda. Vas tomando decisiones, entrenás, subís (o bajás) y al final se arma la historia de tu jugador.</p>
@@ -839,6 +885,7 @@
     });
   });
 
+  document.getElementById("btn-hero-mode-simple").addEventListener("click", startNewCareerFlow);
   document.getElementById("btn-view-history").addEventListener("click", function () { renderHistoryScreen(); showScreen("history"); });
   document.getElementById("btn-history-back").addEventListener("click", function () { showScreen(player ? "hub" : "mode"); });
 

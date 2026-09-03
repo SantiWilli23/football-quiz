@@ -329,6 +329,30 @@
 
   .foot-note { text-align: center; font-size: 11px; color: var(--text-faint); margin-top: 24px; line-height: 1.6; }
 
+  /* Hero de inicio */
+  .hero-block { padding: 6px 2px 28px; }
+  .hero-eyebrow { font-family: ui-monospace, monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: var(--gold2); margin-bottom: 16px; }
+  .hero-title {
+    font-family: Georgia, "Times New Roman", serif; font-weight: 700; line-height: 1.12;
+    font-size: 40px; color: var(--text); margin-bottom: 14px; text-wrap: balance;
+  }
+  .hero-title .hl { color: var(--accent2); }
+  .hero-sub { font-size: 14.5px; color: var(--text-dim); line-height: 1.6; margin-bottom: 24px; max-width: 460px; }
+  .hero-players { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 22px; -webkit-overflow-scrolling: touch; }
+  .hero-pcard {
+    flex: 0 0 auto; min-width: 106px; border-radius: 12px; padding: 12px 14px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--panel-border);
+  }
+  .hero-pcard.featured { background: var(--teal-bg); border-color: var(--teal); }
+  .hero-pcard b { display: block; font-size: 13px; font-weight: 700; color: var(--text); }
+  .hero-pcard.featured b { color: var(--teal2); }
+  .hero-pcard span { font-size: 10.5px; color: var(--text-faint); }
+  .hero-pcard .dots { margin-top: 10px; font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 3px; color: var(--text-faint); opacity: 0.55; }
+  .hero-footer-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .hero-stat-label { display: block; font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.09em; color: var(--text-faint); margin-bottom: 2px; }
+  .hero-stat-value { font-size: 26px; font-weight: 800; color: var(--text); }
+  @media (max-width: 480px) { .hero-title { font-size: 30px; } }
+
   .weekly-table { border: 1px solid var(--gold); border-radius: 14px; padding: 14px 16px; background: rgba(217,164,65,0.06); }
   .weekly-table h3 { font-size: 12px; font-weight: 800; color: var(--gold2); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
   .weekly-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--panel-border); font-size: 12.5px; }
@@ -441,11 +465,29 @@
   </div>
 
   <div id="screen-start" class="screen active">
+    <div class="hero-block">
+      <div class="hero-eyebrow">CHAMPIONS LEAGUE · 1998–2025</div>
+      <div class="hero-title">Armá tu <span class="hl">XI ideal</span> de Europa.</div>
+      <p class="hero-sub">11 rondas, equipos al azar, ratings ocultos. ¿Podés armar el equipo perfecto?</p>
+      <div class="hero-players">
+        <div class="hero-pcard featured"><b>Modric</b><span>MEI</span><div class="dots">? ? ?</div></div>
+        <div class="hero-pcard featured"><b>Benzema</b><span>CA</span><div class="dots">? ? ?</div></div>
+        <div class="hero-pcard"><b>Kroos</b><span>MEI</span><div class="dots">? ? ?</div></div>
+        <div class="hero-pcard"><b>Vinicius</b><span>PE/CA</span><div class="dots">? ? ?</div></div>
+        <div class="hero-pcard"><b>Courtois</b><span>GOL</span><div class="dots">? ? ?</div></div>
+      </div>
+      <div class="hero-footer-row">
+        <div>
+          <span class="hero-stat-label">EQUIPOS DISPONIBLES</span>
+          <span class="hero-stat-value">138</span>
+        </div>
+        <button class="btn btn-holo" id="btn-hero-start">Empezar copa</button>
+      </div>
+    </div>
     <div class="panel">
-      <h2>Armá tu XI ideal</h2>
+      <h2>Configurá tu copa</h2>
       <p class="sub">
-        Cada ronda aparece un equipo al azar de una temporada de Champions League (1998–2025).
-        Elegís un jugador que encaje en un puesto vacío de tu formación. 11 rondas, 3 rerolls, un equipo.
+        Elegís un jugador que encaje en un puesto vacío de tu formación en cada ronda. 3 rerolls, un equipo.
       </p>
 
       <h2 style="margin-top:4px">Formación</h2>
@@ -1053,6 +1095,10 @@
   document.getElementById("btn-vs-new-cup").addEventListener("click", function () {
     closeOnlineRelay();
     showScreen("start");
+  });
+
+  document.getElementById("btn-hero-start").addEventListener("click", function () {
+    document.querySelector("#screen-start .panel").scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
   document.getElementById("btn-start").addEventListener("click", function () {

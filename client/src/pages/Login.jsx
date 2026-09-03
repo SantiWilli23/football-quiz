@@ -32,25 +32,41 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex bg-bg text-white">
-      <div className="hidden lg:flex flex-1 flex-col justify-between p-12 bg-panel border-r border-border">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-card bg-accent/15 border border-accent/30 flex items-center justify-center text-accent font-bold">
+      <div className="hidden lg:flex flex-1 flex-col items-center justify-center gap-10 p-12 bg-panel border-r border-border text-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-14 h-14 rounded-card bg-gradient-to-br from-accent-light to-emerald-500 flex items-center justify-center text-black font-extrabold text-xl">
             FT
           </div>
-          <span className="font-semibold text-xl tracking-tight">Futotal</span>
-        </div>
-        <div>
-          <h1 className="text-4xl font-bold leading-tight mb-4">
-            Una pregunta de fútbol.
-            <br />
-            Todos los días.
+          <h1 className="text-5xl font-extrabold tracking-tight bg-gradient-to-r from-accent-light via-accent to-emerald-500 bg-clip-text text-transparent">
+            FUTOTAL
           </h1>
-          <p className="text-gray-400 max-w-md">
-            Compite con tus amigos, mantené tu racha y demostrá quién sabe más de fútbol
-            en tu grupo.
+          <p className="text-gray-400 max-w-sm text-sm">
+            La trivia de fútbol que desafía a los que lo saben todo
           </p>
         </div>
-        <p className="text-xs text-gray-600">Futotal © {new Date().getFullYear()}</p>
+
+        <div className="flex flex-col items-center gap-5">
+          <div className="w-16 h-px bg-border" />
+          <div className="flex items-center gap-3 flex-wrap justify-center">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-bg/60 px-4 py-2 text-xs font-medium text-gray-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent" /> Trivia diaria
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-bg/60 px-4 py-2 text-xs font-medium text-gray-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Duelos
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-bg/60 px-4 py-2 text-xs font-medium text-gray-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Grupos
+            </span>
+          </div>
+          <Link
+            to="/registro"
+            className="rounded-full bg-gradient-to-r from-accent to-accent-light px-8 py-3 text-sm font-semibold text-black hover:opacity-90 transition-opacity"
+          >
+            Jugar ahora
+          </Link>
+        </div>
+
+        <p className="text-[11px] text-gray-600 tracking-wide">COTRERO · DRAFT EUROPEO 8A2 · TRIVIA</p>
       </div>
 
       <div className="flex-1 flex items-center justify-center px-6 py-12">
