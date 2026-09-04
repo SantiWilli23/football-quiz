@@ -1464,7 +1464,6 @@
       if (confirm("Con " + M.age + " años y en franco declive, ¿querés retirarte esta temporada?")) { retirePlayer(); return; }
     }
 
-    if (M.seasonsPlayed % 2 === 0) { showShop(); return; }
     if (M.contractYearsLeft <= 0) { showMarket(); return; }
 
     renderHub();
