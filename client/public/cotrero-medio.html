@@ -140,6 +140,18 @@
   .btn-chip-red:hover { border-color: var(--bad); filter: brightness(1.1); }
   .btn-chip:disabled { opacity: 0.35; cursor: not-allowed; filter: none; }
 
+  .decision-urgent {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    border: 1px solid var(--accent); background: var(--accent-bg); border-radius: 10px;
+    padding: 10px 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .decision-urgent:hover { filter: brightness(1.1); }
+  .decision-urgent .dtitle { font-size: 13.5px; font-weight: 700; color: var(--text); }
+  .decision-urgent .dtag {
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 9.5px; font-weight: 800;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent2); flex-shrink: 0;
+  }
+
   .bar-track { height: 8px; border-radius: 5px; background: rgba(255,255,255,0.08); overflow: hidden; margin-top: 4px; }
   .bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--teal), var(--teal2)); }
 
@@ -269,6 +281,7 @@
         </div>
         <div class="panel">
           <h2 style="margin-bottom:10px">Decisiones</h2>
+          <div id="hub-decisiones-urgentes"></div>
           <div class="chip-row">
             <button class="btn-chip btn-chip-gold" id="btn-hub-renovar">Renovar</button>
             <button class="btn-chip btn-chip-red" id="btn-hub-vender">Vender</button>
@@ -280,6 +293,7 @@
         <div id="hub-vitrina" class="sans" style="font-size:12px;color:var(--text-dim2)">Sin logros todavía.</div>
       </div>
       <button class="btn btn-gold btn-block" id="btn-hub-avanzar">Empezar temporada</button>
+      <p class="sub sans" id="hub-avanzar-hint" style="display:none;text-align:center;margin:-4px 0 10px">Resolvé las decisiones pendientes antes de empezar la temporada.</p>
       <button class="btn btn-ghost btn-block" id="btn-hub-tienda">Ir a la tienda</button>
       <button class="btn btn-ghost btn-block" id="btn-hub-retirarse">Retirarse</button>
       <button class="btn btn-ghost btn-block" id="btn-hub-borrar">Eliminar carrera</button>
@@ -288,8 +302,8 @@
     <div id="hub-step" style="display:none">
       <!-- ENTRENAMIENTO -->
       <div class="panel step-panel" id="step-entrenamiento">
-        <h2>Pretemporada</h2>
-        <p class="sub">Elegí <b style="color:var(--accent2)">2</b> de estas 4 opciones de entrenamiento.</p>
+        <h2>Decisión · Entrenamiento</h2>
+        <p class="sub">Elegí <b style="color:var(--accent2)">2</b> de estas 4 opciones. El resultado real se revela después de elegir.</p>
         <div class="pick-grid cols2" id="grid-entrenamiento"></div>
         <button class="btn btn-gold btn-block" id="btn-entrenamiento-confirmar" style="margin-top:10px" disabled>Confirmar (0/2)</button>
       </div>
@@ -322,7 +336,7 @@
 
       <!-- MEDIO TIEMPO -->
       <div class="panel step-panel" id="step-mediotiempo">
-        <h2>Mitad de temporada</h2>
+        <h2>Decisión · Mitad de temporada</h2>
         <p class="sub sans" id="mediotiempo-resumen"></p>
         <p class="sub">¿Qué priorizás para lo que queda de temporada?</p>
         <div class="pick-grid" id="grid-mediotiempo"></div>
@@ -635,26 +649,26 @@
     var other = s.filter(function (k) { return k !== sig && k !== "resistencia"; });
     var o0 = other[0] || sig, o1 = other[1] || sig, o2 = other[2] || "resistencia";
     return [
-      { id: "com1", label: "Rutina técnica", rarity: "comun", flavor: "Sesión estándar con el cuerpo técnico. Efecto moderado.", delta: mk(sig, 3), sub: mk("resistencia", -1) },
+      { id: "com1", label: "Rutina técnica", rarity: "comun", flavor: "Sesión estándar con el cuerpo técnico. Efecto moderado.", delta: mk(sig, 3), sub: mk("resistencia", -1), formaDelta: -1 },
       { id: "com2", label: "Trabajo físico", rarity: "comun", flavor: "Preparación física de rutina, nada llamativo.", delta: mk("resistencia", 3), sub: mk(o0, -1) },
-      { id: "com3", label: "Táctica grupal", rarity: "comun", flavor: "Trabajo colectivo con el plantel. Efecto discreto.", delta: mk(o0, 3), sub: mk(o1, -1) },
+      { id: "com3", label: "Táctica grupal", rarity: "comun", flavor: "Trabajo colectivo con el plantel. Efecto discreto.", delta: mk(o0, 3), sub: mk(o1, -1), formaDelta: 1 },
       { id: "com4", label: "Sesión de video", rarity: "comun", flavor: "Análisis de partidos con los analistas del club.", delta: mk(o1, 2), sub: mk("resistencia", -1) },
-      { id: "com5", label: "Gimnasio", rarity: "comun", flavor: "Rutina de fuerza en el gimnasio del predio.", delta: mk(o2, 3), sub: mk(sig, -1) },
+      { id: "com5", label: "Gimnasio", rarity: "comun", flavor: "Rutina de fuerza en el gimnasio del predio.", delta: mk(o2, 3), sub: mk(sig, -1), formaDelta: -2 },
       { id: "com6", label: "Trabajo de core", rarity: "comun", flavor: "Ejercicios de estabilidad y base física.", delta: mk("resistencia", 2), sub: mk(o1, -1) },
-      { id: "com7", label: "Rondos intensivos", rarity: "comun", flavor: "Ejercicio de posesión a ritmo alto.", delta: mk(o0, 2), sub: mk(sig, -1) },
-      { id: "com8", label: "Descanso activo", rarity: "comun", flavor: "Semana liviana, foco en la recuperación.", delta: mk(sig, 2), sub: mk("resistencia", 1) },
+      { id: "com7", label: "Rondos intensivos", rarity: "comun", flavor: "Ejercicio de posesión a ritmo alto.", delta: mk(o0, 2), sub: mk(sig, -1), formaDelta: -1 },
+      { id: "com8", label: "Descanso activo", rarity: "comun", flavor: "Semana liviana, foco en la recuperación.", delta: mk(sig, 2), sub: mk("resistencia", 1), formaDelta: 3 },
       { id: "com9", label: "Charla técnica", rarity: "comun", flavor: "Reunión individual con el cuerpo técnico.", delta: mk(o1, 3), sub: mk("resistencia", -1) },
-      { id: "raro1", label: "Entrenador personal", rarity: "raro", flavor: "Trabajo individualizado. Puede rendir bien, pero no siempre.", delta: mk(sig, 5), hidden: mk(o0, -2) },
-      { id: "raro2", label: "Campamento de alto rendimiento", rarity: "raro", flavor: "Estadía intensiva fuera del club. Resultado incierto.", delta: mk("resistencia", 5), hidden: mk(sig, -2) },
-      { id: "raro3", label: "Método europeo", rarity: "raro", flavor: "Metodología importada, poco probada en tu caso.", delta: mk(o0, 5), hidden: mk("resistencia", -2) },
-      { id: "raro4", label: "Preparación mental intensiva", rarity: "raro", flavor: "Trabajo con psicólogo deportivo. Efecto difícil de anticipar.", delta: mk(o1, 5), hidden: mk(sig, -2) },
-      { id: "raro5", label: "Cambio de rutina radical", rarity: "raro", flavor: "Rompés con tu rutina habitual. Puede salir mal.", delta: mk(sig, 4), hidden: mk(o1, -3) },
-      { id: "raro6", label: "Entrenamiento cruzado", rarity: "raro", flavor: "Mezclás disciplinas poco habituales para tu puesto.", delta: mk("resistencia", 4), hidden: mk(o0, -3) },
-      { id: "leg1", label: "Método revolucionario", rarity: "legendario", flavor: "Algo nunca antes probado en el club. Todo o nada.", delta: mk(sig, 9), youngRecover: mk(o0, -3) },
-      { id: "leg2", label: "Bootcamp extremo", rarity: "legendario", flavor: "Al límite físico. Te puede transformar o quebrar.", delta: mk("resistencia", 9), youngRecover: mk(sig, -3), formaHit: true },
-      { id: "leg3", label: "Preparador de un crack", rarity: "legendario", flavor: "Un ídolo se ofrece a entrenarte. Alto riesgo, alto techo.", delta: mk(o1, 9), youngRecover: mk(o0, -3) },
-      { id: "leg4", label: "Ritual del ídolo", rarity: "legendario", flavor: "Método casi mítico, sin garantías reales.", delta: mk(sig, 10), youngRecover: mk("resistencia", -4), formaHit: true },
-      { id: "leg5", label: "Ciencia de vanguardia", rarity: "legendario", flavor: "Tecnología de punta todavía en pruebas.", delta: mk(o0, 9), youngRecover: mk(o1, -4) }
+      { id: "raro1", label: "Entrenador personal", rarity: "raro", flavor: "Trabajo individualizado. Puede rendir bien, pero no siempre.", delta: mk(sig, 5), hidden: mk(o0, -2), formaDelta: -3 },
+      { id: "raro2", label: "Campamento de alto rendimiento", rarity: "raro", flavor: "Estadía intensiva fuera del club. Resultado incierto.", delta: mk("resistencia", 5), hidden: mk(sig, -2), formaDelta: -4 },
+      { id: "raro3", label: "Método europeo", rarity: "raro", flavor: "Metodología importada, poco probada en tu caso.", delta: mk(o0, 5), hidden: mk("resistencia", -2), formaDelta: 4 },
+      { id: "raro4", label: "Preparación mental intensiva", rarity: "raro", flavor: "Trabajo con psicólogo deportivo. Efecto difícil de anticipar.", delta: mk(o1, 5), hidden: mk(sig, -2), formaDelta: 5 },
+      { id: "raro5", label: "Cambio de rutina radical", rarity: "raro", flavor: "Rompés con tu rutina habitual. Puede salir mal.", delta: mk(sig, 4), hidden: mk(o1, -3), formaDelta: -5 },
+      { id: "raro6", label: "Entrenamiento cruzado", rarity: "raro", flavor: "Mezclás disciplinas poco habituales para tu puesto.", delta: mk("resistencia", 4), hidden: mk(o0, -3), formaDelta: -3 },
+      { id: "leg1", label: "Método revolucionario", rarity: "legendario", flavor: "Algo nunca antes probado en el club. Todo o nada.", delta: mk(sig, 9), youngRecover: mk(o0, -3), formaDelta: -8 },
+      { id: "leg2", label: "Bootcamp extremo", rarity: "legendario", flavor: "Al límite físico. Te puede transformar o quebrar.", delta: mk("resistencia", 9), youngRecover: mk(sig, -3), formaDelta: -14 },
+      { id: "leg3", label: "Preparador de un crack", rarity: "legendario", flavor: "Un ídolo se ofrece a entrenarte. Alto riesgo, alto techo.", delta: mk(o1, 9), youngRecover: mk(o0, -3), formaDelta: 10 },
+      { id: "leg4", label: "Ritual del ídolo", rarity: "legendario", flavor: "Método casi mítico, sin garantías reales.", delta: mk(sig, 10), youngRecover: mk("resistencia", -4), formaDelta: -12 },
+      { id: "leg5", label: "Ciencia de vanguardia", rarity: "legendario", flavor: "Tecnología de punta todavía en pruebas.", delta: mk(o0, 9), youngRecover: mk(o1, -4), formaDelta: 8 }
     ];
     function mk(stat, amount) { var o = {}; o[stat] = amount; return o; }
   }
@@ -730,7 +744,7 @@
   };
 
   /* ============ EVENTOS ============ */
-  // effect: {forma, dt, money, marketValuePct, personality:{tipo:pts}, statKey:amount}
+  // effect: {forma, dt, money, marketValuePct, personality:{tipo:pts}, statDelta:{target:"sig"|"resistencia"|"random", amount}}
   function buildEventPool() {
     return [
       { id: "e1", title: "Rumores de pase", text: "Un club rival te sondea por la prensa. El DT te pregunta qué pensás.", options: [
@@ -750,15 +764,15 @@
         { label: "Rechazar por ahora", effect: { dt: 3, personality: { profesional: 1 } } }
       ]},
       { id: "e5", title: "Crítica en la prensa", text: "Un periodista cuestiona públicamente tu nivel.", options: [
-        { label: "Responder con la cara alta en cancha", effect: { forma: 5, personality: { lider: 2 } } },
+        { label: "Responder con la cara alta en cancha", effect: { forma: 5, statDelta: { target: "sig", amount: 1 }, personality: { lider: 2 } } },
         { label: "Ignorarlo", effect: { personality: { solitario: 2 } } }
       ]},
       { id: "e6", title: "Problema familiar", text: "Un tema personal te tiene preocupado esta semana.", options: [
         { label: "Pedir unos días", effect: { forma: -4, dt: -2 } },
-        { label: "Seguir como si nada", effect: { forma: -2, personality: { profesional: 2 } } }
+        { label: "Seguir como si nada", effect: { forma: -2, statDelta: { target: "random", amount: -1 }, personality: { profesional: 2 } } }
       ]},
       { id: "e7", title: "El DT te pide un sacrificio táctico", text: "Te pide jugar en una posición más retrasada este partido para ayudar al equipo.", options: [
-        { label: "Aceptar", effect: { dt: 10, forma: -2, personality: { lider: 2 } } },
+        { label: "Aceptar", effect: { dt: 10, forma: -2, statDelta: { target: "resistencia", amount: 2 }, personality: { lider: 2 } } },
         { label: "Preferir tu rol habitual", effect: { dt: -5 } }
       ]},
       { id: "e8", title: "Oferta de vestuario", text: "Los referentes del plantel te invitan a liderar una charla de motivación.", options: [
@@ -766,12 +780,12 @@
         { label: "Declinar, preferís los hechos", effect: { personality: { solitario: 2, profesional: 1 } } }
       ]},
       { id: "e9", title: "Escándalo menor", text: "Una foto tuya circula en redes en un mal momento.", options: [
-        { label: "Salir a aclarar todo públicamente", effect: { dt: -3, forma: -3 } },
+        { label: "Salir a aclarar todo públicamente", effect: { dt: -3, forma: -3, marketValuePct: -0.02 } },
         { label: "Dejar que pase solo", effect: { forma: -5 } }
       ]},
       { id: "e10", title: "Racha positiva", text: "Venís de varios partidos muy buenos y el ambiente está eufórico.", options: [
         { label: "Disfrutarlo a fondo", effect: { forma: 8, personality: { fiestero: 3 } } },
-        { label: "Mantener los pies en la tierra", effect: { forma: 4, personality: { profesional: 3 } } }
+        { label: "Mantener los pies en la tierra", effect: { forma: 4, statDelta: { target: "sig", amount: 1 }, personality: { profesional: 3 } } }
       ]},
       { id: "e11", title: "Pedido de un compañero joven", text: "Un juvenil te pide consejos para progresar más rápido.", options: [
         { label: "Dedicarle tiempo", effect: { dt: 4, personality: { lider: 3 } } },
@@ -790,8 +804,20 @@
         { label: "No hace falta", effect: {} }
       ]},
       { id: "e15", title: "Lesión de un compañero", text: "Un titular en tu posición se lesiona: se abre una chance.", options: [
-        { label: "Aprovechar la oportunidad a fondo", effect: { dt: 8, forma: 3 } },
+        { label: "Aprovechar la oportunidad a fondo", effect: { dt: 8, forma: 3, statDelta: { target: "sig", amount: 2 } } },
         { label: "No presionar, tu momento llegará", effect: { personality: { solitario: 1 } } }
+      ]},
+      { id: "e16", title: "Molestia física", text: "Arrastrás una molestia menor que el cuerpo médico te recomienda cuidar.", options: [
+        { label: "Jugar igual, apretando los dientes", effect: { forma: -6, dt: 5, statDelta: { target: "resistencia", amount: 2 } } },
+        { label: "Parar la molestia a tiempo", effect: { forma: 4, dt: -2 } }
+      ]},
+      { id: "e17", title: "Interés de un club grande", text: "Se filtra que un club de otra categoría te sigue de cerca.", options: [
+        { label: "Dejar que la noticia crezca", effect: { dt: -8, marketValuePct: 0.08, forma: 4 } },
+        { label: "Bajarle el precio a los rumores", effect: { dt: 6, marketValuePct: -0.02 } }
+      ]},
+      { id: "e18", title: "Sesión extra con el preparador", text: "El cuerpo técnico te ofrece una sesión extra fuera de la rutina normal.", options: [
+        { label: "Sumarla, aunque te deje cansado", effect: { forma: -3, statDelta: { target: "sig", amount: 2 } } },
+        { label: "Descansar en su lugar", effect: { forma: 3 } }
       ]}
     ];
   }
@@ -826,7 +852,7 @@
       temporaryEffects: {},
       midSeasonFocus: null, midSeasonSummary: null,
       seasonLog: [], nextTournamentCheck: 0,
-      moments: [], _retired: false
+      moments: [], _retired: false, _trainingDoneThisSeason: false
     };
     p.ovr = computeOvr(p.stats, p.position);
     p.peakOvr = p.ovr;
@@ -1063,6 +1089,20 @@
     } else {
       vitrina.innerHTML = M.titles.concat(M.awards).map(function (t) { return '<span class="award-badge">' + titleIcon(t) + " " + esc(titleText(t)) + "</span>"; }).join("");
     }
+
+    var urgentBox = document.getElementById("hub-decisiones-urgentes");
+    var avanzarBtn = document.getElementById("btn-hub-avanzar");
+    var avanzarHint = document.getElementById("hub-avanzar-hint");
+    if (!M._trainingDoneThisSeason) {
+      urgentBox.innerHTML = '<div class="decision-urgent" id="decision-entrenamiento"><span class="dtitle">Entrenamiento de pretemporada</span><span class="dtag">Pendiente</span></div>';
+      document.getElementById("decision-entrenamiento").addEventListener("click", showTrainingScreen);
+      avanzarBtn.disabled = true;
+      avanzarHint.style.display = "";
+    } else {
+      urgentBox.innerHTML = "";
+      avanzarBtn.disabled = false;
+      avanzarHint.style.display = "none";
+    }
   }
 
   document.getElementById("btn-hub-borrar").addEventListener("click", function () {
@@ -1103,7 +1143,7 @@
     var grid = document.getElementById("grid-entrenamiento");
     grid.innerHTML = opts.map(function (t, i) {
       return '<div class="pick-card" data-i="' + i + '"><div class="ptitle">' + esc(t.label) + '</div><div class="pdesc">' + esc(t.flavor) +
-        '</div><span class="ptag ' + t.rarity + '">' + t.rarity + '</span></div>';
+        '</div></div>';
     }).join("");
     grid.querySelectorAll(".pick-card").forEach(function (card) {
       card.addEventListener("click", function () {
@@ -1144,11 +1184,14 @@
           M._pendingRecover = M._pendingRecover || {};
           Object.keys(t.youngRecover).forEach(function (k) { M._pendingRecover[k] = (M._pendingRecover[k] || 0) + Math.abs(t.youngRecover[k]); });
         }
-        if (t.formaHit) M._pendingFormaHit = true;
       }
+      if (t.formaDelta) M.forma = clamp(M.forma + t.formaDelta, 5, effectiveFormaCeiling(M));
     });
     recomputeOvr(M);
-    checkNationalTeamPre();
+    M._trainingDoneThisSeason = true;
+    saveGame();
+    renderHub();
+    showStep(null);
   });
 
   /* ============ SELECCIÓN NACIONAL ============ */
@@ -1268,6 +1311,8 @@
 
   function simulateFirstHalf() {
     M._half1 = simulateStint(0.5);
+    M.midSeasonFocus = null;
+    if (Math.random() >= 0.5) { runEvents(); return; }
     document.getElementById("mediotiempo-resumen").innerHTML =
       "Primera mitad de temporada: <b>" + M._half1.matches + "</b> partidos, <b>" + M._half1.goals + "</b> goles, <b>" + M._half1.assists + "</b> asistencias. Forma actual: <b>" + M.forma + "</b>. " +
       (M._half1.isStarter ? "Fuiste titular." : "Rol secundario en el plantel.");
@@ -1313,6 +1358,16 @@
     if (fx.dt) M.dtRelationship = clamp(M.dtRelationship + fx.dt, -100, 100);
     if (fx.money) M.money = Math.max(0, M.money + fx.money);
     if (fx.marketValuePct) M.marketValue = Math.round(M.marketValue * (1 + fx.marketValuePct));
+    if (fx.statDelta) {
+      var stats = POSITIONS[M.position].stats;
+      var sig = POSITIONS[M.position].signature;
+      var target = fx.statDelta.target === "sig" ? sig
+        : fx.statDelta.target === "resistencia" ? "resistencia"
+        : rand(stats.filter(function (k) { return k !== sig; }));
+      var sd = {}; sd[target] = fx.statDelta.amount;
+      applyStatDelta(sd);
+      recomputeOvr(M);
+    }
     if (fx.personality) Object.keys(fx.personality).forEach(function (k) { M.personalityPoints[k] += fx.personality[k]; });
     if (fx.negRisk) {
       var risk = 0.22 + (M.personality === "fiestero" ? 0.12 : 0) - (M.permanentEffects.negRiskPct || 0) - (M.temporaryEffects.negRiskPct || 0);
@@ -1380,8 +1435,6 @@
       Object.keys(M._pendingRecover).forEach(function (k) { M.stats[k] = clamp((M.stats[k] || 40) + M._pendingRecover[k], 1, 99); });
       M._pendingRecover = null;
     }
-    if (M._pendingFormaHit) { M.forma = clamp(M.forma - randInt(8, 16), 5, effectiveFormaCeiling(M)); M._pendingFormaHit = false; }
-
     var consistBonus = M.midSeasonFocus === "consistencia" ? 1 : 0;
     var noise = M.declinePhase === 1 ? 16 : (10 - consistBonus * 4);
     M.forma = clamp(M.ovr + randInt(-noise, noise), 20, effectiveFormaCeiling(M));
@@ -1471,6 +1524,7 @@
 
   function afterSeasonAdvance() {
     M.seasonsPlayed++;
+    M._trainingDoneThisSeason = false;
     M.age++;
     M.contractYearsLeft--;
     M.money += M.salary;
@@ -1624,7 +1678,10 @@
   }
 
   /* ============ INICIO DE TEMPORADA ============ */
-  document.getElementById("btn-hub-avanzar").addEventListener("click", showTrainingScreen);
+  document.getElementById("btn-hub-avanzar").addEventListener("click", function () {
+    if (!M._trainingDoneThisSeason) return;
+    checkNationalTeamPre();
+  });
   document.getElementById("btn-hub-tienda").addEventListener("click", showShop);
 
   document.getElementById("btn-hub-renovar").addEventListener("click", function () {
