@@ -126,6 +126,20 @@
   }
   .info-chip b { color: var(--accent2); }
 
+  .hub-grid2 { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 14px; }
+  @media (min-width: 520px) { .hub-grid2 { grid-template-columns: 1fr 1fr; } }
+  .hub-grid2 .panel { margin-bottom: 0; }
+  .btn-chip {
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 13px; font-weight: 700;
+    padding: 9px 16px; border-radius: 8px; cursor: pointer; background: transparent; border: 1px solid;
+    transition: all 0.15s ease;
+  }
+  .btn-chip-gold { border-color: var(--gold-dim); color: var(--gold2); background: var(--gold-bg); }
+  .btn-chip-gold:hover { border-color: var(--gold); filter: brightness(1.1); }
+  .btn-chip-red { border-color: rgba(240,144,126,0.4); color: var(--bad); background: rgba(240,144,126,0.12); }
+  .btn-chip-red:hover { border-color: var(--bad); filter: brightness(1.1); }
+  .btn-chip:disabled { opacity: 0.35; cursor: not-allowed; filter: none; }
+
   .bar-track { height: 8px; border-radius: 5px; background: rgba(255,255,255,0.08); overflow: hidden; margin-top: 4px; }
   .bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--teal), var(--teal2)); }
 
@@ -248,9 +262,18 @@
           <span class="info-chip">Dinero <b id="hub-dinero">—</b></span>
         </div>
       </div>
-      <div class="panel">
-        <h2 style="margin-bottom:10px">Atributos</h2>
-        <div id="hub-stats"></div>
+      <div class="hub-grid2">
+        <div class="panel">
+          <h2 style="margin-bottom:10px">Atributos</h2>
+          <div id="hub-stats"></div>
+        </div>
+        <div class="panel">
+          <h2 style="margin-bottom:10px">Decisiones</h2>
+          <div class="chip-row">
+            <button class="btn-chip btn-chip-gold" id="btn-hub-renovar">Renovar</button>
+            <button class="btn-chip btn-chip-red" id="btn-hub-vender">Vender</button>
+          </div>
+        </div>
       </div>
       <div class="panel" id="hub-vitrina-panel">
         <h2 style="margin-bottom:10px">Vitrina</h2>
@@ -1568,9 +1591,11 @@
     });
   }
 
-  function showMarket() {
+  function showMarket(voluntary) {
     var offers = generateOffers();
-    document.getElementById("mercado-texto").textContent = "Tu contrato con " + M.club + " terminó. Elegí tu próximo destino.";
+    document.getElementById("mercado-texto").textContent = voluntary
+      ? "Pediste salir de " + M.club + ". Estos clubes están interesados en ficharte."
+      : "Tu contrato con " + M.club + " terminó. Elegí tu próximo destino.";
     var box = document.getElementById("mercado-ofertas");
     box.innerHTML = offers.map(function (o, i) {
       return '<div class="club-offer"><div class="cname">' + clubIcon(o.club.name) + esc(o.club.name) + '</div><div class="cmeta">' + esc(o.club.league) + " · " + esc(o.club.country) + " · " +
@@ -1601,6 +1626,21 @@
   /* ============ INICIO DE TEMPORADA ============ */
   document.getElementById("btn-hub-avanzar").addEventListener("click", showTrainingScreen);
   document.getElementById("btn-hub-tienda").addEventListener("click", showShop);
+
+  document.getElementById("btn-hub-renovar").addEventListener("click", function () {
+    var years = TIER_CONTRACT_YEARS[M.clubData.tier];
+    var newSalary = salaryFor(M, M.clubData);
+    if (!confirm("¿Renovar con " + M.club + " por " + years + (years === 1 ? " año" : " años") + " a " + fmtMoney(newSalary) + " de salario?")) return;
+    M.contractYearsLeft = years;
+    M.salary = newSalary;
+    saveGame();
+    renderHub();
+  });
+
+  document.getElementById("btn-hub-vender").addEventListener("click", function () {
+    if (!confirm("¿Pedir salida de " + M.club + " ahora mismo? Vas a tener que fichar por otro club.")) return;
+    showMarket(true);
+  });
 
   /* ============ RETIRO Y LEGADO ============ */
   function computeFinalScore() {
