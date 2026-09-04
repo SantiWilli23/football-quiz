@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { BarChart3, Crown, Flame, HelpCircle, Newspaper, Swords, Star, Users, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import Layout from "../components/Layout.jsx";
-import Card from "../components/Card.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 import api from "../api.js";
 
@@ -14,35 +13,30 @@ const INTERNAL_GAMES = [
     label: "Trivia",
     icon: HelpCircle,
     description: "Respondé las preguntas del día: trivia normal + preguntas especiales del grupo.",
-    color: "#3b9dd6",
   },
   {
     to: "/futbol",
     label: "Fútbol",
     icon: Newspaper,
     description: "Resultados en vivo, tabla de posiciones, goleadores y juegos de fútbol.",
-    color: "#3fae9a",
   },
   {
     to: "/grupo",
     label: "Grupos",
     icon: Users,
     description: "Competí con tus amigos, mirá el ranking del grupo y los campeones mensuales.",
-    color: "#d9a441",
   },
   {
     to: "/duelos",
     label: "Duelos",
     icon: Swords,
     description: "Desafiá a alguien del grupo uno contra uno con las preguntas más difíciles.",
-    color: "#f0907e",
   },
   {
     to: "/estadisticas",
     label: "Estadísticas",
     icon: BarChart3,
     description: "Resumen semanal, compatibilidad con el grupo y logros desbloqueados.",
-    color: "#a78bfa",
   },
 ];
 
@@ -52,7 +46,6 @@ const EXTERNAL_GAMES = [
     label: "Draft Europeo 8a2",
     icon: Star,
     description: "Armá tu XI con jugadores de 138 planteles históricos de la Champions League.",
-    color: "#d9a441",
     badge: null,
   },
   {
@@ -60,7 +53,6 @@ const EXTERNAL_GAMES = [
     label: "Cotrero",
     icon: Crown,
     description: "De potrero a leyenda: simulá toda la carrera de un jugador, temporada a temporada.",
-    color: "#3fae9a",
     badge: null,
   },
   {
@@ -68,7 +60,6 @@ const EXTERNAL_GAMES = [
     label: "Adivina el Jugador",
     icon: Zap,
     description: "¿Podés adivinar quién es el jugador con pistas mínimas?",
-    color: "#a8a9ac",
     badge: "Próximamente",
   },
 ];
@@ -92,91 +83,74 @@ export default function Dashboard() {
   return (
     <Layout>
       {/* Header */}
-      <div className="mb-8 pb-6 border-b border-border flex items-start justify-between gap-4 flex-wrap">
+      <div className="mb-12 flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <p className="text-[11px] font-semibold text-accent uppercase tracking-[0.15em] mb-2">Panel</p>
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2 tracking-tight">
-            Hola{user?.username ? `, ${user.username}` : ""} <span className="inline-block">👋</span>
+          <p className="text-[11px] font-medium text-accent/90 uppercase tracking-[0.2em] mb-3">Panel</p>
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight mb-3">
+            Hola{user?.username ? `, ${user.username}` : ""}
           </h1>
-          <p className="text-gray-400 text-sm max-w-xl leading-relaxed">
+          <p className="text-gray-500 text-sm max-w-lg leading-relaxed">
             Futotal es tu plataforma de fútbol con amigos: trivia diaria, duelos 1v1, estadísticas
-            del grupo y simuladores de carrera. Elegí por dónde empezar.
+            del grupo y simuladores de carrera.
           </p>
         </div>
         <GroupSelector />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-x-14 gap-y-12">
         <div>
           {/* Secciones principales */}
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-1 h-3.5 rounded-full bg-accent" />
-            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
-              Secciones
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-            {INTERNAL_GAMES.map(({ to, label, icon: Icon, description, color }) => (
+          <h2 className="text-[11px] font-medium text-gray-600 uppercase tracking-[0.2em] mb-4">
+            Secciones
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/5 rounded-card overflow-hidden mb-12">
+            {INTERNAL_GAMES.map(({ to, label, icon: Icon, description }) => (
               <Link
                 key={to}
                 to={to}
-                className="group relative flex items-start gap-3.5 px-4 py-4 rounded-card border border-border bg-panel hover:border-white/15 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/20 transition-all"
-                style={{ borderLeft: `3px solid ${color}` }}
+                className="group flex items-start gap-4 px-5 py-5 bg-bg hover:bg-panel transition-colors"
               >
-                <div
-                  className="w-11 h-11 rounded-card flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
-                  style={{ background: `${color}1a`, border: `1px solid ${color}40` }}
-                >
-                  <Icon size={20} style={{ color }} />
+                <div className="w-10 h-10 rounded-card flex items-center justify-center shrink-0 bg-white/5 text-gray-400 group-hover:bg-accent/10 group-hover:text-accent transition-colors">
+                  <Icon size={18} />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold mb-0.5 group-hover:text-white transition-colors">
+                <div className="min-w-0 pt-1">
+                  <p className="text-sm font-medium mb-1 group-hover:text-white transition-colors">
                     {label}
                   </p>
-                  <p className="text-xs text-gray-500 leading-snug">{description}</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
                 </div>
               </Link>
             ))}
           </div>
 
           {/* Juegos externos */}
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-1 h-3.5 rounded-full bg-emerald" />
-            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
-              Juegos
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {EXTERNAL_GAMES.map(({ href, label, icon: Icon, description, color, badge }) => {
+          <h2 className="text-[11px] font-medium text-gray-600 uppercase tracking-[0.2em] mb-4">
+            Juegos
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/5 rounded-card overflow-hidden">
+            {EXTERNAL_GAMES.map(({ href, label, icon: Icon, description, badge }) => {
               const inner = (
                 <>
-                  <div
-                    className="w-11 h-11 rounded-card flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
-                    style={{ background: `${color}1a`, border: `1px solid ${color}40` }}
-                  >
-                    <Icon size={20} style={{ color }} />
+                  <div className="w-10 h-10 rounded-card flex items-center justify-center shrink-0 bg-white/5 text-gray-400 group-hover:bg-accent/10 group-hover:text-accent transition-colors">
+                    <Icon size={18} />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <p className="text-sm font-semibold">{label}</p>
+                  <div className="min-w-0 pt-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-sm font-medium group-hover:text-white transition-colors">{label}</p>
                       {badge && (
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-gray-600/50 text-gray-400 border border-gray-600/50">
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full text-gray-500 border border-white/10">
                           {badge}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 leading-snug">{description}</p>
+                    <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
                   </div>
                 </>
               );
 
               if (!href) {
                 return (
-                  <div
-                    key={label}
-                    className="flex items-start gap-3.5 px-4 py-4 rounded-card border border-border bg-panel opacity-50 cursor-default"
-                    style={{ borderLeft: `3px solid ${color}` }}
-                  >
+                  <div key={label} className="flex items-start gap-4 px-5 py-5 bg-bg opacity-40 cursor-default">
                     {inner}
                   </div>
                 );
@@ -186,8 +160,7 @@ export default function Dashboard() {
                 <a
                   key={href}
                   href={href}
-                  className="group relative flex items-start gap-3.5 px-4 py-4 rounded-card border border-border bg-panel hover:border-white/15 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/20 transition-all"
-                  style={{ borderLeft: `3px solid ${color}` }}
+                  className="group flex items-start gap-4 px-5 py-5 bg-bg hover:bg-panel transition-colors"
                 >
                   {inner}
                 </a>
@@ -197,68 +170,61 @@ export default function Dashboard() {
         </div>
 
         {/* Panel lateral */}
-        <div className="space-y-5">
-          <Card>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Flame size={16} className="text-orange-400" />
-                <span className="text-sm font-medium text-gray-300">Racha</span>
-              </div>
-              {current > 0 && (
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-orange-400/10 text-orange-400 border border-orange-400/30">
-                  Activa
-                </span>
-              )}
+        <div className="space-y-8">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Flame size={14} className={current > 0 ? "text-orange-400" : "text-gray-600"} />
+              <span className="text-[11px] font-medium text-gray-500 uppercase tracking-[0.2em]">Racha</span>
             </div>
-            <p className="text-4xl font-bold tracking-tight tabular-nums">
+            <p className="text-4xl font-semibold tracking-tight tabular-nums">
               {current}
-              <span className="text-sm font-medium text-gray-500 ml-1.5">días</span>
+              <span className="text-sm font-normal text-gray-500 ml-2">días</span>
             </p>
-            <div className="mt-3 h-1.5 rounded-full bg-white/5 overflow-hidden">
+            <div className="mt-4 h-px bg-white/10 rounded-full overflow-hidden">
               <div
-                className="h-full rounded-full bg-orange-400 transition-[width]"
+                className="h-full bg-orange-400/70 transition-[width]"
                 style={{ width: `${streakPct}%` }}
               />
             </div>
-            <p className="text-xs text-gray-500 mt-1.5">Mejor racha: {best} días</p>
-          </Card>
+            <p className="text-xs text-gray-600 mt-2">Mejor: {best} días</p>
+          </div>
 
-          <Card>
-            <p className="text-sm font-medium text-gray-300 mb-3">Mis stats</p>
-            <div className="space-y-2.5">
+          <div className="pt-8 border-t border-white/5">
+            <p className="text-[11px] font-medium text-gray-500 uppercase tracking-[0.2em] mb-4">Mis stats</p>
+            <div className="space-y-3">
               <StatRow label="Puntos" value={stats?.total_points ?? 0} />
               <StatRow label="Aciertos" value={`${stats?.accuracy ?? 0}%`} />
               <StatRow label="Trivia" value={stats?.trivia_points ?? 0} />
-              <StatRow label="Especial" value={stats?.mode_b_points ?? 0} accent="text-purple-400" />
+              <StatRow label="Especial" value={stats?.mode_b_points ?? 0} />
             </div>
-          </Card>
+          </div>
 
           {groups.length > 0 && (
-            <Card>
-              <p className="text-sm font-medium text-gray-300 mb-3">Mi grupo</p>
+            <div className="pt-8 border-t border-white/5">
+              <p className="text-[11px] font-medium text-gray-500 uppercase tracking-[0.2em] mb-4">Mi grupo</p>
               {groupDetail ? (
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-card flex items-center justify-center shrink-0 bg-accent/15 border border-accent/30 text-accent font-bold text-sm">
+                  <div className="w-9 h-9 rounded-card flex items-center justify-center shrink-0 bg-accent/15 text-accent font-semibold text-sm">
                     {groupDetail.name.slice(0, 1).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-semibold text-accent truncate">{groupDetail.name}</p>
+                    <p className="font-medium text-sm truncate">{groupDetail.name}</p>
                     {groupDetail.description && (
                       <p className="text-xs text-gray-500 mt-0.5 truncate">{groupDetail.description}</p>
                     )}
                   </div>
                 </div>
               ) : (
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {groups.slice(0, 3).map((g) => (
                     <div key={g.id} className="flex items-center justify-between text-sm gap-2">
                       <span className="truncate">{g.name}</span>
-                      <span className="text-gray-500 text-xs shrink-0">{g.member_count} miembros</span>
+                      <span className="text-gray-600 text-xs shrink-0">{g.member_count} miembros</span>
                     </div>
                   ))}
                 </div>
               )}
-            </Card>
+            </div>
           )}
         </div>
       </div>
@@ -266,11 +232,11 @@ export default function Dashboard() {
   );
 }
 
-function StatRow({ label, value, accent = "text-white" }) {
+function StatRow({ label, value }) {
   return (
     <div className="flex items-center justify-between text-sm">
       <span className="text-gray-500 text-xs">{label}</span>
-      <span className={`font-semibold tabular-nums ${accent}`}>{value}</span>
+      <span className="font-medium tabular-nums">{value}</span>
     </div>
   );
 }
