@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Crown, Flame, HelpCircle, Newspaper, Swords, Star, Users, Zap } from "lucide-react";
+import { BarChart3, Crown, Flame, HelpCircle, Newspaper, Shield, Swords, Star, Users, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -37,6 +37,12 @@ const INTERNAL_GAMES = [
     label: "Estadísticas",
     icon: BarChart3,
     description: "Resumen semanal, compatibilidad con el grupo y logros desbloqueados.",
+  },
+  {
+    to: "/carrera-dt",
+    label: "Modo Carrera DT",
+    icon: Shield,
+    description: "Dirigí un equipo de Premier League o La Liga: tácticas, fichajes y partidos en vivo.",
   },
 ];
 

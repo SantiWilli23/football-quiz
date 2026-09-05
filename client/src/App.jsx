@@ -11,6 +11,7 @@ import Profile from "./pages/Profile.jsx";
 import Stats from "./pages/Stats.jsx";
 import Duels from "./pages/Duels.jsx";
 import Football from "./pages/Football.jsx";
+import CareerMode from "./carrera/index.jsx";
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -120,6 +121,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <Profile />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/carrera-dt"
+        element={
+          <PrivateRoute>
+            <CareerMode />
           </PrivateRoute>
         }
       />
