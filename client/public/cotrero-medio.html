@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Cotrero · Modo Medio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #2a2c30;
@@ -49,7 +52,7 @@
     background: linear-gradient(150deg, var(--accent2), var(--accent) 55%, var(--accent-dark));
     font-weight: 900; color: #04141d; font-size: 16px; font-family: Georgia, serif;
   }
-  .brand h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.04em; color: var(--accent2); }
+  .brand h1 { font-family: 'Oswald', sans-serif; font-size: 21px; font-weight: 700; letter-spacing: 0.05em; color: var(--accent2); text-transform: uppercase; }
   .brand .menu-btn {
     margin-left: auto; font-family: -apple-system, "Segoe UI", Arial, sans-serif;
     font-size: 11.5px; font-weight: 700; color: var(--text-dim); text-decoration: none;
@@ -61,7 +64,7 @@
     background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
     padding: 20px; margin-bottom: 14px;
   }
-  h2 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--accent2); }
+  h2 { font-family: 'Oswald', sans-serif; font-size: 17px; font-weight: 600; letter-spacing: 0.02em; margin-bottom: 6px; color: var(--accent2); text-transform: uppercase; }
   .sub { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12.5px; color: var(--text-dim); margin-bottom: 14px; line-height: 1.55; }
 
   .screen { display: none; }
@@ -97,7 +100,7 @@
   }
   .pick-card:hover { border-color: var(--teal); }
   .pick-card.selected { border-color: var(--accent); background: var(--accent-bg); }
-  .pick-card .ptitle { font-size: 14.5px; font-weight: 700; color: var(--text); }
+  .pick-card .ptitle { font-family: 'Oswald', sans-serif; font-size: 15.5px; font-weight: 600; letter-spacing: 0.01em; color: var(--text); }
   .pick-card .pdesc { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; color: var(--text-dim); margin-top: 4px; line-height: 1.5; }
   .pick-card .ptag {
     display: inline-block; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 9.5px; font-weight: 800;
@@ -114,10 +117,40 @@
   .sdelta.pos { color: var(--good); } .sdelta.neg { color: var(--bad); }
 
   .hub-top { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
-  .hub-ovr { font-size: 40px; font-weight: 900; color: var(--accent2); font-family: Georgia, serif; line-height: 1; }
-  .hub-ovr-lbl { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 10px; color: var(--text-dim2); text-transform: uppercase; letter-spacing: 0.06em; }
+  .hub-ovr-box {
+    width: 68px; height: 68px; border-radius: 14px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; flex-shrink: 0;
+    background: linear-gradient(150deg, var(--accent2), var(--accent) 55%, var(--accent-dark));
+    box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+    transition: background 0.3s ease;
+  }
+  .hub-ovr-box.legend { box-shadow: 0 0 18px rgba(217,164,65,0.5), 0 4px 14px rgba(0,0,0,0.3); }
+  .hub-ovr { font-family: 'Oswald', sans-serif; font-size: 30px; font-weight: 700; color: #fff; line-height: 1; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+  .hub-ovr-lbl { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 9px; color: rgba(255,255,255,0.85); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 1px; }
   .hub-meta { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12.5px; color: var(--text-dim); line-height: 1.6; }
   .hub-meta b { color: var(--text); }
+  .idol-tag { color: var(--gold2); font-weight: 700; }
+
+  .hub-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .hub-tab {
+    flex: 1; text-align: center; font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600;
+    letter-spacing: 0.03em; text-transform: uppercase; padding: 10px 8px; border-radius: 10px;
+    border: 1px solid var(--border); background: rgba(0,0,0,0.15); color: var(--text-dim); cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .hub-tab:hover { color: var(--text); border-color: var(--accent); }
+  .hub-tab.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent2); }
+
+  .idolatry-track { height: 8px; border-radius: 5px; background: rgba(255,255,255,0.08); overflow: hidden; margin-top: 4px; }
+  .idolatry-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--gold), var(--gold2)); }
+
+  .rotate-btn {
+    display: flex; align-items: center; justify-content: center; gap: 5px; margin-left: auto;
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 10.5px; font-weight: 700;
+    color: var(--text-dim); background: transparent; border: 1px solid var(--border); border-radius: 999px;
+    padding: 5px 11px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .rotate-btn:hover { color: var(--accent2); border-color: var(--accent); }
 
   .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
   .info-chip {
@@ -129,28 +162,6 @@
   .hub-grid2 { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 14px; }
   @media (min-width: 520px) { .hub-grid2 { grid-template-columns: 1fr 1fr; } }
   .hub-grid2 .panel { margin-bottom: 0; }
-  .btn-chip {
-    font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 13px; font-weight: 700;
-    padding: 9px 16px; border-radius: 8px; cursor: pointer; background: transparent; border: 1px solid;
-    transition: all 0.15s ease;
-  }
-  .btn-chip-gold { border-color: var(--gold-dim); color: var(--gold2); background: var(--gold-bg); }
-  .btn-chip-gold:hover { border-color: var(--gold); filter: brightness(1.1); }
-  .btn-chip-red { border-color: rgba(240,144,126,0.4); color: var(--bad); background: rgba(240,144,126,0.12); }
-  .btn-chip-red:hover { border-color: var(--bad); filter: brightness(1.1); }
-  .btn-chip:disabled { opacity: 0.35; cursor: not-allowed; filter: none; }
-
-  .decision-urgent {
-    display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    border: 1px solid var(--accent); background: var(--accent-bg); border-radius: 10px;
-    padding: 10px 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.15s ease;
-  }
-  .decision-urgent:hover { filter: brightness(1.1); }
-  .decision-urgent .dtitle { font-size: 13.5px; font-weight: 700; color: var(--text); }
-  .decision-urgent .dtag {
-    font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 9.5px; font-weight: 800;
-    letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent2); flex-shrink: 0;
-  }
 
   .bar-track { height: 8px; border-radius: 5px; background: rgba(255,255,255,0.08); overflow: hidden; margin-top: 4px; }
   .bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--teal), var(--teal2)); }
@@ -159,7 +170,11 @@
   .event-card p { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 13px; color: var(--text); line-height: 1.6; }
 
   .club-offer { border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; background: rgba(0,0,0,0.15); }
-  .club-offer .cname { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  .club-offer .cname { font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .career-table { width: 100%; border-collapse: collapse; font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 12px; }
+  .career-table th, .career-table td { text-align: left; padding: 7px 6px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .career-table th { color: var(--text-dim2); font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; }
+  .career-table td.num, .career-table th.num { text-align: right; font-family: ui-monospace, monospace; }
   .club-badge { height: 22px; width: auto; vertical-align: middle; display: inline-block; flex-shrink: 0; object-fit: contain; }
   .club-offer .cmeta { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11.5px; color: var(--text-dim); margin: 4px 0 10px; line-height: 1.6; }
 
@@ -251,63 +266,78 @@
        se muestra dentro de #hub-step, sin salir de esta página. -->
   <div class="screen" id="screen-hub">
     <div id="hub-normal">
-      <div class="panel">
-        <div class="hub-top">
-          <div>
-            <div class="hub-ovr" id="hub-ovr">60</div>
-            <div class="hub-ovr-lbl">OVR</div>
-          </div>
-          <div class="hub-meta">
-            <div><b id="hub-nombre">—</b> · <span id="hub-edad">16</span> años · <span id="hub-posicion">—</span></div>
-            <div id="hub-club">Sin club</div>
-            <div id="hub-personalidad" style="display:none">Personalidad: <b id="hub-personalidad-val">—</b></div>
-          </div>
-        </div>
-        <div style="margin-top:10px">
-          <div class="sans" style="font-size:11px;color:var(--text-dim2);text-transform:uppercase;letter-spacing:0.06em">Forma</div>
-          <div class="bar-track"><div class="bar-fill" id="hub-forma-bar" style="width:60%"></div></div>
-        </div>
-        <div class="chip-row">
-          <span class="info-chip">Temporada <b id="hub-temporada">1</b></span>
-          <span class="info-chip">Valor <b id="hub-valor">—</b></span>
-          <span class="info-chip">Contrato <b id="hub-contrato">—</b></span>
-          <span class="info-chip">Dinero <b id="hub-dinero">—</b></span>
-        </div>
+      <div class="hub-tabs">
+        <div class="hub-tab active" id="hub-tab-inicio" data-tab="inicio">Inicio</div>
+        <div class="hub-tab" id="hub-tab-tienda" data-tab="tienda">Tienda</div>
+        <div class="hub-tab" id="hub-tab-carrera" data-tab="carrera">Tu carrera</div>
       </div>
-      <div class="hub-grid2">
+
+      <div id="hub-panel-inicio">
         <div class="panel">
-          <h2 style="margin-bottom:10px">Atributos</h2>
-          <div id="hub-stats"></div>
-        </div>
-        <div class="panel">
-          <h2 style="margin-bottom:10px">Decisiones</h2>
-          <div id="hub-decisiones-urgentes"></div>
+          <div class="hub-top">
+            <div class="hub-ovr-box" id="hub-ovr-box">
+              <div class="hub-ovr" id="hub-ovr">60</div>
+              <div class="hub-ovr-lbl">OVR</div>
+            </div>
+            <div class="hub-meta">
+              <div><b id="hub-nombre">—</b> · <span id="hub-edad">16</span> años · <span id="hub-posicion">—</span></div>
+              <div id="hub-club">Sin club</div>
+              <div id="hub-personalidad" style="display:none">Personalidad: <b id="hub-personalidad-val">—</b></div>
+            </div>
+          </div>
+          <div style="margin-top:10px">
+            <div class="sans" style="font-size:11px;color:var(--text-dim2);text-transform:uppercase;letter-spacing:0.06em">Forma</div>
+            <div class="bar-track"><div class="bar-fill" id="hub-forma-bar" style="width:60%"></div></div>
+          </div>
+          <div style="margin-top:10px">
+            <div class="sans" style="font-size:11px;color:var(--gold2);text-transform:uppercase;letter-spacing:0.06em">Idolatría <span class="idol-tag" id="hub-idolo-tag" style="display:none">· Ídolo del club</span></div>
+            <div class="idolatry-track"><div class="idolatry-fill" id="hub-idolatry-bar" style="width:0%"></div></div>
+          </div>
           <div class="chip-row">
-            <button class="btn-chip btn-chip-gold" id="btn-hub-renovar">Renovar</button>
-            <button class="btn-chip btn-chip-red" id="btn-hub-vender">Vender</button>
+            <span class="info-chip">Temporada <b id="hub-temporada">1</b></span>
+            <span class="info-chip">Valor <b id="hub-valor">—</b></span>
+            <span class="info-chip">Contrato <b id="hub-contrato">—</b></span>
+            <span class="info-chip">Dinero <b id="hub-dinero">—</b></span>
+          </div>
+        </div>
+        <button class="rotate-btn" id="btn-hub-rotar">🔄 Girar paneles</button>
+        <div class="hub-grid2">
+          <div class="panel" id="hub-slot-left"></div>
+          <div class="panel" id="hub-slot-right"></div>
+        </div>
+        <div class="panel" id="hub-vitrina-panel">
+          <h2 style="margin-bottom:10px">Vitrina</h2>
+          <div id="hub-vitrina" class="sans" style="font-size:12px;color:var(--text-dim2)">Sin logros todavía.</div>
+        </div>
+        <button class="btn btn-gold btn-block" id="btn-hub-avanzar">Empezar temporada</button>
+        <p class="sub sans" id="hub-avanzar-hint" style="display:none;text-align:center;margin:-4px 0 10px">Resolvé las decisiones pendientes antes de empezar la temporada.</p>
+        <button class="btn btn-ghost btn-block" id="btn-hub-retirarse">Retirarse</button>
+        <button class="btn btn-ghost btn-block" id="btn-hub-borrar">Eliminar carrera</button>
+      </div>
+
+      <div id="hub-panel-tienda" style="display:none">
+        <div class="panel">
+          <h2>Tienda</h2>
+          <p class="sub sans">Tenés <b id="tienda-dinero" style="color:var(--accent2)">€0</b> disponibles.</p>
+          <h2 style="font-size:13px;margin-top:6px">Permanentes</h2>
+          <div class="pick-grid" id="grid-tienda-permanente"></div>
+          <h2 style="font-size:13px;margin-top:14px">Temporales <span class="sans" style="font-size:11px;color:var(--text-dim2);font-weight:400" id="tienda-temp-restantes"></span></h2>
+          <div class="pick-grid" id="grid-tienda-temporal"></div>
+        </div>
+      </div>
+
+      <div id="hub-panel-carrera" style="display:none">
+        <div class="panel">
+          <h2>Tu carrera</h2>
+          <div class="chip-row" id="carrera-resumen"></div>
+          <div style="overflow-x:auto;margin-top:10px">
+            <table class="career-table" id="carrera-tabla"></table>
           </div>
         </div>
       </div>
-      <div class="panel" id="hub-vitrina-panel">
-        <h2 style="margin-bottom:10px">Vitrina</h2>
-        <div id="hub-vitrina" class="sans" style="font-size:12px;color:var(--text-dim2)">Sin logros todavía.</div>
-      </div>
-      <button class="btn btn-gold btn-block" id="btn-hub-avanzar">Empezar temporada</button>
-      <p class="sub sans" id="hub-avanzar-hint" style="display:none;text-align:center;margin:-4px 0 10px">Resolvé las decisiones pendientes antes de empezar la temporada.</p>
-      <button class="btn btn-ghost btn-block" id="btn-hub-tienda">Ir a la tienda</button>
-      <button class="btn btn-ghost btn-block" id="btn-hub-retirarse">Retirarse</button>
-      <button class="btn btn-ghost btn-block" id="btn-hub-borrar">Eliminar carrera</button>
     </div>
 
     <div id="hub-step" style="display:none">
-      <!-- ENTRENAMIENTO -->
-      <div class="panel step-panel" id="step-entrenamiento">
-        <h2>Decisión · Entrenamiento</h2>
-        <p class="sub">Elegí <b style="color:var(--accent2)">2</b> de estas 4 opciones. El resultado real se revela después de elegir.</p>
-        <div class="pick-grid cols2" id="grid-entrenamiento"></div>
-        <button class="btn btn-gold btn-block" id="btn-entrenamiento-confirmar" style="margin-top:10px" disabled>Confirmar (0/2)</button>
-      </div>
-
       <!-- SELECCION NACIONAL -->
       <div class="panel step-panel" id="step-nacional">
         <h2 id="nacional-titulo">Convocatoria</h2>
@@ -328,8 +358,8 @@
           <div class="dot ball" id="fm-dot-pelota" style="left:50%;top:66%"></div>
         </div>
         <div class="pick-grid cols2" style="margin-bottom:10px">
-          <div class="pick-card" data-fm="centro"><div class="ptitle">Centro al área</div><div class="pdesc">Buscás a un compañero de cabeza.</div></div>
-          <div class="pick-card" data-fm="disparo"><div class="ptitle">Disparo de media distancia</div><div class="pdesc">Probás suerte vos mismo.</div></div>
+          <div class="pick-card" data-fm="centro"><div class="ptitle">Centro al área</div></div>
+          <div class="pick-card" data-fm="disparo"><div class="ptitle">Disparo de media distancia</div></div>
         </div>
         <button class="btn btn-ghost btn-block" id="btn-final-mundial-saltar">Simular directo (saltar)</button>
       </div>
@@ -355,17 +385,6 @@
         <div id="resultado-lineas"></div>
         <div id="resultado-premios" style="margin-top:10px"></div>
         <button class="btn btn-gold btn-block" id="btn-resultado-continuar" style="margin-top:12px">Seguir</button>
-      </div>
-
-      <!-- TIENDA -->
-      <div class="panel step-panel" id="step-tienda">
-        <h2>Tienda</h2>
-        <p class="sub sans">Tenés <b id="tienda-dinero" style="color:var(--accent2)">€0</b> disponibles.</p>
-        <h2 style="font-size:13px;margin-top:6px">Permanentes</h2>
-        <div class="pick-grid" id="grid-tienda-permanente"></div>
-        <h2 style="font-size:13px;margin-top:14px">Temporales <span class="sans" style="font-size:11px;color:var(--text-dim2);font-weight:400" id="tienda-temp-restantes"></span></h2>
-        <div class="pick-grid" id="grid-tienda-temporal"></div>
-        <button class="btn btn-gold btn-block" id="btn-tienda-continuar" style="margin-top:14px">Seguir</button>
       </div>
 
       <!-- MERCADO -->
@@ -620,6 +639,30 @@
     return '<img class="club-badge" src="' + url + '" alt="">';
   }
 
+  /* ============ COLORES DE CLUB (para el cuadrado de OVR) ============ */
+  var CLUB_COLORS = {
+    "Real Madrid": ["#5b6162", "#febe10"], "Barcelona": ["#a50044", "#004d98"],
+    "Atlético de Madrid": ["#cb3524", "#272e61"], "Real Sociedad": ["#0067b1", "#ffffff"],
+    "Manchester City": ["#6cabdd", "#1c2c5b"], "Liverpool": ["#c8102e", "#00b2a9"],
+    "Arsenal": ["#ef0107", "#063672"], "Brighton": ["#0057b8", "#ffcd00"],
+    "Juventus": ["#000000", "#ffffff"], "Inter de Milán": ["#0068a8", "#000000"],
+    "Napoli": ["#12a0d7", "#ffffff"], "Atalanta": ["#1d1e5c", "#4dade0"],
+    "Bayern Múnich": ["#dc052d", "#0066b2"], "Borussia Dortmund": ["#fde100", "#000000"],
+    "Bayer Leverkusen": ["#e32221", "#000000"], "Eintracht Frankfurt": ["#e1000f", "#000000"],
+    "PSG": ["#004170", "#da291c"], "Mónaco": ["#e2101b", "#ffffff"],
+    "Lyon": ["#1c2c5b", "#e32219"], "Lille": ["#c8102e", "#001a4b"],
+    "Benfica": ["#e32219", "#000000"], "Porto": ["#00539f", "#ffffff"],
+    "Sporting CP": ["#009540", "#ffffff"], "Braga": ["#e2231a", "#ffffff"],
+    "Ajax": ["#d2122e", "#ffffff"], "PSV": ["#ee2d24", "#ffffff"],
+    "Feyenoord": ["#e32219", "#000000"], "AZ Alkmaar": ["#d2122e", "#000000"],
+    "Flamengo": ["#e2231a", "#000000"], "Palmeiras": ["#006437", "#ffffff"],
+    "São Paulo": ["#e2231a", "#000000"], "Grêmio": ["#0d80c5", "#000000"],
+    "River Plate": ["#e32219", "#ffffff"], "Boca Juniors": ["#003f7d", "#ffca08"],
+    "Racing Club": ["#75aadb", "#ffffff"], "Independiente": ["#e2231a", "#ffffff"],
+    "Universidad de Chile": ["#0033a0", "#ffffff"], "Colo-Colo": ["#000000", "#ffffff"],
+    "Universidad Católica": ["#003da5", "#ffffff"], "Cobresal": ["#e2231a", "#000000"]
+  };
+
   /* ============ TROFEOS SVG (los mismos diseños que el Modo Simple) ============ */
   var TROPHY_SVG = {
     liga: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 52" width="26" height="26" style="display:inline-block;vertical-align:middle"><defs><linearGradient id="mlg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FDE68A"/><stop offset="50%" stop-color="#D97706"/><stop offset="100%" stop-color="#92400E"/></linearGradient></defs><path d="M12 5 Q5 5 5 12 Q5 18 12 20" fill="none" stroke="url(#mlg)" stroke-width="3" stroke-linecap="round"/><path d="M28 5 Q35 5 35 12 Q35 18 28 20" fill="none" stroke="url(#mlg)" stroke-width="3" stroke-linecap="round"/><path d="M11 3 L29 3 L27 24 Q23 30 20 30 Q17 30 13 24 Z" fill="url(#mlg)"/><ellipse cx="20" cy="3" rx="9" ry="2" fill="#FEF3C7" opacity="0.4"/><path d="M14 8 Q18 6.5 22 8" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="18" y="30" width="4" height="8" fill="#B45309" rx="1"/><rect x="11" y="38" width="18" height="4" rx="2" fill="#B45309"/><rect x="13" y="42" width="14" height="3" rx="1.5" fill="#92400E"/></svg>',
@@ -852,7 +895,8 @@
       temporaryEffects: {},
       midSeasonFocus: null, midSeasonSummary: null,
       seasonLog: [], nextTournamentCheck: 0,
-      moments: [], _retired: false, _trainingDoneThisSeason: false
+      moments: [], _retired: false, _trainingDoneThisSeason: false,
+      idolatry: 0, _contractDecisionDoneThisSeason: false
     };
     p.ovr = computeOvr(p.stats, p.position);
     p.peakOvr = p.ovr;
@@ -877,6 +921,7 @@
 
   function effectiveFormaCeiling(p) {
     var c = p.formaCeiling + (p.permanentEffects.formaCeiling || 0) + (p.temporaryEffects.formaCeiling || 0);
+    c += Math.round((p.idolatry || 0) / 12);
     if (p.declinePhase >= 1) c -= 12;
     return clamp(c, 40, 115);
   }
@@ -1054,6 +1099,9 @@
   }
 
   /* ============ HUB ============ */
+  var hubPanelSwapped = false;
+  var hubActiveTab = "inicio";
+
   function renderHub() {
     recomputeOvr(M);
     M.marketValue = marketValueFor(M);
@@ -1077,11 +1125,19 @@
     document.getElementById("hub-contrato").textContent = M.contractYearsLeft + (M.contractYearsLeft === 1 ? " año" : " años");
     document.getElementById("hub-dinero").textContent = fmtMoney(M.money);
 
-    var statsBox = document.getElementById("hub-stats");
-    var eff = statsWithBonuses(M);
-    statsBox.innerHTML = POSITIONS[M.position].stats.map(function (k) {
-      return '<div class="stat-row sans"><span>' + STAT_LABELS[k] + '</span><span class="sval">' + eff[k] + "</span></div>";
-    }).join("");
+    var isLegend = M.idolatry >= 90;
+    document.getElementById("hub-idolatry-bar").style.width = M.idolatry + "%";
+    document.getElementById("hub-idolo-tag").style.display = isLegend ? "" : "none";
+    var ovrBox = document.getElementById("hub-ovr-box");
+    ovrBox.classList.toggle("legend", isLegend);
+    if (isLegend) {
+      ovrBox.style.background = "linear-gradient(150deg, var(--gold2), var(--gold) 55%, var(--gold-dim))";
+    } else {
+      var colors = (M.club && CLUB_COLORS[M.club]) || null;
+      ovrBox.style.background = colors
+        ? "linear-gradient(150deg, " + colors[0] + ", " + colors[1] + ")"
+        : "linear-gradient(150deg, var(--accent2), var(--accent) 55%, var(--accent-dark))";
+    }
 
     var vitrina = document.getElementById("hub-vitrina");
     if (!M.titles.length && !M.awards.length) {
@@ -1090,19 +1146,100 @@
       vitrina.innerHTML = M.titles.concat(M.awards).map(function (t) { return '<span class="award-badge">' + titleIcon(t) + " " + esc(titleText(t)) + "</span>"; }).join("");
     }
 
-    var urgentBox = document.getElementById("hub-decisiones-urgentes");
     var avanzarBtn = document.getElementById("btn-hub-avanzar");
     var avanzarHint = document.getElementById("hub-avanzar-hint");
+    var pending = !M._trainingDoneThisSeason || contractDecisionPending();
+    avanzarBtn.disabled = pending;
+    avanzarHint.style.display = pending ? "" : "none";
+
+    renderHubPanels();
+  }
+
+  function renderHubPanels() {
+    var leftType = hubPanelSwapped ? "decisiones" : "atributos";
+    var rightType = hubPanelSwapped ? "estadisticas" : "decisiones";
+    renderPanelSlot(document.getElementById("hub-slot-left"), leftType);
+    renderPanelSlot(document.getElementById("hub-slot-right"), rightType);
+  }
+
+  document.getElementById("btn-hub-rotar").addEventListener("click", function () {
+    hubPanelSwapped = !hubPanelSwapped;
+    renderHubPanels();
+  });
+
+  function renderPanelSlot(el, type) {
+    if (type === "atributos") renderAtributosPanel(el);
+    else if (type === "estadisticas") renderEstadisticasPanel(el);
+    else renderDecisionesPanel(el);
+  }
+
+  function renderAtributosPanel(el) {
+    var eff = statsWithBonuses(M);
+    el.innerHTML = '<h2 style="margin-bottom:10px">Atributos</h2><div id="hub-stats"></div>';
+    el.querySelector("#hub-stats").innerHTML = POSITIONS[M.position].stats.map(function (k) {
+      return '<div class="stat-row sans"><span>' + STAT_LABELS[k] + '</span><span class="sval">' + eff[k] + "</span></div>";
+    }).join("");
+  }
+
+  function renderEstadisticasPanel(el) {
+    el.innerHTML = '<h2 style="margin-bottom:10px">Estadísticas</h2><div id="hub-quickstats"></div>';
+    var rows = [
+      ["Partidos", M.careerMatches], ["Goles", M.careerGoals], ["Asistencias", M.careerAssists],
+      ["Pico de OVR", M.peakOvr], ["Títulos", M.titles.length], ["Premios", M.awards.length]
+    ];
+    el.querySelector("#hub-quickstats").innerHTML = rows.map(function (r) {
+      return '<div class="stat-row sans"><span>' + esc(r[0]) + '</span><span class="sval">' + esc(String(r[1])) + "</span></div>";
+    }).join("");
+  }
+
+  function renderDecisionesPanel(el) {
+    el.innerHTML = '<h2 style="margin-bottom:10px">Decisiones</h2><div id="decisiones-body"></div>';
+    var body = el.querySelector("#decisiones-body");
     if (!M._trainingDoneThisSeason) {
-      urgentBox.innerHTML = '<div class="decision-urgent" id="decision-entrenamiento"><span class="dtitle">Entrenamiento de pretemporada</span><span class="dtag">Pendiente</span></div>';
-      document.getElementById("decision-entrenamiento").addEventListener("click", showTrainingScreen);
-      avanzarBtn.disabled = true;
-      avanzarHint.style.display = "";
+      renderTrainingDecision(body);
+    } else if (contractDecisionPending()) {
+      renderContractDecision(body);
     } else {
-      urgentBox.innerHTML = "";
-      avanzarBtn.disabled = false;
-      avanzarHint.style.display = "none";
+      body.innerHTML = '<p class="sub sans">No tenés decisiones pendientes.</p>';
     }
+  }
+
+  /* ============ TABS DEL HUB ============ */
+  function switchHubTab(tab) {
+    hubActiveTab = tab;
+    ["inicio", "tienda", "carrera"].forEach(function (t) {
+      document.getElementById("hub-tab-" + t).classList.toggle("active", t === tab);
+      document.getElementById("hub-panel-" + t).style.display = t === tab ? "" : "none";
+    });
+    if (tab === "tienda") renderShopTab();
+    if (tab === "carrera") renderCareerTab();
+  }
+  document.getElementById("hub-tab-inicio").addEventListener("click", function () { switchHubTab("inicio"); });
+  document.getElementById("hub-tab-tienda").addEventListener("click", function () { switchHubTab("tienda"); });
+  document.getElementById("hub-tab-carrera").addEventListener("click", function () { switchHubTab("carrera"); });
+
+  function renderCareerTab() {
+    var resumen = document.getElementById("carrera-resumen");
+    resumen.innerHTML =
+      '<span class="info-chip">Temporadas <b>' + M.seasonsPlayed + '</b></span>' +
+      '<span class="info-chip">Pico OVR <b>' + M.peakOvr + '</b></span>' +
+      '<span class="info-chip">Goles <b>' + M.careerGoals + '</b></span>' +
+      '<span class="info-chip">Asistencias <b>' + M.careerAssists + '</b></span>';
+    var table = document.getElementById("carrera-tabla");
+    if (!M.seasonLog.length) {
+      table.innerHTML = "";
+      table.parentNode.insertAdjacentHTML("beforeend", '<p class="sub sans" id="carrera-vacio">Todavía no completaste ninguna temporada.</p>');
+      return;
+    }
+    var existingEmpty = document.getElementById("carrera-vacio");
+    if (existingEmpty) existingEmpty.remove();
+    var rows = M.seasonLog.map(function (s, i) {
+      return "<tr><td>" + (i + 1) + "</td><td>" + s.age + "</td><td>" + esc(s.club || "—") + '</td><td class="num">' + s.ovr +
+        '</td><td class="num">' + s.pj + '</td><td class="num">' + s.gls + '</td><td class="num">' + s.ast + "</td></tr>";
+    }).join("");
+    table.innerHTML =
+      "<thead><tr><th>Temp.</th><th>Edad</th><th>Club</th><th class='num'>OVR</th><th class='num'>PJ</th><th class='num'>Goles</th><th class='num'>Ast.</th></tr></thead>" +
+      "<tbody>" + rows + "</tbody>";
   }
 
   document.getElementById("btn-hub-borrar").addEventListener("click", function () {
@@ -1134,16 +1271,18 @@
     return position === "delantero" ? "ofensivo" : position === "mediocampista" ? "posesion" : "defensivo";
   }
 
-  /* ============ TEMPORADA: ENTRENAMIENTO ============ */
+  /* ============ TEMPORADA: ENTRENAMIENTO (decisión inline en el hub) ============ */
   var selectedTrainingIdx = [];
-  function showTrainingScreen() {
-    var opts = drawTrainingOptions(M.position);
-    M._currentTrainingOptions = opts;
+  function renderTrainingDecision(body) {
+    var opts = M._currentTrainingOptions || (M._currentTrainingOptions = drawTrainingOptions(M.position));
     selectedTrainingIdx = [];
-    var grid = document.getElementById("grid-entrenamiento");
+    body.innerHTML =
+      '<p class="sub">Elegí <b style="color:var(--accent2)">2</b> entrenamientos para esta temporada.</p>' +
+      '<div class="pick-grid cols2" id="grid-entrenamiento"></div>' +
+      '<button class="btn btn-gold btn-block" id="btn-entrenamiento-confirmar" style="margin-top:10px" disabled>Confirmar (0/2)</button>';
+    var grid = body.querySelector("#grid-entrenamiento");
     grid.innerHTML = opts.map(function (t, i) {
-      return '<div class="pick-card" data-i="' + i + '"><div class="ptitle">' + esc(t.label) + '</div><div class="pdesc">' + esc(t.flavor) +
-        '</div></div>';
+      return '<div class="pick-card" data-i="' + i + '"><div class="ptitle">' + esc(t.label) + '</div></div>';
     }).join("");
     grid.querySelectorAll(".pick-card").forEach(function (card) {
       card.addEventListener("click", function () {
@@ -1154,17 +1293,15 @@
           if (selectedTrainingIdx.length >= 2) return;
           selectedTrainingIdx.push(i); card.classList.add("selected");
         }
-        var btn = document.getElementById("btn-entrenamiento-confirmar");
+        var btn = body.querySelector("#btn-entrenamiento-confirmar");
         btn.textContent = "Confirmar (" + selectedTrainingIdx.length + "/2)";
         btn.disabled = selectedTrainingIdx.length !== 2;
       });
     });
-    document.getElementById("btn-entrenamiento-confirmar").textContent = "Confirmar (0/2)";
-    document.getElementById("btn-entrenamiento-confirmar").disabled = true;
-    showStep("entrenamiento");
+    body.querySelector("#btn-entrenamiento-confirmar").addEventListener("click", confirmTrainingDecision);
   }
 
-  document.getElementById("btn-entrenamiento-confirmar").addEventListener("click", function () {
+  function confirmTrainingDecision() {
     var opts = M._currentTrainingOptions;
     var chosen = selectedTrainingIdx.map(function (i) { return opts[i]; });
     var profesionalBoost = (M.personality === "profesional" ? 1.15 : 1.0) * (M.temporaryEffects.trainingBoost ? 1.2 : 1.0);
@@ -1189,10 +1326,52 @@
     });
     recomputeOvr(M);
     M._trainingDoneThisSeason = true;
+    M._currentTrainingOptions = null;
     saveGame();
     renderHub();
-    showStep(null);
-  });
+  }
+
+  /* ============ DECISIÓN DE CONTRATO (cada 2 temporadas, inline en el hub) ============ */
+  function contractDecisionPending() {
+    return M.seasonsPlayed > 0 && M.seasonsPlayed % 2 === 0 && !M._contractDecisionDoneThisSeason;
+  }
+  function applyClubTransfer(offer) {
+    M.club = offer.club.name;
+    M.clubData = { country: offer.club.country, league: offer.club.league, tier: offer.club.tier, style: offer.club.style, cantera: offer.club.cantera, rivals: offer.club.rivals };
+    M.contractYearsLeft = offer.years;
+    M.salary = offer.salary;
+    if (M.clubsPlayed.indexOf(offer.club.name) === -1) M.clubsPlayed.push(offer.club.name);
+    M.temporaryItems = [];
+    M.temporaryEffects = {};
+    M.dtRelationship = 0;
+    M.idolatry = 0;
+    M.marketValue = marketValueFor(M);
+  }
+  function renderContractDecision(body) {
+    var offers = M._contractOffers || (M._contractOffers = generateOffers().slice(0, 2));
+    body.innerHTML = '<p class="sub">Se cierra un ciclo en ' + esc(M.club) + '. ¿Qué hacés?</p><div class="pick-grid" id="grid-contrato"></div>';
+    var grid = body.querySelector("#grid-contrato");
+    var html = '<div class="pick-card" data-action="renovar"><div class="ptitle">Renovar con ' + esc(M.club) + "</div></div>";
+    offers.forEach(function (o, i) {
+      html += '<div class="pick-card" data-action="fichar" data-i="' + i + '"><div class="ptitle">Fichar por ' + esc(o.club.name) + "</div></div>";
+    });
+    grid.innerHTML = html;
+    grid.querySelectorAll(".pick-card").forEach(function (card) {
+      card.addEventListener("click", function () {
+        if (card.dataset.action === "renovar") {
+          var years = TIER_CONTRACT_YEARS[M.clubData.tier];
+          M.contractYearsLeft = years;
+          M.salary = salaryFor(M, M.clubData);
+        } else {
+          applyClubTransfer(offers[Number(card.dataset.i)]);
+        }
+        M._contractDecisionDoneThisSeason = true;
+        M._contractOffers = null;
+        saveGame();
+        renderHub();
+      });
+    });
+  }
 
   /* ============ SELECCIÓN NACIONAL ============ */
   function checkNationalTeamPre() {
@@ -1215,8 +1394,8 @@
       document.getElementById("nacional-texto").textContent = "¡Fuiste convocado a la selección de " + M.nationality + "! ¿Cómo encarás el torneo?";
       var grid = document.getElementById("grid-nacional-opciones");
       grid.innerHTML =
-        '<div class="pick-card" data-approach="seguro"><div class="ptitle">Jugar con calma</div><div class="pdesc">Menos riesgo, menos gloria.</div></div>' +
-        '<div class="pick-card" data-approach="arriesgado"><div class="ptitle">Ir con todo</div><div class="pdesc">Más riesgo, más chances de pasar rondas.</div></div>';
+        '<div class="pick-card" data-approach="seguro"><div class="ptitle">Jugar con calma</div></div>' +
+        '<div class="pick-card" data-approach="arriesgado"><div class="ptitle">Ir con todo</div></div>';
       grid.querySelectorAll(".pick-card").forEach(function (card) {
         card.addEventListener("click", function () { resolveNationalTournament(card.dataset.approach, isWorldCup); });
       });
@@ -1318,9 +1497,9 @@
       (M._half1.isStarter ? "Fuiste titular." : "Rol secundario en el plantel.");
     var grid = document.getElementById("grid-mediotiempo");
     grid.innerHTML =
-      '<div class="pick-card" data-focus="mejora"><div class="ptitle">Mejorar para la próxima</div><div class="pdesc">Priorizás crecer a futuro, a costa del rendimiento inmediato.</div></div>' +
-      '<div class="pick-card" data-focus="consistencia"><div class="ptitle">Consistencia</div><div class="pdesc">Menos altibajos de forma el resto de la temporada.</div></div>' +
-      '<div class="pick-card" data-focus="momentos"><div class="ptitle">Momentos importantes</div><div class="pdesc">Rendís mejor en partidos grandes, a costa de consistencia general.</div></div>';
+      '<div class="pick-card" data-focus="mejora"><div class="ptitle">Mejorar para la próxima</div></div>' +
+      '<div class="pick-card" data-focus="consistencia"><div class="ptitle">Consistencia</div></div>' +
+      '<div class="pick-card" data-focus="momentos"><div class="ptitle">Momentos importantes</div></div>';
     grid.querySelectorAll(".pick-card").forEach(function (card) {
       card.addEventListener("click", function () {
         M.midSeasonFocus = card.dataset.focus;
@@ -1334,12 +1513,16 @@
   /* ============ EVENTOS ============ */
   var lastEventIds = [];
   function runEvents() {
-    M._eventQueue = pickN(buildEventPool().filter(function (e) { return lastEventIds.indexOf(e.id) === -1; }), randInt(0, 3));
-    lastEventIds = M._eventQueue.map(function (e) { return e.id; });
+    if (Math.random() < 0.6) {
+      M._eventQueue = pickN(buildEventPool().filter(function (e) { return lastEventIds.indexOf(e.id) === -1; }), randInt(1, 3));
+      lastEventIds = M._eventQueue.map(function (e) { return e.id; });
+    } else {
+      M._eventQueue = [];
+    }
     nextEvent();
   }
   function nextEvent() {
-    if (!M._eventQueue.length) { simulateSecondHalf(); return; }
+    if (!M._eventQueue.length) { maybeClubFinal(); return; }
     var ev = M._eventQueue.shift();
     document.getElementById("evento-titulo").textContent = ev.title;
     document.getElementById("evento-texto").textContent = ev.text;
@@ -1376,6 +1559,36 @@
     checkPersonalityReveal();
   }
 
+  /* ============ FINAL IMPORTANTE (liga o copa) ============ */
+  function maybeClubFinal() {
+    var chance = clamp(0.15 + (M.ovr - 65) / 200, 0.08, 0.4);
+    if (Math.random() >= chance) { M._clubFinal = null; simulateSecondHalf(); return; }
+    var isLeague = Math.random() < 0.5;
+    M._clubFinal = { isLeague: isLeague };
+    document.getElementById("evento-titulo").textContent = isLeague ? "Definición de la liga" : "Final de copa";
+    document.getElementById("evento-texto").textContent = isLeague
+      ? "Tu equipo llega a la última fecha con chances de ser campeón. ¿Cómo encarás las semanas decisivas?"
+      : "Tu equipo llegó a la final de la copa. ¿Cómo te preparás para el partido decisivo?";
+    var grid = document.getElementById("grid-evento");
+    grid.innerHTML =
+      '<div class="pick-card" data-approach="seguro"><div class="ptitle">Con cautela</div></div>' +
+      '<div class="pick-card" data-approach="arriesgado"><div class="ptitle">Ir con todo</div></div>' +
+      '<div class="pick-card" data-approach="simular"><div class="ptitle">Simular directo</div></div>';
+    grid.querySelectorAll(".pick-card").forEach(function (card) {
+      card.addEventListener("click", function () { resolveClubFinal(card.dataset.approach); });
+    });
+    showStep("evento");
+  }
+  function resolveClubFinal(approach) {
+    var base = clamp((M.ovr - 55) / 60, 0.05, 0.85);
+    var riskBonus = approach === "arriesgado" ? 0.15 : approach === "simular" ? 0 : 0.05;
+    var variance = approach === "arriesgado" ? 0.3 : approach === "simular" ? 0.2 : 0.12;
+    var roll = clamp(base + riskBonus + (Math.random() * 2 - 1) * variance, 0.03, 0.95);
+    M._clubFinal.won = roll > 0.5;
+    M.forma = clamp(M.forma + (M._clubFinal.won ? 8 : -3), 10, effectiveFormaCeiling(M));
+    simulateSecondHalf();
+  }
+
   function checkPersonalityReveal() {
     if (M.personality) return;
     if (M.seasonsPlayed < 2) return;
@@ -1401,8 +1614,8 @@
       "El cuerpo técnico ve condiciones en vos para jugar de " + POSITIONS[newPos].label + ". ¿Te animás a probar ese cambio, permanente, en tu carrera?";
     var grid = document.getElementById("grid-cambio-posicion");
     grid.innerHTML =
-      '<div class="pick-card" data-accept="1"><div class="ptitle">Aceptar el cambio</div><div class="pdesc">Pasás a jugar de ' + POSITIONS[newPos].label + ' de forma permanente.</div></div>' +
-      '<div class="pick-card" data-accept="0"><div class="ptitle">Seguir en tu posición</div><div class="pdesc">Preferís continuar como ' + POSITIONS[M.position].label + '.</div></div>';
+      '<div class="pick-card" data-accept="1"><div class="ptitle">Aceptar el cambio</div></div>' +
+      '<div class="pick-card" data-accept="0"><div class="ptitle">Seguir en tu posición</div></div>';
     grid.querySelectorAll(".pick-card").forEach(function (card) {
       card.addEventListener("click", function () {
         if (card.dataset.accept === "1") applyPositionChange(newPos);
@@ -1446,19 +1659,33 @@
     var totalMatches = M._half1.matches + half2.matches;
     M.careerGoals += totalGoals; M.careerAssists += totalAssists; M.careerMatches += totalMatches;
 
-    var teamRoll = Math.random() + (M.ovr - 65) / 180;
     var teamResult, wonLeague = false, wonCup = false;
     var seasonNum = M.seasonsPlayed + 1;
-    if (teamRoll > 0.95) { teamResult = "Campeones de la liga"; wonLeague = true; }
-    else if (teamRoll > 0.80) { teamResult = "Ganaron la copa nacional"; wonCup = true; }
-    else if (teamRoll > 0.55) teamResult = "Terminaron peleando arriba de la tabla";
-    else if (teamRoll > 0.28) teamResult = "Temporada pareja en la mitad";
-    else teamResult = "Pelearon el descenso hasta el final";
+    if (M._clubFinal) {
+      if (M._clubFinal.isLeague) {
+        wonLeague = M._clubFinal.won;
+        teamResult = wonLeague ? "Campeones de la liga" : "Perdieron el título en la última fecha";
+      } else {
+        wonCup = M._clubFinal.won;
+        teamResult = wonCup ? "Ganaron la copa nacional" : "Perdieron la final de copa";
+      }
+      M._clubFinal = null;
+    } else {
+      var teamRoll = Math.random() + (M.ovr - 65) / 180;
+      if (teamRoll > 0.95) { teamResult = "Campeones de la liga"; wonLeague = true; }
+      else if (teamRoll > 0.80) { teamResult = "Ganaron la copa nacional"; wonCup = true; }
+      else if (teamRoll > 0.55) teamResult = "Terminaron peleando arriba de la tabla";
+      else if (teamRoll > 0.28) teamResult = "Temporada pareja en la mitad";
+      else teamResult = "Pelearon el descenso hasta el final";
+    }
     if (wonLeague) { M.titles.push({ text: "Liga: " + M.clubData.league + " (temp. " + seasonNum + ")", icon: "liga" }); M.moments.push("Campeón de " + M.clubData.league + " con " + M.club + "."); }
     if (wonCup) M.titles.push({ text: "Copa nacional con " + M.club + " (temp. " + seasonNum + ")", icon: "copa" });
 
     var awardsThisSeason = computeAwards(totalGoals, totalMatches);
     awardsThisSeason.forEach(function (a) { M.awards.push(a); M.moments.push("Ganaste: " + titleText(a) + "."); });
+
+    var idolPerf = (totalGoals * 2 + totalAssists) / 10 + M.dtRelationship / 50 + (wonLeague ? 3 : 0) + (wonCup ? 2 : 0);
+    M.idolatry = clamp(M.idolatry + clamp(Math.round(idolPerf - 1), -6, 12), 0, 100);
 
     M.seasonLog.push({ age: M.age, club: M.club, ovr: M.ovr, pj: totalMatches, gls: totalGoals, ast: totalAssists });
     M._seasonSummary = { totalGoals: totalGoals, totalAssists: totalAssists, totalMatches: totalMatches, teamResult: teamResult, awardsThisSeason: awardsThisSeason };
@@ -1525,6 +1752,7 @@
   function afterSeasonAdvance() {
     M.seasonsPlayed++;
     M._trainingDoneThisSeason = false;
+    M._contractDecisionDoneThisSeason = false;
     M.age++;
     M.contractYearsLeft--;
     M.money += M.salary;
@@ -1548,7 +1776,7 @@
   }
 
   /* ============ TIENDA ============ */
-  function showShop() {
+  function renderShopTab() {
     document.getElementById("tienda-dinero").textContent = fmtMoney(M.money);
     var permGrid = document.getElementById("grid-tienda-permanente");
     var availPerm = SHOP_PERMANENT.filter(function (it) { return M.permanentItems.indexOf(it.id) === -1; });
@@ -1578,7 +1806,6 @@
         card.addEventListener("click", function () { buyTemporary(card.dataset.temp); });
       });
     }
-    showStep("tienda");
   }
 
   function buyPermanent(id) {
@@ -1589,7 +1816,8 @@
     Object.keys(it.effect).forEach(function (k) { M.permanentEffects[k] = (M.permanentEffects[k] || 0) + it.effect[k]; });
     recomputeOvr(M);
     saveGame();
-    showShop();
+    renderShopTab();
+    renderHub();
   }
 
   function buyTemporary(id) {
@@ -1602,7 +1830,8 @@
     applyTemporaryEffect(id);
     recomputeOvr(M);
     saveGame();
-    showShop();
+    renderShopTab();
+    renderHub();
   }
 
   function applyTemporaryEffect(id) {
@@ -1623,12 +1852,6 @@
     if (map[id]) map[id]();
   }
 
-  document.getElementById("btn-tienda-continuar").addEventListener("click", function () {
-    if (M.contractYearsLeft <= 0) { showMarket(); return; }
-    saveGame();
-    renderHub();
-    showStep(null);
-  });
 
   /* ============ MERCADO ============ */
   function generateOffers() {
@@ -1663,15 +1886,7 @@
   }
 
   function acceptOffer(offer) {
-    M.club = offer.club.name;
-    M.clubData = { country: offer.club.country, league: offer.club.league, tier: offer.club.tier, style: offer.club.style, cantera: offer.club.cantera, rivals: offer.club.rivals };
-    M.contractYearsLeft = offer.years;
-    M.salary = offer.salary;
-    if (M.clubsPlayed.indexOf(offer.club.name) === -1) M.clubsPlayed.push(offer.club.name);
-    M.temporaryItems = [];
-    M.temporaryEffects = {};
-    M.dtRelationship = 0;
-    M.marketValue = marketValueFor(M);
+    applyClubTransfer(offer);
     saveGame();
     renderHub();
     showStep(null);
@@ -1679,24 +1894,8 @@
 
   /* ============ INICIO DE TEMPORADA ============ */
   document.getElementById("btn-hub-avanzar").addEventListener("click", function () {
-    if (!M._trainingDoneThisSeason) return;
+    if (!M._trainingDoneThisSeason || contractDecisionPending()) return;
     checkNationalTeamPre();
-  });
-  document.getElementById("btn-hub-tienda").addEventListener("click", showShop);
-
-  document.getElementById("btn-hub-renovar").addEventListener("click", function () {
-    var years = TIER_CONTRACT_YEARS[M.clubData.tier];
-    var newSalary = salaryFor(M, M.clubData);
-    if (!confirm("¿Renovar con " + M.club + " por " + years + (years === 1 ? " año" : " años") + " a " + fmtMoney(newSalary) + " de salario?")) return;
-    M.contractYearsLeft = years;
-    M.salary = newSalary;
-    saveGame();
-    renderHub();
-  });
-
-  document.getElementById("btn-hub-vender").addEventListener("click", function () {
-    if (!confirm("¿Pedir salida de " + M.club + " ahora mismo? Vas a tener que fichar por otro club.")) return;
-    showMarket(true);
   });
 
   /* ============ RETIRO Y LEGADO ============ */
