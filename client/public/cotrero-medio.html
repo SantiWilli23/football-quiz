@@ -144,14 +144,6 @@
   .idolatry-track { height: 8px; border-radius: 5px; background: rgba(255,255,255,0.08); overflow: hidden; margin-top: 4px; }
   .idolatry-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--gold), var(--gold2)); }
 
-  .rotate-btn {
-    display: flex; align-items: center; justify-content: center; gap: 5px; margin-left: auto;
-    font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 10.5px; font-weight: 700;
-    color: var(--text-dim); background: transparent; border: 1px solid var(--border); border-radius: 999px;
-    padding: 5px 11px; cursor: pointer; transition: all 0.15s ease;
-  }
-  .rotate-btn:hover { color: var(--accent2); border-color: var(--accent); }
-
   .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
   .info-chip {
     font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 11px; font-weight: 700;
@@ -300,10 +292,12 @@
             <span class="info-chip">Dinero <b id="hub-dinero">—</b></span>
           </div>
         </div>
-        <button class="rotate-btn" id="btn-hub-rotar">🔄 Girar paneles</button>
         <div class="hub-grid2">
-          <div class="panel" id="hub-slot-left"></div>
-          <div class="panel" id="hub-slot-right"></div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="panel" id="hub-slot-atributos"></div>
+            <div class="panel" id="hub-slot-estadisticas"></div>
+          </div>
+          <div class="panel" id="hub-slot-decisiones"></div>
         </div>
         <div class="panel" id="hub-vitrina-panel">
           <h2 style="margin-bottom:10px">Vitrina</h2>
@@ -1099,7 +1093,6 @@
   }
 
   /* ============ HUB ============ */
-  var hubPanelSwapped = false;
   var hubActiveTab = "inicio";
 
   function renderHub() {
@@ -1156,21 +1149,9 @@
   }
 
   function renderHubPanels() {
-    var leftType = hubPanelSwapped ? "decisiones" : "atributos";
-    var rightType = hubPanelSwapped ? "estadisticas" : "decisiones";
-    renderPanelSlot(document.getElementById("hub-slot-left"), leftType);
-    renderPanelSlot(document.getElementById("hub-slot-right"), rightType);
-  }
-
-  document.getElementById("btn-hub-rotar").addEventListener("click", function () {
-    hubPanelSwapped = !hubPanelSwapped;
-    renderHubPanels();
-  });
-
-  function renderPanelSlot(el, type) {
-    if (type === "atributos") renderAtributosPanel(el);
-    else if (type === "estadisticas") renderEstadisticasPanel(el);
-    else renderDecisionesPanel(el);
+    renderAtributosPanel(document.getElementById("hub-slot-atributos"));
+    renderEstadisticasPanel(document.getElementById("hub-slot-estadisticas"));
+    renderDecisionesPanel(document.getElementById("hub-slot-decisiones"));
   }
 
   function renderAtributosPanel(el) {
