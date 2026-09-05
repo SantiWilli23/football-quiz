@@ -6,6 +6,8 @@ import { simulateUserMatch, simulateQuickMatch } from "../engine/matchEngine.js"
 import { ageSquad, releaseExpired, generateYouthProspects } from "../engine/playerGrowth.js";
 import { transferBudgetFor, weeklyWageBill, seasonIncome } from "../engine/financeEngine.js";
 import { generateMarketRumors } from "../engine/transferAI.js";
+import { effectiveOvr } from "../engine/positions.js";
+import { scoutPlayer, mergeReports } from "../engine/scouting.js";
 
 const CareerContext = createContext(null);
 
@@ -79,18 +81,50 @@ function sortStandings(standings) {
   return [...standings].sort((a, b) => b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf);
 }
 
+// El lineup titular ahora es un arreglo de slots en el orden exacto de la
+// formación ({ slot: "ST", playerId }), no una lista suelta de ids: así
+// sabemos en qué posición juega cada uno y se puede penalizar si no es la suya.
 function defaultLineup(squad, formation) {
   const slots = FORMATIONS[formation] || FORMATIONS["4-3-3"];
   const used = new Set();
-  const starters = [];
-  slots.forEach((pos) => {
-    const candidate = squad
-      .filter((p) => !used.has(p.id) && p.position === pos)
-      .sort((a, b) => b.ovr - a.ovr)[0]
-      || squad.filter((p) => !used.has(p.id)).sort((a, b) => b.ovr - a.ovr)[0];
-    if (candidate) { starters.push(candidate.id); used.add(candidate.id); }
+  const starters = slots.map((pos) => {
+    const candidate =
+      squad.filter((p) => !used.has(p.id) && p.position === pos).sort((a, b) => b.ovr - a.ovr)[0] ||
+      squad.filter((p) => !used.has(p.id)).sort((a, b) => effectiveOvr(b, pos) - effectiveOvr(a, pos))[0];
+    if (candidate) used.add(candidate.id);
+    return { slot: pos, playerId: candidate ? candidate.id : null };
   });
   const bench = squad.filter((p) => !used.has(p.id)).sort((a, b) => b.ovr - a.ovr).slice(0, 9).map((p) => p.id);
+  bench.forEach((id) => used.add(id));
+  const reserves = squad.filter((p) => !used.has(p.id)).map((p) => p.id);
+  return { starters, bench, reserves };
+}
+
+// Al cambiar de formación tratamos de mantener a los jugadores en su misma
+// posición natural si el nuevo esquema la tiene, y sólo recurrimos a la
+// banca/reservas para los slots que quedaron sin dueño.
+function remapLineupToFormation(squad, lineup, formation) {
+  const slots = FORMATIONS[formation] || FORMATIONS["4-3-3"];
+  const prevIds = lineup.starters.map((s) => s.playerId).filter(Boolean);
+  const pool = squad.filter((p) => prevIds.includes(p.id));
+  const used = new Set();
+  const starters = slots.map((pos) => {
+    const exact = pool.find((p) => !used.has(p.id) && p.position === pos);
+    const candidate = exact || pool.find((p) => !used.has(p.id));
+    if (candidate) used.add(candidate.id);
+    return { slot: pos, playerId: candidate ? candidate.id : null };
+  });
+  const leftover = squad.filter((p) => !used.has(p.id) && (lineup.bench.includes(p.id) || lineup.reserves.includes(p.id) || prevIds.includes(p.id)));
+  // Slots vacíos: se completan con el mejor disponible del resto del plantel.
+  starters.forEach((s) => {
+    if (s.playerId) return;
+    const rest = squad.filter((p) => !used.has(p.id));
+    const best = rest.filter((p) => p.position === s.slot).sort((a, b) => b.ovr - a.ovr)[0]
+      || rest.sort((a, b) => effectiveOvr(b, s.slot) - effectiveOvr(a, s.slot))[0];
+    if (best) { s.playerId = best.id; used.add(best.id); }
+  });
+  const bench = squad.filter((p) => !used.has(p.id) && (lineup.bench.includes(p.id) || leftover.includes(p)))
+    .sort((a, b) => b.ovr - a.ovr).slice(0, 9).map((p) => p.id);
   bench.forEach((id) => used.add(id));
   const reserves = squad.filter((p) => !used.has(p.id)).map((p) => p.id);
   return { starters, bench, reserves };
@@ -120,6 +154,8 @@ function buildInitialState(teamId) {
     history: [],
     lastMatch: null,
     gameOver: false,
+    scoutReports: {},
+    scoutsAvailable: {},
   };
 }
 
@@ -143,7 +179,7 @@ export function CareerProvider({ children }) {
   }
 
   function setFormation(formation) {
-    setState((s) => ({ ...s, formation, lineup: defaultLineup(s.squad, formation) }));
+    setState((s) => ({ ...s, formation, lineup: remapLineupToFormation(s.squad, s.lineup, formation) }));
   }
   function setMentality(mentality) {
     setState((s) => ({ ...s, mentality }));
@@ -153,6 +189,59 @@ export function CareerProvider({ children }) {
   }
   function setLineup(lineup) {
     setState((s) => ({ ...s, lineup }));
+  }
+
+  // Asigna/retira un jugador de un slot puntual de la formación (usado por
+  // el editor de cancha). Si ese jugador ya estaba en otro slot, banca o
+  // reservas, lo saca de ahí primero.
+  function assignSlot(slotIndex, playerId) {
+    setState((s) => {
+      const starters = s.lineup.starters.map((slot, i) => {
+        if (i === slotIndex) return { ...slot, playerId };
+        if (playerId && slot.playerId === playerId) return { ...slot, playerId: null };
+        return slot;
+      });
+      const bench = s.lineup.bench.filter((id) => id !== playerId);
+      const reserves = s.lineup.reserves.filter((id) => id !== playerId);
+      // El que salió del slot (si había alguien) vuelve a reservas.
+      const displaced = s.lineup.starters[slotIndex]?.playerId;
+      const reserves2 = displaced && displaced !== playerId && !bench.includes(displaced) ? [...reserves, displaced] : reserves;
+      return { ...s, lineup: { starters, bench, reserves: reserves2 } };
+    });
+  }
+
+  function moveToBench(playerId) {
+    setState((s) => {
+      if (s.lineup.bench.includes(playerId) || s.lineup.bench.length >= 9) return s;
+      const starters = s.lineup.starters.map((slot) => (slot.playerId === playerId ? { ...slot, playerId: null } : slot));
+      const reserves = s.lineup.reserves.filter((id) => id !== playerId);
+      return { ...s, lineup: { starters, bench: [...s.lineup.bench, playerId], reserves } };
+    });
+  }
+
+  function moveToReserves(playerId) {
+    setState((s) => {
+      const starters = s.lineup.starters.map((slot) => (slot.playerId === playerId ? { ...slot, playerId: null } : slot));
+      const bench = s.lineup.bench.filter((id) => id !== playerId);
+      const reserves = s.lineup.reserves.includes(playerId) ? s.lineup.reserves : [...s.lineup.reserves, playerId];
+      return { ...s, lineup: { starters, bench, reserves } };
+    });
+  }
+
+  // Manda a uno de los 6 reclutadores a ver a un jugador (propio o de
+  // cualquier otro club). El reporte da un RANGO de OVR y potencial, no el
+  // número exacto — varios reportes del mismo jugador angostan el rango.
+  function sendScout(scoutId, playerId) {
+    const player = allPlayers.find((p) => p.id === playerId) || state.squad.find((p) => p.id === playerId);
+    if (!player) return null;
+    const targetTeam = teamById(player.teamId);
+    const report = scoutPlayer(scoutId, player, targetTeam?.league);
+    setState((s) => ({
+      ...s,
+      scoutReports: { ...s.scoutReports, [playerId]: mergeReports(s.scoutReports[playerId], report) },
+      news: [`🔎 ${report.scoutName} entregó su informe sobre ${player.name}.`, ...s.news].slice(0, 8),
+    }));
+    return report;
   }
 
   function currentFixture() {
@@ -259,6 +348,10 @@ export function CareerProvider({ children }) {
       setMentality,
       setSlider,
       setLineup,
+      assignSlot,
+      moveToBench,
+      moveToReserves,
+      sendScout,
       currentFixture,
       playNextMatch,
       standingsSorted: state ? sortStandings(state.standings) : [],

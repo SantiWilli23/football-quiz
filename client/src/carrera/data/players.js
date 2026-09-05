@@ -34,15 +34,35 @@ function attributesFor(pos, ovr) {
   return out;
 }
 
-export function calculateValue(ovr, age, potential) {
-  const baseValue = Math.pow(Math.max(ovr - 50, 1), 2) * 0.3;
-  const ageFactor = age <= 24 ? 1.3 : age <= 28 ? 1.0 : age <= 31 ? 0.75 : 0.4;
-  const potentialBonus = (potential - ovr) * 2;
-  return Math.round((baseValue + potentialBonus) * ageFactor);
+// Multiplicador de mercado por posición: los equipos pagan de más por
+// gente que decide partidos (extremos, "9"), y de menos por perfiles de
+// contención — igual que en el mercado real.
+const POSITION_VALUE_MULT = {
+  GK: 0.7, CB: 0.85, LB: 0.95, RB: 0.95, CDM: 0.9,
+  CM: 1.0, CAM: 1.15, LW: 1.3, RW: 1.3, ST: 1.35,
+};
+
+// Curva exponencial (como el mercado real: la diferencia entre 85 y 90 OVR
+// vale mucho más que entre 65 y 70), con multiplicadores de edad, posición
+// y "sueño" (potencial por encima del nivel actual).
+export function calculateValue(ovr, age, potential, position = "CM") {
+  if (ovr < 58) return Math.max(0.05, Math.round((ovr - 50) * 0.08 * 20) / 20);
+  const base = Math.pow(1.155, ovr - 58) * 0.55;
+  const posMult = POSITION_VALUE_MULT[position] || 1;
+  const ageMult =
+    age <= 21 ? 1.4 : age <= 24 ? 1.2 : age <= 27 ? 1.05 : age <= 30 ? 0.82 : age <= 33 ? 0.55 : 0.3;
+  const potGap = Math.max(0, (potential ?? ovr) - ovr);
+  const potMult = 1 + potGap * 0.05;
+  const value = base * posMult * ageMult * potMult;
+  return Math.round(value * 20) / 20;
 }
 
-function wageFor(ovr) {
-  return Math.round(Math.pow(Math.max(ovr - 55, 1), 1.7) * 1.1);
+// Sueldo semanal en miles de € — también exponencial, con techo puesto por
+// la edad (un veterano de 34 años ya no negocia como si fuera a mejorar).
+function wageFor(ovr, age = 26) {
+  const base = Math.pow(1.135, Math.max(ovr - 58, 0)) * 4;
+  const ageMult = age <= 30 ? 1 : age <= 33 ? 0.85 : 0.65;
+  return Math.max(1, Math.round(base * ageMult));
 }
 
 function buildPlayer(team, { name, pos, age, nat, ovr, pot }, isYouth = false) {
@@ -55,12 +75,15 @@ function buildPlayer(team, { name, pos, age, nat, ovr, pot }, isYouth = false) {
     position: pos,
     ovr,
     potential,
-    value: isYouth ? Math.min(5, calculateValue(ovr, age, potential)) : calculateValue(ovr, age, potential),
-    wage: wageFor(ovr),
+    value: isYouth ? Math.min(3, calculateValue(ovr, age, potential, pos)) : calculateValue(ovr, age, potential, pos),
+    wage: wageFor(ovr, age),
     teamId: team.id,
     attributes: attributesFor(pos, ovr),
     contractYears: isYouth ? rnd(2, 4) : rnd(1, 5),
     isYouth,
+    releaseClause: null,
+    transferListed: false,
+    loanListed: false,
   };
 }
 

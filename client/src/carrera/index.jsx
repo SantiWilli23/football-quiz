@@ -6,6 +6,7 @@ import Squad from "./components/Squad.jsx";
 import Tactics from "./components/Tactics.jsx";
 import MatchSimulator from "./components/MatchSimulator.jsx";
 import SeasonCalendar from "./components/SeasonCalendar.jsx";
+import Scouts from "./components/Scouts.jsx";
 
 function CareerApp() {
   const { state } = useCareer();
@@ -29,6 +30,7 @@ function CareerApp() {
         {[
           ["dashboard", "Inicio"],
           ["squad", "Plantilla"],
+          ["scouting", "Scouting"],
           ["tactics", "Tácticas"],
           ["calendar", "Calendario"],
         ].map(([id, label]) => (
@@ -48,6 +50,7 @@ function CareerApp() {
           <Dashboard onPlayMatch={(result) => { setMatchResult(result); setScreen("match"); }} />
         )}
         {screen === "squad" && <Squad />}
+        {screen === "scouting" && <Scouts />}
         {screen === "tactics" && <Tactics />}
         {screen === "calendar" && <SeasonCalendar />}
       </main>
