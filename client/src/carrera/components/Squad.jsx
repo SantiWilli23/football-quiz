@@ -27,8 +27,14 @@ function moraleColor(m) {
   return "text-red-400";
 }
 
+const MEETING_OPTIONS = [
+  { id: "motivate", label: "Charla motivadora", emoji: "🗣️", desc: "+8 moral a todo el plantel" },
+  { id: "demand", label: "Exigir más nivel", emoji: "📢", desc: "+3 confianza directiva, -3 moral" },
+  { id: "rest", label: "Día libre", emoji: "🌴", desc: "+12 moral a todo el plantel" },
+];
+
 export default function Squad() {
-  const { state, moveToBench, moveToReserves, toggleTransferListed, toggleLoanListed, startPositionTraining } = useCareer();
+  const { state, moveToBench, moveToReserves, toggleTransferListed, toggleLoanListed, startPositionTraining, holdSquadMeeting } = useCareer();
   const [tab, setTab] = useState("formacion");
   const [groupFilter, setGroupFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("ovr");
@@ -68,6 +74,11 @@ export default function Squad() {
 
       {tab === "plantilla" && (
         <div className="space-y-6">
+          <SquadMeeting
+            onMeet={holdSquadMeeting}
+            usedThisWeek={state.lastMeetingWeek === state.week}
+          />
+
           <div className="flex items-center justify-between flex-wrap gap-3">
             <h2 className="text-xl font-bold">Plantilla <span className="text-gray-500 font-normal text-base">({state.squad.length})</span></h2>
             <select
@@ -143,6 +154,49 @@ export default function Squad() {
   );
 }
 
+function SquadMeeting({ onMeet, usedThisWeek }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="bg-panel border border-border rounded-card overflow-hidden">
+      <button
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/[0.03] transition-colors"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <div>
+          <p className="text-sm font-semibold">Reunión con el plantel</p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {usedThisWeek ? "Ya hablaste con el equipo esta semana." : "Una vez por semana podés dirigirte al vestuario."}
+          </p>
+        </div>
+        <span className="text-gray-500 text-sm ml-4">{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div className="border-t border-border px-4 py-3 flex flex-wrap gap-2">
+          {MEETING_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              disabled={usedThisWeek}
+              onClick={() => onMeet(opt.id)}
+              className={`flex items-center gap-2 text-left px-3 py-2 rounded-card border text-xs transition-colors ${
+                usedThisWeek
+                  ? "border-border text-gray-600 cursor-not-allowed opacity-50"
+                  : "border-accent/30 text-accent hover:bg-accent/10"
+              }`}
+            >
+              <span className="text-base leading-none">{opt.emoji}</span>
+              <span>
+                <span className="block font-semibold">{opt.label}</span>
+                <span className="block opacity-70">{opt.desc}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const LEVEL_STYLE = {
   Titular: "bg-accent/15 text-accent border-accent/30",
   Banca:   "bg-white/10 text-gray-300 border-white/10",
@@ -184,6 +238,11 @@ function PlayerRow({ player: p, level, report, week, injury, morale, seasonStats
         <div className="hidden sm:flex flex-col items-center w-16 shrink-0">
           <span className="text-[10px] uppercase tracking-wide text-gray-600">Valor</span>
           <span className="text-sm text-gray-300 font-medium">€{p.value}M</span>
+          {p.prevValue != null && p.value !== p.prevValue && (
+            <span className={`text-[9px] ${p.value > p.prevValue ? "text-emerald" : "text-red-400"}`}>
+              {p.value > p.prevValue ? "▲" : "▼"} antes €{p.prevValue}M
+            </span>
+          )}
         </div>
 
         <div className="hidden sm:flex flex-col items-center w-16 shrink-0">

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { CareerProvider, useCareer } from "./context/CareerContext.jsx";
 import TeamSelector from "./components/TeamSelector.jsx";
 import Dashboard from "./components/Dashboard.jsx";
@@ -27,9 +28,17 @@ function CareerApp() {
 
   return (
     <div className="min-h-screen bg-bg text-white">
-      <nav className="flex gap-1 overflow-x-auto border-b border-border bg-panel px-3 py-2 sticky top-0 z-10">
+      <nav className="flex items-center gap-1 overflow-x-auto border-b border-border bg-panel px-3 py-2 sticky top-0 z-10">
+        <Link
+          to="/panel"
+          title="Volver al menú principal"
+          className="px-3 py-1.5 rounded-card text-sm font-medium whitespace-nowrap text-gray-400 hover:text-white border border-transparent hover:border-border shrink-0 mr-1"
+        >
+          🏠 Salir
+        </Link>
+        <span className="w-px h-5 bg-border shrink-0 mr-1" />
         {[
-          ["dashboard", "Inicio"],
+          ["dashboard", "Panel"],
           ["squad", "Plantilla"],
           ["scouting", "Scouting"],
           ["transfers", "Fichajes"],

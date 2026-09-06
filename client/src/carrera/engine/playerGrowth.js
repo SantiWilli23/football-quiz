@@ -27,7 +27,10 @@ export function ageSquad(squad, playerStats = {}) {
       const delta = base + youthBonus;
       const ovr = Math.max(35, Math.min(p.potential, p.ovr + delta));
       const contractYears = Math.max(0, p.contractYears - 1);
-      return { ...p, age, ovr, contractYears };
+      // Evolución del valor de mercado: sube o baja según el progreso de OVR de la temporada.
+      const prevValue = p.value;
+      const value = Math.max(0.5, Math.round(p.value * (1 + delta * 0.07) * 20) / 20);
+      return { ...p, age, ovr, contractYears, prevValue, value };
     })
     .filter((p) => p.age < 41);
 }

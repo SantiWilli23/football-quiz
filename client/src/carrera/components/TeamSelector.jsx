@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useCareer } from "../context/CareerContext.jsx";
 import TeamCrest from "./TeamCrest.jsx";
 
@@ -12,6 +13,7 @@ export default function TeamSelector() {
   return (
     <div className="min-h-screen bg-bg text-white p-4">
       <div className="max-w-4xl mx-auto">
+        <Link to="/panel" className="inline-block text-xs text-gray-500 hover:text-white mb-3">🏠 Volver al menú principal</Link>
         <h1 className="text-2xl font-bold mb-1">Modo Carrera · DT</h1>
         <p className="text-gray-400 text-sm mb-5">Elegí el equipo que vas a dirigir.</p>
 

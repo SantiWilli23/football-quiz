@@ -35,7 +35,7 @@ function clubRepLabel(r) {
 }
 
 export default function Dashboard({ onPlayMatch }) {
-  const { state, team, currentFixture, playNextMatch, playCopaMatch, copaIsAvailable, standingsSorted, resetCareer, acceptJobOffer, declineJobOffer, COPA_ROUNDS: CR, COPA_WEEKS: CW } = useCareer();
+  const { state, team, currentFixture, playNextMatchFirstHalf, playCopaMatch, copaIsAvailable, standingsSorted, resetCareer, acceptJobOffer, declineJobOffer, COPA_ROUNDS: CR, COPA_WEEKS: CW } = useCareer();
   const fixture   = currentFixture();
   const rival     = fixture ? teamById(fixture.opponentTeamId) : null;
   const myPos     = standingsSorted.findIndex((r) => r.teamId === state.teamId) + 1;
@@ -64,7 +64,7 @@ export default function Dashboard({ onPlayMatch }) {
   const nextWindowWeek = w <= 7 ? null : w <= 24 ? null : 20;
 
   function handlePlay() {
-    const result = playNextMatch();
+    const result = playNextMatchFirstHalf();
     if (result) onPlayMatch(result);
   }
 

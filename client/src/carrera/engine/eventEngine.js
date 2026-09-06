@@ -1,4 +1,4 @@
-const EVENTS = [
+const GENERIC_EVENTS = [
   {
     id: "sponsor_deal",
     text: "💼 Un nuevo patrocinador firma con el club. Presupuesto +€2M.",
@@ -30,11 +30,6 @@ const EVENTS = [
     apply: (s) => ({ managerPrestige: Math.min(100, (s.managerPrestige ?? 50) + 6) }),
   },
   {
-    id: "prestige_hit",
-    text: "📉 Los malos resultados recientes empañan tu reputación.",
-    apply: (s) => ({ managerPrestige: Math.max(0, (s.managerPrestige ?? 50) - 5) }),
-  },
-  {
     id: "fan_boost",
     text: "🔥 Los hinchas llenan el estadio. La energía llega al vestuario.",
     moraleBonus: 8,
@@ -44,38 +39,70 @@ const EVENTS = [
     text: "😤 Hay tensiones internas en el vestuario.",
     moraleBonus: -7,
   },
-  {
-    id: "fitness_camp",
-    text: "💪 El preparador físico organizó una semana exigente. El plantel está al 100%.",
-    moraleBonus: 4,
-  },
-  {
-    id: "scout_news",
-    text: "🔭 Tus reclutadores detectaron movimientos interesantes en el mercado.",
-  },
-  {
-    id: "injury_scare",
-    text: "🏥 Un susto en el entrenamiento, pero sin novedades. El plantel sigue sano.",
-  },
-  {
-    id: "fan_protest",
-    text: "😡 Los hinchas protestan por los resultados. La presión aumenta.",
-    apply: (s) => ({ boardConfidence: Math.max(0, s.boardConfidence - 4) }),
-    moraleBonus: -4,
-  },
-  {
-    id: "young_talent",
-    text: "⭐ Un juvenil de la cantera impresiona en los entrenamientos.",
-  },
-  {
-    id: "referee_dispute",
-    text: "🟥 Una decisión arbitral polémica generó malestar en el grupo.",
-    moraleBonus: -3,
-  },
 ];
 
+function pickRandom(pool) {
+  return pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
+}
+
+// Eventos narrativos: usan jugadores reales del plantel para que cada carrera se sienta distinta.
+function narrativeEvents(squad) {
+  const events = [];
+  if (!squad || !squad.length) return events;
+
+  const veterans = squad.filter((p) => !p.isYouth && p.age >= 24);
+  const youthPool = squad.filter((p) => p.isYouth || p.age <= 19);
+  const captain = [...squad].sort((a, b) => b.ovr - a.ovr)[0];
+  const discontent = squad.filter((p) => p.age >= 26);
+
+  if (discontent.length) {
+    const p = pickRandom(discontent);
+    events.push({
+      id: `transfer_request_${p.id}`,
+      text: `📣 ${p.name} pide salir del club. No está conforme con su rol en el equipo.`,
+      targetMoraleId: p.id,
+      targetMoraleDelta: -15,
+    });
+  }
+
+  if (youthPool.length) {
+    const p = pickRandom(youthPool);
+    events.push({
+      id: `youth_breakout_${p.id}`,
+      text: `🌟 Un juvenil de ${p.age} años, ${p.name}, destaca en los entrenamientos. Su valoración sube.`,
+      apply: (s) => ({ squad: s.squad.map((pl) => (pl.id === p.id ? { ...pl, ovr: Math.min(pl.potential, pl.ovr + 1) } : pl)) }),
+    });
+  }
+
+  events.push({
+    id: "president_demands",
+    text: "🎙️ El presidente exige clasificar a competición europea esta temporada. La presión sube.",
+    apply: (s) => ({ boardConfidence: Math.max(0, s.boardConfidence - 3) }),
+  });
+
+  if (captain) {
+    events.push({
+      id: `captain_knock_${captain.id}`,
+      text: `🚑 ${captain.name}, tu jugador más valioso, sufre una molestia física antes del próximo partido.`,
+      forceInjuryId: captain.id,
+    });
+  }
+
+  if (veterans.length >= 2) {
+    const a = pickRandom(veterans);
+    events.push({
+      id: `mentor_${a.id}`,
+      text: `🧭 ${a.name} se convirtió en referente del vestuario. El grupo se muestra más unido.`,
+      moraleBonus: 3,
+    });
+  }
+
+  return events;
+}
+
 // ~8% de probabilidad por semana
-export function rollEvent() {
+export function rollEvent(squad = []) {
   if (Math.random() > 0.08) return null;
-  return EVENTS[Math.floor(Math.random() * EVENTS.length)];
+  const pool = [...GENERIC_EVENTS, ...narrativeEvents(squad)];
+  return pickRandom(pool);
 }

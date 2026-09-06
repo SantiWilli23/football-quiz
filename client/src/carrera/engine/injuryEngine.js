@@ -42,3 +42,14 @@ export function getInjury(injuries, playerId) {
 export function recoverInjuries(injuries, currentWeek) {
   return (injuries || []).filter(i => i.returnWeek > currentWeek);
 }
+
+export function forceInjury(playerId, week) {
+  const type = pickType();
+  return {
+    id: `inj_forced_${playerId}_${week}_${Math.floor(Math.random() * 1e6)}`,
+    playerId,
+    type: type.name,
+    weeksOut: type.weeksOut,
+    returnWeek: week + type.weeksOut,
+  };
+}

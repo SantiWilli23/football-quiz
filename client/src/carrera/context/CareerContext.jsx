@@ -2,14 +2,14 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { teams, teamById, teamsByLeague } from "../data/teams.js";
 import { players as allPlayers, playersByTeam } from "../data/players.js";
 import { loadCareer, saveCareer, clearCareer } from "../hooks/useCareerSave.js";
-import { simulateUserMatch, simulateQuickMatch } from "../engine/matchEngine.js";
+import { simulateUserMatch, simulateQuickMatch, simulateHalf, combineHalves, dayFormFactor } from "../engine/matchEngine.js";
 import { ageSquad, releaseExpired, generateYouthProspects, applyPositionTrainings } from "../engine/playerGrowth.js";
 import { transferBudgetFor, weeklyWageBill, seasonIncome } from "../engine/financeEngine.js";
 import { generateMarketRumors, generateIncomingOffers } from "../engine/transferAI.js";
 import { effectiveOvr, TRAINING_WEEKS } from "../engine/positions.js";
 import { scoutPlayer, mergeReports, MONTHLY_SCOUT_ID, shouldRunMonthlyScout, pickMonthlyDiscoveries } from "../engine/scouting.js";
 import { clubDecision, playerDecision } from "../engine/transferMarket.js";
-import { rollMatchInjuries, recoverInjuries } from "../engine/injuryEngine.js";
+import { rollMatchInjuries, recoverInjuries, forceInjury } from "../engine/injuryEngine.js";
 import { rollEvent } from "../engine/eventEngine.js";
 
 const CareerContext = createContext(null);
@@ -238,6 +238,8 @@ function buildInitialState(teamId) {
     copa: generateCopa(leagueTeams, teamId),
     clubReputation: 50,
     jobOffers: [],
+    pendingMatch: null,
+    lastMeetingWeek: -1,
   };
 }
 
@@ -535,25 +537,71 @@ export function CareerProvider({ children }) {
     return state.week >= COPA_WEEKS[copa.currentRound];
   }
 
-  function playNextMatch() {
+  function playNextMatchFirstHalf() {
     const fixture = currentFixture();
     if (!fixture || !team) return null;
     const rival = teamById(fixture.opponentTeamId);
     const rivalSquad = playersByTeam(rival.id).filter((p) => !(state.acquired || []).includes(p.id));
     const rivalOvr = rivalSquad.length ? rivalSquad.reduce((s, p) => s + p.ovr, 0) / rivalSquad.length : rival.tier === 1 ? 82 : rival.tier === 2 ? 76 : 70;
+    const rivalFormScore = 60;
+    const myDay = dayFormFactor();
+    const rivalDay = dayFormFactor();
 
-    const result = simulateUserMatch({
+    const h1 = simulateHalf({
       myPlayers: state.squad,
-      myLineup: state.lineup.starters,
+      lineup: state.lineup.starters,
       myMentality: state.mentality,
       mySliders: state.sliders,
       myFormScore: 65,
       rivalOvr,
-      rivalFormScore: 60,
+      rivalFormScore,
       isHome: fixture.home,
       morale: state.morale || {},
       trainingFocus: state.trainingFocus || "balanced",
+      myDay, rivalDay, half: 1,
     });
+
+    setState((s) => ({
+      ...s,
+      pendingMatch: {
+        fixtureWeek: fixture.week,
+        rivalId: rival.id,
+        rivalOvr, rivalFormScore,
+        isHome: fixture.home,
+        myDay, rivalDay,
+        h1,
+        lineupFirst: s.lineup.starters,
+      },
+    }));
+
+    return { phase: "half1", ...h1, rival };
+  }
+
+  function playNextMatchSecondHalf(subs = []) {
+    const pm = state.pendingMatch;
+    if (!pm) return null;
+    const rival = teamById(pm.rivalId);
+
+    const lineup2 = pm.lineupFirst.map((slot) => {
+      const sub = subs.find((sb) => sb.outId === slot.playerId);
+      return sub ? { ...slot, playerId: sub.inId } : slot;
+    });
+
+    const h2 = simulateHalf({
+      myPlayers: state.squad,
+      lineup: lineup2,
+      myMentality: state.mentality,
+      mySliders: state.sliders,
+      myFormScore: 65,
+      rivalOvr: pm.rivalOvr,
+      rivalFormScore: pm.rivalFormScore,
+      isHome: pm.isHome,
+      morale: state.morale || {},
+      trainingFocus: state.trainingFocus || "balanced",
+      myDay: pm.myDay, rivalDay: pm.rivalDay, half: 2,
+    });
+
+    const result = combineHalves(pm.h1, h2);
 
     setState((s) => {
       const standings = [...s.standings.map((r) => ({ ...r }))];
@@ -561,7 +609,7 @@ export function CareerProvider({ children }) {
       applyResult(standings, rival.id, result.rivalGoals, result.myGoals);
       simulateRestOfWeek(standings, leagueTeams, s.teamId, rival.id);
 
-      const calendar = s.calendar.map((c) => (c.week === fixture.week ? { ...c, played: true, result: { myGoals: result.myGoals, rivalGoals: result.rivalGoals } } : c));
+      const calendar = s.calendar.map((c) => (c.week === pm.fixtureWeek ? { ...c, played: true, result: { myGoals: result.myGoals, rivalGoals: result.rivalGoals } } : c));
       const isWin = result.myGoals > result.rivalGoals;
       const isLoss = result.myGoals < result.rivalGoals;
 
@@ -575,25 +623,21 @@ export function CareerProvider({ children }) {
 
       const newWeek = s.week + 1;
 
-      // Actualizar estadísticas de jugadores
       const playerStats = mergePlayerStats(s.playerStats || {}, result.starterIds || [], result.playerMatchStats || {});
+      let morale = applyMatchMorale(s.morale || {}, s.squad, { starters: pm.lineupFirst, bench: s.lineup.bench }, isWin, isLoss);
 
-      // Actualizar moral
-      let morale = applyMatchMorale(s.morale || {}, s.squad, s.lineup, isWin, isLoss);
-
-      // Lesiones del partido
-      const newInjuries = rollMatchInjuries(s.lineup.starters, newWeek);
-      const injuries = [...newInjuries, ...recoverInjuries(s.injuries || [], newWeek)];
+      const newInjuries = rollMatchInjuries(pm.lineupFirst, newWeek);
+      let injuries = [...newInjuries, ...recoverInjuries(s.injuries || [], newWeek)];
       if (newInjuries.length) {
         const names = newInjuries.map(i => {
           const p = s.squad.find(pl => pl.id === i.playerId);
           return p ? `${p.name} (${i.type}, ${i.weeksOut} sem.)` : "";
         }).filter(Boolean).join(", ");
-        news = [`🏥 Bajas: ${names}`, ...news].slice(0, 8);
+        if (names) news = [`🏥 Bajas: ${names}`, ...news].slice(0, 8);
       }
 
-      // Evento aleatorio semanal
-      const event = rollEvent();
+      // Evento aleatorio semanal (narrativo, con jugadores reales del plantel)
+      const event = rollEvent(s.squad);
       let eventPatches = {};
       if (event) {
         news = [event.text, ...news].slice(0, 8);
@@ -606,10 +650,19 @@ export function CareerProvider({ children }) {
           });
           morale = updatedMorale;
         }
+        if (event.targetMoraleId && event.targetMoraleDelta) {
+          morale = {
+            ...morale,
+            [event.targetMoraleId]: Math.max(0, Math.min(100, (morale[event.targetMoraleId] ?? 70) + event.targetMoraleDelta)),
+          };
+        }
+        if (event.forceInjuryId && !recoverInjuries(injuries, newWeek).some(i => i.playerId === event.forceInjuryId)) {
+          injuries = [...injuries, forceInjury(event.forceInjuryId, newWeek)];
+        }
       }
 
       const allPlayed = calendar.every((c) => c.played);
-      let next = { ...s, ...eventPatches, standings, calendar, lastMatch: { ...result, rival }, news, week: newWeek, playerStats, morale, injuries };
+      let next = { ...s, ...eventPatches, standings, calendar, lastMatch: { ...result, rival }, news, week: newWeek, playerStats, morale, injuries, pendingMatch: null };
 
       const trainingResult = applyPositionTrainings(next.squad, next.week);
       if (trainingResult.news.length) {
@@ -639,7 +692,33 @@ export function CareerProvider({ children }) {
       if (allPlayed) next = finishSeason(next);
       return next;
     });
-    return result;
+
+    return { phase: "final", ...result, rival };
+  }
+
+  function holdSquadMeeting(type) {
+    setState((s) => {
+      if (s.lastMeetingWeek === s.week) return s;
+      const morale = { ...(s.morale || {}) };
+      let boardConfidence = s.boardConfidence;
+      let newsLine = "";
+
+      if (type === "motivate") {
+        s.squad.forEach((p) => { morale[p.id] = Math.min(100, (morale[p.id] ?? 70) + 8); });
+        newsLine = "🗣️ Diste una charla motivadora al plantel. La moral general sube.";
+      } else if (type === "demand") {
+        s.squad.forEach((p) => { morale[p.id] = Math.max(0, (morale[p.id] ?? 70) - 3); });
+        boardConfidence = Math.min(100, boardConfidence + 3);
+        newsLine = "📢 Exigiste más nivel al plantel. La directiva valora tu carácter, aunque genera algo de tensión.";
+      } else if (type === "rest") {
+        s.squad.forEach((p) => { morale[p.id] = Math.min(100, (morale[p.id] ?? 70) + 12); });
+        newsLine = "🌴 Le diste un día libre al plantel. La moral sube notablemente.";
+      } else {
+        return s;
+      }
+
+      return { ...s, morale, boardConfidence, lastMeetingWeek: s.week, news: [newsLine, ...s.news].slice(0, 8) };
+    });
   }
 
   function playCopaMatch() {
@@ -831,12 +910,14 @@ export function CareerProvider({ children }) {
       startPositionTraining,
       respondToIncomingOffer,
       currentFixture,
-      playNextMatch,
+      playNextMatchFirstHalf,
+      playNextMatchSecondHalf,
       playCopaMatch,
       copaIsAvailable,
       applyTacticsPreset,
       acceptJobOffer,
       declineJobOffer,
+      holdSquadMeeting,
       standingsSorted: state ? sortStandings(state.standings) : [],
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
