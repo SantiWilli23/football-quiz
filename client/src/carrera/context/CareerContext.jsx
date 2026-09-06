@@ -236,6 +236,8 @@ function buildInitialState(teamId) {
     trainingFocus: "balanced",
     releaseClauses: generateReleaseClauses(),
     copa: generateCopa(leagueTeams, teamId),
+    clubReputation: 50,
+    jobOffers: [],
   };
 }
 
@@ -259,6 +261,16 @@ export function CareerProvider({ children }) {
   function setSlider(key, value) { setState((s) => ({ ...s, sliders: { ...s.sliders, [key]: value } })); }
   function setLineup(lineup) { setState((s) => ({ ...s, lineup })); }
   function setTrainingFocus(focus) { setState((s) => ({ ...s, trainingFocus: focus })); }
+
+  function applyTacticsPreset(preset) {
+    setState((s) => ({
+      ...s,
+      formation: preset.formation,
+      mentality: preset.mentality,
+      sliders: { ...s.sliders, ...preset.sliders },
+      lineup: remapLineupToFormation(s.squad, s.lineup, preset.formation),
+    }));
+  }
 
   function setSlotPosition(slotIndex, x, y, newPos) {
     setState((s) => ({
@@ -448,6 +460,29 @@ export function CareerProvider({ children }) {
           ? { ...p, training: { targetPos, endWeek: s.week + TRAINING_WEEKS } }
           : p
       ),
+    }));
+  }
+
+  function acceptJobOffer(offerId) {
+    setState((s) => {
+      const offer = (s.jobOffers || []).find((o) => o.id === offerId && o.status === "pending");
+      if (!offer) return s;
+      // Construir nueva carrera en el club destino, manteniendo prestige e historial
+      const newState = buildInitialState(offer.fromTeamId);
+      return {
+        ...newState,
+        managerPrestige: s.managerPrestige,
+        history: [...s.history, { season: s.season, teamId: s.teamId, note: `Fichado por ${offer.fromTeamName}` }],
+        news: [`🤝 Firmaste como técnico de ${offer.fromTeamName}. Nueva etapa.`, ...newState.news].slice(0, 8),
+      };
+    });
+  }
+
+  function declineJobOffer(offerId) {
+    setState((s) => ({
+      ...s,
+      jobOffers: (s.jobOffers || []).map((o) => o.id === offerId ? { ...o, status: "declined" } : o),
+      news: [`❌ Rechazaste la oferta de otro club. Seguís en tu proyecto.`, ...s.news].slice(0, 8),
     }));
   }
 
@@ -687,15 +722,50 @@ export function CareerProvider({ children }) {
     if (s.copa?.champion) managerPrestige = Math.min(100, managerPrestige + 10);
     else if ((s.copa?.currentRound || 0) >= 2) managerPrestige = Math.min(100, managerPrestige + 3);
 
+    // Club reputation: crece con el tiempo y los resultados, más difícil de perder que boardConfidence
+    let clubReputation = s.clubReputation ?? 50;
+    if (objectiveMet) clubReputation = Math.min(100, clubReputation + 8);
+    else clubReputation = Math.max(0, clubReputation - 6);
+    if (s.copa?.champion) clubReputation = Math.min(100, clubReputation + 12);
+    // Cada temporada que sigues en el club sube +2 de fidelidad base
+    clubReputation = Math.min(100, clubReputation + 2);
+
     let squad = releaseExpired(ageSquad(s.squad, s.playerStats || {}));
     squad = squad.concat(generateYouthProspects(team, 3));
 
     const income = seasonIncome(team, position);
-    const budget = transferBudgetFor(team, position) + Math.round(income.total * 0.3);
+    // Club reputation alta → más presupuesto (hasta +20%)
+    const repBonus = clubReputation >= 75 ? 1.2 : clubReputation >= 50 ? 1.0 : 0.85;
+    const budget = Math.round((transferBudgetFor(team, position) + Math.round(income.total * 0.3)) * repBonus);
 
     const leagueTeamIds = leagueTeams.map((t) => t.id);
     const { calendar } = roundRobinCalendar(leagueTeamIds, s.teamId);
     const newCopa = generateCopa(leagueTeams, s.teamId);
+
+    // Generar ofertas de otros clubes si el prestige es suficiente
+    let newJobOffers = (s.jobOffers || []).map((o) => o.status === "pending" ? { ...o, status: "expired" } : o);
+    const offerChance = managerPrestige >= 75 ? 0.65 : managerPrestige >= 60 ? 0.40 : managerPrestige >= 50 ? 0.20 : 0;
+    if (objectiveMet && Math.random() < offerChance) {
+      const allTeamsList = teams.filter((t) => t.id !== s.teamId);
+      const candidate = allTeamsList[Math.floor(Math.random() * allTeamsList.length)];
+      if (candidate) {
+        newJobOffers = [
+          {
+            id: `job_${candidate.id}_${s.season}`,
+            fromTeamId: candidate.id,
+            fromTeamName: candidate.name,
+            fromLeague: candidate.league,
+            season: s.season,
+            status: "pending",
+          },
+          ...newJobOffers,
+        ].slice(0, 5);
+      }
+    }
+
+    const offerNews = newJobOffers.some((o) => o.status === "pending")
+      ? [`📩 ${newJobOffers.find(o => o.status === "pending").fromTeamName} te ofrece su banquillo. Revisá tu bandeja.`]
+      : [];
 
     return {
       ...s,
@@ -707,13 +777,16 @@ export function CareerProvider({ children }) {
       budget,
       boardConfidence,
       managerPrestige,
+      clubReputation,
+      jobOffers: newJobOffers,
       calendar,
       standings: initialStandings(leagueTeamIds),
       copa: newCopa,
-      playerStats: {},   // reset al inicio de temporada
+      playerStats: {},
       injuries: [],
       history: [...s.history, { season: s.season, position, points: sorted.find((r) => r.teamId === s.teamId)?.pts || 0, objectiveMet, copaChampion: s.copa?.champion || false }],
       news: [
+        ...offerNews,
         objectiveMet ? `¡Objetivo cumplido! Terminaste ${position}° — la directiva confía en el proyecto.` : `No se cumplió el objetivo (terminaste ${position}°). La directiva está molesta.`,
         `Nueva temporada: llegan 3 promesas de la cantera.`,
         `Copa del Rey: primera ronda disponible en jornada ${COPA_WEEKS[0]}.`,
@@ -761,6 +834,9 @@ export function CareerProvider({ children }) {
       playNextMatch,
       playCopaMatch,
       copaIsAvailable,
+      applyTacticsPreset,
+      acceptJobOffer,
+      declineJobOffer,
       standingsSorted: state ? sortStandings(state.standings) : [],
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps

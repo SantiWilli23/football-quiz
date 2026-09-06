@@ -74,8 +74,8 @@ const EVENTS = [
   },
 ];
 
-// ~28% de probabilidad por semana
+// ~8% de probabilidad por semana
 export function rollEvent() {
-  if (Math.random() > 0.28) return null;
+  if (Math.random() > 0.08) return null;
   return EVENTS[Math.floor(Math.random() * EVENTS.length)];
 }

@@ -26,8 +26,16 @@ function moraleEmoji(m) {
   return "😞";
 }
 
+function clubRepLabel(r) {
+  if (r >= 80) return { text: "Ídolo", color: "text-amber" };
+  if (r >= 65) return { text: "Querido", color: "text-emerald" };
+  if (r >= 45) return { text: "Respetado", color: "text-blue" };
+  if (r >= 25) return { text: "Cuestionado", color: "text-orange-400" };
+  return { text: "En la cuerda floja", color: "text-red-400" };
+}
+
 export default function Dashboard({ onPlayMatch }) {
-  const { state, team, currentFixture, playNextMatch, playCopaMatch, copaIsAvailable, standingsSorted, resetCareer, COPA_ROUNDS: CR, COPA_WEEKS: CW } = useCareer();
+  const { state, team, currentFixture, playNextMatch, playCopaMatch, copaIsAvailable, standingsSorted, resetCareer, acceptJobOffer, declineJobOffer, COPA_ROUNDS: CR, COPA_WEEKS: CW } = useCareer();
   const fixture   = currentFixture();
   const rival     = fixture ? teamById(fixture.opponentTeamId) : null;
   const myPos     = standingsSorted.findIndex((r) => r.teamId === state.teamId) + 1;
@@ -35,6 +43,10 @@ export default function Dashboard({ onPlayMatch }) {
   const copa      = state.copa;
   const prestige  = state.managerPrestige ?? 50;
   const pLabel    = prestigeLabel(prestige);
+
+  const clubRep = state.clubReputation ?? 50;
+  const cLabel = clubRepLabel(clubRep);
+  const pendingJobOffers = (state.jobOffers || []).filter((o) => o.status === "pending");
 
   const injuries = (state.injuries || []).filter(i => i.returnWeek > state.week);
   const injuredPlayers = injuries.map(i => {
@@ -99,9 +111,15 @@ export default function Dashboard({ onPlayMatch }) {
               <div className="h-full rounded-full transition-[width]" style={{ width: `${state.boardConfidence}%`, background: CONFIDENCE_GRADIENT[confTier] }} />
             </div>
           </div>
-          <div>
-            <p className="text-xs text-gray-500 mb-0.5">Reputación</p>
-            <span className={`text-xs font-semibold ${pLabel.color}`}>{pLabel.text} ({prestige})</span>
+          <div className="flex items-center justify-end gap-3">
+            <div className="text-right">
+              <p className="text-xs text-gray-500 mb-0.5">Reputación DT</p>
+              <span className={`text-xs font-semibold ${pLabel.color}`}>{pLabel.text} ({prestige})</span>
+            </div>
+            <div className="text-right border-l border-border pl-3">
+              <p className="text-xs text-gray-500 mb-0.5">Vínculo al club</p>
+              <span className={`text-xs font-semibold ${cLabel.color}`}>{cLabel.text} ({clubRep})</span>
+            </div>
           </div>
         </div>
       </div>
@@ -204,6 +222,41 @@ export default function Dashboard({ onPlayMatch }) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Ofertas de otros clubes */}
+      {pendingJobOffers.length > 0 && (
+        <div className="bg-amber/5 border border-amber/30 rounded-2xl p-5 space-y-3">
+          <p className="text-xs text-amber uppercase tracking-wide font-semibold">📩 Oferta de banquillo</p>
+          {pendingJobOffers.map((offer) => {
+            const offerTeam = teamById(offer.fromTeamId);
+            return (
+              <div key={offer.id} className="flex items-center gap-4 flex-wrap">
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold">{offer.fromTeamName}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {offer.fromLeague === "premier" ? "Premier League" : offer.fromLeague === "laliga" ? "La Liga" : offer.fromLeague} · Te ofrecen el puesto de técnico principal
+                  </p>
+                  <p className="text-xs text-gray-600 mt-0.5">Aceptar implica dejar {team.name} y empezar de cero en ese club. Mantenés tu reputación acumulada.</p>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    onClick={() => acceptJobOffer(offer.id)}
+                    className="text-sm font-medium px-4 py-2 rounded-2xl bg-amber/15 text-amber border border-amber/30 hover:bg-amber/25 transition-colors"
+                  >
+                    Aceptar
+                  </button>
+                  <button
+                    onClick={() => declineJobOffer(offer.id)}
+                    className="text-sm font-medium px-4 py-2 rounded-2xl bg-panel border border-border text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
+                  >
+                    Rechazar
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
