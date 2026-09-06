@@ -2,6 +2,8 @@ import { useMemo, useRef, useState } from "react";
 import { useCareer } from "../context/CareerContext.jsx";
 import { effectiveOvr, positionPenalty, positionLabel } from "../engine/positions.js";
 
+function lastName(name) { return name.split(" ").slice(-1)[0]; }
+
 // Ubica cada slot en la cancha por "línea" (según su posición) y reparte el
 // ancho entre los que comparten línea, respetando lado (zurdo/diestro). Esta
 // es sólo la posición DE ARRANQUE de cada formación preestablecida — el
@@ -49,7 +51,10 @@ function nearestPositionForDrop(x, y) {
 
 export default function Formation() {
   const { state, formations, setFormation, assignSlot, setSlotPosition, resetLineupPositions, moveToBench, moveToReserves } = useCareer();
-  const [pickerSlot, setPickerSlot] = useState(null);
+  // Intercambio de dos toques: primero tocás un titular (queda resaltado),
+  // después tocás a cualquier otro jugador (titular, banca o reserva) y se
+  // cambian de lugar. Nada de menús — es la misma lógica que mover fichas.
+  const [selectedSlot, setSelectedSlot] = useState(null);
   const [dragPos, setDragPos] = useState(null); // { index, x, y } — posición en vivo mientras se arrastra
   const pitchRef = useRef(null);
   const dragRef = useRef(null);
@@ -58,16 +63,24 @@ export default function Formation() {
   const { starters, bench, reserves } = state.lineup;
   const autoCoords = useMemo(() => layoutSlots(starters), [starters]);
   const hasCustomPositions = starters.some((s) => s.x != null);
+  const selectedPlayer = selectedSlot != null ? byId[starters[selectedSlot].playerId] : null;
 
-  // Dónde juega hoy cada jugador — se lo mostramos al elegir, y con esto el
-  // picker puede ofrecer TODO el plantel (otros titulares y banca incluidos,
-  // no sólo reservas), porque assignSlot ahora sabe intercambiarlos bien.
-  const roleById = useMemo(() => {
-    const m = {};
-    starters.forEach((s) => { if (s.playerId) m[s.playerId] = { kind: "starter", slot: s.slot }; });
-    bench.forEach((id) => { m[id] = { kind: "bench" }; });
-    return m;
-  }, [starters, bench]);
+  function pickStarter(i) {
+    if (selectedSlot === null) {
+      setSelectedSlot(i);
+    } else if (selectedSlot === i) {
+      setSelectedSlot(null);
+    } else {
+      assignSlot(selectedSlot, starters[i].playerId);
+      setSelectedSlot(null);
+    }
+  }
+
+  function pickOther(playerId) {
+    if (selectedSlot === null) return;
+    assignSlot(selectedSlot, playerId);
+    setSelectedSlot(null);
+  }
 
   function coordFor(i) {
     if (dragPos && dragPos.index === i) return dragPos;
@@ -102,7 +115,7 @@ export default function Formation() {
       setDragPos(null);
     } else {
       setDragPos(null);
-      setPickerSlot(i);
+      pickStarter(i);
     }
   }
 
@@ -124,8 +137,24 @@ export default function Formation() {
             ↺ Restablecer posiciones
           </button>
         )}
-        <span className="text-xs text-gray-500">Tocá un puesto para asignar jugador, o arrastralo para moverlo.</span>
+        <span className="text-xs text-gray-500">Tocá un titular y después a otro jugador (titular, banca o reserva) para cambiarlos de lugar, o arrastrá para reposicionar.</span>
       </div>
+
+      {selectedPlayer && (
+        <div className="flex items-center justify-between gap-3 bg-accent/10 border border-accent/30 rounded-card px-3.5 py-2.5">
+          <p className="text-sm">
+            <span className="font-semibold">{selectedPlayer.name}</span> seleccionado ({starters[selectedSlot].slot}) — tocá a otro jugador para cambiarlo de lugar.
+          </p>
+          <div className="flex gap-1.5 shrink-0">
+            <button onClick={() => { assignSlot(selectedSlot, null); setSelectedSlot(null); }} className="text-xs px-2.5 py-1 rounded-card border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors">
+              Vaciar puesto
+            </button>
+            <button onClick={() => setSelectedSlot(null)} className="text-xs px-2.5 py-1 rounded-card border border-border text-gray-400 hover:text-white hover:border-gray-500 transition-colors">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
 
       <div
         ref={pitchRef}
@@ -141,6 +170,7 @@ export default function Formation() {
           const penalty = p ? positionPenalty(p.position, slot.slot) : 0;
           const label = positionLabel(penalty);
           const dragging = dragPos && dragPos.index === i;
+          const selected = selectedSlot === i;
           return (
             <div
               key={i}
@@ -152,8 +182,12 @@ export default function Formation() {
               style={{ left: `${pos.x}%`, top: `${pos.y}%`, transition: dragging ? "none" : "left 0.15s ease, top 0.15s ease" }}
             >
               <div
-                className={`w-20 h-20 rounded-full flex items-center justify-center text-lg font-extrabold border-2 shadow-lg pointer-events-none ${
-                  p ? (penalty > 0 ? "bg-amber/90 border-amber text-black" : "bg-accent border-accent-light text-white") : "bg-panel border-dashed border-gray-500 text-gray-400 text-sm"
+                className={`w-20 h-20 rounded-full flex items-center justify-center text-lg font-extrabold border-2 shadow-lg pointer-events-none transition-all ${
+                  selected
+                    ? "bg-white border-white text-black ring-4 ring-white/50 scale-110"
+                    : p
+                    ? (penalty > 0 ? "bg-amber/90 border-amber text-black" : "bg-accent border-accent-light text-white")
+                    : "bg-panel border-dashed border-gray-500 text-gray-400 text-sm"
                 }`}
               >
                 {p ? effectiveOvr(p, slot.slot) : slot.slot}
@@ -172,25 +206,32 @@ export default function Formation() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <BenchList title={`Banca (${bench.length}/9)`} ids={bench} byId={byId} onMove={moveToReserves} moveLabel="Mandar a reservas" />
-        <BenchList title={`Reservas (${reserves.length})`} ids={reserves} byId={byId} onMove={moveToBench} moveLabel="Subir a la banca" />
-      </div>
-
-      {pickerSlot !== null && (
-        <SlotPicker
-          slotPos={starters[pickerSlot].slot}
-          currentId={starters[pickerSlot].playerId}
-          squad={state.squad}
-          roleById={roleById}
-          onPick={(playerId) => { assignSlot(pickerSlot, playerId); setPickerSlot(null); }}
-          onClose={() => setPickerSlot(null)}
+        <BenchList
+          title={`Banca (${bench.length}/9)`}
+          ids={bench}
+          byId={byId}
+          selecting={selectedSlot !== null}
+          selectedSlotPos={selectedSlot != null ? starters[selectedSlot].slot : null}
+          onPick={pickOther}
+          onMove={moveToReserves}
+          moveLabel="Mandar a reservas"
         />
-      )}
+        <BenchList
+          title={`Reservas (${reserves.length})`}
+          ids={reserves}
+          byId={byId}
+          selecting={selectedSlot !== null}
+          selectedSlotPos={selectedSlot != null ? starters[selectedSlot].slot : null}
+          onPick={pickOther}
+          onMove={moveToBench}
+          moveLabel="Subir a la banca"
+        />
+      </div>
     </div>
   );
 }
 
-function BenchList({ title, ids, byId, onMove, moveLabel }) {
+function BenchList({ title, ids, byId, selecting, selectedSlotPos, onPick, onMove, moveLabel }) {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2.5">{title}</p>
@@ -198,61 +239,29 @@ function BenchList({ title, ids, byId, onMove, moveLabel }) {
         {ids.map((id) => {
           const p = byId[id];
           if (!p) return null;
+          const penalty = selecting && selectedSlotPos ? positionPenalty(p.position, selectedSlotPos) : 0;
+          const label = selecting ? positionLabel(penalty) : null;
           return (
             <button
               key={id}
-              onClick={() => onMove(id)}
-              title={moveLabel}
-              className="flex flex-col items-center gap-1 p-3 rounded-card border border-border bg-panel hover:border-accent/40 hover:bg-bg transition-colors"
+              onClick={() => (selecting ? onPick(id) : onMove(id))}
+              title={selecting ? "Tocá para cambiarlo con el titular seleccionado" : moveLabel}
+              className={`relative flex flex-col items-center gap-1 p-3 rounded-card border transition-colors ${
+                selecting ? "border-accent/50 bg-accent/5 hover:bg-accent/15 animate-pulse" : "border-border bg-panel hover:border-accent/40 hover:bg-bg"
+              }`}
             >
               <span className="text-[10px] font-semibold text-gray-500">{p.position}</span>
-              <span className="text-xl font-bold leading-none">{p.ovr}</span>
-              <span className="text-[11px] text-gray-400 truncate max-w-full">{p.name.split(" ").slice(-1)[0]}</span>
+              <span className="text-xl font-bold leading-none">{selecting ? effectiveOvr(p, selectedSlotPos) : p.ovr}</span>
+              <span className="text-[11px] text-gray-400 truncate max-w-full">{lastName(p.name)}</span>
+              {label && <span className="text-[8px] text-amber leading-tight">{label.text}</span>}
             </button>
           );
         })}
         {!ids.length && <p className="text-xs text-gray-600 col-span-full py-2">Vacío.</p>}
       </div>
-    </div>
-  );
-}
-
-function SlotPicker({ slotPos, currentId, squad, roleById, onPick, onClose }) {
-  const candidates = squad
-    .filter((p) => p.id !== currentId)
-    .map((p) => ({ p, penalty: positionPenalty(p.position, slotPos), role: roleById[p.id] }))
-    .sort((a, b) => effectiveOvr(b.p, slotPos) - effectiveOvr(a.p, slotPos));
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-3" onClick={onClose}>
-      <div className="bg-panel border border-border rounded-card w-full max-w-md max-h-[70vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="p-3 border-b border-border flex items-center justify-between">
-          <p className="font-semibold text-sm">Elegir para {slotPos}</p>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-sm">✕</button>
-        </div>
-        <div className="divide-y divide-border">
-          {currentId && (
-            <button onClick={() => onPick(null)} className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-bg">
-              Dejar el puesto vacío
-            </button>
-          )}
-          {candidates.map(({ p, penalty, role }) => {
-            const label = positionLabel(penalty);
-            const roleText = role?.kind === "starter" ? `Titular (${role.slot})` : role?.kind === "bench" ? "Banca" : "Reserva";
-            return (
-              <button key={p.id} onClick={() => onPick(p.id)} className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-bg">
-                <span className="flex items-center gap-2 truncate">
-                  <span className="text-gray-500 text-xs w-9 shrink-0">{p.position}</span>
-                  <span className="truncate">{p.name}</span>
-                  <span className="text-[10px] text-gray-600 shrink-0">{roleText}</span>
-                  {label && <span className="text-[10px] text-amber shrink-0">{label.text}</span>}
-                </span>
-                <span className="shrink-0 font-semibold">{effectiveOvr(p, slotPos)}{penalty > 0 && <span className="text-gray-500 font-normal text-xs"> ({p.ovr})</span>}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {!selecting && !!ids.length && (
+        <p className="text-[11px] text-gray-600 mt-1.5">Tocá un titular en la cancha para intercambiarlo con uno de estos.</p>
+      )}
     </div>
   );
 }
