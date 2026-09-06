@@ -13,7 +13,7 @@
 // cambia qué significan.
 const chalk = {
   board: "#1c1f26",
-  boardLight: "#34363b",
+  boardLight: "#2b3444",
   line: "#45474c",
   white: "#f2f2f0",
   yellow: "#d9a441",
