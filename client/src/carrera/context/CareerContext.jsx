@@ -158,6 +158,7 @@ function buildInitialState(teamId) {
     scoutReports: {},
     scoutsAvailable: {},
     acquired: [],
+    offerCooldowns: {},
   };
 }
 
@@ -254,15 +255,38 @@ export function CareerProvider({ children }) {
 
   // Fichajes: primero se le oferta al club por el pase; si acepta, recién
   // ahí se le ofrece contrato al jugador. Ninguna de las dos ofertas mueve
-  // plata todavía — sólo completeTransfer() lo hace, al final.
+  // plata todavía — sólo completeTransfer() lo hace, al final. Cada intento
+  // es de una sola vez: si rechazan (el club o el jugador), no se puede
+  // insistir al toque probando otro número — hay que esperar unas semanas,
+  // como en la vida real.
+  const OFFER_COOLDOWN_WEEKS = 4;
+
+  function isOnOfferCooldown(playerId) {
+    const until = (state.offerCooldowns || {})[playerId];
+    return until != null && state.week < until;
+  }
+
+  function weeksUntilCanOffer(playerId) {
+    const until = (state.offerCooldowns || {})[playerId];
+    return until != null ? Math.max(0, until - state.week) : 0;
+  }
+
   function offerForPlayer(player, offerAmount) {
     const sellerTeam = teamById(player.teamId);
-    return { ...clubDecision(player, sellerTeam, offerAmount), player, sellerTeam, offerAmount };
+    const result = clubDecision(player, sellerTeam, offerAmount);
+    if (!result.accepted) {
+      setState((s) => ({ ...s, offerCooldowns: { ...(s.offerCooldowns || {}), [player.id]: s.week + OFFER_COOLDOWN_WEEKS } }));
+    }
+    return { ...result, player, sellerTeam, offerAmount };
   }
 
   function offerContractTo(player, wageOffered, years) {
     const sellerTeam = teamById(player.teamId);
-    return { ...playerDecision(player, sellerTeam, team, wageOffered, years), player, wageOffered, years };
+    const result = playerDecision(player, sellerTeam, team, wageOffered, years);
+    if (!result.accepted) {
+      setState((s) => ({ ...s, offerCooldowns: { ...(s.offerCooldowns || {}), [player.id]: s.week + OFFER_COOLDOWN_WEEKS } }));
+    }
+    return { ...result, player, wageOffered, years };
   }
 
   function completeTransfer(player, feeAgreed, wageAgreed, yearsAgreed) {
@@ -420,6 +444,8 @@ export function CareerProvider({ children }) {
       offerForPlayer,
       offerContractTo,
       completeTransfer,
+      isOnOfferCooldown,
+      weeksUntilCanOffer,
       currentFixture,
       playNextMatch,
       standingsSorted: state ? sortStandings(state.standings) : [],

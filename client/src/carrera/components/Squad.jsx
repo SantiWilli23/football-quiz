@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { useCareer } from "../context/CareerContext.jsx";
-import { formatRange } from "../engine/scouting.js";
 import Formation from "./Formation.jsx";
 
 // Agrupamos por línea de cancha en vez de tirar las 10 posiciones sueltas:
@@ -157,7 +156,7 @@ function PlayerRow({ player: p, level, report, onBench, onReserves }) {
       <div className="hidden sm:flex flex-col items-center w-16 shrink-0">
         <span className="text-[10px] uppercase tracking-wide text-gray-600">Pot.</span>
         <span className="text-sm text-gray-300 font-medium" title={report ? `Reportado por ${report.scoutName}` : "Sin reclutar"}>
-          {report ? formatRange(report.potRange) : <span className="text-gray-600">?</span>}
+          {report?.potentialEstimate != null ? `~${report.potentialEstimate}` : <span className="text-gray-600">?</span>}
         </span>
       </div>
 

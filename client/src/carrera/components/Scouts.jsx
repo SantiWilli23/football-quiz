@@ -25,7 +25,8 @@ export default function Scouts() {
         <h2 className="text-2xl font-bold mb-2">Departamento de Scouting</h2>
         <p className="text-sm text-gray-500 max-w-lg leading-relaxed">
           No conocés el techo (ni el nivel exacto) de un jugador hasta que uno de tus 6 reclutadores lo va a ver.
-          Cada uno tiene una zona donde es más certero. Varios informes del mismo jugador angostan el rango.
+          El potencial que te reportan es la cifra más probable — no una garantía, puede que el jugador no llegue del
+          todo. El reclutador también te tira una oferta sugerida por el pase.
         </p>
       </div>
 
@@ -68,7 +69,8 @@ export default function Scouts() {
               <th className="px-3 py-3">Pos</th>
               <th className="px-3 py-3">Edad</th>
               <th className="px-3 py-3">OVR est.</th>
-              <th className="px-3 py-3">POT est.</th>
+              <th className="px-3 py-3">Potencial</th>
+              <th className="px-3 py-3">Oferta sugerida</th>
               <th className="px-3 py-3"></th>
             </tr>
           </thead>
@@ -81,7 +83,8 @@ export default function Scouts() {
                   <td className="px-3 py-3 text-center text-gray-400">{p.position}</td>
                   <td className="px-3 py-3 text-center text-gray-400">{p.age}</td>
                   <td className="px-3 py-3 text-center font-semibold">{report ? formatRange(report.ovrRange) : "?"}</td>
-                  <td className="px-3 py-3 text-center text-gray-400">{report ? formatRange(report.potRange) : "?"}</td>
+                  <td className="px-3 py-3 text-center text-gray-400">{report?.potentialEstimate != null ? `~${report.potentialEstimate}` : "?"}</td>
+                  <td className="px-3 py-3 text-center text-gray-400">{report?.suggestedOffer != null ? `€${report.suggestedOffer}M` : "?"}</td>
                   <td className="px-3 py-3 text-center">
                     <button
                       onClick={() => setLastReport(sendScout(scoutId, p.id))}
@@ -94,7 +97,7 @@ export default function Scouts() {
               );
             })}
             {!filtered.length && (
-              <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-600 text-sm">Sin resultados.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-6 text-center text-gray-600 text-sm">Sin resultados.</td></tr>
             )}
           </tbody>
         </table>
@@ -104,9 +107,10 @@ export default function Scouts() {
         <div className="bg-panel border border-accent/30 rounded-2xl p-4 text-sm">
           <p className="font-semibold mb-1">📋 Informe de {lastReport.scoutName}</p>
           <p className="text-gray-400">
-            OVR estimado: <span className="text-white font-medium">{formatRange(lastReport.ovrRange)}</span> · Potencial estimado: <span className="text-white font-medium">{formatRange(lastReport.potRange)}</span>
+            OVR estimado: <span className="text-white font-medium">{formatRange(lastReport.ovrRange)}</span> · Potencial probable: <span className="text-white font-medium">~{lastReport.potentialEstimate}</span> · Oferta sugerida: <span className="text-white font-medium">€{lastReport.suggestedOffer}M</span>
             {lastReport.specialized && <span className="text-amber ml-2">(zona de especialidad — informe más certero)</span>}
           </p>
+          <p className="text-xs text-gray-500 mt-1.5">El potencial es una proyección, no una promesa: capaz llega, capaz se queda un poco corto.</p>
         </div>
       )}
     </div>
