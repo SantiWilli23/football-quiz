@@ -33,6 +33,20 @@ function layoutSlots(slots) {
 function clampPct(v) { return Math.min(95, Math.max(5, v)); }
 const DRAG_THRESHOLD = 6;
 
+// A qué posición corresponde soltar al jugador en tal punto de la cancha.
+// Son los puntos medios entre las líneas de LINE_Y: si lo soltás más cerca
+// de la línea de ataque que de la de mediocampo, pasa a jugar de delantero
+// (con la penalización que le toque si no es lo suyo), y así con el resto.
+function nearestPositionForDrop(x, y) {
+  if (y >= 82.5) return "GK";
+  if (y >= 67) return x < 30 ? "LB" : x > 70 ? "RB" : "CB";
+  if (y >= 55) return "CDM";
+  if (y >= 44) return "CM";
+  if (y >= 29) return "CAM";
+  if (y >= 16) return x < 50 ? "LW" : "RW";
+  return "ST";
+}
+
 export default function Formation() {
   const { state, formations, setFormation, assignSlot, setSlotPosition, resetLineupPositions, moveToBench, moveToReserves } = useCareer();
   const [pickerSlot, setPickerSlot] = useState(null);
@@ -75,7 +89,7 @@ export default function Formation() {
     dragRef.current = null;
     if (d && d.moved) {
       const final = dragPos && dragPos.index === i ? dragPos : null;
-      if (final) setSlotPosition(i, final.x, final.y);
+      if (final) setSlotPosition(i, final.x, final.y, nearestPositionForDrop(final.x, final.y));
       setDragPos(null);
     } else {
       setDragPos(null);
@@ -107,11 +121,11 @@ export default function Formation() {
       <div
         ref={pitchRef}
         className="relative w-full rounded-card overflow-hidden border border-border select-none"
-        style={{ aspectRatio: "0.68", background: "linear-gradient(180deg,#1f4d33,#255c3d 50%,#1f4d33)", touchAction: "none" }}
+        style={{ aspectRatio: "0.95", background: "linear-gradient(180deg,#1f4d33,#255c3d 50%,#1f4d33)", touchAction: "none" }}
       >
         <div className="absolute inset-2 border border-white/25 rounded-md" />
         <div className="absolute left-2 right-2 top-1/2 border-t border-white/25" />
-        <div className="absolute left-1/2 top-1/2 w-16 h-16 -translate-x-1/2 -translate-y-1/2 border border-white/25 rounded-full" />
+        <div className="absolute left-1/2 top-1/2 w-20 h-20 -translate-x-1/2 -translate-y-1/2 border border-white/25 rounded-full" />
         {starters.map((slot, i) => {
           const p = byId[slot.playerId];
           const pos = coordFor(i);
@@ -129,8 +143,8 @@ export default function Formation() {
               style={{ left: `${pos.x}%`, top: `${pos.y}%`, transition: dragging ? "none" : "left 0.15s ease, top 0.15s ease" }}
             >
               <div
-                className={`w-16 h-16 rounded-full flex items-center justify-center text-base font-extrabold border-2 shadow-lg pointer-events-none ${
-                  p ? (penalty > 0 ? "bg-amber/90 border-amber text-black" : "bg-accent border-accent-light text-white") : "bg-panel border-dashed border-gray-500 text-gray-400 text-xs"
+                className={`w-20 h-20 rounded-full flex items-center justify-center text-lg font-extrabold border-2 shadow-lg pointer-events-none ${
+                  p ? (penalty > 0 ? "bg-amber/90 border-amber text-black" : "bg-accent border-accent-light text-white") : "bg-panel border-dashed border-gray-500 text-gray-400 text-sm"
                 }`}
               >
                 {p ? effectiveOvr(p, slot.slot) : slot.slot}

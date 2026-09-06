@@ -225,23 +225,33 @@ export function CareerProvider({ children }) {
   // Guarda una posición libre (x/y en % de la cancha) para un slot puntual,
   // así el usuario puede arrastrar a un jugador fuera de su ubicación
   // "de manual" y armar una formación a medida a partir de una preestablecida.
-  function setSlotPosition(slotIndex, x, y) {
+  // newPos es opcional: si al arrastrar el jugador cae en una zona distinta
+  // de la cancha (defensa, mediocampo, ataque...), ese slot pasa a exigir
+  // esa posición de ahí en más — así jugar "de central" de verdad significa
+  // que ahora lo evalúan como central, no que sólo se movió el dibujito.
+  function setSlotPosition(slotIndex, x, y, newPos) {
     setState((s) => ({
       ...s,
       lineup: {
         ...s.lineup,
-        starters: s.lineup.starters.map((slot, i) => (i === slotIndex ? { ...slot, x, y } : slot)),
+        starters: s.lineup.starters.map((slot, i) =>
+          i === slotIndex ? { ...slot, x, y, ...(newPos ? { slot: newPos } : {}) } : slot
+        ),
       },
     }));
   }
 
-  // Vuelve a la disposición automática de la formación elegida, tirando
-  // cualquier posición libre que se haya movido a mano.
+  // Vuelve a la disposición Y a las posiciones originales de la formación
+  // elegida, tirando cualquier movida a mano (posición libre o cambio de
+  // puesto por arrastre).
   function resetLineupPositions() {
-    setState((s) => ({
-      ...s,
-      lineup: { ...s.lineup, starters: s.lineup.starters.map((slot) => ({ slot: slot.slot, playerId: slot.playerId })) },
-    }));
+    setState((s) => {
+      const preset = FORMATIONS[s.formation] || FORMATIONS["4-3-3"];
+      return {
+        ...s,
+        lineup: { ...s.lineup, starters: s.lineup.starters.map((slot, i) => ({ slot: preset[i] || slot.slot, playerId: slot.playerId })) },
+      };
+    });
   }
 
   // Asigna/retira un jugador de un slot puntual de la formación (usado por
