@@ -13,36 +13,42 @@ const INTERNAL_GAMES = [
     label: "Trivia",
     icon: HelpCircle,
     description: "Respondé las preguntas del día: trivia normal + preguntas especiales del grupo.",
+    color: "#f0907e",
   },
   {
     to: "/futbol",
     label: "Fútbol",
     icon: Newspaper,
     description: "Resultados en vivo, tabla de posiciones, goleadores y juegos de fútbol.",
+    color: "#3b9dd6",
   },
   {
     to: "/grupo",
     label: "Grupos",
     icon: Users,
     description: "Competí con tus amigos, mirá el ranking del grupo y los campeones mensuales.",
+    color: "#d9a441",
   },
   {
     to: "/duelos",
     label: "Duelos",
     icon: Swords,
     description: "Desafiá a alguien del grupo uno contra uno con las preguntas más difíciles.",
+    color: "#f0c674",
   },
   {
     to: "/estadisticas",
     label: "Estadísticas",
     icon: BarChart3,
     description: "Resumen semanal, compatibilidad con el grupo y logros desbloqueados.",
+    color: "#3fae9a",
   },
   {
     to: "/carrera-dt",
     label: "Modo Carrera DT",
     icon: Shield,
     description: "Dirigí un equipo de Premier League o La Liga: tácticas, fichajes y partidos en vivo.",
+    color: "#8a6423",
   },
 ];
 
@@ -53,6 +59,7 @@ const EXTERNAL_GAMES = [
     icon: Star,
     description: "Armá tu XI con jugadores de 138 planteles históricos de la Champions League.",
     badge: null,
+    color: "#d9a441",
   },
   {
     href: "/cotrero.html",
@@ -60,6 +67,7 @@ const EXTERNAL_GAMES = [
     icon: Crown,
     description: "De potrero a leyenda: simulá toda la carrera de un jugador, temporada a temporada.",
     badge: null,
+    color: "#3fae9a",
   },
   {
     href: null,
@@ -67,6 +75,7 @@ const EXTERNAL_GAMES = [
     icon: Zap,
     description: "¿Podés adivinar quién es el jugador con pistas mínimas?",
     badge: "Próximamente",
+    color: "#a8a9ac",
   },
 ];
 
@@ -109,15 +118,18 @@ export default function Dashboard() {
           <h2 className="text-[11px] font-medium text-gray-600 uppercase tracking-[0.2em] mb-4">
             Secciones
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/5 rounded-card overflow-hidden mb-12">
-            {INTERNAL_GAMES.map(({ to, label, icon: Icon, description }) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/5 rounded-2xl overflow-hidden mb-12">
+            {INTERNAL_GAMES.map(({ to, label, icon: Icon, description, color }) => (
               <Link
                 key={to}
                 to={to}
                 className="group flex items-start gap-4 px-5 py-5 bg-bg hover:bg-panel transition-colors"
               >
-                <div className="w-10 h-10 rounded-card flex items-center justify-center shrink-0 bg-white/5 text-gray-400 group-hover:bg-accent/10 group-hover:text-accent transition-colors">
-                  <Icon size={18} />
+                <div
+                  className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
+                  style={{ background: `${color}22`, border: `1px solid ${color}44`, color }}
+                >
+                  <Icon size={19} />
                 </div>
                 <div className="min-w-0 pt-1">
                   <p className="text-sm font-medium mb-1 group-hover:text-white transition-colors">
@@ -133,12 +145,15 @@ export default function Dashboard() {
           <h2 className="text-[11px] font-medium text-gray-600 uppercase tracking-[0.2em] mb-4">
             Juegos
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/5 rounded-card overflow-hidden">
-            {EXTERNAL_GAMES.map(({ href, label, icon: Icon, description, badge }) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/5 rounded-2xl overflow-hidden">
+            {EXTERNAL_GAMES.map(({ href, label, icon: Icon, description, badge, color }) => {
               const inner = (
                 <>
-                  <div className="w-10 h-10 rounded-card flex items-center justify-center shrink-0 bg-white/5 text-gray-400 group-hover:bg-accent/10 group-hover:text-accent transition-colors">
-                    <Icon size={18} />
+                  <div
+                    className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
+                    style={{ background: `${color}22`, border: `1px solid ${color}44`, color }}
+                  >
+                    <Icon size={19} />
                   </div>
                   <div className="min-w-0 pt-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -197,9 +212,9 @@ export default function Dashboard() {
 
           <div className="pt-8 border-t border-white/5">
             <p className="text-[11px] font-medium text-gray-500 uppercase tracking-[0.2em] mb-4">Mis stats</p>
-            <div className="space-y-3">
+            <div className="divide-y divide-white/5">
               <StatRow label="Puntos" value={stats?.total_points ?? 0} />
-              <StatRow label="Aciertos" value={`${stats?.accuracy ?? 0}%`} />
+              <StatRow label="Aciertos" value={`${stats?.accuracy ?? 0}%`} accent />
               <StatRow label="Trivia" value={stats?.trivia_points ?? 0} />
               <StatRow label="Especial" value={stats?.mode_b_points ?? 0} />
             </div>
@@ -210,7 +225,7 @@ export default function Dashboard() {
               <p className="text-[11px] font-medium text-gray-500 uppercase tracking-[0.2em] mb-4">Mi grupo</p>
               {groupDetail ? (
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-card flex items-center justify-center shrink-0 bg-accent/15 text-accent font-semibold text-sm">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-accent/15 text-accent font-semibold text-sm">
                     {groupDetail.name.slice(0, 1).toUpperCase()}
                   </div>
                   <div className="min-w-0">
@@ -238,11 +253,11 @@ export default function Dashboard() {
   );
 }
 
-function StatRow({ label, value }) {
+function StatRow({ label, value, accent }) {
   return (
-    <div className="flex items-center justify-between text-sm">
+    <div className="flex items-center justify-between text-sm py-2.5 first:pt-0 last:pb-0">
       <span className="text-gray-500 text-xs">{label}</span>
-      <span className="font-medium tabular-nums">{value}</span>
+      <span className={`font-medium tabular-nums ${accent ? "text-accent" : ""}`}>{value}</span>
     </div>
   );
 }

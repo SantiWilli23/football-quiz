@@ -136,21 +136,21 @@ function GamesSection() {
         const inner = (
           <>
             <div
-              className="w-10 h-10 rounded-card flex items-center justify-center shrink-0"
+              className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"
               style={{ background: `${color}22`, border: `1px solid ${color}44` }}
             >
-              <Icon size={20} style={{ color }} />
+              <Icon size={24} style={{ color }} />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-0.5">
-                <p className="text-sm font-semibold">{label}</p>
+              <div className="flex items-center gap-2 mb-1">
+                <p className="font-semibold">{label}</p>
                 {!available && (
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-gray-600/50 text-gray-400 border border-gray-600/50">
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-600/50 text-gray-400 border border-gray-600/50">
                     Próximamente
                   </span>
                 )}
               </div>
-              <p className="text-xs text-gray-500 leading-snug">{description}</p>
+              <p className="text-sm text-gray-500 leading-snug">{description}</p>
             </div>
           </>
         );
@@ -159,7 +159,7 @@ function GamesSection() {
           return (
             <div
               key={label}
-              className="flex items-center gap-4 px-4 py-4 rounded-card border border-border bg-panel opacity-60 cursor-default"
+              className="flex items-center gap-4 px-5 py-5 rounded-2xl border border-border bg-panel opacity-60 cursor-default"
             >
               {inner}
             </div>
@@ -170,7 +170,7 @@ function GamesSection() {
           <a
             key={href}
             href={href}
-            className="flex items-center gap-4 px-4 py-4 rounded-card border border-border bg-panel hover:border-white/20 hover:bg-white/5 transition-colors"
+            className="flex items-center gap-4 px-5 py-5 rounded-2xl border border-border bg-panel hover:border-white/20 hover:bg-white/5 transition-colors"
           >
             {inner}
           </a>
@@ -265,7 +265,7 @@ export default function Football() {
       <div className="flex gap-2 mb-6">
         <button
           onClick={() => setSection("juegos")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-card text-sm font-medium border transition-colors ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium border transition-colors ${
             section === "juegos"
               ? "border-accent/50 bg-accent/10 text-accent"
               : "border-border text-gray-400 hover:text-white hover:border-white/30"
@@ -276,7 +276,7 @@ export default function Football() {
         </button>
         <button
           onClick={() => setSection("vivo")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-card text-sm font-medium border transition-colors ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium border transition-colors ${
             section === "vivo"
               ? "border-accent/50 bg-accent/10 text-accent"
               : "border-border text-gray-400 hover:text-white hover:border-white/30"

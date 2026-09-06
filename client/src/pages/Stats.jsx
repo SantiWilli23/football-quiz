@@ -120,7 +120,7 @@ export default function Stats() {
           <GroupSelector />
           <Link
             to="/historial"
-            className="lg:hidden flex items-center gap-2 px-4 py-2 rounded-card text-sm font-medium border border-border text-gray-300 hover:text-white hover:border-white/30 transition-colors"
+            className="lg:hidden flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium border border-border text-gray-300 hover:text-white hover:border-white/30 transition-colors"
           >
             <History size={15} />
             Historial
@@ -128,7 +128,7 @@ export default function Stats() {
           <button
             onClick={handleExport}
             disabled={exporting}
-            className="flex items-center gap-2 px-4 py-2 rounded-card text-sm font-medium border border-border text-gray-300 hover:text-white hover:border-white/30 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-medium border border-border text-gray-300 hover:text-white hover:border-white/30 transition-colors disabled:opacity-50"
           >
             <Download size={15} />
             {exporting ? "Generando..." : "Exportar CSV"}
@@ -174,7 +174,7 @@ export default function Stats() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {summary.most_divisive && (
-                    <div className="rounded-card border border-border bg-bg px-4 py-3">
+                    <div className="rounded-xl border border-border bg-bg px-4 py-3">
                       <p className="text-xs text-gray-500 mb-1">
                         La más peleada · {KIND_LABELS[summary.most_divisive.kind]}
                       </p>
@@ -185,7 +185,7 @@ export default function Stats() {
                     </div>
                   )}
                   {summary.most_unanimous && (
-                    <div className="rounded-card border border-border bg-bg px-4 py-3">
+                    <div className="rounded-xl border border-border bg-bg px-4 py-3">
                       <p className="text-xs text-gray-500 mb-1">
                         En la que todos coincidieron · {KIND_LABELS[summary.most_unanimous.kind]}
                       </p>
@@ -213,7 +213,7 @@ export default function Stats() {
                   {modeB.leaderboard.map((r) => (
                     <div
                       key={r.id}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-card border ${
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border ${
                         r.id === user?.id ? "border-accent/40 bg-accent/5" : "border-border"
                       }`}
                     >
@@ -310,7 +310,7 @@ export default function Stats() {
               {achievements?.achievements.map((a) => (
                 <div
                   key={a.id}
-                  className={`rounded-card border px-4 py-3.5 ${
+                  className={`rounded-xl border px-4 py-3.5 ${
                     a.unlocked ? "border-accent/40 bg-accent/5" : "border-border bg-bg"
                   }`}
                 >

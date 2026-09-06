@@ -22,22 +22,22 @@ export default function Scouts() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-lg font-bold mb-1">Departamento de Scouting</h2>
-        <p className="text-xs text-gray-500 max-w-lg">
+        <h2 className="text-2xl font-bold mb-2">Departamento de Scouting</h2>
+        <p className="text-sm text-gray-500 max-w-lg leading-relaxed">
           No conocés el techo (ni el nivel exacto) de un jugador hasta que uno de tus 6 reclutadores lo va a ver.
           Cada uno tiene una zona donde es más certero. Varios informes del mismo jugador angostan el rango.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {SCOUTS.map((s) => (
           <button
             key={s.id}
             onClick={() => setScoutId(s.id)}
-            className={`text-left p-3 rounded-card border transition-colors ${scoutId === s.id ? "border-accent bg-accent/10" : "border-border bg-panel hover:border-gray-500"}`}
+            className={`text-left p-4 rounded-2xl border transition-colors ${scoutId === s.id ? "border-accent bg-accent/10" : "border-border bg-panel hover:border-gray-500"}`}
           >
             <p className="text-sm font-semibold">{s.name}</p>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">
+            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1.5">
               {s.region === "premier" ? "Premier League" : s.region === "laliga" ? "La Liga" : "Global"} · precisión {Math.round(s.accuracy * 100)}%
             </p>
             <p className="text-xs text-gray-400 leading-snug">{s.desc}</p>
@@ -45,8 +45,8 @@ export default function Scouts() {
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-2 items-center">
-        <select value={teamId} onChange={(e) => setTeamId(e.target.value)} className="bg-panel border border-border rounded-card px-2 py-1.5 text-sm max-w-[220px]">
+      <div className="flex flex-wrap gap-3 items-center">
+        <select value={teamId} onChange={(e) => setTeamId(e.target.value)} className="bg-panel border border-border rounded-2xl px-4 py-3 text-sm max-w-[220px]">
           <option value={team.id}>Mi plantel ({team.name})</option>
           {teams.filter((t) => t.id !== team.id).map((t) => (
             <option key={t.id} value={t.id}>{t.name}</option>
@@ -56,20 +56,20 @@ export default function Scouts() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscar jugador…"
-          className="bg-panel border border-border rounded-card px-2 py-1.5 text-sm flex-1 min-w-[160px]"
+          className="bg-panel border border-border rounded-2xl px-4 py-3 text-sm flex-1 min-w-[160px]"
         />
       </div>
 
-      <div className="overflow-x-auto rounded-card border border-border">
+      <div className="overflow-x-auto rounded-2xl border border-border">
         <table className="w-full text-sm">
           <thead className="bg-panel text-gray-500 text-xs uppercase">
             <tr>
-              <th className="text-left px-3 py-2">Nombre</th>
-              <th className="px-2 py-2">Pos</th>
-              <th className="px-2 py-2">Edad</th>
-              <th className="px-2 py-2">OVR est.</th>
-              <th className="px-2 py-2">POT est.</th>
-              <th className="px-2 py-2"></th>
+              <th className="text-left px-4 py-3">Nombre</th>
+              <th className="px-3 py-3">Pos</th>
+              <th className="px-3 py-3">Edad</th>
+              <th className="px-3 py-3">OVR est.</th>
+              <th className="px-3 py-3">POT est.</th>
+              <th className="px-3 py-3"></th>
             </tr>
           </thead>
           <tbody>
@@ -77,15 +77,15 @@ export default function Scouts() {
               const report = reportedIds[p.id];
               return (
                 <tr key={p.id} className="border-t border-border">
-                  <td className="px-3 py-2 truncate max-w-[160px]">{p.name}</td>
-                  <td className="px-2 py-2 text-center text-gray-400">{p.position}</td>
-                  <td className="px-2 py-2 text-center text-gray-400">{p.age}</td>
-                  <td className="px-2 py-2 text-center font-semibold">{report ? formatRange(report.ovrRange) : "?"}</td>
-                  <td className="px-2 py-2 text-center text-gray-400">{report ? formatRange(report.potRange) : "?"}</td>
-                  <td className="px-2 py-2 text-center">
+                  <td className="px-4 py-3 truncate max-w-[160px]">{p.name}</td>
+                  <td className="px-3 py-3 text-center text-gray-400">{p.position}</td>
+                  <td className="px-3 py-3 text-center text-gray-400">{p.age}</td>
+                  <td className="px-3 py-3 text-center font-semibold">{report ? formatRange(report.ovrRange) : "?"}</td>
+                  <td className="px-3 py-3 text-center text-gray-400">{report ? formatRange(report.potRange) : "?"}</td>
+                  <td className="px-3 py-3 text-center">
                     <button
                       onClick={() => setLastReport(sendScout(scoutId, p.id))}
-                      className="text-xs px-2 py-1 rounded-card bg-accent/15 text-accent border border-accent/30 hover:bg-accent/25"
+                      className="text-sm font-medium px-4 py-2.5 rounded-2xl bg-accent/10 text-accent border border-accent/40 hover:bg-accent/20 transition-colors"
                     >
                       Enviar reclutador
                     </button>
@@ -94,14 +94,14 @@ export default function Scouts() {
               );
             })}
             {!filtered.length && (
-              <tr><td colSpan={6} className="px-3 py-6 text-center text-gray-600 text-sm">Sin resultados.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-600 text-sm">Sin resultados.</td></tr>
             )}
           </tbody>
         </table>
       </div>
 
       {lastReport && (
-        <div className="bg-panel border border-accent/30 rounded-card p-3 text-sm">
+        <div className="bg-panel border border-accent/30 rounded-2xl p-4 text-sm">
           <p className="font-semibold mb-1">📋 Informe de {lastReport.scoutName}</p>
           <p className="text-gray-400">
             OVR estimado: <span className="text-white font-medium">{formatRange(lastReport.ovrRange)}</span> · Potencial estimado: <span className="text-white font-medium">{formatRange(lastReport.potRange)}</span>
