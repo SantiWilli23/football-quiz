@@ -1,14 +1,23 @@
+import { useState } from "react";
 import { badgeFor } from "../data/teams.js";
 
-// Escudo real cuando lo tenemos confirmado; si no, un escudo placeholder con
-// forma de escudo real (no un cuadrado liso) en los colores del club, con
-// sus iniciales — así el 90% de los clubes sin logo cargado igual se leen
-// como un escudo y no como un cuadrado vacío.
+// Escudo real cuando lo tenemos confirmado; si no (o si la URL llegara a
+// fallar en el navegador), un escudo placeholder con forma de escudo real
+// (no un cuadrado liso) en los colores del club, con sus iniciales.
 export default function TeamCrest({ team, size = 32, className = "" }) {
   const url = badgeFor(team.id);
+  const [broken, setBroken] = useState(false);
   const style = { width: size, height: size };
-  if (url) {
-    return <img src={url} alt={team.name} className={`object-contain shrink-0 ${className}`} style={style} />;
+  if (url && !broken) {
+    return (
+      <img
+        src={url}
+        alt={team.name}
+        className={`object-contain shrink-0 ${className}`}
+        style={style}
+        onError={() => setBroken(true)}
+      />
+    );
   }
   const initials = (team.shortName || team.name.slice(0, 3)).toUpperCase();
   return (

@@ -45,18 +45,52 @@ export const teams = [
   { id: "valladolid", name: "Valladolid", shortName: "VLL", league: "laliga", tier: 3, budget: 12, boardObjective: "salvarse", prestige: 2, colors: { primary: "#6B007B", secondary: "#FFFFFF" } },
 ];
 
-// Escudos reales verificados (mismos que usa Cotrero). El resto de los
-// equipos no tiene una URL de escudo confirmada todavía, así que muestran
-// un cuadrado con los colores reales del club en su lugar.
+// Escudos reales verificados contra la API pública de TheSportsDB. Sólo
+// quedan sin confirmar Alavés (la única coincidencia encontrada era la del
+// equipo femenino) y Valladolid (la búsqueda no devolvió resultado) — esos
+// dos siguen mostrando el escudo placeholder con los colores del club.
 export const CLUB_LOGOS = {
-  realmadrid: "https://r2.thesportsdb.com/images/media/team/badge/vwvwrw1473502969.png",
-  barcelona: "https://r2.thesportsdb.com/images/media/team/badge/wq9sir1639406443.png",
-  atletico: "https://r2.thesportsdb.com/images/media/team/badge/0ulh3q1719984315.png",
-  realsociedad: "https://r2.thesportsdb.com/images/media/team/badge/vptvpr1473502986.png",
+  // Premier League
   mancity: "https://r2.thesportsdb.com/images/media/team/badge/vwpvry1467462651.png",
   liverpool: "https://r2.thesportsdb.com/images/media/team/badge/kfaher1737969724.png",
   arsenal: "https://r2.thesportsdb.com/images/media/team/badge/uyhbfe1612467038.png",
+  chelsea: "https://r2.thesportsdb.com/images/media/team/badge/pbf4ul1782638263.png",
+  manutd: "https://r2.thesportsdb.com/images/media/team/badge/xzqdr11517660252.png",
+  tottenham: "https://r2.thesportsdb.com/images/media/team/badge/dfyfhl1604094109.png",
+  newcastle: "https://r2.thesportsdb.com/images/media/team/badge/lhwuiz1621593302.png",
+  astonvilla: "https://www.thesportsdb.com/images/media/team/badge/uwzw561787679026.png",
+  westham: "https://r2.thesportsdb.com/images/media/team/badge/yutyxs1467459956.png",
   brighton: "https://r2.thesportsdb.com/images/media/team/badge/ywypts1448810904.png",
+  fulham: "https://r2.thesportsdb.com/images/media/team/badge/xwwvyt1448811086.png",
+  brentford: "https://r2.thesportsdb.com/images/media/team/badge/grv1aw1546453779.png",
+  nforest: "https://r2.thesportsdb.com/images/media/team/badge/1i2kvh1719918076.png",
+  everton: "https://r2.thesportsdb.com/images/media/team/badge/eqayrf1523184794.png",
+  crystalpalace: "https://r2.thesportsdb.com/images/media/team/badge/ia6i3m1656014992.png",
+  wolves: "https://r2.thesportsdb.com/images/media/team/badge/u9qr031621593327.png",
+  bournemouth: "https://r2.thesportsdb.com/images/media/team/badge/y08nak1534071116.png",
+  ipswich: "https://r2.thesportsdb.com/images/media/team/badge/mdj1ey1634670785.png",
+  leicester: "https://r2.thesportsdb.com/images/media/team/badge/xtxwtu1448813356.png",
+  southampton: "https://r2.thesportsdb.com/images/media/team/badge/ggqtd01621593274.png",
+
+  // La Liga
+  realmadrid: "https://r2.thesportsdb.com/images/media/team/badge/vwvwrw1473502969.png",
+  barcelona: "https://r2.thesportsdb.com/images/media/team/badge/wq9sir1639406443.png",
+  atletico: "https://r2.thesportsdb.com/images/media/team/badge/0ulh3q1719984315.png",
+  athletic: "https://r2.thesportsdb.com/images/media/team/badge/68w7fe1639408210.png",
+  realsociedad: "https://r2.thesportsdb.com/images/media/team/badge/vptvpr1473502986.png",
+  villarreal: "https://r2.thesportsdb.com/images/media/team/badge/vrypqy1473503073.png",
+  realbetis: "https://r2.thesportsdb.com/images/media/team/badge/2oqulv1663245386.png",
+  sevilla: "https://r2.thesportsdb.com/images/media/team/badge/vpsqqx1473502977.png",
+  girona: "https://r2.thesportsdb.com/images/media/team/badge/kfu7zu1659897499.png",
+  valencia: "https://r2.thesportsdb.com/images/media/team/badge/dm8l6o1655594864.png",
+  celtavigo: "https://r2.thesportsdb.com/images/media/team/badge/xfjtku1690436219.png",
+  osasuna: "https://r2.thesportsdb.com/images/media/team/badge/rvspvt1473502960.png",
+  rayo: "https://r2.thesportsdb.com/images/media/team/badge/nzhu941655595465.png",
+  getafe: "https://r2.thesportsdb.com/images/media/team/badge/eyh2891655594452.png",
+  mallorca: "https://r2.thesportsdb.com/images/media/team/badge/ssptsx1473503730.png",
+  laspalmas: "https://r2.thesportsdb.com/images/media/team/badge/mmhyb11616443601.png",
+  leganes: "https://r2.thesportsdb.com/images/media/team/badge/tm0adr1616443898.png",
+  espanyol: "https://r2.thesportsdb.com/images/media/team/badge/867nzz1681703222.png",
 };
 
 export function badgeFor(teamId) {

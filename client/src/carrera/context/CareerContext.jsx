@@ -8,6 +8,7 @@ import { transferBudgetFor, weeklyWageBill, seasonIncome } from "../engine/finan
 import { generateMarketRumors } from "../engine/transferAI.js";
 import { effectiveOvr } from "../engine/positions.js";
 import { scoutPlayer, mergeReports } from "../engine/scouting.js";
+import { clubDecision, playerDecision } from "../engine/transferMarket.js";
 
 const CareerContext = createContext(null);
 
@@ -156,6 +157,7 @@ function buildInitialState(teamId) {
     gameOver: false,
     scoutReports: {},
     scoutsAvailable: {},
+    acquired: [],
   };
 }
 
@@ -250,6 +252,45 @@ export function CareerProvider({ children }) {
     });
   }
 
+  // Fichajes: primero se le oferta al club por el pase; si acepta, recién
+  // ahí se le ofrece contrato al jugador. Ninguna de las dos ofertas mueve
+  // plata todavía — sólo completeTransfer() lo hace, al final.
+  function offerForPlayer(player, offerAmount) {
+    const sellerTeam = teamById(player.teamId);
+    return { ...clubDecision(player, sellerTeam, offerAmount), player, sellerTeam, offerAmount };
+  }
+
+  function offerContractTo(player, wageOffered, years) {
+    const sellerTeam = teamById(player.teamId);
+    return { ...playerDecision(player, sellerTeam, team, wageOffered, years), player, wageOffered, years };
+  }
+
+  function completeTransfer(player, feeAgreed, wageAgreed, yearsAgreed) {
+    setState((s) => {
+      if (s.budget < feeAgreed) return s;
+      const signed = {
+        ...player,
+        teamId: s.teamId,
+        wage: wageAgreed,
+        contractYears: yearsAgreed,
+        isYouth: false,
+        transferListed: false,
+        loanListed: false,
+        releaseClause: null,
+      };
+      const squad = [...s.squad, signed];
+      const reserves = [...s.lineup.reserves, signed.id];
+      return {
+        ...s,
+        squad,
+        lineup: { ...s.lineup, reserves },
+        budget: Math.round((s.budget - feeAgreed) * 20) / 20,
+        acquired: [...(s.acquired || []), player.id],
+        news: [`✍️ Fichaste a ${player.name} por €${feeAgreed}M.`, ...s.news].slice(0, 8),
+      };
+    });
+  }
+
   // Manda a uno de los 6 reclutadores a ver a un jugador (propio o de
   // cualquier otro club). El reporte da un RANGO de OVR y potencial, no el
   // número exacto — varios reportes del mismo jugador angostan el rango.
@@ -275,7 +316,7 @@ export function CareerProvider({ children }) {
     const fixture = currentFixture();
     if (!fixture || !team) return null;
     const rival = teamById(fixture.opponentTeamId);
-    const rivalSquad = playersByTeam(rival.id);
+    const rivalSquad = playersByTeam(rival.id).filter((p) => !(state.acquired || []).includes(p.id));
     const rivalOvr = rivalSquad.length ? rivalSquad.reduce((s, p) => s + p.ovr, 0) / rivalSquad.length : rival.tier === 1 ? 82 : rival.tier === 2 ? 76 : 70;
 
     const result = simulateUserMatch({
@@ -376,6 +417,9 @@ export function CareerProvider({ children }) {
       moveToBench,
       moveToReserves,
       sendScout,
+      offerForPlayer,
+      offerContractTo,
+      completeTransfer,
       currentFixture,
       playNextMatch,
       standingsSorted: state ? sortStandings(state.standings) : [],
