@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useCareer } from "../context/CareerContext.jsx";
 import Formation from "./Formation.jsx";
+import { ALL_POSITIONS, trainingTier, trainingTierLabel } from "../engine/positions.js";
 
 // Agrupamos por línea de cancha en vez de tirar las 10 posiciones sueltas:
 // así la plantilla se lee en bloques (arco, defensa, medio, ataque) y no
@@ -27,7 +28,7 @@ const DOT_CLASSES = {
 };
 
 export default function Squad() {
-  const { state, moveToBench, moveToReserves } = useCareer();
+  const { state, moveToBench, moveToReserves, toggleTransferListed, toggleLoanListed, startPositionTraining } = useCareer();
   const [tab, setTab] = useState("formacion");
   const [groupFilter, setGroupFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("ovr");
@@ -113,7 +114,18 @@ export default function Squad() {
                   </div>
                   <div className="rounded-card border border-border bg-panel divide-y divide-border overflow-hidden">
                     {g.players.map((p) => (
-                      <PlayerRow key={p.id} player={p} level={levelOf(p.id)} report={state.scoutReports[p.id]} onBench={() => moveToBench(p.id)} onReserves={() => moveToReserves(p.id)} />
+                      <PlayerRow
+                        key={p.id}
+                        player={p}
+                        level={levelOf(p.id)}
+                        report={state.scoutReports[p.id]}
+                        week={state.week}
+                        onBench={() => moveToBench(p.id)}
+                        onReserves={() => moveToReserves(p.id)}
+                        onToggleTransferListed={() => toggleTransferListed(p.id)}
+                        onToggleLoanListed={() => toggleLoanListed(p.id)}
+                        onStartTraining={(pos) => startPositionTraining(p.id, pos)}
+                      />
                     ))}
                   </div>
                 </div>
@@ -134,49 +146,111 @@ const LEVEL_STYLE = {
   Reserva: "text-gray-500 border-border",
 };
 
-function PlayerRow({ player: p, level, report, onBench, onReserves }) {
+function PlayerRow({ player: p, level, report, week, onBench, onReserves, onToggleTransferListed, onToggleLoanListed, onStartTraining }) {
   return (
-    <div className="flex items-center gap-4 px-4 py-3.5 hover:bg-white/[0.03] transition-colors">
-      <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-[11px] font-bold text-gray-400">
-        {p.position}
-      </div>
+    <div className="px-4 py-3.5 hover:bg-white/[0.03] transition-colors space-y-2.5">
+      <div className="flex items-center gap-4">
+        <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-[11px] font-bold text-gray-400">
+          {p.position}
+        </div>
 
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold truncate">
-          {p.name} {p.isYouth && <span className="text-amber text-xs align-middle" title="Promesa de la cantera">⭐</span>}
-        </p>
-        <p className="text-xs text-gray-500 mt-0.5">{p.nationality} · {p.age} años</p>
-      </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold truncate">
+            {p.name} {p.isYouth && <span className="text-amber text-xs align-middle" title="Promesa de la cantera">⭐</span>}
+          </p>
+          <p className="text-xs text-gray-500 mt-0.5">{p.nationality} · {p.age} años</p>
+        </div>
 
-      <div className="hidden sm:flex flex-col items-center w-16 shrink-0">
-        <span className="text-[10px] uppercase tracking-wide text-gray-600">Valor</span>
-        <span className="text-sm text-gray-300 font-medium">€{p.value}M</span>
-      </div>
+        <div className="hidden sm:flex flex-col items-center w-16 shrink-0">
+          <span className="text-[10px] uppercase tracking-wide text-gray-600">Valor</span>
+          <span className="text-sm text-gray-300 font-medium">€{p.value}M</span>
+        </div>
 
-      <div className="hidden sm:flex flex-col items-center w-16 shrink-0">
-        <span className="text-[10px] uppercase tracking-wide text-gray-600">Pot.</span>
-        <span className="text-sm text-gray-300 font-medium" title={report ? `Reportado por ${report.scoutName}` : "Sin reclutar"}>
-          {report?.potentialEstimate != null ? `~${report.potentialEstimate}` : <span className="text-gray-600">?</span>}
+        <div className="hidden sm:flex flex-col items-center w-16 shrink-0">
+          <span className="text-[10px] uppercase tracking-wide text-gray-600">Pot.</span>
+          <span className="text-sm text-gray-300 font-medium" title={report ? `Reportado por ${report.scoutName}` : "Sin reclutar"}>
+            {report?.potentialEstimate != null ? `~${report.potentialEstimate}` : <span className="text-gray-600">?</span>}
+          </span>
+        </div>
+
+        <div className="flex flex-col items-center w-11 shrink-0">
+          <span className="text-[10px] uppercase tracking-wide text-gray-600">OVR</span>
+          <span className="text-base font-bold">{p.ovr}</span>
+        </div>
+
+        <span className={`hidden md:inline-flex shrink-0 text-[11px] font-medium px-2.5 py-1 rounded-full border ${LEVEL_STYLE[level]}`}>
+          {level}
         </span>
+
+        <div className="hidden lg:flex gap-1.5 shrink-0">
+          <button onClick={onBench} className="text-xs px-2.5 py-1 rounded-card border border-border text-gray-400 hover:text-white hover:border-gray-500 transition-colors">
+            Banca
+          </button>
+          <button onClick={onReserves} className="text-xs px-2.5 py-1 rounded-card border border-border text-gray-400 hover:text-white hover:border-gray-500 transition-colors">
+            Reservas
+          </button>
+        </div>
       </div>
 
-      <div className="flex flex-col items-center w-11 shrink-0">
-        <span className="text-[10px] uppercase tracking-wide text-gray-600">OVR</span>
-        <span className="text-base font-bold">{p.ovr}</span>
+      <div className="flex flex-wrap items-center gap-2 pl-[52px]">
+        <button
+          onClick={onToggleTransferListed}
+          className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+            p.transferListed ? "bg-red-500/15 text-red-400 border-red-500/40" : "text-gray-500 border-border hover:text-white hover:border-gray-500"
+          }`}
+        >
+          {p.transferListed ? "✓ Transferible" : "Poner transferible"}
+        </button>
+        <button
+          onClick={onToggleLoanListed}
+          className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+            p.loanListed ? "bg-blue/15 text-blue border-blue/40" : "text-gray-500 border-border hover:text-white hover:border-gray-500"
+          }`}
+        >
+          {p.loanListed ? "✓ A préstamo" : "Ofrecer a préstamo"}
+        </button>
+        <PositionTraining player={p} week={week} onStart={onStartTraining} />
       </div>
+    </div>
+  );
+}
 
-      <span className={`hidden md:inline-flex shrink-0 text-[11px] font-medium px-2.5 py-1 rounded-full border ${LEVEL_STYLE[level]}`}>
-        {level}
+function PositionTraining({ player: p, week, onStart }) {
+  const [target, setTarget] = useState("");
+
+  if (p.training) {
+    const weeksLeft = Math.max(0, p.training.endWeek - week);
+    return (
+      <span className="text-[11px] px-2.5 py-1 rounded-full border border-amber/30 bg-amber/10 text-amber">
+        🎓 Entrenando → {p.training.targetPos} ({weeksLeft} sem.)
       </span>
+    );
+  }
 
-      <div className="hidden lg:flex gap-1.5 shrink-0">
-        <button onClick={onBench} className="text-xs px-2.5 py-1 rounded-card border border-border text-gray-400 hover:text-white hover:border-gray-500 transition-colors">
-          Banca
+  const tier = target ? trainingTier(p.position, target) : null;
+  const hint = tier ? trainingTierLabel(tier) : null;
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <select
+        value={target}
+        onChange={(e) => setTarget(e.target.value)}
+        className="bg-bg border border-border rounded-full px-2.5 py-1 text-[11px] text-gray-300"
+      >
+        <option value="">Reconvertir a…</option>
+        {ALL_POSITIONS.filter((pos) => pos !== p.position).map((pos) => (
+          <option key={pos} value={pos}>{pos}</option>
+        ))}
+      </select>
+      {target && (
+        <button
+          onClick={() => { onStart(target); setTarget(""); }}
+          className="text-[11px] px-2.5 py-1 rounded-full border border-accent/40 bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
+        >
+          Entrenar
         </button>
-        <button onClick={onReserves} className="text-xs px-2.5 py-1 rounded-card border border-border text-gray-400 hover:text-white hover:border-gray-500 transition-colors">
-          Reservas
-        </button>
-      </div>
+      )}
+      {hint && <span className={`text-[10px] ${hint.tone === "good" ? "text-emerald" : hint.tone === "warn" ? "text-amber" : "text-red-400"}`}>{hint.text}</span>}
     </div>
   );
 }

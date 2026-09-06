@@ -1,14 +1,24 @@
+import { resolveTrainingDelta } from "./positions.js";
+
+function rndInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+
 // Progresión y envejecimiento de jugadores al final de cada temporada.
+// Subir más allá del potencial es prácticamente imposible (gap<=0 lo corta);
+// una vez que un jugador lo alcanza se queda ahí unos años (hasta los 28)
+// antes de que empiece el declive natural.
 function growthPerSeason(player) {
   const { age, ovr, potential } = player;
   const gap = potential - ovr;
-  if (gap <= 0) return age <= 27 ? 0 : -1;
-  if (age <= 21) return Math.min(gap, Math.floor(Math.random() * 3) + 2);
-  if (age <= 24) return Math.min(gap, Math.floor(Math.random() * 3) + 1);
-  if (age <= 27) return Math.min(gap, Math.floor(Math.random() * 2));
-  if (age <= 30) return Math.random() > 0.7 ? -1 : 0;
-  if (age <= 33) return -Math.floor(Math.random() * 2);
-  return -(Math.floor(Math.random() * 2) + 1);
+  if (gap <= 0) return age < 28 ? 0 : -rndInt(1, 3);
+  if (age <= 21) return Math.min(gap, rndInt(2, 5));
+  if (age < 28) return Math.min(gap, rndInt(1, 3));
+  if (age <= 32) {
+    // Zona de transición: al que le queda margen real todavía puede seguir
+    // creciendo un poco, el resto ya empieza a bajar.
+    if (gap >= 3 && Math.random() < 0.5) return Math.min(gap, rndInt(1, 3));
+    return -rndInt(1, 3);
+  }
+  return -rndInt(1, 3);
 }
 
 export function ageSquad(squad) {
@@ -25,6 +35,23 @@ export function ageSquad(squad) {
 
 export function releaseExpired(squad) {
   return squad.filter((p) => p.contractYears > 0);
+}
+
+// Aplica los cambios de posición que ya cumplieron su tiempo de entrenamiento
+// (ver TRAINING_WEEKS en engine/positions.js). El resultado depende de qué
+// tan lógico sea el cambio: uno con sentido futbolístico mantiene o mejora
+// el OVR, uno sin sentido lo castiga.
+export function applyPositionTrainings(squad, week) {
+  const news = [];
+  const updated = squad.map((p) => {
+    if (!p.training || week < p.training.endWeek) return p;
+    const delta = resolveTrainingDelta(p.position, p.training.targetPos);
+    const ovr = Math.max(30, Math.min(99, p.ovr + delta));
+    const arrow = delta > 0 ? "📈" : delta < 0 ? "📉" : "🎓";
+    news.push(`${arrow} ${p.name} completó su reconversión a ${p.training.targetPos} (OVR ${ovr}, antes ${p.ovr}).`);
+    return { ...p, position: p.training.targetPos, ovr, training: null };
+  });
+  return { squad: updated, news };
 }
 
 const YOUTH_FIRST = ["Alex", "Marco", "Leo", "Kai", "Theo", "Nico", "Dario", "Iker", "Owen", "Milan"];

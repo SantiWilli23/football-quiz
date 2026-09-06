@@ -3,10 +3,10 @@ import { teams, teamById, teamsByLeague } from "../data/teams.js";
 import { players as allPlayers, playersByTeam } from "../data/players.js";
 import { loadCareer, saveCareer, clearCareer } from "../hooks/useCareerSave.js";
 import { simulateUserMatch, simulateQuickMatch } from "../engine/matchEngine.js";
-import { ageSquad, releaseExpired, generateYouthProspects } from "../engine/playerGrowth.js";
+import { ageSquad, releaseExpired, generateYouthProspects, applyPositionTrainings } from "../engine/playerGrowth.js";
 import { transferBudgetFor, weeklyWageBill, seasonIncome } from "../engine/financeEngine.js";
-import { generateMarketRumors } from "../engine/transferAI.js";
-import { effectiveOvr } from "../engine/positions.js";
+import { generateMarketRumors, generateIncomingOffers } from "../engine/transferAI.js";
+import { effectiveOvr, TRAINING_WEEKS } from "../engine/positions.js";
 import { scoutPlayer, mergeReports, MONTHLY_SCOUT_ID, shouldRunMonthlyScout, pickMonthlyDiscoveries } from "../engine/scouting.js";
 import { clubDecision, playerDecision } from "../engine/transferMarket.js";
 
@@ -187,6 +187,9 @@ function buildInitialState(teamId) {
     offerCooldowns: {},
     monthlyReports: [initialDiscovery.entry],
     lastMonthlyScoutWeek: 0,
+    watchlist: [],
+    sentOffers: [],
+    incomingOffers: [],
   };
 }
 
@@ -337,18 +340,28 @@ export function CareerProvider({ children }) {
   function offerForPlayer(player, offerAmount) {
     const sellerTeam = teamById(player.teamId);
     const result = clubDecision(player, sellerTeam, offerAmount);
-    if (!result.accepted) {
-      setState((s) => ({ ...s, offerCooldowns: { ...(s.offerCooldowns || {}), [player.id]: s.week + OFFER_COOLDOWN_WEEKS } }));
-    }
+    setState((s) => ({
+      ...s,
+      offerCooldowns: result.accepted ? s.offerCooldowns : { ...(s.offerCooldowns || {}), [player.id]: s.week + OFFER_COOLDOWN_WEEKS },
+      sentOffers: [
+        { id: `fee_${player.id}_${s.week}_${Date.now()}`, type: "fee", playerId: player.id, playerName: player.name, teamId: player.teamId, amount: offerAmount, accepted: result.accepted, week: s.week },
+        ...(s.sentOffers || []),
+      ].slice(0, 30),
+    }));
     return { ...result, player, sellerTeam, offerAmount };
   }
 
   function offerContractTo(player, wageOffered, years) {
     const sellerTeam = teamById(player.teamId);
     const result = playerDecision(player, sellerTeam, team, wageOffered, years);
-    if (!result.accepted) {
-      setState((s) => ({ ...s, offerCooldowns: { ...(s.offerCooldowns || {}), [player.id]: s.week + OFFER_COOLDOWN_WEEKS } }));
-    }
+    setState((s) => ({
+      ...s,
+      offerCooldowns: result.accepted ? s.offerCooldowns : { ...(s.offerCooldowns || {}), [player.id]: s.week + OFFER_COOLDOWN_WEEKS },
+      sentOffers: [
+        { id: `wage_${player.id}_${s.week}_${Date.now()}`, type: "wage", playerId: player.id, playerName: player.name, teamId: player.teamId, amount: wageOffered, years, accepted: result.accepted, week: s.week },
+        ...(s.sentOffers || []),
+      ].slice(0, 30),
+    }));
     return { ...result, player, wageOffered, years };
   }
 
@@ -373,8 +386,66 @@ export function CareerProvider({ children }) {
         lineup: { ...s.lineup, reserves },
         budget: Math.round((s.budget - feeAgreed) * 20) / 20,
         acquired: [...(s.acquired || []), player.id],
+        watchlist: (s.watchlist || []).filter((id) => id !== player.id),
         news: [`✍️ Fichaste a ${player.name} por €${feeAgreed}M.`, ...s.news].slice(0, 8),
       };
+    });
+  }
+
+  // Seguimiento de jugadores ajenos que te interesan (Central de Transferencias).
+  function toggleWatchlist(playerId) {
+    setState((s) => {
+      const watchlist = s.watchlist || [];
+      return { ...s, watchlist: watchlist.includes(playerId) ? watchlist.filter((id) => id !== playerId) : [...watchlist, playerId] };
+    });
+  }
+
+  // Poner/sacar a un jugador PROPIO de la lista de transferibles o de préstamo
+  // — así lo pueden ofertar otros clubes (ver generateIncomingOffers).
+  function toggleTransferListed(playerId) {
+    setState((s) => ({ ...s, squad: s.squad.map((p) => (p.id === playerId ? { ...p, transferListed: !p.transferListed } : p)) }));
+  }
+  function toggleLoanListed(playerId) {
+    setState((s) => ({ ...s, squad: s.squad.map((p) => (p.id === playerId ? { ...p, loanListed: !p.loanListed } : p)) }));
+  }
+
+  // Reconvertir a un jugador propio a otro puesto: tarda TRAINING_WEEKS en
+  // resolverse (ver applyPositionTrainings, corre cada semana en playNextMatch).
+  function startPositionTraining(playerId, targetPos) {
+    setState((s) => ({
+      ...s,
+      squad: s.squad.map((p) =>
+        p.id === playerId && !p.training && p.position !== targetPos
+          ? { ...p, training: { targetPos, endWeek: s.week + TRAINING_WEEKS } }
+          : p
+      ),
+    }));
+  }
+
+  // Responder a una oferta que llegó de otro club por un jugador propio.
+  // Si se acepta, el jugador sale del plantel y de la alineación ya mismo;
+  // si es venta (no préstamo) también entra la plata al presupuesto.
+  function respondToIncomingOffer(offerId, accept) {
+    setState((s) => {
+      const offer = (s.incomingOffers || []).find((o) => o.id === offerId);
+      if (!offer || offer.status !== "pending") return s;
+      const incomingOffers = s.incomingOffers.map((o) => (o.id === offerId ? { ...o, status: accept ? "accepted" : "rejected" } : o));
+      if (!accept) return { ...s, incomingOffers };
+
+      const squad = s.squad.filter((p) => p.id !== offer.playerId);
+      const lineup = {
+        starters: s.lineup.starters.map((slot) => (slot.playerId === offer.playerId ? { ...slot, playerId: null } : slot)),
+        bench: s.lineup.bench.filter((id) => id !== offer.playerId),
+        reserves: s.lineup.reserves.filter((id) => id !== offer.playerId),
+      };
+      const budget = offer.isLoan ? s.budget : Math.round((s.budget + offer.amount) * 20) / 20;
+      const news = [
+        offer.isLoan
+          ? `🔁 Prestaste a ${offer.playerName} a ${offer.teamName}.`
+          : `💰 Vendiste a ${offer.playerName} a ${offer.teamName} por €${offer.amount}M.`,
+        ...s.news,
+      ].slice(0, 8);
+      return { ...s, squad, lineup, budget, incomingOffers, news };
     });
   }
 
@@ -441,6 +512,20 @@ export function CareerProvider({ children }) {
 
       const allPlayed = calendar.every((c) => c.played);
       let next = { ...s, standings, calendar, lastMatch: { ...result, rival }, news, week: s.week + 1 };
+
+      const trainingResult = applyPositionTrainings(next.squad, next.week);
+      if (trainingResult.news.length) {
+        next = { ...next, squad: trainingResult.squad, news: [...trainingResult.news, ...next.news].slice(0, 8) };
+      }
+
+      const newOffers = generateIncomingOffers(next.squad, teams, next.teamId, next.week);
+      if (newOffers.length) {
+        next = {
+          ...next,
+          incomingOffers: [...newOffers, ...(next.incomingOffers || [])].slice(0, 20),
+          news: [`📨 Llegaron ${newOffers.length} oferta${newOffers.length === 1 ? "" : "s"} por jugadores tuyos.`, ...next.news].slice(0, 8),
+        };
+      }
 
       if (shouldRunMonthlyScout(next.week, next.lastMonthlyScoutWeek)) {
         const discovery = runMonthlyDiscovery(next.scoutReports, next.week);
@@ -525,6 +610,11 @@ export function CareerProvider({ children }) {
       completeTransfer,
       isOnOfferCooldown,
       weeksUntilCanOffer,
+      toggleWatchlist,
+      toggleTransferListed,
+      toggleLoanListed,
+      startPositionTraining,
+      respondToIncomingOffer,
       currentFixture,
       playNextMatch,
       standingsSorted: state ? sortStandings(state.standings) : [],
