@@ -8,7 +8,7 @@
 // cambiar un color es un solo lugar. Lo que se puede resolver con clases de
 // Tailwind vive en tailwind.config.js.
 export const CHALK = {
-  board: "#2a2c30",
+  board: "#1c1f26",
   boardLight: "#34363b",
   line: "#45474c",
 

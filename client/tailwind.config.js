@@ -12,7 +12,7 @@
 // las ~20 referencias a chalk.* / CHALK.* ya esparcidas por la app — sólo
 // cambia qué significan.
 const chalk = {
-  board: "#2a2c30",
+  board: "#1c1f26",
   boardLight: "#34363b",
   line: "#45474c",
   white: "#f2f2f0",
