@@ -2,10 +2,6 @@ import { resolveTrainingDelta } from "./positions.js";
 
 function rndInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
 
-// Progresión y envejecimiento de jugadores al final de cada temporada.
-// Subir más allá del potencial es prácticamente imposible (gap<=0 lo corta);
-// una vez que un jugador lo alcanza se queda ahí unos años (hasta los 28)
-// antes de que empiece el declive natural.
 function growthPerSeason(player) {
   const { age, ovr, potential } = player;
   const gap = potential - ovr;
@@ -13,19 +9,22 @@ function growthPerSeason(player) {
   if (age <= 21) return Math.min(gap, rndInt(2, 5));
   if (age < 28) return Math.min(gap, rndInt(1, 3));
   if (age <= 32) {
-    // Zona de transición: al que le queda margen real todavía puede seguir
-    // creciendo un poco, el resto ya empieza a bajar.
     if (gap >= 3 && Math.random() < 0.5) return Math.min(gap, rndInt(1, 3));
     return -rndInt(1, 3);
   }
   return -rndInt(1, 3);
 }
 
-export function ageSquad(squad) {
+// Bonus para jóvenes titulares habituales: si un jugador <= 21 años jugó
+// >= 18 partidos de titular en la temporada, gana +1 OVR extra de experiencia.
+export function ageSquad(squad, playerStats = {}) {
   return squad
     .map((p) => {
       const age = p.age + 1;
-      const delta = growthPerSeason(p);
+      const base = growthPerSeason(p);
+      const appearances = playerStats[p.id]?.appearances || 0;
+      const youthBonus = p.age <= 21 && appearances >= 18 ? 1 : 0;
+      const delta = base + youthBonus;
       const ovr = Math.max(35, Math.min(p.potential, p.ovr + delta));
       const contractYears = Math.max(0, p.contractYears - 1);
       return { ...p, age, ovr, contractYears };
@@ -37,10 +36,6 @@ export function releaseExpired(squad) {
   return squad.filter((p) => p.contractYears > 0);
 }
 
-// Aplica los cambios de posición que ya cumplieron su tiempo de entrenamiento
-// (ver TRAINING_WEEKS en engine/positions.js). El resultado depende de qué
-// tan lógico sea el cambio: uno con sentido futbolístico mantiene o mejora
-// el OVR, uno sin sentido lo castiga.
 export function applyPositionTrainings(squad, week) {
   const news = [];
   const updated = squad.map((p) => {

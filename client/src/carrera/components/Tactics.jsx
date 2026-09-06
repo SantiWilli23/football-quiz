@@ -12,8 +12,17 @@ const SLIDER_DEFS = [
   ["transition", "Transición", "Conservar", "Contraatacar"],
 ];
 
+const FOCUS_OPTIONS = [
+  { id: "balanced", label: "Equilibrado", emoji: "⚖️", desc: "Sin modificadores especiales" },
+  { id: "defense",  label: "Defensa",     emoji: "🛡️", desc: "+Solidez defensiva, leve baja ofensiva" },
+  { id: "attack",   label: "Ataque",      emoji: "⚔️", desc: "+Poder ofensivo, leve baja defensiva" },
+  { id: "pressing", label: "Pressing",    emoji: "🔥", desc: "+Pressing efectivo durante todo el partido" },
+  { id: "fitness",  label: "Físico",      emoji: "💪", desc: "Reduce el desgaste en el segundo tiempo" },
+];
+
 export default function Tactics() {
-  const { state, formations, setFormation, setMentality, setSlider } = useCareer();
+  const { state, formations, setFormation, setMentality, setSlider, setTrainingFocus } = useCareer();
+  const focus = state.trainingFocus || "balanced";
 
   return (
     <div className="space-y-5">
@@ -38,6 +47,31 @@ export default function Tactics() {
         />
         <div className="flex justify-between text-[10px] text-gray-500 mt-1">
           <span>Park the bus</span><span>Todos arriba</span>
+        </div>
+      </div>
+
+      {/* Foco de entrenamiento semanal */}
+      <div className="bg-panel border border-border rounded-card p-4">
+        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Foco de entrenamiento semanal</p>
+        <p className="text-xs text-gray-600 mb-3">El foco elegido aplica un modificador en el próximo partido.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {FOCUS_OPTIONS.map(opt => (
+            <button
+              key={opt.id}
+              onClick={() => setTrainingFocus(opt.id)}
+              className={`flex items-start gap-3 text-left px-3 py-2.5 rounded-card border transition-colors ${
+                focus === opt.id
+                  ? "border-accent/50 bg-accent/10 text-accent"
+                  : "border-border text-gray-400 hover:border-gray-500 hover:text-white"
+              }`}
+            >
+              <span className="text-xl leading-none mt-0.5">{opt.emoji}</span>
+              <div>
+                <p className="text-sm font-semibold">{opt.label}</p>
+                <p className="text-[11px] opacity-70">{opt.desc}</p>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
 

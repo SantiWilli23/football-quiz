@@ -9,6 +9,8 @@ import { generateMarketRumors, generateIncomingOffers } from "../engine/transfer
 import { effectiveOvr, TRAINING_WEEKS } from "../engine/positions.js";
 import { scoutPlayer, mergeReports, MONTHLY_SCOUT_ID, shouldRunMonthlyScout, pickMonthlyDiscoveries } from "../engine/scouting.js";
 import { clubDecision, playerDecision } from "../engine/transferMarket.js";
+import { rollMatchInjuries, recoverInjuries } from "../engine/injuryEngine.js";
+import { rollEvent } from "../engine/eventEngine.js";
 
 const CareerContext = createContext(null);
 
@@ -30,8 +32,11 @@ const FORMATIONS = {
   "5-2-3": ["GK", "RB", "CB", "CB", "CB", "LB", "CM", "CM", "RW", "ST", "LW"],
 };
 
+const COPA_ROUNDS = ["Dieciseisavos", "Cuartos de final", "Semifinal", "Final"];
+const COPA_WEEKS = [6, 14, 22, 30];
+const COPA_PRIZES = [0.5, 1, 2, 5];
+
 function roundRobinCalendar(leagueTeamIds, myTeamId) {
-  // Genera las 38 jornadas (ida y vuelta) del calendario de liga.
   const ids = leagueTeamIds.slice();
   if (ids.length % 2 !== 0) ids.push(null);
   const n = ids.length;
@@ -58,7 +63,6 @@ function roundRobinCalendar(leagueTeamIds, myTeamId) {
       const opponent = a === myTeamId ? b : a;
       calendar.push({ week: week + 1, opponentTeamId: opponent, home: a === myTeamId, played: false, result: null });
     }
-    // resto de la jornada (partidos sin el usuario) se guarda para simulación estadística
   });
   return { calendar, allRounds };
 }
@@ -70,9 +74,7 @@ function initialStandings(leagueTeamIds) {
 function applyResult(standings, teamId, gf, ga) {
   const row = standings.find((s) => s.teamId === teamId);
   if (!row) return;
-  row.played += 1;
-  row.gf += gf;
-  row.ga += ga;
+  row.played += 1; row.gf += gf; row.ga += ga;
   if (gf > ga) { row.won += 1; row.pts += 3; }
   else if (gf === ga) { row.drawn += 1; row.pts += 1; }
   else { row.lost += 1; }
@@ -82,9 +84,6 @@ function sortStandings(standings) {
   return [...standings].sort((a, b) => b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf);
 }
 
-// El lineup titular ahora es un arreglo de slots en el orden exacto de la
-// formación ({ slot: "ST", playerId }), no una lista suelta de ids: así
-// sabemos en qué posición juega cada uno y se puede penalizar si no es la suya.
 function defaultLineup(squad, formation) {
   const slots = FORMATIONS[formation] || FORMATIONS["4-3-3"];
   const used = new Set();
@@ -101,9 +100,6 @@ function defaultLineup(squad, formation) {
   return { starters, bench, reserves };
 }
 
-// Al cambiar de formación tratamos de mantener a los jugadores en su misma
-// posición natural si el nuevo esquema la tiene, y sólo recurrimos a la
-// banca/reservas para los slots que quedaron sin dueño.
 function remapLineupToFormation(squad, lineup, formation) {
   const slots = FORMATIONS[formation] || FORMATIONS["4-3-3"];
   const prevIds = lineup.starters.map((s) => s.playerId).filter(Boolean);
@@ -115,8 +111,6 @@ function remapLineupToFormation(squad, lineup, formation) {
     if (candidate) used.add(candidate.id);
     return { slot: pos, playerId: candidate ? candidate.id : null };
   });
-  const leftover = squad.filter((p) => !used.has(p.id) && (lineup.bench.includes(p.id) || lineup.reserves.includes(p.id) || prevIds.includes(p.id)));
-  // Slots vacíos: se completan con el mejor disponible del resto del plantel.
   starters.forEach((s) => {
     if (s.playerId) return;
     const rest = squad.filter((p) => !used.has(p.id));
@@ -124,17 +118,13 @@ function remapLineupToFormation(squad, lineup, formation) {
       || rest.sort((a, b) => effectiveOvr(b, s.slot) - effectiveOvr(a, s.slot))[0];
     if (best) { s.playerId = best.id; used.add(best.id); }
   });
-  const bench = squad.filter((p) => !used.has(p.id) && (lineup.bench.includes(p.id) || leftover.includes(p)))
+  const bench = squad.filter((p) => !used.has(p.id) && (lineup.bench.includes(p.id) || prevIds.includes(p.id)))
     .sort((a, b) => b.ovr - a.ovr).slice(0, 9).map((p) => p.id);
   bench.forEach((id) => used.add(id));
   const reserves = squad.filter((p) => !used.has(p.id)).map((p) => p.id);
   return { starters, bench, reserves };
 }
 
-// El 4to reclutador (Iker Salgado) no se manda a mano: cada 4 semanas trae
-// solo un lote de jugadores al azar de cualquier plantel, garantizando
-// siempre al menos uno con potencial real ≥85 (la "joya" del mes). Se corre
-// una vez al arrancar la carrera y después cada vez que se cumple el plazo.
 function runMonthlyDiscovery(scoutReports, week) {
   const players = pickMonthlyDiscoveries(allPlayers);
   const updatedReports = { ...scoutReports };
@@ -148,18 +138,66 @@ function runMonthlyDiscovery(scoutReports, week) {
   });
   const gem = entries.find((e) => e.isGem);
   const newsLine = entries.length
-    ? `🔭 Informe mensual de Iker Salgado: ${entries.map((e) => e.name).join(", ")}${gem ? ` (la joya: ${gem.name}, potencial ~${gem.potentialEstimate})` : ""}.`
+    ? `🔭 Informe mensual de Iker Salgado: ${entries.map((e) => e.name).join(", ")}${gem ? ` (la joya: ${gem.name}, ~${gem.potentialEstimate})` : ""}.`
     : null;
   return { scoutReports: updatedReports, entry: { week, entries }, newsLine };
+}
+
+function generateCopa(leagueTeams, myTeamId) {
+  const others = [...leagueTeams.filter(t => t.id !== myTeamId)].sort(() => Math.random() - 0.5);
+  const opponents = others.slice(0, 4).map(t => ({ id: t.id, name: t.name, tier: t.tier || 2 }));
+  return { opponents, currentRound: 0, eliminated: false, champion: false, results: [] };
+}
+
+function generateReleaseClauses() {
+  const clauses = {};
+  allPlayers.forEach(p => {
+    if (Math.random() < 0.22) {
+      clauses[p.id] = Math.round(p.value * (1.6 + Math.random() * 0.5) * 20) / 20;
+    }
+  });
+  return clauses;
+}
+
+function applyMatchMorale(morale, squad, lineup, isWin, isLoss) {
+  const updated = { ...morale };
+  const starterSet = new Set(lineup.starters.map(s => s.playerId).filter(Boolean));
+  const benchSet = new Set(lineup.bench);
+  squad.forEach(p => {
+    const cur = updated[p.id] ?? 70;
+    let delta = 0;
+    if (starterSet.has(p.id))      delta = isWin ? 5 : isLoss ? -8 : 1;
+    else if (benchSet.has(p.id))   delta = isWin ? 2 : isLoss ? -4 : 0;
+    else                            delta = isLoss ? -2 : -1;
+    updated[p.id] = Math.max(0, Math.min(100, cur + delta));
+  });
+  return updated;
+}
+
+function mergePlayerStats(current, starterIds, matchStats) {
+  const updated = { ...current };
+  starterIds.forEach(id => {
+    if (!updated[id]) updated[id] = { goals: 0, assists: 0, yellowCards: 0, appearances: 0 };
+    updated[id] = { ...updated[id], appearances: updated[id].appearances + 1 };
+  });
+  Object.entries(matchStats || {}).forEach(([id, ms]) => {
+    if (!updated[id]) updated[id] = { goals: 0, assists: 0, yellowCards: 0, appearances: 0 };
+    updated[id] = {
+      ...updated[id],
+      goals: updated[id].goals + (ms.goals || 0),
+      assists: updated[id].assists + (ms.assists || 0),
+      yellowCards: updated[id].yellowCards + (ms.yellowCards || 0),
+    };
+  });
+  return updated;
 }
 
 function buildInitialState(teamId) {
   const team = teamById(teamId);
   const squad = playersByTeam(teamId).map((p) => ({ ...p }));
   const leagueTeamIds = teamsByLeague(team.league).map((t) => t.id);
+  const leagueTeams = teamsByLeague(team.league);
   const { calendar } = roundRobinCalendar(leagueTeamIds, teamId);
-
-  // Arrancás la carrera con un informe mensual ya en mano.
   const initialDiscovery = runMonthlyDiscovery({}, 0);
 
   return {
@@ -190,6 +228,14 @@ function buildInitialState(teamId) {
     watchlist: [],
     sentOffers: [],
     incomingOffers: [],
+    // nuevos campos
+    injuries: [],
+    playerStats: {},
+    morale: {},
+    managerPrestige: 50,
+    trainingFocus: "balanced",
+    releaseClauses: generateReleaseClauses(),
+    copa: generateCopa(leagueTeams, teamId),
   };
 }
 
@@ -203,35 +249,17 @@ export function CareerProvider({ children }) {
   const team = state ? teamById(state.teamId) : null;
   const leagueTeams = team ? teamsByLeague(team.league) : [];
 
-  function selectTeam(teamId) {
-    setState(buildInitialState(teamId));
-  }
-
-  function resetCareer() {
-    clearCareer();
-    setState(null);
-  }
+  function selectTeam(teamId) { setState(buildInitialState(teamId)); }
+  function resetCareer() { clearCareer(); setState(null); }
 
   function setFormation(formation) {
     setState((s) => ({ ...s, formation, lineup: remapLineupToFormation(s.squad, s.lineup, formation) }));
   }
-  function setMentality(mentality) {
-    setState((s) => ({ ...s, mentality }));
-  }
-  function setSlider(key, value) {
-    setState((s) => ({ ...s, sliders: { ...s.sliders, [key]: value } }));
-  }
-  function setLineup(lineup) {
-    setState((s) => ({ ...s, lineup }));
-  }
+  function setMentality(mentality) { setState((s) => ({ ...s, mentality })); }
+  function setSlider(key, value) { setState((s) => ({ ...s, sliders: { ...s.sliders, [key]: value } })); }
+  function setLineup(lineup) { setState((s) => ({ ...s, lineup })); }
+  function setTrainingFocus(focus) { setState((s) => ({ ...s, trainingFocus: focus })); }
 
-  // Guarda una posición libre (x/y en % de la cancha) para un slot puntual,
-  // así el usuario puede arrastrar a un jugador fuera de su ubicación
-  // "de manual" y armar una formación a medida a partir de una preestablecida.
-  // newPos es opcional: si al arrastrar el jugador cae en una zona distinta
-  // de la cancha (defensa, mediocampo, ataque...), ese slot pasa a exigir
-  // esa posición de ahí en más — así jugar "de central" de verdad significa
-  // que ahora lo evalúan como central, no que sólo se movió el dibujito.
   function setSlotPosition(slotIndex, x, y, newPos) {
     setState((s) => ({
       ...s,
@@ -244,9 +272,6 @@ export function CareerProvider({ children }) {
     }));
   }
 
-  // Vuelve a la disposición Y a las posiciones originales de la formación
-  // elegida, tirando cualquier movida a mano (posición libre o cambio de
-  // puesto por arrastre).
   function resetLineupPositions() {
     setState((s) => {
       const preset = FORMATIONS[s.formation] || FORMATIONS["4-3-3"];
@@ -257,13 +282,6 @@ export function CareerProvider({ children }) {
     });
   }
 
-  // Asigna/retira un jugador de un slot puntual de la formación (usado por
-  // el editor de cancha). Si ese jugador ya estaba en otro slot, banca o
-  // reservas, lo saca de ahí primero.
-  // Asignar un jugador a un puesto titular es en realidad un INTERCAMBIO: el
-  // que estaba ahí se va a donde estaba el que entra (otro puesto titular,
-  // la banca o las reservas) — no directo a reservas sin importar de dónde
-  // vino, que es lo que hacía que reordenar el 11 se sintiera roto.
   function assignSlot(slotIndex, playerId) {
     setState((s) => {
       const starters = s.lineup.starters.slice();
@@ -286,14 +304,10 @@ export function CareerProvider({ children }) {
       if (sourceStarterIndex !== -1) {
         starters[sourceStarterIndex] = { ...starters[sourceStarterIndex], playerId: occupant };
       } else if (benchIndex !== -1) {
-        if (occupant) bench[benchIndex] = occupant;
-        else bench.splice(benchIndex, 1);
+        if (occupant) bench[benchIndex] = occupant; else bench.splice(benchIndex, 1);
       } else if (reserveIndex !== -1) {
-        if (occupant) reserves[reserveIndex] = occupant;
-        else reserves.splice(reserveIndex, 1);
+        if (occupant) reserves[reserveIndex] = occupant; else reserves.splice(reserveIndex, 1);
       } else if (occupant) {
-        // El elegido no estaba en el 11, la banca ni las reservas (no
-        // debería pasar) — igual no lo perdemos, va a reservas.
         reserves.push(occupant);
       }
 
@@ -319,12 +333,6 @@ export function CareerProvider({ children }) {
     });
   }
 
-  // Fichajes: primero se le oferta al club por el pase; si acepta, recién
-  // ahí se le ofrece contrato al jugador. Ninguna de las dos ofertas mueve
-  // plata todavía — sólo completeTransfer() lo hace, al final. Cada intento
-  // es de una sola vez: si rechazan (el club o el jugador), no se puede
-  // insistir al toque probando otro número — hay que esperar unas semanas,
-  // como en la vida real.
   const OFFER_COOLDOWN_WEEKS = 4;
 
   function isOnOfferCooldown(playerId) {
@@ -337,9 +345,32 @@ export function CareerProvider({ children }) {
     return until != null ? Math.max(0, until - state.week) : 0;
   }
 
+  function isTransferWindowOpen() {
+    if (!state) return true;
+    const w = state.week;
+    return (w >= 0 && w <= 7) || (w >= 20 && w <= 24);
+  }
+
   function offerForPlayer(player, offerAmount) {
+    const releaseClause = (state.releaseClauses || {})[player.id];
+    // Prestige da un pequeño bonus al efectivo (alta reputación = clubs aceptan ligeramente menos)
+    const prestigeBonus = ((state.managerPrestige ?? 50) - 50) * 0.005;
+    const effectiveOffer = Math.round(offerAmount * (1 + prestigeBonus) * 20) / 20;
+
+    // Cláusula de liberación: si la oferta cubre la cláusula, aceptación automática
+    if (releaseClause != null && offerAmount >= releaseClause) {
+      setState((s) => ({
+        ...s,
+        sentOffers: [
+          { id: `fee_rc_${player.id}_${s.week}_${Date.now()}`, type: "fee", playerId: player.id, playerName: player.name, teamId: player.teamId, amount: offerAmount, accepted: true, week: s.week, byClause: true },
+          ...(s.sentOffers || []),
+        ].slice(0, 30),
+      }));
+      return { accepted: true, player, sellerTeam: teamById(player.teamId), offerAmount, byReleaseClause: true };
+    }
+
     const sellerTeam = teamById(player.teamId);
-    const result = clubDecision(player, sellerTeam, offerAmount);
+    const result = clubDecision(player, sellerTeam, effectiveOffer);
     setState((s) => ({
       ...s,
       offerCooldowns: result.accepted ? s.offerCooldowns : { ...(s.offerCooldowns || {}), [player.id]: s.week + OFFER_COOLDOWN_WEEKS },
@@ -366,6 +397,7 @@ export function CareerProvider({ children }) {
   }
 
   function completeTransfer(player, feeAgreed, wageAgreed, yearsAgreed) {
+    if (!isTransferWindowOpen()) return { success: false, reason: "window_closed" };
     setState((s) => {
       if (s.budget < feeAgreed) return s;
       const signed = {
@@ -390,9 +422,9 @@ export function CareerProvider({ children }) {
         news: [`✍️ Fichaste a ${player.name} por €${feeAgreed}M.`, ...s.news].slice(0, 8),
       };
     });
+    return { success: true };
   }
 
-  // Seguimiento de jugadores ajenos que te interesan (Central de Transferencias).
   function toggleWatchlist(playerId) {
     setState((s) => {
       const watchlist = s.watchlist || [];
@@ -400,17 +432,14 @@ export function CareerProvider({ children }) {
     });
   }
 
-  // Poner/sacar a un jugador PROPIO de la lista de transferibles o de préstamo
-  // — así lo pueden ofertar otros clubes (ver generateIncomingOffers).
   function toggleTransferListed(playerId) {
     setState((s) => ({ ...s, squad: s.squad.map((p) => (p.id === playerId ? { ...p, transferListed: !p.transferListed } : p)) }));
   }
+
   function toggleLoanListed(playerId) {
     setState((s) => ({ ...s, squad: s.squad.map((p) => (p.id === playerId ? { ...p, loanListed: !p.loanListed } : p)) }));
   }
 
-  // Reconvertir a un jugador propio a otro puesto: tarda TRAINING_WEEKS en
-  // resolverse (ver applyPositionTrainings, corre cada semana en playNextMatch).
   function startPositionTraining(playerId, targetPos) {
     setState((s) => ({
       ...s,
@@ -422,9 +451,6 @@ export function CareerProvider({ children }) {
     }));
   }
 
-  // Responder a una oferta que llegó de otro club por un jugador propio.
-  // Si se acepta, el jugador sale del plantel y de la alineación ya mismo;
-  // si es venta (no préstamo) también entra la plata al presupuesto.
   function respondToIncomingOffer(offerId, accept) {
     setState((s) => {
       const offer = (s.incomingOffers || []).find((o) => o.id === offerId);
@@ -449,9 +475,6 @@ export function CareerProvider({ children }) {
     });
   }
 
-  // Manda a uno de los 6 reclutadores a ver a un jugador (propio o de
-  // cualquier otro club). El reporte da un RANGO de OVR y potencial, no el
-  // número exacto — varios reportes del mismo jugador angostan el rango.
   function sendScout(scoutId, playerId) {
     const player = allPlayers.find((p) => p.id === playerId) || state.squad.find((p) => p.id === playerId);
     if (!player) return null;
@@ -470,6 +493,13 @@ export function CareerProvider({ children }) {
     return state.calendar.find((c) => !c.played) || null;
   }
 
+  function copaIsAvailable() {
+    if (!state?.copa) return false;
+    const { copa } = state;
+    if (copa.eliminated || copa.champion) return false;
+    return state.week >= COPA_WEEKS[copa.currentRound];
+  }
+
   function playNextMatch() {
     const fixture = currentFixture();
     if (!fixture || !team) return null;
@@ -486,32 +516,65 @@ export function CareerProvider({ children }) {
       rivalOvr,
       rivalFormScore: 60,
       isHome: fixture.home,
+      morale: state.morale || {},
+      trainingFocus: state.trainingFocus || "balanced",
     });
 
     setState((s) => {
       const standings = [...s.standings.map((r) => ({ ...r }))];
       applyResult(standings, s.teamId, result.myGoals, result.rivalGoals);
       applyResult(standings, rival.id, result.rivalGoals, result.myGoals);
-
-      // Simula el resto de la jornada estadísticamente.
-      leagueTeams.forEach((t) => {
-        if (t.id === s.teamId || t.id === rival.id) return;
-      });
       simulateRestOfWeek(standings, leagueTeams, s.teamId, rival.id);
 
       const calendar = s.calendar.map((c) => (c.week === fixture.week ? { ...c, played: true, result: { myGoals: result.myGoals, rivalGoals: result.rivalGoals } } : c));
-      const news = [
-        result.myGoals > result.rivalGoals
-          ? `Victoria ${result.myGoals}-${result.rivalGoals} vs ${rival.name}.`
-          : result.myGoals < result.rivalGoals
-          ? `Derrota ${result.myGoals}-${result.rivalGoals} vs ${rival.name}.`
+      const isWin = result.myGoals > result.rivalGoals;
+      const isLoss = result.myGoals < result.rivalGoals;
+
+      let news = [
+        isWin ? `Victoria ${result.myGoals}-${result.rivalGoals} vs ${rival.name}.`
+          : isLoss ? `Derrota ${result.myGoals}-${result.rivalGoals} vs ${rival.name}.`
           : `Empate ${result.myGoals}-${result.rivalGoals} vs ${rival.name}.`,
         ...generateMarketRumors(teams, allPlayers, 1),
         ...s.news,
       ].slice(0, 8);
 
+      const newWeek = s.week + 1;
+
+      // Actualizar estadísticas de jugadores
+      const playerStats = mergePlayerStats(s.playerStats || {}, result.starterIds || [], result.playerMatchStats || {});
+
+      // Actualizar moral
+      let morale = applyMatchMorale(s.morale || {}, s.squad, s.lineup, isWin, isLoss);
+
+      // Lesiones del partido
+      const newInjuries = rollMatchInjuries(s.lineup.starters, newWeek);
+      const injuries = [...newInjuries, ...recoverInjuries(s.injuries || [], newWeek)];
+      if (newInjuries.length) {
+        const names = newInjuries.map(i => {
+          const p = s.squad.find(pl => pl.id === i.playerId);
+          return p ? `${p.name} (${i.type}, ${i.weeksOut} sem.)` : "";
+        }).filter(Boolean).join(", ");
+        news = [`🏥 Bajas: ${names}`, ...news].slice(0, 8);
+      }
+
+      // Evento aleatorio semanal
+      const event = rollEvent();
+      let eventPatches = {};
+      if (event) {
+        news = [event.text, ...news].slice(0, 8);
+        if (event.apply) eventPatches = event.apply(s);
+        if (event.moraleBonus) {
+          const bonus = event.moraleBonus;
+          const updatedMorale = { ...morale };
+          s.squad.forEach(p => {
+            updatedMorale[p.id] = Math.max(0, Math.min(100, (updatedMorale[p.id] ?? 70) + bonus));
+          });
+          morale = updatedMorale;
+        }
+      }
+
       const allPlayed = calendar.every((c) => c.played);
-      let next = { ...s, standings, calendar, lastMatch: { ...result, rival }, news, week: s.week + 1 };
+      let next = { ...s, ...eventPatches, standings, calendar, lastMatch: { ...result, rival }, news, week: newWeek, playerStats, morale, injuries };
 
       const trainingResult = applyPositionTrainings(next.squad, next.week);
       if (trainingResult.news.length) {
@@ -544,6 +607,71 @@ export function CareerProvider({ children }) {
     return result;
   }
 
+  function playCopaMatch() {
+    const copa = state?.copa;
+    if (!copa || copa.eliminated || copa.champion) return null;
+    const roundIdx = copa.currentRound;
+    if (state.week < COPA_WEEKS[roundIdx]) return null;
+
+    const opponent = copa.opponents[roundIdx];
+    if (!opponent) return null;
+
+    const rivalTeam = teamById(opponent.id);
+    const rivalOvr = rivalTeam?.tier === 1 ? 83 : rivalTeam?.tier === 2 ? 76 : 70;
+
+    const result = simulateUserMatch({
+      myPlayers: state.squad,
+      myLineup: state.lineup.starters,
+      myMentality: state.mentality,
+      mySliders: state.sliders,
+      myFormScore: 65,
+      rivalOvr,
+      rivalFormScore: 60,
+      isHome: true,
+      morale: state.morale || {},
+      trainingFocus: state.trainingFocus || "balanced",
+    });
+
+    const won = result.myGoals > result.rivalGoals;
+    // En Copa el empate se decide por penales (simplificado: usuario gana el 50%)
+    const wonAfterPenalties = result.myGoals === result.rivalGoals ? Math.random() < 0.5 : won;
+
+    setState((s) => {
+      const newCopa = { ...s.copa };
+      newCopa.results = [...newCopa.results, { round: roundIdx, won: wonAfterPenalties, myGoals: result.myGoals, rivalGoals: result.rivalGoals }];
+
+      let news = [...s.news];
+      let budget = s.budget;
+
+      // Lesiones Copa
+      const newInjuries = rollMatchInjuries(s.lineup.starters, s.week);
+      const injuries = [...newInjuries, ...recoverInjuries(s.injuries || [], s.week)];
+
+      const playerStats = mergePlayerStats(s.playerStats || {}, result.starterIds || [], result.playerMatchStats || {});
+      const isWin = result.myGoals > result.rivalGoals;
+      const isLoss = result.myGoals < result.rivalGoals;
+      const morale = applyMatchMorale(s.morale || {}, s.squad, s.lineup, wonAfterPenalties, !wonAfterPenalties);
+
+      if (!wonAfterPenalties) {
+        newCopa.eliminated = true;
+        news = [`💔 Copa ${COPA_ROUNDS[roundIdx]}: eliminados por ${opponent.name} (${result.myGoals}-${result.rivalGoals}).`, ...news].slice(0, 8);
+      } else if (roundIdx === 3) {
+        newCopa.champion = true;
+        newCopa.currentRound = 4;
+        budget = Math.round((budget + COPA_PRIZES[3]) * 20) / 20;
+        news = [`🏆 ¡CAMPEÓN DE COPA! Ganaste la final vs ${opponent.name} (${result.myGoals}-${result.rivalGoals}). +€${COPA_PRIZES[3]}M.`, ...news].slice(0, 8);
+      } else {
+        newCopa.currentRound = roundIdx + 1;
+        budget = Math.round((budget + COPA_PRIZES[roundIdx]) * 20) / 20;
+        news = [`🏅 Copa ${COPA_ROUNDS[roundIdx]}: avanzás a ${COPA_ROUNDS[roundIdx + 1]} vs ${newCopa.opponents[roundIdx + 1]?.name || "?"} (ganaste ${result.myGoals}-${result.rivalGoals}${result.myGoals === result.rivalGoals ? " en penales" : ""}). +€${COPA_PRIZES[roundIdx]}M.`, ...news].slice(0, 8);
+      }
+
+      return { ...s, copa: newCopa, news, budget, injuries, playerStats, morale, lastMatch: { ...result, rival: { name: opponent.name }, isCopa: true, copaRound: COPA_ROUNDS[roundIdx] } };
+    });
+
+    return { ...result, rival: { name: opponent.name }, isCopa: true, copaRound: COPA_ROUNDS[roundIdx] };
+  }
+
   function finishSeason(s) {
     const sorted = sortStandings(s.standings);
     const position = sorted.findIndex((r) => r.teamId === s.teamId) + 1;
@@ -552,7 +680,14 @@ export function CareerProvider({ children }) {
     const boardConfidence = Math.max(0, Math.min(100, s.boardConfidence + confDelta));
     const gameOver = boardConfidence <= 0;
 
-    let squad = releaseExpired(ageSquad(s.squad));
+    // Prestige update al final de temporada
+    let managerPrestige = s.managerPrestige ?? 50;
+    if (objectiveMet) managerPrestige = Math.min(100, managerPrestige + 5);
+    else managerPrestige = Math.max(0, managerPrestige - 5);
+    if (s.copa?.champion) managerPrestige = Math.min(100, managerPrestige + 10);
+    else if ((s.copa?.currentRound || 0) >= 2) managerPrestige = Math.min(100, managerPrestige + 3);
+
+    let squad = releaseExpired(ageSquad(s.squad, s.playerStats || {}));
     squad = squad.concat(generateYouthProspects(team, 3));
 
     const income = seasonIncome(team, position);
@@ -560,25 +695,28 @@ export function CareerProvider({ children }) {
 
     const leagueTeamIds = leagueTeams.map((t) => t.id);
     const { calendar } = roundRobinCalendar(leagueTeamIds, s.teamId);
+    const newCopa = generateCopa(leagueTeams, s.teamId);
 
     return {
       ...s,
       season: s.season + 1,
       week: 0,
-      // La semana vuelve a 0 con la temporada — si no reiniciamos esto
-      // también, el reclutador mensual se queda esperando una semana que
-      // ya no va a volver a llegar (el contador nunca lo alcanzaría).
       lastMonthlyScoutWeek: 0,
       squad,
       lineup: defaultLineup(squad, s.formation),
       budget,
       boardConfidence,
+      managerPrestige,
       calendar,
       standings: initialStandings(leagueTeamIds),
-      history: [...s.history, { season: s.season, position, points: sorted.find((r) => r.teamId === s.teamId)?.pts || 0, objectiveMet }],
+      copa: newCopa,
+      playerStats: {},   // reset al inicio de temporada
+      injuries: [],
+      history: [...s.history, { season: s.season, position, points: sorted.find((r) => r.teamId === s.teamId)?.pts || 0, objectiveMet, copaChampion: s.copa?.champion || false }],
       news: [
         objectiveMet ? `¡Objetivo cumplido! Terminaste ${position}° — la directiva confía en el proyecto.` : `No se cumplió el objetivo (terminaste ${position}°). La directiva está molesta.`,
-        `Nueva temporada: llegan ${3} promesas de la cantera.`,
+        `Nueva temporada: llegan 3 promesas de la cantera.`,
+        `Copa del Rey: primera ronda disponible en jornada ${COPA_WEEKS[0]}.`,
         ...s.news,
       ].slice(0, 8),
       gameOver,
@@ -593,12 +731,15 @@ export function CareerProvider({ children }) {
       formations: Object.keys(FORMATIONS),
       formationSlots: FORMATIONS,
       allTeams: teams,
+      COPA_ROUNDS,
+      COPA_WEEKS,
       selectTeam,
       resetCareer,
       setFormation,
       setMentality,
       setSlider,
       setLineup,
+      setTrainingFocus,
       assignSlot,
       setSlotPosition,
       resetLineupPositions,
@@ -610,6 +751,7 @@ export function CareerProvider({ children }) {
       completeTransfer,
       isOnOfferCooldown,
       weeksUntilCanOffer,
+      isTransferWindowOpen,
       toggleWatchlist,
       toggleTransferListed,
       toggleLoanListed,
@@ -617,6 +759,8 @@ export function CareerProvider({ children }) {
       respondToIncomingOffer,
       currentFixture,
       playNextMatch,
+      playCopaMatch,
+      copaIsAvailable,
       standingsSorted: state ? sortStandings(state.standings) : [],
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -632,7 +776,6 @@ function evaluateObjective(objective, position) {
 }
 
 function simulateRestOfWeek(standings, leagueTeams, myId, rivalId) {
-  // Empareja al resto de equipos de la liga (sin el usuario ni su rival) de a pares y simula el resultado.
   const others = leagueTeams.filter((t) => t.id !== myId && t.id !== rivalId);
   for (let i = 0; i < others.length - 1; i += 2) {
     const a = others[i], b = others[i + 1];

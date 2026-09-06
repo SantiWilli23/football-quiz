@@ -1,25 +1,63 @@
 import { useCareer } from "../context/CareerContext.jsx";
 import { teamById } from "../data/teams.js";
+import { getInjury } from "../engine/injuryEngine.js";
 import TeamCrest from "./TeamCrest.jsx";
 
-// Degradé de la barra de confianza según el tramo — mismo espíritu que el
-// semáforo anterior (rojo/ámbar/verde) pero como transición de dos colores
-// en vez de un color plano, como pide el nuevo diseño del inicio.
 const CONFIDENCE_GRADIENT = {
   good: "linear-gradient(90deg, #3fae9a, #3b9dd6)",
-  mid: "linear-gradient(90deg, #d9a441, #f0c674)",
-  bad: "linear-gradient(90deg, #d9534f, #f0907e)",
+  mid:  "linear-gradient(90deg, #d9a441, #f0c674)",
+  bad:  "linear-gradient(90deg, #d9534f, #f0907e)",
 };
 
+const COPA_ROUNDS = ["Dieciseisavos", "Cuartos de final", "Semifinal", "Final"];
+const COPA_WEEKS  = [6, 14, 22, 30];
+
+function prestigeLabel(p) {
+  if (p >= 80) return { text: "Leyenda", color: "text-amber" };
+  if (p >= 60) return { text: "Reconocido", color: "text-emerald" };
+  if (p >= 40) return { text: "Emergente", color: "text-blue" };
+  return { text: "Desconocido", color: "text-gray-500" };
+}
+
+function moraleEmoji(m) {
+  if (m >= 85) return "😄";
+  if (m >= 60) return "🙂";
+  if (m >= 40) return "😐";
+  return "😞";
+}
+
 export default function Dashboard({ onPlayMatch }) {
-  const { state, team, currentFixture, playNextMatch, standingsSorted, resetCareer } = useCareer();
-  const fixture = currentFixture();
-  const rival = fixture ? teamById(fixture.opponentTeamId) : null;
-  const myPos = standingsSorted.findIndex((r) => r.teamId === state.teamId) + 1;
-  const confTier = state.boardConfidence < 30 ? "bad" : state.boardConfidence < 60 ? "mid" : "good";
+  const { state, team, currentFixture, playNextMatch, playCopaMatch, copaIsAvailable, standingsSorted, resetCareer, COPA_ROUNDS: CR, COPA_WEEKS: CW } = useCareer();
+  const fixture   = currentFixture();
+  const rival     = fixture ? teamById(fixture.opponentTeamId) : null;
+  const myPos     = standingsSorted.findIndex((r) => r.teamId === state.teamId) + 1;
+  const confTier  = state.boardConfidence < 30 ? "bad" : state.boardConfidence < 60 ? "mid" : "good";
+  const copa      = state.copa;
+  const prestige  = state.managerPrestige ?? 50;
+  const pLabel    = prestigeLabel(prestige);
+
+  const injuries = (state.injuries || []).filter(i => i.returnWeek > state.week);
+  const injuredPlayers = injuries.map(i => {
+    const p = state.squad.find(pl => pl.id === i.playerId);
+    return p ? { ...i, name: p.name, weeksLeft: Math.max(0, i.returnWeek - state.week) } : null;
+  }).filter(Boolean);
+
+  const avgMorale = state.squad.length
+    ? Math.round(state.squad.reduce((sum, p) => sum + ((state.morale || {})[p.id] ?? 70), 0) / state.squad.length)
+    : 70;
+
+  // Ventana de transferencias
+  const w = state.week;
+  const windowOpen = (w >= 0 && w <= 7) || (w >= 20 && w <= 24);
+  const nextWindowWeek = w <= 7 ? null : w <= 24 ? null : 20;
 
   function handlePlay() {
     const result = playNextMatch();
+    if (result) onPlayMatch(result);
+  }
+
+  function handlePlayCopa() {
+    const result = playCopaMatch();
     if (result) onPlayMatch(result);
   }
 
@@ -37,23 +75,42 @@ export default function Dashboard({ onPlayMatch }) {
 
   return (
     <div className="space-y-5">
+      {/* Banner ventana cerrada */}
+      {!windowOpen && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-2xl px-4 py-2.5 flex items-center gap-2.5">
+          <span className="text-red-400 text-sm">🔒</span>
+          <p className="text-sm text-red-300">
+            <span className="font-semibold">Ventana de transferencias cerrada.</span> No podés fichar jugadores hasta la jornada 20 (ventana de invierno).
+          </p>
+        </div>
+      )}
+
+      {/* Club header */}
       <div className="bg-panel border border-border rounded-2xl p-5 flex items-center gap-4">
         <TeamCrest team={team} size={56} />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="font-semibold text-lg truncate">{team.name}</p>
           <p className="text-sm text-gray-500">{team.league === "premier" ? "Premier League" : "La Liga"} · Temporada {state.season}</p>
         </div>
-        <div className="ml-auto text-right shrink-0">
-          <p className="text-xs text-gray-500 mb-1.5">Confianza directiva</p>
-          <div className="w-32 h-2 rounded-full bg-white/10 overflow-hidden">
-            <div className="h-full rounded-full transition-[width]" style={{ width: `${state.boardConfidence}%`, background: CONFIDENCE_GRADIENT[confTier] }} />
+        <div className="text-right shrink-0 space-y-2">
+          <div>
+            <p className="text-xs text-gray-500 mb-1">Confianza directiva</p>
+            <div className="w-32 h-2 rounded-full bg-white/10 overflow-hidden">
+              <div className="h-full rounded-full transition-[width]" style={{ width: `${state.boardConfidence}%`, background: CONFIDENCE_GRADIENT[confTier] }} />
+            </div>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 mb-0.5">Reputación</p>
+            <span className={`text-xs font-semibold ${pLabel.color}`}>{pLabel.text} ({prestige})</span>
           </div>
         </div>
       </div>
 
+      {/* Grid principal */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        {/* Próximo partido */}
         <div className="bg-panel border border-border rounded-2xl p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2.5">Próximo partido</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2.5">Próximo partido · Liga</p>
           {fixture ? (
             <>
               <p className="font-semibold text-lg">{fixture.home ? `vs ${rival.name} (Local)` : `vs ${rival.name} (Visitante)`}</p>
@@ -67,32 +124,115 @@ export default function Dashboard({ onPlayMatch }) {
           )}
         </div>
 
+        {/* Copa del Rey */}
+        {copa && !copa.champion && !copa.eliminated && (
+          <div className={`rounded-2xl p-5 border ${copaIsAvailable() ? "bg-amber/5 border-amber/30" : "bg-panel border-border"}`}>
+            <p className={`text-xs uppercase tracking-wide mb-2.5 ${copaIsAvailable() ? "text-amber" : "text-gray-500"}`}>
+              🏆 Copa del Rey
+            </p>
+            <p className="font-semibold">{COPA_ROUNDS[copa.currentRound]}</p>
+            <p className="text-sm text-gray-400">vs {copa.opponents[copa.currentRound]?.name || "?"}</p>
+            {copaIsAvailable() ? (
+              <button onClick={handlePlayCopa} className="mt-4 w-full bg-amber/20 text-amber font-semibold py-2.5 rounded-2xl hover:bg-amber/30 transition border border-amber/30">
+                Jugar Copa del Rey
+              </button>
+            ) : (
+              <p className="text-xs text-gray-600 mt-2">Disponible a partir de la jornada {COPA_WEEKS[copa.currentRound]}</p>
+            )}
+          </div>
+        )}
+        {copa?.champion && (
+          <div className="bg-amber/10 border border-amber/40 rounded-2xl p-5 flex items-center gap-3">
+            <span className="text-4xl">🏆</span>
+            <div>
+              <p className="font-bold text-amber">¡Campeón de Copa!</p>
+              <p className="text-xs text-gray-400">Copa del Rey conquistada esta temporada</p>
+            </div>
+          </div>
+        )}
+        {copa?.eliminated && (
+          <div className="bg-panel border border-border rounded-2xl p-5">
+            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Copa del Rey</p>
+            <p className="text-sm text-gray-400">Eliminados en {COPA_ROUNDS[Math.max(0, (copa.currentRound || 1) - 1)]}</p>
+          </div>
+        )}
+
+        {/* Tabla */}
         <div className="bg-panel border border-border rounded-2xl p-5">
           <p className="text-xs text-gray-500 uppercase tracking-wide mb-2.5">Tabla de posiciones</p>
           <p className="text-4xl font-bold text-accent leading-none">{myPos}°</p>
           <p className="text-xs text-gray-500 mt-2">de {standingsSorted.length} equipos</p>
         </div>
 
+        {/* Presupuesto + Moral */}
         <div className="bg-panel border border-border rounded-2xl p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2.5">Presupuesto de fichajes</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2.5">Recursos</p>
           <p className="text-3xl font-bold leading-none">€{state.budget}M</p>
-        </div>
-
-        <div className="bg-panel border border-border rounded-2xl p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2.5">Plantilla</p>
-          <p className="text-3xl font-bold leading-none">{state.squad.length}</p>
-          <p className="text-xs text-gray-500 mt-2">jugadores disponibles</p>
+          <p className="text-xs text-gray-500 mt-1">presupuesto de fichajes</p>
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-lg">{moraleEmoji(avgMorale)}</span>
+            <div className="flex-1">
+              <div className="flex justify-between text-xs text-gray-500 mb-1">
+                <span>Moral del plantel</span>
+                <span>{avgMorale}/100</span>
+              </div>
+              <div className="w-full h-1.5 rounded-full bg-white/10">
+                <div
+                  className="h-full rounded-full transition-[width]"
+                  style={{ width: `${avgMorale}%`, background: avgMorale >= 70 ? "#3fae9a" : avgMorale >= 45 ? "#d9a441" : "#d9534f" }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Bajas por lesión */}
+      {injuredPlayers.length > 0 && (
+        <div className="bg-panel border border-red-500/20 rounded-2xl p-5">
+          <p className="text-xs text-red-400 uppercase tracking-wide mb-2.5">🏥 Jugadores lesionados ({injuredPlayers.length})</p>
+          <div className="grid sm:grid-cols-2 gap-2">
+            {injuredPlayers.map(i => (
+              <div key={i.id} className="flex items-center justify-between gap-2 bg-red-500/5 border border-red-500/15 rounded-xl px-3 py-2">
+                <div>
+                  <p className="text-sm font-medium">{i.name}</p>
+                  <p className="text-xs text-gray-500">{i.type}</p>
+                </div>
+                <span className="text-xs text-red-400 shrink-0">
+                  {i.weeksLeft === 1 ? "vuelve próx. sem." : `${i.weeksLeft} sem.`}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Noticias */}
       <div className="bg-panel border border-border rounded-2xl p-5">
         <p className="text-xs text-gray-500 uppercase tracking-wide mb-2.5">Noticias</p>
         <ul className="space-y-2">
-          {state.news.slice(0, 5).map((n, i) => (
+          {state.news.slice(0, 6).map((n, i) => (
             <li key={i} className="text-sm text-gray-300">{n}</li>
           ))}
         </ul>
       </div>
+
+      {/* Historial de Copa */}
+      {copa?.results?.length > 0 && (
+        <div className="bg-panel border border-border rounded-2xl p-5">
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2.5">Copa del Rey — Resultados</p>
+          <div className="space-y-1.5">
+            {copa.results.map((r, i) => (
+              <div key={i} className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">{COPA_ROUNDS[r.round]}</span>
+                <span className={r.won ? "text-emerald" : "text-red-400"}>
+                  {r.myGoals}-{r.rivalGoals} {r.won ? "✓" : "✗"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

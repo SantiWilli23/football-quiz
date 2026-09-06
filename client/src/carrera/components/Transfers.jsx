@@ -11,7 +11,8 @@ function findAnyPlayer(state, playerId) {
 
 export default function Transfers() {
   const {
-    state, team, offerForPlayer, offerContractTo, completeTransfer, isOnOfferCooldown, weeksUntilCanOffer,
+    state, team, offerForPlayer, offerContractTo, completeTransfer,
+    isOnOfferCooldown, weeksUntilCanOffer, isTransferWindowOpen,
     toggleWatchlist, respondToIncomingOffer,
   } = useCareer();
   const [subTab, setSubTab] = useState("mercado");
@@ -20,11 +21,13 @@ export default function Transfers() {
   const [target, setTarget] = useState(null);
   const [showMonthly, setShowMonthly] = useState(!!state.monthlyReports?.length);
 
-  const ownedIds = new Set([...state.squad.map((p) => p.id), ...(state.acquired || [])]);
-  const watchlist = state.watchlist || [];
-  const sentOffers = state.sentOffers || [];
+  const windowOpen = isTransferWindowOpen();
+  const ownedIds      = new Set([...state.squad.map((p) => p.id), ...(state.acquired || [])]);
+  const watchlist     = state.watchlist || [];
+  const sentOffers    = state.sentOffers || [];
   const incomingOffers = state.incomingOffers || [];
   const pendingIncoming = incomingOffers.filter((o) => o.status === "pending");
+  const releaseClauses = state.releaseClauses || {};
 
   const pool = useMemo(
     () => allPlayers.filter((p) => p.teamId === teamId && !ownedIds.has(p.id)),
@@ -40,12 +43,24 @@ export default function Transfers() {
 
   return (
     <div className="space-y-5">
+      {/* Banner ventana cerrada */}
+      {!windowOpen && (
+        <div className="bg-amber/10 border border-amber/30 rounded-2xl px-4 py-3 flex items-start gap-3">
+          <span className="text-amber text-lg shrink-0">🔒</span>
+          <div>
+            <p className="text-sm font-semibold text-amber">Ventana de transferencias cerrada</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Podés negociar y explorar el mercado, pero no podés cerrar fichajes hasta la ventana de invierno (jornada 20-24) o el próximo verano.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div>
         <h2 className="text-2xl font-bold mb-2">Fichajes</h2>
         <p className="text-sm text-gray-500 max-w-lg leading-relaxed">
-          Primero le ofertás al club por el pase. Si acepta, recién ahí le ofrecés contrato al jugador. Cada intento es
-          de una sola vez — si rechazan (el club o el jugador), no podés insistir con otra cifra al toque, hay que
-          esperar unas semanas. Presupuesto disponible: <span className="text-white font-semibold">€{state.budget}M</span>.
+          Primero le ofertás al club por el pase. Si acepta, recién ahí le ofrecés contrato al jugador. Cada intento es de una sola vez.
+          Presupuesto disponible: <span className="text-white font-semibold">€{state.budget}M</span>.
         </p>
       </div>
 
@@ -85,6 +100,7 @@ export default function Transfers() {
                   <th className="px-3 py-3">Pos</th>
                   <th className="px-3 py-3">Edad</th>
                   <th className="px-3 py-3">Valor</th>
+                  <th className="px-3 py-3">Cláusula</th>
                   <th className="px-3 py-3">Contrato</th>
                   <th className="px-3 py-3"></th>
                   <th className="px-3 py-3"></th>
@@ -95,6 +111,7 @@ export default function Transfers() {
                   const report = state.scoutReports[p.id];
                   const cooling = isOnOfferCooldown(p.id);
                   const watched = watchlist.includes(p.id);
+                  const clause = releaseClauses[p.id];
                   return (
                     <tr key={p.id} className="border-t border-border">
                       <td className="px-4 py-3 truncate max-w-[160px]">
@@ -106,6 +123,12 @@ export default function Transfers() {
                       <td className="px-3 py-3 text-center text-gray-400">{p.position}</td>
                       <td className="px-3 py-3 text-center text-gray-400">{p.age}</td>
                       <td className="px-3 py-3 text-center font-semibold">€{p.value}M</td>
+                      <td className="px-3 py-3 text-center">
+                        {clause != null
+                          ? <span className="text-amber text-xs font-medium">€{clause}M</span>
+                          : <span className="text-gray-600 text-xs">—</span>
+                        }
+                      </td>
                       <td className="px-3 py-3 text-center text-gray-400">{p.contractYears} año{p.contractYears === 1 ? "" : "s"}</td>
                       <td className="px-3 py-3 text-center">
                         <button
@@ -118,7 +141,7 @@ export default function Transfers() {
                       </td>
                       <td className="px-3 py-3 text-center">
                         {cooling ? (
-                          <span className="text-xs text-gray-600" title="Te rechazaron hace poco, esperá antes de volver a ofertar">
+                          <span className="text-xs text-gray-600" title="Te rechazaron hace poco">
                             Esperá {weeksUntilCanOffer(p.id)} sem.
                           </span>
                         ) : (
@@ -134,14 +157,14 @@ export default function Transfers() {
                   );
                 })}
                 {!filtered.length && (
-                  <tr><td colSpan={7} className="px-4 py-6 text-center text-gray-600 text-sm">Sin resultados.</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-6 text-center text-gray-600 text-sm">Sin resultados.</td></tr>
                 )}
               </tbody>
             </table>
           </div>
 
           <p className="text-xs text-gray-600">
-            El OVR de un jugador ajeno es una estimación de tus reclutadores — mandá uno en la pestaña Scouting antes de ofertar. Ahí también te va a sugerir una oferta.
+            El OVR de un jugador ajeno es una estimación — mandá un reclutador en la pestaña Scouting antes de ofertar. La cláusula de liberación (🟡) permite activarla y el club está obligado a vender.
           </p>
         </>
       )}
@@ -163,6 +186,8 @@ export default function Transfers() {
           player={target}
           budget={state.budget}
           report={state.scoutReports[target.id]}
+          releaseClause={releaseClauses[target.id]}
+          windowOpen={windowOpen}
           onOfferForPlayer={offerForPlayer}
           onOfferContractTo={offerContractTo}
           onComplete={completeTransfer}
@@ -210,7 +235,7 @@ function MonthlyReportModal({ report, onClose }) {
 }
 
 function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, onOffer, onRespond }) {
-  const pending = incomingOffers.filter((o) => o.status === "pending");
+  const pending  = incomingOffers.filter((o) => o.status === "pending");
   const resolved = incomingOffers.filter((o) => o.status !== "pending");
 
   return (
@@ -223,9 +248,7 @@ function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, 
             <div key={o.id} className="flex items-center justify-between gap-3 bg-panel border border-border rounded-2xl px-4 py-3">
               <div className="min-w-0">
                 <p className="text-sm font-semibold truncate">{o.playerName}</p>
-                <p className="text-xs text-gray-500">
-                  {o.teamName} ofrece {o.isLoan ? "un préstamo" : `€${o.amount}M por el pase`}
-                </p>
+                <p className="text-xs text-gray-500">{o.teamName} ofrece {o.isLoan ? "un préstamo" : `€${o.amount}M por el pase`}</p>
               </div>
               <div className="flex gap-1.5 shrink-0">
                 <button onClick={() => onRespond(o.id, true)} className="text-xs font-medium px-3 py-1.5 rounded-full bg-emerald/15 text-emerald border border-emerald/40 hover:bg-emerald/25 transition-colors">
@@ -285,8 +308,8 @@ function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, 
         <div className="space-y-1.5">
           {sentOffers.map((o) => (
             <p key={o.id} className="text-xs text-gray-500">
-              {o.type === "fee" ? `€${o.amount}M por el pase de` : `€${o.amount}k/sem (${o.years} años) a`} {o.playerName} ·{" "}
-              <span className={o.accepted ? "text-emerald" : "text-red-400"}>{o.accepted ? "aceptada" : "rechazada"}</span>
+              {o.type === "fee" ? `€${o.amount}M por el pase de` : `€${o.amount}k/sem (${o.years} años) a`} {o.playerName}
+              {o.byClause ? " (cláusula)" : ""} · <span className={o.accepted ? "text-emerald" : "text-red-400"}>{o.accepted ? "aceptada" : "rechazada"}</span>
             </p>
           ))}
         </div>
@@ -295,9 +318,9 @@ function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, 
   );
 }
 
-function OfferFlow({ player, budget, report, onOfferForPlayer, onOfferContractTo, onComplete, onClose }) {
+function OfferFlow({ player, budget, report, releaseClause, windowOpen, onOfferForPlayer, onOfferContractTo, onComplete, onClose }) {
   const sellerTeam = teamById(player.teamId);
-  const [stage, setStage] = useState("fee"); // fee -> wage -> done | fee-rejected | wage-rejected
+  const [stage, setStage] = useState("fee");
   const [feeInput, setFeeInput] = useState(report?.suggestedOffer ?? player.value);
   const [feeAgreed, setFeeAgreed] = useState(null);
   const [feeResult, setFeeResult] = useState(null);
@@ -305,20 +328,22 @@ function OfferFlow({ player, budget, report, onOfferForPlayer, onOfferContractTo
   const [years, setYears] = useState(3);
   const [wageResult, setWageResult] = useState(null);
 
-  // Cada oferta se manda una sola vez: si rechazan, la negociación queda
-  // cerrada acá — para volver a intentar hay que salir y esperar el
-  // enfriamiento (se ve en la lista de jugadores).
-  function submitFee() {
-    if (feeInput > budget) {
+  function submitFee(overrideAmount) {
+    const amount = overrideAmount ?? feeInput;
+    if (amount > budget) {
       setFeeResult({ accepted: false, hint: "muy_lejos", noBudget: true });
       setStage("fee-rejected");
       return;
     }
-    const res = onOfferForPlayer(player, feeInput);
+    const res = onOfferForPlayer(player, amount);
     setFeeResult(res);
     if (res.accepted) {
-      setFeeAgreed(feeInput);
-      setStage("wage");
+      setFeeAgreed(amount);
+      if (!windowOpen) {
+        setStage("window-closed-after-fee");
+      } else {
+        setStage("wage");
+      }
     } else {
       setStage("fee-rejected");
     }
@@ -328,8 +353,12 @@ function OfferFlow({ player, budget, report, onOfferForPlayer, onOfferContractTo
     const res = onOfferContractTo(player, wageInput, years);
     setWageResult(res);
     if (res.accepted) {
-      onComplete(player, feeAgreed, wageInput, years);
-      setStage("done");
+      const completed = onComplete(player, feeAgreed, wageInput, years);
+      if (completed?.success === false && completed.reason === "window_closed") {
+        setStage("window-closed");
+      } else {
+        setStage("done");
+      }
     } else {
       setStage("wage-rejected");
     }
@@ -351,19 +380,31 @@ function OfferFlow({ player, budget, report, onOfferForPlayer, onOfferContractTo
             <>
               <p className="text-sm text-gray-400">
                 Valor de mercado: <span className="text-white font-semibold">€{player.value}M</span> · Presupuesto: <span className="text-white font-semibold">€{budget}M</span>
-                {report?.suggestedOffer != null && <> · Oferta sugerida por tu reclutador: <span className="text-white font-semibold">€{report.suggestedOffer}M</span></>}
+                {report?.suggestedOffer != null && <> · Sugerida por scout: <span className="text-white font-semibold">€{report.suggestedOffer}M</span></>}
               </p>
+
+              {/* Cláusula de liberación */}
+              {releaseClause != null && (
+                <div className="bg-amber/5 border border-amber/25 rounded-xl p-3 space-y-2">
+                  <p className="text-xs text-amber font-semibold">⚡ Cláusula de liberación: €{releaseClause}M</p>
+                  <p className="text-xs text-gray-500">Pagando esta cifra el club está obligado a vender sin importar su decisión.</p>
+                  <button
+                    onClick={() => submitFee(releaseClause)}
+                    className="text-xs px-3 py-1.5 rounded-full bg-amber/15 text-amber border border-amber/30 hover:bg-amber/25 transition-colors"
+                  >
+                    Activar cláusula (€{releaseClause}M)
+                  </button>
+                </div>
+              )}
+
               <label className="block text-xs text-gray-500 uppercase tracking-wide">Oferta por el pase (€M)</label>
               <input
-                type="number"
-                min="0"
-                step="0.5"
-                value={feeInput}
+                type="number" min="0" step="0.5" value={feeInput}
                 onChange={(e) => setFeeInput(Number(e.target.value))}
                 className="w-full bg-bg border border-border rounded-2xl px-4 py-3 text-sm"
               />
-              <p className="text-xs text-amber">⚠️ Es tu única chance con este club por ahora — si la rechazan, tenés que esperar unas semanas para volver a ofertar.</p>
-              <button onClick={submitFee} className="w-full bg-accent text-black font-semibold py-2.5 rounded-2xl hover:brightness-110 transition">
+              <p className="text-xs text-amber">⚠️ Es tu única chance con este club por ahora — si la rechazan, tenés que esperar unas semanas.</p>
+              <button onClick={() => submitFee()} className="w-full bg-accent text-black font-semibold py-2.5 rounded-2xl hover:brightness-110 transition">
                 Enviar oferta al club
               </button>
             </>
@@ -381,15 +422,26 @@ function OfferFlow({ player, budget, report, onOfferForPlayer, onOfferContractTo
             </>
           )}
 
+          {stage === "window-closed-after-fee" && (
+            <>
+              <p className="text-sm text-emerald font-medium">✅ El club aceptó €{feeAgreed}M por el pase.</p>
+              <div className="bg-amber/10 border border-amber/30 rounded-xl p-3">
+                <p className="text-sm text-amber font-semibold">🔒 Ventana cerrada</p>
+                <p className="text-xs text-gray-400 mt-1">El pase está acordado pero no podés cerrar el fichaje hasta la ventana de invierno (jornada 20-24) o el próximo verano.</p>
+              </div>
+              <button onClick={onClose} className="w-full bg-panel border border-border text-gray-300 font-semibold py-2.5 rounded-2xl hover:border-gray-500 transition">
+                Cerrar (negociación pendiente)
+              </button>
+            </>
+          )}
+
           {stage === "wage" && (
             <>
               <p className="text-sm text-emerald font-medium">✅ El club aceptó €{feeAgreed}M por el pase.</p>
               <p className="text-sm text-gray-400">Sueldo actual: <span className="text-white font-semibold">€{player.wage}k/sem</span></p>
               <label className="block text-xs text-gray-500 uppercase tracking-wide">Sueldo ofrecido (€k/semana)</label>
               <input
-                type="number"
-                min="1"
-                value={wageInput}
+                type="number" min="1" value={wageInput}
                 onChange={(e) => setWageInput(Number(e.target.value))}
                 className="w-full bg-bg border border-border rounded-2xl px-4 py-3 text-sm"
               />
@@ -397,7 +449,7 @@ function OfferFlow({ player, budget, report, onOfferForPlayer, onOfferContractTo
               <select value={years} onChange={(e) => setYears(Number(e.target.value))} className="w-full bg-bg border border-border rounded-2xl px-4 py-3 text-sm">
                 {[1, 2, 3, 4, 5].map((y) => <option key={y} value={y}>{y} año{y === 1 ? "" : "s"}</option>)}
               </select>
-              <p className="text-xs text-amber">⚠️ También es una única oferta — si el jugador la rechaza, se cae todo el fichaje (el pase ya no queda reservado).</p>
+              <p className="text-xs text-amber">⚠️ También es una única oferta — si el jugador la rechaza, se cae todo el fichaje.</p>
               <button onClick={submitWage} className="w-full bg-accent text-black font-semibold py-2.5 rounded-2xl hover:brightness-110 transition">
                 Ofrecer contrato al jugador
               </button>
@@ -407,7 +459,20 @@ function OfferFlow({ player, budget, report, onOfferForPlayer, onOfferContractTo
           {stage === "wage-rejected" && (
             <>
               <p className="text-sm text-red-400">❌ Rechazó el contrato. {HINT_LABEL[wageResult.hint]}</p>
-              <p className="text-xs text-gray-500">El fichaje se cayó — el club ya gastó su paciencia con esta negociación. Probá más adelante.</p>
+              <p className="text-xs text-gray-500">El fichaje se cayó. Probá más adelante.</p>
+              <button onClick={onClose} className="w-full bg-panel border border-border text-gray-300 font-semibold py-2.5 rounded-2xl hover:border-gray-500 transition">
+                Cerrar
+              </button>
+            </>
+          )}
+
+          {stage === "window-closed" && (
+            <>
+              <p className="text-sm text-emerald font-medium">✅ El jugador aceptó el contrato.</p>
+              <div className="bg-amber/10 border border-amber/30 rounded-xl p-3">
+                <p className="text-sm text-amber font-semibold">🔒 Ventana cerrada</p>
+                <p className="text-xs text-gray-400 mt-1">Todo está acordado pero no podés formalizar el traspaso hasta que abra la ventana.</p>
+              </div>
               <button onClick={onClose} className="w-full bg-panel border border-border text-gray-300 font-semibold py-2.5 rounded-2xl hover:border-gray-500 transition">
                 Cerrar
               </button>

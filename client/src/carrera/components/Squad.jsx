@@ -2,30 +2,30 @@ import { useMemo, useState } from "react";
 import { useCareer } from "../context/CareerContext.jsx";
 import Formation from "./Formation.jsx";
 import { ALL_POSITIONS, trainingTier, trainingTierLabel } from "../engine/positions.js";
+import { getInjury } from "../engine/injuryEngine.js";
 
-// Agrupamos por línea de cancha en vez de tirar las 10 posiciones sueltas:
-// así la plantilla se lee en bloques (arco, defensa, medio, ataque) y no
-// como una sola sopa de filas.
 const GROUPS = [
-  { id: "GK", label: "Arqueros", positions: ["GK"], color: "amber" },
-  { id: "DEF", label: "Defensas", positions: ["CB", "LB", "RB"], color: "blue" },
-  { id: "MID", label: "Mediocampo", positions: ["CDM", "CM", "CAM"], color: "emerald" },
-  { id: "ATT", label: "Ataque", positions: ["LW", "RW", "ST"], color: "red" },
+  { id: "GK",  label: "Arqueros",    positions: ["GK"],             color: "amber"   },
+  { id: "DEF", label: "Defensas",    positions: ["CB", "LB", "RB"], color: "blue"    },
+  { id: "MID", label: "Mediocampo",  positions: ["CDM", "CM", "CAM"], color: "emerald" },
+  { id: "ATT", label: "Ataque",      positions: ["LW", "RW", "ST"], color: "red"     },
 ];
 const COLOR_CLASSES = {
-  amber: "bg-amber/15 text-amber border-amber/30",
-  blue: "bg-blue/15 text-blue border-blue/30",
+  amber:   "bg-amber/15 text-amber border-amber/30",
+  blue:    "bg-blue/15 text-blue border-blue/30",
   emerald: "bg-emerald/15 text-emerald border-emerald/30",
-  red: "bg-red/15 text-red border-red/30",
+  red:     "bg-red/15 text-red border-red/30",
 };
-// Tailwind no puede resolver clases armadas con template strings (bg-${x}):
-// necesita ver la clase completa y literal en el código para generarla.
 const DOT_CLASSES = {
-  amber: "bg-amber",
-  blue: "bg-blue",
-  emerald: "bg-emerald",
-  red: "bg-red",
+  amber: "bg-amber", blue: "bg-blue", emerald: "bg-emerald", red: "bg-red",
 };
+
+function moraleColor(m) {
+  if (m >= 80) return "text-emerald";
+  if (m >= 55) return "text-amber";
+  if (m >= 35) return "text-orange-400";
+  return "text-red-400";
+}
 
 export default function Squad() {
   const { state, moveToBench, moveToReserves, toggleTransferListed, toggleLoanListed, startPositionTraining } = useCareer();
@@ -34,7 +34,7 @@ export default function Squad() {
   const [sortBy, setSortBy] = useState("ovr");
 
   const starterIds = new Set(state.lineup.starters.map((s) => s.playerId).filter(Boolean));
-  const benchIds = new Set(state.lineup.bench);
+  const benchIds   = new Set(state.lineup.bench);
 
   function levelOf(id) {
     if (starterIds.has(id)) return "Titular";
@@ -120,6 +120,9 @@ export default function Squad() {
                         level={levelOf(p.id)}
                         report={state.scoutReports[p.id]}
                         week={state.week}
+                        injury={getInjury(state.injuries || [], p.id)}
+                        morale={(state.morale || {})[p.id] ?? 70}
+                        seasonStats={(state.playerStats || {})[p.id]}
                         onBench={() => moveToBench(p.id)}
                         onReserves={() => moveToReserves(p.id)}
                         onToggleTransferListed={() => toggleTransferListed(p.id)}
@@ -142,13 +145,24 @@ export default function Squad() {
 
 const LEVEL_STYLE = {
   Titular: "bg-accent/15 text-accent border-accent/30",
-  Banca: "bg-white/10 text-gray-300 border-white/10",
+  Banca:   "bg-white/10 text-gray-300 border-white/10",
   Reserva: "text-gray-500 border-border",
 };
 
-function PlayerRow({ player: p, level, report, week, onBench, onReserves, onToggleTransferListed, onToggleLoanListed, onStartTraining }) {
+function PlayerRow({ player: p, level, report, week, injury, morale, seasonStats, onBench, onReserves, onToggleTransferListed, onToggleLoanListed, onStartTraining }) {
+  const isInjured = injury && injury.returnWeek > week;
+  const weeksLeft = isInjured ? Math.max(0, injury.returnWeek - week) : 0;
+
   return (
-    <div className="px-4 py-3.5 hover:bg-white/[0.03] transition-colors space-y-2.5">
+    <div className={`px-4 py-3.5 hover:bg-white/[0.03] transition-colors space-y-2.5 ${isInjured ? "opacity-75" : ""}`}>
+      {/* Baja por lesión */}
+      {isInjured && (
+        <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-1.5">
+          <span className="text-red-400 text-sm">🏥</span>
+          <p className="text-xs text-red-400">{injury.type} — vuelve en {weeksLeft} sem.</p>
+        </div>
+      )}
+
       <div className="flex items-center gap-4">
         <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-[11px] font-bold text-gray-400">
           {p.position}
@@ -159,6 +173,12 @@ function PlayerRow({ player: p, level, report, week, onBench, onReserves, onTogg
             {p.name} {p.isYouth && <span className="text-amber text-xs align-middle" title="Promesa de la cantera">⭐</span>}
           </p>
           <p className="text-xs text-gray-500 mt-0.5">{p.nationality} · {p.age} años</p>
+        </div>
+
+        {/* Moral */}
+        <div className="hidden sm:flex flex-col items-center w-14 shrink-0">
+          <span className="text-[10px] uppercase tracking-wide text-gray-600">Moral</span>
+          <span className={`text-sm font-semibold ${moraleColor(morale)}`}>{morale}</span>
         </div>
 
         <div className="hidden sm:flex flex-col items-center w-16 shrink-0">
@@ -192,6 +212,17 @@ function PlayerRow({ player: p, level, report, week, onBench, onReserves, onTogg
         </div>
       </div>
 
+      {/* Estadísticas de temporada */}
+      {seasonStats && (
+        <div className="flex items-center gap-3 pl-[52px] flex-wrap">
+          <span className="text-[11px] text-gray-500">⚽ {seasonStats.goals ?? 0}</span>
+          <span className="text-[11px] text-gray-500">🅰️ {seasonStats.assists ?? 0}</span>
+          <span className="text-[11px] text-gray-500">🟨 {seasonStats.yellowCards ?? 0}</span>
+          <span className="text-[11px] text-gray-500">▶ {seasonStats.appearances ?? 0} partidos</span>
+        </div>
+      )}
+
+      {/* Controles de transferencia y entrenamiento */}
       <div className="flex flex-wrap items-center gap-2 pl-[52px]">
         <button
           onClick={onToggleTransferListed}
