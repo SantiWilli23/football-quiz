@@ -191,6 +191,28 @@ export function CareerProvider({ children }) {
     setState((s) => ({ ...s, lineup }));
   }
 
+  // Guarda una posición libre (x/y en % de la cancha) para un slot puntual,
+  // así el usuario puede arrastrar a un jugador fuera de su ubicación
+  // "de manual" y armar una formación a medida a partir de una preestablecida.
+  function setSlotPosition(slotIndex, x, y) {
+    setState((s) => ({
+      ...s,
+      lineup: {
+        ...s.lineup,
+        starters: s.lineup.starters.map((slot, i) => (i === slotIndex ? { ...slot, x, y } : slot)),
+      },
+    }));
+  }
+
+  // Vuelve a la disposición automática de la formación elegida, tirando
+  // cualquier posición libre que se haya movido a mano.
+  function resetLineupPositions() {
+    setState((s) => ({
+      ...s,
+      lineup: { ...s.lineup, starters: s.lineup.starters.map((slot) => ({ slot: slot.slot, playerId: slot.playerId })) },
+    }));
+  }
+
   // Asigna/retira un jugador de un slot puntual de la formación (usado por
   // el editor de cancha). Si ese jugador ya estaba en otro slot, banca o
   // reservas, lo saca de ahí primero.
@@ -349,6 +371,8 @@ export function CareerProvider({ children }) {
       setSlider,
       setLineup,
       assignSlot,
+      setSlotPosition,
+      resetLineupPositions,
       moveToBench,
       moveToReserves,
       sendScout,
