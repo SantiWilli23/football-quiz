@@ -257,19 +257,44 @@ export function CareerProvider({ children }) {
   // Asigna/retira un jugador de un slot puntual de la formación (usado por
   // el editor de cancha). Si ese jugador ya estaba en otro slot, banca o
   // reservas, lo saca de ahí primero.
+  // Asignar un jugador a un puesto titular es en realidad un INTERCAMBIO: el
+  // que estaba ahí se va a donde estaba el que entra (otro puesto titular,
+  // la banca o las reservas) — no directo a reservas sin importar de dónde
+  // vino, que es lo que hacía que reordenar el 11 se sintiera roto.
   function assignSlot(slotIndex, playerId) {
     setState((s) => {
-      const starters = s.lineup.starters.map((slot, i) => {
-        if (i === slotIndex) return { ...slot, playerId };
-        if (playerId && slot.playerId === playerId) return { ...slot, playerId: null };
-        return slot;
-      });
-      const bench = s.lineup.bench.filter((id) => id !== playerId);
-      const reserves = s.lineup.reserves.filter((id) => id !== playerId);
-      // El que salió del slot (si había alguien) vuelve a reservas.
-      const displaced = s.lineup.starters[slotIndex]?.playerId;
-      const reserves2 = displaced && displaced !== playerId && !bench.includes(displaced) ? [...reserves, displaced] : reserves;
-      return { ...s, lineup: { starters, bench, reserves: reserves2 } };
+      const starters = s.lineup.starters.slice();
+      const bench = s.lineup.bench.slice();
+      const reserves = s.lineup.reserves.slice();
+      const occupant = starters[slotIndex]?.playerId ?? null;
+
+      if (playerId == null) {
+        starters[slotIndex] = { ...starters[slotIndex], playerId: null };
+        if (occupant) reserves.push(occupant);
+        return { ...s, lineup: { starters, bench, reserves } };
+      }
+
+      const sourceStarterIndex = starters.findIndex((slot, i) => i !== slotIndex && slot.playerId === playerId);
+      const benchIndex = bench.indexOf(playerId);
+      const reserveIndex = reserves.indexOf(playerId);
+
+      starters[slotIndex] = { ...starters[slotIndex], playerId };
+
+      if (sourceStarterIndex !== -1) {
+        starters[sourceStarterIndex] = { ...starters[sourceStarterIndex], playerId: occupant };
+      } else if (benchIndex !== -1) {
+        if (occupant) bench[benchIndex] = occupant;
+        else bench.splice(benchIndex, 1);
+      } else if (reserveIndex !== -1) {
+        if (occupant) reserves[reserveIndex] = occupant;
+        else reserves.splice(reserveIndex, 1);
+      } else if (occupant) {
+        // El elegido no estaba en el 11, la banca ni las reservas (no
+        // debería pasar) — igual no lo perdemos, va a reservas.
+        reserves.push(occupant);
+      }
+
+      return { ...s, lineup: { starters, bench, reserves } };
     });
   }
 

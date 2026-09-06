@@ -57,8 +57,17 @@ export default function Formation() {
   const byId = useMemo(() => Object.fromEntries(state.squad.map((p) => [p.id, p])), [state.squad]);
   const { starters, bench, reserves } = state.lineup;
   const autoCoords = useMemo(() => layoutSlots(starters), [starters]);
-  const usedIds = new Set([...starters.map((s) => s.playerId), ...bench].filter(Boolean));
   const hasCustomPositions = starters.some((s) => s.x != null);
+
+  // Dónde juega hoy cada jugador — se lo mostramos al elegir, y con esto el
+  // picker puede ofrecer TODO el plantel (otros titulares y banca incluidos,
+  // no sólo reservas), porque assignSlot ahora sabe intercambiarlos bien.
+  const roleById = useMemo(() => {
+    const m = {};
+    starters.forEach((s) => { if (s.playerId) m[s.playerId] = { kind: "starter", slot: s.slot }; });
+    bench.forEach((id) => { m[id] = { kind: "bench" }; });
+    return m;
+  }, [starters, bench]);
 
   function coordFor(i) {
     if (dragPos && dragPos.index === i) return dragPos;
@@ -172,7 +181,7 @@ export default function Formation() {
           slotPos={starters[pickerSlot].slot}
           currentId={starters[pickerSlot].playerId}
           squad={state.squad}
-          usedIds={usedIds}
+          roleById={roleById}
           onPick={(playerId) => { assignSlot(pickerSlot, playerId); setPickerSlot(null); }}
           onClose={() => setPickerSlot(null)}
         />
@@ -208,10 +217,10 @@ function BenchList({ title, ids, byId, onMove, moveLabel }) {
   );
 }
 
-function SlotPicker({ slotPos, currentId, squad, usedIds, onPick, onClose }) {
+function SlotPicker({ slotPos, currentId, squad, roleById, onPick, onClose }) {
   const candidates = squad
-    .filter((p) => p.id === currentId || !usedIds.has(p.id))
-    .map((p) => ({ p, penalty: positionPenalty(p.position, slotPos) }))
+    .filter((p) => p.id !== currentId)
+    .map((p) => ({ p, penalty: positionPenalty(p.position, slotPos), role: roleById[p.id] }))
     .sort((a, b) => effectiveOvr(b.p, slotPos) - effectiveOvr(a.p, slotPos));
 
   return (
@@ -227,13 +236,15 @@ function SlotPicker({ slotPos, currentId, squad, usedIds, onPick, onClose }) {
               Dejar el puesto vacío
             </button>
           )}
-          {candidates.map(({ p, penalty }) => {
+          {candidates.map(({ p, penalty, role }) => {
             const label = positionLabel(penalty);
+            const roleText = role?.kind === "starter" ? `Titular (${role.slot})` : role?.kind === "bench" ? "Banca" : "Reserva";
             return (
               <button key={p.id} onClick={() => onPick(p.id)} className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-bg">
                 <span className="flex items-center gap-2 truncate">
                   <span className="text-gray-500 text-xs w-9 shrink-0">{p.position}</span>
                   <span className="truncate">{p.name}</span>
+                  <span className="text-[10px] text-gray-600 shrink-0">{roleText}</span>
                   {label && <span className="text-[10px] text-amber shrink-0">{label.text}</span>}
                 </span>
                 <span className="shrink-0 font-semibold">{effectiveOvr(p, slotPos)}{penalty > 0 && <span className="text-gray-500 font-normal text-xs"> ({p.ovr})</span>}</span>
