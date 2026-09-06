@@ -36,6 +36,44 @@ const COPA_ROUNDS = ["Dieciseisavos", "Cuartos de final", "Semifinal", "Final"];
 const COPA_WEEKS = [6, 14, 22, 30];
 const COPA_PRIZES = [0.5, 1, 2, 5];
 
+const CONTINENTAL_ROUNDS = ["Fase de grupos", "Cuartos de final", "Semifinal", "Final"];
+const CONTINENTAL_WEEKS = [10, 18, 26, 34];
+const CONTINENTAL_PRIZES = { champions: [2, 4, 8, 15], europa: [1, 2, 4, 8] };
+const CONTINENTAL_LABELS = { champions: "Champions League", europa: "Europa League" };
+
+// Clasificación a copas europeas: 1ra temporada por jerarquía del club, después por posición final.
+function determineContinentalCompetition(tier, position) {
+  if (position != null) {
+    if (position <= 4) return "champions";
+    if (position <= 6) return "europa";
+    return null;
+  }
+  if (tier === 1) return "champions";
+  if (tier === 2) return Math.random() < 0.4 ? "europa" : null;
+  return null;
+}
+
+function generateContinental(competition, myTeamId) {
+  if (!competition) return null;
+  const pool = teams.filter((t) => t.id !== myTeamId && (t.tier === 1 || t.tier === 2));
+  const others = [...pool].sort(() => Math.random() - 0.5);
+  const opponents = others.slice(0, 4).map((t) => ({ id: t.id, name: t.name, tier: t.tier || 2 }));
+  return { competition, opponents, currentRound: 0, eliminated: false, champion: false, results: [] };
+}
+
+// Cansancio: los titulares pierden físico, el resto del plantel recupera cada semana.
+function applyMatchFatigue(fatigue, squad, playedIds, trainingFocus) {
+  const updated = { ...(fatigue || {}) };
+  const playedSet = new Set(playedIds);
+  const recoveryBonus = trainingFocus === "fitness" ? 5 : 0;
+  squad.forEach((p) => {
+    const cur = updated[p.id] ?? 100;
+    const delta = playedSet.has(p.id) ? -22 : 15 + recoveryBonus;
+    updated[p.id] = Math.max(0, Math.min(100, cur + delta));
+  });
+  return updated;
+}
+
 function roundRobinCalendar(leagueTeamIds, myTeamId) {
   const ids = leagueTeamIds.slice();
   if (ids.length % 2 !== 0) ids.push(null);
@@ -240,6 +278,8 @@ function buildInitialState(teamId) {
     jobOffers: [],
     pendingMatch: null,
     lastMeetingWeek: -1,
+    fatigue: {},
+    continental: generateContinental(determineContinentalCompetition(team.tier, null), teamId),
   };
 }
 
@@ -557,6 +597,7 @@ export function CareerProvider({ children }) {
       rivalFormScore,
       isHome: fixture.home,
       morale: state.morale || {},
+      fatigue: state.fatigue || {},
       trainingFocus: state.trainingFocus || "balanced",
       myDay, rivalDay, half: 1,
     });
@@ -597,6 +638,7 @@ export function CareerProvider({ children }) {
       rivalFormScore: pm.rivalFormScore,
       isHome: pm.isHome,
       morale: state.morale || {},
+      fatigue: state.fatigue || {},
       trainingFocus: state.trainingFocus || "balanced",
       myDay: pm.myDay, rivalDay: pm.rivalDay, half: 2,
     });
@@ -625,6 +667,7 @@ export function CareerProvider({ children }) {
 
       const playerStats = mergePlayerStats(s.playerStats || {}, result.starterIds || [], result.playerMatchStats || {});
       let morale = applyMatchMorale(s.morale || {}, s.squad, { starters: pm.lineupFirst, bench: s.lineup.bench }, isWin, isLoss);
+      const fatigue = applyMatchFatigue(s.fatigue || {}, s.squad, result.starterIds || [], s.trainingFocus);
 
       const newInjuries = rollMatchInjuries(pm.lineupFirst, newWeek);
       let injuries = [...newInjuries, ...recoverInjuries(s.injuries || [], newWeek)];
@@ -662,7 +705,7 @@ export function CareerProvider({ children }) {
       }
 
       const allPlayed = calendar.every((c) => c.played);
-      let next = { ...s, ...eventPatches, standings, calendar, lastMatch: { ...result, rival }, news, week: newWeek, playerStats, morale, injuries, pendingMatch: null };
+      let next = { ...s, ...eventPatches, standings, calendar, lastMatch: { ...result, rival }, news, week: newWeek, playerStats, morale, fatigue, injuries, pendingMatch: null };
 
       const trainingResult = applyPositionTrainings(next.squad, next.week);
       if (trainingResult.news.length) {
@@ -743,6 +786,7 @@ export function CareerProvider({ children }) {
       rivalFormScore: 60,
       isHome: true,
       morale: state.morale || {},
+      fatigue: state.fatigue || {},
       trainingFocus: state.trainingFocus || "balanced",
     });
 
@@ -765,6 +809,7 @@ export function CareerProvider({ children }) {
       const isWin = result.myGoals > result.rivalGoals;
       const isLoss = result.myGoals < result.rivalGoals;
       const morale = applyMatchMorale(s.morale || {}, s.squad, s.lineup, wonAfterPenalties, !wonAfterPenalties);
+      const fatigue = applyMatchFatigue(s.fatigue || {}, s.squad, result.starterIds || [], s.trainingFocus);
 
       if (!wonAfterPenalties) {
         newCopa.eliminated = true;
@@ -780,10 +825,90 @@ export function CareerProvider({ children }) {
         news = [`🏅 Copa ${COPA_ROUNDS[roundIdx]}: avanzás a ${COPA_ROUNDS[roundIdx + 1]} vs ${newCopa.opponents[roundIdx + 1]?.name || "?"} (ganaste ${result.myGoals}-${result.rivalGoals}${result.myGoals === result.rivalGoals ? " en penales" : ""}). +€${COPA_PRIZES[roundIdx]}M.`, ...news].slice(0, 8);
       }
 
-      return { ...s, copa: newCopa, news, budget, injuries, playerStats, morale, lastMatch: { ...result, rival: { name: opponent.name }, isCopa: true, copaRound: COPA_ROUNDS[roundIdx] } };
+      return { ...s, copa: newCopa, news, budget, injuries, playerStats, morale, fatigue, lastMatch: { ...result, rival: { name: opponent.name }, competitionLabel: `Copa del Rey · ${COPA_ROUNDS[roundIdx]}` } };
     });
 
-    return { ...result, rival: { name: opponent.name }, isCopa: true, copaRound: COPA_ROUNDS[roundIdx] };
+    return { ...result, rival: { name: opponent.name }, competitionLabel: `Copa del Rey · ${COPA_ROUNDS[roundIdx]}` };
+  }
+
+  function continentalIsAvailable() {
+    if (!state?.continental) return false;
+    const { continental } = state;
+    if (continental.eliminated || continental.champion) return false;
+    return state.week >= CONTINENTAL_WEEKS[continental.currentRound];
+  }
+
+  function playContinentalMatch() {
+    const continental = state?.continental;
+    if (!continental || continental.eliminated || continental.champion) return null;
+    const roundIdx = continental.currentRound;
+    if (state.week < CONTINENTAL_WEEKS[roundIdx]) return null;
+
+    const opponent = continental.opponents[roundIdx];
+    if (!opponent) return null;
+
+    const rivalTeam = teamById(opponent.id);
+    const rivalOvr = rivalTeam?.tier === 1 ? 86 : rivalTeam?.tier === 2 ? 79 : 72;
+    const prizes = CONTINENTAL_PRIZES[continental.competition] || CONTINENTAL_PRIZES.europa;
+    const compLabel = CONTINENTAL_LABELS[continental.competition] || "Copa Europea";
+
+    const result = simulateUserMatch({
+      myPlayers: state.squad,
+      myLineup: state.lineup.starters,
+      myMentality: state.mentality,
+      mySliders: state.sliders,
+      myFormScore: 65,
+      rivalOvr,
+      rivalFormScore: 63,
+      isHome: true,
+      morale: state.morale || {},
+      fatigue: state.fatigue || {},
+      trainingFocus: state.trainingFocus || "balanced",
+    });
+
+    const won = result.myGoals > result.rivalGoals;
+    const wonAfterPenalties = result.myGoals === result.rivalGoals ? Math.random() < 0.5 : won;
+
+    setState((s) => {
+      const newContinental = { ...s.continental };
+      newContinental.results = [...newContinental.results, { round: roundIdx, won: wonAfterPenalties, myGoals: result.myGoals, rivalGoals: result.rivalGoals }];
+
+      let news = [...s.news];
+      let budget = s.budget;
+      let managerPrestige = s.managerPrestige ?? 50;
+      let clubReputation = s.clubReputation ?? 50;
+
+      const newInjuries = rollMatchInjuries(s.lineup.starters, s.week);
+      const injuries = [...newInjuries, ...recoverInjuries(s.injuries || [], s.week)];
+      const playerStats = mergePlayerStats(s.playerStats || {}, result.starterIds || [], result.playerMatchStats || {});
+      const morale = applyMatchMorale(s.morale || {}, s.squad, s.lineup, wonAfterPenalties, !wonAfterPenalties);
+      const fatigue = applyMatchFatigue(s.fatigue || {}, s.squad, result.starterIds || [], s.trainingFocus);
+
+      if (!wonAfterPenalties) {
+        newContinental.eliminated = true;
+        managerPrestige = Math.max(0, managerPrestige - 2);
+        news = [`💔 ${compLabel} ${CONTINENTAL_ROUNDS[roundIdx]}: eliminados por ${opponent.name} (${result.myGoals}-${result.rivalGoals}).`, ...news].slice(0, 8);
+      } else if (roundIdx === 3) {
+        newContinental.champion = true;
+        newContinental.currentRound = 4;
+        budget = Math.round((budget + prizes[3]) * 20) / 20;
+        managerPrestige = Math.min(100, managerPrestige + 15);
+        clubReputation = Math.min(100, clubReputation + 15);
+        news = [`🏆🌍 ¡CAMPEÓN DE ${compLabel.toUpperCase()}! Venciste a ${opponent.name} (${result.myGoals}-${result.rivalGoals}). +€${prizes[3]}M.`, ...news].slice(0, 8);
+      } else {
+        newContinental.currentRound = roundIdx + 1;
+        budget = Math.round((budget + prizes[roundIdx]) * 20) / 20;
+        managerPrestige = Math.min(100, managerPrestige + 3);
+        news = [`🌍 ${compLabel} ${CONTINENTAL_ROUNDS[roundIdx]}: avanzás a ${CONTINENTAL_ROUNDS[roundIdx + 1]} vs ${newContinental.opponents[roundIdx + 1]?.name || "?"} (ganaste ${result.myGoals}-${result.rivalGoals}${result.myGoals === result.rivalGoals ? " en penales" : ""}). +€${prizes[roundIdx]}M.`, ...news].slice(0, 8);
+      }
+
+      return {
+        ...s, continental: newContinental, news, budget, injuries, playerStats, morale, fatigue, managerPrestige, clubReputation,
+        lastMatch: { ...result, rival: { name: opponent.name }, competitionLabel: `${compLabel} · ${CONTINENTAL_ROUNDS[roundIdx]}` },
+      };
+    });
+
+    return { ...result, rival: { name: opponent.name }, competitionLabel: `${compLabel} · ${CONTINENTAL_ROUNDS[roundIdx]}` };
   }
 
   function finishSeason(s) {
@@ -820,6 +945,12 @@ export function CareerProvider({ children }) {
     const leagueTeamIds = leagueTeams.map((t) => t.id);
     const { calendar } = roundRobinCalendar(leagueTeamIds, s.teamId);
     const newCopa = generateCopa(leagueTeams, s.teamId);
+
+    const nextCompetition = determineContinentalCompetition(team.tier, position);
+    const newContinental = generateContinental(nextCompetition, s.teamId);
+    const continentalNewsLine = nextCompetition
+      ? `🌍 Clasificaste a ${CONTINENTAL_LABELS[nextCompetition]} la próxima temporada.`
+      : null;
 
     // Generar ofertas de otros clubes si el prestige es suficiente
     let newJobOffers = (s.jobOffers || []).map((o) => o.status === "pending" ? { ...o, status: "expired" } : o);
@@ -861,10 +992,13 @@ export function CareerProvider({ children }) {
       calendar,
       standings: initialStandings(leagueTeamIds),
       copa: newCopa,
+      continental: newContinental,
       playerStats: {},
       injuries: [],
-      history: [...s.history, { season: s.season, position, points: sorted.find((r) => r.teamId === s.teamId)?.pts || 0, objectiveMet, copaChampion: s.copa?.champion || false }],
+      fatigue: {},
+      history: [...s.history, { season: s.season, position, points: sorted.find((r) => r.teamId === s.teamId)?.pts || 0, objectiveMet, copaChampion: s.copa?.champion || false, continentalChampion: s.continental?.champion || false }],
       news: [
+        ...(continentalNewsLine ? [continentalNewsLine] : []),
         ...offerNews,
         objectiveMet ? `¡Objetivo cumplido! Terminaste ${position}° — la directiva confía en el proyecto.` : `No se cumplió el objetivo (terminaste ${position}°). La directiva está molesta.`,
         `Nueva temporada: llegan 3 promesas de la cantera.`,
@@ -885,6 +1019,9 @@ export function CareerProvider({ children }) {
       allTeams: teams,
       COPA_ROUNDS,
       COPA_WEEKS,
+      CONTINENTAL_ROUNDS,
+      CONTINENTAL_WEEKS,
+      CONTINENTAL_LABELS,
       selectTeam,
       resetCareer,
       setFormation,
@@ -914,6 +1051,8 @@ export function CareerProvider({ children }) {
       playNextMatchSecondHalf,
       playCopaMatch,
       copaIsAvailable,
+      playContinentalMatch,
+      continentalIsAvailable,
       applyTacticsPreset,
       acceptJobOffer,
       declineJobOffer,

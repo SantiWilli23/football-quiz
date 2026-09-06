@@ -1,6 +1,6 @@
 import { effectiveOvr } from "./positions.js";
 
-function squadOvr(players, lineupSlots, morale = {}) {
+function squadOvr(players, lineupSlots, morale = {}, fatigue = {}) {
   const xi = (lineupSlots || [])
     .map((slot) => ({ p: players.find((pl) => pl.id === slot.playerId), pos: slot.slot }))
     .filter((x) => x.p);
@@ -9,7 +9,9 @@ function squadOvr(players, lineupSlots, morale = {}) {
     const eff = effectiveOvr(x.p, x.pos);
     const m = morale[x.p.id] ?? 70;
     const mBonus = m >= 85 ? 2 : m <= 35 ? -4 : 0;
-    return s + eff + mBonus;
+    const f = fatigue[x.p.id] ?? 100;
+    const fBonus = f <= 30 ? -6 : f <= 55 ? -2.5 : 0;
+    return s + eff + mBonus + fBonus;
   }, 0) / xi.length;
 }
 
@@ -44,9 +46,9 @@ export function dayFormFactor() {
 function computeRates({
   myPlayers, lineup, myMentality, mySliders, myFormScore,
   rivalOvr, rivalFormScore, isHome, rivalMentality = 3,
-  morale, trainingFocus, myDay, rivalDay,
+  morale, fatigue, trainingFocus, myDay, rivalDay,
 }) {
-  const myOvr = squadOvr(myPlayers, lineup, morale);
+  const myOvr = squadOvr(myPlayers, lineup, morale, fatigue);
   const ms = mentalityScore(myMentality);
   const rms = mentalityScore(rivalMentality);
   const ss = slidersScore(mySliders || { pressing: 50, tempo: 50 });
@@ -71,11 +73,11 @@ function computeRates({
 export function simulateHalf({
   myPlayers, lineup, myMentality, mySliders, myFormScore,
   rivalOvr, rivalFormScore, isHome, rivalMentality = 3,
-  morale = {}, trainingFocus = "balanced", myDay, rivalDay, half,
+  morale = {}, fatigue = {}, trainingFocus = "balanced", myDay, rivalDay, half,
 }) {
   const rates = computeRates({
     myPlayers, lineup, myMentality, mySliders, myFormScore,
-    rivalOvr, rivalFormScore, isHome, rivalMentality, morale, trainingFocus, myDay, rivalDay,
+    rivalOvr, rivalFormScore, isHome, rivalMentality, morale, fatigue, trainingFocus, myDay, rivalDay,
   });
   const { goalChancePerMin, concededChancePerMin, effectivePressBoost, tm } = rates;
 
@@ -197,9 +199,9 @@ export function combineHalves(h1, h2) {
 export function simulateUserMatch({
   myPlayers, myLineup, myMentality, mySliders, myFormScore,
   rivalOvr, rivalFormScore, isHome, rivalMentality = 3,
-  morale = {}, trainingFocus = "balanced",
+  morale = {}, fatigue = {}, trainingFocus = "balanced",
 }) {
-  const myOvr = squadOvr(myPlayers, myLineup, morale);
+  const myOvr = squadOvr(myPlayers, myLineup, morale, fatigue);
   const ms = mentalityScore(myMentality);
   const rms = mentalityScore(rivalMentality);
   const ss = slidersScore(mySliders || { pressing: 50, tempo: 50 });

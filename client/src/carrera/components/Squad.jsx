@@ -27,6 +27,12 @@ function moraleColor(m) {
   return "text-red-400";
 }
 
+function fatigueColor(f) {
+  if (f >= 70) return "text-emerald";
+  if (f >= 45) return "text-amber";
+  return "text-red-400";
+}
+
 const MEETING_OPTIONS = [
   { id: "motivate", label: "Charla motivadora", emoji: "🗣️", desc: "+8 moral a todo el plantel" },
   { id: "demand", label: "Exigir más nivel", emoji: "📢", desc: "+3 confianza directiva, -3 moral" },
@@ -133,6 +139,7 @@ export default function Squad() {
                         week={state.week}
                         injury={getInjury(state.injuries || [], p.id)}
                         morale={(state.morale || {})[p.id] ?? 70}
+                        fatigue={(state.fatigue || {})[p.id] ?? 100}
                         seasonStats={(state.playerStats || {})[p.id]}
                         onBench={() => moveToBench(p.id)}
                         onReserves={() => moveToReserves(p.id)}
@@ -203,7 +210,7 @@ const LEVEL_STYLE = {
   Reserva: "text-gray-500 border-border",
 };
 
-function PlayerRow({ player: p, level, report, week, injury, morale, seasonStats, onBench, onReserves, onToggleTransferListed, onToggleLoanListed, onStartTraining }) {
+function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, seasonStats, onBench, onReserves, onToggleTransferListed, onToggleLoanListed, onStartTraining }) {
   const isInjured = injury && injury.returnWeek > week;
   const weeksLeft = isInjured ? Math.max(0, injury.returnWeek - week) : 0;
 
@@ -233,6 +240,12 @@ function PlayerRow({ player: p, level, report, week, injury, morale, seasonStats
         <div className="hidden sm:flex flex-col items-center w-14 shrink-0">
           <span className="text-[10px] uppercase tracking-wide text-gray-600">Moral</span>
           <span className={`text-sm font-semibold ${moraleColor(morale)}`}>{morale}</span>
+        </div>
+
+        {/* Físico */}
+        <div className="hidden sm:flex flex-col items-center w-14 shrink-0">
+          <span className="text-[10px] uppercase tracking-wide text-gray-600">Físico</span>
+          <span className={`text-sm font-semibold ${fatigueColor(fatigue)}`}>{fatigue}</span>
         </div>
 
         <div className="hidden sm:flex flex-col items-center w-16 shrink-0">

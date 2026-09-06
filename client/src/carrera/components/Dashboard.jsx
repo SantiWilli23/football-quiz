@@ -34,13 +34,24 @@ function clubRepLabel(r) {
   return { text: "En la cuerda floja", color: "text-red-400" };
 }
 
+function competitionEmojiAndColor(competition) {
+  return competition === "champions"
+    ? { emoji: "⭐", color: "text-blue", bg: "bg-blue/5 border-blue/30" }
+    : { emoji: "🟠", color: "text-orange-400", bg: "bg-orange-500/5 border-orange-500/30" };
+}
+
 export default function Dashboard({ onPlayMatch }) {
-  const { state, team, currentFixture, playNextMatchFirstHalf, playCopaMatch, copaIsAvailable, standingsSorted, resetCareer, acceptJobOffer, declineJobOffer, COPA_ROUNDS: CR, COPA_WEEKS: CW } = useCareer();
+  const {
+    state, team, currentFixture, playNextMatchFirstHalf, playCopaMatch, copaIsAvailable,
+    playContinentalMatch, continentalIsAvailable, standingsSorted, resetCareer, acceptJobOffer, declineJobOffer,
+    COPA_ROUNDS: CR, COPA_WEEKS: CW, CONTINENTAL_ROUNDS, CONTINENTAL_WEEKS, CONTINENTAL_LABELS,
+  } = useCareer();
   const fixture   = currentFixture();
   const rival     = fixture ? teamById(fixture.opponentTeamId) : null;
   const myPos     = standingsSorted.findIndex((r) => r.teamId === state.teamId) + 1;
   const confTier  = state.boardConfidence < 30 ? "bad" : state.boardConfidence < 60 ? "mid" : "good";
   const copa      = state.copa;
+  const continental = state.continental;
   const prestige  = state.managerPrestige ?? 50;
   const pLabel    = prestigeLabel(prestige);
 
@@ -70,6 +81,11 @@ export default function Dashboard({ onPlayMatch }) {
 
   function handlePlayCopa() {
     const result = playCopaMatch();
+    if (result) onPlayMatch(result);
+  }
+
+  function handlePlayContinental() {
+    const result = playContinentalMatch();
     if (result) onPlayMatch(result);
   }
 
@@ -172,6 +188,43 @@ export default function Dashboard({ onPlayMatch }) {
           <div className="bg-panel border border-border rounded-2xl p-5">
             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Copa del Rey</p>
             <p className="text-sm text-gray-400">Eliminados en {COPA_ROUNDS[Math.max(0, (copa.currentRound || 1) - 1)]}</p>
+          </div>
+        )}
+
+        {/* Competición continental */}
+        {continental && !continental.champion && !continental.eliminated && (() => {
+          const ce = competitionEmojiAndColor(continental.competition);
+          const label = CONTINENTAL_LABELS[continental.competition];
+          return (
+            <div className={`rounded-2xl p-5 border ${continentalIsAvailable() ? ce.bg : "bg-panel border-border"}`}>
+              <p className={`text-xs uppercase tracking-wide mb-2.5 ${continentalIsAvailable() ? ce.color : "text-gray-500"}`}>
+                {ce.emoji} {label}
+              </p>
+              <p className="font-semibold">{CONTINENTAL_ROUNDS[continental.currentRound]}</p>
+              <p className="text-sm text-gray-400">vs {continental.opponents[continental.currentRound]?.name || "?"}</p>
+              {continentalIsAvailable() ? (
+                <button onClick={handlePlayContinental} className={`mt-4 w-full font-semibold py-2.5 rounded-2xl transition border ${ce.color} ${ce.bg} hover:brightness-110`}>
+                  Jugar {label}
+                </button>
+              ) : (
+                <p className="text-xs text-gray-600 mt-2">Disponible a partir de la jornada {CONTINENTAL_WEEKS[continental.currentRound]}</p>
+              )}
+            </div>
+          );
+        })()}
+        {continental?.champion && (
+          <div className="bg-blue/10 border border-blue/40 rounded-2xl p-5 flex items-center gap-3">
+            <span className="text-4xl">🏆</span>
+            <div>
+              <p className="font-bold text-blue">¡Campeón de {CONTINENTAL_LABELS[continental.competition]}!</p>
+              <p className="text-xs text-gray-400">Título continental conquistado esta temporada</p>
+            </div>
+          </div>
+        )}
+        {continental?.eliminated && (
+          <div className="bg-panel border border-border rounded-2xl p-5">
+            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">{CONTINENTAL_LABELS[continental.competition]}</p>
+            <p className="text-sm text-gray-400">Eliminados en {CONTINENTAL_ROUNDS[Math.max(0, (continental.currentRound || 1) - 1)]}</p>
           </div>
         )}
 
@@ -278,6 +331,23 @@ export default function Dashboard({ onPlayMatch }) {
             {copa.results.map((r, i) => (
               <div key={i} className="flex items-center justify-between text-sm">
                 <span className="text-gray-400">{COPA_ROUNDS[r.round]}</span>
+                <span className={r.won ? "text-emerald" : "text-red-400"}>
+                  {r.myGoals}-{r.rivalGoals} {r.won ? "✓" : "✗"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Historial continental */}
+      {continental?.results?.length > 0 && (
+        <div className="bg-panel border border-border rounded-2xl p-5">
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2.5">{CONTINENTAL_LABELS[continental.competition]} — Resultados</p>
+          <div className="space-y-1.5">
+            {continental.results.map((r, i) => (
+              <div key={i} className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">{CONTINENTAL_ROUNDS[r.round]}</span>
                 <span className={r.won ? "text-emerald" : "text-red-400"}>
                   {r.myGoals}-{r.rivalGoals} {r.won ? "✓" : "✗"}
                 </span>

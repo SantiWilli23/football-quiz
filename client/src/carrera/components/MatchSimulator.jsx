@@ -75,7 +75,7 @@ export default function MatchSimulator({ matchResult, onFinish }) {
     <div className="min-h-screen bg-bg text-white p-4">
       <div className="max-w-2xl mx-auto">
         <div className="bg-panel border border-border rounded-card p-5 text-center mb-4">
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">{data.isCopa ? `Copa del Rey · ${data.copaRound}` : "Liga"}</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">{data.competitionLabel || "Liga"}</p>
           <div className="flex items-center justify-center gap-4">
             <span className="flex items-center gap-2 font-semibold text-lg"><TeamCrest team={team} size={24} />{team.name}</span>
             <span className="text-3xl font-bold tabular-nums">{myGoalsSoFar} - {rivalGoalsSoFar}</span>
