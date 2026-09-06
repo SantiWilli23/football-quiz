@@ -8,11 +8,50 @@ import { askingPrice } from "./transferMarket.js";
 export const SCOUTS = [
   { id: "s1", name: "Martín Ochoa", region: "laliga", accuracy: 0.9, desc: "Ex-jugador de La Liga, ojo fino para el mediocampo." },
   { id: "s2", name: "Derek Whitmore", region: "premier", accuracy: 0.9, desc: "Veterano de las canteras inglesas, especialista en Premier." },
-  { id: "s3", name: "Yuki Tanaka", region: "global", accuracy: 0.75, desc: "Red de contactos en Asia y Oceanía, generalista." },
-  { id: "s4", name: "Camila Duarte", region: "global", accuracy: 0.8, desc: "Sudamérica y mercados emergentes, buena para jóvenes." },
-  { id: "s5", name: "Klaus Reiter", region: "global", accuracy: 0.85, desc: "Exigente y meticuloso, tarda pero se equivoca poco." },
-  { id: "s6", name: "Sofia Bianchi", region: "global", accuracy: 0.7, desc: "Nueva en el oficio, barata pero menos precisa." },
+  { id: "s3", name: "Camila Duarte", region: "global", accuracy: 0.8, desc: "Sudamérica y mercados emergentes, buena para jóvenes." },
+  {
+    id: "s4",
+    name: "Iker Salgado",
+    region: "global",
+    accuracy: 0.75,
+    monthly: true,
+    desc: "No lo mandás vos: viaja por su cuenta y una vez al mes te manda un informe con jugadores random que encontró — siempre trae a alguien con potencial alto.",
+  },
 ];
+
+// El 4to reclutador no se dirige a mano: cada 4 semanas manda su propio
+// informe con jugadores al azar de cualquier plantel, y ese lote siempre
+// trae al menos uno con potencial real ≥85 (la "joya" del mes).
+export const MONTHLY_SCOUT_ID = "s4";
+const MONTHLY_INTERVAL_WEEKS = 4;
+const MONTHLY_BATCH_SIZE = 3;
+const MONTHLY_MIN_POTENTIAL = 85;
+
+export function shouldRunMonthlyScout(week, lastRunWeek) {
+  return lastRunWeek == null || week - lastRunWeek >= MONTHLY_INTERVAL_WEEKS;
+}
+
+function sample(pool, n) {
+  const copy = pool.slice();
+  const picked = [];
+  while (picked.length < n && copy.length) {
+    const i = Math.floor(Math.random() * copy.length);
+    picked.push(copy.splice(i, 1)[0]);
+  }
+  return picked;
+}
+
+// Arma el lote random del mes: primero garantiza la "joya" (potencial real
+// ≥85), después completa con jugadores cualquiera. Devuelve los jugadores
+// elegidos, no todavía los reportes (eso lo arma quien tenga el contexto de
+// la carrera, así puede fusionarlos con los reportes ya existentes).
+export function pickMonthlyDiscoveries(allPlayers, excludeIds = []) {
+  const pool = allPlayers.filter((p) => !excludeIds.includes(p.id));
+  const gems = pool.filter((p) => p.potential >= MONTHLY_MIN_POTENTIAL);
+  const gem = gems.length ? sample(gems, 1)[0] : sample(pool, 1)[0];
+  const rest = sample(pool.filter((p) => p.id !== gem?.id), MONTHLY_BATCH_SIZE - 1);
+  return [gem, ...rest].filter(Boolean);
+}
 
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function rnd(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }

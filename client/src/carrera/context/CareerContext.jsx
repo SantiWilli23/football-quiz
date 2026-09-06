@@ -7,7 +7,7 @@ import { ageSquad, releaseExpired, generateYouthProspects } from "../engine/play
 import { transferBudgetFor, weeklyWageBill, seasonIncome } from "../engine/financeEngine.js";
 import { generateMarketRumors } from "../engine/transferAI.js";
 import { effectiveOvr } from "../engine/positions.js";
-import { scoutPlayer, mergeReports } from "../engine/scouting.js";
+import { scoutPlayer, mergeReports, MONTHLY_SCOUT_ID, shouldRunMonthlyScout, pickMonthlyDiscoveries } from "../engine/scouting.js";
 import { clubDecision, playerDecision } from "../engine/transferMarket.js";
 
 const CareerContext = createContext(null);
@@ -131,11 +131,37 @@ function remapLineupToFormation(squad, lineup, formation) {
   return { starters, bench, reserves };
 }
 
+// El 4to reclutador (Iker Salgado) no se manda a mano: cada 4 semanas trae
+// solo un lote de jugadores al azar de cualquier plantel, garantizando
+// siempre al menos uno con potencial real ≥85 (la "joya" del mes). Se corre
+// una vez al arrancar la carrera y después cada vez que se cumple el plazo.
+function runMonthlyDiscovery(scoutReports, week) {
+  const players = pickMonthlyDiscoveries(allPlayers);
+  const updatedReports = { ...scoutReports };
+  const entries = [];
+  players.forEach((p, i) => {
+    const sellerTeam = teamById(p.teamId);
+    const report = scoutPlayer(MONTHLY_SCOUT_ID, p, sellerTeam?.league);
+    if (!report) return;
+    updatedReports[p.id] = mergeReports(scoutReports[p.id], report);
+    entries.push({ playerId: p.id, name: p.name, teamId: p.teamId, potentialEstimate: report.potentialEstimate, isGem: i === 0 });
+  });
+  const gem = entries.find((e) => e.isGem);
+  const newsLine = entries.length
+    ? `🔭 Informe mensual de Iker Salgado: ${entries.map((e) => e.name).join(", ")}${gem ? ` (la joya: ${gem.name}, potencial ~${gem.potentialEstimate})` : ""}.`
+    : null;
+  return { scoutReports: updatedReports, entry: { week, entries }, newsLine };
+}
+
 function buildInitialState(teamId) {
   const team = teamById(teamId);
   const squad = playersByTeam(teamId).map((p) => ({ ...p }));
   const leagueTeamIds = teamsByLeague(team.league).map((t) => t.id);
   const { calendar } = roundRobinCalendar(leagueTeamIds, teamId);
+
+  // Arrancás la carrera con un informe mensual ya en mano.
+  const initialDiscovery = runMonthlyDiscovery({}, 0);
+
   return {
     version: 1,
     teamId,
@@ -151,14 +177,16 @@ function buildInitialState(teamId) {
     boardConfidence: 60,
     calendar,
     standings: initialStandings(leagueTeamIds),
-    news: [`Bienvenido al banquillo de ${team.name}.`],
+    news: [initialDiscovery.newsLine, `Bienvenido al banquillo de ${team.name}.`].filter(Boolean),
     history: [],
     lastMatch: null,
     gameOver: false,
-    scoutReports: {},
+    scoutReports: initialDiscovery.scoutReports,
     scoutsAvailable: {},
     acquired: [],
     offerCooldowns: {},
+    monthlyReports: [initialDiscovery.entry],
+    lastMonthlyScoutWeek: 0,
   };
 }
 
@@ -378,6 +406,18 @@ export function CareerProvider({ children }) {
 
       const allPlayed = calendar.every((c) => c.played);
       let next = { ...s, standings, calendar, lastMatch: { ...result, rival }, news, week: s.week + 1 };
+
+      if (shouldRunMonthlyScout(next.week, next.lastMonthlyScoutWeek)) {
+        const discovery = runMonthlyDiscovery(next.scoutReports, next.week);
+        next = {
+          ...next,
+          scoutReports: discovery.scoutReports,
+          monthlyReports: [discovery.entry, ...(next.monthlyReports || [])].slice(0, 12),
+          lastMonthlyScoutWeek: next.week,
+          news: discovery.newsLine ? [discovery.newsLine, ...next.news].slice(0, 8) : next.news,
+        };
+      }
+
       if (allPlayed) next = finishSeason(next);
       return next;
     });
@@ -405,6 +445,10 @@ export function CareerProvider({ children }) {
       ...s,
       season: s.season + 1,
       week: 0,
+      // La semana vuelve a 0 con la temporada — si no reiniciamos esto
+      // también, el reclutador mensual se queda esperando una semana que
+      // ya no va a volver a llegar (el contador nunca lo alcanzaría).
+      lastMonthlyScoutWeek: 0,
       squad,
       lineup: defaultLineup(squad, s.formation),
       budget,

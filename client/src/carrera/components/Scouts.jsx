@@ -4,9 +4,11 @@ import { teams, teamById } from "../data/teams.js";
 import { players as allPlayers } from "../data/players.js";
 import { SCOUTS, formatRange } from "../engine/scouting.js";
 
+const MANUAL_SCOUTS = SCOUTS.filter((s) => !s.monthly);
+
 export default function Scouts() {
   const { state, team, sendScout } = useCareer();
-  const [scoutId, setScoutId] = useState(SCOUTS[0].id);
+  const [scoutId, setScoutId] = useState(MANUAL_SCOUTS[0].id);
   const [teamId, setTeamId] = useState(team.id);
   const [query, setQuery] = useState("");
   const [lastReport, setLastReport] = useState(null);
@@ -24,20 +26,33 @@ export default function Scouts() {
       <div>
         <h2 className="text-2xl font-bold mb-2">Departamento de Scouting</h2>
         <p className="text-sm text-gray-500 max-w-lg leading-relaxed">
-          No conocés el techo (ni el nivel exacto) de un jugador hasta que uno de tus 6 reclutadores lo va a ver.
+          No conocés el techo (ni el nivel exacto) de un jugador hasta que uno de tus 4 reclutadores lo va a ver.
           El potencial que te reportan es la cifra más probable — no una garantía, puede que el jugador no llegue del
           todo. El reclutador también te tira una oferta sugerida por el pase.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {SCOUTS.map((s) => (
           <button
             key={s.id}
-            onClick={() => setScoutId(s.id)}
-            className={`text-left p-4 rounded-2xl border transition-colors ${scoutId === s.id ? "border-accent bg-accent/10" : "border-border bg-panel hover:border-gray-500"}`}
+            onClick={() => !s.monthly && setScoutId(s.id)}
+            className={`text-left p-4 rounded-2xl border transition-colors ${
+              s.monthly
+                ? "border-dashed border-gray-600 bg-panel cursor-default"
+                : scoutId === s.id
+                ? "border-accent bg-accent/10"
+                : "border-border bg-panel hover:border-gray-500"
+            }`}
           >
-            <p className="text-sm font-semibold">{s.name}</p>
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-sm font-semibold">{s.name}</p>
+              {s.monthly && (
+                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber/15 text-amber border border-amber/30">
+                  Automático
+                </span>
+              )}
+            </div>
             <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1.5">
               {s.region === "premier" ? "Premier League" : s.region === "laliga" ? "La Liga" : "Global"} · precisión {Math.round(s.accuracy * 100)}%
             </p>
@@ -45,6 +60,28 @@ export default function Scouts() {
           </button>
         ))}
       </div>
+
+      {state.monthlyReports?.length > 0 && (
+        <div className="bg-panel border border-amber/20 rounded-2xl p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-amber mb-2.5">📋 Último informe mensual de Iker Salgado</p>
+          <div className="flex flex-wrap gap-2">
+            {state.monthlyReports[0].entries.map((e) => {
+              const t = teamById(e.teamId);
+              return (
+                <span
+                  key={e.playerId}
+                  className={`text-xs px-3 py-1.5 rounded-full border ${
+                    e.isGem ? "border-amber/50 bg-amber/10 text-amber" : "border-border text-gray-400"
+                  }`}
+                  title={t ? t.name : ""}
+                >
+                  {e.isGem && "💎 "}{e.name} (~{e.potentialEstimate}){t ? ` · ${t.name}` : ""}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-3 items-center">
         <select value={teamId} onChange={(e) => setTeamId(e.target.value)} className="bg-panel border border-border rounded-2xl px-4 py-3 text-sm max-w-[220px]">
