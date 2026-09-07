@@ -42,11 +42,13 @@ function competitionEmojiAndColor(competition) {
 
 export default function Dashboard({ onPlayMatch }) {
   const {
-    state, team, currentFixture, playNextMatchFirstHalf, playCopaMatch, copaIsAvailable,
+    state, team, currentFixture, isRivalMatch, playNextMatchFirstHalf, playCopaMatch, copaIsAvailable,
     playContinentalMatch, continentalIsAvailable, standingsSorted, resetCareer, acceptJobOffer, declineJobOffer,
+    preseasonAvailable, playPreseasonMatch,
     COPA_ROUNDS: CR, COPA_WEEKS: CW, CONTINENTAL_ROUNDS, CONTINENTAL_WEEKS, CONTINENTAL_LABELS,
   } = useCareer();
   const fixture   = currentFixture();
+  const fixtureIsDerby = fixture ? isRivalMatch(fixture.opponentTeamId) : false;
   const rival     = fixture ? teamById(fixture.opponentTeamId) : null;
   const myPos     = standingsSorted.findIndex((r) => r.teamId === state.teamId) + 1;
   const confTier  = state.boardConfidence < 30 ? "bad" : state.boardConfidence < 60 ? "mid" : "good";
@@ -86,6 +88,11 @@ export default function Dashboard({ onPlayMatch }) {
 
   function handlePlayContinental() {
     const result = playContinentalMatch();
+    if (result) onPlayMatch(result);
+  }
+
+  function handlePlayPreseason() {
+    const result = playPreseasonMatch();
     if (result) onPlayMatch(result);
   }
 
@@ -143,8 +150,10 @@ export default function Dashboard({ onPlayMatch }) {
       {/* Grid principal */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         {/* Próximo partido */}
-        <div className="bg-panel border border-border rounded-2xl p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2.5">Próximo partido · Liga</p>
+        <div className={`rounded-2xl p-5 border ${fixtureIsDerby ? "bg-red-500/5 border-red-500/30" : "bg-panel border-border"}`}>
+          <p className={`text-xs uppercase tracking-wide mb-2.5 ${fixtureIsDerby ? "text-red-400" : "text-gray-500"}`}>
+            {fixtureIsDerby ? "🔥 Clásico · Liga" : "Próximo partido · Liga"}
+          </p>
           {fixture ? (
             <>
               <p className="font-semibold text-lg">{fixture.home ? `vs ${rival.name} (Local)` : `vs ${rival.name} (Visitante)`}</p>
@@ -157,6 +166,18 @@ export default function Dashboard({ onPlayMatch }) {
             <p className="text-sm text-gray-400">Sin partidos pendientes.</p>
           )}
         </div>
+
+        {/* Pretemporada */}
+        {preseasonAvailable() && (
+          <div className="bg-panel border border-border rounded-2xl p-5">
+            <p className="text-xs text-gray-500 uppercase tracking-wide mb-2.5">Pretemporada · Amistoso {state.preseason.matchesPlayed + 1}/{state.preseason.total}</p>
+            <p className="font-semibold">vs {state.preseason.opponents[state.preseason.matchesPlayed]?.name || "?"}</p>
+            <p className="text-xs text-gray-500 mb-4">Probá tu once y tácticas sin afectar la tabla.</p>
+            <button onClick={handlePlayPreseason} className="w-full bg-panel border border-accent/40 text-accent font-semibold py-2.5 rounded-2xl hover:bg-accent/10 transition">
+              Jugar amistoso
+            </button>
+          </div>
+        )}
 
         {/* Copa del Rey */}
         {copa && !copa.champion && !copa.eliminated && (

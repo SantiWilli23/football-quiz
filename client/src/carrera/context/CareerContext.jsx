@@ -36,6 +36,29 @@ const COPA_ROUNDS = ["Dieciseisavos", "Cuartos de final", "Semifinal", "Final"];
 const COPA_WEEKS = [6, 14, 22, 30];
 const COPA_PRIZES = [0.5, 1, 2, 5];
 
+const RIVALRY_PAIRS = [
+  ["mancity", "manutd"],
+  ["liverpool", "everton"],
+  ["arsenal", "tottenham"],
+  ["chelsea", "tottenham"],
+  ["realmadrid", "barcelona"],
+  ["realmadrid", "atletico"],
+  ["atletico", "barcelona"],
+  ["athletic", "realsociedad"],
+  ["sevilla", "realbetis"],
+  ["barcelona", "espanyol"],
+];
+
+function isDerby(teamId, opponentId) {
+  return RIVALRY_PAIRS.some(([a, b]) => (a === teamId && b === opponentId) || (a === opponentId && b === teamId));
+}
+
+function generatePreseason(myTeamId) {
+  const others = teams.filter((t) => t.id !== myTeamId).sort(() => Math.random() - 0.5);
+  const opponents = others.slice(0, 3).map((t) => ({ id: t.id, name: t.name, tier: t.tier || 2 }));
+  return { opponents, matchesPlayed: 0, total: opponents.length, done: opponents.length === 0 };
+}
+
 const CONTINENTAL_ROUNDS = ["Fase de grupos", "Cuartos de final", "Semifinal", "Final"];
 const CONTINENTAL_WEEKS = [10, 18, 26, 34];
 const CONTINENTAL_PRIZES = { champions: [2, 4, 8, 15], europa: [1, 2, 4, 8] };
@@ -280,6 +303,9 @@ function buildInitialState(teamId) {
     lastMeetingWeek: -1,
     fatigue: {},
     continental: generateContinental(determineContinentalCompetition(team.tier, null), teamId),
+    captainId: [...squad].sort((a, b) => b.ovr - a.ovr)[0]?.id || null,
+    playerInstructions: {},
+    preseason: generatePreseason(teamId),
   };
 }
 
@@ -494,6 +520,17 @@ export function CareerProvider({ children }) {
     setState((s) => ({ ...s, squad: s.squad.map((p) => (p.id === playerId ? { ...p, loanListed: !p.loanListed } : p)) }));
   }
 
+  function setCaptain(playerId) {
+    setState((s) => ({ ...s, captainId: playerId }));
+  }
+
+  function setPlayerInstruction(playerId, instruction) {
+    setState((s) => ({
+      ...s,
+      playerInstructions: { ...(s.playerInstructions || {}), [playerId]: instruction === "libre" ? undefined : instruction },
+    }));
+  }
+
   function startPositionTraining(playerId, targetPos) {
     setState((s) => ({
       ...s,
@@ -570,6 +607,11 @@ export function CareerProvider({ children }) {
     return state.calendar.find((c) => !c.played) || null;
   }
 
+  function isRivalMatch(opponentId) {
+    if (!state) return false;
+    return isDerby(state.teamId, opponentId);
+  }
+
   function copaIsAvailable() {
     if (!state?.copa) return false;
     const { copa } = state;
@@ -598,9 +640,12 @@ export function CareerProvider({ children }) {
       isHome: fixture.home,
       morale: state.morale || {},
       fatigue: state.fatigue || {},
+      instructions: state.playerInstructions || {},
       trainingFocus: state.trainingFocus || "balanced",
       myDay, rivalDay, half: 1,
     });
+
+    const derby = isDerby(state.teamId, rival.id);
 
     setState((s) => ({
       ...s,
@@ -610,12 +655,13 @@ export function CareerProvider({ children }) {
         rivalOvr, rivalFormScore,
         isHome: fixture.home,
         myDay, rivalDay,
+        isDerby: derby,
         h1,
         lineupFirst: s.lineup.starters,
       },
     }));
 
-    return { phase: "half1", ...h1, rival };
+    return { phase: "half1", ...h1, rival, isDerby: derby };
   }
 
   function playNextMatchSecondHalf(subs = []) {
@@ -639,6 +685,7 @@ export function CareerProvider({ children }) {
       isHome: pm.isHome,
       morale: state.morale || {},
       fatigue: state.fatigue || {},
+      instructions: state.playerInstructions || {},
       trainingFocus: state.trainingFocus || "balanced",
       myDay: pm.myDay, rivalDay: pm.rivalDay, half: 2,
     });
@@ -668,6 +715,23 @@ export function CareerProvider({ children }) {
       const playerStats = mergePlayerStats(s.playerStats || {}, result.starterIds || [], result.playerMatchStats || {});
       let morale = applyMatchMorale(s.morale || {}, s.squad, { starters: pm.lineupFirst, bench: s.lineup.bench }, isWin, isLoss);
       const fatigue = applyMatchFatigue(s.fatigue || {}, s.squad, result.starterIds || [], s.trainingFocus);
+
+      let managerPrestige = s.managerPrestige ?? 50;
+      if (pm.isDerby) {
+        // El clásico pega más fuerte en la moral y en la reputación del técnico.
+        const derbyMoraleDelta = isWin ? 6 : isLoss ? -6 : 0;
+        const updated = { ...morale };
+        s.squad.forEach((p) => { updated[p.id] = Math.max(0, Math.min(100, (updated[p.id] ?? 70) + derbyMoraleDelta)); });
+        morale = updated;
+        managerPrestige = Math.max(0, Math.min(100, managerPrestige + (isWin ? 4 : isLoss ? -3 : 0)));
+        news = [isWin ? `🔥 ¡Ganaste el clásico ante ${rival.name}!` : isLoss ? `😔 Perdiste el clásico ante ${rival.name}.` : `🔥 Empate en el clásico ante ${rival.name}.`, ...news].slice(0, 8);
+      }
+
+      if (s.captainId && isWin && (result.starterIds || []).includes(s.captainId)) {
+        const updated = { ...morale };
+        s.squad.forEach((p) => { updated[p.id] = Math.min(100, (updated[p.id] ?? 70) + 2); });
+        morale = updated;
+      }
 
       const newInjuries = rollMatchInjuries(pm.lineupFirst, newWeek);
       let injuries = [...newInjuries, ...recoverInjuries(s.injuries || [], newWeek)];
@@ -705,7 +769,8 @@ export function CareerProvider({ children }) {
       }
 
       const allPlayed = calendar.every((c) => c.played);
-      let next = { ...s, ...eventPatches, standings, calendar, lastMatch: { ...result, rival }, news, week: newWeek, playerStats, morale, fatigue, injuries, pendingMatch: null };
+      const competitionLabel = pm.isDerby ? "🔥 Clásico · Liga" : "Liga";
+      let next = { ...s, ...eventPatches, standings, calendar, managerPrestige, lastMatch: { ...result, rival, isDerby: pm.isDerby, competitionLabel }, news, week: newWeek, playerStats, morale, fatigue, injuries, pendingMatch: null };
 
       const trainingResult = applyPositionTrainings(next.squad, next.week);
       if (trainingResult.news.length) {
@@ -736,7 +801,7 @@ export function CareerProvider({ children }) {
       return next;
     });
 
-    return { phase: "final", ...result, rival };
+    return { phase: "final", ...result, rival, isDerby: pm.isDerby, competitionLabel: pm.isDerby ? "🔥 Clásico · Liga" : "Liga" };
   }
 
   function holdSquadMeeting(type) {
@@ -787,6 +852,7 @@ export function CareerProvider({ children }) {
       isHome: true,
       morale: state.morale || {},
       fatigue: state.fatigue || {},
+      instructions: state.playerInstructions || {},
       trainingFocus: state.trainingFocus || "balanced",
     });
 
@@ -863,6 +929,7 @@ export function CareerProvider({ children }) {
       isHome: true,
       morale: state.morale || {},
       fatigue: state.fatigue || {},
+      instructions: state.playerInstructions || {},
       trainingFocus: state.trainingFocus || "balanced",
     });
 
@@ -909,6 +976,53 @@ export function CareerProvider({ children }) {
     });
 
     return { ...result, rival: { name: opponent.name }, competitionLabel: `${compLabel} · ${CONTINENTAL_ROUNDS[roundIdx]}` };
+  }
+
+  function preseasonAvailable() {
+    return !!state?.preseason && !state.preseason.done;
+  }
+
+  function playPreseasonMatch() {
+    const preseason = state?.preseason;
+    if (!preseason || preseason.done) return null;
+    const opponent = preseason.opponents[preseason.matchesPlayed];
+    if (!opponent) return null;
+
+    const rivalTeam = teamById(opponent.id);
+    const rivalOvr = rivalTeam?.tier === 1 ? 80 : rivalTeam?.tier === 2 ? 73 : 66;
+
+    const result = simulateUserMatch({
+      myPlayers: state.squad,
+      myLineup: state.lineup.starters,
+      myMentality: state.mentality,
+      mySliders: state.sliders,
+      myFormScore: 60,
+      rivalOvr,
+      rivalFormScore: 55,
+      isHome: true,
+      morale: state.morale || {},
+      fatigue: state.fatigue || {},
+      instructions: state.playerInstructions || {},
+      trainingFocus: state.trainingFocus || "balanced",
+    });
+
+    const isWin = result.myGoals > result.rivalGoals;
+    const isLoss = result.myGoals < result.rivalGoals;
+
+    setState((s) => {
+      const matchesPlayed = s.preseason.matchesPlayed + 1;
+      const done = matchesPlayed >= s.preseason.total;
+      const morale = applyMatchMorale(s.morale || {}, s.squad, s.lineup, isWin, isLoss);
+      const news = [
+        isWin ? `Amistoso: victoria ${result.myGoals}-${result.rivalGoals} vs ${opponent.name}.`
+          : isLoss ? `Amistoso: derrota ${result.myGoals}-${result.rivalGoals} vs ${opponent.name}.`
+          : `Amistoso: empate ${result.myGoals}-${result.rivalGoals} vs ${opponent.name}.`,
+        ...s.news,
+      ].slice(0, 8);
+      return { ...s, preseason: { ...s.preseason, matchesPlayed, done }, morale, news };
+    });
+
+    return { ...result, rival: { name: opponent.name }, competitionLabel: "Amistoso de pretemporada" };
   }
 
   function finishSeason(s) {
@@ -993,6 +1107,7 @@ export function CareerProvider({ children }) {
       standings: initialStandings(leagueTeamIds),
       copa: newCopa,
       continental: newContinental,
+      preseason: generatePreseason(s.teamId),
       playerStats: {},
       injuries: [],
       fatigue: {},
@@ -1045,8 +1160,13 @@ export function CareerProvider({ children }) {
       toggleTransferListed,
       toggleLoanListed,
       startPositionTraining,
+      setCaptain,
+      setPlayerInstruction,
+      preseasonAvailable,
+      playPreseasonMatch,
       respondToIncomingOffer,
       currentFixture,
+      isRivalMatch,
       playNextMatchFirstHalf,
       playNextMatchSecondHalf,
       playCopaMatch,

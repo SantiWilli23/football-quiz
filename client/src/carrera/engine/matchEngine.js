@@ -73,7 +73,7 @@ function computeRates({
 export function simulateHalf({
   myPlayers, lineup, myMentality, mySliders, myFormScore,
   rivalOvr, rivalFormScore, isHome, rivalMentality = 3,
-  morale = {}, fatigue = {}, trainingFocus = "balanced", myDay, rivalDay, half,
+  morale = {}, fatigue = {}, instructions = {}, trainingFocus = "balanced", myDay, rivalDay, half,
 }) {
   const rates = computeRates({
     myPlayers, lineup, myMentality, mySliders, myFormScore,
@@ -85,7 +85,8 @@ export function simulateHalf({
   const minEnd = half === 1 ? 45 : 90;
 
   const xi = (lineup || []).map((slot) => myPlayers.find((p) => p.id === slot.playerId)).filter(Boolean);
-  const scorers = pickWeightedScorers(myPlayers, lineup);
+  const scorers = pickWeightedScorers(myPlayers, lineup, instructions);
+  const cardPool = xi.filter((p) => instructions[p.id] !== "conservador");
   let scorerIdx = 0;
 
   const events = [];
@@ -134,7 +135,8 @@ export function simulateHalf({
         myFouls++;
         if (Math.random() < 0.12) {
           myYellow++;
-          const cardPlayer = xi[Math.floor(Math.random() * xi.length)];
+          const pool = cardPool.length ? cardPool : xi;
+          const cardPlayer = pool[Math.floor(Math.random() * pool.length)];
           if (cardPlayer?.id) {
             playerMatchStats[cardPlayer.id] = playerMatchStats[cardPlayer.id] || { goals: 0, assists: 0, yellowCards: 0 };
             playerMatchStats[cardPlayer.id].yellowCards++;
@@ -199,7 +201,7 @@ export function combineHalves(h1, h2) {
 export function simulateUserMatch({
   myPlayers, myLineup, myMentality, mySliders, myFormScore,
   rivalOvr, rivalFormScore, isHome, rivalMentality = 3,
-  morale = {}, fatigue = {}, trainingFocus = "balanced",
+  morale = {}, fatigue = {}, instructions = {}, trainingFocus = "balanced",
 }) {
   const myOvr = squadOvr(myPlayers, myLineup, morale, fatigue);
   const ms = mentalityScore(myMentality);
@@ -226,8 +228,9 @@ export function simulateUserMatch({
   let myCorners = 0, rivalCorners = 0, myFouls = 0, rivalFouls = 0, myYellow = 0, rivalYellow = 0;
   let myPossession = clamp(48 + (myOvr - rivalOvr) * 0.55 + ss.tempoBoost * 4, 28, 74);
 
-  const scorers = pickWeightedScorers(myPlayers, myLineup);
+  const scorers = pickWeightedScorers(myPlayers, myLineup, instructions);
   const xi = (myLineup || []).map(slot => myPlayers.find(p => p.id === slot.playerId)).filter(Boolean);
+  const cardPool = xi.filter((p) => instructions[p.id] !== "conservador");
   let scorerIdx = 0;
 
   const playerMatchStats = {};
@@ -272,7 +275,8 @@ export function simulateUserMatch({
         myFouls++;
         if (Math.random() < 0.12) {
           myYellow++;
-          const cardPlayer = xi[Math.floor(Math.random() * xi.length)];
+          const pool = cardPool.length ? cardPool : xi;
+          const cardPlayer = pool[Math.floor(Math.random() * pool.length)];
           if (cardPlayer?.id) {
             playerMatchStats[cardPlayer.id] = playerMatchStats[cardPlayer.id] || { goals: 0, assists: 0, yellowCards: 0 };
             playerMatchStats[cardPlayer.id].yellowCards++;
@@ -307,11 +311,15 @@ export function simulateUserMatch({
   };
 }
 
-function pickWeightedScorers(players, lineup) {
+function pickWeightedScorers(players, lineup, instructions = {}) {
   const xi = (lineup || []).map((slot) => players.find((p) => p.id === slot.playerId)).filter(Boolean);
   const attackers = xi.filter((p) => ["ST", "LW", "RW", "CAM"].includes(p.position));
   const rest = xi.filter((p) => !attackers.includes(p));
   const weighted = [...attackers, ...attackers, ...attackers, ...rest];
+  // Instrucción "ofensivo": el jugador busca más el gol, entra con peso extra al reparto de goles.
+  xi.forEach((p) => {
+    if (instructions[p.id] === "ofensivo") weighted.push(p, p);
+  });
   return weighted.length ? weighted : xi;
 }
 

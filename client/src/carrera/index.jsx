@@ -9,6 +9,7 @@ import MatchSimulator from "./components/MatchSimulator.jsx";
 import SeasonCalendar from "./components/SeasonCalendar.jsx";
 import Scouts from "./components/Scouts.jsx";
 import Transfers from "./components/Transfers.jsx";
+import CareerHistory from "./components/CareerHistory.jsx";
 
 function CareerApp() {
   const { state } = useCareer();
@@ -44,6 +45,7 @@ function CareerApp() {
           ["transfers", "Fichajes"],
           ["tactics", "Tácticas"],
           ["calendar", "Calendario"],
+          ["history", "Historial"],
         ].map(([id, label]) => (
           <button
             key={id}
@@ -65,6 +67,7 @@ function CareerApp() {
         {screen === "transfers" && <Transfers />}
         {screen === "tactics" && <Tactics />}
         {screen === "calendar" && <SeasonCalendar />}
+        {screen === "history" && <CareerHistory />}
       </main>
     </div>
   );

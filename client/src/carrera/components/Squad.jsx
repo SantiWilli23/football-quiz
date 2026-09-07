@@ -39,8 +39,14 @@ const MEETING_OPTIONS = [
   { id: "rest", label: "Día libre", emoji: "🌴", desc: "+12 moral a todo el plantel" },
 ];
 
+const INSTRUCTION_OPTIONS = [
+  { id: "libre", label: "Libre" },
+  { id: "ofensivo", label: "Ofensivo" },
+  { id: "conservador", label: "Conservador" },
+];
+
 export default function Squad() {
-  const { state, moveToBench, moveToReserves, toggleTransferListed, toggleLoanListed, startPositionTraining, holdSquadMeeting } = useCareer();
+  const { state, moveToBench, moveToReserves, toggleTransferListed, toggleLoanListed, startPositionTraining, holdSquadMeeting, setCaptain, setPlayerInstruction } = useCareer();
   const [tab, setTab] = useState("formacion");
   const [groupFilter, setGroupFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("ovr");
@@ -141,11 +147,15 @@ export default function Squad() {
                         morale={(state.morale || {})[p.id] ?? 70}
                         fatigue={(state.fatigue || {})[p.id] ?? 100}
                         seasonStats={(state.playerStats || {})[p.id]}
+                        isCaptain={state.captainId === p.id}
+                        instruction={(state.playerInstructions || {})[p.id] || "libre"}
                         onBench={() => moveToBench(p.id)}
                         onReserves={() => moveToReserves(p.id)}
                         onToggleTransferListed={() => toggleTransferListed(p.id)}
                         onToggleLoanListed={() => toggleLoanListed(p.id)}
                         onStartTraining={(pos) => startPositionTraining(p.id, pos)}
+                        onSetCaptain={() => setCaptain(p.id)}
+                        onSetInstruction={(instr) => setPlayerInstruction(p.id, instr)}
                       />
                     ))}
                   </div>
@@ -210,7 +220,7 @@ const LEVEL_STYLE = {
   Reserva: "text-gray-500 border-border",
 };
 
-function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, seasonStats, onBench, onReserves, onToggleTransferListed, onToggleLoanListed, onStartTraining }) {
+function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, seasonStats, isCaptain, instruction, onBench, onReserves, onToggleTransferListed, onToggleLoanListed, onStartTraining, onSetCaptain, onSetInstruction }) {
   const isInjured = injury && injury.returnWeek > week;
   const weeksLeft = isInjured ? Math.max(0, injury.returnWeek - week) : 0;
 
@@ -231,6 +241,7 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
 
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold truncate">
+            {isCaptain && <span className="text-amber align-middle mr-1" title="Capitán">🎖️</span>}
             {p.name} {p.isYouth && <span className="text-amber text-xs align-middle" title="Promesa de la cantera">⭐</span>}
           </p>
           <p className="text-xs text-gray-500 mt-0.5">{p.nationality} · {p.age} años</p>
@@ -296,6 +307,25 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
 
       {/* Controles de transferencia y entrenamiento */}
       <div className="flex flex-wrap items-center gap-2 pl-[52px]">
+        <button
+          onClick={onSetCaptain}
+          disabled={isCaptain}
+          className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+            isCaptain ? "bg-amber/15 text-amber border-amber/40 cursor-default" : "text-gray-500 border-border hover:text-white hover:border-gray-500"
+          }`}
+        >
+          {isCaptain ? "🎖️ Capitán" : "Nombrar capitán"}
+        </button>
+        <select
+          value={instruction}
+          onChange={(e) => onSetInstruction(e.target.value)}
+          title="Instrucción individual para partidos"
+          className="bg-bg border border-border rounded-full px-2.5 py-1 text-[11px] text-gray-300"
+        >
+          {INSTRUCTION_OPTIONS.map((opt) => (
+            <option key={opt.id} value={opt.id}>{opt.label}</option>
+          ))}
+        </select>
         <button
           onClick={onToggleTransferListed}
           className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
