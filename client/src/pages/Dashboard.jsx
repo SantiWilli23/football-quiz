@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Crown, Flame, HelpCircle, Newspaper, Shield, Swords, Star, Users, Zap } from "lucide-react";
+import { BarChart3, Crown, Flame, HelpCircle, Newspaper, Shield, Skull, Swords, Star, Users, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -35,6 +35,13 @@ const INTERNAL_GAMES = [
     icon: Swords,
     description: "Desafiá a alguien del grupo uno contra uno con las preguntas más difíciles.",
     color: "#f0c674",
+  },
+  {
+    to: "/supervivencia",
+    label: "Supervivencia",
+    icon: Skull,
+    description: "Todo el grupo responde en vivo la misma pregunta. El que falla queda afuera — gana el último en pie.",
+    color: "#d9534f",
   },
   {
     to: "/estadisticas",

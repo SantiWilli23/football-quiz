@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Radio } from "lucide-react";
+import { Radio, Timer } from "lucide-react";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -12,8 +12,36 @@ import ModeBCard from "../components/ModeBCard.jsx";
 import GroupQuestionComposer from "../components/GroupQuestionComposer.jsx";
 import ShareButton from "../components/ShareButton.jsx";
 import GroupStreakCard from "../components/GroupStreakCard.jsx";
+import EscudoQuiz from "../components/EscudoQuiz.jsx";
 
 const LIVE_REFRESH_MS = 15000;
+
+function todayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// Más racha, más comodines disponibles por día — incentiva volver seguido sin
+// regalar de más a quien recién empieza.
+function powerupBudget(streak) {
+  if (streak >= 10) return { fifty: 3, skip: 2 };
+  if (streak >= 5) return { fifty: 2, skip: 1 };
+  if (streak >= 2) return { fifty: 1, skip: 1 };
+  return { fifty: 1, skip: 0 };
+}
+
+function loadPowerupUsage() {
+  try {
+    const raw = JSON.parse(localStorage.getItem("fq_powerups") || "{}");
+    if (raw.date !== todayKey()) return { fifty: 0, skip: 0 };
+    return { fifty: raw.fifty || 0, skip: raw.skip || 0 };
+  } catch {
+    return { fifty: 0, skip: 0 };
+  }
+}
+
+function savePowerupUsage(usage) {
+  localStorage.setItem("fq_powerups", JSON.stringify({ date: todayKey(), ...usage }));
+}
 
 export default function Trivia() {
   const { stats, refreshMe } = useAuth();
@@ -21,6 +49,19 @@ export default function Trivia() {
   const [questions, setQuestions] = useState(null);
   const [modeBData, setModeBData] = useState(null);
   const [mode, setMode] = useState("a");
+  const [timedMode, setTimedMode] = useState(false);
+  const [powerupUsage, setPowerupUsage] = useState(loadPowerupUsage);
+
+  const budget = powerupBudget(stats?.current_streak ?? 0);
+  const powerupsLeft = { fifty: Math.max(0, budget.fifty - powerupUsage.fifty), skip: Math.max(0, budget.skip - powerupUsage.skip) };
+
+  const handleUsePowerup = (type) => {
+    setPowerupUsage((prev) => {
+      const next = { ...prev, [type]: prev[type] + 1 };
+      savePowerupUsage(next);
+      return next;
+    });
+  };
 
   const loadTrivia = async () => {
     try {
@@ -79,8 +120,21 @@ export default function Trivia() {
           <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
             <h1 className="text-xl sm:text-2xl font-bold">Trivia del día</h1>
             <div className="flex items-center gap-2">
-              <ShareButton trivia={questions} modeB={modeBData} />
+              <ShareButton trivia={questions} modeB={modeBData} stats={stats} />
               <GroupSelector className="mr-1" />
+              {mode === "a" && (
+                <button
+                  onClick={() => setTimedMode((v) => !v)}
+                  title="Modo contrarreloj: 20 segundos por pregunta"
+                  className={`flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded border transition-colors ${
+                    timedMode
+                      ? "bg-red-500/20 border-red-500 text-red-400"
+                      : "bg-transparent border-gray-600 text-gray-400 hover:border-gray-500"
+                  }`}
+                >
+                  <Timer size={14} /> Contrarreloj
+                </button>
+              )}
               <button
                 onClick={() => setMode("a")}
                 className={`px-3 py-1 text-sm font-medium rounded border ${
@@ -138,9 +192,13 @@ export default function Trivia() {
                     index={i}
                     total={questions.length}
                     onAnswered={(result) => handleAnswered(i, result)}
+                    timedMode={timedMode}
+                    powerups={powerupsLeft}
+                    onUsePowerup={handleUsePowerup}
                   />
                 ))}
                 {groupId && <BonusCard groupId={groupId} />}
+                <EscudoQuiz />
               </>
             ) : (
               modeBData &&

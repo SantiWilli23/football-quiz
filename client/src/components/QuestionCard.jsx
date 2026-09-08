@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CheckCircle2, Clock, Scissors, SkipForward, XCircle } from "lucide-react";
 import api from "../api.js";
 import Card from "./Card.jsx";
 import { SLOT_CHALK, chalkFill } from "../theme.js";
@@ -12,14 +12,23 @@ const SLOT_COLORS = Object.fromEntries(
   ])
 );
 
-export default function QuestionCard({ item, index, total, onAnswered }) {
+const TIMER_SECONDS = 20;
+
+export default function QuestionCard({ item, index, total, onAnswered, timedMode, powerups, onUsePowerup }) {
   const { question } = item;
   const [selected, setSelected] = useState(item.answered ? item.result.answer : null);
   const [result, setResult] = useState(item.answered ? item.result : null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [eliminated, setEliminated] = useState([]);
+  const [fiftyLoading, setFiftyLoading] = useState(false);
+  const [skipped, setSkipped] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(TIMER_SECONDS);
+  const timerRef = useRef(null);
+  const submitRef = useRef(null);
 
   const slotColor = SLOT_COLORS[question.slot] || SLOT_COLORS[1];
+  const locked = !!result || skipped;
 
   const options = [
     ["a", question.option_a],
@@ -28,14 +37,13 @@ export default function QuestionCard({ item, index, total, onAnswered }) {
     ["d", question.option_d],
   ];
 
-  const handleAnswer = async () => {
-    if (!selected) return;
+  const handleAnswer = async (overrideAnswer) => {
+    const answer = overrideAnswer || selected;
+    if (!answer) return;
     setSubmitting(true);
     setError("");
     try {
-      const { data: res } = await api.post(`/questions/${question.id}/answer`, {
-        answer: selected,
-      });
+      const { data: res } = await api.post(`/questions/${question.id}/answer`, { answer });
       setResult(res);
       onAnswered(res);
     } catch (err) {
@@ -43,6 +51,48 @@ export default function QuestionCard({ item, index, total, onAnswered }) {
     } finally {
       setSubmitting(false);
     }
+  };
+  submitRef.current = handleAnswer;
+
+  // Modo contrarreloj: cuenta regresiva por pregunta. Si se acaba el tiempo,
+  // se manda lo que esté marcado o una opción al azar (como en un show real).
+  useEffect(() => {
+    if (!timedMode || locked) return;
+    setSecondsLeft(TIMER_SECONDS);
+    timerRef.current = setInterval(() => {
+      setSecondsLeft((s) => {
+        if (s <= 1) {
+          clearInterval(timerRef.current);
+          const remaining = options.map(([k]) => k).filter((k) => !eliminated.includes(k));
+          const fallback = selected || remaining[Math.floor(Math.random() * remaining.length)];
+          submitRef.current(fallback);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timedMode, locked]);
+
+  const handleFifty = async () => {
+    if (fiftyLoading || locked || !powerups?.fifty) return;
+    setFiftyLoading(true);
+    try {
+      const { data } = await api.post(`/questions/${question.id}/fifty`);
+      setEliminated(data.eliminate);
+      onUsePowerup?.("fifty");
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo usar el comodín");
+    } finally {
+      setFiftyLoading(false);
+    }
+  };
+
+  const handleSkip = () => {
+    if (locked || !powerups?.skip) return;
+    setSkipped(true);
+    onUsePowerup?.("skip");
   };
 
   return (
@@ -64,19 +114,64 @@ export default function QuestionCard({ item, index, total, onAnswered }) {
           </span>
         </div>
 
-      <h2 className="text-xl font-semibold mb-6">{question.question}</h2>
+      {timedMode && !locked && (
+        <div className="flex items-center gap-2 mb-4">
+          <Clock size={14} className={secondsLeft <= 5 ? "text-red-400" : "text-gray-400"} />
+          <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-[width] ${secondsLeft <= 5 ? "bg-red-500" : "bg-accent"}`}
+              style={{ width: `${(secondsLeft / TIMER_SECONDS) * 100}%` }}
+            />
+          </div>
+          <span className={`text-xs font-semibold tabular-nums w-6 text-right ${secondsLeft <= 5 ? "text-red-400" : "text-gray-400"}`}>
+            {secondsLeft}s
+          </span>
+        </div>
+      )}
 
+      <h2 className="text-xl font-semibold mb-4">{question.question}</h2>
+
+      {!locked && (powerups?.fifty > 0 || powerups?.skip > 0) && (
+        <div className="flex gap-2 mb-4">
+          {powerups.fifty > 0 && (
+            <button
+              onClick={handleFifty}
+              disabled={fiftyLoading || eliminated.length > 0}
+              className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border border-purple-500/40 text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 disabled:opacity-40 transition-colors"
+            >
+              <Scissors size={13} /> 50/50 ({powerups.fifty})
+            </button>
+          )}
+          {powerups.skip > 0 && (
+            <button
+              onClick={handleSkip}
+              className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border border-blue-500/40 text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
+            >
+              <SkipForward size={13} /> Pasar ({powerups.skip})
+            </button>
+          )}
+        </div>
+      )}
+
+      {skipped && !result ? (
+        <div className="rounded-card border border-blue-500/30 bg-blue-500/10 px-4 py-3.5 text-sm text-blue-300">
+          Pasaste esta pregunta. Podés responderla otro día si vuelve a aparecer.
+        </div>
+      ) : (
       <div className="space-y-3">
         {options.map(([key, text]) => {
           const isSelected = selected === key;
           const isCorrectOption = result && key === result.correct_answer;
           const isWrongSelected = result && isSelected && !result.is_correct;
+          const isEliminated = eliminated.includes(key);
 
           let optionClass = "border-border hover:border-white/30 bg-bg";
           if (result) {
             if (isCorrectOption) optionClass = "border-accent bg-accent/10";
             else if (isWrongSelected) optionClass = "border-red-500 bg-red-500/10";
             else optionClass = "border-border bg-bg opacity-60";
+          } else if (isEliminated) {
+            optionClass = "border-border bg-bg opacity-30";
           } else if (isSelected) {
             optionClass = "border-accent bg-accent/10";
           }
@@ -84,28 +179,29 @@ export default function QuestionCard({ item, index, total, onAnswered }) {
           return (
             <button
               key={key}
-              disabled={!!result}
+              disabled={!!result || isEliminated}
               onClick={() => setSelected(key)}
               className={`w-full text-left px-4 py-3.5 rounded-card border transition-colors flex items-center gap-3 ${optionClass} ${
-                result ? "cursor-default" : "cursor-pointer"
+                result || isEliminated ? "cursor-default" : "cursor-pointer"
               }`}
             >
               <span className="w-7 h-7 shrink-0 rounded-full border border-current/40 flex items-center justify-center text-xs font-semibold">
                 {OPTION_LABELS[key]}
               </span>
-              <span className="text-sm flex-1">{text}</span>
+              <span className={`text-sm flex-1 ${isEliminated ? "line-through" : ""}`}>{text}</span>
               {result && isCorrectOption && <CheckCircle2 size={18} className="text-accent shrink-0" />}
               {result && isWrongSelected && <XCircle size={18} className="text-red-400 shrink-0" />}
             </button>
           );
         })}
       </div>
+      )}
 
       {error && <p className="text-sm text-red-400 mt-4">{error}</p>}
 
-      {!result && (
+      {!result && !skipped && (
         <button
-          onClick={handleAnswer}
+          onClick={() => handleAnswer()}
           disabled={!selected || submitting}
           className="mt-6 w-full bg-accent hover:bg-accent-dark disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-black font-semibold rounded-card py-3 text-sm"
         >

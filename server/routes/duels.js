@@ -195,6 +195,28 @@ router.post("/", async (req, res) => {
   }
 });
 
+// Set de preguntas al azar para el modo Supervivencia grupal (juego en vivo,
+// no persistido en DB — el anfitrión reparte las preguntas por WebSocket y
+// necesita conocer la respuesta correcta para arbitrar en el momento).
+router.get("/random-set", async (req, res) => {
+  const difficulty = req.query.difficulty ?? DEFAULT_DIFFICULTY;
+  const count = Math.max(1, Math.min(30, Number(req.query.count) || 10));
+
+  if (!DUEL_DIFFICULTIES[difficulty]) return res.status(400).json({ error: "Dificultad inválida" });
+
+  try {
+    const result = await db.execute({
+      sql: `SELECT id, question, option_a, option_b, option_c, option_d, correct_answer
+            FROM duel_questions WHERE difficulty = ? ORDER BY RANDOM() LIMIT ?`,
+      args: [difficulty, count],
+    });
+    res.json({ questions: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 // Mis duelos en el grupo, separados por lo que tengo que hacer con cada uno.
 router.get("/", async (req, res) => {
   const groupId = Number(req.query.groupId);

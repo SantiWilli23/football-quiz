@@ -110,6 +110,33 @@ router.post("/:id/answer", async (req, res) => {
   }
 });
 
+// Comodín 50/50: descarta dos opciones incorrectas sin revelar cuál es la
+// correcta ni consumir el intento (eso pasa recién al responder).
+router.post("/:id/fifty", async (req, res) => {
+  const questionId = Number(req.params.id);
+  try {
+    const qResult = await db.execute({ sql: "SELECT * FROM questions WHERE id = ?", args: [questionId] });
+    const question = qResult.rows[0];
+    if (!question) return res.status(404).json({ error: "Pregunta no encontrada" });
+
+    const existing = await db.execute({
+      sql: "SELECT id FROM answers WHERE user_id = ? AND question_id = ?",
+      args: [req.userId, questionId],
+    });
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: "Ya respondiste esta pregunta" });
+    }
+
+    const wrongKeys = ["a", "b", "c", "d"].filter((k) => k !== question.correct_answer);
+    const eliminate = wrongKeys.sort(() => Math.random() - 0.5).slice(0, 2);
+
+    res.json({ eliminate });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 router.get("/streak", async (req, res) => {
   try {
     const [current_streak, best_streak] = await Promise.all([

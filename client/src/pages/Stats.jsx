@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Award, Crown, Download, Heart, History, Sparkles, TrendingUp, Trophy } from "lucide-react";
+import { Award, BookOpen, Crown, Download, Heart, History, Sparkles, TrendingUp, Trophy } from "lucide-react";
 import api from "../api.js";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -48,6 +48,7 @@ export default function Stats() {
   const [weekly, setWeekly] = useState(null);
   const [compatibility, setCompatibility] = useState([]);
   const [achievements, setAchievements] = useState(null);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
 
@@ -59,16 +60,18 @@ export default function Stats() {
     setLoading(true);
     const params = { groupId };
     const settle = (promise, fallback) => promise.then((r) => r.data).catch(() => fallback);
-    const [modeBData, weeklyData, compatData, achData] = await Promise.all([
+    const [modeBData, weeklyData, compatData, achData, categoriesData] = await Promise.all([
       settle(api.get("/stats/mode-b", { params }), null),
       settle(api.get("/stats/weekly", { params }), null),
       settle(api.get("/stats/compatibility", { params }), { compatibility: [] }),
       settle(api.get("/stats/achievements", { params }), null),
+      settle(api.get("/stats/categories", { params }), { categories: [] }),
     ]);
     setModeB(modeBData);
     setWeekly(weeklyData);
     setCompatibility(compatData.compatibility);
     setAchievements(achData);
+    setCategories(categoriesData.categories);
     setLoading(false);
   }, [groupId, groupsLoading]);
 
@@ -298,6 +301,41 @@ export default function Stats() {
               )}
             </Card>
           </div>
+
+          <Card>
+            <SectionTitle icon={BookOpen} hint="mínimo 3 respuestas para entrar al ranking">
+              Quién sabe más de qué
+            </SectionTitle>
+            {categories.length === 0 ? (
+              <p className="text-sm text-gray-500">Todavía no hay suficientes respuestas para armar el ranking por categoría.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {categories.map((c) => (
+                  <div key={c.category} className="rounded-xl border border-border bg-bg px-4 py-3">
+                    <p className="text-xs text-gray-500 mb-2">{c.category}</p>
+                    <div className="flex items-center gap-2.5 mb-2">
+                      <Avatar user={c.leader} size={28} />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold truncate">{c.leader.username}</p>
+                        <p className="text-[11px] text-gray-600">{c.leader.correct}/{c.leader.total} correctas</p>
+                      </div>
+                      <span className="ml-auto text-lg font-bold text-accent shrink-0">{c.leader.accuracy}%</span>
+                    </div>
+                    {c.breakdown.length > 1 && (
+                      <div className="space-y-1 mt-2 pt-2 border-t border-border">
+                        {c.breakdown.slice(1, 4).map((m) => (
+                          <div key={m.username} className="flex items-center justify-between text-xs text-gray-500">
+                            <span className="truncate">{m.username}</span>
+                            <span>{m.accuracy}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
 
           <Card>
             <SectionTitle

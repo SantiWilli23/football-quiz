@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Check, Share2 } from "lucide-react";
+import { Check, Image as ImageIcon, Share2 } from "lucide-react";
+import { useAuth } from "../context/AuthContext.jsx";
+import { generateResultCard, shareOrDownloadCard } from "../utils/shareImage.js";
 
 const KIND_EMOJI = {
   quien_es_mas: "🫵",
@@ -41,15 +43,15 @@ export function buildShareText({ trivia, modeB, date }) {
   return lines.join("\n");
 }
 
-export default function ShareButton({ trivia, modeB, className = "" }) {
+export default function ShareButton({ trivia, modeB, stats, className = "" }) {
+  const { user } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [generating, setGenerating] = useState(false);
+
+  const dateLabel = new Date().toLocaleDateString("es-ES", { day: "numeric", month: "long" });
 
   const handleShare = async () => {
-    const text = buildShareText({
-      trivia,
-      modeB,
-      date: new Date().toLocaleDateString("es-ES", { day: "numeric", month: "long" }),
-    });
+    const text = buildShareText({ trivia, modeB, date: dateLabel });
 
     // En el teléfono abre el menú nativo (con WhatsApp adentro); en escritorio
     // no existe, así que se copia al portapapeles.
@@ -70,17 +72,46 @@ export default function ShareButton({ trivia, modeB, className = "" }) {
     }
   };
 
+  const handleShareImage = async () => {
+    if (generating || !trivia?.length) return;
+    setGenerating(true);
+    try {
+      const blob = await generateResultCard({
+        username: user?.username || "Jugador",
+        date: dateLabel,
+        trivia,
+        streak: stats?.current_streak,
+      });
+      await shareOrDownloadCard(blob, `futotal-${new Date().toISOString().slice(0, 10)}.png`);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
-    <button
-      onClick={handleShare}
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-card text-sm font-medium border transition-colors ${
-        copied
-          ? "border-accent/40 bg-accent/10 text-accent"
-          : "border-border text-gray-300 hover:text-white hover:border-white/30"
-      } ${className}`}
-    >
-      {copied ? <Check size={14} /> : <Share2 size={14} />}
-      {copied ? "Copiado" : "Compartir"}
-    </button>
+    <div className={`flex items-center gap-1.5 ${className}`}>
+      <button
+        onClick={handleShare}
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-card text-sm font-medium border transition-colors ${
+          copied
+            ? "border-accent/40 bg-accent/10 text-accent"
+            : "border-border text-gray-300 hover:text-white hover:border-white/30"
+        }`}
+      >
+        {copied ? <Check size={14} /> : <Share2 size={14} />}
+        {copied ? "Copiado" : "Compartir"}
+      </button>
+      {trivia?.length > 0 && (
+        <button
+          onClick={handleShareImage}
+          disabled={generating}
+          title="Compartir como imagen"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-card text-sm font-medium border border-border text-gray-300 hover:text-white hover:border-white/30 disabled:opacity-40 transition-colors"
+        >
+          <ImageIcon size={14} />
+          {generating ? "..." : "Imagen"}
+        </button>
+      )}
+    </div>
   );
 }

@@ -767,6 +767,63 @@ router.get("/weekly", async (req, res) => {
 
 // Con quién del grupo coincidís más: porcentaje de preguntas de Modo B que
 // ambos respondieron igual, contando sólo las que respondieron los dos.
+// Quién sabe más de cada categoría dentro del grupo: precisión por miembro,
+// ordenado, con el líder de cada categoría destacado.
+router.get("/categories", async (req, res) => {
+  const groupId = Number(req.query.groupId);
+  if (!groupId) return res.status(400).json({ error: "Falta groupId" });
+
+  try {
+    if (!(await requireMembership(groupId, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+
+    const members = await groupMembers(groupId);
+    if (members.length === 0) return res.json({ categories: [] });
+
+    const rowsResult = await db.execute({
+      sql: `SELECT q.category AS category, a.user_id AS user_id,
+                   SUM(a.is_correct) AS correct, COUNT(*) AS total
+            FROM answers a
+            JOIN questions q ON q.id = a.question_id
+            JOIN group_members gm ON gm.user_id = a.user_id AND gm.group_id = ?
+            GROUP BY q.category, a.user_id`,
+      args: [groupId],
+    });
+
+    const memberById = new Map(members.map((m) => [m.id, m]));
+    const byCategory = new Map();
+    for (const row of rowsResult.rows) {
+      const member = memberById.get(row.user_id);
+      if (!member) continue;
+      const total = Number(row.total);
+      if (total < 3) continue; // evita rankear con muestras minúsculas
+      const correct = Number(row.correct);
+      if (!byCategory.has(row.category)) byCategory.set(row.category, []);
+      byCategory.get(row.category).push({
+        username: member.username,
+        avatar: member.avatar,
+        avatar_config: member.avatar_config,
+        correct,
+        total,
+        accuracy: Math.round((correct / total) * 100),
+      });
+    }
+
+    const categories = [...byCategory.entries()]
+      .map(([category, breakdown]) => {
+        const sorted = breakdown.sort((a, b) => b.accuracy - a.accuracy || b.total - a.total);
+        return { category, leader: sorted[0], breakdown: sorted };
+      })
+      .sort((a, b) => b.leader.total - a.leader.total);
+
+    res.json({ categories });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 router.get("/compatibility", async (req, res) => {
   const groupId = Number(req.query.groupId);
   if (!groupId) return res.status(400).json({ error: "Falta groupId" });

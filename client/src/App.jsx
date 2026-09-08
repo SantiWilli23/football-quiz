@@ -11,6 +11,7 @@ import Profile from "./pages/Profile.jsx";
 import Stats from "./pages/Stats.jsx";
 import Duels from "./pages/Duels.jsx";
 import Football from "./pages/Football.jsx";
+import Survival from "./pages/Survival.jsx";
 import CareerMode from "./carrera/index.jsx";
 
 function PrivateRoute({ children }) {
@@ -121,6 +122,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <Profile />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/supervivencia"
+        element={
+          <PrivateRoute>
+            <Survival />
           </PrivateRoute>
         }
       />
