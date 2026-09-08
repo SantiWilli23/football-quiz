@@ -1,16 +1,84 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCareer } from "../context/CareerContext.jsx";
 import { getInjury } from "../engine/injuryEngine.js";
+import { layoutSlots } from "../engine/pitchLayout.js";
+import { getPressQuestion } from "../engine/pressEngine.js";
 import TeamCrest from "./TeamCrest.jsx";
 
 const MAX_SUBS = 3;
+const TICK_MS = 1000;
+const RIVAL_FORMATION = ["GK", "RB", "CB", "CB", "LB", "CDM", "CM", "CM", "RW", "ST", "LW"].map((slot) => ({ slot }));
+
+function ballPositionFor(event) {
+  if (!event) return { x: 50, y: 50 };
+  if (event.type === "goal") return event.team === "me" ? { x: 50, y: 6 } : { x: 50, y: 94 };
+  if (event.type === "shot") return event.team === "me" ? { x: 50, y: 24 } : { x: 50, y: 76 };
+  if (event.type === "card") return { x: 50, y: 50 };
+  return { x: 50, y: 50 };
+}
+
+function LivePitch({ myColor, starters, byId, lastEvent }) {
+  const myCoords = useMemo(() => layoutSlots(starters), [starters]);
+  const rivalCoords = useMemo(
+    () => layoutSlots(RIVAL_FORMATION).map((c) => ({ x: c.x, y: 100 - c.y })),
+    []
+  );
+  const ball = ballPositionFor(lastEvent);
+  const goalFlash = lastEvent?.type === "goal";
+
+  return (
+    <div
+      className="relative w-full rounded-card overflow-hidden border border-border select-none mb-4"
+      style={{ aspectRatio: "0.8", background: "linear-gradient(180deg,#1f4d33,#255c3d 50%,#1f4d33)" }}
+    >
+      <div className="absolute inset-2 border border-white/25 rounded-md" />
+      <div className="absolute left-2 right-2 top-1/2 border-t border-white/25" />
+      <div className="absolute left-1/2 top-1/2 w-14 h-14 -translate-x-1/2 -translate-y-1/2 border border-white/25 rounded-full" />
+
+      {starters.map((slot, i) => {
+        const p = byId[slot.playerId];
+        const pos = myCoords[i] || { x: 50, y: 50 };
+        return (
+          <div
+            key={`me-${i}`}
+            className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5"
+            style={{ left: `${pos.x}%`, top: `${pos.y}%`, transition: "left 0.4s ease, top 0.4s ease" }}
+          >
+            <div
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[11px] sm:text-xs font-bold text-white shadow-md border border-black/20"
+              style={{ background: myColor }}
+            >
+              {p?.number ?? "?"}
+            </div>
+          </div>
+        );
+      })}
+
+      {rivalCoords.map((pos, i) => (
+        <div
+          key={`riv-${i}`}
+          className="absolute -translate-x-1/2 -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-[10px] sm:text-[11px] font-bold bg-gray-700 text-gray-200 border border-gray-500"
+          style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+        >
+          {i + 1}
+        </div>
+      ))}
+
+      <div
+        className={`absolute w-2.5 h-2.5 rounded-full bg-white shadow transition-all duration-500 ${goalFlash ? "ring-4 ring-amber/70" : ""}`}
+        style={{ left: `${ball.x}%`, top: `${ball.y}%`, transform: "translate(-50%,-50%)" }}
+      />
+    </div>
+  );
+}
 
 export default function MatchSimulator({ matchResult, onFinish }) {
-  const { team, state, playNextMatchSecondHalf } = useCareer();
+  const { team, state, playNextMatchSecondHalf, answerPressConference } = useCareer();
   const [data, setData] = useState(matchResult);
   const [shown, setShown] = useState([]);
   const [playing, setPlaying] = useState(true);
   const [subs, setSubs] = useState([]);
+  const [pressChoice, setPressChoice] = useState(null);
   const idxRef = useRef(0);
   const timerRef = useRef(null);
 
@@ -24,7 +92,7 @@ export default function MatchSimulator({ matchResult, onFinish }) {
       idxRef.current += 1;
       setShown(events.slice(0, idxRef.current));
       if (idxRef.current >= events.length) clearInterval(timerRef.current);
-    }, 900);
+    }, TICK_MS);
     return () => clearInterval(timerRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, events.length]);
@@ -46,6 +114,11 @@ export default function MatchSimulator({ matchResult, onFinish }) {
     setPlaying(true);
   }
 
+  function handlePressAnswer(option) {
+    answerPressConference(option.effects);
+    setPressChoice(option.id);
+  }
+
   if (!data) return null;
 
   const eventsDone = shown.length >= events.length;
@@ -62,6 +135,11 @@ export default function MatchSimulator({ matchResult, onFinish }) {
   const usedIn = new Set(subs.map((s) => s.inId));
   const availableOut = starters.filter((s) => !usedOut.has(s.playerId));
   const availableIn = bench.filter((id) => !usedIn.has(id) && !getInjury(state.injuries || [], id));
+
+  const byId = Object.fromEntries(state.squad.map((p) => [p.id, p]));
+  const lastEvent = shown[shown.length - 1] || null;
+  const isPreseason = data.competitionLabel === "Amistoso de pretemporada";
+  const pressQuestion = finished && !isPreseason ? getPressQuestion(data.myGoals, data.rivalGoals) : null;
 
   function addSub(outId, inId) {
     if (!outId || !inId || subs.length >= MAX_SUBS) return;
@@ -84,6 +162,8 @@ export default function MatchSimulator({ matchResult, onFinish }) {
           {!eventsDone && <p className="text-xs text-gray-500 mt-2">Min {shown.length ? shown[shown.length - 1].min : 0}'</p>}
         </div>
 
+        <LivePitch myColor={team.colors?.primary || "#3fae9a"} starters={starters} byId={byId} lastEvent={lastEvent} />
+
         {!eventsDone && (
           <div className="flex gap-2 mb-4">
             <button onClick={simulateFast} className="flex-1 bg-panel border border-border rounded-card py-2 text-sm hover:border-white/20">
@@ -92,7 +172,7 @@ export default function MatchSimulator({ matchResult, onFinish }) {
           </div>
         )}
 
-        <div className="bg-panel border border-border rounded-card p-4 mb-4 max-h-96 overflow-y-auto space-y-2">
+        <div className="bg-panel border border-border rounded-card p-4 mb-4 max-h-72 overflow-y-auto space-y-2">
           {shown.length === 0 && <p className="text-sm text-gray-500">El partido está por comenzar...</p>}
           {shown.map((e, i) => (
             <p key={i} className="text-sm">
@@ -143,7 +223,36 @@ export default function MatchSimulator({ matchResult, onFinish }) {
               <StatRow label="Faltas" me={data.stats.fouls.me} rival={data.stats.fouls.rival} />
               <StatRow label="Amarillas" me={data.stats.yellow.me} rival={data.stats.yellow.rival} />
             </div>
-            <button onClick={onFinish} className="w-full bg-accent text-black font-semibold py-2.5 rounded-card hover:brightness-110">
+
+            {pressQuestion && !pressChoice && (
+              <div className="bg-panel border border-accent/30 rounded-card p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-accent mb-1">🎙️ Conferencia de prensa</p>
+                <p className="text-sm font-medium mb-3">{pressQuestion.question}</p>
+                <div className="space-y-2">
+                  {pressQuestion.options.map((opt) => (
+                    <button
+                      key={opt.id}
+                      onClick={() => handlePressAnswer(opt)}
+                      className="w-full text-left text-sm px-3.5 py-2.5 rounded-card border border-border bg-bg hover:border-accent/40 hover:bg-accent/5 transition-colors"
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {pressQuestion && pressChoice && (
+              <div className="bg-panel border border-border rounded-card p-4">
+                <p className="text-xs text-gray-500">🎙️ Declaraste tu postura en la conferencia de prensa.</p>
+              </div>
+            )}
+
+            <button
+              onClick={onFinish}
+              disabled={!!pressQuestion && !pressChoice}
+              className="w-full bg-accent text-black font-semibold py-2.5 rounded-card hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
               Continuar
             </button>
           </div>

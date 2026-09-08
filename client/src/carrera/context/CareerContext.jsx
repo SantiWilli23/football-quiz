@@ -4,6 +4,8 @@ import { players as allPlayers, playersByTeam } from "../data/players.js";
 import { loadCareer, saveCareer, clearCareer } from "../hooks/useCareerSave.js";
 import { simulateUserMatch, simulateQuickMatch, simulateHalf, combineHalves, dayFormFactor } from "../engine/matchEngine.js";
 import { ageSquad, releaseExpired, generateYouthProspects, applyPositionTrainings } from "../engine/playerGrowth.js";
+import { assignInitialNumbers, nextAvailableNumber } from "../engine/squadNumbers.js";
+import { getPressQuestion } from "../engine/pressEngine.js";
 import { transferBudgetFor, weeklyWageBill, seasonIncome } from "../engine/financeEngine.js";
 import { generateMarketRumors, generateIncomingOffers } from "../engine/transferAI.js";
 import { effectiveOvr, TRAINING_WEEKS } from "../engine/positions.js";
@@ -255,7 +257,7 @@ function mergePlayerStats(current, starterIds, matchStats) {
 
 function buildInitialState(teamId) {
   const team = teamById(teamId);
-  const squad = playersByTeam(teamId).map((p) => ({ ...p }));
+  const squad = assignInitialNumbers(playersByTeam(teamId).map((p) => ({ ...p })));
   const leagueTeamIds = teamsByLeague(team.league).map((t) => t.id);
   const leagueTeams = teamsByLeague(team.league);
   const { calendar } = roundRobinCalendar(leagueTeamIds, teamId);
@@ -491,6 +493,7 @@ export function CareerProvider({ children }) {
         transferListed: false,
         loanListed: false,
         releaseClause: null,
+        number: nextAvailableNumber(s.squad),
       };
       const squad = [...s.squad, signed];
       const reserves = [...s.lineup.reserves, signed.id];
@@ -826,6 +829,28 @@ export function CareerProvider({ children }) {
     return { phase: "final", ...result, rival, isDerby: pm.isDerby, competitionLabel: pm.isDerby ? "🔥 Clásico · Liga" : "Liga" };
   }
 
+  function answerPressConference(effects) {
+    setState((s) => {
+      const boardConfidence = effects.boardConfidence
+        ? Math.max(0, Math.min(100, s.boardConfidence + effects.boardConfidence))
+        : s.boardConfidence;
+      const managerPrestige = effects.managerPrestige
+        ? Math.max(0, Math.min(100, (s.managerPrestige ?? 50) + effects.managerPrestige))
+        : s.managerPrestige;
+      const clubReputation = effects.clubReputation
+        ? Math.max(0, Math.min(100, (s.clubReputation ?? 50) + effects.clubReputation))
+        : s.clubReputation;
+      let morale = s.morale || {};
+      if (effects.moraleAll) {
+        const delta = effects.moraleAll;
+        const updated = { ...morale };
+        s.squad.forEach((p) => { updated[p.id] = Math.max(0, Math.min(100, (updated[p.id] ?? 70) + delta)); });
+        morale = updated;
+      }
+      return { ...s, boardConfidence, managerPrestige, clubReputation, morale };
+    });
+  }
+
   function holdSquadMeeting(type) {
     setState((s) => {
       if (s.lastMeetingWeek === s.week) return s;
@@ -1071,7 +1096,9 @@ export function CareerProvider({ children }) {
     clubReputation = Math.min(100, clubReputation + 2);
 
     let squad = releaseExpired(ageSquad(s.squad, s.playerStats || {}));
-    squad = squad.concat(generateYouthProspects(team, 3));
+    generateYouthProspects(team, 3).forEach((y) => {
+      squad = [...squad, { ...y, number: nextAvailableNumber(squad) }];
+    });
 
     const income = seasonIncome(team, position);
     // Club reputation alta → más presupuesto (hasta +20%)
@@ -1201,6 +1228,7 @@ export function CareerProvider({ children }) {
       acceptJobOffer,
       declineJobOffer,
       holdSquadMeeting,
+      answerPressConference,
       standingsSorted: state ? sortStandings(state.standings) : [],
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
