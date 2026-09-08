@@ -56,12 +56,17 @@ export default function Transfers() {
         </div>
       )}
 
-      <div>
-        <h2 className="text-2xl font-bold mb-2">Fichajes</h2>
-        <p className="text-sm text-gray-500 max-w-lg leading-relaxed">
-          Primero le ofertás al club por el pase. Si acepta, recién ahí le ofrecés contrato al jugador. Cada intento es de una sola vez.
-          Presupuesto disponible: <span className="text-white font-semibold">€{state.budget}M</span>.
-        </p>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="text-2xl font-bold mb-1">Fichajes</h2>
+          <p className="text-sm text-gray-500 max-w-lg leading-relaxed">
+            Primero le ofertás al club por el pase. Si acepta, recién ahí le ofrecés contrato al jugador.
+          </p>
+        </div>
+        <div className="bg-panel border border-border rounded-2xl px-4 py-2.5 text-right shrink-0">
+          <p className="text-[10px] uppercase tracking-wide text-gray-500">Presupuesto</p>
+          <p className="text-lg font-bold text-accent leading-none">€{state.budget}M</p>
+        </div>
       </div>
 
       <div className="flex gap-1">
@@ -92,79 +97,71 @@ export default function Transfers() {
             />
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-border">
-            <table className="w-full text-sm">
-              <thead className="bg-panel text-gray-500 text-xs uppercase">
-                <tr>
-                  <th className="text-left px-4 py-3">Nombre</th>
-                  <th className="px-3 py-3">Pos</th>
-                  <th className="px-3 py-3">Edad</th>
-                  <th className="px-3 py-3">Valor</th>
-                  <th className="px-3 py-3">Cláusula</th>
-                  <th className="px-3 py-3">Contrato</th>
-                  <th className="px-3 py-3"></th>
-                  <th className="px-3 py-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((p) => {
-                  const report = state.scoutReports[p.id];
-                  const cooling = isOnOfferCooldown(p.id);
-                  const watched = watchlist.includes(p.id);
-                  const clause = releaseClauses[p.id];
-                  return (
-                    <tr key={p.id} className="border-t border-border">
-                      <td className="px-4 py-3 truncate max-w-[160px]">
-                        {p.name}
-                        <span className="text-gray-500 ml-1.5" title={report ? `OVR estimado por ${report.scoutName}` : "Sin reclutar"}>
-                          ({report ? formatRange(report.ovrRange) : "?"})
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-center text-gray-400">{p.position}</td>
-                      <td className="px-3 py-3 text-center text-gray-400">{p.age}</td>
-                      <td className="px-3 py-3 text-center font-semibold">€{p.value}M</td>
-                      <td className="px-3 py-3 text-center">
-                        {clause != null
-                          ? <span className="text-amber text-xs font-medium">€{clause}M</span>
-                          : <span className="text-gray-600 text-xs">—</span>
-                        }
-                      </td>
-                      <td className="px-3 py-3 text-center text-gray-400">{p.contractYears} año{p.contractYears === 1 ? "" : "s"}</td>
-                      <td className="px-3 py-3 text-center">
-                        <button
-                          onClick={() => toggleWatchlist(p.id)}
-                          title={watched ? "Quitar de seguimiento" : "Seguir jugador"}
-                          className={`text-lg leading-none ${watched ? "text-amber" : "text-gray-600 hover:text-gray-300"}`}
-                        >
-                          {watched ? "★" : "☆"}
-                        </button>
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        {cooling ? (
-                          <span className="text-xs text-gray-600" title="Te rechazaron hace poco">
-                            Esperá {weeksUntilCanOffer(p.id)} sem.
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => setTarget(p)}
-                            className="text-sm font-medium px-4 py-2.5 rounded-2xl bg-accent/10 text-accent border border-accent/40 hover:bg-accent/20 transition-colors"
-                          >
-                            Ofertar
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-                {!filtered.length && (
-                  <tr><td colSpan={8} className="px-4 py-6 text-center text-gray-600 text-sm">Sin resultados.</td></tr>
-                )}
-              </tbody>
-            </table>
+          <div className="space-y-2">
+            {filtered.map((p) => {
+              const report = state.scoutReports[p.id];
+              const cooling = isOnOfferCooldown(p.id);
+              const watched = watchlist.includes(p.id);
+              const clause = releaseClauses[p.id];
+              return (
+                <div key={p.id} className="bg-panel border border-border rounded-2xl px-4 py-3 flex items-center gap-3 flex-wrap sm:flex-nowrap">
+                  <button
+                    onClick={() => toggleWatchlist(p.id)}
+                    title={watched ? "Quitar de seguimiento" : "Seguir jugador"}
+                    className={`text-lg leading-none shrink-0 ${watched ? "text-amber" : "text-gray-600 hover:text-gray-300"}`}
+                  >
+                    {watched ? "★" : "☆"}
+                  </button>
+
+                  <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-[11px] font-bold text-gray-400">
+                    {p.position}
+                  </div>
+
+                  <div className="min-w-0 flex-1 basis-full sm:basis-auto">
+                    <p className="text-sm font-semibold truncate">{p.name}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {p.age} años · OVR est. {report ? formatRange(report.ovrRange) : <span className="text-gray-600">sin scoutear</span>}
+                      {p.contractYears <= 1 && <span className="text-amber ml-1.5">· último año de contrato</span>}
+                    </p>
+                  </div>
+
+                  <div className="hidden md:flex flex-col items-center w-20 shrink-0">
+                    <span className="text-[10px] uppercase tracking-wide text-gray-600">Valor</span>
+                    <span className="text-sm font-semibold">€{p.value}M</span>
+                  </div>
+
+                  <div className="hidden md:flex flex-col items-center w-24 shrink-0">
+                    <span className="text-[10px] uppercase tracking-wide text-gray-600">Cláusula</span>
+                    {clause != null
+                      ? <span className="text-amber text-sm font-medium">€{clause}M</span>
+                      : <span className="text-gray-600 text-sm">—</span>
+                    }
+                  </div>
+
+                  <div className="shrink-0 ml-auto sm:ml-0">
+                    {cooling ? (
+                      <span className="text-xs text-gray-600 px-3 py-2.5 inline-block" title="Te rechazaron hace poco">
+                        Esperá {weeksUntilCanOffer(p.id)} sem.
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => setTarget(p)}
+                        className="text-sm font-medium px-4 py-2.5 rounded-2xl bg-accent/10 text-accent border border-accent/40 hover:bg-accent/20 transition-colors whitespace-nowrap"
+                      >
+                        Ofertar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {!filtered.length && (
+              <p className="px-4 py-6 text-center text-gray-600 text-sm bg-panel border border-border rounded-2xl">Sin resultados.</p>
+            )}
           </div>
 
           <p className="text-xs text-gray-600">
-            El OVR de un jugador ajeno es una estimación — mandá un reclutador en la pestaña Scouting antes de ofertar. La cláusula de liberación (🟡) permite activarla y el club está obligado a vender.
+            El OVR de un jugador ajeno es una estimación — mandá un reclutador en la pestaña Scouting antes de ofertar. La cláusula (🟡) permite pagarla directamente y el club está obligado a vender.
           </p>
         </>
       )}
@@ -318,6 +315,27 @@ function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, 
   );
 }
 
+const STEP_LABELS = { fee: 1, "fee-rejected": 1, "window-closed-after-fee": 1, wage: 2, "wage-rejected": 2, "window-closed": 2, done: 2 };
+
+function StepIndicator({ stage }) {
+  const step = STEP_LABELS[stage] || 1;
+  return (
+    <div className="flex items-center gap-2 mb-1">
+      {[1, 2].map((n) => (
+        <div key={n} className="flex items-center gap-2 flex-1">
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+            step >= n ? "bg-accent text-black" : "bg-bg border border-border text-gray-500"
+          }`}>
+            {n}
+          </div>
+          <span className={`text-xs ${step >= n ? "text-gray-300" : "text-gray-600"}`}>{n === 1 ? "Pase" : "Contrato"}</span>
+          {n === 1 && <div className={`h-px flex-1 ${step >= 2 ? "bg-accent" : "bg-border"}`} />}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function OfferFlow({ player, budget, report, releaseClause, windowOpen, onOfferForPlayer, onOfferContractTo, onComplete, onClose }) {
   const sellerTeam = teamById(player.teamId);
   const [stage, setStage] = useState("fee");
@@ -327,6 +345,7 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, onOfferF
   const [wageInput, setWageInput] = useState(player.wage + Math.round(player.wage * 0.2));
   const [years, setYears] = useState(3);
   const [wageResult, setWageResult] = useState(null);
+  const [completeError, setCompleteError] = useState(null);
 
   function submitFee(overrideAmount) {
     const amount = overrideAmount ?? feeInput;
@@ -354,8 +373,9 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, onOfferF
     setWageResult(res);
     if (res.accepted) {
       const completed = onComplete(player, feeAgreed, wageInput, years);
-      if (completed?.success === false && completed.reason === "window_closed") {
-        setStage("window-closed");
+      if (completed?.success === false) {
+        if (completed.reason === "window_closed") setStage("window-closed");
+        else { setCompleteError(completed.reason); setStage("complete-error"); }
       } else {
         setStage("done");
       }
@@ -367,12 +387,15 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, onOfferF
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-3" onClick={onClose}>
       <div className="bg-panel border border-border rounded-2xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-        <div className="p-4 border-b border-border flex items-center justify-between">
-          <div>
-            <p className="font-semibold">{player.name}</p>
-            <p className="text-xs text-gray-500">{player.position} · {player.age} años · {sellerTeam.name}</p>
+        <div className="p-4 border-b border-border">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="font-semibold">{player.name}</p>
+              <p className="text-xs text-gray-500">{player.position} · {player.age} años · {sellerTeam.name}</p>
+            </div>
+            <button onClick={onClose} className="text-gray-400 hover:text-white text-sm">✕</button>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-sm">✕</button>
+          <StepIndicator stage={stage} />
         </div>
 
         <div className="p-4 space-y-4">
@@ -390,9 +413,10 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, onOfferF
                   <p className="text-xs text-gray-500">Pagando esta cifra el club está obligado a vender sin importar su decisión.</p>
                   <button
                     onClick={() => submitFee(releaseClause)}
-                    className="text-xs px-3 py-1.5 rounded-full bg-amber/15 text-amber border border-amber/30 hover:bg-amber/25 transition-colors"
+                    disabled={releaseClause > budget}
+                    className="text-xs px-3 py-1.5 rounded-full bg-amber/15 text-amber border border-amber/30 hover:bg-amber/25 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    Activar cláusula (€{releaseClause}M)
+                    {releaseClause > budget ? "No te alcanza el presupuesto" : `Activar cláusula (€${releaseClause}M)`}
                   </button>
                 </div>
               )}
@@ -473,6 +497,18 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, onOfferF
                 <p className="text-sm text-amber font-semibold">🔒 Ventana cerrada</p>
                 <p className="text-xs text-gray-400 mt-1">Todo está acordado pero no podés formalizar el traspaso hasta que abra la ventana.</p>
               </div>
+              <button onClick={onClose} className="w-full bg-panel border border-border text-gray-300 font-semibold py-2.5 rounded-2xl hover:border-gray-500 transition">
+                Cerrar
+              </button>
+            </>
+          )}
+
+          {stage === "complete-error" && (
+            <>
+              <p className="text-sm text-red-400">
+                ❌ {completeError === "insufficient_budget" ? "El presupuesto bajó y ya no te alcanza para cerrar este fichaje." : "No se pudo cerrar el fichaje."}
+              </p>
+              <p className="text-xs text-gray-500">El acuerdo con el jugador se perdió. Revisá tu presupuesto e intentá de nuevo más adelante.</p>
               <button onClick={onClose} className="w-full bg-panel border border-border text-gray-300 font-semibold py-2.5 rounded-2xl hover:border-gray-500 transition">
                 Cerrar
               </button>

@@ -306,6 +306,7 @@ function buildInitialState(teamId) {
     captainId: [...squad].sort((a, b) => b.ovr - a.ovr)[0]?.id || null,
     playerInstructions: {},
     preseason: generatePreseason(teamId),
+    scoutCooldowns: {},
   };
 }
 
@@ -478,6 +479,7 @@ export function CareerProvider({ children }) {
 
   function completeTransfer(player, feeAgreed, wageAgreed, yearsAgreed) {
     if (!isTransferWindowOpen()) return { success: false, reason: "window_closed" };
+    if (state.budget < feeAgreed) return { success: false, reason: "insufficient_budget" };
     setState((s) => {
       if (s.budget < feeAgreed) return s;
       const signed = {
@@ -589,14 +591,34 @@ export function CareerProvider({ children }) {
     });
   }
 
+  const SCOUT_COOLDOWN_WEEKS = 3;
+
+  function scoutCooldownKey(scoutId, playerId) {
+    return `${scoutId}__${playerId}`;
+  }
+
+  function isScoutOnCooldown(scoutId, playerId) {
+    const until = (state?.scoutCooldowns || {})[scoutCooldownKey(scoutId, playerId)];
+    return until != null && state.week < until;
+  }
+
+  function weeksUntilScoutAvailable(scoutId, playerId) {
+    const until = (state?.scoutCooldowns || {})[scoutCooldownKey(scoutId, playerId)];
+    return until != null ? Math.max(0, until - state.week) : 0;
+  }
+
   function sendScout(scoutId, playerId) {
     const player = allPlayers.find((p) => p.id === playerId) || state.squad.find((p) => p.id === playerId);
     if (!player) return null;
+    if (isScoutOnCooldown(scoutId, playerId)) {
+      return { error: "cooldown", weeksLeft: weeksUntilScoutAvailable(scoutId, playerId) };
+    }
     const targetTeam = teamById(player.teamId);
     const report = scoutPlayer(scoutId, player, targetTeam?.league);
     setState((s) => ({
       ...s,
       scoutReports: { ...s.scoutReports, [playerId]: mergeReports(s.scoutReports[playerId], report) },
+      scoutCooldowns: { ...(s.scoutCooldowns || {}), [scoutCooldownKey(scoutId, playerId)]: s.week + SCOUT_COOLDOWN_WEEKS },
       news: [`🔎 ${report.scoutName} entregó su informe sobre ${player.name}.`, ...s.news].slice(0, 8),
     }));
     return report;
@@ -1150,6 +1172,8 @@ export function CareerProvider({ children }) {
       moveToBench,
       moveToReserves,
       sendScout,
+      isScoutOnCooldown,
+      weeksUntilScoutAvailable,
       offerForPlayer,
       offerContractTo,
       completeTransfer,
