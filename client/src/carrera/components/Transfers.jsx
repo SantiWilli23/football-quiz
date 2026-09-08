@@ -4,6 +4,7 @@ import { teams, teamById } from "../data/teams.js";
 import { players as allPlayers } from "../data/players.js";
 import { formatRange } from "../engine/scouting.js";
 import { HINT_LABEL } from "../engine/transferMarket.js";
+import Scouts from "./Scouts.jsx";
 
 function findAnyPlayer(state, playerId) {
   return state.squad.find((p) => p.id === playerId) || allPlayers.find((p) => p.id === playerId);
@@ -69,8 +70,12 @@ export default function Transfers() {
         </div>
       </div>
 
-      <div className="flex gap-1">
-        {[["mercado", "Mercado"], ["central", `Central de Transferencias${pendingIncoming.length ? ` (${pendingIncoming.length})` : ""}`]].map(([id, label]) => (
+      <div className="flex gap-1 flex-wrap">
+        {[
+          ["mercado", "Mercado"],
+          ["scouting", "Scouting"],
+          ["central", `Central de Transferencias${pendingIncoming.length ? ` (${pendingIncoming.length})` : ""}`],
+        ].map(([id, label]) => (
           <button
             key={id}
             onClick={() => setSubTab(id)}
@@ -165,6 +170,8 @@ export default function Transfers() {
           </p>
         </>
       )}
+
+      {subTab === "scouting" && <Scouts />}
 
       {subTab === "central" && (
         <TransferHub

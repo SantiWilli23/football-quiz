@@ -44,14 +44,11 @@ export default function Scouts() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-2xl font-bold mb-2">Departamento de Scouting</h2>
-        <p className="text-sm text-gray-500 max-w-lg leading-relaxed">
-          No conocés el nivel exacto ni el techo de un rival hasta que un reclutador lo va a ver. El informe da un
-          <span className="text-gray-300"> rango de OVR</span> y una <span className="text-gray-300">proyección de potencial</span> — no es garantía.
-          Cada reclutador puede volver a ver al mismo jugador recién a los 3 semanas.
-        </p>
-      </div>
+      <p className="text-sm text-gray-500 max-w-lg leading-relaxed">
+        No conocés el nivel exacto ni el techo de un rival hasta que un reclutador lo va a ver. El informe da un
+        <span className="text-gray-300"> rango de OVR</span> y una <span className="text-gray-300">proyección de potencial</span> — no es garantía.
+        Cada reclutador puede volver a ver al mismo jugador recién a los 3 semanas. Los informes que consigas acá se ven directo en el Mercado.
+      </p>
 
       {/* Paso 1: elegir reclutador */}
       <div>

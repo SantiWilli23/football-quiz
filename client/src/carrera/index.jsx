@@ -7,7 +7,6 @@ import Squad from "./components/Squad.jsx";
 import Tactics from "./components/Tactics.jsx";
 import MatchSimulator from "./components/MatchSimulator.jsx";
 import SeasonCalendar from "./components/SeasonCalendar.jsx";
-import Scouts from "./components/Scouts.jsx";
 import Transfers from "./components/Transfers.jsx";
 import CareerHistory from "./components/CareerHistory.jsx";
 
@@ -41,7 +40,6 @@ function CareerApp() {
         {[
           ["dashboard", "Panel"],
           ["squad", "Plantilla"],
-          ["scouting", "Scouting"],
           ["transfers", "Fichajes"],
           ["tactics", "Tácticas"],
           ["calendar", "Calendario"],
@@ -63,7 +61,6 @@ function CareerApp() {
           <Dashboard onPlayMatch={(result) => { setMatchResult(result); setScreen("match"); }} />
         )}
         {screen === "squad" && <Squad />}
-        {screen === "scouting" && <Scouts />}
         {screen === "transfers" && <Transfers />}
         {screen === "tactics" && <Tactics />}
         {screen === "calendar" && <SeasonCalendar />}
