@@ -15,6 +15,17 @@ export function normalize(str) {
     .replace(/\s+/g, " ");
 }
 
+// El dataset marca algunos pasos de carrera como "(cedido)" o "(cantera)" —
+// son el MISMO club, solo que ese paso fue a préstamo o por la cantera; para
+// este juego eso no importa (la pregunta es sólo "¿jugó ahí?"), así que se
+// funden con el club base. Otros paréntesis SÍ son un club distinto con
+// nombre repetido (ej. "Nacional (Uruguay)" vs. otro "Nacional") y quedan tal cual.
+const MERGE_SUFFIXES = /\s*\((cedido|cantera)\)\s*$/i;
+
+function canonicalClubName(rawName) {
+  return rawName.replace(MERGE_SUFFIXES, "").trim();
+}
+
 const POSITION_MAP = {
   "Portero": "Arquero",
   "Arquero": "Arquero",
@@ -68,8 +79,8 @@ export async function seedEquipoJugador() {
     if (!playerId) continue;
 
     for (const stint of j.carrera) {
-      const clubName = stint.club;
-      if (!clubName) continue;
+      if (!stint.club) continue;
+      const clubName = canonicalClubName(stint.club);
       const normalizedClub = normalize(clubName);
 
       let clubId = clubIds.get(normalizedClub);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Crown, Flame, HelpCircle, Newspaper, Shield, Skull, Swords, Star, Users, Zap } from "lucide-react";
+import { BarChart3, Crown, Flame, HelpCircle, Link2, Newspaper, Shield, Skull, Swords, Star, Users, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -56,6 +56,13 @@ const INTERNAL_GAMES = [
     icon: Shield,
     description: "Dirigí un equipo de Premier League o La Liga: tácticas, fichajes y partidos en vivo.",
     color: "#8a6423",
+  },
+  {
+    to: "/equipo-jugador",
+    label: "Equipo-Jugador",
+    icon: Link2,
+    description: "Cadena de conexiones futbolísticas: jugador → equipo → jugador. El que falla, queda eliminado.",
+    color: "#5ba3d9",
   },
 ];
 

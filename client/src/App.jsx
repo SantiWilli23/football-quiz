@@ -13,6 +13,7 @@ import Duels from "./pages/Duels.jsx";
 import Football from "./pages/Football.jsx";
 import Survival from "./pages/Survival.jsx";
 import CareerMode from "./carrera/index.jsx";
+import EquipoJugador from "./equipo-jugador/index.jsx";
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -138,6 +139,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <CareerMode />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/equipo-jugador"
+        element={
+          <PrivateRoute>
+            <EquipoJugador />
           </PrivateRoute>
         }
       />
