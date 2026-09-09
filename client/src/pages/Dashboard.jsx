@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Crown, Flame, HelpCircle, Link2, Newspaper, Shield, Skull, Swords, Star, Users, Zap } from "lucide-react";
+import { BarChart3, Crown, Flame, HelpCircle, Link2, Newspaper, Shield, Skull, Swords, Star, Target, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -57,13 +57,6 @@ const INTERNAL_GAMES = [
     description: "Dirigí un equipo de Premier League o La Liga: tácticas, fichajes y partidos en vivo.",
     color: "#8a6423",
   },
-  {
-    to: "/equipo-jugador",
-    label: "Equipo-Jugador",
-    icon: Link2,
-    description: "Cadena de conexiones futbolísticas: jugador → equipo → jugador. El que falla, queda eliminado.",
-    color: "#5ba3d9",
-  },
 ];
 
 const EXTERNAL_GAMES = [
@@ -84,11 +77,19 @@ const EXTERNAL_GAMES = [
     color: "#3fae9a",
   },
   {
-    href: null,
-    label: "Adivina el Jugador",
-    icon: Zap,
-    description: "¿Podés adivinar quién es el jugador con pistas mínimas?",
-    badge: "Próximamente",
+    to: "/equipo-jugador",
+    label: "Equipo-Jugador",
+    icon: Link2,
+    description: "Cadena de conexiones futbolísticas: jugador → equipo → jugador. El que falla, queda eliminado.",
+    badge: null,
+    color: "#5ba3d9",
+  },
+  {
+    href: "/goltexto/",
+    label: "Goltexto",
+    icon: Target,
+    description: "Adiviná al futbolista secreto: cada intento te dice qué tan cerca estás.",
+    badge: null,
     color: "#a8a9ac",
   },
 ];
@@ -160,7 +161,7 @@ export default function Dashboard() {
             Juegos
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/5 rounded-2xl overflow-hidden">
-            {EXTERNAL_GAMES.map(({ href, label, icon: Icon, description, badge, color }) => {
+            {EXTERNAL_GAMES.map(({ href, to, label, icon: Icon, description, badge, color }) => {
               const inner = (
                 <>
                   <div
@@ -182,6 +183,18 @@ export default function Dashboard() {
                   </div>
                 </>
               );
+
+              if (to) {
+                return (
+                  <Link
+                    key={to}
+                    to={to}
+                    className="group flex items-start gap-4 px-5 py-5 bg-bg hover:bg-panel transition-colors"
+                  >
+                    {inner}
+                  </Link>
+                );
+              }
 
               if (!href) {
                 return (
