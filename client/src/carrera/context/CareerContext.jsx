@@ -938,10 +938,10 @@ export function CareerProvider({ children }) {
         news = [`🏅 Copa ${COPA_ROUNDS[roundIdx]}: avanzás a ${COPA_ROUNDS[roundIdx + 1]} vs ${newCopa.opponents[roundIdx + 1]?.name || "?"} (ganaste ${result.myGoals}-${result.rivalGoals}${result.myGoals === result.rivalGoals ? " en penales" : ""}). +€${COPA_PRIZES[roundIdx]}M.`, ...news].slice(0, 8);
       }
 
-      return { ...s, copa: newCopa, news, budget, injuries, playerStats, morale, fatigue, lastMatch: { ...result, rival: { name: opponent.name }, competitionLabel: `Copa del Rey · ${COPA_ROUNDS[roundIdx]}` } };
+      return { ...s, copa: newCopa, news, budget, injuries, playerStats, morale, fatigue, lastMatch: { ...result, rival: rivalTeam, competitionLabel: `Copa del Rey · ${COPA_ROUNDS[roundIdx]}` } };
     });
 
-    return { ...result, rival: { name: opponent.name }, competitionLabel: `Copa del Rey · ${COPA_ROUNDS[roundIdx]}` };
+    return { ...result, rival: rivalTeam, competitionLabel: `Copa del Rey · ${COPA_ROUNDS[roundIdx]}` };
   }
 
   function continentalIsAvailable() {
@@ -1018,11 +1018,11 @@ export function CareerProvider({ children }) {
 
       return {
         ...s, continental: newContinental, news, budget, injuries, playerStats, morale, fatigue, managerPrestige, clubReputation,
-        lastMatch: { ...result, rival: { name: opponent.name }, competitionLabel: `${compLabel} · ${CONTINENTAL_ROUNDS[roundIdx]}` },
+        lastMatch: { ...result, rival: rivalTeam, competitionLabel: `${compLabel} · ${CONTINENTAL_ROUNDS[roundIdx]}` },
       };
     });
 
-    return { ...result, rival: { name: opponent.name }, competitionLabel: `${compLabel} · ${CONTINENTAL_ROUNDS[roundIdx]}` };
+    return { ...result, rival: rivalTeam, competitionLabel: `${compLabel} · ${CONTINENTAL_ROUNDS[roundIdx]}` };
   }
 
   function preseasonAvailable() {
@@ -1069,7 +1069,7 @@ export function CareerProvider({ children }) {
       return { ...s, preseason: { ...s.preseason, matchesPlayed, done }, morale, news };
     });
 
-    return { ...result, rival: { name: opponent.name }, competitionLabel: "Amistoso de pretemporada" };
+    return { ...result, rival: rivalTeam, competitionLabel: "Amistoso de pretemporada" };
   }
 
   function finishSeason(s) {

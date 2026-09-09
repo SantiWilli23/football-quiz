@@ -20,12 +20,14 @@ export default function TeamCrest({ team, size = 32, className = "" }) {
     );
   }
   const initials = (team.shortName || team.name.slice(0, 3)).toUpperCase();
+  const primary = team.colors?.primary || "#3fae9a";
+  const secondary = team.colors?.secondary || "#1c1c1c";
   return (
     <svg viewBox="0 0 32 36" className={`shrink-0 ${className}`} style={style} role="img" aria-label={team.name}>
       <defs>
         <linearGradient id={`crest-${team.id}`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor={team.colors.primary} />
-          <stop offset="100%" stopColor={team.colors.secondary} />
+          <stop offset="0%" stopColor={primary} />
+          <stop offset="100%" stopColor={secondary} />
         </linearGradient>
       </defs>
       <path
