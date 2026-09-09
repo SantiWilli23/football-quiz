@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { db, initSchema } from "./client.js";
 import { DUEL_POOL } from "./duel-pool.js";
+import { seedEquipoJugador } from "./seed-equipo-jugador.js";
 
 function dateOffset(days) {
   const d = new Date();
@@ -2080,6 +2081,8 @@ async function seed() {
   if (cleanup.rowsAffected > 0) {
     console.log(`Limpiadas ${cleanup.rowsAffected} preguntas de personalidad futuras pre-creadas.`);
   }
+
+  await seedEquipoJugador();
 
   console.log(
     `Seed completado: ${NUM_DAYS} días x 3 preguntas trivia (Modo A) + 2 preguntas especiales (Modo B) + ${DUEL_POOL.length} preguntas de duelo.`

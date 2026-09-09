@@ -279,3 +279,35 @@ CREATE TABLE IF NOT EXISTS football_cache (
   payload TEXT NOT NULL,
   fetched_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Equipo-Jugador: cadena de conexiones futbolísticas (jugador -> equipo -> jugador...).
+-- Datos cargados una sola vez desde server/data/equipo-jugador-players.json
+-- (ver server/db/seed-equipo-jugador.js), sin scraping ni API en vivo dentro del juego.
+CREATE TABLE IF NOT EXISTS ej_clubs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  normalized_name TEXT UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS ej_players (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  normalized_name TEXT UNIQUE NOT NULL,
+  nationality TEXT,
+  position TEXT,
+  birth_year INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS ej_player_clubs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  player_id INTEGER NOT NULL REFERENCES ej_players(id),
+  club_id INTEGER NOT NULL REFERENCES ej_clubs(id),
+  start_year INTEGER,
+  end_year INTEGER,
+  UNIQUE(player_id, club_id, start_year)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ej_pc_player ON ej_player_clubs(player_id);
+CREATE INDEX IF NOT EXISTS idx_ej_pc_club ON ej_player_clubs(club_id);
+CREATE INDEX IF NOT EXISTS idx_ej_players_name ON ej_players(normalized_name);
+CREATE INDEX IF NOT EXISTS idx_ej_clubs_name ON ej_clubs(normalized_name);
