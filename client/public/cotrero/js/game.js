@@ -457,6 +457,55 @@ function hasSave() { return !!localStorage.getItem(SAVE_KEY); }
 
 function deleteSave() { localStorage.removeItem(SAVE_KEY); state = null; }
 
+// ── SALÓN DE LA FAMA ──────────────────────────────────────────────
+// Cada carrera que termina (retiro) queda registrada acá, para que las
+// próximas partidas tengan algo con qué compararse.
+const HOF_KEY = "cotrero_hof";
+const HOF_MAX = 20;
+let hofRecorded = false; // evita duplicar el registro si se renderiza game_over más de una vez
+
+function getHallOfFame() {
+  try {
+    const raw = localStorage.getItem(HOF_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list : [];
+  } catch { return []; }
+}
+
+function recordCareerInHallOfFame() {
+  if (!state || hofRecorded) return;
+  hofRecorded = true;
+  const career = state.career;
+  const player = state.player;
+  const entry = {
+    id: `${Date.now()}_${Math.floor(Math.random() * 1e6)}`,
+    date: Date.now(),
+    name: player.name,
+    position: player.position,
+    club: state.club ? state.club.name : "—",
+    goals: career.goals,
+    assists: career.assists,
+    appearances: career.appearances,
+    seasons: career.season - 1,
+    peakOvr: player.ovr,
+  };
+  const list = [entry, ...getHallOfFame()].sort((a, b) => b.goals - a.goals).slice(0, HOF_MAX);
+  try { localStorage.setItem(HOF_KEY, JSON.stringify(list)); } catch { /* almacenamiento lleno: se ignora */ }
+}
+
+function shareCareerText() {
+  if (!state) return "";
+  const career = state.career;
+  const player = state.player;
+  const rankLabel = career.goals > 150 ? "Leyenda" : career.goals > 80 ? "Ídolo" : career.goals > 40 ? "Crack" : "Jugador correcto";
+  return [
+    `⚽ Cotrero — Carrera de ${player.name}`,
+    `${rankLabel} · ${career.season - 1} temporadas`,
+    `${career.goals} goles · ${career.assists} asistencias · ${career.appearances} partidos`,
+    `OVR final: ${player.ovr}`,
+  ].join("\n");
+}
+
 // ── ENGINE ────────────────────────────────────────────────────────
 
 function calcOvr(stats, position) {
@@ -816,6 +865,7 @@ function render() {
     case "match":      app.innerHTML = renderMatch(); break;
     case "season_end": app.innerHTML = renderSeasonEnd(); break;
     case "game_over":  app.innerHTML = renderGameOver(); break;
+    case "hall_of_fame": app.innerHTML = renderHallOfFame(); break;
     default:           app.innerHTML = renderMenu();
   }
   attachEvents();
@@ -834,6 +884,7 @@ function renderMenu() {
       <div class="menu-btns">
         <button class="btn btn-primary" data-action="new_game">Nueva carrera</button>
         ${saveExists ? `<button class="btn btn-outline" data-action="continue_game">Continuar</button>` : ""}
+        <button class="btn btn-outline" data-action="view_hof">🏛 Salón de la fama</button>
         ${saveExists ? `<button class="btn btn-ghost" data-action="delete_save">Borrar partida</button>` : ""}
       </div>
     </div>
@@ -1264,6 +1315,7 @@ function renderSeasonEnd() {
 }
 
 function renderGameOver() {
+  recordCareerInHallOfFame();
   const career = state ? state.career : { goals: 0, assists: 0, appearances: 0, season: 1 };
   const player = state ? state.player : { name: "—", ovr: 0, age: 37 };
   const rankLabel = career.goals > 150 ? "Leyenda" : career.goals > 80 ? "Ídolo" : career.goals > 40 ? "Crack" : "Jugador correcto";
@@ -1296,8 +1348,43 @@ function renderGameOver() {
         <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold-dim)">Legado</div>
         <div class="personality-name">${rankLabel}</div>
       </div>
-      <div style="width:100%;max-width:480px;margin-top:8px">
+      <div style="width:100%;max-width:480px;margin-top:8px;display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-outline" data-action="share_result">📋 Compartir resultado</button>
+        <button class="btn btn-ghost" data-action="view_hof">🏛 Salón de la fama</button>
         <button class="btn btn-primary" data-action="new_game_after">Nueva carrera</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderHallOfFame() {
+  const list = getHallOfFame();
+  return `
+    <div class="screen fade-in" style="max-width:520px;margin:0 auto">
+      <div class="logo-block">
+        <div class="logo" style="font-size:32px">🏛 Salón de la Fama</div>
+        <div class="logo-sub">Tus mejores carreras, ordenadas por goles</div>
+      </div>
+      ${!list.length ? `
+        <p style="color:var(--text-muted);text-align:center;margin-top:16px">Todavía no terminaste ninguna carrera.</p>
+      ` : `
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+          ${list.map((e, i) => `
+            <div class="stat-summary-box" style="text-align:left;padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div style="font-weight:700">${i + 1}. ${e.name}</div>
+                <div style="font-size:12px;color:var(--text-muted)">${e.position} · ${e.club} · ${e.seasons} temporadas</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-weight:700;color:var(--gold-dim)">${e.goals} goles</div>
+                <div style="font-size:12px;color:var(--text-muted)">${e.assists} asist. · OVR ${e.peakOvr}</div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      `}
+      <div style="width:100%;margin-top:16px">
+        <button class="btn btn-outline" data-action="go_menu">← Volver al menú</button>
       </div>
     </div>
   `;
@@ -1344,9 +1431,25 @@ function handleClick(e) {
 
   switch (action) {
     case "new_game":
+      hofRecorded = false;
       creation = { step: 1, position: null, archetype: null, shownArchetypes: [], name: "", countryIdx: 0, clubIdx: 0 };
       navigate("creation");
       break;
+
+    case "view_hof":
+      navigate("hall_of_fame");
+      break;
+
+    case "share_result": {
+      const text = shareCareerText();
+      const done = () => { el.textContent = "✅ Copiado"; setTimeout(() => { el.textContent = "📋 Compartir resultado"; }, 1500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => alert(text));
+      } else {
+        alert(text);
+      }
+      break;
+    }
 
     case "continue_game":
       if (load()) navigate("hub");
@@ -1470,6 +1573,7 @@ function handleClick(e) {
       break;
 
     case "new_game_after":
+      hofRecorded = false;
       deleteSave();
       creation = { step: 1, position: null, archetype: null, shownArchetypes: [], name: "", countryIdx: 0, clubIdx: 0 };
       navigate("creation");
