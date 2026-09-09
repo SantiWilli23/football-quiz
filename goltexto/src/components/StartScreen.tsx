@@ -16,7 +16,7 @@ export default function StartScreen({ onStart, hasSavedGame, onResume }: Props) 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-4xl font-bold tracking-tight text-center mb-1">Goltexto</h1>
+        <h1 className="text-4xl font-bold tracking-tight text-center mb-1">Fichado</h1>
         <p className="text-sm text-gray-500 text-center mb-10">Adiviná al futbolista secreto.</p>
 
         {hasSavedGame && (

@@ -1,6 +1,6 @@
-# Goltexto
+# Fichado
 
-Clon de Contexto/Goltexto, pero de fútbol. Escribís nombres de futbolistas y cada intento te devuelve un puntaje de similitud (0-100) contra el jugador secreto, basado en equipo, liga, nacionalidad, posición y edad. Diseño 100% en blanco/negro/grises — sin colores de acento en ningún lado.
+Clon de Contexto, pero de fútbol. Escribís nombres de futbolistas y cada intento te devuelve un puntaje de similitud (0-100) contra el jugador secreto, basado en equipo, liga, nacionalidad, posición y edad. Diseño 100% en blanco/negro/grises — sin colores de acento en ningún lado.
 
 ## Correr localmente
 

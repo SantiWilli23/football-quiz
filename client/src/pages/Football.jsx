@@ -6,12 +6,15 @@ import {
   ChevronRight,
   Crown,
   Gamepad2,
+  Link2,
   Radio,
+  Shield,
   Star,
   Table2,
+  Target,
   Trophy,
-  Zap,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
@@ -48,12 +51,28 @@ const GAMES = [
     available: true,
   },
   {
-    href: null,
-    label: "Adivina el Jugador",
-    icon: Zap,
-    description: "¿Podés adivinar quién es el jugador con pistas mínimas? Próximamente.",
+    to: "/carrera-dt",
+    label: "Modo Carrera DT",
+    icon: Shield,
+    description: "Dirigí un equipo de Premier League o La Liga: tácticas, fichajes y partidos en vivo.",
+    color: "#8a6423",
+    available: true,
+  },
+  {
+    to: "/equipo-jugador",
+    label: "Equipo-Jugador",
+    icon: Link2,
+    description: "Cadena de conexiones futbolísticas: jugador → equipo → jugador. El que falla, queda eliminado.",
+    color: "#5ba3d9",
+    available: true,
+  },
+  {
+    href: "/fichado/",
+    label: "Fichado",
+    icon: Target,
+    description: "Adiviná al futbolista secreto: cada intento te dice qué tan cerca estás.",
     color: "#a8a9ac",
-    available: false,
+    available: true,
   },
 ];
 
@@ -132,7 +151,7 @@ function BlockedByPlan() {
 function GamesSection() {
   return (
     <div className="space-y-3">
-      {GAMES.map(({ href, label, icon: Icon, description, color, available }) => {
+      {GAMES.map(({ href, to, label, icon: Icon, description, color, available }) => {
         const inner = (
           <>
             <div
@@ -155,23 +174,26 @@ function GamesSection() {
           </>
         );
 
+        const className = "flex items-center gap-4 px-5 py-5 rounded-2xl border border-border bg-panel hover:border-white/20 hover:bg-white/5 transition-colors";
+
+        if (to) {
+          return (
+            <Link key={to} to={to} className={className}>
+              {inner}
+            </Link>
+          );
+        }
+
         if (!href) {
           return (
-            <div
-              key={label}
-              className="flex items-center gap-4 px-5 py-5 rounded-2xl border border-border bg-panel opacity-60 cursor-default"
-            >
+            <div key={label} className="flex items-center gap-4 px-5 py-5 rounded-2xl border border-border bg-panel opacity-60 cursor-default">
               {inner}
             </div>
           );
         }
 
         return (
-          <a
-            key={href}
-            href={href}
-            className="flex items-center gap-4 px-5 py-5 rounded-2xl border border-border bg-panel hover:border-white/20 hover:bg-white/5 transition-colors"
-          >
+          <a key={href} href={href} className={className}>
             {inner}
           </a>
         );

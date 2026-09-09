@@ -77,7 +77,7 @@ export function buildShareText(opts: {
   attemptsUsed: number;
   maxAttempts: MaxAttempts;
 }): string {
-  const title = opts.mode === "daily" && opts.edition != null ? `Goltexto #${opts.edition}` : "Goltexto";
+  const title = opts.mode === "daily" && opts.edition != null ? `Fichado #${opts.edition}` : "Fichado";
   const result = opts.status === "won" ? `${opts.attemptsUsed}/${opts.maxAttempts} intentos` : `X/${opts.maxAttempts}`;
   return `${title} - ${result}`;
 }

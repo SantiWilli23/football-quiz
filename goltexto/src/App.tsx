@@ -137,7 +137,7 @@ export default function App() {
     <div className="min-h-screen px-4 py-8">
       <div className="max-w-lg mx-auto">
         <header className="mb-6 text-center">
-          <h1 className="text-2xl font-bold tracking-tight">Goltexto</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Fichado</h1>
           <p className="text-sm text-gray-500 mt-1">
             Intento {Math.min(attemptsUsed, maxAttempts)} / {maxAttempts}
             {mode === "daily" && ` · Edición diaria #${dailyEditionNumber()}`}

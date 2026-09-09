@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Crown, Flame, HelpCircle, Link2, Newspaper, Shield, Skull, Swords, Star, Target, Users } from "lucide-react";
+import { BarChart3, Flame, HelpCircle, Newspaper, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -7,19 +7,22 @@ import Layout from "../components/Layout.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 import api from "../api.js";
 
-const INTERNAL_GAMES = [
+// El inicio muestra solo las secciones generales — cada una agrupa sus
+// propios modos adentro (Trivia: trivia diaria, duelos, supervivencia;
+// Fútbol: resultados en vivo + subapartado de juegos).
+const SECTIONS = [
   {
     to: "/trivia",
     label: "Trivia",
     icon: HelpCircle,
-    description: "Respondé las preguntas del día: trivia normal + preguntas especiales del grupo.",
+    description: "Trivia diaria, preguntas especiales del grupo, duelos 1v1 y supervivencia en vivo.",
     color: "#f0907e",
   },
   {
     to: "/futbol",
     label: "Fútbol",
     icon: Newspaper,
-    description: "Resultados en vivo, tabla de posiciones, goleadores y juegos de fútbol.",
+    description: "Resultados en vivo, tabla de posiciones, goleadores y todos los juegos de fútbol.",
     color: "#3b9dd6",
   },
   {
@@ -30,67 +33,11 @@ const INTERNAL_GAMES = [
     color: "#d9a441",
   },
   {
-    to: "/duelos",
-    label: "Duelos",
-    icon: Swords,
-    description: "Desafiá a alguien del grupo uno contra uno con las preguntas más difíciles.",
-    color: "#f0c674",
-  },
-  {
-    to: "/supervivencia",
-    label: "Supervivencia",
-    icon: Skull,
-    description: "Todo el grupo responde en vivo la misma pregunta. El que falla queda afuera — gana el último en pie.",
-    color: "#d9534f",
-  },
-  {
     to: "/estadisticas",
     label: "Estadísticas",
     icon: BarChart3,
     description: "Resumen semanal, compatibilidad con el grupo y logros desbloqueados.",
     color: "#3fae9a",
-  },
-  {
-    to: "/carrera-dt",
-    label: "Modo Carrera DT",
-    icon: Shield,
-    description: "Dirigí un equipo de Premier League o La Liga: tácticas, fichajes y partidos en vivo.",
-    color: "#8a6423",
-  },
-];
-
-const EXTERNAL_GAMES = [
-  {
-    href: "/draft-europeo.html",
-    label: "Draft Europeo 8a2",
-    icon: Star,
-    description: "Armá tu XI con jugadores de 138 planteles históricos de la Champions League.",
-    badge: null,
-    color: "#d9a441",
-  },
-  {
-    href: "/cotrero.html",
-    label: "Cotrero",
-    icon: Crown,
-    description: "De potrero a leyenda: simulá toda la carrera de un jugador, temporada a temporada.",
-    badge: null,
-    color: "#3fae9a",
-  },
-  {
-    to: "/equipo-jugador",
-    label: "Equipo-Jugador",
-    icon: Link2,
-    description: "Cadena de conexiones futbolísticas: jugador → equipo → jugador. El que falla, queda eliminado.",
-    badge: null,
-    color: "#5ba3d9",
-  },
-  {
-    href: "/goltexto/",
-    label: "Goltexto",
-    icon: Target,
-    description: "Adiviná al futbolista secreto: cada intento te dice qué tan cerca estás.",
-    badge: null,
-    color: "#a8a9ac",
   },
 ];
 
@@ -129,12 +76,11 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-x-14 gap-y-12">
         <div>
-          {/* Secciones principales */}
           <h2 className="text-[11px] font-medium text-gray-600 uppercase tracking-[0.2em] mb-4">
             Secciones
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/5 rounded-2xl overflow-hidden mb-12">
-            {INTERNAL_GAMES.map(({ to, label, icon: Icon, description, color }) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/5 rounded-2xl overflow-hidden">
+            {SECTIONS.map(({ to, label, icon: Icon, description, color }) => (
               <Link
                 key={to}
                 to={to}
@@ -154,66 +100,6 @@ export default function Dashboard() {
                 </div>
               </Link>
             ))}
-          </div>
-
-          {/* Juegos externos */}
-          <h2 className="text-[11px] font-medium text-gray-600 uppercase tracking-[0.2em] mb-4">
-            Juegos
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/5 rounded-2xl overflow-hidden">
-            {EXTERNAL_GAMES.map(({ href, to, label, icon: Icon, description, badge, color }) => {
-              const inner = (
-                <>
-                  <div
-                    className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
-                    style={{ background: `${color}22`, border: `1px solid ${color}44`, color }}
-                  >
-                    <Icon size={19} />
-                  </div>
-                  <div className="min-w-0 pt-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-sm font-medium group-hover:text-white transition-colors">{label}</p>
-                      {badge && (
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full text-gray-500 border border-white/10">
-                          {badge}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
-                  </div>
-                </>
-              );
-
-              if (to) {
-                return (
-                  <Link
-                    key={to}
-                    to={to}
-                    className="group flex items-start gap-4 px-5 py-5 bg-bg hover:bg-panel transition-colors"
-                  >
-                    {inner}
-                  </Link>
-                );
-              }
-
-              if (!href) {
-                return (
-                  <div key={label} className="flex items-start gap-4 px-5 py-5 bg-bg opacity-40 cursor-default">
-                    {inner}
-                  </div>
-                );
-              }
-
-              return (
-                <a
-                  key={href}
-                  href={href}
-                  className="group flex items-start gap-4 px-5 py-5 bg-bg hover:bg-panel transition-colors"
-                >
-                  {inner}
-                </a>
-              );
-            })}
           </div>
         </div>
 
