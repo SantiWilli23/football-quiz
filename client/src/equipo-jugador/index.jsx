@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import LocalGame from "./components/LocalGame.jsx";
 import OnlineGame from "./components/OnlineGame.jsx";
+import MatchHistoryScreen from "./components/MatchHistoryScreen.jsx";
 
 export default function EquipoJugador() {
-  const [mode, setMode] = useState(null); // null | "local" | "online"
+  const [mode, setMode] = useState(null); // null | "local" | "online" | "history"
 
   return (
     <div className="min-h-screen bg-bg text-white p-4">
@@ -40,11 +41,19 @@ export default function EquipoJugador() {
               <p className="font-semibold">Online</p>
               <p className="text-sm text-gray-500 mt-1">2 o 4 jugadores, cada uno desde su dispositivo con un código de sala.</p>
             </button>
+
+            <button
+              onClick={() => setMode("history")}
+              className="w-full text-center text-sm text-gray-500 hover:text-gray-300 py-2"
+            >
+              📜 Ver historial de partidas
+            </button>
           </div>
         )}
 
         {mode === "local" && <LocalGame onExit={() => setMode(null)} />}
         {mode === "online" && <OnlineGame onExit={() => setMode(null)} />}
+        {mode === "history" && <MatchHistoryScreen onBack={() => setMode(null)} />}
       </div>
     </div>
   );

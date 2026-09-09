@@ -9,7 +9,7 @@ import ResultScreen from "./ResultScreen.jsx";
 const GAME_NAME = "equipo-jugador";
 
 export default function OnlineGame({ onExit }) {
-  const { status, roomCode, role, seat, error, lastMessage, createRoom, joinRoom, send, publishState, leave } = useRoomRelay(GAME_NAME);
+  const { status, roomCode, role, seat, error, lastMessage, createRoom, joinRoom, send, publishState, leave, retry } = useRoomRelay(GAME_NAME);
   const isHost = role === "host";
 
   const [setupMode, setSetupMode] = useState(null); // null | "create" | "join"
@@ -279,6 +279,32 @@ export default function OnlineGame({ onExit }) {
     return <p className="text-sm text-gray-500 text-center py-10">Conectando…</p>;
   }
 
+  if (status === "reconnecting") {
+    return (
+      <div className="max-w-md mx-auto text-center py-10 space-y-2">
+        <p className="text-sm text-gray-300">📶 Se cortó la conexión, reconectando…</p>
+        <p className="text-xs text-gray-600">La partida sigue en pie, no se pierde el turno ni el progreso.</p>
+      </div>
+    );
+  }
+
+  if (status === "closed") {
+    return (
+      <div className="max-w-md mx-auto text-center py-10 space-y-4">
+        <p className="text-sm text-gray-300">No se pudo reconectar a la sala.</p>
+        <p className="text-xs text-gray-600">Puede que la sala se haya cerrado (todos se desconectaron) o que se haya perdido la conexión a internet.</p>
+        <div className="flex gap-2 justify-center">
+          <button onClick={retry} className="text-sm font-medium px-4 py-2 rounded-2xl bg-accent/10 text-accent border border-accent/40 hover:bg-accent/20 transition-colors">
+            Reintentar
+          </button>
+          <button onClick={handleLeave} className="text-sm px-4 py-2 rounded-2xl border border-border text-gray-400 hover:text-white transition-colors">
+            Volver
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (status === "in-room" && phase === "lobby") {
     return (
       <div className="max-w-md mx-auto bg-panel border border-border rounded-2xl p-6 space-y-5">
@@ -328,7 +354,7 @@ export default function OnlineGame({ onExit }) {
   }
 
   if (phase === "finished" && game) {
-    return <ResultScreen state={game} mySeat={seat} onExit={handleLeave} />;
+    return <ResultScreen state={game} mySeat={seat} mode="online" onExit={handleLeave} />;
   }
 
   return <p className="text-sm text-gray-500 text-center py-10">Cargando…</p>;

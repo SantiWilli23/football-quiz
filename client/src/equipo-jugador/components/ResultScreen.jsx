@@ -1,6 +1,23 @@
-export default function ResultScreen({ state, mySeat, onPlayAgain, onExit }) {
+import { useEffect, useRef } from "react";
+import { saveMatchResult } from "../matchHistory.js";
+
+export default function ResultScreen({ state, mySeat, mode = "local", onPlayAgain, onExit }) {
   const winnerName = state.winnerSeat != null ? state.playerNames[state.winnerSeat] : null;
   const iWon = mySeat != null && mySeat === state.winnerSeat;
+  const logged = useRef(false);
+
+  useEffect(() => {
+    if (logged.current) return;
+    logged.current = true;
+    saveMatchResult({
+      mode,
+      winnerName,
+      iWon: mySeat != null ? iWon : null,
+      playerNames: state.playerNames,
+      chainLength: state.chain.length,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="bg-panel border border-border rounded-2xl p-8 text-center space-y-4">
