@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { CareerProvider, useCareer } from "./context/CareerContext.jsx";
 import TeamSelector from "./components/TeamSelector.jsx";
+import SaveManager from "./components/SaveManager.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import Squad from "./components/Squad.jsx";
 import Tactics from "./components/Tactics.jsx";
@@ -9,13 +10,20 @@ import MatchSimulator from "./components/MatchSimulator.jsx";
 import SeasonCalendar from "./components/SeasonCalendar.jsx";
 import Transfers from "./components/Transfers.jsx";
 import CareerHistory from "./components/CareerHistory.jsx";
+import Finances from "./components/Finances.jsx";
 
 function CareerApp() {
-  const { state } = useCareer();
+  const { state, saveSlots, exitToMenu } = useCareer();
   const [screen, setScreen] = useState("dashboard");
   const [matchResult, setMatchResult] = useState(null);
+  const [forceNewCareer, setForceNewCareer] = useState(false);
 
-  if (!state) return <TeamSelector />;
+  if (!state) {
+    if (!forceNewCareer && saveSlots.length > 0) {
+      return <SaveManager onNewCareer={() => setForceNewCareer(true)} />;
+    }
+    return <TeamSelector onBack={saveSlots.length > 0 ? () => setForceNewCareer(false) : null} />;
+  }
 
   if (screen === "match") {
     return (
@@ -36,12 +44,20 @@ function CareerApp() {
         >
           🏠 Salir
         </Link>
+        <button
+          onClick={() => { setForceNewCareer(false); exitToMenu(); }}
+          title="Cambiar de carrera"
+          className="px-3 py-1.5 rounded-card text-sm font-medium whitespace-nowrap text-gray-400 hover:text-white border border-transparent hover:border-border shrink-0 mr-1"
+        >
+          🔀 Mis carreras
+        </button>
         <span className="w-px h-5 bg-border shrink-0 mr-1" />
         {[
           ["dashboard", "Panel"],
           ["squad", "Plantilla"],
           ["transfers", "Fichajes"],
           ["tactics", "Tácticas"],
+          ["finances", "Finanzas"],
           ["calendar", "Calendario"],
           ["history", "Historial"],
         ].map(([id, label]) => (
@@ -63,6 +79,7 @@ function CareerApp() {
         {screen === "squad" && <Squad />}
         {screen === "transfers" && <Transfers />}
         {screen === "tactics" && <Tactics />}
+        {screen === "finances" && <Finances />}
         {screen === "calendar" && <SeasonCalendar />}
         {screen === "history" && <CareerHistory />}
       </main>

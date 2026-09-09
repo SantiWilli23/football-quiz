@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useCareer } from "../context/CareerContext.jsx";
 import TeamCrest from "./TeamCrest.jsx";
 
-export default function TeamSelector() {
+export default function TeamSelector({ onBack }) {
   const { allTeams, selectTeam } = useCareer();
   const [league, setLeague] = useState("premier");
   const [chosen, setChosen] = useState(null);
@@ -13,7 +13,12 @@ export default function TeamSelector() {
   return (
     <div className="min-h-screen bg-bg text-white p-4">
       <div className="max-w-4xl mx-auto">
-        <Link to="/panel" className="inline-block text-xs text-gray-500 hover:text-white mb-3">🏠 Volver al menú principal</Link>
+        <div className="flex items-center gap-3 mb-3">
+          <Link to="/panel" className="text-xs text-gray-500 hover:text-white">🏠 Volver al menú principal</Link>
+          {onBack && (
+            <button onClick={onBack} className="text-xs text-gray-500 hover:text-white">← Mis carreras</button>
+          )}
+        </div>
         <h1 className="text-2xl font-bold mb-1">Modo Carrera · DT</h1>
         <p className="text-gray-400 text-sm mb-5">Elegí el equipo que vas a dirigir.</p>
 

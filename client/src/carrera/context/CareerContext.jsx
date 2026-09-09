@@ -1,7 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { teams, teamById, teamsByLeague } from "../data/teams.js";
 import { players as allPlayers, playersByTeam } from "../data/players.js";
-import { loadCareer, saveCareer, clearCareer } from "../hooks/useCareerSave.js";
+import {
+  loadCareer, saveCareer, clearCareer, createSaveSlot, deleteSaveSlot,
+  listSaveSlots, getActiveSlotId, setActiveSlotId,
+} from "../hooks/useCareerSave.js";
 import { simulateUserMatch, simulateQuickMatch, simulateHalf, combineHalves, dayFormFactor } from "../engine/matchEngine.js";
 import { ageSquad, releaseExpired, generateYouthProspects, applyPositionTrainings } from "../engine/playerGrowth.js";
 import { assignInitialNumbers, nextAvailableNumber } from "../engine/squadNumbers.js";
@@ -314,16 +317,50 @@ function buildInitialState(teamId) {
 
 export function CareerProvider({ children }) {
   const [state, setState] = useState(() => loadCareer());
+  const [saveSlots, setSaveSlots] = useState(() => listSaveSlots());
 
   useEffect(() => {
-    if (state) saveCareer(state);
+    if (state) {
+      saveCareer(state);
+      setSaveSlots(listSaveSlots());
+    }
   }, [state]);
 
   const team = state ? teamById(state.teamId) : null;
   const leagueTeams = team ? teamsByLeague(team.league) : [];
 
-  function selectTeam(teamId) { setState(buildInitialState(teamId)); }
-  function resetCareer() { clearCareer(); setState(null); }
+  // Crea una carrera nueva en un slot propio (no pisa las carreras existentes).
+  function selectTeam(teamId) {
+    const initial = buildInitialState(teamId);
+    createSaveSlot(initial);
+    setState(initial);
+    setSaveSlots(listSaveSlots());
+  }
+
+  // Vuelve a la pantalla de carreras sin borrar el progreso guardado.
+  function exitToMenu() {
+    clearCareer();
+    setState(null);
+  }
+
+  // Retoma una carrera guardada existente.
+  function resumeCareer(slotId) {
+    const data = loadCareer(slotId);
+    if (!data) return;
+    setActiveSlotId(slotId);
+    setState(data);
+  }
+
+  // Borra una carrera guardada por completo (no puede deshacerse).
+  function deleteCareer(slotId) {
+    const wasActive = !!state && getActiveSlotId() === slotId;
+    deleteSaveSlot(slotId);
+    setSaveSlots(listSaveSlots());
+    if (wasActive) setState(null);
+  }
+
+  // Compat: algunos componentes todavía llaman resetCareer() para "salir".
+  function resetCareer() { exitToMenu(); }
 
   function setFormation(formation) {
     setState((s) => ({ ...s, formation, lineup: remapLineupToFormation(s.squad, s.lineup, formation) }));
@@ -1148,6 +1185,8 @@ export function CareerProvider({ children }) {
       squad,
       lineup: defaultLineup(squad, s.formation),
       budget,
+      lastSeasonIncome: income,
+      lastSeasonPosition: position,
       boardConfidence,
       managerPrestige,
       clubReputation,
@@ -1188,6 +1227,10 @@ export function CareerProvider({ children }) {
       CONTINENTAL_LABELS,
       selectTeam,
       resetCareer,
+      exitToMenu,
+      resumeCareer,
+      deleteCareer,
+      saveSlots,
       setFormation,
       setMentality,
       setSlider,
@@ -1232,7 +1275,7 @@ export function CareerProvider({ children }) {
       standingsSorted: state ? sortStandings(state.standings) : [],
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state]
+    [state, saveSlots]
   );
 
   return <CareerContext.Provider value={value}>{children}</CareerContext.Provider>;
