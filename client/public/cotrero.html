@@ -321,9 +321,9 @@
         <div class="mtitle">Medio</div>
         <p>5 stats por posición, entrenamientos con riesgo, tienda, personalidad oculta, mercado de pases y selección nacional (20-40 min).</p>
       </div>
-      <div class="mode-card locked" data-mode="especialista">
-        <div class="mtitle">Especialista <span class="soon">PRÓXIMAMENTE</span></div>
-        <p>Todo lo del modo Medio más partidos importantes con cancha 2D y lesiones. En construcción.</p>
+      <div class="mode-card" data-mode="especialista">
+        <div class="mtitle">Especialista</div>
+        <p>Todo lo del modo Medio más partidos importantes, riesgo de lesión y Salón de la Fama (30-50 min).</p>
       </div>
 
       <button class="btn btn-ghost btn-block" id="btn-view-history" style="margin-top:6px">Ver mis mejores carreras</button>
@@ -881,6 +881,7 @@
     card.addEventListener("click", function () {
       if (card.classList.contains("locked")) return;
       if (card.dataset.mode === "medio") { window.location.href = "/cotrero-medio.html"; return; }
+      if (card.dataset.mode === "especialista") { window.location.href = "/cotrero/"; return; }
       startNewCareerFlow();
     });
   });
