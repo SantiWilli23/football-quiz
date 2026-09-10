@@ -1,31 +1,38 @@
 /** @type {import('tailwindcss').Config} */
+
+// Misma paleta que el resto de Futotal (ver client/tailwind.config.js), para
+// que Fichado se sienta parte de la misma app y no un proyecto aparte.
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
-    // Paleta reducida a blanco/negro/grises a propósito: nada de colores de
-    // acento en toda la app (ver README). Sobrescribe la paleta default de
-    // Tailwind para que sea imposible usar "bg-red-500" etc. por error.
-    colors: {
-      transparent: "transparent",
-      current: "currentColor",
-      white: "#ffffff",
-      black: "#0a0a0a",
-      gray: {
-        50: "#fafafa",
-        100: "#f2f2f2",
-        200: "#e2e2e2",
-        300: "#cbcbcb",
-        400: "#a3a3a3",
-        500: "#787878",
-        600: "#565656",
-        700: "#3d3d3d",
-        800: "#262626",
-        900: "#171717",
-      },
-    },
     extend: {
+      colors: {
+        bg: "#262b35",
+        panel: "#2b3444",
+        border: "#45474c",
+        white: "#f2f2f0",
+        black: "#262b35",
+        gray: {
+          200: "#45474c",
+          300: "#c9cacc",
+          400: "#a8a9ac",
+          500: "#8a8b8e",
+          600: "#6f7074",
+          700: "#57585c",
+          800: "#45474c",
+          900: "#1e2023",
+        },
+        accent: {
+          DEFAULT: "#3b9dd6",
+          dark: "#215e82",
+          light: "#7cc4ea",
+        },
+      },
+      borderRadius: {
+        card: "4px",
+      },
       fontFamily: {
-        sans: ["system-ui", "-apple-system", "Segoe UI", "sans-serif"],
+        sans: ["Archivo", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
       },
     },
   },

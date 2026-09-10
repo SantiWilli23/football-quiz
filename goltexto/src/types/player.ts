@@ -12,5 +12,3 @@ export interface Guess {
   player: Player;
   score: number;
 }
-
-export type MaxAttempts = 10 | 20 | 100;

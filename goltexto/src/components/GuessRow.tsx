@@ -1,13 +1,14 @@
 import type { Guess } from "../types/player";
 
-// Interpola de gris claro a casi-negro según el score (0-99). El 100 se
-// resuelve aparte como fila invertida (fondo negro, texto blanco).
+// Interpola de un gris apagado al azul de acento según el score (0-99). El
+// 100 se resuelve aparte como fila destacada en acento.
 function barColor(score: number): string {
   const t = Math.max(0, Math.min(1, score / 100));
-  const from = 0xe2, to = 0x1a;
-  const v = Math.round(from + (to - from) * t);
-  const hex = v.toString(16).padStart(2, "0");
-  return `#${hex}${hex}${hex}`;
+  // gray-600 (#6f7074) -> accent (#3b9dd6)
+  const from = { r: 0x6f, g: 0x70, b: 0x74 };
+  const to = { r: 0x3b, g: 0x9d, b: 0xd6 };
+  const mix = (a: number, b: number) => Math.round(a + (b - a) * t);
+  return `rgb(${mix(from.r, to.r)}, ${mix(from.g, to.g)}, ${mix(from.b, to.b)})`;
 }
 
 interface Props {
@@ -22,37 +23,44 @@ export default function GuessRow({ order, guess, isLatest }: Props) {
 
   return (
     <div
-      className={`border px-4 py-3 transition-colors ${
+      className={`rounded-xl border px-4 py-3.5 transition-all ${
         isExact
-          ? "bg-black text-white border-black"
+          ? "bg-accent/15 border-accent shadow-[0_2px_8px_rgba(59,157,214,0.2)]"
           : isLatest
-          ? "border-black border-2"
-          : "border-gray-300"
+          ? "border-accent/60 bg-panel shadow-[0_1px_4px_rgba(0,0,0,0.3)]"
+          : "border-border bg-panel"
       }`}
     >
-      <div className="flex items-center justify-between gap-3 mb-2">
-        <div className="flex items-center gap-3 min-w-0">
-          <span className={`text-xs tabular-nums ${isExact ? "text-gray-300" : "text-gray-500"}`}>#{order}</span>
-          <span className={`text-sm truncate ${isLatest ? "font-semibold" : "font-medium"}`}>{player.name}</span>
+      <div className="flex items-center justify-between gap-3 mb-2.5">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="text-[11px] font-medium tabular-nums w-4 shrink-0 text-gray-500">
+            {order}
+          </span>
+          <span className={`text-sm truncate ${isLatest || isExact ? "font-semibold text-white" : "font-medium text-gray-200"}`}>{player.name}</span>
         </div>
-        <span className={`text-lg font-bold tabular-nums shrink-0 ${isExact ? "text-white" : "text-black"}`}>{score}</span>
+        <span className={`text-xl font-bold tabular-nums shrink-0 ${isExact ? "text-accent" : "text-white"}`}>{score}</span>
       </div>
 
       {!isExact && (
-        <div className="w-full h-2 bg-gray-200">
+        <div className="w-full h-1.5 rounded-full bg-bg overflow-hidden mb-2.5">
           <div
-            className="h-full transition-[width] duration-300"
+            className="h-full rounded-full transition-[width] duration-300"
             style={{ width: `${score}%`, backgroundColor: barColor(score) }}
           />
         </div>
       )}
 
-      <div className={`flex flex-wrap gap-x-3 gap-y-0.5 mt-2 text-xs ${isExact ? "text-gray-300" : "text-gray-500"}`}>
-        <span>{player.team}</span>
-        <span>{player.league}</span>
-        <span>{player.nationality}</span>
-        <span>{player.position}</span>
-        <span>{player.age} años</span>
+      <div className="flex flex-wrap gap-1.5">
+        {[player.team, player.league, player.nationality, player.position, `${player.age} años`].map((val) => (
+          <span
+            key={val}
+            className={`text-[11px] px-2 py-0.5 rounded-full ${
+              isExact ? "bg-accent/20 text-accent" : "bg-bg text-gray-400"
+            }`}
+          >
+            {val}
+          </span>
+        ))}
       </div>
     </div>
   );

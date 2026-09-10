@@ -53,24 +53,26 @@ export default function GuessInput({ players, guessedIds, disabled, onSubmit, er
         onFocus={() => setOpen(true)}
         disabled={disabled}
         placeholder="Escribí el nombre de un futbolista…"
-        className="w-full border border-black px-4 py-3 text-sm outline-none focus:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+        className="w-full rounded-2xl border-2 border-border bg-panel px-4 py-3.5 text-sm text-white outline-none focus:border-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       />
 
       {open && suggestions.length > 0 && (
-        <div className="absolute z-20 mt-1 w-full border border-black bg-white max-h-72 overflow-y-auto">
+        <div className="absolute z-20 mt-1.5 w-full rounded-2xl border border-border bg-panel shadow-[0_8px_24px_rgba(0,0,0,0.4)] max-h-72 overflow-y-auto overflow-hidden">
           {suggestions.map((p) => {
             const already = guessedIds.has(p.id);
             return (
               <button
                 key={p.id}
                 onClick={() => pick(p)}
-                className={`w-full text-left px-4 py-2.5 text-sm border-b border-gray-200 last:border-0 hover:bg-gray-100 transition-colors ${
-                  already ? "text-gray-400" : "text-black"
+                className={`w-full text-left px-4 py-3 text-sm border-b border-border last:border-0 hover:bg-bg transition-colors flex items-center justify-between gap-2 ${
+                  already ? "text-gray-500" : "text-white"
                 }`}
               >
-                {p.name}
-                {already && <span className="text-xs ml-2">(ya lo probaste)</span>}
-                <span className="text-xs text-gray-500 ml-2">{p.team}</span>
+                <span className="truncate">
+                  {p.name}
+                  {already && <span className="text-xs ml-2">(ya lo probaste)</span>}
+                </span>
+                <span className="text-xs text-gray-500 shrink-0">{p.team}</span>
               </button>
             );
           })}
@@ -78,12 +80,12 @@ export default function GuessInput({ players, guessedIds, disabled, onSubmit, er
       )}
 
       {open && query.trim().length > 0 && suggestions.length === 0 && (
-        <div className="absolute z-20 mt-1 w-full border border-black bg-white px-4 py-3 text-sm text-gray-600">
+        <div className="absolute z-20 mt-1.5 w-full rounded-2xl border border-border bg-panel shadow-[0_8px_24px_rgba(0,0,0,0.4)] px-4 py-3 text-sm text-gray-400">
           No encontramos a nadie con ese nombre.
         </div>
       )}
 
-      {errorMessage && <p className="text-sm text-gray-600 mt-2">{errorMessage}</p>}
+      {errorMessage && <p className="text-sm text-gray-500 mt-2 px-0.5">{errorMessage}</p>}
     </div>
   );
 }

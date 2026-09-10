@@ -1,6 +1,6 @@
 # Fichado
 
-Clon de Contexto, pero de fútbol. Escribís nombres de futbolistas y cada intento te devuelve un puntaje de similitud (0-100) contra el jugador secreto, basado en equipo, liga, nacionalidad, posición y edad. Diseño 100% en blanco/negro/grises — sin colores de acento en ningún lado.
+Clon de Contexto, pero de fútbol. Escribís nombres de futbolistas y cada intento te devuelve un puntaje de similitud (0-100) contra el jugador secreto, basado en equipo, liga, nacionalidad, posición y edad. Elegís dificultad (Fácil/Normal/Difícil, que define cuántos intentos tenés) antes de arrancar. Usa la misma paleta de colores que el resto de Futotal (ver `tailwind.config.js`), en vez de una identidad propia.
 
 ## Correr localmente
 
@@ -26,10 +26,11 @@ npm run build:data # regenera src/data/players.json desde la base de Equipo-Juga
 src/
   components/   UI (StartScreen, GuessInput, GuessList, GuessRow, EndScreen)
   data/         players.json — dataset de jugadores
-  types/        interfaces TypeScript (Player, Guess, MaxAttempts)
+  types/        interfaces TypeScript (Player, Guess)
   utils/
     scoring.ts       función pura de similitud (scoreGuess) + tests
     scoring.test.ts
+    difficulty.ts     dificultades (Fácil/Normal/Difícil) y su cantidad de intentos
     gameUtils.ts      modo diario (semilla por fecha), localStorage, texto para compartir
 ```
 

@@ -1,12 +1,14 @@
-import type { Guess, MaxAttempts, Player } from "../types/player";
+import type { Guess, Player } from "../types/player";
+import type { DifficultyId } from "./difficulty";
 
-const STORAGE_KEY = "goltexto_game_v1";
+const STORAGE_KEY = "fichado_game_v2";
 
 export interface StoredGame {
   mode: "random" | "daily";
   dailyKey?: string;
   secretId: number;
-  maxAttempts: MaxAttempts;
+  difficulty: DifficultyId;
+  maxAttempts: number;
   guesses: { playerId: number; score: number }[];
   status: "playing" | "won" | "lost";
   hintsUsed: number;
@@ -75,7 +77,7 @@ export function buildShareText(opts: {
   mode: "random" | "daily";
   status: "won" | "lost";
   attemptsUsed: number;
-  maxAttempts: MaxAttempts;
+  maxAttempts: number;
 }): string {
   const title = opts.mode === "daily" && opts.edition != null ? `Fichado #${opts.edition}` : "Fichado";
   const result = opts.status === "won" ? `${opts.attemptsUsed}/${opts.maxAttempts} intentos` : `X/${opts.maxAttempts}`;

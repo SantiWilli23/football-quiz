@@ -3,5 +3,7 @@
 @tailwind utilities;
 
 body {
-  @apply bg-white text-black;
+  @apply bg-bg text-white;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

@@ -15,7 +15,7 @@ export default function GuessList({ guesses, latestPlayerId }: Props) {
   const sorted = sortByScoreDesc(guesses);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       {sorted.map((g, i) => (
         <GuessRow key={g.player.id} order={i + 1} guess={g} isLatest={g.player.id === latestPlayerId} />
       ))}
