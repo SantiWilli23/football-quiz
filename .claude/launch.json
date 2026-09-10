@@ -4,23 +4,43 @@
     {
       "name": "football-quiz",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["index.js"],
+      "runtimeArgs": [
+        "index.js"
+      ],
       "cwd": "server",
       "port": 4000
     },
     {
       "name": "football-quiz-client",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "cwd": "client",
       "port": 5173
     },
     {
       "name": "goltexto",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "5174"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5174"
+      ],
       "cwd": "goltexto",
       "port": 5174
+    },
+    {
+      "name": "dtleague-ui-test",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "run-test-server.js"
+      ],
+      "cwd": "server",
+      "port": 4000
     }
   ]
 }

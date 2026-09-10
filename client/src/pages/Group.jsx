@@ -7,6 +7,7 @@ import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import Avatar from "../components/Avatar.jsx";
 import QuestionBank from "../components/QuestionBank.jsx";
+import WeeklyChallenges from "../components/WeeklyChallenges.jsx";
 
 const currentMonth = new Date().toISOString().slice(0, 7);
 
@@ -387,6 +388,12 @@ export default function Group() {
               )}
             </Card>
           )}
+        </div>
+      )}
+
+      {activeGroupId && (
+        <div className="mt-6">
+          <WeeklyChallenges groupId={activeGroupId} />
         </div>
       )}
 

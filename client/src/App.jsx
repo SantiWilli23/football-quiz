@@ -14,6 +14,8 @@ import Football from "./pages/Football.jsx";
 import Survival from "./pages/Survival.jsx";
 import CareerMode from "./carrera/index.jsx";
 import EquipoJugador from "./equipo-jugador/index.jsx";
+import DtLeagueHome from "./dt-liga/DtLeagueHome.jsx";
+import DtLeagueRoom from "./dt-liga/DtLeagueRoom.jsx";
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -147,6 +149,22 @@ export default function App() {
         element={
           <PrivateRoute>
             <EquipoJugador />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/dt-liga"
+        element={
+          <PrivateRoute>
+            <DtLeagueHome />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/dt-liga/:code"
+        element={
+          <PrivateRoute>
+            <DtLeagueRoom />
           </PrivateRoute>
         }
       />

@@ -508,6 +508,7 @@
         <div class="chip active" data-mode="clasico">Clásico<small>ratings ocultos</small></div>
         <div class="chip" data-mode="almanaque">De almanaque<small>ratings visibles</small></div>
         <div class="chip" data-mode="clasico_facil">Clásico Fácil<small>6 cambios · rivales duros</small></div>
+        <div class="chip" data-mode="bayern2020">Semanal: Bayern 2020<small>rivales fijos · ranking de grupo</small></div>
       </div>
 
       <h2>Estilo táctico</h2>
@@ -692,6 +693,7 @@
     <div class="panel">
       <div id="bracket-champion-slot"></div>
       <div id="weekly-table" style="margin-bottom:18px"></div>
+      <div id="group-weekly-table" style="margin-bottom:18px"></div>
       <h2 style="margin-bottom:14px" id="bracket-title">Cuadro de la Champions</h2>
       <div id="bracket-rounds"></div>
       <button class="btn btn-holo btn-block" id="btn-cup-new" style="margin-top:6px">Nueva copa</button>
@@ -1071,6 +1073,19 @@
     formationGrid.appendChild(el);
   });
 
+  function esc(str) {
+    return String(str == null ? "" : str).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function modeLabel(mode) {
+    if (mode === "almanaque") return "ALMANAQUE";
+    if (mode === "clasico_facil") return "CLÁSICO FÁCIL";
+    if (mode === "bayern2020") return "SEMANAL · BAYERN 2020";
+    return "CLÁSICO";
+  }
+
   var selectedFormation = "4-2-3-1";
   var selectedMode = "clasico";
   var selectedStyle = "equilibrado";
@@ -1112,7 +1127,7 @@
     state.mode = p1Result.mode;
     state.style = p1Result.style;
     state.slots = FORMATIONS[state.formation].map(function (t) { return { type: t, filled: null }; });
-    document.getElementById("mode-badge").textContent = "JUGADOR 2 · " + (state.mode === "almanaque" ? "ALMANAQUE" : state.mode === "clasico_facil" ? "CLÁSICO FÁCIL" : "CLÁSICO");
+    document.getElementById("mode-badge").textContent = "JUGADOR 2 · " + modeLabel(state.mode);
     showScreen("draft");
     drawNewTeam({});
   });
@@ -1198,7 +1213,7 @@
     state.style = selectedStyle;
     state.slots = FORMATIONS[state.formation].map(function (t) { return { type: t, filled: null }; });
     document.getElementById("mode-badge").textContent =
-      "ONLINE · " + (state.mode === "almanaque" ? "ALMANAQUE" : state.mode === "clasico_facil" ? "CLÁSICO FÁCIL" : "CLÁSICO");
+      "ONLINE · " + modeLabel(state.mode);
     showScreen("draft");
     drawNewTeam({});
   }
@@ -1272,7 +1287,7 @@
     state.slots = FORMATIONS[state.formation].map(function (t) { return { type: t, filled: null }; });
     document.getElementById("mode-badge").textContent =
       (twoPlayerMode ? "JUGADOR 1 · " : "") +
-      (state.mode === "almanaque" ? "MODO ALMANAQUE" : state.mode === "clasico_facil" ? "CLÁSICO FÁCIL" : "MODO CLÁSICO");
+      modeLabel(state.mode);
     showScreen("draft");
     drawNewTeam({});
   }
@@ -1608,7 +1623,32 @@
     return sum / team.players.length;
   }
 
+  // Semanal "Bayern 2020": rivales fijos, los mismos con los que el Bayern
+  // Múnich se cruzó en su camino a ganar la Champions 2019-20 (grupo con
+  // Tottenham, octavos Chelsea, cuartos Barcelona 8-2, semis Lyon). Se usa
+  // la temporada exacta cuando existe en la base (Barcelona y Lyon 2019-20
+  // están), y la temporada más cercana disponible para el resto — el PSG de
+  // la final no está en la base de 138 equipos-temporada, así que el camino
+  // llega hasta semifinales.
+  var BAYERN_2020_CLUBS = ["TOTTENHAM", "CHELSEA", "BARCELONA", "LYON"];
+  function bayern2020Pool() {
+    var candidates = TEAMS.filter(function (t) { return BAYERN_2020_CLUBS.indexOf(t.club) !== -1; });
+    // Para cada club, preferir la temporada 2019-20 si existe.
+    var best = BAYERN_2020_CLUBS.map(function (club) {
+      var opts = candidates.filter(function (t) { return t.club === club; });
+      var exact = opts.filter(function (t) { return t.season === "2019-20"; })[0];
+      return exact || opts[0];
+    }).filter(Boolean);
+    return best;
+  }
+
   function pickRandomOpponents(n) {
+    if (state.mode === "bayern2020") {
+      var fixed = bayern2020Pool();
+      var out = [];
+      while (out.length < n) out = out.concat(shuffleArr(fixed));
+      return out.slice(0, n);
+    }
     if (state.mode === "clasico_facil") {
       // Clásico Fácil: solo equipos con promedio >= 82 (plantillas de élite)
       var elite = TEAMS.filter(function (t) { return teamAvgRating(t) >= 82; });
@@ -2099,6 +2139,7 @@
       champSlot.innerHTML = "";
     }
     renderWeeklyTable(isChampion);
+    renderGroupWeeklyTable();
 
     var container = document.getElementById("bracket-rounds");
     container.innerHTML = "";
@@ -2130,6 +2171,36 @@
 
   var WEEKLY_KEY = "draft8a2_weekly";
   var CHAMPIONS_KEY = "draft8a2_champions";
+
+  // Manda el puntaje al ranking semanal REAL del grupo (comparte sesión/token
+  // con el resto de Futotal vía localStorage, sin login propio). Si no hay
+  // sesión o grupo activo, no hace nada — el juego sigue andando igual.
+  function submitChallengeScore(gameKey, score) {
+    try {
+      var token = localStorage.getItem("fq_token");
+      var groupId = localStorage.getItem("fq_active_group");
+      if (!token || !groupId) return;
+      fetch("/api/challenges/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ gameKey: gameKey, groupId: Number(groupId), score: score }),
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  function fetchGroupLeaderboard(gameKey, onDone) {
+    try {
+      var token = localStorage.getItem("fq_token");
+      var groupId = localStorage.getItem("fq_active_group");
+      if (!token || !groupId) return onDone(null);
+      fetch("/api/challenges/leaderboard?gameKey=" + gameKey + "&groupId=" + Number(groupId), {
+        headers: { "Authorization": "Bearer " + token },
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(onDone)
+        .catch(function () { onDone(null); });
+    } catch (e) { onDone(null); }
+  }
 
   function getWeekKey() {
     var d = new Date();
@@ -2209,6 +2280,28 @@
     var score = calcRunScore();
     var label = "Copa " + new Date().toLocaleDateString("es-ES", { day: "numeric", month: "short" });
     saveWeeklyScore({ score: score, label: label, isChampion: isChampion, ts: Date.now() });
+    if (state.mode === "bayern2020") submitChallengeScore("draft_europeo", score);
+  }
+
+  function renderGroupWeeklyTable() {
+    var box = document.getElementById("group-weekly-table");
+    if (!box || state.mode !== "bayern2020") { if (box) box.innerHTML = ""; return; }
+    box.innerHTML = '<div class="weekly-table"><h3>🏆 Ranking del grupo — Bayern 2020</h3><div class="weekly-locked">Cargando…</div></div>';
+    fetchGroupLeaderboard("draft_europeo", function (data) {
+      if (!data || !data.entries || !data.entries.length) {
+        box.innerHTML = '<div class="weekly-table"><h3>🏆 Ranking del grupo — Bayern 2020</h3><div class="weekly-locked">Iniciá sesión y elegí un grupo en Futotal para aparecer acá.</div></div>';
+        return;
+      }
+      var medals = ["🥇", "🥈", "🥉", "4°"];
+      var rows = data.entries.slice(0, 4).map(function (e, i) {
+        return '<div class="weekly-row">' +
+          '<div class="weekly-pos">' + (medals[i] || (e.rank + "°")) + "</div>" +
+          '<div class="weekly-name">' + esc(e.username) + "</div>" +
+          '<div class="weekly-score">' + e.score + " pts · +" + e.points + "</div>" +
+          "</div>";
+      }).join("");
+      box.innerHTML = '<div class="weekly-table"><h3>🏆 Ranking del grupo — Bayern 2020</h3>' + rows + "</div>";
+    });
   }
 
   /* ---- fin tabla semanal ---- */

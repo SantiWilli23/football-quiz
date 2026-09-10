@@ -7,6 +7,7 @@ import {
   buildShareText, clearSavedGame, dailyEditionNumber, guessesToStored,
   hintForAttribute, loadGame, pickDailySecret, pickRandomSecret, saveGame, todayKey,
 } from "./utils/gameUtils";
+import { submitChallengeScore } from "./utils/weeklyChallenge";
 import StartScreen from "./components/StartScreen";
 import GuessInput from "./components/GuessInput";
 import GuessList from "./components/GuessList";
@@ -113,6 +114,7 @@ export default function App() {
     if (score >= 100) {
       setStatus("won");
       setScreen("ended");
+      submitChallengeScore(nextGuesses.length + hintsUsed);
       return;
     }
     if (nextGuesses.length + hintsUsed >= maxAttempts) {

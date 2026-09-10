@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { saveMatchResult } from "../matchHistory.js";
+import { registerFourPlayerWin } from "../weeklyChallenge.js";
 
 export default function ResultScreen({ state, mySeat, mode = "local", onPlayAgain, onExit }) {
   const winnerName = state.winnerSeat != null ? state.playerNames[state.winnerSeat] : null;
@@ -16,6 +17,10 @@ export default function ResultScreen({ state, mySeat, mode = "local", onPlayAgai
       playerNames: state.playerNames,
       chainLength: state.chain.length,
     });
+    // El reto semanal es específicamente "más rondas ganadas de a 4 online".
+    if (mode === "online" && iWon && state.playerCount === 4) {
+      registerFourPlayerWin();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

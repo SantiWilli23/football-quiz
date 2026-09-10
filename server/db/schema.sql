@@ -311,3 +311,50 @@ CREATE INDEX IF NOT EXISTS idx_ej_pc_player ON ej_player_clubs(player_id);
 CREATE INDEX IF NOT EXISTS idx_ej_pc_club ON ej_player_clubs(club_id);
 CREATE INDEX IF NOT EXISTS idx_ej_players_name ON ej_players(normalized_name);
 CREATE INDEX IF NOT EXISTS idx_ej_clubs_name ON ej_clubs(normalized_name);
+
+-- Puntajes de los "retos" (versión semanal de cada juego + trivia diaria),
+-- para el ranking de grupo. period_key es "YYYY-MM-DD" para trivia (se
+-- resetea cada día) o "YYYY-Www" (semana ISO) para el resto. Guarda el MEJOR
+-- puntaje de cada usuario en ese período — el ranking/los puntos (100/50/30/10)
+-- se calculan al leer, no se guardan, así no hay que recalcular nada si
+-- alguien mejora su marca a mitad de semana.
+CREATE TABLE IF NOT EXISTS challenge_scores (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  game_key TEXT NOT NULL,
+  period_key TEXT NOT NULL,
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  score REAL NOT NULL,
+  submitted_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(game_key, period_key, group_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_challenge_scores_lookup ON challenge_scores(game_key, period_key, group_id);
+
+-- Modo Carrera DT Online: una liga que arma un usuario e invita a amigos por
+-- código. Cada uno elige un club real de la liga elegida (Premier/La Liga) y
+-- el resto de los clubes de esa liga quedan controlados por la CPU. Fase 1:
+-- solo lobby (crear/unirse/elegir equipo) — la fixture y los resultados de
+-- partido son la fase siguiente.
+CREATE TABLE IF NOT EXISTS dt_leagues (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  league_key TEXT NOT NULL CHECK (league_key IN ('premier', 'laliga')),
+  invite_code TEXT UNIQUE NOT NULL,
+  created_by INTEGER NOT NULL REFERENCES users(id),
+  status TEXT NOT NULL DEFAULT 'lobby' CHECK (status IN ('lobby', 'in_progress', 'finished')),
+  current_week INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS dt_league_members (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES dt_leagues(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  team_id TEXT,
+  joined_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(league_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_dt_league_members_league ON dt_league_members(league_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_dt_league_members_team ON dt_league_members(league_id, team_id) WHERE team_id IS NOT NULL;

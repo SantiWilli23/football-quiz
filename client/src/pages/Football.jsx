@@ -13,6 +13,7 @@ import {
   Table2,
   Target,
   Trophy,
+  Users,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../api.js";
@@ -56,6 +57,14 @@ const GAMES = [
     icon: Shield,
     description: "Dirigí un equipo de Premier League o La Liga: tácticas, fichajes y partidos en vivo.",
     color: "#8a6423",
+    available: true,
+  },
+  {
+    to: "/dt-liga",
+    label: "Liga Online DT",
+    icon: Users,
+    description: "Armá una liga con amigos: cada uno elige un club real y compite temporada a temporada.",
+    color: "#d97a41",
     available: true,
   },
   {
