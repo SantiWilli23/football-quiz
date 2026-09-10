@@ -90,6 +90,65 @@ const COUNTRIES = [
   ]},
 ];
 
+// ── RETO SEMANAL ─────────────────────────────────────────────────
+// Un jugador real (con su posición y el club real donde arrancó su carrera
+// senior) por semana, igual para todo el grupo. Cotrero no tiene arqueros,
+// así que la lista sólo cubre delantero/mediocampista/defensa. La dificultad
+// del reto es la del juego base ("media") — no se altera el balance.
+const WEEKLY_PLAYERS = [
+  { name: "Lionel Messi", position: "delantero", country: "España", club: "barcelona" },
+  { name: "Kylian Mbappé", position: "delantero", country: "Francia", club: "monaco" },
+  { name: "Raúl González", position: "delantero", country: "España", club: "realmadrid" },
+  { name: "Juan Román Riquelme", position: "mediocampista", country: "Argentina", club: "boca" },
+  { name: "Paolo Maldini", position: "defensa", country: "Italia", club: "milan" },
+  { name: "Kaká", position: "mediocampista", country: "Brasil", club: "saopaulo" },
+  { name: "Zico", position: "delantero", country: "Brasil", club: "flamengo" },
+  { name: "Rivellino", position: "mediocampista", country: "Brasil", club: "corinthians" },
+  { name: "Steven Gerrard", position: "mediocampista", country: "Inglaterra", club: "liverpool" },
+  { name: "John Terry", position: "defensa", country: "Inglaterra", club: "chelsea" },
+  { name: "Bukayo Saka", position: "delantero", country: "Inglaterra", club: "arsenal" },
+  { name: "Nabil Fekir", position: "mediocampista", country: "Francia", club: "lyon" },
+];
+
+function hashStr(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  return hash;
+}
+
+// Semana ISO simplificada (lunes a domingo) — mismo criterio que el resto de Futotal.
+function isoWeekKey() {
+  const d = new Date();
+  const day = (d.getDay() + 6) % 7;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - day);
+  return monday.toISOString().slice(0, 10);
+}
+
+function currentWeeklyPlayer() {
+  const idx = hashStr(isoWeekKey()) % WEEKLY_PLAYERS.length;
+  return WEEKLY_PLAYERS[idx];
+}
+
+function resolveWeeklyClub(entry) {
+  const country = COUNTRIES.find(c => c.name === entry.country);
+  const club = country ? country.clubs.find(c => c.id === entry.club) : null;
+  return { country, club };
+}
+
+function submitChallengeScore(gameKey, score) {
+  try {
+    const token = localStorage.getItem("fq_token");
+    const groupId = localStorage.getItem("fq_active_group");
+    if (!token || !groupId) return;
+    fetch("/api/challenges/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+      body: JSON.stringify({ gameKey: gameKey, groupId: Number(groupId), score: score }),
+    }).catch(function () {});
+  } catch (e) {}
+}
+
 const DECISIONS_POOL = [
   {
     id: "d01",
@@ -474,6 +533,7 @@ function deleteSave() { localStorage.removeItem(SAVE_KEY); state = null; }
 const HOF_KEY = "cotrero_hof";
 const HOF_MAX = 20;
 let hofRecorded = false; // evita duplicar el registro si se renderiza game_over más de una vez
+let weeklyScoreSubmitted = false; // idem, para no mandar el puntaje del reto semanal más de una vez
 
 function getHallOfFame() {
   try {
@@ -756,8 +816,18 @@ function resolveMatch(matchId, situationChoice) {
     }
   }
 
-  const teamGoals = win ? 1 + Math.floor(Math.random() * 3) : draw ? 1 : Math.floor(Math.random() * 2);
-  const rivalGoals = win ? Math.floor(Math.random() * 2) : draw ? 1 : 1 + Math.floor(Math.random() * 2);
+  // El marcador siempre respeta win/draw/loss (antes se sorteaban por separado
+  // y podían contradecirse, ej. "Victoria" con 1-1).
+  let teamGoals, rivalGoals;
+  if (win) {
+    rivalGoals = Math.floor(Math.random() * 2);
+    teamGoals = rivalGoals + 1 + Math.floor(Math.random() * 2);
+  } else if (loss) {
+    teamGoals = Math.floor(Math.random() * 2);
+    rivalGoals = teamGoals + 1 + Math.floor(Math.random() * 2);
+  } else {
+    teamGoals = rivalGoals = Math.floor(Math.random() * 3);
+  }
 
   const result = { win, draw, loss, teamGoals, rivalGoals, goals, assists, injured };
   match.played = true;
@@ -1013,6 +1083,7 @@ function renderMenu() {
       <div class="menu-btns">
         <button class="btn btn-primary" data-action="new_game">Nueva carrera</button>
         ${saveExists ? `<button class="btn btn-outline" data-action="continue_game">Continuar</button>` : ""}
+        <button class="btn btn-outline" data-action="weekly_challenge">🗓 Reto semanal · ranking de grupo</button>
         <button class="btn btn-outline" data-action="view_hof">🏛 Salón de la fama</button>
         ${saveExists ? `<button class="btn btn-ghost" data-action="delete_save">Borrar partida</button>` : ""}
       </div>
@@ -1125,7 +1196,7 @@ function renderHub() {
   const career = state.career;
   const schedule = state.schedule;
 
-  const formaColor = p.forma >= 70 ? "#4CAF6A" : p.forma >= 45 ? "#C9A74C" : "#C0392B";
+  const formaColor = p.forma >= 70 ? "#3FAE9A" : p.forma >= 45 ? "#D9A441" : "#F0907E";
   const weekProgress = Math.round((career.week / 34) * 100);
 
   // Next important match
@@ -1193,7 +1264,7 @@ function renderHub() {
             ` : ""}
 
             ${p.injuryStatus ? `
-              <div style="margin-top:12px;padding:10px 12px;background:rgba(192,57,43,0.12);border:1px solid rgba(192,57,43,0.3);border-radius:6px;display:flex;align-items:center;gap:8px">
+              <div style="margin-top:12px;padding:10px 12px;background:rgba(240,144,126,0.12);border:1px solid rgba(240,144,126,0.3);border-radius:6px;display:flex;align-items:center;gap:8px">
                 <span style="font-size:18px">🩹</span>
                 <span style="font-size:13px;color:var(--danger)">${p.injuryStatus.name} — ${p.injuryStatus.weeksLeft} sem. restantes</span>
               </div>
@@ -1496,7 +1567,16 @@ function renderSeasonEnd() {
 }
 
 function renderGameOver() {
+  const wasWeeklyChallenge = !!(state && state.isWeeklyChallenge) && !weeklyScoreSubmitted;
   recordCareerInHallOfFame();
+  if (wasWeeklyChallenge && state) {
+    weeklyScoreSubmitted = true;
+    var trophyCount = (state.career.trophies || []).length;
+    var finalScore = Math.round(
+      state.player.ovr * 5 + state.career.goals * 2 + state.career.assists * 1.5 + trophyCount * 15
+    );
+    submitChallengeScore("cotrero", finalScore);
+  }
   const career = state ? state.career : { goals: 0, assists: 0, appearances: 0, season: 1 };
   const player = state ? state.player : { name: "—", ovr: 0, age: 37 };
   const rankLabel = career.goals > 150 ? "Leyenda" : career.goals > 80 ? "Ídolo" : career.goals > 40 ? "Crack" : "Jugador correcto";
@@ -1642,10 +1722,23 @@ function handleClick(e) {
 
   switch (action) {
     case "new_game":
-      hofRecorded = false;
+      hofRecorded = false; weeklyScoreSubmitted = false;
       creation = { step: 1, position: null, archetype: null, shownArchetypes: [], name: "", countryIdx: 0, clubIdx: 0 };
       navigate("creation");
       break;
+
+    case "weekly_challenge": {
+      hofRecorded = false; weeklyScoreSubmitted = false;
+      const entry = currentWeeklyPlayer();
+      const { country, club } = resolveWeeklyClub(entry);
+      if (!country || !club) { navigate("menu"); break; }
+      initNewGame(entry.name, entry.position, null, club, country);
+      state.isWeeklyChallenge = true;
+      state.weeklyLabel = entry.name;
+      save();
+      navigate("hub");
+      break;
+    }
 
     case "view_hof":
       navigate("hall_of_fame");
@@ -1812,7 +1905,7 @@ function handleClick(e) {
       break;
 
     case "new_game_after":
-      hofRecorded = false;
+      hofRecorded = false; weeklyScoreSubmitted = false;
       deleteSave();
       creation = { step: 1, position: null, archetype: null, shownArchetypes: [], name: "", countryIdx: 0, clubIdx: 0 };
       navigate("creation");

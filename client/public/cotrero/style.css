@@ -1,20 +1,22 @@
 :root {
-  --gold: #C9A74C;
-  --gold-light: #E5C97A;
-  --gold-dim: #8A7032;
-  --gold-subtle: rgba(201, 167, 76, 0.12);
-  --gold-border: rgba(201, 167, 76, 0.28);
-  --black: #080808;
-  --surface: #101010;
-  --surface-2: #181818;
-  --surface-3: #222222;
-  --border: #282828;
-  --text: #EDE4C8;
-  --text-muted: #7A7060;
-  --text-dim: #3E3A34;
-  --success: #4CAF6A;
-  --danger: #C0392B;
-  --rare: #6B6FD4;
+  /* Misma paleta azulada que el resto de Futotal / Cotrero / Draft Europeo
+     (ver client/src/theme.js) — antes este modo tenía su propio negro puro. */
+  --gold: #D9A441;
+  --gold-light: #F0C674;
+  --gold-dim: #8A6423;
+  --gold-subtle: rgba(217, 164, 65, 0.12);
+  --gold-border: rgba(217, 164, 65, 0.28);
+  --black: #262B35;
+  --surface: #2B3444;
+  --surface-2: #313B4C;
+  --surface-3: #3A4557;
+  --border: rgba(255, 255, 255, 0.12);
+  --text: #F2F2F0;
+  --text-muted: #A8A9AC;
+  --text-dim: #6B6D74;
+  --success: #3FAE9A;
+  --danger: #F0907E;
+  --rare: #3B9DD6;
   --legendary: var(--gold);
 }
 
@@ -550,9 +552,9 @@ h1, h2, h3 { font-family: 'Barlow Condensed', sans-serif; }
 }
 
 .match-type-badge.clasico {
-  background: rgba(192,57,43,0.1);
-  color: #E74C3C;
-  border-color: rgba(192,57,43,0.3);
+  background: rgba(240,144,126,0.14);
+  color: var(--danger);
+  border-color: rgba(240,144,126,0.35);
 }
 
 /* News */
