@@ -64,6 +64,39 @@ router.get("/players/random", async (req, res) => {
   res.json({ player });
 });
 
+// Para el bot: un club al azar en el que jugó tal jugador (que no esté ya usado).
+router.get("/clubs/for-player", async (req, res) => {
+  const playerId = Number(req.query.playerId);
+  const exclude = parseExclude(req.query.exclude);
+  if (!Number.isInteger(playerId)) return res.status(400).json({ error: "playerId es requerido" });
+
+  const excludeClause = exclude.length ? `AND c.id NOT IN (${exclude.map(() => "?").join(",")})` : "";
+  const result = await db.execute({
+    sql: `SELECT c.id, c.name FROM ej_player_clubs pc JOIN ej_clubs c ON c.id = pc.club_id
+          WHERE pc.player_id = ? ${excludeClause}
+          ORDER BY RANDOM() LIMIT 1`,
+    args: [playerId, ...exclude],
+  });
+  res.json({ club: result.rows[0] || null });
+});
+
+// Para el bot: un jugador al azar que pasó por tal club (que no esté ya usado).
+router.get("/players/for-club", async (req, res) => {
+  const clubId = Number(req.query.clubId);
+  const exclude = parseExclude(req.query.exclude);
+  if (!Number.isInteger(clubId)) return res.status(400).json({ error: "clubId es requerido" });
+
+  const excludeClause = exclude.length ? `AND p.id NOT IN (${exclude.map(() => "?").join(",")})` : "";
+  const result = await db.execute({
+    sql: `SELECT p.id, p.name, p.nationality, p.position, p.birth_year
+          FROM ej_player_clubs pc JOIN ej_players p ON p.id = pc.player_id
+          WHERE pc.club_id = ? ${excludeClause}
+          ORDER BY RANDOM() LIMIT 1`,
+    args: [clubId, ...exclude],
+  });
+  res.json({ player: result.rows[0] || null });
+});
+
 // ¿Jugó este jugador en este club? Es la única validación que importa:
 // alcanza para ambos sentidos de la cadena (jugador -> equipo y equipo -> jugador),
 // porque el vínculo es el mismo par (player_id, club_id) sin importar el orden.

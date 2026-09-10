@@ -44,7 +44,7 @@ export default function MatchHistoryScreen({ onBack }) {
                 <p className="text-xs text-gray-500 mt-0.5 truncate">{m.playerNames?.join(" vs ")}</p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-xs text-gray-500">{m.mode === "online" ? "Online" : "Local"}</p>
+                <p className="text-xs text-gray-500">{m.mode === "online" ? "Online" : m.mode === "bot" ? "Vs. Bot" : "Local"}</p>
                 <p className="text-[11px] text-gray-600">{formatDate(m.date)}</p>
               </div>
             </div>

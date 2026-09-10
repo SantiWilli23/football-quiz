@@ -5,7 +5,7 @@ import AutocompleteInput from "./AutocompleteInput.jsx";
 import { TURN_SECONDS, lastChainEntity } from "../engine/chainEngine.js";
 import { searchPlayers, searchClubs } from "../api.js";
 
-export default function GameScreen({ state, mySeat, isLocal, onAttempt, onTimeout, attemptError, attempting }) {
+export default function GameScreen({ state, mySeat, isLocal, onAttempt, onTimeout, attemptError, attempting, waitingMessage }) {
   const [secondsLeft, setSecondsLeft] = useState(TURN_SECONDS);
   const [passGateOpen, setPassGateOpen] = useState(isLocal);
 
@@ -103,7 +103,9 @@ export default function GameScreen({ state, mySeat, isLocal, onAttempt, onTimeou
       )}
 
       {!interactive && myTurn === false && state.status === "playing" && (
-        <p className="text-sm text-gray-500 text-center py-2">Esperando a {state.playerNames[state.turnSeat]}…</p>
+        <p className="text-sm text-gray-500 text-center py-2">
+          {waitingMessage || `Esperando a ${state.playerNames[state.turnSeat]}…`}
+        </p>
       )}
     </div>
   );

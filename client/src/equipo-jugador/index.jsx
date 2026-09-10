@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import LocalGame from "./components/LocalGame.jsx";
 import OnlineGame from "./components/OnlineGame.jsx";
+import BotGame from "./components/BotGame.jsx";
 import MatchHistoryScreen from "./components/MatchHistoryScreen.jsx";
 
 export default function EquipoJugador() {
-  const [mode, setMode] = useState(null); // null | "local" | "online" | "history"
+  const [mode, setMode] = useState(null); // null | "local" | "online" | "bot" | "history"
 
   return (
     <div className="min-h-screen bg-bg text-white p-4">
@@ -25,6 +26,14 @@ export default function EquipoJugador() {
               El siguiente, otro jugador de ese equipo (de cualquier época). Y así, sin repetir a nadie.
               El que no responde a tiempo o se equivoca, queda eliminado directo.
             </div>
+
+            <button
+              onClick={() => setMode("bot")}
+              className="w-full bg-panel border border-border rounded-2xl p-5 text-left hover:border-accent/40 transition-colors"
+            >
+              <p className="font-semibold">Vs. Bot</p>
+              <p className="text-sm text-gray-500 mt-1">Jugás solo contra un bot que responde solo. Ideal para practicar.</p>
+            </button>
 
             <button
               onClick={() => setMode("local")}
@@ -51,6 +60,7 @@ export default function EquipoJugador() {
           </div>
         )}
 
+        {mode === "bot" && <BotGame onExit={() => setMode(null)} />}
         {mode === "local" && <LocalGame onExit={() => setMode(null)} />}
         {mode === "online" && <OnlineGame onExit={() => setMode(null)} />}
         {mode === "history" && <MatchHistoryScreen onBack={() => setMode(null)} />}

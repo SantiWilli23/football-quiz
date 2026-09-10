@@ -27,3 +27,17 @@ export async function checkLink(playerId, clubId) {
   const { data } = await api.post("/equipo-jugador/check-link", { playerId, clubId });
   return !!data.valid;
 }
+
+export async function randomClubForPlayer(playerId, excludeIds = []) {
+  const { data } = await api.get("/equipo-jugador/clubs/for-player", {
+    params: { playerId, exclude: excludeIds.join(",") },
+  });
+  return data.club;
+}
+
+export async function randomPlayerForClub(clubId, excludeIds = []) {
+  const { data } = await api.get("/equipo-jugador/players/for-club", {
+    params: { clubId, exclude: excludeIds.join(",") },
+  });
+  return data.player;
+}
