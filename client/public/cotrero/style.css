@@ -766,6 +766,57 @@ h1, h2, h3 { font-family: 'Barlow Condensed', sans-serif; }
   margin-top: 4px;
 }
 
+/* ── MATCH PITCH VISUAL ── */
+.match-pitch {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  margin: 20px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #14301f, #1b3d28 50%, #14301f);
+  border: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+}
+.pitch-half {
+  flex: 1;
+  padding: 20px 14px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+.pitch-center-line {
+  position: absolute;
+  top: 0; bottom: 0; left: 50%;
+  width: 1px;
+  background: rgba(255,255,255,0.18);
+}
+.pitch-center-circle {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 54px; height: 54px;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 50%;
+  transform: translate(-50%,-50%);
+}
+.pitch-team-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pitch-goal-dots {
+  font-size: 15px;
+  letter-spacing: 2px;
+  color: var(--text);
+}
+
+/* ── HALL OF FAME ENTRY ── */
+.hof-entry { transition: border-color 0.15s ease; }
+.hof-entry:hover { border-color: var(--gold-border); }
+
 /* ── PERSONALITY REVEAL ── */
 .personality-reveal {
   width: 100%;

@@ -376,6 +376,16 @@ const MATCH_SITUATIONS = [
   },
 ];
 
+const INJURY_TYPES = [
+  { name: "Golpe leve", weeks: 1, prob: 0.50 },
+  { name: "Sobrecarga muscular", weeks: 2, prob: 0.25 },
+  { name: "Desgarro", weeks: 4, prob: 0.15 },
+  { name: "Esguince", weeks: 6, prob: 0.07 },
+  { name: "Fractura", weeks: 10, prob: 0.03 },
+];
+
+const INTL_WINDOWS = [11, 28];
+
 const FLAVOR_TEXTS = {
   dt_sube: [
     "El técnico te buscó después del entrenamiento para darte una palmada.",
@@ -439,6 +449,7 @@ let creation = { step: 1, position: null, archetype: null, shownArchetypes: [], 
 let currentView = "menu";
 let currentMatchId = null;
 let pendingPersonalityReveal = null;
+let expandedHofIds = new Set();
 
 const SAVE_KEY = "cotrero_v1";
 
@@ -483,11 +494,15 @@ function recordCareerInHallOfFame() {
     name: player.name,
     position: player.position,
     club: state.club ? state.club.name : "—",
+    country: player.country ? player.country.name : null,
     goals: career.goals,
     assists: career.assists,
     appearances: career.appearances,
     seasons: career.season - 1,
     peakOvr: player.ovr,
+    caps: career.caps || 0,
+    natGoals: career.natGoals || 0,
+    seasonHistory: career.seasonHistory || [],
   };
   const list = [entry, ...getHallOfFame()].sort((a, b) => b.goals - a.goals).slice(0, HOF_MAX);
   try { localStorage.setItem(HOF_KEY, JSON.stringify(list)); } catch { /* almacenamiento lleno: se ignora */ }
@@ -559,6 +574,44 @@ function generateMatches(club, season) {
       situation: i % 2 === 0 ? MATCH_SITUATIONS[Math.floor(Math.random() * MATCH_SITUATIONS.length)] : null,
     };
   });
+}
+
+function allClubs() {
+  return COUNTRIES.flatMap(c => c.clubs.map(cl => ({ ...cl, countryName: c.name, countryFlag: c.flag })));
+}
+
+function pickOfferClub(currentClub) {
+  const candidates = allClubs().filter(cl => cl.id !== currentClub.id && cl.prestige >= currentClub.prestige - 12);
+  if (!candidates.length) return null;
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
+function regenerateRemainingMatches(newClub) {
+  const remaining = state.schedule.matches.filter(m => m.week >= state.career.week);
+  const kept = state.schedule.matches.filter(m => m.week < state.career.week);
+  const rivals = getLeagueRivals(newClub);
+  const allRivals = rivals.length ? rivals : COUNTRIES[0].clubs.filter(c => c.id !== newClub.id);
+  const types = ["liga", "copa", "liga", "clasico", "liga", "copa", "liga", "clasico", "liga", "liga_final"];
+  const fresh = remaining.map((m, i) => {
+    const rival = allRivals[Math.floor(Math.random() * allRivals.length)];
+    return {
+      id: `m_s${state.career.season}_transfer_${i}`,
+      week: m.week,
+      rival: { ...rival },
+      type: types[i % types.length],
+      home: Math.random() > 0.5,
+      played: false,
+      result: null,
+      situation: i % 2 === 0 ? MATCH_SITUATIONS[Math.floor(Math.random() * MATCH_SITUATIONS.length)] : null,
+    };
+  });
+  state.schedule.matches = [...kept, ...fresh];
+}
+
+function pickInjuryType() {
+  let r = Math.random(), cum = 0;
+  for (const t of INJURY_TYPES) { cum += t.prob; if (r < cum) return t; }
+  return INJURY_TYPES[0];
 }
 
 function pickDecision() {
@@ -658,22 +711,23 @@ function resolveMatch(matchId, situationChoice) {
   const match = state.schedule.matches.find(m => m.id === matchId);
   if (!match || match.played) return null;
 
-  const ovr = state.player.ovr;
-  const forma = state.player.forma;
+  const injured = !!state.player.injuryStatus;
+  const ovr = injured ? Math.round(state.club.prestige * 0.78) : state.player.ovr;
+  const forma = injured ? 55 : state.player.forma;
   const homeBonus = match.home ? 5 : -3;
   const rivalStr = (match.rival.prestige || 70) * 0.68 + Math.random() * 15;
   const myStr = ovr + (forma - 50) * 0.25 + homeBonus + (Math.random() * 18 - 9);
 
-  // Situation modifier
+  // Situation modifier (no aplica si el jugador no está en cancha)
   let sitMod = 0;
-  if (situationChoice !== null && situationChoice !== undefined && match.situation) {
+  if (!injured && situationChoice !== null && situationChoice !== undefined && match.situation) {
     const sfx = match.situation.effects[situationChoice];
     sitMod = (sfx.rendimiento || 0) * 3;
     if ((sfx.riesgo || 0) > 0 && Math.random() < 0.3) sitMod -= 5;
   }
 
   // Clasico pressure
-  if (match.type === "clasico" && state._clasicoPressure) {
+  if (!injured && match.type === "clasico" && state._clasicoPressure) {
     sitMod += Math.random() > 0.5 ? 8 : -8;
     delete state._clasicoPressure;
   }
@@ -687,7 +741,7 @@ function resolveMatch(matchId, situationChoice) {
   // Player stats
   let goals = 0, assists = 0;
   const pos = state.player.position;
-  if (win || draw) {
+  if (!injured && (win || draw)) {
     if (pos === "delantero") {
       if (Math.random() < 0.45) goals = 1;
       if (Math.random() < 0.18) goals = 2;
@@ -705,20 +759,22 @@ function resolveMatch(matchId, situationChoice) {
   const teamGoals = win ? 1 + Math.floor(Math.random() * 3) : draw ? 1 : Math.floor(Math.random() * 2);
   const rivalGoals = win ? Math.floor(Math.random() * 2) : draw ? 1 : 1 + Math.floor(Math.random() * 2);
 
-  const result = { win, draw, loss, teamGoals, rivalGoals, goals, assists };
+  const result = { win, draw, loss, teamGoals, rivalGoals, goals, assists, injured };
   match.played = true;
   match.result = result;
 
-  // Update career stats
-  state.career.goals += goals;
-  state.career.assists += assists;
-  state.career.seasonGoals += goals;
-  state.career.seasonAssists += assists;
-  state.career.appearances += 1;
+  if (!injured) {
+    // Update career stats
+    state.career.goals += goals;
+    state.career.assists += assists;
+    state.career.seasonGoals += goals;
+    state.career.seasonAssists += assists;
+    state.career.appearances += 1;
 
-  // Forma update
-  if (win) state.player.forma = Math.min(100, state.player.forma + 6);
-  else if (loss) state.player.forma = Math.max(10, state.player.forma - 7);
+    // Forma update
+    if (win) state.player.forma = Math.min(100, state.player.forma + 6);
+    else if (loss) state.player.forma = Math.max(10, state.player.forma - 7);
+  }
 
   return result;
 }
@@ -739,6 +795,53 @@ function advanceWeek() {
 
   // Weekly forma drift (slight)
   state.player.forma = Math.max(10, Math.min(100, state.player.forma + (Math.random() * 4 - 2)));
+
+  // ── Lesiones ──
+  if (state.player.injuryStatus) {
+    state.player.injuryStatus.weeksLeft--;
+    if (state.player.injuryStatus.weeksLeft <= 0) {
+      addNews(`Te recuperaste de tu ${state.player.injuryStatus.name.toLowerCase()}. Volvés a estar disponible.`, true);
+      state.player.injuryStatus = null;
+      state.player.injuryRisk = Math.max(10, state.player.injuryRisk - 20);
+    }
+  } else {
+    const weeklyChance = 0.015 + (state.player.injuryRisk / 100) * 0.05;
+    if (Math.random() < weeklyChance) {
+      const type = pickInjuryType();
+      state.player.injuryStatus = { name: type.name, weeksLeft: type.weeks };
+      state.player.forma = Math.max(10, state.player.forma - 6);
+      addNews(`🩹 Sufriste ${type.name.toLowerCase()}. Vas a estar afuera ${type.weeks} semana${type.weeks === 1 ? "" : "s"}.`, true);
+    } else {
+      state.player.injuryRisk = Math.max(10, state.player.injuryRisk - 1);
+    }
+  }
+
+  // ── Oferta de mercado (si tu representante mencionó interés en una decisión reciente) ──
+  if (state._marketInterest) {
+    delete state._marketInterest;
+    if (!state.pendingOffer && Math.random() < 0.6) {
+      const offerClub = pickOfferClub(state.club);
+      if (offerClub) {
+        state.pendingOffer = { club: offerClub };
+        addNews(`📩 ${offerClub.name} formalizó una oferta por vos.`, true);
+      }
+    }
+  }
+
+  // ── Convocatoria a la selección ──
+  if (INTL_WINDOWS.includes(state.career.week) && state.player.ovr >= 72 && state.player.country) {
+    const callChance = Math.max(0.05, Math.min(0.8, (state.player.ovr - 70) / 40));
+    if (Math.random() < callChance) {
+      state.career.caps = (state.career.caps || 0) + 1;
+      const scored = Math.random() < 0.3;
+      if (scored) state.career.natGoals = (state.career.natGoals || 0) + 1;
+      addNews(
+        `${state.player.country.flag} Convocatoria a la Selección de ${state.player.country.name}. ${scored ? "Anotaste con la camiseta nacional." : "Sumaste minutos con la selección."}`,
+        true
+      );
+      state.player.forma = Math.max(10, state.player.forma - 4);
+    }
+  }
 
   // New decision for this week
   state.schedule.decisionUsed = false;
@@ -776,6 +879,27 @@ function startNewSeason() {
     state.player.ovr = calcOvr(state.player.stats, state.player.position);
   }
 
+  // Guarda el resumen de la temporada que termina, para el detalle del Salón de la Fama.
+  if (!state.career.seasonHistory) state.career.seasonHistory = [];
+  state.career.seasonHistory.push({
+    season: state.career.season,
+    age: state.player.age,
+    club: state.club.name,
+    goals: state.career.seasonGoals,
+    assists: state.career.seasonAssists,
+    ovr: state.player.ovr,
+  });
+
+  // Buen rendimiento sostenido también genera interés de otros clubes, más allá
+  // de lo que dispare la decisión del representante.
+  if (!state.pendingOffer && state.career.seasonGoals >= 12 && Math.random() < 0.35) {
+    const offerClub = pickOfferClub(state.club);
+    if (offerClub) {
+      state.pendingOffer = { club: offerClub };
+      addNews(`📩 Tu temporada llamó la atención: ${offerClub.name} quiere ficharte.`, true);
+    }
+  }
+
   // New season
   state.career.season++;
   state.career.week = 0;
@@ -801,7 +925,7 @@ function addNews(text, highlight = false) {
   state.news = state.news.slice(0, 6);
 }
 
-function initNewGame(name, position, archetype, club) {
+function initNewGame(name, position, archetype, club, country) {
   const stats = initStats(position, archetype);
   const ovr = calcOvr(stats, position);
   state = {
@@ -810,6 +934,7 @@ function initNewGame(name, position, archetype, club) {
       position,
       archetype: archetype ? archetype.id : null,
       archetypeName: archetype ? archetype.name : null,
+      country: country ? { name: country.name, flag: country.flag } : null,
       age: 16,
       stats,
       ovr,
@@ -822,6 +947,7 @@ function initNewGame(name, position, archetype, club) {
       personalityRevealed: null,
     },
     club,
+    pendingOffer: null,
     career: {
       season: 1,
       week: 0,
@@ -831,6 +957,9 @@ function initNewGame(name, position, archetype, club) {
       seasonGoals: 0,
       seasonAssists: 0,
       trophies: [],
+      caps: 0,
+      natGoals: 0,
+      seasonHistory: [],
     },
     schedule: {
       matches: generateMatches(club, 1),
@@ -1025,8 +1154,9 @@ function renderHub() {
               <div class="player-pos-badge">${pos.icon}</div>
               <div>
                 <div class="player-name">${p.name}</div>
-                <div class="player-meta">${pos.label} · ${p.age} años · ${state.club.name}</div>
+                <div class="player-meta">${p.country ? p.country.flag + " " : ""}${pos.label} · ${p.age} años · ${state.club.name}</div>
                 ${p.archetypeName ? `<div class="player-meta" style="margin-top:2px;color:var(--gold-dim)">${p.archetypeName}</div>` : ""}
+                ${career.caps ? `<div class="player-meta" style="margin-top:2px">${career.caps} caps${career.natGoals ? ` · ${career.natGoals} goles con la selección` : ""}</div>` : ""}
               </div>
               <div style="margin-left:auto;text-align:right">
                 <div class="ovr-number">${p.ovr}</div>
@@ -1061,8 +1191,32 @@ function renderHub() {
                 <span style="font-size:13px;color:var(--gold)">${PERSONALITY_TYPES[p.personalityRevealed].name}</span>
               </div>
             ` : ""}
+
+            ${p.injuryStatus ? `
+              <div style="margin-top:12px;padding:10px 12px;background:rgba(192,57,43,0.12);border:1px solid rgba(192,57,43,0.3);border-radius:6px;display:flex;align-items:center;gap:8px">
+                <span style="font-size:18px">🩹</span>
+                <span style="font-size:13px;color:var(--danger)">${p.injuryStatus.name} — ${p.injuryStatus.weeksLeft} sem. restantes</span>
+              </div>
+            ` : ""}
           </div>
         </div>
+
+        <!-- Oferta de fichaje -->
+        ${state.pendingOffer ? `
+          <div class="card" style="border-color:var(--gold-border)">
+            <div class="card-header">📩 Oferta de fichaje</div>
+            <div class="card-body">
+              <div style="font-size:14px;margin-bottom:12px">
+                <strong>${state.pendingOffer.club.name}</strong> ${state.pendingOffer.club.countryFlag || ""} quiere ficharte
+                (nivel ${state.pendingOffer.club.tier}).
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-primary" style="flex:1" data-action="accept_offer">Aceptar</button>
+                <button class="btn btn-outline" style="flex:1" data-action="reject_offer">Rechazar</button>
+              </div>
+            </div>
+          </div>
+        ` : ""}
 
         <!-- Actions this week -->
         <div class="card">
@@ -1206,7 +1360,17 @@ function renderMatch() {
       </div>
 
       <div class="match-body container">
-        ${match.situation ? `
+        ${state.player.injuryStatus ? `
+          <div class="card" style="padding:20px;text-align:center">
+            <div style="font-size:14px;color:var(--danger);line-height:1.6">
+              🩹 Estás lesionado (${state.player.injuryStatus.name}, ${state.player.injuryStatus.weeksLeft} sem. restantes).
+              El equipo juega sin vos.
+            </div>
+          </div>
+          <button class="btn btn-primary" data-action="resolve_match_sim" data-match="${match.id}">
+            Ver resultado
+          </button>
+        ` : match.situation ? `
           <div class="situation-box">
             <div class="situation-label">Situación táctica</div>
             <div class="situation-text">${match.situation.text}</div>
@@ -1253,16 +1417,33 @@ function renderMatchResult(result, match) {
       </div>
       <div style="font-size:13px;color:var(--text-muted);text-align:center;margin-top:4px">vs ${match.rival.name}</div>
 
-      <div class="stats-summary">
-        <div class="stat-summary-box">
-          <div class="stat-summary-number">${result.goals}</div>
-          <div class="stat-summary-label">Goles tuyos</div>
+      <div class="match-pitch">
+        <div class="pitch-center-line"></div>
+        <div class="pitch-center-circle"></div>
+        <div class="pitch-half">
+          <div class="pitch-team-label">${state.player.name}</div>
+          <div class="pitch-goal-dots">${"⚽".repeat(result.teamGoals) || "—"}</div>
         </div>
-        <div class="stat-summary-box">
-          <div class="stat-summary-number">${result.assists}</div>
-          <div class="stat-summary-label">Asistencias</div>
+        <div class="pitch-half">
+          <div class="pitch-team-label">${match.rival.name}</div>
+          <div class="pitch-goal-dots">${"⚽".repeat(result.rivalGoals) || "—"}</div>
         </div>
       </div>
+
+      ${result.injured ? `
+        <p style="text-align:center;color:var(--danger);font-size:13px;margin-top:4px">🩹 No jugaste este partido por lesión.</p>
+      ` : `
+        <div class="stats-summary">
+          <div class="stat-summary-box">
+            <div class="stat-summary-number">${result.goals}</div>
+            <div class="stat-summary-label">Goles tuyos</div>
+          </div>
+          <div class="stat-summary-box">
+            <div class="stat-summary-number">${result.assists}</div>
+            <div class="stat-summary-label">Asistencias</div>
+          </div>
+        </div>
+      `}
 
       <div style="width:100%;max-width:480px">
         <button class="btn btn-primary" data-action="go_hub">Volver al Hub →</button>
@@ -1344,6 +1525,18 @@ function renderGameOver() {
           <div class="stat-summary-label">Temporadas</div>
         </div>
       </div>
+      ${career.caps ? `
+        <div class="stats-summary" style="width:100%;max-width:480px">
+          <div class="stat-summary-box">
+            <div class="stat-summary-number">${career.caps}</div>
+            <div class="stat-summary-label">Caps selección</div>
+          </div>
+          <div class="stat-summary-box">
+            <div class="stat-summary-number">${career.natGoals || 0}</div>
+            <div class="stat-summary-label">Goles selección</div>
+          </div>
+        </div>
+      ` : ""}
       <div class="personality-reveal" style="max-width:480px;width:100%">
         <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold-dim)">Legado</div>
         <div class="personality-name">${rankLabel}</div>
@@ -1369,18 +1562,36 @@ function renderHallOfFame() {
         <p style="color:var(--text-muted);text-align:center;margin-top:16px">Todavía no terminaste ninguna carrera.</p>
       ` : `
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
-          ${list.map((e, i) => `
-            <div class="stat-summary-box" style="text-align:left;padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
-              <div>
-                <div style="font-weight:700">${i + 1}. ${e.name}</div>
-                <div style="font-size:12px;color:var(--text-muted)">${e.position} · ${e.club} · ${e.seasons} temporadas</div>
+          ${list.map((e, i) => {
+            const expanded = expandedHofIds.has(e.id);
+            return `
+            <div class="stat-summary-box hof-entry" data-action="toggle_hof" data-id="${e.id}" style="text-align:left;padding:12px 16px;cursor:pointer">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                  <div style="font-weight:700">${i + 1}. ${e.name}</div>
+                  <div style="font-size:12px;color:var(--text-muted)">
+                    ${e.position} · ${e.club} · ${e.seasons} temporadas${e.caps ? ` · ${e.caps} caps` : ""}
+                  </div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-weight:700;color:var(--gold-dim)">${e.goals} goles</div>
+                  <div style="font-size:12px;color:var(--text-muted)">${e.assists} asist. · OVR ${e.peakOvr}</div>
+                </div>
               </div>
-              <div style="text-align:right">
-                <div style="font-weight:700;color:var(--gold-dim)">${e.goals} goles</div>
-                <div style="font-size:12px;color:var(--text-muted)">${e.assists} asist. · OVR ${e.peakOvr}</div>
-              </div>
+              ${expanded ? `
+                <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+                  ${e.seasonHistory && e.seasonHistory.length ? e.seasonHistory.map(s => `
+                    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);padding:3px 0">
+                      <span>Temp. ${s.season} · ${s.club} · ${s.age} años</span>
+                      <span>${s.goals}g ${s.assists}a · OVR ${s.ovr}</span>
+                    </div>
+                  `).join("") : `<div style="font-size:12px;color:var(--text-dim)">Sin detalle temporada a temporada.</div>`}
+                  ${e.country ? `<div style="font-size:12px;color:var(--text-muted);margin-top:4px">Selección: ${e.country}${e.natGoals ? ` · ${e.natGoals} goles` : ""}</div>` : ""}
+                </div>
+              ` : `<div style="font-size:11px;color:var(--text-dim);margin-top:6px">Tocá para ver el detalle temporada a temporada</div>`}
             </div>
-          `).join("")}
+          `;
+          }).join("")}
         </div>
       `}
       <div style="width:100%;margin-top:16px">
@@ -1506,7 +1717,7 @@ function handleClick(e) {
       if (!creation.name.trim()) return;
       const country = COUNTRIES[creation.countryIdx];
       const club = country.clubs[creation.clubIdx];
-      initNewGame(creation.name.trim(), creation.position, creation.archetype, club);
+      initNewGame(creation.name.trim(), creation.position, creation.archetype, club, country);
       navigate("hub");
       break;
     }
@@ -1553,6 +1764,34 @@ function handleClick(e) {
       save();
       document.getElementById("app").innerHTML = renderMatchResult(result, match);
       attachEvents();
+      break;
+    }
+
+    case "accept_offer": {
+      if (!state.pendingOffer) return;
+      const newClub = state.pendingOffer.club;
+      addNews(`✍️ Fichaje cerrado: ahora jugás en ${newClub.name}.`, true);
+      state.club = newClub;
+      state.pendingOffer = null;
+      state.player.dtRelation = 50;
+      regenerateRemainingMatches(newClub);
+      save();
+      navigate("hub");
+      break;
+    }
+
+    case "reject_offer":
+      if (!state.pendingOffer) return;
+      addNews(`Rechazaste la oferta de ${state.pendingOffer.club.name}. Seguís en ${state.club.name}.`);
+      state.pendingOffer = null;
+      save();
+      navigate("hub");
+      break;
+
+    case "toggle_hof": {
+      const id = el.dataset.id;
+      if (expandedHofIds.has(id)) expandedHofIds.delete(id); else expandedHofIds.add(id);
+      render();
       break;
     }
 
