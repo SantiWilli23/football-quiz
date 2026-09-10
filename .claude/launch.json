@@ -32,15 +32,6 @@
       ],
       "cwd": "goltexto",
       "port": 5174
-    },
-    {
-      "name": "dtleague-ui-test",
-      "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "run-test-server.js"
-      ],
-      "cwd": "server",
-      "port": 4000
     }
   ]
 }

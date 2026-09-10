@@ -1,0 +1,242 @@
+[
+  {
+    "id": "mancity",
+    "name": "Manchester City",
+    "shortName": "MCI",
+    "league": "premier"
+  },
+  {
+    "id": "liverpool",
+    "name": "Liverpool",
+    "shortName": "LIV",
+    "league": "premier"
+  },
+  {
+    "id": "arsenal",
+    "name": "Arsenal",
+    "shortName": "ARS",
+    "league": "premier"
+  },
+  {
+    "id": "chelsea",
+    "name": "Chelsea",
+    "shortName": "CHE",
+    "league": "premier"
+  },
+  {
+    "id": "manutd",
+    "name": "Manchester United",
+    "shortName": "MUN",
+    "league": "premier"
+  },
+  {
+    "id": "tottenham",
+    "name": "Tottenham Hotspur",
+    "shortName": "TOT",
+    "league": "premier"
+  },
+  {
+    "id": "newcastle",
+    "name": "Newcastle United",
+    "shortName": "NEW",
+    "league": "premier"
+  },
+  {
+    "id": "astonvilla",
+    "name": "Aston Villa",
+    "shortName": "AVL",
+    "league": "premier"
+  },
+  {
+    "id": "westham",
+    "name": "West Ham United",
+    "shortName": "WHU",
+    "league": "premier"
+  },
+  {
+    "id": "brighton",
+    "name": "Brighton",
+    "shortName": "BHA",
+    "league": "premier"
+  },
+  {
+    "id": "fulham",
+    "name": "Fulham",
+    "shortName": "FUL",
+    "league": "premier"
+  },
+  {
+    "id": "brentford",
+    "name": "Brentford",
+    "shortName": "BRE",
+    "league": "premier"
+  },
+  {
+    "id": "nforest",
+    "name": "Nottingham Forest",
+    "shortName": "NFO",
+    "league": "premier"
+  },
+  {
+    "id": "everton",
+    "name": "Everton",
+    "shortName": "EVE",
+    "league": "premier"
+  },
+  {
+    "id": "crystalpalace",
+    "name": "Crystal Palace",
+    "shortName": "CRY",
+    "league": "premier"
+  },
+  {
+    "id": "wolves",
+    "name": "Wolverhampton",
+    "shortName": "WOL",
+    "league": "premier"
+  },
+  {
+    "id": "bournemouth",
+    "name": "Bournemouth",
+    "shortName": "BOU",
+    "league": "premier"
+  },
+  {
+    "id": "ipswich",
+    "name": "Ipswich Town",
+    "shortName": "IPS",
+    "league": "premier"
+  },
+  {
+    "id": "leicester",
+    "name": "Leicester City",
+    "shortName": "LEI",
+    "league": "premier"
+  },
+  {
+    "id": "southampton",
+    "name": "Southampton",
+    "shortName": "SOU",
+    "league": "premier"
+  },
+  {
+    "id": "realmadrid",
+    "name": "Real Madrid",
+    "shortName": "RMA",
+    "league": "laliga"
+  },
+  {
+    "id": "barcelona",
+    "name": "Barcelona",
+    "shortName": "BAR",
+    "league": "laliga"
+  },
+  {
+    "id": "atletico",
+    "name": "Atlético de Madrid",
+    "shortName": "ATM",
+    "league": "laliga"
+  },
+  {
+    "id": "athletic",
+    "name": "Athletic Club",
+    "shortName": "ATH",
+    "league": "laliga"
+  },
+  {
+    "id": "realsociedad",
+    "name": "Real Sociedad",
+    "shortName": "RSO",
+    "league": "laliga"
+  },
+  {
+    "id": "villarreal",
+    "name": "Villarreal",
+    "shortName": "VIL",
+    "league": "laliga"
+  },
+  {
+    "id": "realbetis",
+    "name": "Real Betis",
+    "shortName": "BET",
+    "league": "laliga"
+  },
+  {
+    "id": "sevilla",
+    "name": "Sevilla",
+    "shortName": "SEV",
+    "league": "laliga"
+  },
+  {
+    "id": "girona",
+    "name": "Girona",
+    "shortName": "GIR",
+    "league": "laliga"
+  },
+  {
+    "id": "valencia",
+    "name": "Valencia",
+    "shortName": "VAL",
+    "league": "laliga"
+  },
+  {
+    "id": "celtavigo",
+    "name": "Celta de Vigo",
+    "shortName": "CEL",
+    "league": "laliga"
+  },
+  {
+    "id": "osasuna",
+    "name": "Osasuna",
+    "shortName": "OSA",
+    "league": "laliga"
+  },
+  {
+    "id": "rayo",
+    "name": "Rayo Vallecano",
+    "shortName": "RAY",
+    "league": "laliga"
+  },
+  {
+    "id": "getafe",
+    "name": "Getafe",
+    "shortName": "GET",
+    "league": "laliga"
+  },
+  {
+    "id": "mallorca",
+    "name": "Mallorca",
+    "shortName": "MAL",
+    "league": "laliga"
+  },
+  {
+    "id": "laspalmas",
+    "name": "Las Palmas",
+    "shortName": "LPA",
+    "league": "laliga"
+  },
+  {
+    "id": "alaves",
+    "name": "Deportivo Alavés",
+    "shortName": "ALA",
+    "league": "laliga"
+  },
+  {
+    "id": "leganes",
+    "name": "Leganés",
+    "shortName": "LEG",
+    "league": "laliga"
+  },
+  {
+    "id": "espanyol",
+    "name": "Espanyol",
+    "shortName": "ESP",
+    "league": "laliga"
+  },
+  {
+    "id": "valladolid",
+    "name": "Valladolid",
+    "shortName": "VLL",
+    "league": "laliga"
+  }
+]

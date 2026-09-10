@@ -6,7 +6,11 @@ import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const TEAMS = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/dt-teams.json"), "utf-8"));
+const TEAMS_PATH = path.join(__dirname, "../data/dt-teams.json");
+// Si faltara el archivo (por ejemplo un deploy sin server/data/), no tumbamos
+// todo el server al arrancar: esta sección queda sin equipos disponibles en
+// vez de tirar abajo el resto de la API.
+const TEAMS = fs.existsSync(TEAMS_PATH) ? JSON.parse(fs.readFileSync(TEAMS_PATH, "utf-8")) : [];
 
 const router = Router();
 router.use(requireAuth);
