@@ -453,7 +453,11 @@ export function CareerProvider({ children }) {
     });
   }
 
-  const OFFER_COOLDOWN_WEEKS = 4;
+  // El club/jugador solo se "cansa" de vos si le ofertaste algo ridículamente
+  // bajo (muy_lejos). Si estuviste cerca y no salió, podés subir la cifra y
+  // volver a intentar en el momento — no tiene sentido bloquear a alguien
+  // que está negociando de buena fe.
+  const OFFER_COOLDOWN_WEEKS = 1;
 
   function isOnOfferCooldown(playerId) {
     const until = (state.offerCooldowns || {})[playerId];
@@ -491,9 +495,10 @@ export function CareerProvider({ children }) {
 
     const sellerTeam = teamById(player.teamId);
     const result = clubDecision(player, sellerTeam, effectiveOffer);
+    const shouldCooldown = !result.accepted && result.hint === "muy_lejos";
     setState((s) => ({
       ...s,
-      offerCooldowns: result.accepted ? s.offerCooldowns : { ...(s.offerCooldowns || {}), [player.id]: s.week + OFFER_COOLDOWN_WEEKS },
+      offerCooldowns: shouldCooldown ? { ...(s.offerCooldowns || {}), [player.id]: s.week + OFFER_COOLDOWN_WEEKS } : s.offerCooldowns,
       sentOffers: [
         { id: `fee_${player.id}_${s.week}_${Date.now()}`, type: "fee", playerId: player.id, playerName: player.name, teamId: player.teamId, amount: offerAmount, accepted: result.accepted, week: s.week },
         ...(s.sentOffers || []),
@@ -505,9 +510,10 @@ export function CareerProvider({ children }) {
   function offerContractTo(player, wageOffered, years) {
     const sellerTeam = teamById(player.teamId);
     const result = playerDecision(player, sellerTeam, team, wageOffered, years);
+    const shouldCooldown = !result.accepted && result.hint === "muy_lejos";
     setState((s) => ({
       ...s,
-      offerCooldowns: result.accepted ? s.offerCooldowns : { ...(s.offerCooldowns || {}), [player.id]: s.week + OFFER_COOLDOWN_WEEKS },
+      offerCooldowns: shouldCooldown ? { ...(s.offerCooldowns || {}), [player.id]: s.week + OFFER_COOLDOWN_WEEKS } : s.offerCooldowns,
       sentOffers: [
         { id: `wage_${player.id}_${s.week}_${Date.now()}`, type: "wage", playerId: player.id, playerName: player.name, teamId: player.teamId, amount: wageOffered, years, accepted: result.accepted, week: s.week },
         ...(s.sentOffers || []),
