@@ -34,6 +34,29 @@ export async function initSchema() {
   await migrateModeBKindConstraint();
   await migrateAvatarConfig();
   await migrateDuelDifficulty();
+  await migrateDtLeagueColumns();
+}
+
+// La Liga Online DT nació con avance semanal manual por el creador. Estas
+// columnas nuevas habilitan: meses configurables (weeks_per_month), partidos
+// en vivo humano-vs-humano con velocidad elegida (speed) y walkover a los 3
+// días si el rival nunca se conecta (live_started_at / live_*_joined / walkover).
+async function migrateDtLeagueColumns() {
+  const leaguesInfo = await db.execute("PRAGMA table_info(dt_leagues)");
+  if (leaguesInfo.rows.length && !leaguesInfo.rows.some((r) => r.name === "weeks_per_month")) {
+    await db.execute("ALTER TABLE dt_leagues ADD COLUMN weeks_per_month INTEGER NOT NULL DEFAULT 4");
+  }
+
+  const fixturesInfo = await db.execute("PRAGMA table_info(dt_league_fixtures)");
+  if (fixturesInfo.rows.length) {
+    const names = new Set(fixturesInfo.rows.map((r) => r.name));
+    if (!names.has("month")) await db.execute("ALTER TABLE dt_league_fixtures ADD COLUMN month INTEGER NOT NULL DEFAULT 1");
+    if (!names.has("speed")) await db.execute("ALTER TABLE dt_league_fixtures ADD COLUMN speed REAL NOT NULL DEFAULT 1");
+    if (!names.has("live_started_at")) await db.execute("ALTER TABLE dt_league_fixtures ADD COLUMN live_started_at TEXT");
+    if (!names.has("live_home_joined")) await db.execute("ALTER TABLE dt_league_fixtures ADD COLUMN live_home_joined INTEGER NOT NULL DEFAULT 0");
+    if (!names.has("live_away_joined")) await db.execute("ALTER TABLE dt_league_fixtures ADD COLUMN live_away_joined INTEGER NOT NULL DEFAULT 0");
+    if (!names.has("walkover")) await db.execute("ALTER TABLE dt_league_fixtures ADD COLUMN walkover TEXT");
+  }
 }
 
 // Los duelos nacieron sin niveles de dificultad. Son columnas nuevas con valor

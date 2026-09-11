@@ -8,6 +8,7 @@ import http from "node:http";
 
 import { initSchema } from "./db/client.js";
 import { attachWsRelay } from "./ws-relay.js";
+import { attachDtLiveWs } from "./dt-live.js";
 import authRoutes from "./routes/auth.js";
 import groupsRoutes from "./routes/groups.js";
 import questionsRoutes from "./routes/questions.js";
@@ -57,6 +58,7 @@ if (fs.existsSync(clientDist)) {
 
 const httpServer = http.createServer(app);
 attachWsRelay(httpServer);
+attachDtLiveWs(httpServer);
 
 const PORT = process.env.PORT || 4000;
 

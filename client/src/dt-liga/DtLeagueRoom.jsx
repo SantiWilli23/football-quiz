@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Check, Copy } from "lucide-react";
 import {
   getLeague, pickTeam, startLeague,
-  getMyTactics, setMyTactics, getFixtures, getStandings, advanceWeek,
+  getMyTactics, setMyTactics, getFixtures, getStandings, advanceWeek, playFixtureSolo,
 } from "./api.js";
 
 const POLL_MS = 4000;
@@ -101,7 +101,7 @@ export default function DtLeagueRoom() {
             <h1 className="text-2xl font-bold">{league.name}</h1>
             <p className="text-sm text-gray-500 mt-0.5">
               {league.leagueKey === "premier" ? "Premier League" : "La Liga"}
-              {league.status === "in_progress" && ` · Jornada ${league.currentWeek}/${league.totalWeeks}`}
+              {league.status === "in_progress" && ` · ${league.weeksPerMonth} jornada${league.weeksPerMonth === 1 ? "" : "s"} por mes`}
               {league.status === "finished" && " · Temporada terminada"}
             </p>
           </div>
@@ -229,11 +229,11 @@ export default function DtLeagueRoom() {
 }
 
 function FixturesTab({ code, league, myTeamId, onAdvanced }) {
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
-  const [advancing, setAdvancing] = useState(false);
+  const [busyId, setBusyId] = useState(null);
+  const [resolving, setResolving] = useState(false);
   const [error, setError] = useState(null);
-
-  const weekToShow = data?.week ?? Math.min(league.currentWeek + 1, league.totalWeeks || 1);
 
   const load = useCallback(async () => {
     try {
@@ -246,67 +246,120 @@ function FixturesTab({ code, league, myTeamId, onAdvanced }) {
 
   useEffect(() => { load(); }, [load]);
 
-  async function handleAdvance() {
-    setAdvancing(true);
+  async function handlePlaySolo(fixtureId) {
+    setBusyId(fixtureId);
+    setError(null);
+    try {
+      await playFixtureSolo(code, fixtureId);
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo jugar ese partido");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  // Botón de conveniencia: resuelve los CPU-vs-CPU pendientes del mes sin
+  // esperar a que alguien más entre a mirar la liga.
+  async function handleResolveCpu() {
+    setResolving(true);
     setError(null);
     try {
       const result = await advanceWeek(code);
-      onAdvanced((prev) => ({ ...prev, currentWeek: result.week, status: result.finished ? "finished" : "in_progress" }));
+      onAdvanced((prev) => ({ ...prev, status: result.finished ? "finished" : "in_progress" }));
       await load();
     } catch (err) {
-      setError(err.response?.data?.error || "No se pudo avanzar la jornada");
+      setError(err.response?.data?.error || "No se pudo resolver");
     } finally {
-      setAdvancing(false);
+      setResolving(false);
     }
   }
 
   if (!data) return <p className="text-sm text-gray-500 text-center py-6">Cargando…</p>;
 
-  const allPlayed = data.fixtures.length > 0 && data.fixtures.every((f) => f.played);
   const seasonOver = league.status === "finished";
+  const monthDone = data.fixtures.length > 0 && data.fixtures.every((f) => f.played);
+  const pendingOthers = data.fixtures.filter((f) => !f.played && !f.involvesMe);
+  const byWeek = {};
+  data.fixtures.forEach((f) => { (byWeek[f.week] ||= []).push(f); });
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {error && <div className="bg-red-500/10 border border-red-500/30 rounded-2xl px-4 py-2.5 text-sm text-red-300">{error}</div>}
 
-      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-        Jornada {weekToShow} / {data.totalWeeks}
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+          Mes {data.month} / {data.totalMonths}
+        </p>
+        {!seasonOver && (
+          <button
+            onClick={handleResolveCpu}
+            disabled={resolving}
+            className="text-xs text-gray-500 hover:text-white disabled:opacity-40"
+          >
+            {resolving ? "Resolviendo…" : "↻ Resolver partidos de CPU"}
+          </button>
+        )}
+      </div>
 
-      <div className="space-y-1.5">
-        {data.fixtures.map((f) => {
-          const involvesMe = myTeamId && (f.homeTeamId === myTeamId || f.awayTeamId === myTeamId);
-          return (
+      {Object.entries(byWeek).map(([week, fixtures]) => (
+        <div key={week} className="space-y-1.5">
+          <p className="text-[11px] text-gray-600 uppercase tracking-wide">Jornada {week}</p>
+          {fixtures.map((f) => (
             <div
               key={f.id}
-              className={`flex items-center justify-between px-4 py-2.5 rounded-2xl border text-sm ${
-                involvesMe ? "border-accent/40 bg-accent/5" : "border-border bg-panel"
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl border text-sm ${
+                f.involvesMe ? "border-accent/40 bg-accent/5" : "border-border bg-panel"
               }`}
             >
               <span className={`flex-1 text-right ${f.homeTeamId === myTeamId ? "font-semibold text-accent" : ""}`}>{f.homeTeamName}</span>
-              <span className="w-16 text-center font-bold tabular-nums">
+              <span className="w-16 text-center font-bold tabular-nums shrink-0">
                 {f.played ? `${f.homeGoals} - ${f.awayGoals}` : "vs"}
               </span>
               <span className={`flex-1 ${f.awayTeamId === myTeamId ? "font-semibold text-accent" : ""}`}>{f.awayTeamName}</span>
-            </div>
-          );
-        })}
-      </div>
 
-      {league.isMine && !seasonOver && (
-        <button
-          onClick={handleAdvance}
-          disabled={advancing || allPlayed}
-          className="w-full bg-accent text-black font-semibold py-2.5 rounded-2xl hover:brightness-110 disabled:opacity-40 transition"
-        >
-          {advancing ? "Resolviendo partidos…" : "Jugar esta jornada"}
-        </button>
-      )}
-      {!league.isMine && !seasonOver && (
-        <p className="text-xs text-gray-500 text-center">Solo quien creó la liga puede avanzar la jornada.</p>
-      )}
-      {seasonOver && (
+              <span className="shrink-0 w-32 text-right">
+                {f.played && f.walkover && (
+                  <span className="text-[10px] text-amber">walkover</span>
+                )}
+                {!f.played && f.canPlaySolo && (
+                  <button
+                    onClick={() => handlePlaySolo(f.id)}
+                    disabled={busyId === f.id}
+                    className="text-xs font-medium px-3 py-1.5 rounded-full bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20 disabled:opacity-40 transition-colors"
+                  >
+                    {busyId === f.id ? "…" : "Jugar"}
+                  </button>
+                )}
+                {!f.played && f.canPlayLive && (
+                  <button
+                    onClick={() => navigate(`/dt-liga/${code}/live/${f.id}`)}
+                    className="text-xs font-medium px-3 py-1.5 rounded-full bg-red-500/10 text-red-300 border border-red-500/30 hover:bg-red-500/20 transition-colors"
+                  >
+                    🔴 En vivo
+                  </button>
+                )}
+                {!f.played && f.isPvp && !f.involvesMe && (
+                  <span className="text-[10px] text-gray-600">{f.homeManager} vs {f.awayManager}</span>
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+      ))}
+
+      {seasonOver ? (
         <p className="text-sm text-emerald text-center font-medium py-2">🏆 La temporada terminó — mirá la tabla final.</p>
+      ) : monthDone ? (
+        <p className="text-sm text-gray-500 text-center py-2">
+          Terminaste tus partidos de este mes. {pendingOthers.length > 0
+            ? `Esperando a que ${pendingOthers.length === 1 ? "otro jugador termine el suyo" : "los demás terminen los suyos"}…`
+            : "El próximo mes ya está disponible."}
+        </p>
+      ) : (
+        <p className="text-xs text-gray-600 text-center">
+          Jugá tus partidos contra la CPU cuando quieras. Los que son contra otro jugador se juegan en vivo, los dos conectados a la vez.
+        </p>
       )}
     </div>
   );

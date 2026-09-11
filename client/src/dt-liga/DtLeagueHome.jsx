@@ -14,6 +14,7 @@ export default function DtLeagueHome() {
 
   const [name, setName] = useState("");
   const [leagueKey, setLeagueKey] = useState("premier");
+  const [weeksPerMonth, setWeeksPerMonth] = useState(4);
   const [creating, setCreating] = useState(false);
 
   const [joinCode, setJoinCode] = useState("");
@@ -28,7 +29,7 @@ export default function DtLeagueHome() {
     setCreating(true);
     setError(null);
     try {
-      const league = await createLeague(name.trim(), leagueKey);
+      const league = await createLeague(name.trim(), leagueKey, weeksPerMonth);
       navigate(`/dt-liga/${league.inviteCode}`);
     } catch (err) {
       setError(err.response?.data?.error || "No se pudo crear la liga");
@@ -117,6 +118,18 @@ export default function DtLeagueHome() {
                 {opt.label}
               </button>
             ))}
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 block mb-1.5">Jornadas por mes (define cuándo se espera a todos)</label>
+            <input
+              type="number" min={1} max={20} value={weeksPerMonth}
+              onChange={(e) => setWeeksPerMonth(Number(e.target.value))}
+              className="w-24 bg-bg border border-border rounded-2xl px-3 py-2 text-sm"
+            />
+            <p className="text-xs text-gray-600 mt-1.5">
+              Cada jugador puede adelantar sus partidos contra la CPU cuando quiera dentro del mes —
+              recién al terminarlo se espera a que todos hayan cerrado sus partidos.
+            </p>
           </div>
           <button
             onClick={handleCreate}

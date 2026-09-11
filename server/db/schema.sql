@@ -345,6 +345,7 @@ CREATE TABLE IF NOT EXISTS dt_leagues (
   status TEXT NOT NULL DEFAULT 'lobby' CHECK (status IN ('lobby', 'in_progress', 'finished')),
   current_week INTEGER NOT NULL DEFAULT 0,
   total_weeks INTEGER NOT NULL DEFAULT 0,
+  weeks_per_month INTEGER NOT NULL DEFAULT 4,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -364,11 +365,19 @@ CREATE TABLE IF NOT EXISTS dt_league_fixtures (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   league_id INTEGER NOT NULL REFERENCES dt_leagues(id),
   week INTEGER NOT NULL,
+  month INTEGER NOT NULL DEFAULT 1,
   home_team_id TEXT NOT NULL,
   away_team_id TEXT NOT NULL,
   home_goals INTEGER,
   away_goals INTEGER,
-  played INTEGER NOT NULL DEFAULT 0
+  played INTEGER NOT NULL DEFAULT 0,
+  -- Partidos humano-vs-humano: velocidad elegida, cuándo se conectó el
+  -- primero (para el walkover a los 3 días) y quién de los dos ya entró.
+  speed REAL NOT NULL DEFAULT 1,
+  live_started_at TEXT,
+  live_home_joined INTEGER NOT NULL DEFAULT 0,
+  live_away_joined INTEGER NOT NULL DEFAULT 0,
+  walkover TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_dt_fixtures_league_week ON dt_league_fixtures(league_id, week);

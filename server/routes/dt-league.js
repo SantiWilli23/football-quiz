@@ -17,6 +17,8 @@ const router = Router();
 router.use(requireAuth);
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sin 0/O/1/I
+const WALKOVER_DAYS = 3;
+const ALLOWED_SPEEDS = [0.2, 0.5, 1, 2];
 
 function clamp(v, a, b) {
   return Math.max(a, Math.min(b, v));
@@ -56,6 +58,116 @@ async function requireMembership(league, userId) {
   return { members, me };
 }
 
+// El mes "activo" es el más chico que todavía tiene algún partido sin jugar.
+// No se guarda como puntero mutable: se recalcula siempre, así que en cuanto
+// se completa el último partido pendiente de un mes, el siguiente ya aparece
+// solo como el nuevo activo — nadie tiene que "avanzar" nada a mano.
+async function activeMonthOf(leagueId, totalMonths) {
+  if (!totalMonths) return 1;
+  const result = await db.execute({
+    sql: "SELECT MIN(month) as m FROM dt_league_fixtures WHERE league_id = ? AND played = 0",
+    args: [leagueId],
+  });
+  const m = result.rows[0]?.m;
+  return m == null ? totalMonths : m;
+}
+
+// Resuelve al toque los partidos CPU-vs-CPU del mes activo (nadie tiene que
+// jugarlos, así que no tiene sentido dejarlos pendientes) y aplica walkover
+// a los partidos humano-vs-humano en vivo que quedaron a mitad de camino
+// más de WALKOVER_DAYS sin que el rival ausente se conecte.
+async function resolvePendingFixtures(league, members) {
+  const teams = teamsForLeague(league.league_key);
+  const tierByTeam = Object.fromEntries(teams.map((t) => [t.id, t.tier]));
+  const teamIdsWithManager = new Set(members.filter((m) => m.team_id).map((m) => m.team_id));
+
+  // OJO: limitado al mes activo. Si esto barriera TODA la temporada, los
+  // CPU-vs-CPU de meses futuros se jugarían solos de una sola vez y le
+  // sacarían todo el sentido a esperar el fin de mes.
+  const totalMonths = Math.max(1, Math.ceil((league.total_weeks || 1) / (league.weeks_per_month || 4)));
+  const activeMonth = await activeMonthOf(league.id, totalMonths);
+
+  const pending = await db.execute({
+    sql: "SELECT * FROM dt_league_fixtures WHERE league_id = ? AND month = ? AND played = 0",
+    args: [league.id, activeMonth],
+  });
+  if (!pending.rows.length) return;
+
+  const tacticsResult = await db.execute({
+    sql: "SELECT team_id, mentality, pressing, tempo FROM dt_league_tactics WHERE league_id = ?",
+    args: [league.id],
+  });
+  const tacticsByTeam = Object.fromEntries(tacticsResult.rows.map((r) => [r.team_id, r]));
+
+  const now = Date.now();
+
+  for (const fx of pending.rows) {
+    const homeIsHuman = teamIdsWithManager.has(fx.home_team_id);
+    const awayIsHuman = teamIdsWithManager.has(fx.away_team_id);
+
+    if (!homeIsHuman && !awayIsHuman) {
+      // CPU vs CPU: se resuelve solo, nadie tiene que hacer nada.
+      const { homeGoals, awayGoals } = simulateFixture({
+        homeTier: tierByTeam[fx.home_team_id] || 2,
+        awayTier: tierByTeam[fx.away_team_id] || 2,
+        homeTactics: null,
+        awayTactics: null,
+      });
+      await db.execute({
+        sql: "UPDATE dt_league_fixtures SET home_goals = ?, away_goals = ?, played = 1 WHERE id = ?",
+        args: [homeGoals, awayGoals, fx.id],
+      });
+      continue;
+    }
+
+    if (homeIsHuman && awayIsHuman && fx.live_started_at) {
+      const startedAt = new Date(fx.live_started_at.replace(" ", "T") + "Z").getTime();
+      const daysWaiting = (now - startedAt) / 86400000;
+      if (daysWaiting >= WALKOVER_DAYS) {
+        const onlyHomeJoined = !!fx.live_home_joined && !fx.live_away_joined;
+        const onlyAwayJoined = !!fx.live_away_joined && !fx.live_home_joined;
+        if (onlyHomeJoined || onlyAwayJoined) {
+          // Ganó por walkover quien sí se presentó.
+          const homeGoals = onlyHomeJoined ? 3 : 0;
+          const awayGoals = onlyAwayJoined ? 3 : 0;
+          await db.execute({
+            sql: "UPDATE dt_league_fixtures SET home_goals = ?, away_goals = ?, played = 1, walkover = ? WHERE id = ?",
+            args: [homeGoals, awayGoals, onlyHomeJoined ? "home" : "away", fx.id],
+          });
+        } else {
+          // Ninguno se presentó (o el partido quedó a mitad por un reinicio del
+          // servidor): se resuelve igual que un CPU, para no trabar la liga.
+          const { homeGoals, awayGoals } = simulateFixture({
+            homeTier: tierByTeam[fx.home_team_id] || 2,
+            awayTier: tierByTeam[fx.away_team_id] || 2,
+            homeTactics: tacticsByTeam[fx.home_team_id] || null,
+            awayTactics: tacticsByTeam[fx.away_team_id] || null,
+          });
+          await db.execute({
+            sql: "UPDATE dt_league_fixtures SET home_goals = ?, away_goals = ?, played = 1 WHERE id = ?",
+            args: [homeGoals, awayGoals, fx.id],
+          });
+        }
+      }
+    }
+  }
+}
+
+// Si ya no queda ningún partido pendiente, la temporada terminó — no hace
+// falta que nadie la cierre a mano.
+async function checkAndFinishSeason(league) {
+  if (league.status !== "in_progress") return league;
+  const pending = await db.execute({
+    sql: "SELECT COUNT(*) as c FROM dt_league_fixtures WHERE league_id = ? AND played = 0",
+    args: [league.id],
+  });
+  if (Number(pending.rows[0].c) === 0) {
+    await db.execute({ sql: "UPDATE dt_leagues SET status = 'finished' WHERE id = ?", args: [league.id] });
+    return { ...league, status: "finished" };
+  }
+  return league;
+}
+
 function serializeLeague(league, members, userId) {
   const league_teams = teamsForLeague(league.league_key);
   const takenIds = new Set(members.map((m) => m.team_id).filter(Boolean));
@@ -67,6 +179,7 @@ function serializeLeague(league, members, userId) {
     status: league.status,
     currentWeek: league.current_week,
     totalWeeks: league.total_weeks,
+    weeksPerMonth: league.weeks_per_month,
     createdBy: league.created_by,
     isMine: league.created_by === userId,
     members: members.map((m) => ({
@@ -107,6 +220,7 @@ async function loadStandings(leagueId, teamIds) {
 router.post("/", async (req, res) => {
   const name = String(req.body?.name || "").trim().slice(0, 60);
   const leagueKey = String(req.body?.leagueKey || "");
+  const weeksPerMonth = clamp(Number(req.body?.weeksPerMonth) || 4, 1, 20);
   if (!name) return res.status(400).json({ error: "Ponele un nombre a la liga" });
   if (!["premier", "laliga"].includes(leagueKey)) return res.status(400).json({ error: "Liga inválida" });
 
@@ -119,8 +233,8 @@ router.post("/", async (req, res) => {
   if (!inviteCode) return res.status(500).json({ error: "No se pudo generar un código, probá de nuevo" });
 
   const result = await db.execute({
-    sql: "INSERT INTO dt_leagues (name, league_key, invite_code, created_by) VALUES (?, ?, ?, ?)",
-    args: [name, leagueKey, inviteCode, req.userId],
+    sql: "INSERT INTO dt_leagues (name, league_key, invite_code, created_by, weeks_per_month) VALUES (?, ?, ?, ?, ?)",
+    args: [name, leagueKey, inviteCode, req.userId, weeksPerMonth],
   });
   await db.execute({
     sql: "INSERT INTO dt_league_members (league_id, user_id) VALUES (?, ?)",
@@ -181,11 +295,16 @@ router.post("/join", async (req, res) => {
 });
 
 router.get("/:code", async (req, res) => {
-  const league = await loadLeagueByCode(req.params.code);
+  let league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
 
   const { members, me } = await requireMembership(league, req.userId);
   if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+
+  if (league.status === "in_progress") {
+    await resolvePendingFixtures(league, members);
+    league = await checkAndFinishSeason(league);
+  }
 
   res.json({ league: serializeLeague(league, members, req.userId) });
 });
@@ -216,7 +335,8 @@ router.post("/:code/team", async (req, res) => {
 
 // Solo el creador puede arrancar la temporada, y solo cuando todos eligieron
 // equipo. Arma el calendario de ida y vuelta con TODOS los equipos de la
-// liga (los que nadie eligió quedan controlados por la CPU).
+// liga (los que nadie eligió quedan controlados por la CPU), agrupado en
+// meses según weeks_per_month.
 router.post("/:code/start", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
@@ -233,18 +353,21 @@ router.post("/:code/start", async (req, res) => {
 
   const allTeamIds = teamsForLeague(league.league_key).map((t) => t.id);
   const rounds = generateRoundRobin(allTeamIds);
+  const weeksPerMonth = league.weeks_per_month || 4;
 
   const fixtures = [];
   rounds.forEach((round, idx) => {
-    round.forEach(([home, away]) => fixtures.push({ week: idx + 1, home, away }));
+    const week = idx + 1;
+    const month = Math.ceil(week / weeksPerMonth);
+    round.forEach(([home, away]) => fixtures.push({ week, month, home, away }));
   });
 
   for (let i = 0; i < fixtures.length; i += 50) {
     const chunk = fixtures.slice(i, i + 50);
-    const placeholders = chunk.map(() => "(?, ?, ?, ?)").join(", ");
-    const args = chunk.flatMap((fx) => [league.id, fx.week, fx.home, fx.away]);
+    const placeholders = chunk.map(() => "(?, ?, ?, ?, ?)").join(", ");
+    const args = chunk.flatMap((fx) => [league.id, fx.week, fx.month, fx.home, fx.away]);
     await db.execute({
-      sql: `INSERT INTO dt_league_fixtures (league_id, week, home_team_id, away_team_id) VALUES ${placeholders}`,
+      sql: `INSERT INTO dt_league_fixtures (league_id, week, month, home_team_id, away_team_id) VALUES ${placeholders}`,
       args,
     });
   }
@@ -297,40 +420,152 @@ router.post("/:code/tactics", async (req, res) => {
   res.json({ ok: true, tactics: { mentality, pressing, tempo } });
 });
 
+// Todos los partidos del mes activo (o el que se pida por query), agrupados
+// por jornada, con lo necesario para que el cliente decida qué botón mostrar
+// por partido: jugar solo, jugar en vivo, o solo mirar.
 router.get("/:code/fixtures", async (req, res) => {
-  const league = await loadLeagueByCode(req.params.code);
+  let league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
-  const { me } = await requireMembership(league, req.userId);
+  const { members, me } = await requireMembership(league, req.userId);
   if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
 
-  const week = req.query.week ? Number(req.query.week) : Math.min(league.current_week + 1, league.total_weeks || 1);
+  if (league.status === "in_progress") {
+    await resolvePendingFixtures(league, members);
+    league = await checkAndFinishSeason(league);
+  }
+
+  const totalMonths = Math.max(1, Math.ceil((league.total_weeks || 1) / (league.weeks_per_month || 4)));
+  const activeMonth = await activeMonthOf(league.id, totalMonths);
+  const month = req.query.month ? Number(req.query.month) : activeMonth;
+
   const result = await db.execute({
-    sql: "SELECT * FROM dt_league_fixtures WHERE league_id = ? AND week = ? ORDER BY id",
-    args: [league.id, week],
+    sql: "SELECT * FROM dt_league_fixtures WHERE league_id = ? AND month = ? ORDER BY week, id",
+    args: [league.id, month],
   });
 
   const nameByTeam = Object.fromEntries(teamsForLeague(league.league_key).map((t) => [t.id, t.name]));
+  const memberByTeam = Object.fromEntries(members.filter((m) => m.team_id).map((m) => [m.team_id, m]));
+
   res.json({
-    week,
+    month,
+    activeMonth,
+    totalMonths,
     totalWeeks: league.total_weeks,
-    fixtures: result.rows.map((r) => ({
-      id: r.id,
-      homeTeamId: r.home_team_id,
-      awayTeamId: r.away_team_id,
-      homeTeamName: nameByTeam[r.home_team_id] || r.home_team_id,
-      awayTeamName: nameByTeam[r.away_team_id] || r.away_team_id,
-      homeGoals: r.home_goals,
-      awayGoals: r.away_goals,
-      played: !!r.played,
-    })),
+    fixtures: result.rows.map((r) => {
+      const homeManager = memberByTeam[r.home_team_id] || null;
+      const awayManager = memberByTeam[r.away_team_id] || null;
+      const isPvp = !!homeManager && !!awayManager;
+      const myTeamId = me.team_id;
+      const involvesMe = myTeamId && (r.home_team_id === myTeamId || r.away_team_id === myTeamId);
+      return {
+        id: r.id,
+        week: r.week,
+        month: r.month,
+        homeTeamId: r.home_team_id,
+        awayTeamId: r.away_team_id,
+        homeTeamName: nameByTeam[r.home_team_id] || r.home_team_id,
+        awayTeamName: nameByTeam[r.away_team_id] || r.away_team_id,
+        homeManager: homeManager?.username || null,
+        awayManager: awayManager?.username || null,
+        homeGoals: r.home_goals,
+        awayGoals: r.away_goals,
+        played: !!r.played,
+        walkover: r.walkover || null,
+        isPvp,
+        involvesMe: !!involvesMe,
+        canPlaySolo: involvesMe && !isPvp && !r.played,
+        canPlayLive: involvesMe && isPvp && !r.played,
+      };
+    }),
   });
 });
 
-router.get("/:code/standings", async (req, res) => {
+// Resuelve al instante un partido humano-vs-CPU: no hace falta esperar a
+// nadie, así que cualquiera de los dos managers (el humano) lo juega cuando
+// quiera. Si el rival también es humano, esto no aplica — ese va por /live.
+router.post("/:code/fixtures/:fixtureId/play", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   const { members, me } = await requireMembership(league, req.userId);
   if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me.team_id) return res.status(400).json({ error: "Todavía no elegiste equipo" });
+
+  const fxResult = await db.execute({
+    sql: "SELECT * FROM dt_league_fixtures WHERE id = ? AND league_id = ?",
+    args: [req.params.fixtureId, league.id],
+  });
+  const fx = fxResult.rows[0];
+  if (!fx) return res.status(404).json({ error: "Partido no encontrado" });
+  if (fx.played) return res.status(400).json({ error: "Ese partido ya se jugó" });
+  if (fx.home_team_id !== me.team_id && fx.away_team_id !== me.team_id) {
+    return res.status(403).json({ error: "Ese partido no es tuyo" });
+  }
+
+  const teamIdsWithManager = new Set(members.filter((m) => m.team_id).map((m) => m.team_id));
+  const opponentTeamId = fx.home_team_id === me.team_id ? fx.away_team_id : fx.home_team_id;
+  if (teamIdsWithManager.has(opponentTeamId)) {
+    return res.status(400).json({ error: "Tu rival en este partido es otro jugador — se juega en vivo" });
+  }
+
+  const teams = teamsForLeague(league.league_key);
+  const tierByTeam = Object.fromEntries(teams.map((t) => [t.id, t.tier]));
+  const tacticsResult = await db.execute({
+    sql: "SELECT team_id, mentality, pressing, tempo FROM dt_league_tactics WHERE league_id = ? AND team_id IN (?, ?)",
+    args: [league.id, fx.home_team_id, fx.away_team_id],
+  });
+  const tacticsByTeam = Object.fromEntries(tacticsResult.rows.map((r) => [r.team_id, r]));
+
+  const { homeGoals, awayGoals } = simulateFixture({
+    homeTier: tierByTeam[fx.home_team_id] || 2,
+    awayTier: tierByTeam[fx.away_team_id] || 2,
+    homeTactics: tacticsByTeam[fx.home_team_id] || null,
+    awayTactics: tacticsByTeam[fx.away_team_id] || null,
+  });
+  await db.execute({
+    sql: "UPDATE dt_league_fixtures SET home_goals = ?, away_goals = ?, played = 1 WHERE id = ?",
+    args: [homeGoals, awayGoals, fx.id],
+  });
+
+  res.json({ ok: true, homeGoals, awayGoals });
+});
+
+// Datos que necesita el cliente para conectarse al partido en vivo por
+// WebSocket (ver server/dt-live.js) — valida que el fixture sea PvP y que el
+// usuario sea uno de los dos managers antes de darle luz verde.
+router.get("/:code/fixtures/:fixtureId/live", async (req, res) => {
+  const league = await loadLeagueByCode(req.params.code);
+  if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  const { members, me } = await requireMembership(league, req.userId);
+  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+
+  const fxResult = await db.execute({
+    sql: "SELECT * FROM dt_league_fixtures WHERE id = ? AND league_id = ?",
+    args: [req.params.fixtureId, league.id],
+  });
+  const fx = fxResult.rows[0];
+  if (!fx) return res.status(404).json({ error: "Partido no encontrado" });
+  if (fx.played) return res.status(400).json({ error: "Ese partido ya se jugó" });
+  if (fx.home_team_id !== me.team_id && fx.away_team_id !== me.team_id) {
+    return res.status(403).json({ error: "Ese partido no es tuyo" });
+  }
+  const teamIdsWithManager = new Set(members.filter((m) => m.team_id).map((m) => m.team_id));
+  if (!teamIdsWithManager.has(fx.home_team_id) || !teamIdsWithManager.has(fx.away_team_id)) {
+    return res.status(400).json({ error: "Este partido no enfrenta a dos jugadores — jugalo con /play" });
+  }
+
+  res.json({ fixtureId: fx.id, allowedSpeeds: ALLOWED_SPEEDS });
+});
+
+router.get("/:code/standings", async (req, res) => {
+  let league = await loadLeagueByCode(req.params.code);
+  if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  const { members, me } = await requireMembership(league, req.userId);
+  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+
+  if (league.status === "in_progress") {
+    await resolvePendingFixtures(league, members);
+    league = await checkAndFinishSeason(league);
+  }
 
   const teams = teamsForLeague(league.league_key);
   const standings = await loadStandings(league.id, teams.map((t) => t.id));
@@ -347,52 +582,30 @@ router.get("/:code/standings", async (req, res) => {
   });
 });
 
-// Solo el creador puede avanzar la jornada: resuelve todos los partidos de
-// la semana siguiente (humano vs CPU, CPU vs CPU, humano vs humano — todos
-// se resuelven igual, con la táctica que cada uno haya dejado cargada).
+// Legacy: antes esto era el único modo de avanzar la jornada. Ahora la liga
+// progresa sola a medida que se juegan los partidos, así que esto queda como
+// un botón de conveniencia para forzar la resolución de los CPU-vs-CPU
+// pendientes del mes activo sin tener que esperar a que alguien más entre.
 router.post("/:code/advance", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
-  if (league.created_by !== req.userId) return res.status(403).json({ error: "Solo quien creó la liga puede avanzar la jornada" });
+  const { members, me } = await requireMembership(league, req.userId);
+  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
   if (league.status !== "in_progress") return res.status(400).json({ error: "La liga no está en curso" });
 
-  const nextWeek = league.current_week + 1;
-  if (nextWeek > league.total_weeks) return res.status(400).json({ error: "La temporada ya terminó" });
+  await resolvePendingFixtures(league, members);
 
-  const teams = teamsForLeague(league.league_key);
-  const tierByTeam = Object.fromEntries(teams.map((t) => [t.id, t.tier]));
+  const totalMonths = Math.max(1, Math.ceil((league.total_weeks || 1) / (league.weeks_per_month || 4)));
+  const activeMonth = await activeMonthOf(league.id, totalMonths);
+  const finished = activeMonth >= totalMonths && (
+    await db.execute({ sql: "SELECT COUNT(*) as c FROM dt_league_fixtures WHERE league_id = ? AND played = 0", args: [league.id] })
+  ).rows[0].c === 0;
 
-  const tacticsResult = await db.execute({
-    sql: "SELECT team_id, mentality, pressing, tempo FROM dt_league_tactics WHERE league_id = ?",
-    args: [league.id],
-  });
-  const tacticsByTeam = Object.fromEntries(tacticsResult.rows.map((r) => [r.team_id, r]));
-
-  const fixturesResult = await db.execute({
-    sql: "SELECT * FROM dt_league_fixtures WHERE league_id = ? AND week = ? AND played = 0",
-    args: [league.id, nextWeek],
-  });
-
-  for (const fx of fixturesResult.rows) {
-    const { homeGoals, awayGoals } = simulateFixture({
-      homeTier: tierByTeam[fx.home_team_id] || 2,
-      awayTier: tierByTeam[fx.away_team_id] || 2,
-      homeTactics: tacticsByTeam[fx.home_team_id] || null,
-      awayTactics: tacticsByTeam[fx.away_team_id] || null,
-    });
-    await db.execute({
-      sql: "UPDATE dt_league_fixtures SET home_goals = ?, away_goals = ?, played = 1 WHERE id = ?",
-      args: [homeGoals, awayGoals, fx.id],
-    });
+  if (finished && league.status !== "finished") {
+    await db.execute({ sql: "UPDATE dt_leagues SET status = 'finished' WHERE id = ?", args: [league.id] });
   }
 
-  const finished = nextWeek >= league.total_weeks;
-  await db.execute({
-    sql: "UPDATE dt_leagues SET current_week = ?, status = ? WHERE id = ?",
-    args: [nextWeek, finished ? "finished" : "in_progress", league.id],
-  });
-
-  res.json({ ok: true, week: nextWeek, finished });
+  res.json({ ok: true, activeMonth, totalMonths, finished });
 });
 
 export default router;

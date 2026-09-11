@@ -35,7 +35,9 @@ export function attachWsRelay(httpServer) {
   const rooms = new Map();
 
   httpServer.on("upgrade", (req, socket, head) => {
-    if (!req.url || !req.url.startsWith("/ws")) return;
+    // Exacto (no startsWith): "/ws/dt-live" es otro relay (ver dt-live.js) y
+    // no debe ser interceptado acá — startsWith("/ws") también lo matchea.
+    if (req.url !== "/ws") return;
     wss.handleUpgrade(req, socket, head, (ws) => {
       wss.emit("connection", ws, req);
     });

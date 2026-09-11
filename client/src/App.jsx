@@ -16,6 +16,7 @@ import CareerMode from "./carrera/index.jsx";
 import EquipoJugador from "./equipo-jugador/index.jsx";
 import DtLeagueHome from "./dt-liga/DtLeagueHome.jsx";
 import DtLeagueRoom from "./dt-liga/DtLeagueRoom.jsx";
+import LiveMatch from "./dt-liga/LiveMatch.jsx";
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -165,6 +166,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <DtLeagueRoom />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/dt-liga/:code/live/:fixtureId"
+        element={
+          <PrivateRoute>
+            <LiveMatch />
           </PrivateRoute>
         }
       />
