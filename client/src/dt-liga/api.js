@@ -29,3 +29,28 @@ export async function startLeague(code) {
   const { data } = await api.post(`/dt-league/${code}/start`);
   return data.league;
 }
+
+export async function getMyTactics(code) {
+  const { data } = await api.get(`/dt-league/${code}/tactics`);
+  return data.tactics;
+}
+
+export async function setMyTactics(code, tactics) {
+  const { data } = await api.post(`/dt-league/${code}/tactics`, tactics);
+  return data.tactics;
+}
+
+export async function getFixtures(code, week) {
+  const { data } = await api.get(`/dt-league/${code}/fixtures`, { params: week ? { week } : {} });
+  return data;
+}
+
+export async function getStandings(code) {
+  const { data } = await api.get(`/dt-league/${code}/standings`);
+  return data.standings;
+}
+
+export async function advanceWeek(code) {
+  const { data } = await api.post(`/dt-league/${code}/advance`);
+  return data;
+}

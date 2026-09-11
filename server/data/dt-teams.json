@@ -3,240 +3,280 @@
     "id": "mancity",
     "name": "Manchester City",
     "shortName": "MCI",
-    "league": "premier"
+    "league": "premier",
+    "tier": 1
   },
   {
     "id": "liverpool",
     "name": "Liverpool",
     "shortName": "LIV",
-    "league": "premier"
+    "league": "premier",
+    "tier": 1
   },
   {
     "id": "arsenal",
     "name": "Arsenal",
     "shortName": "ARS",
-    "league": "premier"
+    "league": "premier",
+    "tier": 1
   },
   {
     "id": "chelsea",
     "name": "Chelsea",
     "shortName": "CHE",
-    "league": "premier"
+    "league": "premier",
+    "tier": 1
   },
   {
     "id": "manutd",
     "name": "Manchester United",
     "shortName": "MUN",
-    "league": "premier"
+    "league": "premier",
+    "tier": 1
   },
   {
     "id": "tottenham",
     "name": "Tottenham Hotspur",
     "shortName": "TOT",
-    "league": "premier"
+    "league": "premier",
+    "tier": 1
   },
   {
     "id": "newcastle",
     "name": "Newcastle United",
     "shortName": "NEW",
-    "league": "premier"
+    "league": "premier",
+    "tier": 1
   },
   {
     "id": "astonvilla",
     "name": "Aston Villa",
     "shortName": "AVL",
-    "league": "premier"
+    "league": "premier",
+    "tier": 1
   },
   {
     "id": "westham",
     "name": "West Ham United",
     "shortName": "WHU",
-    "league": "premier"
+    "league": "premier",
+    "tier": 2
   },
   {
     "id": "brighton",
     "name": "Brighton",
     "shortName": "BHA",
-    "league": "premier"
+    "league": "premier",
+    "tier": 2
   },
   {
     "id": "fulham",
     "name": "Fulham",
     "shortName": "FUL",
-    "league": "premier"
+    "league": "premier",
+    "tier": 2
   },
   {
     "id": "brentford",
     "name": "Brentford",
     "shortName": "BRE",
-    "league": "premier"
+    "league": "premier",
+    "tier": 2
   },
   {
     "id": "nforest",
     "name": "Nottingham Forest",
     "shortName": "NFO",
-    "league": "premier"
+    "league": "premier",
+    "tier": 2
   },
   {
     "id": "everton",
     "name": "Everton",
     "shortName": "EVE",
-    "league": "premier"
+    "league": "premier",
+    "tier": 2
   },
   {
     "id": "crystalpalace",
     "name": "Crystal Palace",
     "shortName": "CRY",
-    "league": "premier"
+    "league": "premier",
+    "tier": 2
   },
   {
     "id": "wolves",
     "name": "Wolverhampton",
     "shortName": "WOL",
-    "league": "premier"
+    "league": "premier",
+    "tier": 2
   },
   {
     "id": "bournemouth",
     "name": "Bournemouth",
     "shortName": "BOU",
-    "league": "premier"
+    "league": "premier",
+    "tier": 3
   },
   {
     "id": "ipswich",
     "name": "Ipswich Town",
     "shortName": "IPS",
-    "league": "premier"
+    "league": "premier",
+    "tier": 3
   },
   {
     "id": "leicester",
     "name": "Leicester City",
     "shortName": "LEI",
-    "league": "premier"
+    "league": "premier",
+    "tier": 3
   },
   {
     "id": "southampton",
     "name": "Southampton",
     "shortName": "SOU",
-    "league": "premier"
+    "league": "premier",
+    "tier": 3
   },
   {
     "id": "realmadrid",
     "name": "Real Madrid",
     "shortName": "RMA",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 1
   },
   {
     "id": "barcelona",
     "name": "Barcelona",
     "shortName": "BAR",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 1
   },
   {
     "id": "atletico",
     "name": "Atlético de Madrid",
     "shortName": "ATM",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 1
   },
   {
     "id": "athletic",
     "name": "Athletic Club",
     "shortName": "ATH",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 2
   },
   {
     "id": "realsociedad",
     "name": "Real Sociedad",
     "shortName": "RSO",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 2
   },
   {
     "id": "villarreal",
     "name": "Villarreal",
     "shortName": "VIL",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 2
   },
   {
     "id": "realbetis",
     "name": "Real Betis",
     "shortName": "BET",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 2
   },
   {
     "id": "sevilla",
     "name": "Sevilla",
     "shortName": "SEV",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 2
   },
   {
     "id": "girona",
     "name": "Girona",
     "shortName": "GIR",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 2
   },
   {
     "id": "valencia",
     "name": "Valencia",
     "shortName": "VAL",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 2
   },
   {
     "id": "celtavigo",
     "name": "Celta de Vigo",
     "shortName": "CEL",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 2
   },
   {
     "id": "osasuna",
     "name": "Osasuna",
     "shortName": "OSA",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 3
   },
   {
     "id": "rayo",
     "name": "Rayo Vallecano",
     "shortName": "RAY",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 3
   },
   {
     "id": "getafe",
     "name": "Getafe",
     "shortName": "GET",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 3
   },
   {
     "id": "mallorca",
     "name": "Mallorca",
     "shortName": "MAL",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 3
   },
   {
     "id": "laspalmas",
     "name": "Las Palmas",
     "shortName": "LPA",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 3
   },
   {
     "id": "alaves",
     "name": "Deportivo Alavés",
     "shortName": "ALA",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 3
   },
   {
     "id": "leganes",
     "name": "Leganés",
     "shortName": "LEG",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 3
   },
   {
     "id": "espanyol",
     "name": "Espanyol",
     "shortName": "ESP",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 3
   },
   {
     "id": "valladolid",
     "name": "Valladolid",
     "shortName": "VLL",
-    "league": "laliga"
+    "league": "laliga",
+    "tier": 3
   }
 ]

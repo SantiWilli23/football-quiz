@@ -344,6 +344,7 @@ CREATE TABLE IF NOT EXISTS dt_leagues (
   created_by INTEGER NOT NULL REFERENCES users(id),
   status TEXT NOT NULL DEFAULT 'lobby' CHECK (status IN ('lobby', 'in_progress', 'finished')),
   current_week INTEGER NOT NULL DEFAULT 0,
+  total_weeks INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -358,3 +359,30 @@ CREATE TABLE IF NOT EXISTS dt_league_members (
 
 CREATE INDEX IF NOT EXISTS idx_dt_league_members_league ON dt_league_members(league_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_dt_league_members_team ON dt_league_members(league_id, team_id) WHERE team_id IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS dt_league_fixtures (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES dt_leagues(id),
+  week INTEGER NOT NULL,
+  home_team_id TEXT NOT NULL,
+  away_team_id TEXT NOT NULL,
+  home_goals INTEGER,
+  away_goals INTEGER,
+  played INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_dt_fixtures_league_week ON dt_league_fixtures(league_id, week);
+
+-- Táctica que cada usuario elige para SU club (mentalidad + pressing + tempo,
+-- versión resumida de la del modo Carrera single-player). Los clubes CPU no
+-- tienen fila acá y usan los valores por defecto al resolver sus partidos.
+CREATE TABLE IF NOT EXISTS dt_league_tactics (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES dt_leagues(id),
+  team_id TEXT NOT NULL,
+  mentality INTEGER NOT NULL DEFAULT 3,
+  pressing INTEGER NOT NULL DEFAULT 50,
+  tempo INTEGER NOT NULL DEFAULT 50,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(league_id, team_id)
+);
