@@ -17,8 +17,9 @@ export default function ResultScreen({ state, mySeat, mode = "local", onPlayAgai
       playerNames: state.playerNames,
       chainLength: state.chain.length,
     });
-    // El reto semanal es específicamente "más rondas ganadas de a 4 online".
-    if (mode === "online" && iWon && state.playerCount === 4) {
+    // El reto semanal suma cuando se gana una partida online de 4 o más
+    // jugadores (el modo "de a hartos" con eliminación grupal); 1v1 no cuenta.
+    if (mode === "online" && iWon && state.playerCount >= 4) {
       registerFourPlayerWin();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

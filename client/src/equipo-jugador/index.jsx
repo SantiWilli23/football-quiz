@@ -48,7 +48,7 @@ export default function EquipoJugador() {
               className="w-full bg-panel border border-border rounded-2xl p-5 text-left hover:border-accent/40 transition-colors"
             >
               <p className="font-semibold">Online</p>
-              <p className="text-sm text-gray-500 mt-1">2 o 4 jugadores, cada uno desde su dispositivo con un código de sala.</p>
+              <p className="text-sm text-gray-500 mt-1">De 2 a 8 jugadores, cada uno desde su dispositivo con un código de sala. Con 6 u 8 es el modo "de a hartos": eliminación hasta que quede uno solo.</p>
             </button>
 
             <button

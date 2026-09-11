@@ -12,7 +12,7 @@ const GAMES = [
   { key: "draft_europeo", label: "Draft Europeo · Bayern 2020", endpoint: "leaderboard" },
   { key: "cotrero", label: "Cotrero · Reto semanal", endpoint: "leaderboard" },
   { key: "fichado", label: "Fichado · Menos intentos gana", endpoint: "leaderboard" },
-  { key: "equipo_jugador", label: "Equipo-Jugador · Más rondas 4v4", endpoint: "leaderboard" },
+  { key: "equipo_jugador", label: "Equipo-Jugador · Eliminación de a hartos (4+)", endpoint: "leaderboard" },
 ];
 
 const MEDALS = ["🥇", "🥈", "🥉", "4°"];

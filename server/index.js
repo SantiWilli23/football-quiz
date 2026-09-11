@@ -21,6 +21,7 @@ import footballRoutes from "./routes/football.js";
 import equipoJugadorRoutes from "./routes/equipo-jugador.js";
 import challengesRoutes from "./routes/challenges.js";
 import dtLeagueRoutes from "./routes/dt-league.js";
+import groupCupRoutes from "./routes/group-cup.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -45,6 +46,7 @@ app.use("/api/football", footballRoutes);
 app.use("/api/equipo-jugador", equipoJugadorRoutes);
 app.use("/api/challenges", challengesRoutes);
 app.use("/api/dt-league", dtLeagueRoutes);
+app.use("/api/group-cup", groupCupRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 

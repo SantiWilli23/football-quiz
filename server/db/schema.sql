@@ -395,3 +395,53 @@ CREATE TABLE IF NOT EXISTS dt_league_tactics (
   updated_at TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE(league_id, team_id)
 );
+
+-- Copa grupal: torneo de eliminación directa dentro de un grupo. Cada
+-- participante arma su "equipo" draftando jugadores reales del mismo pool de
+-- Equipo-Jugador (ej_players) — no hay un rating oficial de esos jugadores en
+-- la base, así que la fuerza del plantel se deriva de forma determinística
+-- del id de cada jugador (ver ratingForPlayer en group-cup.js). Los cupos que
+-- nadie eligió se llenan con CPU (plantel al azar) para completar el bracket.
+CREATE TABLE IF NOT EXISTS group_cups (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  name TEXT NOT NULL,
+  bracket_size INTEGER NOT NULL,
+  squad_size INTEGER NOT NULL DEFAULT 5,
+  status TEXT NOT NULL DEFAULT 'lobby' CHECK (status IN ('lobby', 'in_progress', 'finished')),
+  round INTEGER NOT NULL DEFAULT 0,
+  created_by INTEGER NOT NULL REFERENCES users(id),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_group_cups_group ON group_cups(group_id);
+
+CREATE TABLE IF NOT EXISTS group_cup_participants (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  cup_id INTEGER NOT NULL REFERENCES group_cups(id),
+  user_id INTEGER REFERENCES users(id),
+  is_cpu INTEGER NOT NULL DEFAULT 0,
+  team_name TEXT NOT NULL,
+  squad TEXT NOT NULL,
+  rating REAL NOT NULL,
+  seed INTEGER,
+  eliminated INTEGER NOT NULL DEFAULT 0,
+  UNIQUE(cup_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_group_cup_participants_cup ON group_cup_participants(cup_id);
+
+CREATE TABLE IF NOT EXISTS group_cup_matches (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  cup_id INTEGER NOT NULL REFERENCES group_cups(id),
+  round INTEGER NOT NULL,
+  slot_index INTEGER NOT NULL,
+  participant_a_id INTEGER REFERENCES group_cup_participants(id),
+  participant_b_id INTEGER REFERENCES group_cup_participants(id),
+  score_a INTEGER,
+  score_b INTEGER,
+  winner_id INTEGER REFERENCES group_cup_participants(id),
+  played INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_group_cup_matches_cup ON group_cup_matches(cup_id, round);

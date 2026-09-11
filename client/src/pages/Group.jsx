@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { CalendarDays, Copy, Crown, LogOut, Plus, Trophy, Users } from "lucide-react";
+import { CalendarDays, Copy, Crown, Link2, LogOut, Plus, Shield, Trophy, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -8,6 +9,7 @@ import Card from "../components/Card.jsx";
 import Avatar from "../components/Avatar.jsx";
 import QuestionBank from "../components/QuestionBank.jsx";
 import WeeklyChallenges from "../components/WeeklyChallenges.jsx";
+import GroupCup from "../components/GroupCup.jsx";
 
 const currentMonth = new Date().toISOString().slice(0, 7);
 
@@ -388,6 +390,37 @@ export default function Group() {
               )}
             </Card>
           )}
+        </div>
+      )}
+
+      {activeGroupId && (
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Link
+            to="/dt-liga"
+            className="flex items-center gap-3 px-4 py-3.5 rounded-card border border-border bg-panel hover:border-accent/40 transition-colors"
+          >
+            <Shield size={18} className="text-[#d97a41] shrink-0" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">Crear Liga Online DT</p>
+              <p className="text-xs text-gray-500">Invitá al grupo, cada uno elige un club real y compiten toda una temporada.</p>
+            </div>
+          </Link>
+          <Link
+            to="/equipo-jugador"
+            className="flex items-center gap-3 px-4 py-3.5 rounded-card border border-border bg-panel hover:border-accent/40 transition-colors"
+          >
+            <Link2 size={18} className="text-[#5ba3d9] shrink-0" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">Desafío grupal: Equipo-Jugador</p>
+              <p className="text-xs text-gray-500">Sala online de 6 u 8: cadena de fútbol con eliminación hasta que quede uno solo.</p>
+            </div>
+          </Link>
+        </div>
+      )}
+
+      {activeGroupId && (
+        <div className="mt-6">
+          <GroupCup groupId={activeGroupId} />
         </div>
       )}
 

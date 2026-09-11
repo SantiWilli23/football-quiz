@@ -231,19 +231,24 @@ export default function OnlineGame({ onExit }) {
     return (
       <div className="max-w-md mx-auto bg-panel border border-border rounded-2xl p-6 space-y-4">
         <p className="text-sm font-semibold">Cantidad de jugadores</p>
-        <div className="flex gap-2">
-          {[2, 4].map((n) => (
+        <div className="grid grid-cols-3 gap-2">
+          {[2, 4, 6, 8].map((n) => (
             <button
               key={n}
               onClick={() => setPlayerCount(n)}
-              className={`flex-1 py-2.5 rounded-2xl border text-sm font-medium ${
+              className={`py-2.5 rounded-2xl border text-sm font-medium ${
                 playerCount === n ? "border-accent bg-accent/10 text-accent" : "border-border text-gray-400"
               }`}
             >
-              {n} jugadores
+              {n}
             </button>
           ))}
         </div>
+        {playerCount >= 6 && (
+          <p className="text-xs text-amber-400">
+            Modo "de a hartos": eliminación directa hasta que quede uno solo. Ideal para un desafío de grupo.
+          </p>
+        )}
         <button onClick={handleCreate} disabled={!myName.trim()} className="w-full bg-accent text-black font-semibold py-2.5 rounded-2xl hover:brightness-110 disabled:opacity-40 transition">
           Crear sala
         </button>
