@@ -118,6 +118,10 @@
     font-weight: 800;
   }
   #mode-row .chip.active { color: #1a1408; background: linear-gradient(120deg, var(--gold2), var(--gold)); }
+  #mode-row .chip.weekly { border-color: #e0524b; color: #ff9c8f; background: rgba(224,82,75,0.14); animation: weeklyPulse 2.2s ease-in-out infinite; }
+  #mode-row .chip.weekly:hover { border-color: #ff6b5c; color: #fff; }
+  #mode-row .chip.weekly.active { color: #2a0906; background: linear-gradient(120deg, #ff9472, #e0524b); box-shadow: 0 0 16px rgba(224,82,75,0.6); animation: none; }
+  @keyframes weeklyPulse { 0%, 100% { box-shadow: 0 0 0 rgba(224,82,75,0); } 50% { box-shadow: 0 0 10px rgba(224,82,75,0.45); } }
   .chip small { display: block; font-weight: 500; opacity: 0.75; font-size: 10.5px; margin-top: 1px; }
 
   .formation-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; margin-bottom: 18px; }
@@ -508,7 +512,7 @@
         <div class="chip active" data-mode="clasico">Clásico<small>ratings ocultos</small></div>
         <div class="chip" data-mode="almanaque">De almanaque<small>ratings visibles</small></div>
         <div class="chip" data-mode="clasico_facil">Clásico Fácil<small>6 cambios · rivales duros</small></div>
-        <div class="chip" data-mode="bayern2020">Semanal: Bayern 2020<small>rivales fijos · ranking de grupo</small></div>
+        <div class="chip weekly" data-mode="bayern2020">🔥 Semanal: Bayern 2020<small>rivales fijos · ranking de grupo</small></div>
       </div>
 
       <h2>Estilo táctico</h2>
