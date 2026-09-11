@@ -3,10 +3,25 @@ import { Link } from "react-router-dom";
 import { useCareer } from "../context/CareerContext.jsx";
 import TeamCrest from "./TeamCrest.jsx";
 
+// Epílogo de Cotrero: si te retiraste en un club que también existe acá,
+// "Dirigí a tu ex-club" deja esta bandera antes de navegar y la consumimos
+// una sola vez para preseleccionarlo.
+function readDtPrefill() {
+  try {
+    const id = localStorage.getItem("fq_dt_prefill_team");
+    if (id) localStorage.removeItem("fq_dt_prefill_team");
+    return id;
+  } catch {
+    return null;
+  }
+}
+
 export default function TeamSelector({ onBack }) {
   const { allTeams, selectTeam } = useCareer();
-  const [league, setLeague] = useState("premier");
-  const [chosen, setChosen] = useState(null);
+  const [prefillId] = useState(readDtPrefill);
+  const prefillTeam = prefillId ? allTeams.find((t) => t.id === prefillId) : null;
+  const [league, setLeague] = useState(prefillTeam ? prefillTeam.league : "premier");
+  const [chosen, setChosen] = useState(prefillTeam || null);
 
   const list = allTeams.filter((t) => t.league === league);
 
@@ -21,6 +36,12 @@ export default function TeamSelector({ onBack }) {
         </div>
         <h1 className="text-2xl font-bold mb-1">Modo Carrera · DT</h1>
         <p className="text-gray-400 text-sm mb-5">Elegí el equipo que vas a dirigir.</p>
+
+        {prefillTeam && (
+          <div className="bg-amber/10 border border-amber/30 rounded-card px-4 py-3 mb-5 text-sm text-amber">
+            ⚽➡️🧢 Colgaste los botines en {prefillTeam.name}. Ya te lo dejamos preseleccionado — confirmá abajo para dirigirlo.
+          </div>
+        )}
 
         <div className="flex gap-2 mb-4">
           {[["premier", "Premier League"], ["laliga", "La Liga"]].map(([id, label]) => (

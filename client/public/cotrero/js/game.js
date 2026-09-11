@@ -445,6 +445,60 @@ const INJURY_TYPES = [
 
 const INTL_WINDOWS = [11, 28];
 
+// Cuando el "calor" de prensa (pressHeat) se acumula demasiado por varias
+// decisiones polémicas seguidas, se dispara una de estas en vez de una
+// decisión normal — la crisis mediática tiene más en juego que el resto.
+const CRISIS_DECISIONS = [
+  {
+    id: "crisis01",
+    context: "La prensa lleva semanas acumulando titulares sobre vos. Hoy el club te cita a una conferencia para que 'aclarés la situación' frente a todos los medios.",
+    options: [
+      { text: "Pedís disculpas públicamente y prometés enfocarte solo en jugar." },
+      { text: "Defendés cada una de tus decisiones sin bajar los brazos." },
+      { text: "Dejás que el club hable por vos y no decís una palabra." },
+    ],
+    effects: [
+      { dt: 6, forma: -3, p: { profesional: 1 } },
+      { dt: -4, p: { lider: 1 }, forma: 2 },
+      { dt: 2, p: { solitario: 1 } },
+    ],
+  },
+  {
+    id: "crisis02",
+    context: "Un dirigente del club te llama en privado. Te dice que la directiva está incómoda con tanto ruido mediático y que esperan un cambio de actitud.",
+    options: [
+      { text: "Le asegurás que vas a bajar tu perfil públicamente." },
+      { text: "Le decís que tu juego dentro de la cancha es lo único que importa." },
+      { text: "Le pedís que el club te respalde en vez de presionarte." },
+    ],
+    effects: [
+      { dt: 5, p: { profesional: 1 } },
+      { forma: 4, p: { solitario: 1 } },
+      { dt: -6, p: { lider: 1 } },
+    ],
+  },
+];
+
+function generateRivalTeammate(playerOvr) {
+  return {
+    name: RIVAL_NAMES[Math.floor(Math.random() * RIVAL_NAMES.length)],
+    ovr: Math.max(50, playerOvr + Math.floor(Math.random() * 11) - 5),
+  };
+}
+
+// Clubes cuyo id coincide 1:1 con un equipo real del Modo Carrera DT
+// (que sólo cubre Premier League y La Liga) — permite ofrecer el epílogo
+// "dirigí a tu ex-club" sin inventar una integración de datos que no existe.
+const DT_COMPATIBLE_CLUBS = new Set([
+  "realmadrid", "barcelona", "atletico", "sevilla", "valencia",
+  "mancity", "liverpool", "arsenal", "chelsea", "newcastle",
+]);
+
+const RIVAL_NAMES = [
+  "Emiliano Duarte", "Thiago Correa", "Marco Veltri", "Lucas Ferreira",
+  "Diego Salcedo", "Bruno Iglesias", "Franco Pellegrino", "Mateo Rueda",
+];
+
 const FLAVOR_TEXTS = {
   dt_sube: [
     "El técnico te buscó después del entrenamiento para darte una palmada.",
@@ -504,7 +558,7 @@ const PERSONALITY_TYPES = {
 // ── STATE ─────────────────────────────────────────────────────────
 
 let state = null;
-let creation = { step: 1, position: null, archetype: null, shownArchetypes: [], name: "", countryIdx: 0, clubIdx: 0 };
+let creation = { step: 1, position: null, archetype: null, shownArchetypes: [], name: "", countryIdx: 0, clubIdx: 0, ironman: false };
 let currentView = "menu";
 let currentMatchId = null;
 let pendingPersonalityReveal = null;
@@ -717,9 +771,11 @@ function applySpecial(id) {
   switch (id) {
     case "foto_condicional":
       if (state.player.forma < 55) state.player.forma = Math.max(10, state.player.forma - 5);
+      state.pressHeat = Math.min(100, (state.pressHeat || 0) + 10);
       break;
     case "presion_clasico":
       state._clasicoPressure = true;
+      state.pressHeat = Math.min(100, (state.pressHeat || 0) + 12);
       break;
     case "arenga_condicional":
       if ((state.player.personality.lider || 0) >= 3) {
@@ -742,6 +798,7 @@ function applySpecial(id) {
     case "polemica_media":
       if (Math.random() > 0.5) state.player.forma = Math.min(100, state.player.forma + 3);
       else { state.player.forma = Math.max(10, state.player.forma - 4); state.player.dtRelation = Math.max(0, state.player.dtRelation - 3); }
+      state.pressHeat = Math.min(100, (state.pressHeat || 0) + 18);
       break;
     case "descanso_condicional":
       state.player.forma = Math.min(100, state.player.forma + (state.player.forma < 60 ? 8 : 3));
@@ -772,22 +829,24 @@ function resolveMatch(matchId, situationChoice) {
   if (!match || match.played) return null;
 
   const injured = !!state.player.injuryStatus;
-  const ovr = injured ? Math.round(state.club.prestige * 0.78) : state.player.ovr;
-  const forma = injured ? 55 : state.player.forma;
+  const benched = !injured && !!state._benchedNextMatch;
+  const sidelined = injured || benched;
+  const ovr = sidelined ? Math.round(state.club.prestige * 0.78) : state.player.ovr;
+  const forma = sidelined ? 55 : state.player.forma;
   const homeBonus = match.home ? 5 : -3;
   const rivalStr = (match.rival.prestige || 70) * 0.68 + Math.random() * 15;
   const myStr = ovr + (forma - 50) * 0.25 + homeBonus + (Math.random() * 18 - 9);
 
   // Situation modifier (no aplica si el jugador no está en cancha)
   let sitMod = 0;
-  if (!injured && situationChoice !== null && situationChoice !== undefined && match.situation) {
+  if (!sidelined && situationChoice !== null && situationChoice !== undefined && match.situation) {
     const sfx = match.situation.effects[situationChoice];
     sitMod = (sfx.rendimiento || 0) * 3;
     if ((sfx.riesgo || 0) > 0 && Math.random() < 0.3) sitMod -= 5;
   }
 
   // Clasico pressure
-  if (!injured && match.type === "clasico" && state._clasicoPressure) {
+  if (!sidelined && match.type === "clasico" && state._clasicoPressure) {
     sitMod += Math.random() > 0.5 ? 8 : -8;
     delete state._clasicoPressure;
   }
@@ -801,7 +860,7 @@ function resolveMatch(matchId, situationChoice) {
   // Player stats
   let goals = 0, assists = 0;
   const pos = state.player.position;
-  if (!injured && (win || draw)) {
+  if (!sidelined && (win || draw)) {
     if (pos === "delantero") {
       if (Math.random() < 0.45) goals = 1;
       if (Math.random() < 0.18) goals = 2;
@@ -829,11 +888,11 @@ function resolveMatch(matchId, situationChoice) {
     teamGoals = rivalGoals = Math.floor(Math.random() * 3);
   }
 
-  const result = { win, draw, loss, teamGoals, rivalGoals, goals, assists, injured };
+  const result = { win, draw, loss, teamGoals, rivalGoals, goals, assists, injured, benched };
   match.played = true;
   match.result = result;
 
-  if (!injured) {
+  if (!sidelined) {
     // Update career stats
     state.career.goals += goals;
     state.career.assists += assists;
@@ -845,6 +904,8 @@ function resolveMatch(matchId, situationChoice) {
     if (win) state.player.forma = Math.min(100, state.player.forma + 6);
     else if (loss) state.player.forma = Math.max(10, state.player.forma - 7);
   }
+
+  if (benched) delete state._benchedNextMatch;
 
   return result;
 }
@@ -913,9 +974,33 @@ function advanceWeek() {
     }
   }
 
+  // ── Prensa acumulada: mucho ruido seguido dispara una crisis mediática ──
+  state.pressHeat = Math.max(0, (state.pressHeat || 0) - 5);
+  let forcedDecision = null;
+  if (state.pressHeat >= 60) {
+    addNews("📰 Los medios no te sueltan. Se armó una bola de nieve mediática.", true);
+    forcedDecision = CRISIS_DECISIONS[Math.floor(Math.random() * CRISIS_DECISIONS.length)];
+    state.pressHeat = 20;
+  } else if (state.pressHeat >= 40 && state.pressHeat < 45) {
+    addNews("Empezás a notar que la prensa junta material sobre vos.");
+  }
+
+  // ── Rival de vestuario: alguien te disputa el puesto ──
+  if (state.player.rival) {
+    if (state.career.week % 4 === 0) {
+      state.player.rival.ovr = Math.min(95, state.player.rival.ovr + Math.floor(Math.random() * 3));
+    }
+    const gap = state.player.rival.ovr - state.player.ovr;
+    if (gap >= 6 && Math.random() < 0.18) {
+      state._benchedNextMatch = true;
+      state.player.dtRelation = Math.max(0, state.player.dtRelation - 3);
+      addNews(`El técnico le dio minutos a ${state.player.rival.name} en tu puesto. Se está haciendo un lugar.`, true);
+    }
+  }
+
   // New decision for this week
   state.schedule.decisionUsed = false;
-  state.schedule.currentDecision = pickDecision();
+  state.schedule.currentDecision = forcedDecision || pickDecision();
 
   save();
 }
@@ -995,7 +1080,7 @@ function addNews(text, highlight = false) {
   state.news = state.news.slice(0, 6);
 }
 
-function initNewGame(name, position, archetype, club, country) {
+function initNewGame(name, position, archetype, club, country, ironman) {
   const stats = initStats(position, archetype);
   const ovr = calcOvr(stats, position);
   state = {
@@ -1015,9 +1100,12 @@ function initNewGame(name, position, archetype, club, country) {
       injuryStatus: null,
       personality: { lider: 0, solitario: 0, fiestero: 0, profesional: 0 },
       personalityRevealed: null,
+      rival: generateRivalTeammate(ovr),
     },
     club,
+    ironman: !!ironman,
     pendingOffer: null,
+    pressHeat: 0,
     career: {
       season: 1,
       week: 0,
@@ -1181,6 +1269,17 @@ function renderCreationStep3() {
             ${country.clubs.map((cl, i) => `<option value="${i}" ${i === creation.clubIdx ? "selected" : ""}>${cl.name} (Nivel ${cl.tier})</option>`).join("")}
           </select>
         </div>
+        <button
+          class="stat-summary-box"
+          data-action="toggle_ironman"
+          style="width:100%;text-align:left;padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;border-color:${creation.ironman ? "var(--danger)" : "var(--border)"}"
+        >
+          <span style="font-size:20px">${creation.ironman ? "☑" : "☐"}</span>
+          <span>
+            <span style="display:block;font-weight:700;color:${creation.ironman ? "var(--danger)" : "var(--text)"}">Modo Ironman</span>
+            <span style="display:block;font-size:12px;color:var(--text-muted)">Sin poder esquivar decisiones ni evitar las situaciones tácticas del partido. Cada elección pesa.</span>
+          </span>
+        </button>
       </div>
       <div class="creation-footer container">
         <button class="btn btn-outline" style="max-width:120px" data-action="creation_back3">Volver</button>
@@ -1267,6 +1366,16 @@ function renderHub() {
               <div style="margin-top:12px;padding:10px 12px;background:rgba(240,144,126,0.12);border:1px solid rgba(240,144,126,0.3);border-radius:6px;display:flex;align-items:center;gap:8px">
                 <span style="font-size:18px">🩹</span>
                 <span style="font-size:13px;color:var(--danger)">${p.injuryStatus.name} — ${p.injuryStatus.weeksLeft} sem. restantes</span>
+              </div>
+            ` : ""}
+
+            ${p.rival ? `
+              <div style="margin-top:12px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:16px">🥊</span>
+                  <span style="font-size:12px;color:var(--text-muted)">Compite por tu puesto: <b style="color:var(--text)">${p.rival.name}</b></span>
+                </div>
+                <span style="font-size:12px;font-weight:700;color:${p.rival.ovr > p.ovr ? "var(--danger)" : "var(--text-muted)"}">${p.rival.ovr} OVR</span>
               </div>
             ` : ""}
           </div>
@@ -1405,9 +1514,13 @@ function renderDecision() {
 
       <p class="decision-note container">Las consecuencias de cada elección no siempre son evidentes.<br>A veces la opción que parece más segura no lo es.</p>
 
-      <div style="margin-top:20px" class="container">
-        <button class="btn btn-ghost" data-action="close_decision">← Volver sin decidir</button>
-      </div>
+      ${state.ironman ? `
+        <p class="decision-note container" style="color:var(--danger)">🔒 Modo Ironman: tenés que elegir una opción.</p>
+      ` : `
+        <div style="margin-top:20px" class="container">
+          <button class="btn btn-ghost" data-action="close_decision">← Volver sin decidir</button>
+        </div>
+      `}
     </div>
   `;
 }
@@ -1441,6 +1554,15 @@ function renderMatch() {
           <button class="btn btn-primary" data-action="resolve_match_sim" data-match="${match.id}">
             Ver resultado
           </button>
+        ` : state._benchedNextMatch ? `
+          <div class="card" style="padding:20px;text-align:center">
+            <div style="font-size:14px;color:var(--gold);line-height:1.6">
+              🪑 El técnico eligió a ${state.player.rival ? state.player.rival.name : "tu competencia"} en tu puesto para este partido.
+            </div>
+          </div>
+          <button class="btn btn-primary" data-action="resolve_match_sim" data-match="${match.id}">
+            Ver resultado
+          </button>
         ` : match.situation ? `
           <div class="situation-box">
             <div class="situation-label">Situación táctica</div>
@@ -1454,9 +1576,13 @@ function renderMatch() {
               </button>
             `).join("")}
           </div>
-          <button class="btn btn-outline" data-action="resolve_match_sim" data-match="${match.id}">
-            Simular sin decidir
-          </button>
+          ${state.ironman ? `
+            <p class="decision-note" style="color:var(--danger)">🔒 Modo Ironman: tenés que elegir una opción táctica.</p>
+          ` : `
+            <button class="btn btn-outline" data-action="resolve_match_sim" data-match="${match.id}">
+              Simular sin decidir
+            </button>
+          `}
         ` : `
           <div class="card" style="padding:20px;text-align:center">
             <div style="font-size:14px;color:var(--text-muted);line-height:1.6">
@@ -1503,6 +1629,8 @@ function renderMatchResult(result, match) {
 
       ${result.injured ? `
         <p style="text-align:center;color:var(--danger);font-size:13px;margin-top:4px">🩹 No jugaste este partido por lesión.</p>
+      ` : result.benched ? `
+        <p style="text-align:center;color:var(--gold);font-size:13px;margin-top:4px">🪑 No jugaste este partido — el técnico eligió a otro en tu puesto.</p>
       ` : `
         <div class="stats-summary">
           <div class="stat-summary-box">
@@ -1621,6 +1749,16 @@ function renderGameOver() {
         <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold-dim)">Legado</div>
         <div class="personality-name">${rankLabel}</div>
       </div>
+      ${state && state.club && DT_COMPATIBLE_CLUBS.has(state.club.id) ? `
+        <div class="card" style="width:100%;max-width:480px;border-color:var(--gold-border)">
+          <div class="card-body" style="text-align:center">
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:10px">
+              Colgaste los botines en ${state.club.name}. ¿Y si seguís del otro lado de la línea?
+            </div>
+            <button class="btn btn-primary" data-action="epilogue_dt">⚽➡️🧢 Dirigí a ${state.club.name} en Modo Carrera DT</button>
+          </div>
+        </div>
+      ` : ""}
       <div style="width:100%;max-width:480px;margin-top:8px;display:flex;flex-direction:column;gap:8px">
         <button class="btn btn-outline" data-action="share_result">📋 Compartir resultado</button>
         <button class="btn btn-ghost" data-action="view_hof">🏛 Salón de la fama</button>
@@ -1723,7 +1861,7 @@ function handleClick(e) {
   switch (action) {
     case "new_game":
       hofRecorded = false; weeklyScoreSubmitted = false;
-      creation = { step: 1, position: null, archetype: null, shownArchetypes: [], name: "", countryIdx: 0, clubIdx: 0 };
+      creation = { step: 1, position: null, archetype: null, shownArchetypes: [], name: "", countryIdx: 0, clubIdx: 0, ironman: false };
       navigate("creation");
       break;
 
@@ -1754,6 +1892,13 @@ function handleClick(e) {
       }
       break;
     }
+
+    case "epilogue_dt":
+      if (state && state.club) {
+        try { localStorage.setItem("fq_dt_prefill_team", state.club.id); } catch (e) {}
+      }
+      window.location.href = "/carrera-dt";
+      break;
 
     case "continue_game":
       if (load()) navigate("hub");
@@ -1806,11 +1951,16 @@ function handleClick(e) {
       render();
       break;
 
+    case "toggle_ironman":
+      creation.ironman = !creation.ironman;
+      render();
+      break;
+
     case "start_game": {
       if (!creation.name.trim()) return;
       const country = COUNTRIES[creation.countryIdx];
       const club = country.clubs[creation.clubIdx];
-      initNewGame(creation.name.trim(), creation.position, creation.archetype, club, country);
+      initNewGame(creation.name.trim(), creation.position, creation.archetype, club, country, creation.ironman);
       navigate("hub");
       break;
     }
@@ -1907,7 +2057,7 @@ function handleClick(e) {
     case "new_game_after":
       hofRecorded = false; weeklyScoreSubmitted = false;
       deleteSave();
-      creation = { step: 1, position: null, archetype: null, shownArchetypes: [], name: "", countryIdx: 0, clubIdx: 0 };
+      creation = { step: 1, position: null, archetype: null, shownArchetypes: [], name: "", countryIdx: 0, clubIdx: 0, ironman: false };
       navigate("creation");
       break;
   }
