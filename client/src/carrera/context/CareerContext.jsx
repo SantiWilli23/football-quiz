@@ -6,7 +6,7 @@ import {
   listSaveSlots, getActiveSlotId, setActiveSlotId,
 } from "../hooks/useCareerSave.js";
 import { simulateUserMatch, simulateQuickMatch, simulateHalf, combineHalves, dayFormFactor } from "../engine/matchEngine.js";
-import { ageSquad, releaseExpired, generateYouthProspects, applyPositionTrainings } from "../engine/playerGrowth.js";
+import { ageSquad, generateYouthProspects, applyPositionTrainings } from "../engine/playerGrowth.js";
 import { assignInitialNumbers, nextAvailableNumber } from "../engine/squadNumbers.js";
 import { getPressQuestion } from "../engine/pressEngine.js";
 import { transferBudgetFor, weeklyWageBill, seasonIncome } from "../engine/financeEngine.js";
@@ -304,6 +304,7 @@ function buildInitialState(teamId) {
     copa: generateCopa(leagueTeams, teamId),
     clubReputation: 50,
     jobOffers: [],
+    renewalOffers: [],
     pendingMatch: null,
     lastMeetingWeek: -1,
     fatigue: {},
@@ -611,6 +612,40 @@ export function CareerProvider({ children }) {
       jobOffers: (s.jobOffers || []).map((o) => o.id === offerId ? { ...o, status: "declined" } : o),
       news: [`❌ Rechazaste la oferta de otro club. Seguís en tu proyecto.`, ...s.news].slice(0, 8),
     }));
+  }
+
+  function renewContract(playerId, years, wage) {
+    setState((s) => {
+      const player = s.squad.find((p) => p.id === playerId);
+      if (!player) return s;
+      return {
+        ...s,
+        squad: s.squad.map((p) => (p.id === playerId ? { ...p, contractYears: years, wage } : p)),
+        renewalOffers: (s.renewalOffers || []).filter((r) => r.playerId !== playerId),
+        news: [`✍️ Renovaste el contrato de ${player.name} por ${years} año${years === 1 ? "" : "s"}.`, ...s.news].slice(0, 8),
+      };
+    });
+  }
+
+  function releasePlayer(playerId) {
+    setState((s) => {
+      const player = s.squad.find((p) => p.id === playerId);
+      if (!player) return s;
+      const squad = s.squad.filter((p) => p.id !== playerId);
+      const lineup = {
+        starters: s.lineup.starters.map((slot) => (slot.playerId === playerId ? { ...slot, playerId: null } : slot)),
+        bench: s.lineup.bench.filter((id) => id !== playerId),
+        reserves: s.lineup.reserves.filter((id) => id !== playerId),
+      };
+      return {
+        ...s,
+        squad,
+        lineup,
+        captainId: s.captainId === playerId ? null : s.captainId,
+        renewalOffers: (s.renewalOffers || []).filter((r) => r.playerId !== playerId),
+        news: [`👋 ${player.name} dejó el club como agente libre.`, ...s.news].slice(0, 8),
+      };
+    });
   }
 
   function respondToIncomingOffer(offerId, accept) {
@@ -1138,10 +1173,23 @@ export function CareerProvider({ children }) {
     // Cada temporada que sigues en el club sube +2 de fidelidad base
     clubReputation = Math.min(100, clubReputation + 2);
 
-    let squad = releaseExpired(ageSquad(s.squad, s.playerStats || {}));
+    // Los contratos que llegan a 0 años ya no se liberan solos: quedan
+    // pendientes de una decisión (renovar o dejar salir) en el Dashboard.
+    let squad = ageSquad(s.squad, s.playerStats || {});
     generateYouthProspects(team, 3).forEach((y) => {
       squad = [...squad, { ...y, number: nextAvailableNumber(squad) }];
     });
+    const renewalOffers = squad
+      .filter((p) => p.contractYears <= 0 && !p.isYouth)
+      .map((p) => ({
+        playerId: p.id,
+        name: p.name,
+        position: p.position,
+        age: p.age,
+        ovr: p.ovr,
+        suggestedWage: Math.max(1, Math.round(p.wage * 1.15 * 10) / 10),
+        suggestedYears: p.age <= 30 ? 3 : p.age <= 33 ? 2 : 1,
+      }));
 
     const income = seasonIncome(team, position);
     // Club reputation alta → más presupuesto (hasta +20%)
@@ -1183,12 +1231,17 @@ export function CareerProvider({ children }) {
       ? [`📩 ${newJobOffers.find(o => o.status === "pending").fromTeamName} te ofrece su banquillo. Revisá tu bandeja.`]
       : [];
 
+    const renewalNews = renewalOffers.length
+      ? [`✍️ ${renewalOffers.length} contrato${renewalOffers.length === 1 ? "" : "s"} por vencer. Decidí si renovás o dejás salir.`]
+      : [];
+
     return {
       ...s,
       season: s.season + 1,
       week: 0,
       lastMonthlyScoutWeek: 0,
       squad,
+      renewalOffers,
       lineup: defaultLineup(squad, s.formation),
       budget,
       lastSeasonIncome: income,
@@ -1209,6 +1262,7 @@ export function CareerProvider({ children }) {
       news: [
         ...(continentalNewsLine ? [continentalNewsLine] : []),
         ...offerNews,
+        ...renewalNews,
         objectiveMet ? `¡Objetivo cumplido! Terminaste ${position}° — la directiva confía en el proyecto.` : `No se cumplió el objetivo (terminaste ${position}°). La directiva está molesta.`,
         `Nueva temporada: llegan 3 promesas de la cantera.`,
         `Copa del Rey: primera ronda disponible en jornada ${COPA_WEEKS[0]}.`,
@@ -1276,6 +1330,8 @@ export function CareerProvider({ children }) {
       applyTacticsPreset,
       acceptJobOffer,
       declineJobOffer,
+      renewContract,
+      releasePlayer,
       holdSquadMeeting,
       answerPressConference,
       standingsSorted: state ? sortStandings(state.standings) : [],

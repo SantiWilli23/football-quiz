@@ -44,6 +44,7 @@ export default function Dashboard({ onPlayMatch }) {
   const {
     state, team, currentFixture, isRivalMatch, playNextMatchFirstHalf, playCopaMatch, copaIsAvailable,
     playContinentalMatch, continentalIsAvailable, standingsSorted, resetCareer, acceptJobOffer, declineJobOffer,
+    renewContract, releasePlayer,
     preseasonAvailable, playPreseasonMatch,
     COPA_ROUNDS: CR, COPA_WEEKS: CW, CONTINENTAL_ROUNDS, CONTINENTAL_WEEKS, CONTINENTAL_LABELS,
   } = useCareer();
@@ -60,6 +61,7 @@ export default function Dashboard({ onPlayMatch }) {
   const clubRep = state.clubReputation ?? 50;
   const cLabel = clubRepLabel(clubRep);
   const pendingJobOffers = (state.jobOffers || []).filter((o) => o.status === "pending");
+  const renewalOffers = state.renewalOffers || [];
 
   const injuries = (state.injuries || []).filter(i => i.returnWeek > state.week);
   const injuredPlayers = injuries.map(i => {
@@ -331,6 +333,40 @@ export default function Dashboard({ onPlayMatch }) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Contratos por vencer */}
+      {renewalOffers.length > 0 && (
+        <div className="bg-blue/5 border border-blue/30 rounded-2xl p-5 space-y-3">
+          <p className="text-xs text-blue uppercase tracking-wide font-semibold">✍️ Contratos por vencer</p>
+          {renewalOffers.map((offer) => (
+            <div key={offer.playerId} className="flex items-center gap-4 flex-wrap">
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold">{offer.name}</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {offer.position} · {offer.age} años · OVR {offer.ovr}
+                </p>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  Renovar: {offer.suggestedYears} año{offer.suggestedYears === 1 ? "" : "s"} a €{offer.suggestedWage}k/sem
+                </p>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <button
+                  onClick={() => renewContract(offer.playerId, offer.suggestedYears, offer.suggestedWage)}
+                  className="text-sm font-medium px-4 py-2 rounded-2xl bg-blue/15 text-blue border border-blue/30 hover:bg-blue/25 transition-colors"
+                >
+                  Renovar
+                </button>
+                <button
+                  onClick={() => releasePlayer(offer.playerId)}
+                  className="text-sm font-medium px-4 py-2 rounded-2xl bg-panel border border-border text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
+                >
+                  Dejar salir
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
