@@ -50,7 +50,6 @@ export default function Trivia() {
   const [questions, setQuestions] = useState(null);
   const [modeBData, setModeBData] = useState(null);
   const [mode, setMode] = useState("a");
-  const [timedMode, setTimedMode] = useState(false);
   const [powerupUsage, setPowerupUsage] = useState(loadPowerupUsage);
 
   const budget = powerupBudget(stats?.current_streak ?? 0);
@@ -124,17 +123,12 @@ export default function Trivia() {
               <ShareButton trivia={questions} modeB={modeBData} stats={stats} />
               <GroupSelector className="mr-1" />
               {mode === "a" && (
-                <button
-                  onClick={() => setTimedMode((v) => !v)}
-                  title="Modo contrarreloj: 20 segundos por pregunta"
-                  className={`flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded border transition-colors ${
-                    timedMode
-                      ? "bg-red-500/20 border-red-500 text-red-400"
-                      : "bg-transparent border-gray-600 text-gray-400 hover:border-gray-500"
-                  }`}
+                <span
+                  title="Tenés 20 segundos por pregunta — así nadie tiene tiempo de googlear la respuesta"
+                  className="flex items-center gap-1.5 px-3 py-1 text-sm font-medium rounded border border-red-500/40 bg-red-500/10 text-red-400"
                 >
-                  <Timer size={14} /> Contrarreloj
-                </button>
+                  <Timer size={14} /> 20s por pregunta
+                </span>
               )}
               <button
                 onClick={() => setMode("a")}
@@ -208,7 +202,7 @@ export default function Trivia() {
                     index={i}
                     total={questions.length}
                     onAnswered={(result) => handleAnswered(i, result)}
-                    timedMode={timedMode}
+                    timedMode
                     powerups={powerupsLeft}
                     onUsePowerup={handleUsePowerup}
                   />

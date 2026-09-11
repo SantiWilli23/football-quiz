@@ -217,9 +217,15 @@ export default function QuestionCard({ item, index, total, onAnswered, timedMode
               : "border-red-500/40 bg-red-500/10 text-red-400"
           }`}
         >
-          <span className="text-sm font-medium">{result.is_correct ? "¡Correcto!" : "Incorrecto"}</span>
-          <span className="text-sm font-semibold">
-            {result.is_correct ? `+${result.points} puntos` : "+0 puntos"}
+          <span className="text-sm font-medium">
+            {result.timedOut ? "⏱️ Se acabó el tiempo" : result.is_correct ? "¡Correcto!" : "Incorrecto"}
+          </span>
+          <span className="text-sm font-semibold text-right">
+            {result.dailyRank != null
+              ? result.points > 0
+                ? `#${result.dailyRank} del día · +${result.points} pts`
+                : "Fuera del podio de hoy"
+              : "Se define al terminar las 3 de hoy"}
           </span>
         </div>
       )}

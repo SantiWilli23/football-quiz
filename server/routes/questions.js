@@ -1,10 +1,35 @@
 import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
-import { todayStr, computePoints, getCurrentStreak, getBestStreak } from "../utils/points.js";
+import { todayStr, settleDailyScoreIfComplete, getCurrentStreak, getBestStreak } from "../utils/points.js";
 
 const router = Router();
 router.use(requireAuth);
+
+// Anti-Google casero: cuando alguien pide las preguntas de hoy, anotamos la
+// hora. Si una respuesta llega mucho después de esa hora (más tiempo del que
+// da el cronómetro de la pantalla + margen de red), se cuenta como
+// incorrecta sin importar qué haya marcado — así no alcanza con tenerla
+// abierta un rato y googlear la respuesta con calma. Vive en memoria nomás
+// (se resetea si el server reinicia): es una traba disuasiva, no una
+// auditoría de seguridad, y no vale la pena una tabla nueva para esto.
+const firstServedAt = new Map(); // `${userId}:${dateStr}` -> timestamp (ms)
+const SECONDS_PER_QUESTION = 20;
+const GRACE_SECONDS = 15; // margen por latencia de red + tiempo de lectura del enunciado
+const MAX_QUESTIONS_PER_DAY = 3;
+const TIME_BUDGET_MS = (SECONDS_PER_QUESTION + GRACE_SECONDS) * MAX_QUESTIONS_PER_DAY * 1000;
+
+function markServed(userId, dateStr) {
+  const key = `${userId}:${dateStr}`;
+  if (!firstServedAt.has(key)) firstServedAt.set(key, Date.now());
+}
+
+function isWithinTimeBudget(userId, dateStr) {
+  const key = `${userId}:${dateStr}`;
+  const servedAt = firstServedAt.get(key);
+  if (!servedAt) return true; // el server se reinició o no pasó por /today: no penalizamos por eso
+  return Date.now() - servedAt <= TIME_BUDGET_MS;
+}
 
 function publicQuestion(q) {
   return {
@@ -31,6 +56,8 @@ router.get("/today", async (req, res) => {
     if (qResult.rows.length === 0) {
       return res.status(404).json({ error: "No hay preguntas programadas para hoy" });
     }
+
+    markServed(req.userId, today);
 
     const answersResult = await db.execute({
       sql: `SELECT * FROM answers WHERE user_id = ? AND question_id IN (${qResult.rows.map(() => "?").join(",")})`,
@@ -87,14 +114,29 @@ router.post("/:id/answer", async (req, res) => {
       return res.status(409).json({ error: "Ya respondiste esta pregunta" });
     }
 
-    const is_correct = answer === question.correct_answer;
-    const { points } = await computePoints(req.userId, today, is_correct);
+    // Si la respuesta llega pasado el tiempo que tuvo la pregunta en pantalla
+    // (cronómetro + margen), se cuenta como incorrecta sin importar qué haya
+    // marcado — evita el truco de dejarla abierta y googlear con calma.
+    const onTime = isWithinTimeBudget(req.userId, today);
+    const is_correct = onTime && answer === question.correct_answer;
 
     await db.execute({
       sql: `INSERT INTO answers (user_id, question_id, answer, is_correct, points)
-            VALUES (?, ?, ?, ?, ?)`,
-      args: [req.userId, questionId, answer, is_correct ? 1 : 0, points],
+            VALUES (?, ?, ?, ?, 0)`,
+      args: [req.userId, questionId, answer, is_correct ? 1 : 0],
     });
+
+    // Recién cuando completa las 3 preguntas de hoy se sabe su % de acierto
+    // final, así que ahí se calcula el puesto del día y se le suman los
+    // puntos correspondientes a ESA respuesta (la que cerró el día).
+    const settlement = await settleDailyScoreIfComplete(req.userId, today);
+    const points = settlement?.points ?? 0;
+    if (settlement) {
+      await db.execute({
+        sql: "UPDATE answers SET points = ? WHERE user_id = ? AND question_id = ?",
+        args: [points, req.userId, questionId],
+      });
+    }
 
     const current_streak = await getCurrentStreak(req.userId);
 
@@ -103,6 +145,8 @@ router.post("/:id/answer", async (req, res) => {
       points,
       correct_answer: question.correct_answer,
       current_streak,
+      timedOut: !onTime,
+      dailyRank: settlement?.rank ?? null,
     });
   } catch (err) {
     console.error(err);

@@ -83,12 +83,54 @@ export async function getBestStreak(userId) {
   return best;
 }
 
-// Computes points for answering `dateStr`'s question with correctness `isCorrect`.
-export async function computePoints(userId, dateStr, isCorrect) {
-  if (!isCorrect) return { points: 0, streakAfter: 0 };
+// Ya no se paga 10 puntos fijos por pregunta acertada: se paga por el
+// PORCENTAJE DE ACIERTO DEL DÍA respecto a todos los demás. 1° lugar = 10,
+// 2° = 5, 3° = 3, 4° = 2, el resto no suma (empates comparten puesto y premio).
+const RANK_TIER_POINTS = { 1: 10, 2: 5, 3: 3, 4: 2 };
+
+async function dailyQuestionCount(dateStr) {
+  const result = await db.execute({ sql: "SELECT COUNT(*) as c FROM questions WHERE scheduled_date = ?", args: [dateStr] });
+  return Number(result.rows[0]?.c || 0);
+}
+
+// Si esta respuesta completa las preguntas de HOY para el usuario, calcula su
+// puesto en el ranking del día por % de acierto (contra todo el que ya haya
+// terminado también) y le asigna los puntos según el puesto. Si todavía le
+// faltan preguntas de hoy por responder, no hay nada que asignar aún: se
+// devuelve null y esa respuesta puntual queda en 0 hasta que complete el día.
+export async function settleDailyScoreIfComplete(userId, dateStr) {
+  const total = await dailyQuestionCount(dateStr);
+  if (total === 0) return null;
+
+  const mine = await db.execute({
+    sql: `SELECT COUNT(*) as answered, COALESCE(SUM(is_correct), 0) as correct
+          FROM answers a JOIN questions q ON q.id = a.question_id
+          WHERE a.user_id = ? AND q.scheduled_date = ?`,
+    args: [userId, dateStr],
+  });
+  const answered = Number(mine.rows[0].answered);
+  const correct = Number(mine.rows[0].correct);
+  if (answered < total) return null;
+
+  const myAccuracy = correct / total;
+
+  const others = await db.execute({
+    sql: `SELECT a.user_id, COUNT(*) as answered, COALESCE(SUM(a.is_correct), 0) as correct
+          FROM answers a JOIN questions q ON q.id = a.question_id
+          WHERE q.scheduled_date = ? AND a.user_id != ?
+          GROUP BY a.user_id
+          HAVING answered >= ?`,
+    args: [dateStr, userId, total],
+  });
+
+  const betterCount = others.rows.filter((r) => Number(r.correct) / total > myAccuracy).length;
+  const rank = betterCount + 1; // ranking denso: empatados comparten puesto y premio
+  const tierPoints = RANK_TIER_POINTS[rank] || 0;
+
   const yesterday = addDays(dateStr, -1);
   const priorStreak = await streakEndingExactlyOn(userId, yesterday);
-  const streakAfter = priorStreak + 1;
-  const bonus = streakAfter >= 3 ? 2 : 0;
-  return { points: 10 + bonus, streakAfter };
+  const streakAfter = correct > 0 ? priorStreak + 1 : 0;
+  const streakBonus = correct > 0 && streakAfter >= 3 ? 2 : 0;
+
+  return { rank, accuracy: myAccuracy, points: tierPoints + streakBonus, streakAfter };
 }
