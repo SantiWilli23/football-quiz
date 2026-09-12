@@ -6,6 +6,8 @@ import { useGroups } from "../context/GroupContext.jsx";
 const LEAGUE_OPTIONS = [
   { key: "premier", label: "Premier League" },
   { key: "laliga", label: "La Liga" },
+  { key: "seriea", label: "Serie A" },
+  { key: "bundesliga", label: "Bundesliga" },
 ];
 
 export default function DtLeagueHome() {
@@ -89,7 +91,7 @@ export default function DtLeagueHome() {
                   <div className="min-w-0">
                     <p className="text-sm font-semibold truncate">{l.name}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      {l.leagueKey === "premier" ? "Premier League" : "La Liga"} · {l.memberCount} jugador{l.memberCount === 1 ? "" : "es"}
+                      {LEAGUE_OPTIONS.find((o) => o.key === l.leagueKey)?.label || l.leagueKey} · {l.memberCount} jugador{l.memberCount === 1 ? "" : "es"}
                       {l.myTeamId ? ` · tu equipo: ${l.myTeamId}` : " · sin equipo elegido"}
                     </p>
                   </div>

@@ -251,7 +251,7 @@ router.post("/", async (req, res) => {
   const groupId = Number(req.body?.groupId);
   const weeksPerMonth = clamp(Number(req.body?.weeksPerMonth) || 4, 1, 20);
   if (!name) return res.status(400).json({ error: "Ponele un nombre a la liga" });
-  if (!["premier", "laliga"].includes(leagueKey)) return res.status(400).json({ error: "Liga inválida" });
+  if (!["premier", "laliga", "seriea", "bundesliga"].includes(leagueKey)) return res.status(400).json({ error: "Liga inválida" });
   if (!groupId) return res.status(400).json({ error: "Elegí a qué grupo pertenece esta liga" });
 
   const creatorMembership = await db.execute({

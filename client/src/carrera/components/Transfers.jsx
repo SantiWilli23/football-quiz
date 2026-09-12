@@ -16,14 +16,13 @@ export default function Transfers() {
   const {
     state, team, offerForPlayer, offerContractTo, completeTransfer,
     isOnOfferCooldown, weeksUntilCanOffer, isTransferWindowOpen,
-    toggleWatchlist, respondToIncomingOffer,
+    toggleWatchlist, respondToIncomingOffer, sendScoutMission,
   } = useCareer();
   const [subTab, setSubTab] = useState("mercado");
   const [teamId, setTeamId] = useState(teams.find((t) => t.id !== team.id).id);
   const [query, setQuery] = useState("");
   const [posFilter, setPosFilter] = useState("");
   const [target, setTarget] = useState(null);
-  const [showMonthly, setShowMonthly] = useState(!!state.monthlyReports?.length);
 
   const windowOpen = isTransferWindowOpen();
   const ownedIds      = new Set([...state.squad.map((p) => p.id), ...(state.acquired || [])]);
@@ -51,7 +50,8 @@ export default function Transfers() {
       .slice(0, 40);
   }, [pool, query, posFilter]);
 
-  const latestMonthly = state.monthlyReports?.[0];
+  const hiredScouts = state.hiredScouts || [];
+  const scoutMissions = state.scoutMissions || [];
 
   return (
     <div className="space-y-5">
@@ -168,7 +168,27 @@ export default function Transfers() {
                     }
                   </div>
 
-                  <div className="shrink-0 ml-auto sm:ml-0">
+                  <div className="shrink-0 ml-auto sm:ml-0 flex items-center gap-1.5">
+                    {!report && !scoutMissions.some((m) => m.playerIds.includes(p.id)) && (
+                      hiredScouts.length ? (
+                        <select
+                          defaultValue=""
+                          onChange={(e) => { if (e.target.value) sendScoutMission(e.target.value, p.id); e.target.value = ""; }}
+                          title="Mandar a un ojeador a investigarlo"
+                          className="text-sm font-medium px-3 py-2.5 rounded-2xl bg-panel border border-border text-gray-300 hover:border-gray-500 transition-colors"
+                        >
+                          <option value="">🔎 Scoutear…</option>
+                          {hiredScouts.map((sc) => (
+                            <option key={sc.id} value={sc.id}>{sc.specialty === "ovr" ? "OVR" : sc.specialty === "potential" ? "Potencial" : "Generalista"}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className="text-xs text-gray-600" title="Contratá un ojeador en la pestaña Scouting">🔎 sin ojeadores</span>
+                      )
+                    )}
+                    {scoutMissions.some((m) => m.playerIds.includes(p.id)) && (
+                      <span className="text-xs text-gray-600 px-2">🔎 en camino…</span>
+                    )}
                     {cooling ? (
                       <span className="text-xs text-gray-600 px-3 py-2.5 inline-block" title="Te rechazaron hace poco">
                         Esperá {weeksUntilCanOffer(p.id)} sem.
@@ -225,42 +245,6 @@ export default function Transfers() {
           onClose={() => setTarget(null)}
         />
       )}
-
-      {showMonthly && latestMonthly && (
-        <MonthlyReportModal report={latestMonthly} onClose={() => setShowMonthly(false)} />
-      )}
-    </div>
-  );
-}
-
-function MonthlyReportModal({ report, onClose }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-3" onClick={onClose}>
-      <div className="bg-panel border border-amber/30 rounded-2xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-        <div className="p-4 border-b border-border">
-          <p className="text-xs font-semibold uppercase tracking-wide text-amber">📋 Antes de entrar al mercado</p>
-          <p className="font-semibold mt-1">Informe mensual de Iker Salgado</p>
-        </div>
-        <div className="p-4 space-y-3">
-          <div className="flex flex-wrap gap-2">
-            {report.entries.map((e) => {
-              const t = teamById(e.teamId);
-              return (
-                <span
-                  key={e.playerId}
-                  className={`text-xs px-3 py-1.5 rounded-full border ${e.isGem ? "border-amber/50 bg-amber/10 text-amber" : "border-border text-gray-400"}`}
-                  title={t ? t.name : ""}
-                >
-                  {e.isGem && "💎 "}{e.name} (~{e.potentialEstimate}){t ? ` · ${t.name}` : ""}
-                </span>
-              );
-            })}
-          </div>
-          <button onClick={onClose} className="w-full bg-accent text-black font-semibold py-2.5 rounded-2xl hover:brightness-110 transition">
-            Ir al mercado
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

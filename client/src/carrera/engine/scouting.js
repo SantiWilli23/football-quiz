@@ -1,36 +1,48 @@
 import { teamById } from "../data/teams.js";
 import { askingPrice } from "./transferMarket.js";
 
-// Sistema de reclutadores: nadie conoce de memoria el OVR exacto de un
-// jugador (ni siquiera los propios canteranos), y mucho menos su techo. Hay
-// que mandar un ojeador a verlo. Cada uno tiene una zona donde es más
-// fiable y un margen de error que se reduce en su especialidad.
-export const SCOUTS = [
-  { id: "s1", name: "Martín Ochoa", region: "laliga", accuracy: 0.9, desc: "Ex-jugador de La Liga, ojo fino para el mediocampo." },
-  { id: "s2", name: "Derek Whitmore", region: "premier", accuracy: 0.9, desc: "Veterano de las canteras inglesas, especialista en Premier." },
-  { id: "s3", name: "Camila Duarte", region: "global", accuracy: 0.8, desc: "Sudamérica y mercados emergentes, buena para jóvenes." },
-  {
-    id: "s4",
-    name: "Iker Salgado",
-    region: "global",
-    accuracy: 0.75,
-    monthly: true,
-    desc: "No lo mandás vos: viaja por su cuenta y una vez al mes te manda un informe con jugadores random que encontró — siempre trae a alguien con potencial alto.",
+// Sistema de ojeadores: ya no hay un reclutador fijo con un margen de error
+// dado — se CONTRATA un ojeador especializado (con contrato de 1 o 2
+// temporadas) y se lo manda a investigar a un jugador puntual. El tipo de
+// ojeador define qué tan preciso es en cada dato: uno especializado en OVR
+// clava el nivel actual pero se equivoca ~10 puntos en el potencial (y
+// viceversa); el generalista (más caro) es fino en las dos cosas.
+export const SCOUT_SPECIALTIES = {
+  ovr: {
+    id: "ovr",
+    label: "Especialista en Nivel (OVR)",
+    desc: "Clava el rango de OVR actual, pero su proyección de potencial pierde precisión (~10 de margen extra).",
   },
-];
+  potential: {
+    id: "potential",
+    label: "Especialista en Potencial",
+    desc: "Proyecta el techo del jugador con gran precisión, pero su rango de OVR actual es menos fino (~10 de margen extra).",
+  },
+  both: {
+    id: "both",
+    label: "Generalista",
+    desc: "Preciso en OVR y en potencial a la vez — por algo cuesta bastante más.",
+  },
+};
 
-// El 4to reclutador no se dirige a mano: cada 4 semanas manda su propio
-// informe con jugadores al azar de cualquier plantel, y ese lote siempre
-// trae al menos uno con potencial real ≥85 (la "joya" del mes).
-export const MONTHLY_SCOUT_ID = "s4";
-const MONTHLY_INTERVAL_WEEKS = 4;
-const MONTHLY_BATCH_SIZE = 3;
-const MONTHLY_MIN_POTENTIAL = 85;
+export const MAX_SCOUTS = 3;
+export const SPECIALTY_GAP = 10;
+export const SCOUT_MISSION_MIN_WEEKS = 1;
+export const SCOUT_MISSION_MAX_WEEKS = 3;
+// Cuántos compañeros de liga trae de yapa el informe del jugador pedido.
+export const SCOUT_LEAGUEMATES_COUNT = 5;
 
-export function shouldRunMonthlyScout(week, lastRunWeek) {
-  return lastRunWeek == null || week - lastRunWeek >= MONTHLY_INTERVAL_WEEKS;
+function costRangeFor(specialty) {
+  return specialty === "both" ? [15, 15] : [5, 7];
 }
 
+export function rollScoutCost(specialty) {
+  const [lo, hi] = costRangeFor(specialty);
+  return lo === hi ? lo : lo + Math.floor(Math.random() * (hi - lo + 1));
+}
+
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function rnd(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
 function sample(pool, n) {
   const copy = pool.slice();
   const picked = [];
@@ -41,65 +53,32 @@ function sample(pool, n) {
   return picked;
 }
 
-// Arma el lote random del mes: primero garantiza la "joya" (potencial real
-// ≥85), después completa con jugadores cualquiera. Devuelve los jugadores
-// elegidos, no todavía los reportes (eso lo arma quien tenga el contexto de
-// la carrera, así puede fusionarlos con los reportes ya existentes).
-export function pickMonthlyDiscoveries(allPlayers, excludeIds = []) {
-  const pool = allPlayers.filter((p) => !excludeIds.includes(p.id));
-  const gems = pool.filter((p) => p.potential >= MONTHLY_MIN_POTENTIAL);
-  const gem = gems.length ? sample(gems, 1)[0] : sample(pool, 1)[0];
-  const rest = sample(pool.filter((p) => p.id !== gem?.id), MONTHLY_BATCH_SIZE - 1);
-  return [gem, ...rest].filter(Boolean);
-}
+// Genera un reporte para un jugador puntual, según la especialidad del
+// ojeador contratado (no hace falta pasar el ojeador completo, alcanza con
+// su especialidad — así también sirve para re-generar informes viejos).
+export function scoutPlayer(specialty, player) {
+  if (!player) return null;
+  const baseErr = 3; // ojeador de base, sin sesgo
+  const ovrErr = specialty === "potential" ? baseErr + SPECIALTY_GAP : baseErr;
+  const potErr = specialty === "ovr" ? Math.round(baseErr * 1.4) + SPECIALTY_GAP : Math.round(baseErr * 1.4);
 
-function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
-function rnd(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
-
-function regionMatches(scout, player, teamLeague) {
-  if (scout.region === "global") return false;
-  return scout.region === teamLeague;
-}
-
-// Genera un reporte: rango estimado de OVR (todavía incierto), una única
-// cifra de potencial ("probablemente llegue a esto", no una garantía) y una
-// oferta sugerida para el pase. Cuanto más especializado el ojeador en esa
-// liga, más angosto (preciso) el margen de error.
-export function scoutPlayer(scoutId, player, teamLeague) {
-  const scout = SCOUTS.find((s) => s.id === scoutId);
-  if (!scout || !player) return null;
-  const specialized = regionMatches(scout, player, teamLeague);
-  const acc = clamp(scout.accuracy + (specialized ? 0.12 : 0), 0.5, 0.98);
-  const errMargin = Math.round((1 - acc) * 22); // 0.98 acc -> ±1, 0.5 acc -> ±11
-
-  const ovrErr = Math.max(1, errMargin + rnd(-1, 1));
-  const potErr = Math.max(1, Math.round(errMargin * 1.4) + rnd(-1, 2));
   const potentialEstimate = clamp(player.potential + rnd(-potErr, potErr), player.ovr, 99);
-
   const sellerTeam = teamById(player.teamId);
   const suggestedOffer = sellerTeam ? askingPrice(player, sellerTeam) : player.value;
 
   return {
-    scoutId,
-    scoutName: scout.name,
+    specialty,
     playerId: player.id,
     ovrRange: [clamp(player.ovr - ovrErr, 30, 99), clamp(player.ovr + ovrErr, 30, 99)],
     potentialEstimate,
     suggestedOffer,
-    specialized,
-    accuracy: acc,
   };
 }
 
-// Combina reportes previos con uno nuevo. El rango de OVR sólo se angosta
-// (la info nueva suma certeza); el potencial se promedia hacia el nuevo dato,
-// así varios informes convergen en una cifra más confiable sin fingir que
-// ahora es un número exacto y garantizado.
+// Combina reportes previos con uno nuevo: el rango de OVR sólo se angosta,
+// el potencial se promedia hacia el nuevo dato.
 export function mergeReports(prev, next) {
   if (!prev) return next;
-  // prev puede venir de un informe guardado con el formato viejo (sin
-  // potentialEstimate) — en ese caso no hay nada que promediar, se usa el
-  // nuevo tal cual en vez de contaminar la cuenta con NaN.
   const potentialEstimate = Number.isFinite(prev.potentialEstimate)
     ? Math.round((prev.potentialEstimate + next.potentialEstimate) / 2)
     : next.potentialEstimate;
@@ -107,10 +86,33 @@ export function mergeReports(prev, next) {
     ...next,
     ovrRange: [Math.max(prev.ovrRange[0], next.ovrRange[0]), Math.min(prev.ovrRange[1], next.ovrRange[1])],
     potentialEstimate,
-    history: [...(prev.history || [prev.scoutName]), next.scoutName],
   };
 }
 
 export function formatRange([lo, hi]) {
   return lo === hi ? `${lo}` : `${lo}–${hi}`;
+}
+
+// Arma la misión de scouting: como el ojeador ya viaja hasta la liga del
+// jugador pedido, aprovecha para traer informes de varios compañeros de
+// liga más. El informe completo recién está listo 1-3 semanas después.
+export function buildScoutMission(scout, targetPlayer, week, allPlayers) {
+  const targetTeam = teamById(targetPlayer.teamId);
+  const league = targetTeam?.league;
+  const leaguemates = league
+    ? sample(
+        allPlayers.filter((p) => p.teamId !== targetPlayer.teamId && teamById(p.teamId)?.league === league),
+        SCOUT_LEAGUEMATES_COUNT
+      )
+    : [];
+  return {
+    id: `mission_${scout.id}_${targetPlayer.id}_${week}_${Date.now()}`,
+    scoutId: scout.id,
+    scoutSpecialty: scout.specialty,
+    targetPlayerId: targetPlayer.id,
+    targetPlayerName: targetPlayer.name,
+    playerIds: [targetPlayer.id, ...leaguemates.map((p) => p.id)],
+    requestedWeek: week,
+    resolveWeek: week + rnd(SCOUT_MISSION_MIN_WEEKS, SCOUT_MISSION_MAX_WEEKS),
+  };
 }

@@ -12,7 +12,9 @@ export function askingPrice(player, sellerTeam) {
   const importance = clamp((player.ovr - sellerTeam.prestige * 7) / 12, 0, 1);
   const importanceFactor = 1 + importance * 0.4;
   const listedFactor = player.transferListed ? 0.8 : 1;
-  return Math.round(player.value * contractFactor * importanceFactor * listedFactor * 20) / 20;
+  // Canterano: el club no lo suelta barato ni loco — es de la casa.
+  const academyFactor = player.academyProduct && !player.transferListed ? 1.5 : 1;
+  return Math.round(player.value * contractFactor * importanceFactor * listedFactor * academyFactor * 20) / 20;
 }
 
 // El club acepta o no la oferta por el pase. Si la oferta iguala o supera lo
@@ -26,10 +28,14 @@ export function clubDecision(player, sellerTeam, offerAmount) {
   const ask = askingPrice(player, sellerTeam);
   const ratio = offerAmount / ask;
   const hint = ratio < 0.65 ? "muy_lejos" : ratio < 0.9 ? "lejos" : ratio < 1 ? "cerca" : "alcanzado";
-  if (ratio >= 1) {
+  // Un canterano no se cierra solo con igualar el precio pedido — el club
+  // duda incluso con la plata en la mano, así que hay que pasarse bastante.
+  const acceptThreshold = player.academyProduct && !player.transferListed ? 1.2 : 1;
+  if (ratio >= acceptThreshold) {
     return { accepted: true, hint, ratio, askingPrice: ask };
   }
-  const acceptChance = clamp((ratio - 0.5) * 1.5, 0.02, 0.9);
+  const chanceMult = player.academyProduct && !player.transferListed ? 0.6 : 1.5;
+  const acceptChance = clamp((ratio - 0.5) * chanceMult, 0.01, 0.9);
   const accepted = Math.random() < acceptChance;
   return { accepted, hint, ratio, askingPrice: ask };
 }

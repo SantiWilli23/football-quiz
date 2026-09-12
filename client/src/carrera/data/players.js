@@ -24,7 +24,7 @@ function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function rnd(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-function attributesFor(pos, ovr) {
+export function attributesFor(pos, ovr) {
   const w = POS_ATTR_WEIGHTS[pos] || POS_ATTR_WEIGHTS.CM;
   const out = {};
   Object.keys(w).forEach((k) => {
@@ -45,15 +45,19 @@ const POSITION_VALUE_MULT = {
 // Curva exponencial (como el mercado real: la diferencia entre 85 y 90 OVR
 // vale mucho más que entre 65 y 70), con multiplicadores de edad, posición
 // y "sueño" (potencial por encima del nivel actual).
-export function calculateValue(ovr, age, potential, position = "CM") {
+export function calculateValue(ovr, age, potential, position = "CM", homegrown = false) {
   if (ovr < 58) return Math.max(0.05, Math.round((ovr - 50) * 0.08 * 20) / 20);
   const base = Math.pow(1.155, ovr - 58) * 0.55;
   const posMult = POSITION_VALUE_MULT[position] || 1;
   const ageMult =
-    age <= 21 ? 1.4 : age <= 24 ? 1.2 : age <= 27 ? 1.05 : age <= 30 ? 0.82 : age <= 33 ? 0.55 : 0.3;
+    age <= 19 ? 1.6 : age <= 21 ? 1.4 : age <= 24 ? 1.2 : age <= 27 ? 1.05 : age <= 30 ? 0.82 : age <= 33 ? 0.55 : 0.3;
   const potGap = Math.max(0, (potential ?? ovr) - ovr);
-  const potMult = 1 + potGap * 0.05;
-  const value = base * posMult * ageMult * potMult;
+  const potMult = 1 + potGap * 0.07;
+  // Un canterano con recorrido (sale de las inferiores del propio club) vale
+  // bastante más de lo que dice su OVR de hoy: el club sabe lo que tiene y
+  // no lo regala ni cuando todavía no es titular fijo.
+  const homegrownMult = homegrown ? 1.6 : 1;
+  const value = base * posMult * ageMult * potMult * homegrownMult;
   return Math.round(value * 20) / 20;
 }
 
@@ -65,7 +69,7 @@ function wageFor(ovr, age = 26) {
   return Math.max(1, Math.round(base * ageMult));
 }
 
-function buildPlayer(team, { name, pos, age, nat, ovr, pot }, isYouth = false) {
+function buildPlayer(team, { name, pos, age, nat, ovr, pot, homegrown }, isYouth = false) {
   const potential = clamp(pot ?? ovr + rnd(0, 6), ovr, 99);
   return {
     id: nextId(team.id),
@@ -75,12 +79,15 @@ function buildPlayer(team, { name, pos, age, nat, ovr, pot }, isYouth = false) {
     position: pos,
     ovr,
     potential,
-    value: isYouth ? Math.min(3, calculateValue(ovr, age, potential, pos)) : calculateValue(ovr, age, potential, pos),
+    value: isYouth ? Math.min(3, calculateValue(ovr, age, potential, pos)) : calculateValue(ovr, age, potential, pos, !!homegrown),
     wage: wageFor(ovr, age),
     teamId: team.id,
     attributes: attributesFor(pos, ovr),
     contractYears: isYouth ? rnd(2, 4) : rnd(1, 5),
     isYouth,
+    // Canterano: salió de las inferiores de este mismo club — el club se
+    // resiste mucho más a venderlo (ver transferMarket.js: askingPrice/clubDecision).
+    academyProduct: !!homegrown,
     releaseClause: null,
     transferListed: false,
     loanListed: false,
@@ -90,16 +97,25 @@ function buildPlayer(team, { name, pos, age, nat, ovr, pot }, isYouth = false) {
 const FIRST_NAMES = {
   premier: ["James", "Harry", "Jack", "Oliver", "Callum", "Ethan", "Tyler", "Reece", "Dominic", "Mason", "Aaron", "Kyle", "Ryan", "Josh", "Ben", "Sam", "Tom", "Luke", "George", "Charlie"],
   laliga: ["Álvaro", "Pablo", "Diego", "Adrián", "Iker", "Mario", "Sergio", "Rubén", "Marc", "Nico", "Hugo", "Javi", "Raúl", "Iván", "Óscar", "Dani", "Guille", "Manu", "Jorge", "Víctor"],
+  seriea: ["Matteo", "Francesco", "Lorenzo", "Andrea", "Davide", "Simone", "Riccardo", "Alessandro", "Federico", "Gabriele", "Nicolo", "Giacomo", "Leonardo", "Tommaso", "Mattia", "Edoardo", "Marco", "Luca", "Stefano", "Antonio"],
+  bundesliga: ["Lukas", "Maximilian", "Felix", "Jonas", "Niklas", "Leon", "Finn", "Julian", "Tobias", "Philipp", "Moritz", "Elias", "Paul", "Tim", "Fabian", "Jan", "Sebastian", "David", "Erik", "Marvin"],
 };
 const LAST_NAMES = {
   premier: ["Whitfield", "Sanderson", "Hargreaves", "Osborne", "Kingsley", "Pearce", "Fenwick", "Colton", "Marsh", "Hopwood", "Radley", "Bristow", "Draycott", "Nolan", "Ashworth", "Broughton"],
   laliga: ["Serrano", "Bustos", "Cabañas", "Molinero", "Vallejo", "Cortés", "Herrán", "Peláez", "Escudero", "Marín", "Salcedo", "Bravo", "Cañete", "Roldán", "Zamorano", "Aguirre"],
+  seriea: ["Bianchi", "Ricci", "Marino", "Greco", "Conti", "De Luca", "Mancini", "Costa", "Fontana", "Santoro", "Rinaldi", "Barbieri", "Gatti", "Villa", "Caruso", "Moretti"],
+  bundesliga: ["Schneider", "Fischer", "Weber", "Wagner", "Becker", "Hoffmann", "Schulz", "Krüger", "Zimmermann", "Braun", "Vogel", "Krause", "Lang", "Berger", "Hartmann", "Keller"],
 };
 const NAT_PREMIER = ["ENG", "SCO", "WAL", "IRL", "FRA", "NED", "BEL"];
 const NAT_LALIGA = ["ESP", "ARG", "BRA", "URU", "COL", "POR", "FRA"];
+const NAT_SERIEA = ["ITA", "ARG", "BRA", "FRA", "SRB", "ALB"];
+const NAT_BUNDESLIGA = ["GER", "AUT", "SUI", "NED", "POL", "TUR"];
 
 function fillerPool(league) {
-  return league === "laliga" ? { first: FIRST_NAMES.laliga, last: LAST_NAMES.laliga, nats: NAT_LALIGA } : { first: FIRST_NAMES.premier, last: LAST_NAMES.premier, nats: NAT_PREMIER };
+  if (league === "laliga") return { first: FIRST_NAMES.laliga, last: LAST_NAMES.laliga, nats: NAT_LALIGA };
+  if (league === "seriea") return { first: FIRST_NAMES.seriea, last: LAST_NAMES.seriea, nats: NAT_SERIEA };
+  if (league === "bundesliga") return { first: FIRST_NAMES.bundesliga, last: LAST_NAMES.bundesliga, nats: NAT_BUNDESLIGA };
+  return { first: FIRST_NAMES.premier, last: LAST_NAMES.premier, nats: NAT_PREMIER };
 }
 
 function tierRange(tier) {
@@ -481,7 +497,7 @@ const NAMED = {
     { name: "Inigo Martinez", pos: "CB", age: 33, nat: "ESP", ovr: 82, pot: 82 },
     { name: "Andreas Christensen", pos: "CB", age: 28, nat: "DEN", ovr: 82, pot: 83 },
     { name: "Eric Garcia", pos: "CB", age: 23, nat: "ESP", ovr: 79, pot: 82 },
-    { name: "Pau Cubarsi", pos: "CB", age: 17, nat: "ESP", ovr: 73, pot: 87 },
+    { name: "Pau Cubarsi", pos: "CB", age: 17, nat: "ESP", ovr: 80, pot: 94, homegrown: true },
     { name: "Alejandro Balde", pos: "LB", age: 20, nat: "ESP", ovr: 82, pot: 90 },
     { name: "Frenkie de Jong", pos: "CM", age: 27, nat: "NED", ovr: 85, pot: 87 },
     { name: "Pedri", pos: "CM", age: 22, nat: "ESP", ovr: 87, pot: 93 },

@@ -12,7 +12,13 @@ import { getPressQuestion } from "../engine/pressEngine.js";
 import { transferBudgetFor, weeklyWageBill, seasonIncome } from "../engine/financeEngine.js";
 import { generateMarketRumors, generateIncomingOffers } from "../engine/transferAI.js";
 import { effectiveOvr, TRAINING_WEEKS } from "../engine/positions.js";
-import { scoutPlayer, mergeReports, MONTHLY_SCOUT_ID, shouldRunMonthlyScout, pickMonthlyDiscoveries } from "../engine/scouting.js";
+import {
+  scoutPlayer, mergeReports, buildScoutMission, rollScoutCost,
+  MAX_SCOUTS, SCOUT_SPECIALTIES,
+} from "../engine/scouting.js";
+import {
+  generateAcademyBatch, rollAcademyCost, MAX_ACADEMY_AGENTS, ACADEMY_INTERVAL_WEEKS,
+} from "../engine/academy.js";
 import { clubDecision, playerDecision } from "../engine/transferMarket.js";
 import { rollMatchInjuries, recoverInjuries, forceInjury } from "../engine/injuryEngine.js";
 import { rollEvent } from "../engine/eventEngine.js";
@@ -191,24 +197,6 @@ function remapLineupToFormation(squad, lineup, formation) {
   return { starters, bench, reserves };
 }
 
-function runMonthlyDiscovery(scoutReports, week) {
-  const players = pickMonthlyDiscoveries(allPlayers);
-  const updatedReports = { ...scoutReports };
-  const entries = [];
-  players.forEach((p, i) => {
-    const sellerTeam = teamById(p.teamId);
-    const report = scoutPlayer(MONTHLY_SCOUT_ID, p, sellerTeam?.league);
-    if (!report) return;
-    updatedReports[p.id] = mergeReports(scoutReports[p.id], report);
-    entries.push({ playerId: p.id, name: p.name, teamId: p.teamId, potentialEstimate: report.potentialEstimate, isGem: i === 0 });
-  });
-  const gem = entries.find((e) => e.isGem);
-  const newsLine = entries.length
-    ? `🔭 Informe mensual de Iker Salgado: ${entries.map((e) => e.name).join(", ")}${gem ? ` (la joya: ${gem.name}, ~${gem.potentialEstimate})` : ""}.`
-    : null;
-  return { scoutReports: updatedReports, entry: { week, entries }, newsLine };
-}
-
 function generateCopa(leagueTeams, myTeamId) {
   const others = [...leagueTeams.filter(t => t.id !== myTeamId)].sort(() => Math.random() - 0.5);
   const opponents = others.slice(0, 4).map(t => ({ id: t.id, name: t.name, tier: t.tier || 2 }));
@@ -264,7 +252,6 @@ function buildInitialState(teamId) {
   const leagueTeamIds = teamsByLeague(team.league).map((t) => t.id);
   const leagueTeams = teamsByLeague(team.league);
   const { calendar } = roundRobinCalendar(leagueTeamIds, teamId);
-  const initialDiscovery = runMonthlyDiscovery({}, 0);
 
   return {
     version: 1,
@@ -281,16 +268,17 @@ function buildInitialState(teamId) {
     boardConfidence: 60,
     calendar,
     standings: initialStandings(leagueTeamIds),
-    news: [initialDiscovery.newsLine, `Bienvenido al banquillo de ${team.name}.`].filter(Boolean),
+    news: [`Bienvenido al banquillo de ${team.name}.`],
     history: [],
     lastMatch: null,
     gameOver: false,
-    scoutReports: initialDiscovery.scoutReports,
-    scoutsAvailable: {},
+    scoutReports: {},
+    hiredScouts: [],
+    scoutMissions: [],
+    academyAgents: [],
+    academyPool: [],
     acquired: [],
     offerCooldowns: {},
-    monthlyReports: [initialDiscovery.entry],
-    lastMonthlyScoutWeek: 0,
     watchlist: [],
     sentOffers: [],
     incomingOffers: [],
@@ -534,6 +522,7 @@ export function CareerProvider({ children }) {
         wage: wageAgreed,
         contractYears: yearsAgreed,
         isYouth: false,
+        academyProduct: false,
         transferListed: false,
         loanListed: false,
         releaseClause: null,
@@ -672,37 +661,71 @@ export function CareerProvider({ children }) {
     });
   }
 
-  const SCOUT_COOLDOWN_WEEKS = 3;
+  // ===== Scouting (ojeadores contratados) =====
 
-  function scoutCooldownKey(scoutId, playerId) {
-    return `${scoutId}__${playerId}`;
+  function SCOUT_SPECIALTY_LABEL(specialty) {
+    return SCOUT_SPECIALTIES[specialty]?.label || specialty;
   }
 
-  function isScoutOnCooldown(scoutId, playerId) {
-    const until = (state?.scoutCooldowns || {})[scoutCooldownKey(scoutId, playerId)];
-    return until != null && state.week < until;
-  }
-
-  function weeksUntilScoutAvailable(scoutId, playerId) {
-    const until = (state?.scoutCooldowns || {})[scoutCooldownKey(scoutId, playerId)];
-    return until != null ? Math.max(0, until - state.week) : 0;
-  }
-
-  function sendScout(scoutId, playerId) {
-    const player = allPlayers.find((p) => p.id === playerId) || state.squad.find((p) => p.id === playerId);
-    if (!player) return null;
-    if (isScoutOnCooldown(scoutId, playerId)) {
-      return { error: "cooldown", weeksLeft: weeksUntilScoutAvailable(scoutId, playerId) };
-    }
-    const targetTeam = teamById(player.teamId);
-    const report = scoutPlayer(scoutId, player, targetTeam?.league);
+  function hireScout(specialty, seasons) {
+    if ((state.hiredScouts || []).length >= MAX_SCOUTS) return { error: "max_scouts" };
+    const cost = rollScoutCost(specialty);
+    if (state.budget < cost) return { error: "insufficient_budget", cost };
+    const scout = { id: `scout_${Date.now()}_${Math.floor(Math.random() * 9999)}`, specialty, cost, seasonsLeft: seasons, hiredWeek: state.week };
     setState((s) => ({
       ...s,
-      scoutReports: { ...s.scoutReports, [playerId]: mergeReports(s.scoutReports[playerId], report) },
-      scoutCooldowns: { ...(s.scoutCooldowns || {}), [scoutCooldownKey(scoutId, playerId)]: s.week + SCOUT_COOLDOWN_WEEKS },
-      news: [`🔎 ${report.scoutName} entregó su informe sobre ${player.name}.`, ...s.news].slice(0, 8),
+      budget: Math.round((s.budget - cost) * 20) / 20,
+      hiredScouts: [...(s.hiredScouts || []), scout],
+      news: [`🔎 Contrataste a un ojeador ${SCOUT_SPECIALTY_LABEL(specialty)} por €${cost}M (${seasons} temporada${seasons === 1 ? "" : "s"}).`, ...s.news].slice(0, 8),
     }));
-    return report;
+    return { success: true, scout };
+  }
+
+  function sendScoutMission(scoutId, playerId) {
+    const scout = (state.hiredScouts || []).find((sc) => sc.id === scoutId);
+    const player = allPlayers.find((p) => p.id === playerId) || state.squad.find((p) => p.id === playerId);
+    if (!scout || !player) return null;
+    if ((state.scoutMissions || []).some((m) => m.scoutId === scoutId && m.targetPlayerId === playerId)) {
+      return { error: "already_pending" };
+    }
+    const mission = buildScoutMission(scout, player, state.week, allPlayers);
+    setState((s) => ({
+      ...s,
+      scoutMissions: [...(s.scoutMissions || []), mission],
+      news: [`🧳 Mandaste al ojeador a investigar a ${player.name} (informe en ${mission.resolveWeek - s.week} semana${mission.resolveWeek - s.week === 1 ? "" : "s"}).`, ...s.news].slice(0, 8),
+    }));
+    return { success: true, mission };
+  }
+
+  // ===== Inferiores (agentes de la cantera) =====
+
+  function hireAcademyAgent(specialty, seasons, country) {
+    if ((state.academyAgents || []).length >= MAX_ACADEMY_AGENTS) return { error: "max_agents" };
+    const cost = rollAcademyCost(specialty);
+    if (state.budget < cost) return { error: "insufficient_budget", cost };
+    const agent = { id: `agent_${Date.now()}_${Math.floor(Math.random() * 9999)}`, specialty, cost, seasonsLeft: seasons, hiredWeek: state.week, lastRunWeek: state.week, country };
+    setState((s) => ({
+      ...s,
+      budget: Math.round((s.budget - cost) * 20) / 20,
+      academyAgents: [...(s.academyAgents || []), agent],
+      news: [`🌍 Mandaste un agente de inferiores ${SCOUT_SPECIALTY_LABEL(specialty)} a recorrer ${country} (€${cost}M, ${seasons} temporada${seasons === 1 ? "" : "s"}).`, ...s.news].slice(0, 8),
+    }));
+    return { success: true, agent };
+  }
+
+  function signAcademyProspect(prospectId) {
+    setState((s) => {
+      const prospect = (s.academyPool || []).find((p) => p.id === prospectId);
+      if (!prospect) return s;
+      const signed = { ...prospect, teamId: s.teamId, number: nextAvailableNumber(s.squad) };
+      return {
+        ...s,
+        squad: [...s.squad, signed],
+        lineup: { ...s.lineup, reserves: [...s.lineup.reserves, signed.id] },
+        academyPool: s.academyPool.filter((p) => p.id !== prospectId),
+        news: [`🌱 Sumaste a ${prospect.name} (${prospect.age} años) desde las inferiores.`, ...s.news].slice(0, 8),
+      };
+    });
   }
 
   function currentFixture() {
@@ -889,14 +912,46 @@ export function CareerProvider({ children }) {
         };
       }
 
-      if (shouldRunMonthlyScout(next.week, next.lastMonthlyScoutWeek)) {
-        const discovery = runMonthlyDiscovery(next.scoutReports, next.week);
+      // Informes de scouting que ya llegan (se pidieron 1-3 semanas atrás)
+      const dueMissions = (next.scoutMissions || []).filter((m) => m.resolveWeek <= next.week);
+      if (dueMissions.length) {
+        let scoutReports = { ...next.scoutReports };
+        const reportedNames = [];
+        dueMissions.forEach((m) => {
+          m.playerIds.forEach((pid) => {
+            const p = allPlayers.find((pl) => pl.id === pid) || next.squad.find((pl) => pl.id === pid);
+            if (!p) return;
+            const report = scoutPlayer(m.scoutSpecialty, p);
+            if (!report) return;
+            scoutReports[pid] = mergeReports(scoutReports[pid], report);
+          });
+          reportedNames.push(m.targetPlayerName);
+        });
         next = {
           ...next,
-          scoutReports: discovery.scoutReports,
-          monthlyReports: [discovery.entry, ...(next.monthlyReports || [])].slice(0, 12),
-          lastMonthlyScoutWeek: next.week,
-          news: discovery.newsLine ? [discovery.newsLine, ...next.news].slice(0, 8) : next.news,
+          scoutReports,
+          scoutMissions: (next.scoutMissions || []).filter((m) => m.resolveWeek > next.week),
+          news: [`📋 Llegó el informe de scouting sobre ${reportedNames.join(", ")} (y varios compañeros de liga).`, ...next.news].slice(0, 8),
+        };
+      }
+
+      // Lote mensual de las inferiores: cada agente activo trae ~7 chicos cada 4 semanas
+      const dueAgents = (next.academyAgents || []).filter((a) => next.week - a.lastRunWeek >= ACADEMY_INTERVAL_WEEKS);
+      if (dueAgents.length) {
+        let academyPool = [...(next.academyPool || [])];
+        const agentNames = [];
+        const updatedAgents = next.academyAgents.map((a) => {
+          if (next.week - a.lastRunWeek < ACADEMY_INTERVAL_WEEKS) return a;
+          const batch = generateAcademyBatch(a, next.week, `${a.id}_${next.week}`);
+          academyPool = [...academyPool, ...batch];
+          agentNames.push(a.country);
+          return { ...a, lastRunWeek: next.week };
+        });
+        next = {
+          ...next,
+          academyAgents: updatedAgents,
+          academyPool: academyPool.slice(0, 60),
+          news: [`🌱 Llegaron ${dueAgents.length * 7} chicos nuevos de las inferiores (${agentNames.join(", ")}).`, ...next.news].slice(0, 8),
         };
       }
 
@@ -1235,11 +1290,21 @@ export function CareerProvider({ children }) {
       ? [`✍️ ${renewalOffers.length} contrato${renewalOffers.length === 1 ? "" : "s"} por vencer. Decidí si renovás o dejás salir.`]
       : [];
 
+    // Los contratos de ojeadores y agentes de inferiores duran temporadas
+    // enteras — al cerrar una, se les descuenta una y se van los que llegan a 0.
+    const hiredScouts = (s.hiredScouts || [])
+      .map((sc) => ({ ...sc, seasonsLeft: sc.seasonsLeft - 1 }))
+      .filter((sc) => sc.seasonsLeft > 0);
+    const academyAgents = (s.academyAgents || [])
+      .map((a) => ({ ...a, seasonsLeft: a.seasonsLeft - 1 }))
+      .filter((a) => a.seasonsLeft > 0);
+
     return {
       ...s,
       season: s.season + 1,
       week: 0,
-      lastMonthlyScoutWeek: 0,
+      hiredScouts,
+      academyAgents,
       squad,
       renewalOffers,
       lineup: defaultLineup(squad, s.formation),
@@ -1301,9 +1366,10 @@ export function CareerProvider({ children }) {
       resetLineupPositions,
       moveToBench,
       moveToReserves,
-      sendScout,
-      isScoutOnCooldown,
-      weeksUntilScoutAvailable,
+      hireScout,
+      sendScoutMission,
+      hireAcademyAgent,
+      signAcademyProspect,
       offerForPlayer,
       offerContractTo,
       completeTransfer,

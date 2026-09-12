@@ -278,5 +278,271 @@
     "shortName": "VLL",
     "league": "laliga",
     "tier": 3
+  },
+  {
+    "id": "inter",
+    "name": "Inter de Milán",
+    "shortName": "INT",
+    "league": "seriea",
+    "tier": 1
+  },
+  {
+    "id": "juventus",
+    "name": "Juventus",
+    "shortName": "JUV",
+    "league": "seriea",
+    "tier": 1
+  },
+  {
+    "id": "milan",
+    "name": "AC Milan",
+    "shortName": "MIL",
+    "league": "seriea",
+    "tier": 1
+  },
+  {
+    "id": "napoli",
+    "name": "Napoli",
+    "shortName": "NAP",
+    "league": "seriea",
+    "tier": 1
+  },
+  {
+    "id": "roma",
+    "name": "AS Roma",
+    "shortName": "ROM",
+    "league": "seriea",
+    "tier": 2
+  },
+  {
+    "id": "atalanta",
+    "name": "Atalanta",
+    "shortName": "ATA",
+    "league": "seriea",
+    "tier": 2
+  },
+  {
+    "id": "lazio",
+    "name": "Lazio",
+    "shortName": "LAZ",
+    "league": "seriea",
+    "tier": 2
+  },
+  {
+    "id": "fiorentina",
+    "name": "Fiorentina",
+    "shortName": "FIO",
+    "league": "seriea",
+    "tier": 2
+  },
+  {
+    "id": "bologna",
+    "name": "Bologna",
+    "shortName": "BOL",
+    "league": "seriea",
+    "tier": 2
+  },
+  {
+    "id": "torino",
+    "name": "Torino",
+    "shortName": "TOR",
+    "league": "seriea",
+    "tier": 3
+  },
+  {
+    "id": "udinese",
+    "name": "Udinese",
+    "shortName": "UDI",
+    "league": "seriea",
+    "tier": 3
+  },
+  {
+    "id": "genoa",
+    "name": "Genoa",
+    "shortName": "GEN",
+    "league": "seriea",
+    "tier": 3
+  },
+  {
+    "id": "monza",
+    "name": "Monza",
+    "shortName": "MON",
+    "league": "seriea",
+    "tier": 3
+  },
+  {
+    "id": "cagliari",
+    "name": "Cagliari",
+    "shortName": "CAG",
+    "league": "seriea",
+    "tier": 3
+  },
+  {
+    "id": "verona",
+    "name": "Hellas Verona",
+    "shortName": "VER",
+    "league": "seriea",
+    "tier": 3
+  },
+  {
+    "id": "empoli",
+    "name": "Empoli",
+    "shortName": "EMP",
+    "league": "seriea",
+    "tier": 3
+  },
+  {
+    "id": "lecce",
+    "name": "Lecce",
+    "shortName": "LEC",
+    "league": "seriea",
+    "tier": 3
+  },
+  {
+    "id": "parma",
+    "name": "Parma",
+    "shortName": "PAR",
+    "league": "seriea",
+    "tier": 3
+  },
+  {
+    "id": "como",
+    "name": "Como",
+    "shortName": "COM",
+    "league": "seriea",
+    "tier": 3
+  },
+  {
+    "id": "venezia",
+    "name": "Venezia",
+    "shortName": "VEN",
+    "league": "seriea",
+    "tier": 3
+  },
+  {
+    "id": "bayern",
+    "name": "Bayern Múnich",
+    "shortName": "BAY",
+    "league": "bundesliga",
+    "tier": 1
+  },
+  {
+    "id": "dortmund",
+    "name": "Borussia Dortmund",
+    "shortName": "BVB",
+    "league": "bundesliga",
+    "tier": 1
+  },
+  {
+    "id": "leverkusen",
+    "name": "Bayer Leverkusen",
+    "shortName": "B04",
+    "league": "bundesliga",
+    "tier": 1
+  },
+  {
+    "id": "leipzig",
+    "name": "RB Leipzig",
+    "shortName": "RBL",
+    "league": "bundesliga",
+    "tier": 1
+  },
+  {
+    "id": "frankfurt",
+    "name": "Eintracht Frankfurt",
+    "shortName": "SGE",
+    "league": "bundesliga",
+    "tier": 2
+  },
+  {
+    "id": "stuttgart",
+    "name": "VfB Stuttgart",
+    "shortName": "VFB",
+    "league": "bundesliga",
+    "tier": 2
+  },
+  {
+    "id": "gladbach",
+    "name": "Borussia Mönchengladbach",
+    "shortName": "BMG",
+    "league": "bundesliga",
+    "tier": 2
+  },
+  {
+    "id": "wolfsburg",
+    "name": "VfL Wolfsburg",
+    "shortName": "WOB",
+    "league": "bundesliga",
+    "tier": 2
+  },
+  {
+    "id": "freiburg",
+    "name": "SC Friburgo",
+    "shortName": "SCF",
+    "league": "bundesliga",
+    "tier": 2
+  },
+  {
+    "id": "unionberlin",
+    "name": "Union Berlín",
+    "shortName": "FCU",
+    "league": "bundesliga",
+    "tier": 2
+  },
+  {
+    "id": "werder",
+    "name": "Werder Bremen",
+    "shortName": "SVW",
+    "league": "bundesliga",
+    "tier": 3
+  },
+  {
+    "id": "mainz",
+    "name": "Mainz 05",
+    "shortName": "M05",
+    "league": "bundesliga",
+    "tier": 3
+  },
+  {
+    "id": "hoffenheim",
+    "name": "TSG Hoffenheim",
+    "shortName": "TSG",
+    "league": "bundesliga",
+    "tier": 3
+  },
+  {
+    "id": "augsburg",
+    "name": "FC Augsburgo",
+    "shortName": "FCA",
+    "league": "bundesliga",
+    "tier": 3
+  },
+  {
+    "id": "bochum",
+    "name": "VfL Bochum",
+    "shortName": "BOC",
+    "league": "bundesliga",
+    "tier": 3
+  },
+  {
+    "id": "heidenheim",
+    "name": "Heidenheim",
+    "shortName": "HDH",
+    "league": "bundesliga",
+    "tier": 3
+  },
+  {
+    "id": "stpauli",
+    "name": "St. Pauli",
+    "shortName": "STP",
+    "league": "bundesliga",
+    "tier": 3
+  },
+  {
+    "id": "kiel",
+    "name": "Holstein Kiel",
+    "shortName": "KIE",
+    "league": "bundesliga",
+    "tier": 3
   }
 ]
