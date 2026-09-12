@@ -12,6 +12,8 @@ const CONFIDENCE_GRADIENT = {
 const COPA_ROUNDS = ["Dieciseisavos", "Cuartos de final", "Semifinal", "Final"];
 const COPA_WEEKS  = [6, 14, 22, 30];
 
+const LEAGUE_LABELS = { premier: "Premier League", laliga: "La Liga", seriea: "Serie A", bundesliga: "Bundesliga" };
+
 function prestigeLabel(p) {
   if (p >= 80) return { text: "Leyenda", color: "text-amber" };
   if (p >= 60) return { text: "Reconocido", color: "text-emerald" };
@@ -127,7 +129,7 @@ export default function Dashboard({ onPlayMatch }) {
         <TeamCrest team={team} size={56} />
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-lg truncate">{team.name}</p>
-          <p className="text-sm text-gray-500">{team.league === "premier" ? "Premier League" : "La Liga"} · Temporada {state.season}</p>
+          <p className="text-sm text-gray-500">{LEAGUE_LABELS[team.league] || team.league} · Temporada {state.season}</p>
         </div>
         <div className="text-right shrink-0 space-y-2">
           <div>
@@ -312,7 +314,7 @@ export default function Dashboard({ onPlayMatch }) {
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold">{offer.fromTeamName}</p>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    {offer.fromLeague === "premier" ? "Premier League" : offer.fromLeague === "laliga" ? "La Liga" : offer.fromLeague} · Te ofrecen el puesto de técnico principal
+                    {LEAGUE_LABELS[offer.fromLeague] || offer.fromLeague} · Te ofrecen el puesto de técnico principal
                   </p>
                   <p className="text-xs text-gray-600 mt-0.5">Aceptar implica dejar {team.name} y empezar de cero en ese club. Mantenés tu reputación acumulada.</p>
                 </div>

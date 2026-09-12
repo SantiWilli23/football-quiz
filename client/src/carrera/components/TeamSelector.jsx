@@ -43,8 +43,8 @@ export default function TeamSelector({ onBack }) {
           </div>
         )}
 
-        <div className="flex gap-2 mb-4">
-          {[["premier", "Premier League"], ["laliga", "La Liga"]].map(([id, label]) => (
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {[["premier", "Premier League"], ["laliga", "La Liga"], ["seriea", "Serie A"], ["bundesliga", "Bundesliga"]].map(([id, label]) => (
             <button
               key={id}
               onClick={() => { setLeague(id); setChosen(null); }}
