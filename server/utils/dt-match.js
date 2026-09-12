@@ -13,6 +13,32 @@ function tierToOvr(tier) {
   return tier === 1 ? 84 : tier === 2 ? 77 : 70;
 }
 
+// Puntos semanales hacia el ranking general del grupo, ajustados por la
+// diferencia de nivel entre los dos clubes — no todos parten del mismo
+// objetivo: el Barça (tier 1) y la Real Sociedad (tier 2) no valen lo mismo
+// si ganan o pierden. Ganarle a un club más grande vale mucho más que
+// cumplir con lo esperado, y un club grande que pierde contra uno chico
+// resta en vez de simplemente no sumar.
+const DT_TIER_WEIGHT = { 1: 3, 2: 2, 3: 1 };
+
+export function dtWeeklyPoints(myTier, oppTier, outcome) {
+  const myWeight = DT_TIER_WEIGHT[myTier] ?? 2;
+  const oppWeight = DT_TIER_WEIGHT[oppTier] ?? 2;
+  const gap = oppWeight - myWeight; // positivo = el rival era más grande que vos
+
+  if (outcome === "win") return 10 + Math.max(0, gap) * 8;
+  if (outcome === "draw") return 4 + Math.max(0, gap) * 3;
+  // loss: perder contra uno más chico resta (gap negativo), perder contra
+  // uno más grande no penaliza — era lo esperable.
+  return gap < 0 ? gap * 4 : 0;
+}
+
+export function dtOutcomeFor(myGoals, oppGoals) {
+  if (myGoals > oppGoals) return "win";
+  if (myGoals < oppGoals) return "loss";
+  return "draw";
+}
+
 function dayFormFactor() {
   const noise = (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
   return clamp(1 + noise * 0.22, 0.68, 1.32);

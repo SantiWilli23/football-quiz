@@ -5,8 +5,8 @@ export async function myLeagues() {
   return data.leagues;
 }
 
-export async function createLeague(name, leagueKey, weeksPerMonth) {
-  const { data } = await api.post("/dt-league", { name, leagueKey, weeksPerMonth });
+export async function createLeague(name, leagueKey, weeksPerMonth, groupId) {
+  const { data } = await api.post("/dt-league", { name, leagueKey, weeksPerMonth, groupId });
   return data.league;
 }
 

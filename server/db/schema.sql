@@ -342,6 +342,10 @@ CREATE TABLE IF NOT EXISTS dt_leagues (
   league_key TEXT NOT NULL CHECK (league_key IN ('premier', 'laliga')),
   invite_code TEXT UNIQUE NOT NULL,
   created_by INTEGER NOT NULL REFERENCES users(id),
+  -- La liga pertenece a UN grupo general (Trivia/Duelos/etc): solo esos
+  -- miembros pueden unirse. Nullable por compatibilidad con ligas viejas de
+  -- antes de esta columna, que no se restringen retroactivamente.
+  group_id INTEGER REFERENCES groups_t(id),
   status TEXT NOT NULL DEFAULT 'lobby' CHECK (status IN ('lobby', 'in_progress', 'finished')),
   current_week INTEGER NOT NULL DEFAULT 0,
   total_weeks INTEGER NOT NULL DEFAULT 0,
@@ -395,6 +399,28 @@ CREATE TABLE IF NOT EXISTS dt_league_tactics (
   updated_at TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE(league_id, team_id)
 );
+
+-- Puntos semanales de la Liga Online DT hacia el ranking general del grupo
+-- (mismo ranking que trivia/duelos/Modo B, ver rankingBetween en stats.js).
+-- Se suma UNA fila por jornada jugada por cada usuario — no por partido de
+-- CPU, esos no puntúan porque nadie los jugó. El puntaje ya viene ajustado
+-- por diferencia de nivel entre los dos clubes (ver dtWeeklyPoints en
+-- utils/dt-match.js): ganarle a un club más grande vale mucho más que
+-- ganarle al que "tenía" que ganarte, y un club grande que pierde contra uno
+-- chico resta — la Real Sociedad y el Barça no parten del mismo objetivo.
+CREATE TABLE IF NOT EXISTS dt_league_weekly_scores (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES dt_leagues(id),
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  week INTEGER NOT NULL,
+  points INTEGER NOT NULL DEFAULT 0,
+  settled_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(league_id, user_id, week)
+);
+
+CREATE INDEX IF NOT EXISTS idx_dt_weekly_scores_group ON dt_league_weekly_scores(group_id, settled_at);
+CREATE INDEX IF NOT EXISTS idx_dt_weekly_scores_user ON dt_league_weekly_scores(user_id);
 
 -- Copa grupal: torneo de eliminación directa dentro de un grupo. Cada
 -- participante arma su "equipo" draftando jugadores reales del mismo pool de

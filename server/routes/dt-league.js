@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
-import { simulateFixture, generateRoundRobin } from "../utils/dt-match.js";
+import { simulateFixture, generateRoundRobin, dtWeeklyPoints, dtOutcomeFor } from "../utils/dt-match.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TEAMS_PATH = path.join(__dirname, "../data/dt-teams.json");
@@ -72,6 +72,31 @@ async function activeMonthOf(leagueId, totalMonths) {
   return m == null ? totalMonths : m;
 }
 
+// Puntos semanales hacia el ranking del grupo (ver dt_league_weekly_scores):
+// una fila por manager humano involucrado, ignorado si la liga no tiene
+// grupo asociado (ligas viejas de antes de esta columna). ON CONFLICT DO
+// NOTHING de yapa, por si algún día se reprocesa el mismo fixture.
+async function awardWeeklyPoints(league, fx, homeGoals, awayGoals, members, tierByTeam) {
+  if (!league.group_id) return;
+  const homeMember = members.find((m) => m.team_id === fx.home_team_id);
+  const awayMember = members.find((m) => m.team_id === fx.away_team_id);
+  const homeTier = tierByTeam[fx.home_team_id] || 2;
+  const awayTier = tierByTeam[fx.away_team_id] || 2;
+
+  const entries = [];
+  if (homeMember) entries.push({ userId: homeMember.user_id, points: dtWeeklyPoints(homeTier, awayTier, dtOutcomeFor(homeGoals, awayGoals)) });
+  if (awayMember) entries.push({ userId: awayMember.user_id, points: dtWeeklyPoints(awayTier, homeTier, dtOutcomeFor(awayGoals, homeGoals)) });
+
+  for (const entry of entries) {
+    await db.execute({
+      sql: `INSERT INTO dt_league_weekly_scores (league_id, group_id, user_id, week, points)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(league_id, user_id, week) DO NOTHING`,
+      args: [league.id, league.group_id, entry.userId, fx.week, entry.points],
+    });
+  }
+}
+
 // Resuelve al toque los partidos CPU-vs-CPU del mes activo (nadie tiene que
 // jugarlos, así que no tiene sentido dejarlos pendientes) y aplica walkover
 // a los partidos humano-vs-humano en vivo que quedaron a mitad de camino
@@ -134,6 +159,7 @@ async function resolvePendingFixtures(league, members) {
             sql: "UPDATE dt_league_fixtures SET home_goals = ?, away_goals = ?, played = 1, walkover = ? WHERE id = ?",
             args: [homeGoals, awayGoals, onlyHomeJoined ? "home" : "away", fx.id],
           });
+          await awardWeeklyPoints(league, fx, homeGoals, awayGoals, members, tierByTeam);
         } else {
           // Ninguno se presentó (o el partido quedó a mitad por un reinicio del
           // servidor): se resuelve igual que un CPU, para no trabar la liga.
@@ -147,6 +173,7 @@ async function resolvePendingFixtures(league, members) {
             sql: "UPDATE dt_league_fixtures SET home_goals = ?, away_goals = ?, played = 1 WHERE id = ?",
             args: [homeGoals, awayGoals, fx.id],
           });
+          await awardWeeklyPoints(league, fx, homeGoals, awayGoals, members, tierByTeam);
         }
       }
     }
@@ -177,6 +204,7 @@ function serializeLeague(league, members, userId) {
     leagueKey: league.league_key,
     inviteCode: league.invite_code,
     status: league.status,
+    groupId: league.group_id ?? null,
     currentWeek: league.current_week,
     totalWeeks: league.total_weeks,
     weeksPerMonth: league.weeks_per_month,
@@ -220,9 +248,17 @@ async function loadStandings(leagueId, teamIds) {
 router.post("/", async (req, res) => {
   const name = String(req.body?.name || "").trim().slice(0, 60);
   const leagueKey = String(req.body?.leagueKey || "");
+  const groupId = Number(req.body?.groupId);
   const weeksPerMonth = clamp(Number(req.body?.weeksPerMonth) || 4, 1, 20);
   if (!name) return res.status(400).json({ error: "Ponele un nombre a la liga" });
   if (!["premier", "laliga"].includes(leagueKey)) return res.status(400).json({ error: "Liga inválida" });
+  if (!groupId) return res.status(400).json({ error: "Elegí a qué grupo pertenece esta liga" });
+
+  const creatorMembership = await db.execute({
+    sql: "SELECT 1 FROM group_members WHERE group_id = ? AND user_id = ?",
+    args: [groupId, req.userId],
+  });
+  if (!creatorMembership.rows.length) return res.status(403).json({ error: "No pertenecés a ese grupo" });
 
   let inviteCode;
   for (let i = 0; i < 10; i++) {
@@ -233,8 +269,8 @@ router.post("/", async (req, res) => {
   if (!inviteCode) return res.status(500).json({ error: "No se pudo generar un código, probá de nuevo" });
 
   const result = await db.execute({
-    sql: "INSERT INTO dt_leagues (name, league_key, invite_code, created_by, weeks_per_month) VALUES (?, ?, ?, ?, ?)",
-    args: [name, leagueKey, inviteCode, req.userId, weeksPerMonth],
+    sql: "INSERT INTO dt_leagues (name, league_key, invite_code, created_by, group_id, weeks_per_month) VALUES (?, ?, ?, ?, ?, ?)",
+    args: [name, leagueKey, inviteCode, req.userId, groupId, weeksPerMonth],
   });
   await db.execute({
     sql: "INSERT INTO dt_league_members (league_id, user_id) VALUES (?, ?)",
@@ -278,6 +314,18 @@ router.post("/join", async (req, res) => {
   const league = await loadLeagueByCode(code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   if (league.status !== "lobby") return res.status(400).json({ error: "Esa liga ya arrancó, no se puede sumar más gente" });
+
+  // Ligas de antes de esta restricción (sin group_id) quedan abiertas por
+  // código como siempre; las nuevas son solo para gente del mismo grupo.
+  if (league.group_id) {
+    const groupMembership = await db.execute({
+      sql: "SELECT 1 FROM group_members WHERE group_id = ? AND user_id = ?",
+      args: [league.group_id, req.userId],
+    });
+    if (!groupMembership.rows.length) {
+      return res.status(403).json({ error: "Esta liga es solo para miembros de su grupo" });
+    }
+  }
 
   const already = await db.execute({
     sql: "SELECT 1 FROM dt_league_members WHERE league_id = ? AND user_id = ?",
@@ -525,6 +573,7 @@ router.post("/:code/fixtures/:fixtureId/play", async (req, res) => {
     sql: "UPDATE dt_league_fixtures SET home_goals = ?, away_goals = ?, played = 1 WHERE id = ?",
     args: [homeGoals, awayGoals, fx.id],
   });
+  await awardWeeklyPoints(league, fx, homeGoals, awayGoals, members, tierByTeam);
 
   res.json({ ok: true, homeGoals, awayGoals });
 });

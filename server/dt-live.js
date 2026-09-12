@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { db } from "./db/client.js";
-import { simulateFixtureEvents } from "./utils/dt-match.js";
+import { simulateFixtureEvents, dtWeeklyPoints, dtOutcomeFor } from "./utils/dt-match.js";
 
 // Partidos en vivo de la Liga Online DT: cuando un fixture es entre dos
 // managers humanos, ninguno lo resuelve con un click — los dos tienen que
@@ -89,9 +89,11 @@ export function attachDtLiveWs(httpServer) {
 
       let room = rooms.get(fixtureId);
       if (!room) {
+        const leagueResult = await db.execute({ sql: "SELECT group_id FROM dt_leagues WHERE id = ?", args: [fx.league_id] });
         room = {
           fixtureId,
           leagueId: fx.league_id,
+          groupId: leagueResult.rows[0]?.group_id || null,
           fx,
           homeMember,
           awayMember,
@@ -176,6 +178,8 @@ async function startRoom(room) {
   });
   room.events = events;
   room.finalScore = { homeGoals, awayGoals };
+  room.homeTier = homeTier;
+  room.awayTier = awayTier;
 
   await db.execute({ sql: "UPDATE dt_league_fixtures SET speed = ? WHERE id = ?", args: [room.speed, room.fixtureId] });
   broadcast(room, { type: "kickoff", speed: room.speed });
@@ -201,6 +205,19 @@ async function finishRoom(room) {
       sql: "UPDATE dt_league_fixtures SET home_goals = ?, away_goals = ?, played = 1 WHERE id = ?",
       args: [room.finalScore.homeGoals, room.finalScore.awayGoals, room.fixtureId],
     });
+    if (room.groupId) {
+      const { homeGoals, awayGoals } = room.finalScore;
+      const homePoints = dtWeeklyPoints(room.homeTier, room.awayTier, dtOutcomeFor(homeGoals, awayGoals));
+      const awayPoints = dtWeeklyPoints(room.awayTier, room.homeTier, dtOutcomeFor(awayGoals, homeGoals));
+      for (const [userId, points] of [[room.homeMember.user_id, homePoints], [room.awayMember.user_id, awayPoints]]) {
+        await db.execute({
+          sql: `INSERT INTO dt_league_weekly_scores (league_id, group_id, user_id, week, points)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(league_id, user_id, week) DO NOTHING`,
+          args: [room.leagueId, room.groupId, userId, room.fx.week, points],
+        });
+      }
+    }
   } catch (err) {
     console.error("dt-live: no se pudo guardar el resultado final", err);
   }

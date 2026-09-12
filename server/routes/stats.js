@@ -108,9 +108,24 @@ async function duelPointsByUser(groupId, from, to) {
   return points;
 }
 
+// Puntos semanales de la Liga Online DT dentro del rango (ver
+// dt_league_weekly_scores en dt-league.js / dt-live.js — una fila por
+// jornada jugada por cada manager humano, ya ajustados por diferencia de
+// nivel entre los dos clubes).
+async function dtLeaguePointsByUser(groupId, from, to) {
+  const result = await db.execute({
+    sql: `SELECT user_id, COALESCE(SUM(points), 0) AS points
+          FROM dt_league_weekly_scores
+          WHERE group_id = ? AND date(settled_at) >= ? AND date(settled_at) <= ?
+          GROUP BY user_id`,
+    args: [groupId, from, to],
+  });
+  return new Map(result.rows.map((r) => [r.user_id, Number(r.points)]));
+}
+
 // Ranking del grupo acotado a un rango de fechas. Los puntos de trivia son del
-// usuario (no del grupo), igual que en el ranking histórico; los de Modo B y
-// los de duelos sí son por grupo.
+// usuario (no del grupo), igual que en el ranking histórico; los de Modo B,
+// duelos y Liga DT sí son por grupo.
 async function rankingBetween(groupId, from, to) {
   const members = await groupMembers(groupId);
   if (members.length === 0) return [];
@@ -140,6 +155,7 @@ async function rankingBetween(groupId, from, to) {
   });
   const modeBByUser = new Map(modeBResult.rows.map((r) => [r.user_id, Number(r.points)]));
   const duelByUser = await duelPointsByUser(groupId, from, to);
+  const dtLeagueByUser = await dtLeaguePointsByUser(groupId, from, to);
 
   return members
     .map((m) => {
@@ -147,6 +163,7 @@ async function rankingBetween(groupId, from, to) {
       const trivia_points = trivia ? Number(trivia.points) : 0;
       const mode_b_points = modeBByUser.get(m.id) || 0;
       const duel_points = duelByUser.get(m.id) || 0;
+      const dt_league_points = dtLeagueByUser.get(m.id) || 0;
       const answered = trivia ? Number(trivia.answered) : 0;
       const correct = trivia ? Number(trivia.correct) : 0;
       return {
@@ -157,7 +174,8 @@ async function rankingBetween(groupId, from, to) {
         trivia_points,
         mode_b_points,
         duel_points,
-        points: trivia_points + mode_b_points + duel_points,
+        dt_league_points,
+        points: trivia_points + mode_b_points + duel_points + dt_league_points,
         answered,
         correct,
         accuracy: answered > 0 ? Math.round((correct / answered) * 100) : 0,

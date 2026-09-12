@@ -57,6 +57,10 @@ async function migrateDtLeagueColumns() {
     if (!names.has("live_away_joined")) await db.execute("ALTER TABLE dt_league_fixtures ADD COLUMN live_away_joined INTEGER NOT NULL DEFAULT 0");
     if (!names.has("walkover")) await db.execute("ALTER TABLE dt_league_fixtures ADD COLUMN walkover TEXT");
   }
+
+  if (leaguesInfo.rows.length && !leaguesInfo.rows.some((r) => r.name === "group_id")) {
+    await db.execute("ALTER TABLE dt_leagues ADD COLUMN group_id INTEGER REFERENCES groups_t(id)");
+  }
 }
 
 // Los duelos nacieron sin niveles de dificultad. Son columnas nuevas con valor
