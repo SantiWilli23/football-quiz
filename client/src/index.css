@@ -158,3 +158,50 @@ body {
 .chalk-line {
   border-bottom: 1px dashed rgb(var(--c-border));
 }
+
+/* ============================================================
+   Forma "Cancha": eje independiente del color de arriba. En vez
+   de redondear las esquinas de tarjetas, filas y botones, las
+   corta en diagonal — ver client/src/context/ThemeContext.jsx
+   (SHAPES) y ThemeSettings.jsx (el selector).
+
+   No se toca `rounded-full` (avatares, puntos, píldoras chicas):
+   cortarle la esquina a un círculo de 6px no se lee como "corte",
+   se lee como bug. El corte se aplica solo a las clases que ya
+   usa la app para tarjetas/filas/botones/inputs.
+   ============================================================ */
+:root {
+  --cut-lg: 0px;
+  --cut-sm: 0px;
+}
+[data-shape="cancha"] {
+  --cut-lg: 12px;
+  --cut-sm: 5px;
+}
+
+[data-shape="cancha"] .rounded-card,
+[data-shape="cancha"] .rounded-2xl,
+[data-shape="cancha"] .rounded-xl {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--cut-lg)) 0,
+    100% var(--cut-lg),
+    100% 100%,
+    var(--cut-lg) 100%,
+    0 calc(100% - var(--cut-lg))
+  );
+}
+
+[data-shape="cancha"] .rounded,
+[data-shape="cancha"] .rounded-md {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--cut-sm)) 0,
+    100% var(--cut-sm),
+    100% 100%,
+    var(--cut-sm) 100%,
+    0 calc(100% - var(--cut-sm))
+  );
+}

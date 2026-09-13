@@ -10,16 +10,37 @@ export const THEMES = [
 ];
 const THEME_IDS = THEMES.map((t) => t.id);
 const DEFAULT_THEME = "nocturno";
-const STORAGE_KEY = "fq_theme";
+const THEME_KEY = "fq_theme";
 
-// Mismo helper que usa el script inline de index.html para no repintar con
-// el tema equivocado un instante antes de que React monte.
+// La forma es un eje aparte del color: "redondeada" es el estilo de
+// siempre (border-radius normal); "cancha" corta la esquina de tarjetas,
+// filas y botones en vez de redondearla — se combina con cualquiera de
+// los tres temas de color de arriba.
+export const SHAPES = [
+  { id: "redondeada", label: "Redondeada" },
+  { id: "cancha", label: "Cancha (esquina cortada)" },
+];
+const SHAPE_IDS = SHAPES.map((s) => s.id);
+const DEFAULT_SHAPE = "redondeada";
+const SHAPE_KEY = "fq_shape";
+
+// Mismos helpers que usa el script inline de index.html para no repintar
+// con la elección equivocada un instante antes de que React monte.
 export function readStoredTheme() {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(THEME_KEY);
     return THEME_IDS.includes(stored) ? stored : DEFAULT_THEME;
   } catch {
     return DEFAULT_THEME;
+  }
+}
+
+export function readStoredShape() {
+  try {
+    const stored = localStorage.getItem(SHAPE_KEY);
+    return SHAPE_IDS.includes(stored) ? stored : DEFAULT_SHAPE;
+  } catch {
+    return DEFAULT_SHAPE;
   }
 }
 
@@ -32,26 +53,44 @@ function applyTheme(themeId) {
   }
 }
 
+function applyShape(shapeId) {
+  document.documentElement.setAttribute("data-shape", shapeId);
+}
+
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState(readStoredTheme);
+  const [shape, setShapeState] = useState(readStoredShape);
 
   useEffect(() => {
     applyTheme(theme);
     try {
-      localStorage.setItem(STORAGE_KEY, theme);
+      localStorage.setItem(THEME_KEY, theme);
     } catch {
       // Sin localStorage (privado/incógnito) el tema simplemente no persiste.
     }
   }, [theme]);
 
+  useEffect(() => {
+    applyShape(shape);
+    try {
+      localStorage.setItem(SHAPE_KEY, shape);
+    } catch {
+      // Idem.
+    }
+  }, [shape]);
+
   function setTheme(themeId) {
     if (THEME_IDS.includes(themeId)) setThemeState(themeId);
   }
 
+  function setShape(shapeId) {
+    if (SHAPE_IDS.includes(shapeId)) setShapeState(shapeId);
+  }
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, themes: THEMES }}>
+    <ThemeContext.Provider value={{ theme, setTheme, themes: THEMES, shape, setShape, shapes: SHAPES }}>
       {children}
     </ThemeContext.Provider>
   );

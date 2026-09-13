@@ -27,6 +27,8 @@
         try {
           var t = localStorage.getItem("fq_theme");
           if (t === "azul" || t === "bengala") document.documentElement.setAttribute("data-theme", t);
+          var s = localStorage.getItem("fq_shape");
+          if (s === "cancha") document.documentElement.setAttribute("data-shape", s);
         } catch (e) {}
       })();
     </script>
