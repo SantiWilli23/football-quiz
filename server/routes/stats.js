@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
-import { addDays, getBestStreak, todayStr } from "../utils/points.js";
+import { addDays, getBestStreak, getCurrentStreak, todayStr } from "../utils/points.js";
 import { duelSidePoints } from "./duels.js";
 import {
   QUESTION_KINDS,
@@ -885,6 +885,127 @@ router.get("/compatibility", async (req, res) => {
       .sort((a, b) => (b.agreement ?? -1) - (a.agreement ?? -1));
 
     res.json({ compatibility });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// "Insights" del grupo: posta automáticas a partir de datos que ya existen,
+// no una encuesta ni nada que alguien tenga que cargar. Cada una es
+// opcional — si nadie califica (ej. nadie jugó suficientes duelos), esa
+// tarjeta simplemente no viene en la respuesta.
+router.get("/insights", async (req, res) => {
+  const groupId = Number(req.query.groupId);
+  if (!groupId) return res.status(400).json({ error: "Falta groupId" });
+
+  try {
+    if (!(await requireMembership(groupId, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+
+    const members = await groupMembers(groupId);
+    if (members.length === 0) return res.json({ insights: [] });
+    const memberIds = members.map((m) => m.id);
+    const memberById = new Map(members.map((m) => [m.id, m]));
+    const placeholders = memberIds.map(() => "?").join(",");
+    const insights = [];
+
+    // 1) Racha activa más larga del grupo.
+    const streaks = await Promise.all(memberIds.map((id) => getCurrentStreak(id)));
+    let bestStreakIdx = -1;
+    streaks.forEach((s, i) => { if (s > 0 && (bestStreakIdx === -1 || s > streaks[bestStreakIdx])) bestStreakIdx = i; });
+    if (bestStreakIdx !== -1) {
+      const m = memberById.get(memberIds[bestStreakIdx]);
+      insights.push({
+        key: "streak", title: "Racha más larga ahora mismo",
+        username: m.username, avatar: m.avatar, avatar_config: m.avatar_config,
+        value: `${streaks[bestStreakIdx]} día${streaks[bestStreakIdx] === 1 ? "" : "s"}`,
+      });
+    }
+
+    // 2) El más preciso este mes (con un mínimo de preguntas para que no
+    // gane alguien que contestó una sola y le achuntó).
+    const month = monthOf(todayStr());
+    const { from, to } = monthBounds(month);
+    const accuracyResult = await db.execute({
+      sql: `SELECT a.user_id, COUNT(*) AS answered, SUM(a.is_correct) AS correct
+            FROM answers a JOIN questions q ON q.id = a.question_id
+            WHERE a.user_id IN (${placeholders}) AND q.scheduled_date >= ? AND q.scheduled_date <= ?
+            GROUP BY a.user_id HAVING COUNT(*) >= 5`,
+      args: [...memberIds, from, to],
+    });
+    if (accuracyResult.rows.length > 0) {
+      const best = accuracyResult.rows
+        .map((r) => ({ ...r, accuracy: Math.round((Number(r.correct) / Number(r.answered)) * 100) }))
+        .sort((a, b) => b.accuracy - a.accuracy)[0];
+      const m = memberById.get(best.user_id);
+      if (m) {
+        insights.push({
+          key: "accuracy", title: "El más preciso este mes",
+          username: m.username, avatar: m.avatar, avatar_config: m.avatar_config,
+          value: `${best.accuracy}% de acierto`,
+        });
+      }
+    }
+
+    // 3) Experto en una categoría: el (usuario, categoría) con mejor
+    // puntería de todo el grupo, exigiendo un mínimo de preguntas de esa
+    // categoría para que no sea puro azar.
+    const categoryResult = await db.execute({
+      sql: `SELECT a.user_id, q.category, COUNT(*) AS answered, SUM(a.is_correct) AS correct
+            FROM answers a JOIN questions q ON q.id = a.question_id
+            WHERE a.user_id IN (${placeholders})
+            GROUP BY a.user_id, q.category HAVING COUNT(*) >= 3`,
+      args: memberIds,
+    });
+    if (categoryResult.rows.length > 0) {
+      const best = categoryResult.rows
+        .map((r) => ({ ...r, accuracy: Math.round((Number(r.correct) / Number(r.answered)) * 100) }))
+        .sort((a, b) => b.accuracy - a.accuracy)[0];
+      const m = memberById.get(best.user_id);
+      if (m) {
+        insights.push({
+          key: "category", title: `Experto en "${best.category}"`,
+          username: m.username, avatar: m.avatar, avatar_config: m.avatar_config,
+          value: `${best.accuracy}% de acierto (${best.answered} preguntas)`,
+        });
+      }
+    }
+
+    // 4) Mejor duelista: mayor porcentaje de duelos ganados, con al menos
+    // dos jugados para que cuente como algo más que suerte del primero.
+    const duelsResult = await db.execute({
+      sql: `SELECT challenger_id, opponent_id, winner_id FROM duels WHERE group_id = ? AND status = 'terminado'`,
+      args: [groupId],
+    });
+    const duelStats = new Map();
+    const touch = (userId) => {
+      if (!duelStats.has(userId)) duelStats.set(userId, { played: 0, won: 0 });
+      return duelStats.get(userId);
+    };
+    for (const d of duelsResult.rows) {
+      touch(d.challenger_id).played++;
+      touch(d.opponent_id).played++;
+      if (d.winner_id !== null) touch(d.winner_id).won++;
+    }
+    const duelists = [...duelStats.entries()]
+      .filter(([, s]) => s.played >= 2)
+      .map(([userId, s]) => ({ userId, winRate: Math.round((s.won / s.played) * 100), played: s.played }))
+      .sort((a, b) => b.winRate - a.winRate);
+    if (duelists.length > 0) {
+      const top = duelists[0];
+      const m = memberById.get(top.userId);
+      if (m) {
+        insights.push({
+          key: "duelist", title: "Mejor duelista del grupo",
+          username: m.username, avatar: m.avatar, avatar_config: m.avatar_config,
+          value: `${top.winRate}% ganados (${top.played} duelos)`,
+        });
+      }
+    }
+
+    res.json({ insights });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

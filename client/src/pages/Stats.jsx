@@ -49,6 +49,7 @@ export default function Stats() {
   const [compatibility, setCompatibility] = useState([]);
   const [achievements, setAchievements] = useState(null);
   const [categories, setCategories] = useState([]);
+  const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
 
@@ -60,18 +61,20 @@ export default function Stats() {
     setLoading(true);
     const params = { groupId };
     const settle = (promise, fallback) => promise.then((r) => r.data).catch(() => fallback);
-    const [modeBData, weeklyData, compatData, achData, categoriesData] = await Promise.all([
+    const [modeBData, weeklyData, compatData, achData, categoriesData, insightsData] = await Promise.all([
       settle(api.get("/stats/mode-b", { params }), null),
       settle(api.get("/stats/weekly", { params }), null),
       settle(api.get("/stats/compatibility", { params }), { compatibility: [] }),
       settle(api.get("/stats/achievements", { params }), null),
       settle(api.get("/stats/categories", { params }), { categories: [] }),
+      settle(api.get("/stats/insights", { params }), { insights: [] }),
     ]);
     setModeB(modeBData);
     setWeekly(weeklyData);
     setCompatibility(compatData.compatibility);
     setAchievements(achData);
     setCategories(categoriesData.categories);
+    setInsights(insightsData.insights);
     setLoading(false);
   }, [groupId, groupsLoading]);
 
@@ -140,6 +143,26 @@ export default function Stats() {
       </div>
 
       {loading && <p className="text-sm text-gray-500">Cargando...</p>}
+
+      {!loading && insights.length > 0 && (
+        <Card className="mb-6">
+          <SectionTitle icon={Sparkles} hint="se arman solas con lo que ya jugaron">
+            Lo más destacado del grupo
+          </SectionTitle>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {insights.map((i) => (
+              <div key={i.key} className="flex items-center gap-3 px-4 py-3 rounded-card border border-border bg-bg/40">
+                <Avatar user={i} size={36} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] text-gray-500 uppercase tracking-wide truncate">{i.title}</p>
+                  <p className="text-sm font-semibold truncate">{i.username}</p>
+                  <p className="text-xs text-accent">{i.value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {!loading && (
         <div className="space-y-6">
