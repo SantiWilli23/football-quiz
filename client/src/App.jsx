@@ -14,6 +14,7 @@ import Football from "./pages/Football.jsx";
 import Survival from "./pages/Survival.jsx";
 import Wordle from "./pages/Wordle.jsx";
 import Quiniela from "./pages/Quiniela.jsx";
+import UnMinuto from "./pages/UnMinuto.jsx";
 import SeasonPredictions from "./pages/SeasonPredictions.jsx";
 import CareerMode from "./carrera/index.jsx";
 import EquipoJugador from "./equipo-jugador/index.jsx";
@@ -161,6 +162,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <SeasonPredictions />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/un-minuto"
+        element={
+          <PrivateRoute>
+            <UnMinuto />
           </PrivateRoute>
         }
       />

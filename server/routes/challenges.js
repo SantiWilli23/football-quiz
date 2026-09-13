@@ -8,7 +8,7 @@ router.use(requireAuth);
 
 // Los "retos" semanales que hoy tienen versión especial. Trivia diaria se
 // rankea aparte (en vivo, sin submit) porque ya se registra sola en `answers`.
-const ALLOWED_GAMES = new Set(["draft_europeo", "cotrero", "fichado", "equipo_jugador"]);
+const ALLOWED_GAMES = new Set(["draft_europeo", "cotrero", "fichado", "equipo_jugador", "un_minuto"]);
 
 function periodKeyFor(gameKey) {
   return isoWeekKey();

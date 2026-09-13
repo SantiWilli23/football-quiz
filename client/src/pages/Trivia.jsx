@@ -172,6 +172,12 @@ export default function Trivia() {
             >
               <User size={14} /> Fulbodle
             </Link>
+            <Link
+              to="/un-minuto"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded border border-gray-600 text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
+            >
+              <Timer size={14} /> Un Minuto
+            </Link>
           </div>
 
           <div className="flex items-center gap-3 mb-6">

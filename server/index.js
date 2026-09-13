@@ -26,6 +26,7 @@ import groupCupRoutes from "./routes/group-cup.js";
 import wordleRoutes from "./routes/wordle.js";
 import quinielaRoutes from "./routes/quiniela.js";
 import seasonPredictionsRoutes from "./routes/season-predictions.js";
+import unMinutoRoutes from "./routes/un-minuto.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -55,6 +56,7 @@ app.use("/api/group-cup", groupCupRoutes);
 app.use("/api/wordle", wordleRoutes);
 app.use("/api/quiniela", quinielaRoutes);
 app.use("/api/season-predictions", seasonPredictionsRoutes);
+app.use("/api/un-minuto", unMinutoRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
