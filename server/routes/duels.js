@@ -126,10 +126,45 @@ async function resolveIfComplete(duel) {
   };
 }
 
+// Comodín semanal: "doble o nada". Cada lado del duelo puede jugárselo con
+// su propio comodín (uno por persona por semana, en cualquier duelo). Si lo
+// activaste y ganás, el doble de puntos; si empatás o perdés, cero — ni
+// siquiera el consuelo del empate. Exportada porque stats.js necesita el
+// mismo cálculo para el ranking general del grupo, no solo esta pantalla.
+export function duelSidePoints(difficulty, outcome, wildcard) {
+  if (outcome === "draw") {
+    const base = duelPointsFor(difficulty, "draw");
+    return wildcard ? 0 : base;
+  }
+  const won = outcome === "win";
+  const base = won ? duelPointsFor(difficulty, "win") : 0;
+  return wildcard ? base * 2 : base;
+}
+
 function pointsFor(duel, userId) {
   if (duel.status !== "terminado") return 0;
-  if (duel.winner_id === null) return duelPointsFor(duel.difficulty, "draw");
-  return duel.winner_id === userId ? duelPointsFor(duel.difficulty, "win") : 0;
+  const iAmChallenger = duel.challenger_id === userId;
+  const wildcard = !!(iAmChallenger ? duel.challenger_wildcard : duel.opponent_wildcard);
+  const outcome = duel.winner_id === null ? "draw" : duel.winner_id === userId ? "win" : "loss";
+  return duelSidePoints(duel.difficulty, outcome, wildcard);
+}
+
+function currentWeekKeyOf(userId) {
+  return db.execute({
+    sql: `SELECT 1 FROM duels
+          WHERE ((challenger_id = ? AND challenger_wildcard = 1) OR (opponent_id = ? AND opponent_wildcard = 1))
+            AND strftime('%Y-%W', created_at) = strftime('%Y-%W', 'now')
+          LIMIT 1`,
+    args: [userId, userId],
+  });
+}
+
+// Un solo comodín por persona por semana (se cuenta por jornada calendaria,
+// no por grupo) — cualquiera de los duelos donde ya lo usaste esta semana
+// lo consume, sea que lo hayas activado al desafiar o al aceptar.
+async function wildcardUsedThisWeek(userId) {
+  const result = await currentWeekKeyOf(userId);
+  return result.rows.length > 0;
 }
 
 // Desafiar a alguien del grupo.
@@ -137,6 +172,7 @@ router.post("/", async (req, res) => {
   const groupId = Number(req.body?.group_id);
   const opponentId = Number(req.body?.opponent_id);
   const difficulty = req.body?.difficulty ?? DEFAULT_DIFFICULTY;
+  const useWildcard = !!req.body?.use_wildcard;
 
   if (!groupId || !opponentId) return res.status(400).json({ error: "Faltan campos requeridos" });
   if (!DUEL_DIFFICULTIES[difficulty]) return res.status(400).json({ error: "Dificultad inválida" });
@@ -145,6 +181,9 @@ router.post("/", async (req, res) => {
   }
 
   try {
+    if (useWildcard && (await wildcardUsedThisWeek(req.userId))) {
+      return res.status(409).json({ error: "Ya usaste tu comodín de esta semana" });
+    }
     if (!(await requireMembership(groupId, req.userId))) {
       return res.status(403).json({ error: "No perteneces a este grupo" });
     }
@@ -172,23 +211,64 @@ router.post("/", async (req, res) => {
     }
 
     const inserted = await db.execute({
-      sql: `INSERT INTO duels (group_id, challenger_id, opponent_id, question_ids, difficulty)
-            VALUES (?, ?, ?, ?, ?)`,
+      sql: `INSERT INTO duels (group_id, challenger_id, opponent_id, question_ids, difficulty, challenger_wildcard)
+            VALUES (?, ?, ?, ?, ?, ?)`,
       args: [
         groupId,
         req.userId,
         opponentId,
         JSON.stringify(questions.rows.map((q) => q.id)),
         difficulty,
+        useWildcard ? 1 : 0,
       ],
     });
 
     await notify(
       opponentId,
-      `${await usernameOf(req.userId)} te desafió a un duelo ${DUEL_DIFFICULTIES[difficulty].label}.`
+      `${await usernameOf(req.userId)} te desafió a un duelo ${DUEL_DIFFICULTIES[difficulty].label}${useWildcard ? " y jugó su comodín (doble o nada)" : ""}.`
     );
 
     res.status(201).json({ id: Number(inserted.lastInsertRowid) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Activar tu propio comodín sobre un duelo ya creado (típicamente el
+// desafiado, que no pudo elegirlo al crear el duelo). Solo antes de empezar
+// a responder: una vez que ya viste una pregunta no vale apostar a lo
+// seguro con información de más.
+router.post("/:id/wildcard", async (req, res) => {
+  const duelId = Number(req.params.id);
+
+  try {
+    const result = await db.execute({ sql: "SELECT * FROM duels WHERE id = ?", args: [duelId] });
+    const duel = result.rows[0];
+    if (!duel) return res.status(404).json({ error: "Duelo no encontrado" });
+    if (duel.challenger_id !== req.userId && duel.opponent_id !== req.userId) {
+      return res.status(403).json({ error: "Este duelo no es tuyo" });
+    }
+    if (duel.status !== "esperando") return res.status(400).json({ error: "Este duelo ya terminó" });
+
+    const iAmChallenger = duel.challenger_id === req.userId;
+    if (iAmChallenger ? duel.challenger_wildcard : duel.opponent_wildcard) {
+      return res.status(409).json({ error: "Ya activaste el comodín en este duelo" });
+    }
+
+    const mine = await answersOf(duelId, req.userId);
+    if (mine.length > 0) return res.status(400).json({ error: "Ya empezaste a responder, es tarde para el comodín" });
+
+    if (await wildcardUsedThisWeek(req.userId)) {
+      return res.status(409).json({ error: "Ya usaste tu comodín de esta semana" });
+    }
+
+    await db.execute({
+      sql: `UPDATE duels SET ${iAmChallenger ? "challenger_wildcard" : "opponent_wildcard"} = 1 WHERE id = ?`,
+      args: [duelId],
+    });
+
+    res.json({ success: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });
@@ -243,6 +323,7 @@ router.get("/", async (req, res) => {
 
     const duels = [];
     let record = { won: 0, lost: 0, drawn: 0, points: 0 };
+    const wildcardAvailable = !(await wildcardUsedThisWeek(req.userId));
 
     for (const row of result.rows) {
       const duel = await resolveIfComplete(row);
@@ -260,9 +341,15 @@ router.get("/", async (req, res) => {
         else record.lost++;
       }
 
+      const myWildcard = !!(iAmChallenger ? duel.challenger_wildcard : duel.opponent_wildcard);
+      const rivalWildcard = !!(iAmChallenger ? duel.opponent_wildcard : duel.challenger_wildcard);
+
       duels.push({
         id: duel.id,
         status: duel.status,
+        my_wildcard: myWildcard,
+        rival_wildcard: rivalWildcard,
+        can_activate_wildcard: duel.status === "esperando" && !myWildcard && myAnswers.length === 0 && wildcardAvailable,
         rival: {
           id: rivalId,
           username: iAmChallenger ? row.opponent_name : row.challenger_name,
@@ -303,7 +390,7 @@ router.get("/", async (req, res) => {
       });
     }
 
-    res.json({ duels, record, difficulties: DUEL_DIFFICULTIES });
+    res.json({ duels, record, difficulties: DUEL_DIFFICULTIES, wildcard_available: wildcardAvailable });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

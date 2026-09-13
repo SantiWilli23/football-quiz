@@ -255,7 +255,9 @@ CREATE TABLE IF NOT EXISTS duels (
   winner_id INTEGER REFERENCES users(id),
   status TEXT NOT NULL DEFAULT 'esperando' CHECK (status IN ('esperando', 'terminado')),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  resolved_at TEXT
+  resolved_at TEXT,
+  challenger_wildcard INTEGER NOT NULL DEFAULT 0,
+  opponent_wildcard INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_duels_group ON duels(group_id, status);

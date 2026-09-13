@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Check, Circle, Flame, HelpCircle, Star, Sword, Swords, Trophy, X, Zap } from "lucide-react";
+import { Check, Circle, Dices, Flame, HelpCircle, Star, Sword, Swords, Trophy, X, Zap } from "lucide-react";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -192,6 +192,8 @@ export default function Duels() {
   const [challenging, setChallenging] = useState(false);
   const [difficulty, setDifficulty] = useState("dificil");
   const [selectedGame, setSelectedGame] = useState(null);
+  const [useWildcard, setUseWildcard] = useState(false);
+  const [activatingWildcard, setActivatingWildcard] = useState(null);
 
   useEffect(() => {
     const handleMessage = (e) => {
@@ -226,13 +228,29 @@ export default function Duels() {
     setChallenging(true);
     setError("");
     try {
-      const { data: created } = await api.post("/duels", { group_id: groupId, opponent_id: opponentId, difficulty });
+      const { data: created } = await api.post("/duels", {
+        group_id: groupId, opponent_id: opponentId, difficulty, use_wildcard: useWildcard,
+      });
+      setUseWildcard(false);
       await load();
       setPlaying(created.id);
     } catch (err) {
       setError(err.response?.data?.error || "No se pudo crear el duelo");
     } finally {
       setChallenging(false);
+    }
+  };
+
+  const activateWildcard = async (duelId) => {
+    setActivatingWildcard(duelId);
+    setError("");
+    try {
+      await api.post(`/duels/${duelId}/wildcard`);
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo activar el comodín");
+    } finally {
+      setActivatingWildcard(null);
     }
   };
 
@@ -438,14 +456,25 @@ export default function Duels() {
               >
                 <Avatar user={d.rival} size={32} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">
+                  <p className="text-sm font-medium truncate flex items-center gap-1.5">
                     {d.i_challenged ? "Desafiaste a" : "Te desafió"} {d.rival.username}
+                    {d.my_wildcard && <Dices size={13} className="text-amber shrink-0" title="Comodín activado: doble o nada" />}
                   </p>
                   <p className="text-xs text-gray-500">
                     {DIFFICULTY_STYLE[d.difficulty]?.emoji} {d.difficulty_label} · {d.my_answered}/
                     {d.total_questions} respondidas
                   </p>
                 </div>
+                {d.can_activate_wildcard && (
+                  <button
+                    onClick={() => activateWildcard(d.id)}
+                    disabled={activatingWildcard === d.id}
+                    title="Jugarte este duelo doble o nada"
+                    className="px-3 py-2 rounded-card text-xs font-medium border border-amber/40 text-amber hover:bg-amber/10 disabled:opacity-40 transition-colors shrink-0"
+                  >
+                    🎲 Comodín
+                  </button>
+                )}
                 <button
                   onClick={() => setPlaying(d.id)}
                   className="px-4 py-2 rounded-card text-sm font-semibold text-onaccent shrink-0 transition-opacity hover:opacity-90"
@@ -486,6 +515,29 @@ export default function Duels() {
             );
           })}
         </div>
+
+        <button
+          onClick={() => data?.wildcard_available && setUseWildcard((v) => !v)}
+          disabled={!data?.wildcard_available}
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-card border mb-5 text-left transition-colors ${
+            !data?.wildcard_available
+              ? "border-border opacity-40 cursor-not-allowed"
+              : useWildcard
+                ? "border-amber bg-amber/10"
+                : "border-border hover:border-amber/50"
+          }`}
+        >
+          <Dices size={18} className={useWildcard ? "text-amber" : "text-gray-400"} />
+          <div className="flex-1 min-w-0">
+            <p className={`text-sm font-medium ${useWildcard ? "text-amber" : ""}`}>Comodín semanal — doble o nada</p>
+            <p className="text-xs text-gray-500">
+              {data?.wildcard_available
+                ? "Si ganás este duelo, el doble de puntos. Si empatás o perdés, cero. Uno por semana."
+                : "Ya usaste tu comodín de esta semana."}
+            </p>
+          </div>
+          {useWildcard && <span className="text-xs font-semibold text-amber shrink-0">Activado</span>}
+        </button>
 
         {members.length === 0 ? (
           <p className="text-sm text-gray-500">Sos el único miembro del grupo por ahora.</p>
@@ -528,7 +580,10 @@ export default function Duels() {
               <div key={d.id} className="flex items-center gap-3 px-4 py-3 rounded-card border border-border">
                 <Avatar user={d.rival} size={32} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm truncate">{d.rival.username}</p>
+                  <p className="text-sm truncate flex items-center gap-1.5">
+                    {d.rival.username}
+                    {d.my_wildcard && <Dices size={13} className="text-amber shrink-0" title="Comodín activado: doble o nada" />}
+                  </p>
                   <p className="text-xs text-gray-500">
                     Ya jugaste. Le faltan {d.total_questions - d.rival_answered} preguntas.
                   </p>
@@ -552,7 +607,10 @@ export default function Duels() {
                 >
                   <Avatar user={d.rival} size={32} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm truncate">contra {d.rival.username}</p>
+                    <p className="text-sm truncate flex items-center gap-1.5">
+                      contra {d.rival.username}
+                      {d.my_wildcard && <Dices size={13} className="text-amber shrink-0" title="Jugaste este duelo doble o nada" />}
+                    </p>
                     <p className="text-xs text-gray-500">
                       {DIFFICULTY_STYLE[d.difficulty]?.emoji} {d.my_correct}–{d.rival_correct} de{" "}
                       {d.total_questions}
@@ -560,7 +618,9 @@ export default function Duels() {
                   </div>
                   <div className="text-right shrink-0">
                     <p className={`text-sm font-semibold ${style.className}`}>{style.label}</p>
-                    <p className="text-[11px] text-gray-600">+{d.points} pts</p>
+                    <p className={`text-[11px] ${d.my_wildcard ? "text-amber font-medium" : "text-gray-600"}`}>
+                      {d.my_wildcard ? `${d.points > 0 ? "×2 · " : "sin puntos · "}` : ""}+{d.points} pts
+                    </p>
                   </div>
                 </div>
               );

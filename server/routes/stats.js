@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { addDays, getBestStreak, todayStr } from "../utils/points.js";
-import { duelPointsFor } from "./duels.js";
+import { duelSidePoints } from "./duels.js";
 import {
   QUESTION_KINDS,
   answersFor,
@@ -88,7 +88,8 @@ function monthBounds(month) {
 // abierto de un mes al otro, suma en el mes en que efectivamente se jugó.
 async function duelPointsByUser(groupId, from, to) {
   const result = await db.execute({
-    sql: `SELECT challenger_id, opponent_id, winner_id, difficulty FROM duels
+    sql: `SELECT challenger_id, opponent_id, winner_id, difficulty, challenger_wildcard, opponent_wildcard
+          FROM duels
           WHERE group_id = ? AND status = 'terminado'
             AND date(resolved_at) >= ? AND date(resolved_at) <= ?`,
     args: [groupId, from, to],
@@ -98,12 +99,10 @@ async function duelPointsByUser(groupId, from, to) {
   const add = (userId, amount) => points.set(userId, (points.get(userId) || 0) + amount);
 
   for (const row of result.rows) {
-    if (row.winner_id === null) {
-      add(row.challenger_id, duelPointsFor(row.difficulty, "draw"));
-      add(row.opponent_id, duelPointsFor(row.difficulty, "draw"));
-    } else {
-      add(row.winner_id, duelPointsFor(row.difficulty, "win"));
-    }
+    const challengerOutcome = row.winner_id === null ? "draw" : row.winner_id === row.challenger_id ? "win" : "loss";
+    const opponentOutcome = row.winner_id === null ? "draw" : row.winner_id === row.opponent_id ? "win" : "loss";
+    add(row.challenger_id, duelSidePoints(row.difficulty, challengerOutcome, !!row.challenger_wildcard));
+    add(row.opponent_id, duelSidePoints(row.difficulty, opponentOutcome, !!row.opponent_wildcard));
   }
   return points;
 }

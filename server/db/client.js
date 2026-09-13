@@ -34,6 +34,7 @@ export async function initSchema() {
   await migrateModeBKindConstraint();
   await migrateAvatarConfig();
   await migrateDuelDifficulty();
+  await migrateDuelWildcard();
   await migrateDtLeagueColumns();
 }
 
@@ -73,6 +74,16 @@ async function migrateDuelDifficulty() {
     if (info.rows.some((r) => r.name === "difficulty")) continue;
     await db.execute(`ALTER TABLE ${table} ADD COLUMN difficulty TEXT NOT NULL DEFAULT 'dificil'`);
   }
+}
+
+// Comodín semanal: cada lado de un duelo puede jugarse "doble o nada" (ver
+// duels.js). Columnas nuevas nullable-por-default, entran con ALTER TABLE.
+async function migrateDuelWildcard() {
+  const info = await db.execute("PRAGMA table_info(duels)");
+  if (info.rows.length === 0) return;
+  const names = new Set(info.rows.map((r) => r.name));
+  if (!names.has("challenger_wildcard")) await db.execute("ALTER TABLE duels ADD COLUMN challenger_wildcard INTEGER NOT NULL DEFAULT 0");
+  if (!names.has("opponent_wildcard")) await db.execute("ALTER TABLE duels ADD COLUMN opponent_wildcard INTEGER NOT NULL DEFAULT 0");
 }
 
 // Instalaciones anteriores tienen `users` sin la columna del avatar dibujado.
