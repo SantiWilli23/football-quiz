@@ -153,6 +153,23 @@ async function quinielaPointsByUser(memberIds, from, to) {
   return new Map(result.rows.map((r) => [r.user_id, Number(r.points)]));
 }
 
+// Puntos de predicción de campeón/descenso, ya resueltos (scored = 1). Se
+// cuentan por la fecha en que se hizo la predicción, como quiniela — total
+// se resuelven una sola vez, meses después, así que no importa demasiado en
+// qué mes del ranking caen.
+async function seasonPredictionPointsByUser(memberIds, from, to) {
+  if (memberIds.length === 0) return new Map();
+  const placeholders = memberIds.map(() => "?").join(",");
+  const result = await db.execute({
+    sql: `SELECT user_id, COALESCE(SUM(points), 0) AS points
+          FROM season_predictions
+          WHERE user_id IN (${placeholders}) AND scored = 1 AND date(created_at) >= ? AND date(created_at) <= ?
+          GROUP BY user_id`,
+    args: [...memberIds, from, to],
+  });
+  return new Map(result.rows.map((r) => [r.user_id, Number(r.points)]));
+}
+
 // Puntos de apuestas cruzadas ya liquidadas (ver settleBets en duels.js) —
 // pueden ser negativos, así que se suman tal cual quedaron.
 async function betPointsByUser(groupId, from, to) {
@@ -203,6 +220,7 @@ async function rankingBetween(groupId, from, to) {
   const wordleByUser = await wordlePointsByUser(memberIds, from, to);
   const quinielaByUser = await quinielaPointsByUser(memberIds, from, to);
   const betByUser = await betPointsByUser(groupId, from, to);
+  const seasonPredByUser = await seasonPredictionPointsByUser(memberIds, from, to);
 
   return members
     .map((m) => {
@@ -214,6 +232,7 @@ async function rankingBetween(groupId, from, to) {
       const wordle_points = wordleByUser.get(m.id) || 0;
       const quiniela_points = quinielaByUser.get(m.id) || 0;
       const bet_points = betByUser.get(m.id) || 0;
+      const season_prediction_points = seasonPredByUser.get(m.id) || 0;
       const answered = trivia ? Number(trivia.answered) : 0;
       const correct = trivia ? Number(trivia.correct) : 0;
       return {
@@ -228,7 +247,8 @@ async function rankingBetween(groupId, from, to) {
         wordle_points,
         quiniela_points,
         bet_points,
-        points: trivia_points + mode_b_points + duel_points + dt_league_points + wordle_points + quiniela_points + bet_points,
+        season_prediction_points,
+        points: trivia_points + mode_b_points + duel_points + dt_league_points + wordle_points + quiniela_points + bet_points + season_prediction_points,
         answered,
         correct,
         accuracy: answered > 0 ? Math.round((correct / answered) * 100) : 0,

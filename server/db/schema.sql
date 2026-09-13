@@ -371,6 +371,32 @@ CREATE TABLE IF NOT EXISTS quiniela_predictions (
 
 CREATE INDEX IF NOT EXISTS idx_quiniela_user_date ON quiniela_predictions(user_id, fixture_date);
 
+-- Predicción de campeón y descenso: al arrancar la temporada real de una
+-- liga, cada quien predice quién sale campeón y quién baja (hasta 3 equipos).
+-- Se resuelve "perezoso" como la quiniela: cada vez que alguien pide sus
+-- predicciones, se mira la tabla real (getStandings) y si ya casi no quedan
+-- partidos por jugar (temporada terminada en la práctica) se puntúa ahí
+-- mismo. Nunca se puntúa contra la tabla de muestra (demo) de una temporada
+-- vieja — sólo contra datos reales de la temporada que se predijo.
+CREATE TABLE IF NOT EXISTS season_predictions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  league TEXT NOT NULL,
+  season_year INTEGER NOT NULL,
+  champion_team_id INTEGER NOT NULL,
+  champion_team_name TEXT NOT NULL,
+  relegated_team_ids TEXT NOT NULL,
+  relegated_team_names TEXT NOT NULL,
+  actual_champion_team_id INTEGER,
+  actual_relegated_team_ids TEXT,
+  points INTEGER,
+  scored INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(user_id, league, season_year)
+);
+
+CREATE INDEX IF NOT EXISTS idx_season_predictions_user ON season_predictions(user_id, scored);
+
 CREATE INDEX IF NOT EXISTS idx_duel_answers_lookup ON duel_answers(duel_id, user_id);
 
 CREATE TABLE IF NOT EXISTS football_cache (

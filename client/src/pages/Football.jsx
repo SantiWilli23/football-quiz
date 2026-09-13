@@ -91,6 +91,14 @@ const GAMES = [
     color: "#f0907e",
     available: true,
   },
+  {
+    to: "/pronosticos",
+    label: "Campeón y descenso",
+    icon: Trophy,
+    description: "Predecí quién sale campeón y qué 3 equipos bajan esta temporada real.",
+    color: "#d9a441",
+    available: true,
+  },
 ];
 
 function addDays(dateStr, delta) {
