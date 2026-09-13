@@ -1,9 +1,26 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useCareer } from "../context/CareerContext.jsx";
 import { teamById } from "../data/teams.js";
 
+function buildLegacy(history, team) {
+  const seasons = history.filter((h) => !h.note);
+  const titles = seasons.filter((h) => h.objectiveMet).length;
+  const copas = seasons.filter((h) => h.copaChampion).length;
+  const continental = seasons.filter((h) => h.continentalChampion).length;
+  const best = seasons.reduce((min, h) => (h.position < (min?.position ?? Infinity) ? h : min), null);
+  const clubsManaged = [...new Set(seasons.map((h) => h.teamId))].map((id) => teamById(id)?.name).filter(Boolean);
+  const named = seasons.filter((h) => h.seasonName);
+  return { seasonsCount: seasons.length, titles, copas, continental, best, clubsManaged, named };
+}
+
 export default function CareerHistory() {
-  const { state, team } = useCareer();
+  const { state, team, retireCareer } = useCareer();
   const history = state.history || [];
+  const [confirmRetire, setConfirmRetire] = useState(false);
+  const [legacy, setLegacy] = useState(null);
+
+  const openLegacy = () => setLegacy(buildLegacy(history, team));
 
   return (
     <div className="space-y-5">
@@ -34,7 +51,10 @@ export default function CareerHistory() {
             <div key={i} className="bg-panel border border-border rounded-2xl p-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
-                  <p className="font-semibold">Temporada {h.season} · {t?.name}</p>
+                  <p className="font-semibold">
+                    Temporada {h.season} · {t?.name}
+                    {h.seasonName && <span className="text-accent font-normal"> — "{h.seasonName}"</span>}
+                  </p>
                   <p className="text-xs text-gray-500 mt-0.5">{h.points} puntos</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -58,6 +78,88 @@ export default function CareerHistory() {
           );
         })}
       </div>
+
+      {/* Modo legado: cerrar la carrera para siempre y llevarte la ficha
+          resumen. Sólo tiene sentido si ya jugaste algo. */}
+      {history.some((h) => !h.note) && (
+        <div className="pt-4 border-t border-border">
+          {!legacy ? (
+            <button
+              onClick={openLegacy}
+              className="text-sm text-gray-500 hover:text-amber transition-colors"
+            >
+              🏛 Ver mi legado y retirarme
+            </button>
+          ) : (
+            <div className="bg-panel border border-amber/30 rounded-2xl p-5 space-y-4">
+              <h3 className="font-bold text-lg text-amber">🏛 Tu legado como DT</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                  <p className="text-2xl font-bold">{legacy.seasonsCount}</p>
+                  <p className="text-xs text-gray-500">Temporadas dirigidas</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-emerald">{legacy.titles}</p>
+                  <p className="text-xs text-gray-500">Objetivos cumplidos</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-amber">{legacy.copas}</p>
+                  <p className="text-xs text-gray-500">Copas del Rey</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-blue">{legacy.continental}</p>
+                  <p className="text-xs text-gray-500">Títulos continentales</p>
+                </div>
+              </div>
+              {legacy.best && (
+                <p className="text-sm text-gray-400">
+                  Tu mejor temporada: <span className="text-white font-semibold">{legacy.best.position}°</span> con {teamById(legacy.best.teamId)?.name}
+                  {legacy.best.seasonName && <> — "{legacy.best.seasonName}"</>}.
+                </p>
+              )}
+              {legacy.clubsManaged.length > 0 && (
+                <p className="text-sm text-gray-400">Clubes dirigidos: {legacy.clubsManaged.join(", ")}.</p>
+              )}
+
+              {!confirmRetire ? (
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    onClick={() => setConfirmRetire(true)}
+                    className="text-sm font-semibold px-4 py-2.5 rounded-2xl bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition-colors"
+                  >
+                    Retirarme para siempre
+                  </button>
+                  <button
+                    onClick={() => setLegacy(null)}
+                    className="text-sm text-gray-500 hover:text-white transition-colors"
+                  >
+                    Cerrar
+                  </button>
+                </div>
+              ) : (
+                <div className="bg-red-500/5 border border-red-500/30 rounded-xl p-4">
+                  <p className="text-sm mb-3">Esto borra la carrera para siempre. No se puede deshacer.</p>
+                  <div className="flex items-center gap-3">
+                    <Link
+                      to="/panel"
+                      onClick={retireCareer}
+                      className="text-sm font-semibold px-4 py-2.5 rounded-2xl bg-red-500 hover:bg-red-600 text-white transition-colors"
+                    >
+                      Sí, retirarme
+                    </Link>
+                    <button
+                      onClick={() => setConfirmRetire(false)}
+                      className="text-sm text-gray-400 hover:text-white transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

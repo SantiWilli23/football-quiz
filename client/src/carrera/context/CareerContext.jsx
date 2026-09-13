@@ -280,6 +280,8 @@ function buildInitialState(teamId) {
     acquired: [],
     offerCooldowns: {},
     watchlist: [],
+    stolenByAI: {},
+    seasonName: null,
     sentOffers: [],
     incomingOffers: [],
     // nuevos campos
@@ -350,6 +352,16 @@ export function CareerProvider({ children }) {
 
   // Compat: algunos componentes todavía llaman resetCareer() para "salir".
   function resetCareer() { exitToMenu(); }
+
+  // Retiro definitivo del DT: borra la carrera activa igual que deleteCareer,
+  // pero desde adentro de la partida (el "legado" que se muestra antes se
+  // arma solo con state.history, no hace falta guardar nada especial).
+  function retireCareer() {
+    const slotId = getActiveSlotId();
+    if (slotId) deleteSaveSlot(slotId);
+    setSaveSlots(listSaveSlots());
+    setState(null);
+  }
 
   function setFormation(formation) {
     setState((s) => ({ ...s, formation, lineup: remapLineupToFormation(s.squad, s.lineup, formation) }));
@@ -560,6 +572,12 @@ export function CareerProvider({ children }) {
 
   function setCaptain(playerId) {
     setState((s) => ({ ...s, captainId: playerId }));
+  }
+
+  // Bautizar la temporada en curso con un nombre propio (ej. "La del ascenso
+  // imposible"). Queda pegado a la fila del historial cuando la temporada cierra.
+  function setSeasonName(name) {
+    setState((s) => ({ ...s, seasonName: name.trim().slice(0, 60) || null }));
   }
 
   function setPlayerInstruction(playerId, instruction) {
@@ -910,6 +928,36 @@ export function CareerProvider({ children }) {
           incomingOffers: [...newOffers, ...(next.incomingOffers || [])].slice(0, 20),
           news: [`📨 Llegaron ${newOffers.length} oferta${newOffers.length === 1 ? "" : "s"} por jugadores tuyos.`, ...next.news].slice(0, 8),
         };
+      }
+
+      // Robo de fichaje: si seguís a un jugador ajeno demasiado tiempo sin
+      // cerrar el pase, un club rival se puede adelantar y ficharlo. Sólo
+      // corre sobre la watchlist (los objetivos que marcaste vos) — no roba
+      // jugadores al azar de todo el mercado.
+      const targets = (next.watchlist || []).filter((id) => !(next.acquired || []).includes(id));
+      if (targets.length) {
+        let watchlist = next.watchlist;
+        let stolenByAI = { ...(next.stolenByAI || {}) };
+        const stolenNames = [];
+        targets.forEach((pid) => {
+          if (Math.random() >= 0.08) return;
+          const p = allPlayers.find((pl) => pl.id === pid);
+          if (!p) return;
+          const buyers = teams.filter((t) => t.id !== next.teamId && t.id !== p.teamId);
+          if (!buyers.length) return;
+          const buyer = buyers[Math.floor(Math.random() * buyers.length)];
+          stolenByAI[pid] = { teamId: buyer.id, week: next.week };
+          watchlist = watchlist.filter((id) => id !== pid);
+          stolenNames.push(`${p.name} (lo fichó ${buyer.name})`);
+        });
+        if (stolenNames.length) {
+          next = {
+            ...next,
+            watchlist,
+            stolenByAI,
+            news: [`😱 Te robaron un fichaje: ${stolenNames.join(", ")}.`, ...next.news].slice(0, 8),
+          };
+        }
       }
 
       // Informes de scouting que ya llegan (se pidieron 1-3 semanas atrás)
@@ -1323,7 +1371,8 @@ export function CareerProvider({ children }) {
       playerStats: {},
       injuries: [],
       fatigue: {},
-      history: [...s.history, { season: s.season, position, points: sorted.find((r) => r.teamId === s.teamId)?.pts || 0, objectiveMet, copaChampion: s.copa?.champion || false, continentalChampion: s.continental?.champion || false }],
+      history: [...s.history, { season: s.season, seasonName: s.seasonName || null, teamId: s.teamId, position, points: sorted.find((r) => r.teamId === s.teamId)?.pts || 0, objectiveMet, copaChampion: s.copa?.champion || false, continentalChampion: s.continental?.champion || false }],
+      seasonName: null,
       news: [
         ...(continentalNewsLine ? [continentalNewsLine] : []),
         ...offerNews,
@@ -1352,6 +1401,7 @@ export function CareerProvider({ children }) {
       CONTINENTAL_LABELS,
       selectTeam,
       resetCareer,
+      retireCareer,
       exitToMenu,
       resumeCareer,
       deleteCareer,
@@ -1377,6 +1427,7 @@ export function CareerProvider({ children }) {
       weeksUntilCanOffer,
       isTransferWindowOpen,
       toggleWatchlist,
+      setSeasonName,
       toggleTransferListed,
       toggleLoanListed,
       startPositionTraining,

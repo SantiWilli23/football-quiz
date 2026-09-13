@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Lock, Flame, Trophy, Star, Medal, TrendingUp, Wallet, Smile, Meh, Frown,
   HeartPulse, Mail, PenLine, Newspaper, ShieldAlert, PlayCircle, Target,
@@ -86,12 +87,54 @@ function CompetitionCard({ Icon, label, color, bg, round, opponentName, availabl
   );
 }
 
+// Bautizar la temporada en curso con un nombre propio, tipo "La del ascenso
+// imposible". Queda pegado a la fila del historial cuando cierra la temporada.
+function SeasonNameEditor({ value, onSave }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value || "");
+
+  if (editing) {
+    return (
+      <div className="mt-3 flex items-center gap-2">
+        <input
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") { onSave(draft); setEditing(false); }
+            if (e.key === "Escape") setEditing(false);
+          }}
+          maxLength={60}
+          placeholder="Ponele un nombre a esta temporada…"
+          className="bg-bg border border-border rounded-card px-3 py-1.5 text-sm flex-1 max-w-xs focus:outline-none focus:border-accent"
+        />
+        <button
+          onClick={() => { onSave(draft); setEditing(false); }}
+          className="text-xs font-medium px-3 py-1.5 rounded-card bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20 transition-colors"
+        >
+          Guardar
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => { setDraft(value || ""); setEditing(true); }}
+      className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors"
+    >
+      <PenLine size={12} />
+      {value ? `"${value}"` : "Ponele un nombre a esta temporada"}
+    </button>
+  );
+}
+
 export default function Dashboard({ onPlayMatch }) {
   const {
     state, team, currentFixture, isRivalMatch, playNextMatchFirstHalf, playCopaMatch, copaIsAvailable,
     playContinentalMatch, continentalIsAvailable, standingsSorted, resetCareer, acceptJobOffer, declineJobOffer,
     renewContract, releasePlayer,
-    preseasonAvailable, playPreseasonMatch,
+    preseasonAvailable, playPreseasonMatch, setSeasonName,
     COPA_ROUNDS: CR, COPA_WEEKS: CW, CONTINENTAL_ROUNDS, CONTINENTAL_WEEKS, CONTINENTAL_LABELS,
   } = useCareer();
   const fixture   = currentFixture();
@@ -178,6 +221,7 @@ export default function Dashboard({ onPlayMatch }) {
             <p className="text-sm text-gray-500">{LEAGUE_LABELS[team.league] || team.league} · Temporada {state.season}</p>
           </div>
         </div>
+        <SeasonNameEditor value={state.seasonName} onSave={setSeasonName} />
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mt-4 pt-4 border-t border-border">
           <div className="min-w-[140px]">
             <p className="text-[11px] text-gray-500 mb-1.5 uppercase tracking-wide">Confianza directiva</p>

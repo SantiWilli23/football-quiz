@@ -25,7 +25,11 @@ export default function Transfers() {
   const [target, setTarget] = useState(null);
 
   const windowOpen = isTransferWindowOpen();
-  const ownedIds      = new Set([...state.squad.map((p) => p.id), ...(state.acquired || [])]);
+  const ownedIds      = new Set([
+    ...state.squad.map((p) => p.id),
+    ...(state.acquired || []),
+    ...Object.keys(state.stolenByAI || {}).map(Number),
+  ]);
   const watchlist     = state.watchlist || [];
   const sentOffers    = state.sentOffers || [];
   const incomingOffers = state.incomingOffers || [];
