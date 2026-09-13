@@ -315,6 +315,36 @@ CREATE TABLE IF NOT EXISTS duel_tournament_matches (
 CREATE INDEX IF NOT EXISTS idx_tourn_matches_tournament ON duel_tournament_matches(tournament_id, round);
 CREATE INDEX IF NOT EXISTS idx_tourn_players_tournament ON duel_tournament_players(tournament_id);
 
+-- "Fulbodle": un jugador real secreto por día, igual para todos (elegido
+-- determinísticamente a partir de la fecha, ver server/routes/wordle.js —
+-- no hace falta guardar cuál es, se recalcula solo). Cada intento de cada
+-- usuario queda acá — wordle_results guarda el resultado final una sola vez
+-- por persona por día, para que sume al ranking del grupo como cualquier
+-- otro puntaje.
+CREATE TABLE IF NOT EXISTS wordle_guesses (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  date TEXT NOT NULL,
+  attempt_number INTEGER NOT NULL,
+  guess_name TEXT NOT NULL,
+  is_correct INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(user_id, date, attempt_number)
+);
+
+CREATE TABLE IF NOT EXISTS wordle_results (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  date TEXT NOT NULL,
+  attempts INTEGER NOT NULL,
+  points INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(user_id, date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_wordle_guesses_user_date ON wordle_guesses(user_id, date);
+CREATE INDEX IF NOT EXISTS idx_wordle_results_date ON wordle_results(date);
+
 CREATE INDEX IF NOT EXISTS idx_duel_answers_lookup ON duel_answers(duel_id, user_id);
 
 CREATE TABLE IF NOT EXISTS football_cache (

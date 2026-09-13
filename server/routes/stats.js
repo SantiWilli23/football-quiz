@@ -122,6 +122,22 @@ async function dtLeaguePointsByUser(groupId, from, to) {
   return new Map(result.rows.map((r) => [r.user_id, Number(r.points)]));
 }
 
+// Puntos de Fulbodle (el jugador secreto del día): son del usuario, no del
+// grupo — el mismo secreto es igual para todo el mundo, así que se suman
+// por fecha de resultado igual que trivia, no por group_id.
+async function wordlePointsByUser(memberIds, from, to) {
+  if (memberIds.length === 0) return new Map();
+  const placeholders = memberIds.map(() => "?").join(",");
+  const result = await db.execute({
+    sql: `SELECT user_id, COALESCE(SUM(points), 0) AS points
+          FROM wordle_results
+          WHERE user_id IN (${placeholders}) AND date >= ? AND date <= ?
+          GROUP BY user_id`,
+    args: [...memberIds, from, to],
+  });
+  return new Map(result.rows.map((r) => [r.user_id, Number(r.points)]));
+}
+
 // Ranking del grupo acotado a un rango de fechas. Los puntos de trivia son del
 // usuario (no del grupo), igual que en el ranking histórico; los de Modo B,
 // duelos y Liga DT sí son por grupo.
@@ -155,6 +171,7 @@ async function rankingBetween(groupId, from, to) {
   const modeBByUser = new Map(modeBResult.rows.map((r) => [r.user_id, Number(r.points)]));
   const duelByUser = await duelPointsByUser(groupId, from, to);
   const dtLeagueByUser = await dtLeaguePointsByUser(groupId, from, to);
+  const wordleByUser = await wordlePointsByUser(memberIds, from, to);
 
   return members
     .map((m) => {
@@ -163,6 +180,7 @@ async function rankingBetween(groupId, from, to) {
       const mode_b_points = modeBByUser.get(m.id) || 0;
       const duel_points = duelByUser.get(m.id) || 0;
       const dt_league_points = dtLeagueByUser.get(m.id) || 0;
+      const wordle_points = wordleByUser.get(m.id) || 0;
       const answered = trivia ? Number(trivia.answered) : 0;
       const correct = trivia ? Number(trivia.correct) : 0;
       return {
@@ -174,7 +192,8 @@ async function rankingBetween(groupId, from, to) {
         mode_b_points,
         duel_points,
         dt_league_points,
-        points: trivia_points + mode_b_points + duel_points + dt_league_points,
+        wordle_points,
+        points: trivia_points + mode_b_points + duel_points + dt_league_points + wordle_points,
         answered,
         correct,
         accuracy: answered > 0 ? Math.round((correct / answered) * 100) : 0,

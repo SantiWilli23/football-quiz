@@ -12,6 +12,7 @@ import Stats from "./pages/Stats.jsx";
 import Duels from "./pages/Duels.jsx";
 import Football from "./pages/Football.jsx";
 import Survival from "./pages/Survival.jsx";
+import Wordle from "./pages/Wordle.jsx";
 import CareerMode from "./carrera/index.jsx";
 import EquipoJugador from "./equipo-jugador/index.jsx";
 import DtLeagueHome from "./dt-liga/DtLeagueHome.jsx";
@@ -134,6 +135,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <Survival />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/fulbodle"
+        element={
+          <PrivateRoute>
+            <Wordle />
           </PrivateRoute>
         }
       />
