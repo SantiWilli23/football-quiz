@@ -32,11 +32,17 @@ function send(ws, msg) {
 }
 
 function broadcast(room, msg) {
-  room.sockets.forEach((_userId, ws) => send(ws, msg));
+  room.sockets.forEach((_info, ws) => send(ws, msg));
 }
 
+// Solo cuenta a los dos que juegan (para decidir si ya arranca el partido);
+// los espectadores no cuentan como "conectado" a estos efectos.
 function connectedUserIds(room) {
-  return [...new Set(room.sockets.values())];
+  return [...new Set([...room.sockets.values()].filter((s) => s.role !== "spectator").map((s) => s.userId))];
+}
+
+function spectatorCount(room) {
+  return [...room.sockets.values()].filter((s) => s.role === "spectator").length;
 }
 
 export function attachDtLiveWs(httpServer) {
@@ -82,9 +88,23 @@ export function attachDtLiveWs(httpServer) {
         send(ws, { type: "error", message: "Este partido no enfrenta a dos jugadores humanos" });
         return ws.close();
       }
-      if (userId !== homeMember.user_id && userId !== awayMember.user_id) {
-        send(ws, { type: "error", message: "No sos parte de este partido" });
-        return ws.close();
+
+      const isHome = userId === homeMember.user_id;
+      const isAway = userId === awayMember.user_id;
+      let isSpectator = false;
+      if (!isHome && !isAway) {
+        // No juega este partido, pero si es de la misma liga (otro DT del
+        // grupo) puede entrar a mirarlo — no participa, no elige velocidad,
+        // y no cuenta para que arranque el partido.
+        const leagueMembership = await db.execute({
+          sql: "SELECT 1 FROM dt_league_members WHERE league_id = ? AND user_id = ?",
+          args: [fx.league_id, userId],
+        });
+        if (leagueMembership.rows.length === 0) {
+          send(ws, { type: "error", message: "No sos parte de este partido" });
+          return ws.close();
+        }
+        isSpectator = true;
       }
 
       let room = rooms.get(fixtureId);
@@ -107,19 +127,21 @@ export function attachDtLiveWs(httpServer) {
         };
         rooms.set(fixtureId, room);
       }
-      room.sockets.set(ws, userId);
+      const role = isHome ? "home" : isAway ? "away" : "spectator";
+      room.sockets.set(ws, { userId, role });
       ws._fixtureId = fixtureId;
 
-      const isHome = userId === homeMember.user_id;
-      const joinedCol = isHome ? "live_home_joined" : "live_away_joined";
-      if (!fx.live_started_at) {
-        await db.execute({ sql: "UPDATE dt_league_fixtures SET live_started_at = datetime('now') WHERE id = ?", args: [fixtureId] });
+      if (!isSpectator) {
+        const joinedCol = isHome ? "live_home_joined" : "live_away_joined";
+        if (!fx.live_started_at) {
+          await db.execute({ sql: "UPDATE dt_league_fixtures SET live_started_at = datetime('now') WHERE id = ?", args: [fixtureId] });
+        }
+        await db.execute({ sql: `UPDATE dt_league_fixtures SET ${joinedCol} = 1 WHERE id = ?`, args: [fixtureId] });
       }
-      await db.execute({ sql: `UPDATE dt_league_fixtures SET ${joinedCol} = 1 WHERE id = ?`, args: [fixtureId] });
 
       send(ws, {
         type: "joined",
-        you: isHome ? "home" : "away",
+        you: role,
         homeUsername: homeMember.username,
         awayUsername: awayMember.username,
         homeTeamId: fx.home_team_id,
@@ -128,8 +150,9 @@ export function attachDtLiveWs(httpServer) {
         awayTeamName: TEAM_BY_ID[fx.away_team_id]?.name || fx.away_team_id,
         speed: room.speed,
         started: room.started,
+        events: isSpectator ? room.events?.slice(0, room.tickIndex) ?? [] : undefined,
       });
-      broadcast(room, { type: "presence", connected: connectedUserIds(room) });
+      broadcast(room, { type: "presence", connected: connectedUserIds(room), spectators: spectatorCount(room) });
 
       const bothConnected =
         connectedUserIds(room).includes(homeMember.user_id) && connectedUserIds(room).includes(awayMember.user_id);
@@ -139,6 +162,8 @@ export function attachDtLiveWs(httpServer) {
         let msg;
         try { msg = JSON.parse(raw.toString()); } catch { return; }
         if (!msg || typeof msg.type !== "string") return;
+        const sender = room.sockets.get(ws);
+        if (sender?.role === "spectator") return; // solo mira, no toca nada
         if (msg.type === "set_speed" && !room.started && ALLOWED_SPEEDS.includes(Number(msg.speed))) {
           room.speed = Number(msg.speed);
           broadcast(room, { type: "speed", speed: room.speed });
@@ -147,7 +172,7 @@ export function attachDtLiveWs(httpServer) {
 
       ws.on("close", () => {
         room.sockets.delete(ws);
-        broadcast(room, { type: "presence", connected: connectedUserIds(room) });
+        broadcast(room, { type: "presence", connected: connectedUserIds(room), spectators: spectatorCount(room) });
       });
     } catch (err) {
       console.error("dt-live error:", err);

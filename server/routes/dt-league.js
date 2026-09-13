@@ -594,9 +594,8 @@ router.get("/:code/fixtures/:fixtureId/live", async (req, res) => {
   const fx = fxResult.rows[0];
   if (!fx) return res.status(404).json({ error: "Partido no encontrado" });
   if (fx.played) return res.status(400).json({ error: "Ese partido ya se jugó" });
-  if (fx.home_team_id !== me.team_id && fx.away_team_id !== me.team_id) {
-    return res.status(403).json({ error: "Ese partido no es tuyo" });
-  }
+  // No hace falta ser vos el que juega: cualquiera de la liga puede entrar
+  // a mirar en vivo (modo espectador) — dt-live.js decide el rol real.
   const teamIdsWithManager = new Set(members.filter((m) => m.team_id).map((m) => m.team_id));
   if (!teamIdsWithManager.has(fx.home_team_id) || !teamIdsWithManager.has(fx.away_team_id)) {
     return res.status(400).json({ error: "Este partido no enfrenta a dos jugadores — jugalo con /play" });

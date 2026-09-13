@@ -14,9 +14,10 @@ export default function LiveMatch() {
   const navigate = useNavigate();
   const [phase, setPhase] = useState("connecting"); // connecting | waiting | live | final | error
   const [error, setError] = useState(null);
-  const [you, setYou] = useState(null); // "home" | "away"
+  const [you, setYou] = useState(null); // "home" | "away" | "spectator"
   const [teams, setTeams] = useState(null);
   const [connected, setConnected] = useState([]);
+  const [spectators, setSpectators] = useState(0);
   const [speed, setSpeed] = useState(1);
   const [events, setEvents] = useState([]);
   const [score, setScore] = useState({ home: 0, away: 0 });
@@ -51,8 +52,15 @@ export default function LiveMatch() {
           setTeams({ home: msg.homeTeamName, away: msg.awayTeamName, homeUser: msg.homeUsername, awayUser: msg.awayUsername });
           setSpeed(msg.speed);
           setPhase(msg.started ? "live" : "waiting");
+          if (msg.you === "spectator" && msg.events?.length) {
+            setEvents(msg.events);
+            const home = msg.events.filter((e) => e.team === "home").length;
+            const away = msg.events.filter((e) => e.team === "away").length;
+            setScore({ home, away });
+          }
         } else if (msg.type === "presence") {
           setConnected(msg.connected);
+          if (typeof msg.spectators === "number") setSpectators(msg.spectators);
         } else if (msg.type === "speed") {
           setSpeed(msg.speed);
         } else if (msg.type === "kickoff") {
@@ -92,7 +100,12 @@ export default function LiveMatch() {
     <div className="min-h-screen bg-bg text-white p-4">
       <div className="max-w-xl mx-auto space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold">Partido en vivo</h1>
+          <h1 className="text-xl font-bold flex items-center gap-2">
+            Partido en vivo
+            {you === "spectator" && (
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-panel border border-border text-gray-400">👀 mirando</span>
+            )}
+          </h1>
           <Link to={`/dt-liga/${code}`} className="text-xs text-gray-500 hover:text-white">← Volver a la liga</Link>
         </div>
 
@@ -109,32 +122,39 @@ export default function LiveMatch() {
               <span className="text-3xl font-bold tabular-nums">{score.home} - {score.away}</span>
               <span className={`font-semibold ${you === "away" ? "text-accent" : ""}`}>{teams.away}</span>
             </div>
-            <p className="text-xs text-gray-500">{teams.homeUser} vs {teams.awayUser}</p>
+            <p className="text-xs text-gray-500">
+              {teams.homeUser} vs {teams.awayUser}
+              {spectators > 0 && ` · 👀 ${spectators} mirando`}
+            </p>
           </div>
         )}
 
         {phase === "waiting" && (
           <div className="bg-panel border border-border rounded-2xl p-5 space-y-4">
             <p className="text-sm text-gray-400 text-center">
-              {bothConnected ? "Los dos están conectados — arranca en un momento…" : "Esperando a que se conecte el otro DT…"}
+              {you === "spectator"
+                ? "Esperando a que los dos DT se conecten para arrancar…"
+                : bothConnected ? "Los dos están conectados — arranca en un momento…" : "Esperando a que se conecte el otro DT…"}
             </p>
-            <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Velocidad del partido</p>
-              <div className="grid grid-cols-2 gap-2">
-                {SPEED_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => sendSpeed(opt.value)}
-                    className={`px-3 py-2 rounded-2xl border text-sm transition-colors ${
-                      speed === opt.value ? "border-accent bg-accent/10 text-accent" : "border-border text-gray-400 hover:border-gray-500"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+            {you !== "spectator" && (
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Velocidad del partido</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {SPEED_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => sendSpeed(opt.value)}
+                      className={`px-3 py-2 rounded-2xl border text-sm transition-colors ${
+                        speed === opt.value ? "border-accent bg-accent/10 text-accent" : "border-border text-gray-400 hover:border-gray-500"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-600 mt-2">Cualquiera de los dos puede cambiarla antes de que arranque.</p>
               </div>
-              <p className="text-xs text-gray-600 mt-2">Cualquiera de los dos puede cambiarla antes de que arranque.</p>
-            </div>
+            )}
           </div>
         )}
 

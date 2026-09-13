@@ -340,7 +340,13 @@ function FixturesTab({ code, league, myTeamId, onAdvanced }) {
                   </button>
                 )}
                 {!f.played && f.isPvp && !f.involvesMe && (
-                  <span className="text-[10px] text-gray-600">{f.homeManager} vs {f.awayManager}</span>
+                  <button
+                    onClick={() => navigate(`/dt-liga/${code}/live/${f.id}`)}
+                    title={`${f.homeManager} vs ${f.awayManager}`}
+                    className="text-xs font-medium px-3 py-1.5 rounded-full bg-panel border border-border text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
+                  >
+                    👀 Mirar
+                  </button>
                 )}
               </span>
             </div>
