@@ -360,6 +360,62 @@ const DECISIONS_POOL = [
       { p: { profesional: 1 } },
     ],
   },
+  {
+    id: "d16",
+    context: "Tu pareja te pide que se muden juntos. Es un paso grande, y la temporada está en un momento exigente.",
+    options: [
+      { text: "Te animás. Necesitás algo estable fuera de la cancha." },
+      { text: "Le pedís esperar hasta que termine la temporada." },
+      { text: "Le decís que preferís enfocarte solo en el fútbol por ahora." },
+    ],
+    effects: [
+      { forma: 4, p: { profesional: 1 } },
+      { p: { profesional: 1 } },
+      { forma: -3, p: { solitario: 1 } },
+    ],
+  },
+  {
+    id: "d17",
+    context: "Te enterás de que vas a ser padre/madre. La noticia te cae en medio de una semana de partidos importantes.",
+    options: [
+      { text: "Lo compartís con el grupo. Necesitás decirlo en voz alta." },
+      { text: "Lo guardás para vos y tu familia por ahora." },
+      { text: "Se lo contás primero al técnico, para que lo tenga en cuenta." },
+    ],
+    effects: [
+      { forma: 5, p: { lider: 1 } },
+      { p: { solitario: 1 } },
+      { dt: 4, p: { profesional: 1 } },
+    ],
+  },
+  {
+    id: "d18",
+    context: "Tu familia te reclama que las giras y concentraciones te están alejando de casa. Es una charla que veías venir.",
+    options: [
+      { text: "Le pedís al club adaptar tu calendario lo que se pueda." },
+      { text: "Les explicás que es parte del trabajo y que no depende de vos." },
+      { text: "Les prometés compensarlo en cuanto termine la temporada." },
+    ],
+    effects: [
+      { dt: -3, forma: 2 },
+      { forma: -4, p: { profesional: 1 } },
+      { p: { solitario: 1 } },
+    ],
+  },
+  {
+    id: "d19",
+    context: "Un familiar cercano no está bien de salud. Te ofrecen un permiso corto para viajar a verlo, aunque hay entrenamientos importantes esa semana.",
+    options: [
+      { text: "Viajás. La familia primero." },
+      { text: "Te quedás, pero llamás todos los días." },
+      { text: "Le pedís al club que gestione algo para no perder entrenamientos." },
+    ],
+    effects: [
+      { forma: -2, dt: 2, p: { lider: 1 } },
+      { forma: -5, p: { solitario: 1 } },
+      { dt: 3, p: { profesional: 1 } },
+    ],
+  },
 ];
 
 const MATCH_SITUATIONS = [
@@ -765,6 +821,16 @@ function applyDecisionEffects(decision, optionIdx) {
   if (!state._usedDecisions) state._usedDecisions = [];
   state._usedDecisions.push(decision.id);
   if (state._usedDecisions.length > 12) state._usedDecisions.shift();
+
+  pushHistory({
+    type: "semanal",
+    week: state.career.week,
+    season: state.career.season,
+    label: decision.context.length > 70 ? decision.context.slice(0, 70) + "…" : decision.context,
+    text: decision.options[optionIdx].text,
+    dtDelta: deltaDt,
+    formaDelta: deltaForma,
+  });
 }
 
 // ── DECISIONES LIBRES ──────────────────────────────────────────────
@@ -826,6 +892,188 @@ const FREE_DECISIONS = [
       };
     },
   },
+  {
+    id: "capitania",
+    icon: "🧢",
+    label: "Pedir el brazalete de capitán",
+    sub: "Le pedís al DT que te haga capitán. Pesa más si el grupo ya te ve como líder.",
+    cooldownWeeks: 8,
+    blocked(p) {
+      return p.isCaptain ? "Ya sos el capitán del equipo." : null;
+    },
+    resolve(p) {
+      const liderBonus = Math.min(20, (p.personality?.lider || 0) * 2);
+      const chance = Math.max(0.08, Math.min(0.8, 0.15 + (p.dtRelation - 50) / 120 + liderBonus / 100));
+      const success = Math.random() < chance;
+      if (success) {
+        p.isCaptain = true;
+        p.dtRelation = Math.max(0, Math.min(100, p.dtRelation + 4));
+        return { success, text: "El DT te da el brazalete: \"Confío en vos para llevar la voz del grupo\"." };
+      }
+      p.dtRelation = Math.max(0, Math.min(100, p.dtRelation - 5));
+      return { success, text: "El DT te dice que todavía no es tu momento de liderar el vestuario." };
+    },
+  },
+  {
+    id: "penales",
+    icon: "🎯",
+    label: "Pedir patear los penales",
+    sub: "Le pedís al DT que te confirme como el pateador oficial del equipo.",
+    cooldownWeeks: 6,
+    blocked(p) {
+      return p.setPieceRole === "penales" ? "Ya sos el pateador de penales del equipo." : null;
+    },
+    resolve(p) {
+      const chance = Math.max(0.1, Math.min(0.8, 0.2 + (p.dtRelation - 50) / 110 + (p.ovr - 70) / 150));
+      const success = Math.random() < chance;
+      if (success) {
+        p.setPieceRole = "penales";
+        p.dtRelation = Math.max(0, Math.min(100, p.dtRelation + 2));
+        return { success, text: "El DT te confirma como el pateador de penales del equipo." };
+      }
+      p.dtRelation = Math.max(0, Math.min(100, p.dtRelation - 4));
+      return { success, text: "El DT prefiere sostener al pateador habitual por ahora." };
+    },
+  },
+  {
+    id: "descanso",
+    icon: "🌴",
+    label: "Pedir unos días de descanso",
+    sub: "Le pedís al cuerpo técnico que te baje la carga esta semana.",
+    cooldownWeeks: 4,
+    blocked(p) {
+      return p.forma >= 92 ? "Ya estás a tope de forma, no hace falta." : null;
+    },
+    resolve(p) {
+      const chance = Math.max(0.25, Math.min(0.9, 0.4 + (p.dtRelation - 50) / 150));
+      const success = Math.random() < chance;
+      if (success) {
+        p.forma = Math.min(100, p.forma + 8);
+        return { success, text: "Te bajaron la carga esta semana. Llegás más fresco." };
+      }
+      p.dtRelation = Math.max(0, Math.min(100, p.dtRelation - 3));
+      return { success, text: "Te dijeron que no hay tiempo para bajar el ritmo a mitad de temporada." };
+    },
+  },
+  {
+    id: "prensa_contrato",
+    icon: "📰",
+    label: "Hablar con la prensa de tu contrato",
+    sub: "Metés presión pública para negociar. Sube el ruido mediático, salga bien o mal.",
+    cooldownWeeks: 5,
+    blocked() {
+      return null;
+    },
+    resolve(p) {
+      const chance = Math.max(0.15, Math.min(0.75, 0.3 + (p.dtRelation - 50) / 130));
+      const success = Math.random() < chance;
+      if (success) {
+        p.dtRelation = Math.max(0, Math.min(100, p.dtRelation + 2));
+        state.pressHeat = Math.min(100, (state.pressHeat || 0) + 10);
+        return { success, text: "Manejaste bien la nota. El club valora que no perdiste el tono." };
+      }
+      p.dtRelation = Math.max(0, Math.min(100, p.dtRelation - 8));
+      state.pressHeat = Math.min(100, (state.pressHeat || 0) + 20);
+      return { success, text: "Te fuiste de boca con la prensa. En el club no les cayó nada bien." };
+    },
+  },
+  {
+    id: "redes_sociales",
+    icon: "📱",
+    label: "Postear algo polémico en redes",
+    sub: "Una movida arriesgada para hacer ruido. Puede sumarte fama o quemarte con el club.",
+    cooldownWeeks: 4,
+    blocked() {
+      return null;
+    },
+    resolve(p) {
+      const success = Math.random() < 0.4;
+      if (success) {
+        p.forma = Math.min(100, p.forma + 3);
+        state.pressHeat = Math.min(100, (state.pressHeat || 0) + 15);
+        return { success, text: "El posteo explotó de la mejor manera. Ganaste seguidores y buena onda." };
+      }
+      p.dtRelation = Math.max(0, Math.min(100, p.dtRelation - 9));
+      state.pressHeat = Math.min(100, (state.pressHeat || 0) + 25);
+      return { success, text: "El posteo generó polémica y el club te pidió explicaciones." };
+    },
+  },
+  {
+    id: "prestamo",
+    icon: "🚪",
+    label: "Amenazar con pedir salir a préstamo",
+    sub: "Le hacés saber al club que si no sumás minutos, vas a pedir salir cedido.",
+    cooldownWeeks: 7,
+    blocked(p) {
+      return p.isStarter ? "Sos titular, no tiene sentido amenazar con irte." : null;
+    },
+    resolve(p) {
+      const chance = Math.max(0.15, Math.min(0.7, 0.3 + (50 - p.dtRelation) / 150));
+      const success = Math.random() < chance;
+      if (success) {
+        p.forma = Math.min(100, p.forma + 3);
+        return { success, text: "El club tomó nota del reclamo y te promete más consideración de acá en más." };
+      }
+      p.dtRelation = Math.max(0, Math.min(100, p.dtRelation - 7));
+      return { success, text: "Se lo tomaron como una amenaza vacía. No cambió nada, y quedó un mal gesto." };
+    },
+  },
+  {
+    id: "rival_migas",
+    icon: "🤝",
+    label: "Hacer buenas migas con tu rival de puesto",
+    sub: "Un gesto sin riesgo: acercarte a quien te compite el lugar en vez de tensar la cuerda.",
+    cooldownWeeks: 4,
+    blocked(p) {
+      return p.rival ? null : "No tenés a nadie compitiéndote el puesto ahora mismo.";
+    },
+    resolve(p) {
+      p.forma = Math.min(100, p.forma + 2);
+      p.personality.lider = (p.personality.lider || 0) + 1;
+      checkPersonality();
+      return { success: true, text: `Te llevás mejor con ${p.rival.name}. El vestuario respira más liviano.` };
+    },
+  },
+  {
+    id: "rival_confrontar",
+    icon: "😤",
+    label: "Confrontar a tu rival de puesto",
+    sub: "Un cara a cara directo. Puede marcarle el terreno o salirte el tiro por la culata.",
+    cooldownWeeks: 5,
+    blocked(p) {
+      return p.rival ? null : "No tenés a nadie compitiéndote el puesto ahora mismo.";
+    },
+    resolve(p) {
+      const success = Math.random() < 0.5;
+      if (success) {
+        p.rival.ovr = Math.max(55, p.rival.ovr - 3);
+        return { success, text: `Le dejaste en claro que el puesto es tuyo. ${p.rival.name} bajó un cambio.` };
+      }
+      p.dtRelation = Math.max(0, Math.min(100, p.dtRelation - 5));
+      p.rival.ovr = Math.min(95, p.rival.ovr + 2);
+      return { success, text: `La confrontación se fue de tema. El DT se enteró y no le gustó nada.` };
+    },
+  },
+  {
+    id: "rival_sabotear",
+    icon: "🗡️",
+    label: "Meter presión por lo bajo a tu rival",
+    sub: "Jugada sucia y de alto riesgo: correr rumores para debilitarlo frente al DT.",
+    cooldownWeeks: 8,
+    blocked(p) {
+      return p.rival ? null : "No tenés a nadie compitiéndote el puesto ahora mismo.";
+    },
+    resolve(p) {
+      const success = Math.random() < 0.35;
+      if (success) {
+        p.rival.ovr = Math.max(50, p.rival.ovr - 6);
+        return { success, text: `El rumor prendió. ${p.rival.name} perdió lugar en la consideración del DT.` };
+      }
+      p.dtRelation = Math.max(0, Math.min(100, p.dtRelation - 14));
+      p.forma = Math.max(10, p.forma - 3);
+      return { success, text: "Se supo que vos corriste el rumor. Quedaste pegado frente a todo el plantel." };
+    },
+  },
 ];
 
 function resolveFreeDecision(id) {
@@ -843,7 +1091,21 @@ function resolveFreeDecision(id) {
   state.freeDecisionCooldowns[id] = week;
   addNews(result.text, result.success);
   state._lastFreeDecisionResult = { id, ...result };
+  pushHistory({
+    type: "libre",
+    week: state.career.week,
+    season: state.career.season,
+    label: def.label,
+    text: result.text,
+    success: result.success,
+  });
   save();
+}
+
+function pushHistory(entry) {
+  if (!state.decisionHistory) state.decisionHistory = [];
+  state.decisionHistory.unshift(entry);
+  if (state.decisionHistory.length > 40) state.decisionHistory.length = 40;
 }
 
 function applySpecial(id) {
@@ -952,6 +1214,10 @@ function resolveMatch(matchId, situationChoice) {
       if (Math.random() < 0.1) goals = 1;
       if (Math.random() < 0.16) assists = 1;
     }
+
+    // Ser el pateador de penales del equipo da una chance extra de gol,
+    // sin importar el puesto (ver decisión libre "Pedir patear los penales").
+    if (state.player.setPieceRole === "penales" && Math.random() < 0.12) goals += 1;
   }
 
   // El marcador siempre respeta win/draw/loss (antes se sorteaban por separado
@@ -1065,16 +1331,29 @@ function advanceWeek() {
   }
 
   // ── Rival de vestuario: alguien te disputa el puesto ──
+  // La relación con el DT ahora pesa acá: con buena relación cuesta más que
+  // te bajen del 11, y si ya sos titular indiscutido el técnico no te toca
+  // salvo que la diferencia de nivel sea enorme.
   if (state.player.rival) {
     if (state.career.week % 4 === 0) {
       state.player.rival.ovr = Math.min(95, state.player.rival.ovr + Math.floor(Math.random() * 3));
     }
     const gap = state.player.rival.ovr - state.player.ovr;
-    if (gap >= 6 && Math.random() < 0.18) {
+    const dtShield = (state.player.dtRelation - 50) / 400; // +/- ~0.12 según relación
+    const starterShield = state.player.isStarter ? 0.12 : 0;
+    const benchChance = Math.max(0.03, 0.18 - dtShield - starterShield);
+    const benchGapThreshold = state.player.isStarter ? 9 : 6;
+    if (gap >= benchGapThreshold && Math.random() < benchChance) {
       state._benchedNextMatch = true;
       state.player.dtRelation = Math.max(0, state.player.dtRelation - 3);
       addNews(`El técnico le dio minutos a ${state.player.rival.name} en tu puesto. Se está haciendo un lugar.`, true);
     }
+  }
+
+  // ── Relación muy mala con el DT: empieza a jugarte en contra ──
+  if (state.player.dtRelation < 15 && Math.random() < 0.25) {
+    state.player.forma = Math.max(10, state.player.forma - 4);
+    addNews("El cuerpo técnico no te tiene confianza. Se nota en cómo te tratan día a día.", true);
   }
 
   // New decision for this week
@@ -1176,6 +1455,8 @@ function initNewGame(name, position, archetype, club, country, ironman) {
       potential: randomPotential(ovr, 16),
       dtRelation: 50,
       isStarter: null,
+      isCaptain: false,
+      setPieceRole: null,
       salaryLevel: 0,
       injuryRisk: 15,
       injuryStatus: null,
@@ -1210,6 +1491,7 @@ function initNewGame(name, position, archetype, club, country, ironman) {
     ],
     _usedDecisions: [],
     freeDecisionCooldowns: {},
+    decisionHistory: [],
   };
   // Pick first decision after state is ready
   state.schedule.currentDecision = pickDecision();
@@ -1231,6 +1513,7 @@ function render() {
     case "creation":   app.innerHTML = renderCreation(); break;
     case "hub":        app.innerHTML = renderHub(); break;
     case "decisions":  app.innerHTML = renderDecisions(); break;
+    case "historial":  app.innerHTML = renderHistorial(); break;
     case "decision":   app.innerHTML = renderDecision(); break;
     case "match":      app.innerHTML = renderMatch(); break;
     case "season_end": app.innerHTML = renderSeasonEnd(); break;
@@ -1372,20 +1655,50 @@ function renderCreationStep3() {
   `;
 }
 
+// Hay algo para hacer en Decisiones si: la decisión semanal está pendiente,
+// o alguna decisión libre está disponible (sin bloqueo y sin enfriamiento) —
+// así el puntito avisa también cuando un enfriamiento recién se cumplió.
+function hasAvailableFreeDecision() {
+  if (!state.freeDecisionCooldowns) state.freeDecisionCooldowns = {};
+  const p = state.player;
+  const week = absWeek(state.career);
+  return FREE_DECISIONS.some(def => {
+    if (def.blocked && def.blocked(p)) return false;
+    const lastWeek = state.freeDecisionCooldowns[def.id];
+    return lastWeek == null || week - lastWeek >= def.cooldownWeeks;
+  });
+}
+
 function renderTabBar(active) {
   const pendingDecision = !!(state.schedule?.currentDecision && !state.schedule?.decisionUsed);
+  const showDot = pendingDecision || hasAvailableFreeDecision();
   return `
     <div class="hub-tabs">
       <button class="hub-tab ${active === "hub" ? "active" : ""}" data-action="go_hub">Inicio</button>
       <button class="hub-tab ${active === "decisions" ? "active" : ""}" data-action="go_decisions">
-        Decisiones${pendingDecision ? `<span class="hub-tab-dot"></span>` : ""}
+        Decisiones${showDot ? `<span class="hub-tab-dot"></span>` : ""}
       </button>
+      <button class="hub-tab ${active === "historial" ? "active" : ""}" data-action="go_historial">Historial</button>
     </div>
   `;
 }
 
 function dtRelationColor(val) {
   return val >= 65 ? "#3FAE9A" : val >= 35 ? "#D9A441" : "#F0907E";
+}
+
+function salaryAmount(p) {
+  const base = 8000 + p.ovr * 300;
+  return Math.round(base * (1 + (p.salaryLevel || 0) * 0.18));
+}
+
+function buyoutClause(p, club) {
+  const base = (p.ovr * 1.2 + (p.salaryLevel || 0) * 15 + (p.dtRelation ?? 50) * 0.6) * ((club?.prestige || 70) / 70);
+  return Math.round(base) * 100000;
+}
+
+function formatMoney(n) {
+  return "$" + n.toLocaleString("es-AR");
 }
 
 function renderHub() {
@@ -1662,14 +1975,26 @@ function renderDecisions() {
               <div class="forma-value" style="color:${dtRelationColor(p.dtRelation ?? 50)}">${p.dtRelation ?? 50}</div>
             </div>
             ${p.isStarter ? `<p style="margin-top:12px;font-size:12px;color:var(--gold)">🎯 Sos titular indiscutido.</p>` : ""}
-            ${p.salaryLevel ? `<p style="margin-top:8px;font-size:12px;color:var(--text-muted)">💰 Nivel salarial: ${p.salaryLevel}</p>` : ""}
+            ${p.isCaptain ? `<p style="margin-top:8px;font-size:12px;color:var(--gold)">🧢 Sos el capitán del equipo.</p>` : ""}
+            ${p.setPieceRole === "penales" ? `<p style="margin-top:8px;font-size:12px;color:var(--gold)">🎯 Pateador de penales del equipo.</p>` : ""}
+            <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted)">
+              <span>💰 Sueldo semanal</span>
+              <span style="color:var(--text);font-weight:600">${formatMoney(salaryAmount(p))}</span>
+            </div>
+            <div style="margin-top:6px;display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted)">
+              <span>📄 Cláusula de rescisión</span>
+              <span style="color:var(--text);font-weight:600">${formatMoney(buyoutClause(p, state.club))}</span>
+            </div>
           </div>
         </div>
 
         ${last ? `
-          <div class="card" style="border-color:${last.success ? "var(--gold-border)" : "rgba(240,144,126,0.4)"}">
-            <div class="card-body" style="font-size:13px;color:${last.success ? "var(--gold)" : "var(--danger)"}">
-              ${last.text}
+          <div class="card free-result-flash" style="border-color:${last.success ? "var(--gold-border)" : "rgba(240,144,126,0.4)"}">
+            <div class="card-body">
+              <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;color:${last.success ? "var(--gold)" : "var(--danger)"}">
+                ${last.success ? "✅ Salió bien" : "⚠️ Salió mal"}
+              </div>
+              <div style="font-size:13px;color:${last.success ? "var(--gold)" : "var(--danger)"}">${last.text}</div>
             </div>
           </div>
         ` : ""}
@@ -1694,6 +2019,47 @@ function renderDecisions() {
                 </div>
               `;
             }).join("")}
+          </div>
+        </div>
+
+        <div style="height:20px"></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderHistorial() {
+  const history = state.decisionHistory || [];
+  return `
+    <div class="screen hub-screen fade-in">
+      <div class="hub-topbar">
+        <div class="hub-logo">COTRERO</div>
+        <div class="hub-week">Temporada ${state.career.season} · Semana ${state.career.week}/34</div>
+      </div>
+
+      ${renderTabBar("historial")}
+
+      <div class="hub-body">
+        <div class="card">
+          <div class="card-header">Historial de decisiones</div>
+          <div>
+            ${history.length === 0 ? `
+              <div class="card-body" style="color:var(--text-muted);font-size:13px">
+                Todavía no tomaste ninguna decisión esta carrera.
+              </div>
+            ` : history.map(h => `
+              <div class="history-item">
+                <div class="history-week">Temporada ${h.season} · Semana ${h.week} · ${h.type === "semanal" ? "Decisión semanal" : "Decisión libre"}</div>
+                <div class="history-label">${h.label}</div>
+                <div class="history-choice" style="color:${
+                  h.type === "libre"
+                    ? (h.success ? "var(--gold)" : "var(--danger)")
+                    : "var(--text)"
+                }">
+                  ${h.type === "libre" ? (h.success ? "✅ " : "⚠️ ") : "→ "}${h.text}
+                </div>
+              </div>
+            `).join("")}
           </div>
         </div>
 
@@ -2188,6 +2554,10 @@ function handleClick(e) {
 
     case "go_decisions":
       navigate("decisions");
+      break;
+
+    case "go_historial":
+      navigate("historial");
       break;
 
     case "free_decision":
