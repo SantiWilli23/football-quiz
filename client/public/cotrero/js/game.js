@@ -767,6 +767,85 @@ function applyDecisionEffects(decision, optionIdx) {
   if (state._usedDecisions.length > 12) state._usedDecisions.shift();
 }
 
+// ── DECISIONES LIBRES ──────────────────────────────────────────────
+// A diferencia de la decisión semanal (una por semana, la elige el juego),
+// estas las dispara el jugador cuando quiere. Tienen un enfriamiento propio
+// para que no se conviertan en una máquina de sumar reputación gratis: cada
+// una se puede volver a intentar recién después de `cooldownWeeks` semanas
+// (contadas de forma absoluta entre temporadas, ver absWeek).
+function absWeek(career) {
+  return career.season * 100 + career.week;
+}
+
+const FREE_DECISIONS = [
+  {
+    id: "titularidad",
+    icon: "🎯",
+    label: "Pedir la titularidad",
+    sub: "Le pedís al DT un lugar fijo en el 11. El resultado depende de cómo estás parado con él.",
+    cooldownWeeks: 6,
+    blocked(p) {
+      return p.isStarter ? "Ya sos titular indiscutido." : null;
+    },
+    resolve(p) {
+      const chance = Math.max(0.1, Math.min(0.85, 0.25 + (p.dtRelation - 50) / 100 + (p.forma - 50) / 200));
+      const success = Math.random() < chance;
+      if (success) {
+        p.isStarter = true;
+        p.dtRelation = Math.max(0, Math.min(100, p.dtRelation + 3));
+        return { success, text: "Hablaste con el DT y te aseguró un lugar fijo en el 11. Sos titular." };
+      }
+      p.dtRelation = Math.max(0, Math.min(100, p.dtRelation - 6));
+      return { success, text: `El DT te bajó el perfil: "No es tu momento todavía". Se lo tomó a mal que se lo pidas.` };
+    },
+  },
+  {
+    id: "sueldo",
+    icon: "💰",
+    label: "Pedir un aumento de sueldo",
+    sub: "Vas a hablar de plata. Si tu relación con el DT es baja, te puede salir caro.",
+    cooldownWeeks: 5,
+    blocked() {
+      return null;
+    },
+    resolve(p) {
+      const chance = Math.max(0.1, Math.min(0.8, 0.2 + (p.dtRelation - 50) / 90));
+      const success = Math.random() < chance;
+      if (success) {
+        p.salaryLevel = (p.salaryLevel || 0) + 1;
+        p.dtRelation = Math.max(0, Math.min(100, p.dtRelation + 1));
+        return { success, text: "El club aceptó mejorarte el contrato. Vas a cobrar más." };
+      }
+      const harsh = p.dtRelation < 30;
+      p.dtRelation = Math.max(0, p.dtRelation - (harsh ? 10 : 5));
+      return {
+        success,
+        text: harsh
+          ? `Te frenaron en seco: "Primero rendí, después hablamos de plata". Quedó mal el pedido.`
+          : "Te dijeron que no es el momento. No cambia nada, pero tampoco ayudó.",
+      };
+    },
+  },
+];
+
+function resolveFreeDecision(id) {
+  const def = FREE_DECISIONS.find(d => d.id === id);
+  if (!def) return;
+  const p = state.player;
+  if (!state.freeDecisionCooldowns) state.freeDecisionCooldowns = {};
+
+  const week = absWeek(state.career);
+  const lastWeek = state.freeDecisionCooldowns[id];
+  if (lastWeek != null && week - lastWeek < def.cooldownWeeks) return;
+  if (def.blocked && def.blocked(p)) return;
+
+  const result = def.resolve(p);
+  state.freeDecisionCooldowns[id] = week;
+  addNews(result.text, result.success);
+  state._lastFreeDecisionResult = { id, ...result };
+  save();
+}
+
 function applySpecial(id) {
   switch (id) {
     case "foto_condicional":
@@ -1096,6 +1175,8 @@ function initNewGame(name, position, archetype, club, country, ironman) {
       forma: 58,
       potential: randomPotential(ovr, 16),
       dtRelation: 50,
+      isStarter: null,
+      salaryLevel: 0,
       injuryRisk: 15,
       injuryStatus: null,
       personality: { lider: 0, solitario: 0, fiestero: 0, profesional: 0 },
@@ -1128,6 +1209,7 @@ function initNewGame(name, position, archetype, club, country, ironman) {
       { text: `Tu carrera arranca hoy. Primera semana en ${club.name}.`, highlight: true },
     ],
     _usedDecisions: [],
+    freeDecisionCooldowns: {},
   };
   // Pick first decision after state is ready
   state.schedule.currentDecision = pickDecision();
@@ -1148,6 +1230,7 @@ function render() {
     case "menu":       app.innerHTML = renderMenu(); break;
     case "creation":   app.innerHTML = renderCreation(); break;
     case "hub":        app.innerHTML = renderHub(); break;
+    case "decisions":  app.innerHTML = renderDecisions(); break;
     case "decision":   app.innerHTML = renderDecision(); break;
     case "match":      app.innerHTML = renderMatch(); break;
     case "season_end": app.innerHTML = renderSeasonEnd(); break;
@@ -1289,6 +1372,22 @@ function renderCreationStep3() {
   `;
 }
 
+function renderTabBar(active) {
+  const pendingDecision = !!(state.schedule?.currentDecision && !state.schedule?.decisionUsed);
+  return `
+    <div class="hub-tabs">
+      <button class="hub-tab ${active === "hub" ? "active" : ""}" data-action="go_hub">Inicio</button>
+      <button class="hub-tab ${active === "decisions" ? "active" : ""}" data-action="go_decisions">
+        Decisiones${pendingDecision ? `<span class="hub-tab-dot"></span>` : ""}
+      </button>
+    </div>
+  `;
+}
+
+function dtRelationColor(val) {
+  return val >= 65 ? "#3FAE9A" : val >= 35 ? "#D9A441" : "#F0907E";
+}
+
 function renderHub() {
   const p = state.player;
   const pos = POSITIONS[p.position];
@@ -1296,6 +1395,7 @@ function renderHub() {
   const schedule = state.schedule;
 
   const formaColor = p.forma >= 70 ? "#3FAE9A" : p.forma >= 45 ? "#D9A441" : "#F0907E";
+  const dtColor = dtRelationColor(p.dtRelation ?? 50);
   const weekProgress = Math.round((career.week / 34) * 100);
 
   // Next important match
@@ -1315,6 +1415,8 @@ function renderHub() {
       <div class="week-progress">
         <div class="week-progress-fill" style="width:${weekProgress}%"></div>
       </div>
+
+      ${renderTabBar("hub")}
 
       <div class="hub-body">
         <!-- Player card -->
@@ -1354,6 +1456,21 @@ function renderHub() {
               </div>
               <div class="forma-value" style="color:${formaColor}">${p.forma}</div>
             </div>
+
+            <div class="forma-row" style="margin-top:8px;padding-top:0;border-top:none">
+              <div class="forma-label">DT</div>
+              <div class="forma-bar-bg">
+                <div class="forma-bar-fill" style="width:${p.dtRelation ?? 50}%;background:${dtColor}"></div>
+              </div>
+              <div class="forma-value" style="color:${dtColor}">${p.dtRelation ?? 50}</div>
+            </div>
+
+            ${p.isStarter ? `
+              <div style="margin-top:12px;padding:10px 12px;background:var(--gold-subtle);border:1px solid var(--gold-border);border-radius:6px;display:flex;align-items:center;gap:8px">
+                <span style="font-size:18px">🎯</span>
+                <span style="font-size:13px;color:var(--gold)">Titular indiscutido</span>
+              </div>
+            ` : ""}
 
             ${p.personalityRevealed ? `
               <div style="margin-top:12px;padding:10px 12px;background:var(--gold-subtle);border:1px solid var(--gold-border);border-radius:6px;display:flex;align-items:center;gap:8px">
@@ -1403,11 +1520,11 @@ function renderHub() {
           <div class="card-header">Esta semana</div>
           <div>
             ${schedule.currentDecision && !schedule.decisionUsed ? `
-              <div class="action-item" data-action="open_decision">
+              <div class="action-item" data-action="go_decisions">
                 <div class="action-dot pulse" style="background:var(--gold)"></div>
                 <div>
                   <div class="action-text">Hay una decisión pendiente</div>
-                  <div class="action-sub">Podés resolverla cuando quieras antes de avanzar</div>
+                  <div class="action-sub">Andá a la pestaña Decisiones para resolverla</div>
                 </div>
                 <div class="action-arrow">→</div>
               </div>
@@ -1490,9 +1607,105 @@ function renderHub() {
   `;
 }
 
+function renderDecisions() {
+  const p = state.player;
+  const career = state.career;
+  const schedule = state.schedule;
+  if (!state.freeDecisionCooldowns) state.freeDecisionCooldowns = {};
+  const week = absWeek(career);
+  const last = state._lastFreeDecisionResult;
+
+  return `
+    <div class="screen hub-screen fade-in">
+      <div class="hub-topbar">
+        <div class="hub-logo">COTRERO</div>
+        <div class="hub-week">Temporada ${career.season} · Semana ${career.week}/34</div>
+      </div>
+
+      ${renderTabBar("decisions")}
+
+      <div class="hub-body">
+        <div class="card">
+          <div class="card-header">Decisión de la semana</div>
+          <div>
+            ${schedule.currentDecision && !schedule.decisionUsed ? `
+              <div class="action-item" data-action="open_decision">
+                <div class="action-dot pulse" style="background:var(--gold)"></div>
+                <div>
+                  <div class="action-text">Hay una decisión pendiente</div>
+                  <div class="action-sub">Podés resolverla cuando quieras antes de avanzar</div>
+                </div>
+                <div class="action-arrow">→</div>
+              </div>
+            ` : schedule.currentDecision && schedule.decisionUsed ? `
+              <div class="action-item disabled">
+                <div class="action-dot" style="background:var(--text-dim)"></div>
+                <div class="action-text">Ya decidiste esta semana</div>
+              </div>
+            ` : `
+              <div class="action-item disabled">
+                <div class="action-dot" style="background:var(--text-dim)"></div>
+                <div class="action-text">Sin decisiones esta semana</div>
+              </div>
+            `}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Relación con el DT</div>
+          <div class="card-body">
+            <div class="forma-row" style="margin-top:0;padding-top:0;border-top:none">
+              <div class="forma-label">DT</div>
+              <div class="forma-bar-bg">
+                <div class="forma-bar-fill" style="width:${p.dtRelation ?? 50}%;background:${dtRelationColor(p.dtRelation ?? 50)}"></div>
+              </div>
+              <div class="forma-value" style="color:${dtRelationColor(p.dtRelation ?? 50)}">${p.dtRelation ?? 50}</div>
+            </div>
+            ${p.isStarter ? `<p style="margin-top:12px;font-size:12px;color:var(--gold)">🎯 Sos titular indiscutido.</p>` : ""}
+            ${p.salaryLevel ? `<p style="margin-top:8px;font-size:12px;color:var(--text-muted)">💰 Nivel salarial: ${p.salaryLevel}</p>` : ""}
+          </div>
+        </div>
+
+        ${last ? `
+          <div class="card" style="border-color:${last.success ? "var(--gold-border)" : "rgba(240,144,126,0.4)"}">
+            <div class="card-body" style="font-size:13px;color:${last.success ? "var(--gold)" : "var(--danger)"}">
+              ${last.text}
+            </div>
+          </div>
+        ` : ""}
+
+        <div class="card">
+          <div class="card-header">Decisiones libres</div>
+          <div>
+            ${FREE_DECISIONS.map(def => {
+              const blockedReason = def.blocked && def.blocked(p);
+              const lastWeek = state.freeDecisionCooldowns[def.id];
+              const weeksLeft = lastWeek != null ? def.cooldownWeeks - (week - lastWeek) : 0;
+              const onCooldown = weeksLeft > 0;
+              const disabled = !!blockedReason || onCooldown;
+              return `
+                <div class="action-item ${disabled ? "disabled" : ""}" ${disabled ? "" : `data-action="free_decision" data-id="${def.id}"`}>
+                  <div class="action-dot" style="background:${disabled ? "var(--text-dim)" : "var(--gold)"}"></div>
+                  <div>
+                    <div class="action-text">${def.icon} ${def.label}</div>
+                    <div class="action-sub">${blockedReason || (onCooldown ? `Podés volver a intentarlo en ${weeksLeft} sem.` : def.sub)}</div>
+                  </div>
+                  ${disabled ? "" : `<div class="action-arrow">→</div>`}
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </div>
+
+        <div style="height:20px"></div>
+      </div>
+    </div>
+  `;
+}
+
 function renderDecision() {
   const d = state.schedule.currentDecision;
-  if (!d) { navigate("hub"); return ""; }
+  if (!d) { navigate("decisions"); return ""; }
   const letters = ["A", "B", "C"];
   return `
     <div class="screen decision-screen fade-in">
@@ -1970,7 +2183,16 @@ function handleClick(e) {
       break;
 
     case "close_decision":
-      navigate("hub");
+      navigate("decisions");
+      break;
+
+    case "go_decisions":
+      navigate("decisions");
+      break;
+
+    case "free_decision":
+      resolveFreeDecision(el.dataset.id);
+      navigate("decisions");
       break;
 
     case "make_decision": {
@@ -1980,7 +2202,7 @@ function handleClick(e) {
       applyDecisionEffects(d, idx);
       state.schedule.decisionUsed = true;
       save();
-      navigate("hub");
+      navigate("decisions");
       break;
     }
 

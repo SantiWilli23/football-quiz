@@ -322,6 +322,47 @@ h1, h2, h3 { font-family: 'Barlow Condensed', sans-serif; }
   gap: 14px;
 }
 
+/* ── TABS (Inicio / Decisiones) ── */
+.hub-tabs {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px 0;
+}
+
+.hub-tab {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.hub-tab:hover { color: var(--text); }
+.hub-tab.active {
+  background: var(--gold-subtle);
+  border-color: var(--gold-border);
+  color: var(--gold);
+}
+
+.hub-tab-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+  display: inline-block;
+}
+
 /* ── CARDS ── */
 .card {
   background: var(--surface-2);
