@@ -258,7 +258,8 @@ CREATE TABLE IF NOT EXISTS duels (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   resolved_at TEXT,
   challenger_wildcard INTEGER NOT NULL DEFAULT 0,
-  opponent_wildcard INTEGER NOT NULL DEFAULT 0
+  opponent_wildcard INTEGER NOT NULL DEFAULT 0,
+  tournament_match_id INTEGER REFERENCES duel_tournament_matches(id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_duels_group ON duels(group_id, status);
@@ -274,6 +275,45 @@ CREATE TABLE IF NOT EXISTS duel_answers (
   answered_at TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE(duel_id, user_id, question_id)
 );
+
+-- Torneo de duelos: bracket de eliminación directa dentro de un grupo. Cada
+-- cruce del bracket (duel_tournament_matches) es, en el fondo, un duelo
+-- normal de la tabla `duels` de arriba — se identifica con
+-- duels.tournament_match_id para que al resolverse dispare el avance de
+-- ronda (ver server/routes/duel-tournaments.js).
+CREATE TABLE IF NOT EXISTS duel_tournaments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  name TEXT NOT NULL,
+  difficulty TEXT NOT NULL DEFAULT 'dificil',
+  status TEXT NOT NULL DEFAULT 'abierto' CHECK (status IN ('abierto', 'en_curso', 'terminado')),
+  created_by INTEGER NOT NULL REFERENCES users(id),
+  champion_id INTEGER REFERENCES users(id),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS duel_tournament_players (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tournament_id INTEGER NOT NULL REFERENCES duel_tournaments(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  joined_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(tournament_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS duel_tournament_matches (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tournament_id INTEGER NOT NULL REFERENCES duel_tournaments(id),
+  round INTEGER NOT NULL,
+  slot INTEGER NOT NULL,
+  player_a_id INTEGER REFERENCES users(id),
+  player_b_id INTEGER REFERENCES users(id),
+  duel_id INTEGER REFERENCES duels(id),
+  winner_id INTEGER REFERENCES users(id),
+  decided_by_coin INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_tourn_matches_tournament ON duel_tournament_matches(tournament_id, round);
+CREATE INDEX IF NOT EXISTS idx_tourn_players_tournament ON duel_tournament_players(tournament_id);
 
 CREATE INDEX IF NOT EXISTS idx_duel_answers_lookup ON duel_answers(duel_id, user_id);
 

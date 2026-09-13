@@ -7,6 +7,7 @@ import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import Avatar from "../components/Avatar.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
+import DuelTournaments from "../components/DuelTournaments.jsx";
 import { CHALK, DUEL_CHALK } from "../theme.js";
 
 const COLOR = CHALK.red;
@@ -194,6 +195,7 @@ export default function Duels() {
   const [selectedGame, setSelectedGame] = useState(null);
   const [useWildcard, setUseWildcard] = useState(false);
   const [activatingWildcard, setActivatingWildcard] = useState(null);
+  const [view, setView] = useState("duelos");
 
   useEffect(() => {
     const handleMessage = (e) => {
@@ -410,6 +412,28 @@ export default function Duels() {
         </div>
       )}
 
+      <div className="flex gap-1 mb-6">
+        {[["duelos", "1v1 sueltos"], ["torneos", "Torneos"]].map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => setView(id)}
+            className={`px-3 py-1.5 rounded-card text-sm font-medium transition-colors ${
+              view === id ? "bg-accent/15 text-accent border border-accent/30" : "text-gray-400 border border-transparent hover:text-white"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {view === "torneos" && (
+        <Card>
+          <DuelTournaments groupId={groupId} onPlay={(duelId) => setPlaying(duelId)} />
+        </Card>
+      )}
+
+      {view === "duelos" && (
+      <>
       {record && (
         <Card className="mb-6">
           <div className="flex items-center gap-2 mb-4">
@@ -631,6 +655,8 @@ export default function Duels() {
 
       {duels.length === 0 && (
         <p className="text-sm text-gray-500">Todavía no jugaste ningún duelo.</p>
+      )}
+      </>
       )}
     </Layout>
   );

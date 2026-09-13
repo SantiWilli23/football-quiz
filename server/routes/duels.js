@@ -494,6 +494,10 @@ router.post("/:id/answer", async (req, res) => {
     }
 
     const after = await resolveIfComplete(duel);
+    if (after.status === "terminado" && duel.status !== "terminado" && after.tournament_match_id) {
+      const { advanceTournamentForDuel } = await import("./duel-tournaments.js");
+      await advanceTournamentForDuel(after);
+    }
     const mine = await answersOf(duelId, req.userId);
 
     res.status(201).json({
