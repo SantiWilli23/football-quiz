@@ -20,6 +20,7 @@ export default function DtLeagueHome() {
   const [leagueKey, setLeagueKey] = useState("premier");
   const [weeksPerMonth, setWeeksPerMonth] = useState(4);
   const [groupId, setGroupId] = useState(null);
+  const [draftMode, setDraftMode] = useState(false);
   const [creating, setCreating] = useState(false);
 
   const [joinCode, setJoinCode] = useState("");
@@ -38,7 +39,7 @@ export default function DtLeagueHome() {
     setCreating(true);
     setError(null);
     try {
-      const league = await createLeague(name.trim(), leagueKey, weeksPerMonth, groupId);
+      const league = await createLeague(name.trim(), leagueKey, weeksPerMonth, groupId, draftMode);
       navigate(`/dt-liga/${league.inviteCode}`);
     } catch (err) {
       setError(err.response?.data?.error || "No se pudo crear la liga");
@@ -164,6 +165,15 @@ export default function DtLeagueHome() {
                   recién al terminarlo se espera a que todos hayan cerrado sus partidos.
                 </p>
               </div>
+              <label className="flex items-center gap-2.5 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={draftMode}
+                  onChange={(e) => setDraftMode(e.target.checked)}
+                  className="accent-accent"
+                />
+                Modo draft (se sortea un orden de turnos para elegir club, en vez de a las corridas)
+              </label>
               <button
                 onClick={handleCreate}
                 disabled={!name.trim() || !groupId || creating}

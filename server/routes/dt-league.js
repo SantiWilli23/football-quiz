@@ -195,9 +195,34 @@ async function checkAndFinishSeason(league) {
   return league;
 }
 
+function parseDraftOrder(league) {
+  if (!league.draft_order) return null;
+  try {
+    const order = JSON.parse(league.draft_order);
+    return Array.isArray(order) ? order : null;
+  } catch {
+    return null;
+  }
+}
+
+// De quién es el turno: el primero del orden sorteado que todavía no eligió
+// equipo. Se calcula siempre así, no hace falta guardar un índice aparte que
+// se pueda desincronizar.
+function currentDraftTurn(league, members) {
+  const order = parseDraftOrder(league);
+  if (!order) return null;
+  const byUser = new Map(members.map((m) => [m.user_id, m]));
+  for (const userId of order) {
+    const m = byUser.get(userId);
+    if (m && !m.team_id) return userId;
+  }
+  return null;
+}
+
 function serializeLeague(league, members, userId) {
   const league_teams = teamsForLeague(league.league_key);
   const takenIds = new Set(members.map((m) => m.team_id).filter(Boolean));
+  const draftOrder = parseDraftOrder(league);
   return {
     id: league.id,
     name: league.name,
@@ -210,6 +235,9 @@ function serializeLeague(league, members, userId) {
     weeksPerMonth: league.weeks_per_month,
     createdBy: league.created_by,
     isMine: league.created_by === userId,
+    draftMode: !!league.draft_mode,
+    draftOrder,
+    draftTurnUserId: league.draft_mode ? currentDraftTurn(league, members) : null,
     members: members.map((m) => ({
       userId: m.user_id,
       username: m.username,
@@ -219,6 +247,20 @@ function serializeLeague(league, members, userId) {
     availableTeams: league_teams.filter((t) => !takenIds.has(t.id)),
     allTeams: league_teams,
   };
+}
+
+// Sortea y congela el orden de turnos apenas hay 2+ miembros en una liga en
+// modo draft que todavía no lo tiene. Quien se sume al lobby después del
+// sorteo entra sin turno propio (edge case aceptado: el draft es para armar
+// el grupo antes de arrancar, no para sumar gente sobre la marcha).
+async function rollDraftOrderIfNeeded(league, members) {
+  if (!league.draft_mode || league.draft_order || league.status !== "lobby" || members.length < 2) return league;
+  const order = members.map((m) => m.user_id).sort(() => Math.random() - 0.5);
+  await db.execute({
+    sql: "UPDATE dt_leagues SET draft_order = ? WHERE id = ?",
+    args: [JSON.stringify(order), league.id],
+  });
+  return { ...league, draft_order: JSON.stringify(order) };
 }
 
 async function loadStandings(leagueId, teamIds) {
@@ -250,6 +292,7 @@ router.post("/", async (req, res) => {
   const leagueKey = String(req.body?.leagueKey || "");
   const groupId = Number(req.body?.groupId);
   const weeksPerMonth = clamp(Number(req.body?.weeksPerMonth) || 4, 1, 20);
+  const draftMode = !!req.body?.draftMode;
   if (!name) return res.status(400).json({ error: "Ponele un nombre a la liga" });
   if (!["premier", "laliga", "seriea", "bundesliga"].includes(leagueKey)) return res.status(400).json({ error: "Liga inválida" });
   if (!groupId) return res.status(400).json({ error: "Elegí a qué grupo pertenece esta liga" });
@@ -269,8 +312,8 @@ router.post("/", async (req, res) => {
   if (!inviteCode) return res.status(500).json({ error: "No se pudo generar un código, probá de nuevo" });
 
   const result = await db.execute({
-    sql: "INSERT INTO dt_leagues (name, league_key, invite_code, created_by, group_id, weeks_per_month) VALUES (?, ?, ?, ?, ?, ?)",
-    args: [name, leagueKey, inviteCode, req.userId, groupId, weeksPerMonth],
+    sql: "INSERT INTO dt_leagues (name, league_key, invite_code, created_by, group_id, weeks_per_month, draft_mode) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    args: [name, leagueKey, inviteCode, req.userId, groupId, weeksPerMonth, draftMode ? 1 : 0],
   });
   await db.execute({
     sql: "INSERT INTO dt_league_members (league_id, user_id) VALUES (?, ?)",
@@ -311,7 +354,7 @@ router.post("/join", async (req, res) => {
   const code = String(req.body?.inviteCode || "").trim();
   if (!code) return res.status(400).json({ error: "Falta el código de invitación" });
 
-  const league = await loadLeagueByCode(code);
+  let league = await loadLeagueByCode(code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   if (league.status !== "lobby") return res.status(400).json({ error: "Esa liga ya arrancó, no se puede sumar más gente" });
 
@@ -339,6 +382,7 @@ router.post("/join", async (req, res) => {
   }
 
   const members = await loadMembers(league.id);
+  league = await rollDraftOrderIfNeeded(league, members);
   res.json({ league: serializeLeague(league, members, req.userId) });
 });
 
@@ -348,6 +392,8 @@ router.get("/:code", async (req, res) => {
 
   const { members, me } = await requireMembership(league, req.userId);
   if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+
+  league = await rollDraftOrderIfNeeded(league, members);
 
   if (league.status === "in_progress") {
     await resolvePendingFixtures(league, members);
@@ -371,6 +417,17 @@ router.post("/:code/team", async (req, res) => {
 
   const takenBy = members.find((m) => m.team_id === teamId && m.user_id !== req.userId);
   if (takenBy) return res.status(409).json({ error: `${validTeam.name} ya lo eligió ${takenBy.username}` });
+
+  if (league.draft_mode && !league.draft_order) {
+    return res.status(400).json({ error: "Esta liga es a draft — esperá a que se sume alguien más para sortear el orden de turnos." });
+  }
+  if (league.draft_mode && league.draft_order && !me.team_id) {
+    const turnUserId = currentDraftTurn(league, members);
+    if (turnUserId !== null && turnUserId !== req.userId) {
+      const turnMember = members.find((m) => m.user_id === turnUserId);
+      return res.status(400).json({ error: `Es el turno de ${turnMember?.username || "otro jugador"}, esperá tu turno.` });
+    }
+  }
 
   await db.execute({
     sql: "UPDATE dt_league_members SET team_id = ? WHERE league_id = ? AND user_id = ?",
@@ -654,6 +711,133 @@ router.post("/:code/advance", async (req, res) => {
   }
 
   res.json({ ok: true, activeMonth, totalMonths, finished });
+});
+
+// Mercado de pases entre DTs: proponerle a otro manager de la liga
+// intercambiar los clubes que dirigen de ahí en más. Sólo durante la
+// temporada en curso, sólo entre dos managers con club asignado.
+router.post("/:code/trade", async (req, res) => {
+  const toUserId = Number(req.body?.toUserId);
+  const league = await loadLeagueByCode(req.params.code);
+  if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  if (league.status !== "in_progress") return res.status(400).json({ error: "Solo se puede negociar con la temporada en curso" });
+
+  const { members, me } = await requireMembership(league, req.userId);
+  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me.team_id) return res.status(400).json({ error: "Todavía no tenés un club para ofrecer" });
+  if (toUserId === req.userId) return res.status(400).json({ error: "No podés proponerte un cambio a vos mismo" });
+
+  const target = members.find((m) => m.user_id === toUserId);
+  if (!target || !target.team_id) return res.status(400).json({ error: "Ese jugador no tiene un club en esta liga" });
+
+  const existing = await db.execute({
+    sql: `SELECT id FROM dt_league_trades WHERE league_id = ? AND status = 'pending'
+          AND ((from_user_id = ? AND to_user_id = ?) OR (from_user_id = ? AND to_user_id = ?))`,
+    args: [league.id, req.userId, toUserId, toUserId, req.userId],
+  });
+  if (existing.rows.length) return res.status(409).json({ error: "Ya hay una propuesta pendiente entre ustedes dos" });
+
+  const result = await db.execute({
+    sql: "INSERT INTO dt_league_trades (league_id, from_user_id, to_user_id) VALUES (?, ?, ?)",
+    args: [league.id, req.userId, toUserId],
+  });
+  res.status(201).json({ id: Number(result.lastInsertRowid) });
+});
+
+// Mis propuestas (mandadas y recibidas) en esta liga.
+router.get("/:code/trades", async (req, res) => {
+  const league = await loadLeagueByCode(req.params.code);
+  if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  const { me } = await requireMembership(league, req.userId);
+  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+
+  const result = await db.execute({
+    sql: `SELECT t.*, uf.username AS from_username, ut.username AS to_username
+          FROM dt_league_trades t
+          JOIN users uf ON uf.id = t.from_user_id
+          JOIN users ut ON ut.id = t.to_user_id
+          WHERE t.league_id = ? AND (t.from_user_id = ? OR t.to_user_id = ?)
+          ORDER BY t.created_at DESC LIMIT 20`,
+    args: [league.id, req.userId, req.userId],
+  });
+
+  const nameByTeam = Object.fromEntries(teamsForLeague(league.league_key).map((t) => [t.id, t.name]));
+  const { members } = await requireMembership(league, req.userId);
+  const teamByUser = Object.fromEntries(members.map((m) => [m.user_id, m.team_id]));
+
+  res.json({
+    trades: result.rows.map((t) => ({
+      id: t.id,
+      status: t.status,
+      fromUserId: t.from_user_id,
+      fromUsername: t.from_username,
+      fromTeamName: nameByTeam[teamByUser[t.from_user_id]] || null,
+      toUserId: t.to_user_id,
+      toUsername: t.to_username,
+      toTeamName: nameByTeam[teamByUser[t.to_user_id]] || null,
+      isMine: t.from_user_id === req.userId,
+    })),
+  });
+});
+
+router.post("/:code/trade/:tradeId/respond", async (req, res) => {
+  const accept = !!req.body?.accept;
+  const league = await loadLeagueByCode(req.params.code);
+  if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  const { me } = await requireMembership(league, req.userId);
+  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+
+  const tradeResult = await db.execute({
+    sql: "SELECT * FROM dt_league_trades WHERE id = ? AND league_id = ?",
+    args: [req.params.tradeId, league.id],
+  });
+  const trade = tradeResult.rows[0];
+  if (!trade) return res.status(404).json({ error: "Propuesta no encontrada" });
+  if (trade.status !== "pending") return res.status(400).json({ error: "Esta propuesta ya se resolvió" });
+  if (trade.to_user_id !== req.userId) return res.status(403).json({ error: "Esta propuesta no es para vos" });
+
+  if (!accept) {
+    await db.execute({
+      sql: "UPDATE dt_league_trades SET status = 'rejected', resolved_at = datetime('now') WHERE id = ?",
+      args: [trade.id],
+    });
+    return res.json({ ok: true, accepted: false });
+  }
+
+  const membersResult = await db.execute({
+    sql: "SELECT user_id, team_id FROM dt_league_members WHERE league_id = ? AND user_id IN (?, ?)",
+    args: [league.id, trade.from_user_id, trade.to_user_id],
+  });
+  const fromRow = membersResult.rows.find((m) => m.user_id === trade.from_user_id);
+  const toRow = membersResult.rows.find((m) => m.user_id === trade.to_user_id);
+  if (!fromRow?.team_id || !toRow?.team_id) {
+    await db.execute({
+      sql: "UPDATE dt_league_trades SET status = 'cancelled', resolved_at = datetime('now') WHERE id = ?",
+      args: [trade.id],
+    });
+    return res.status(400).json({ error: "Uno de los dos ya no tiene un club para intercambiar" });
+  }
+
+  // El índice único (league_id, team_id) no deja tener dos filas con el mismo
+  // club ni un instante: hay que pasar por NULL en el medio del intercambio.
+  await db.execute({
+    sql: "UPDATE dt_league_members SET team_id = NULL WHERE league_id = ? AND user_id = ?",
+    args: [league.id, trade.from_user_id],
+  });
+  await db.execute({
+    sql: "UPDATE dt_league_members SET team_id = ? WHERE league_id = ? AND user_id = ?",
+    args: [fromRow.team_id, league.id, trade.to_user_id],
+  });
+  await db.execute({
+    sql: "UPDATE dt_league_members SET team_id = ? WHERE league_id = ? AND user_id = ?",
+    args: [toRow.team_id, league.id, trade.from_user_id],
+  });
+  await db.execute({
+    sql: "UPDATE dt_league_trades SET status = 'accepted', resolved_at = datetime('now') WHERE id = ?",
+    args: [trade.id],
+  });
+
+  res.json({ ok: true, accepted: true });
 });
 
 export default router;

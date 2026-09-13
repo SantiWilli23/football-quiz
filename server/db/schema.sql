@@ -449,6 +449,13 @@ CREATE TABLE IF NOT EXISTS dt_leagues (
   current_week INTEGER NOT NULL DEFAULT 0,
   total_weeks INTEGER NOT NULL DEFAULT 0,
   weeks_per_month INTEGER NOT NULL DEFAULT 4,
+  -- Draft de liga (opcional): en vez de elegir equipo libremente, se sortea
+  -- un orden de turnos entre los miembros que había en el lobby quien se
+  -- congela apenas hay 2+ (draft_order, JSON de user_ids) y cada quien elige
+  -- por turno — de quién es el turno se calcula solo (el primero del orden
+  -- que todavía no tiene equipo), no hace falta guardar un índice aparte.
+  draft_mode INTEGER NOT NULL DEFAULT 0,
+  draft_order TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -520,6 +527,24 @@ CREATE TABLE IF NOT EXISTS dt_league_weekly_scores (
 
 CREATE INDEX IF NOT EXISTS idx_dt_weekly_scores_group ON dt_league_weekly_scores(group_id, settled_at);
 CREATE INDEX IF NOT EXISTS idx_dt_weekly_scores_user ON dt_league_weekly_scores(user_id);
+
+-- Mercado de pases entre DTs humanos de una Liga Online DT: como acá no hay
+-- plantilla jugador por jugador (cada manager dirige un CLUB entero, ver
+-- dt_league_members), "negociar un fichaje" se traduce en proponerle a otro
+-- manager INTERCAMBIAR los clubes que dirigen de ahí en más. Los resultados
+-- ya jugados quedan como estaban — sólo cambia quién controla cada club de
+-- ahí en adelante.
+CREATE TABLE IF NOT EXISTS dt_league_trades (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES dt_leagues(id),
+  from_user_id INTEGER NOT NULL REFERENCES users(id),
+  to_user_id INTEGER NOT NULL REFERENCES users(id),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'cancelled')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  resolved_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_dt_league_trades_league ON dt_league_trades(league_id, status);
 
 -- Copa grupal: torneo de eliminación directa dentro de un grupo. Cada
 -- participante arma su "equipo" draftando jugadores reales del mismo pool de

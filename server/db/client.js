@@ -38,6 +38,17 @@ export async function initSchema() {
   await migrateDuelTournamentMatch();
   await migrateGroupMemberRival();
   await migrateDtLeagueColumns();
+  await migrateDtLeagueDraft();
+}
+
+// Draft de liga: orden de turnos para elegir equipo, opcional por liga.
+// Columnas nuevas y nullable/con default, entran con ALTER TABLE.
+async function migrateDtLeagueDraft() {
+  const info = await db.execute("PRAGMA table_info(dt_leagues)");
+  if (info.rows.length === 0) return;
+  const names = new Set(info.rows.map((r) => r.name));
+  if (!names.has("draft_mode")) await db.execute("ALTER TABLE dt_leagues ADD COLUMN draft_mode INTEGER NOT NULL DEFAULT 0");
+  if (!names.has("draft_order")) await db.execute("ALTER TABLE dt_leagues ADD COLUMN draft_order TEXT");
 }
 
 // La Liga Online DT nació con avance semanal manual por el creador. Estas

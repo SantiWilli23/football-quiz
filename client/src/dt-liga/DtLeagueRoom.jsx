@@ -4,6 +4,7 @@ import { Check, Copy } from "lucide-react";
 import {
   getLeague, pickTeam, startLeague,
   getMyTactics, setMyTactics, getFixtures, getStandings, advanceWeek, playFixtureSolo,
+  proposeTrade, getTrades, respondTrade,
 } from "./api.js";
 
 const POLL_MS = 4000;
@@ -148,6 +149,41 @@ export default function DtLeagueRoom() {
           </div>
         </div>
 
+        {league.status === "lobby" && league.draftMode && (
+          <div className="bg-panel border border-border rounded-2xl p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Draft — orden de turnos</p>
+            {!league.draftOrder ? (
+              <p className="text-sm text-gray-500">Se sortea apenas se sume alguien más a la liga.</p>
+            ) : (
+              <>
+                <p className="text-sm mb-2">
+                  {league.draftTurnUserId
+                    ? league.draftTurnUserId === league.members.find((m) => m.isMe)?.userId
+                      ? "🎯 Es tu turno de elegir."
+                      : `Turno de ${league.members.find((m) => m.userId === league.draftTurnUserId)?.username || "otro jugador"}.`
+                    : "Todos eligieron equipo."}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {league.draftOrder.map((uid, i) => {
+                    const m = league.members.find((x) => x.userId === uid);
+                    const isTurn = uid === league.draftTurnUserId;
+                    return (
+                      <span
+                        key={uid}
+                        className={`text-xs px-2.5 py-1 rounded-full border ${
+                          isTurn ? "border-accent bg-accent/10 text-accent font-semibold" : "border-border text-gray-500"
+                        }`}
+                      >
+                        {i + 1}. {m?.username || "?"}
+                      </span>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {league.status === "lobby" && (
           <>
             <div>
@@ -159,16 +195,20 @@ export default function DtLeagueRoom() {
                   const owner = takenBy(t.id);
                   const isMine = owner?.isMe;
                   const isTakenByOther = owner && !isMine;
+                  const notMyTurn =
+                    league.draftMode && !!league.draftOrder && !myTeamId &&
+                    league.draftTurnUserId !== null &&
+                    league.draftTurnUserId !== league.members.find((m) => m.isMe)?.userId;
                   return (
                     <button
                       key={t.id}
-                      onClick={() => !isTakenByOther && handlePick(t.id)}
-                      disabled={isTakenByOther || busyTeamId === t.id}
-                      title={isTakenByOther ? `Ya lo eligió ${owner.username}` : undefined}
+                      onClick={() => !isTakenByOther && !notMyTurn && handlePick(t.id)}
+                      disabled={isTakenByOther || notMyTurn || busyTeamId === t.id}
+                      title={isTakenByOther ? `Ya lo eligió ${owner.username}` : notMyTurn ? "Todavía no es tu turno" : undefined}
                       className={`text-left px-3 py-2.5 rounded-2xl border text-sm transition-colors ${
                         isMine
                           ? "border-accent bg-accent/10 text-accent font-semibold"
-                          : isTakenByOther
+                          : isTakenByOther || notMyTurn
                           ? "border-border text-gray-600 opacity-50 cursor-not-allowed"
                           : "border-border text-gray-300 hover:border-accent/40"
                       }`}
@@ -203,7 +243,7 @@ export default function DtLeagueRoom() {
         {(league.status === "in_progress" || league.status === "finished") && (
           <>
             <div className="flex gap-1">
-              {[["fixtures", "Jornada"], ["standings", "Tabla"], ["tactics", "Mi táctica"]].map(([id, label]) => (
+              {[["fixtures", "Jornada"], ["standings", "Tabla"], ["tactics", "Mi táctica"], ["market", "Mercado"]].map(([id, label]) => (
                 <button
                   key={id}
                   onClick={() => setTab(id)}
@@ -221,6 +261,7 @@ export default function DtLeagueRoom() {
             )}
             {tab === "standings" && <StandingsTab code={code} myTeamId={myTeamId} />}
             {tab === "tactics" && <TacticsTab code={code} myTeamId={myTeamId} teamName={teamName} />}
+            {tab === "market" && <MarketTab code={code} league={league} />}
           </>
         )}
       </div>
@@ -484,6 +525,130 @@ function TacticsTab({ code, myTeamId, teamName }) {
       </div>
 
       <p className="text-xs text-gray-600 h-4">{saving ? "Guardando…" : saved ? "✓ Guardado" : ""}</p>
+    </div>
+  );
+}
+
+// Mercado de pases entre DTs: como acá cada uno dirige un club entero (no hay
+// plantilla jugador a jugador), "fichar" es proponerle a otro manager
+// intercambiar los clubes que dirigen de ahí en más.
+function MarketTab({ code, league }) {
+  const [trades, setTrades] = useState([]);
+  const [proposingTo, setProposingTo] = useState(null);
+  const [error, setError] = useState(null);
+
+  const load = useCallback(async () => {
+    try {
+      setTrades(await getTrades(code));
+    } catch {
+      setTrades([]);
+    }
+  }, [code]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const me = league.members.find((m) => m.isMe);
+  const others = league.members.filter((m) => !m.isMe && m.teamId);
+  const pendingWithUser = (userId) =>
+    trades.some((t) => t.status === "pending" && ((t.fromUserId === userId) || (t.toUserId === userId)) && (t.fromUserId === me?.userId || t.toUserId === me?.userId));
+
+  async function handlePropose(toUserId) {
+    setProposingTo(toUserId);
+    setError(null);
+    try {
+      await proposeTrade(code, toUserId);
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo mandar la propuesta");
+    } finally {
+      setProposingTo(null);
+    }
+  }
+
+  async function handleRespond(tradeId, accept) {
+    setError(null);
+    try {
+      await respondTrade(code, tradeId, accept);
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo responder");
+    }
+  }
+
+  if (!me?.teamId) {
+    return <p className="text-sm text-gray-500 text-center py-6">No dirigís ningún equipo en esta liga.</p>;
+  }
+
+  const pending = trades.filter((t) => t.status === "pending");
+  const resolved = trades.filter((t) => t.status !== "pending");
+
+  return (
+    <div className="space-y-5">
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-2xl px-4 py-2.5 text-sm text-red-300">{error}</div>
+      )}
+
+      {pending.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Propuestas pendientes</p>
+          {pending.map((t) => (
+            <div key={t.id} className="bg-panel border border-border rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
+              <p className="text-sm">
+                {t.isMine
+                  ? `Le ofreciste ${t.fromTeamName} a ${t.toUsername} a cambio de ${t.toTeamName}`
+                  : `${t.fromUsername} te ofrece ${t.fromTeamName} a cambio de tu ${t.toTeamName}`}
+              </p>
+              {!t.isMine && (
+                <div className="flex gap-1.5 shrink-0">
+                  <button
+                    onClick={() => handleRespond(t.id, true)}
+                    className="text-xs font-medium px-3 py-1.5 rounded-full bg-emerald/15 text-emerald border border-emerald/40 hover:bg-emerald/25 transition-colors"
+                  >
+                    Aceptar
+                  </button>
+                  <button
+                    onClick={() => handleRespond(t.id, false)}
+                    className="text-xs font-medium px-3 py-1.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition-colors"
+                  >
+                    Rechazar
+                  </button>
+                </div>
+              )}
+              {t.isMine && <span className="text-xs text-gray-500 shrink-0">esperando respuesta</span>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Proponer intercambio de club</p>
+        {others.length === 0 && <p className="text-sm text-gray-500">No hay otros managers con club en esta liga.</p>}
+        {others.map((m) => (
+          <div key={m.userId} className="bg-panel border border-border rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
+            <p className="text-sm">{m.username} — dirige {league.allTeams.find((t) => t.id === m.teamId)?.name || m.teamId}</p>
+            <button
+              onClick={() => handlePropose(m.userId)}
+              disabled={proposingTo === m.userId || pendingWithUser(m.userId)}
+              className="text-xs font-medium px-3 py-1.5 rounded-full bg-accent/10 text-accent border border-accent/40 hover:bg-accent/20 disabled:opacity-40 transition-colors shrink-0"
+            >
+              {pendingWithUser(m.userId) ? "Ya hay propuesta" : "Proponer cambio"}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {resolved.length > 0 && (
+        <details>
+          <summary className="text-xs text-gray-600 cursor-pointer hover:text-gray-400">Historial ({resolved.length})</summary>
+          <div className="mt-2 space-y-1.5">
+            {resolved.map((t) => (
+              <p key={t.id} className="text-xs text-gray-500">
+                {t.fromUsername} ↔ {t.toUsername} — <span className={t.status === "accepted" ? "text-emerald" : "text-red-400"}>{t.status === "accepted" ? "aceptado" : t.status === "rejected" ? "rechazado" : "cancelado"}</span>
+              </p>
+            ))}
+          </div>
+        </details>
+      )}
     </div>
   );
 }

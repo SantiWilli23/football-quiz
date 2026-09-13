@@ -5,8 +5,8 @@ export async function myLeagues() {
   return data.leagues;
 }
 
-export async function createLeague(name, leagueKey, weeksPerMonth, groupId) {
-  const { data } = await api.post("/dt-league", { name, leagueKey, weeksPerMonth, groupId });
+export async function createLeague(name, leagueKey, weeksPerMonth, groupId, draftMode) {
+  const { data } = await api.post("/dt-league", { name, leagueKey, weeksPerMonth, groupId, draftMode });
   return data.league;
 }
 
@@ -67,6 +67,22 @@ export async function getLiveAccess(code, fixtureId) {
 // sin esperar a que alguien más entre a la liga.
 export async function advanceWeek(code) {
   const { data } = await api.post(`/dt-league/${code}/advance`);
+  return data;
+}
+
+// Mercado de pases: proponerle a otro manager intercambiar los clubes que dirigen.
+export async function proposeTrade(code, toUserId) {
+  const { data } = await api.post(`/dt-league/${code}/trade`, { toUserId });
+  return data;
+}
+
+export async function getTrades(code) {
+  const { data } = await api.get(`/dt-league/${code}/trades`);
+  return data.trades;
+}
+
+export async function respondTrade(code, tradeId, accept) {
+  const { data } = await api.post(`/dt-league/${code}/trade/${tradeId}/respond`, { accept });
   return data;
 }
 
