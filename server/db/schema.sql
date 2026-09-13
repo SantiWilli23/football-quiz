@@ -345,6 +345,32 @@ CREATE TABLE IF NOT EXISTS wordle_results (
 CREATE INDEX IF NOT EXISTS idx_wordle_guesses_user_date ON wordle_guesses(user_id, date);
 CREATE INDEX IF NOT EXISTS idx_wordle_results_date ON wordle_results(date);
 
+-- Quiniela semanal: predicción de resultado exacto sobre partidos reales
+-- (misma API externa que ya usa Fútbol en vivo — ver server/utils/football-api.js).
+-- No hay corrector automático: se resuelve "perezoso", igual que el walkover
+-- de Liga Online DT — cada vez que alguien pide sus predicciones, las que ya
+-- tienen resultado real se puntúan ahí mismo y quedan marcadas (scored),
+-- para no recalcular de nuevo.
+CREATE TABLE IF NOT EXISTS quiniela_predictions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  league TEXT NOT NULL,
+  fixture_id INTEGER NOT NULL,
+  fixture_date TEXT NOT NULL,
+  home_team TEXT NOT NULL,
+  away_team TEXT NOT NULL,
+  predicted_home INTEGER NOT NULL,
+  predicted_away INTEGER NOT NULL,
+  actual_home INTEGER,
+  actual_away INTEGER,
+  points INTEGER,
+  scored INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(user_id, fixture_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_quiniela_user_date ON quiniela_predictions(user_id, fixture_date);
+
 CREATE INDEX IF NOT EXISTS idx_duel_answers_lookup ON duel_answers(duel_id, user_id);
 
 CREATE TABLE IF NOT EXISTS football_cache (

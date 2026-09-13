@@ -24,6 +24,7 @@ import challengesRoutes from "./routes/challenges.js";
 import dtLeagueRoutes from "./routes/dt-league.js";
 import groupCupRoutes from "./routes/group-cup.js";
 import wordleRoutes from "./routes/wordle.js";
+import quinielaRoutes from "./routes/quiniela.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -51,6 +52,7 @@ app.use("/api/challenges", challengesRoutes);
 app.use("/api/dt-league", dtLeagueRoutes);
 app.use("/api/group-cup", groupCupRoutes);
 app.use("/api/wordle", wordleRoutes);
+app.use("/api/quiniela", quinielaRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 

@@ -83,6 +83,14 @@ const GAMES = [
     color: "#a8a9ac",
     available: true,
   },
+  {
+    to: "/quiniela",
+    label: "Quiniela semanal",
+    icon: CalendarDays,
+    description: "Predecí el resultado exacto de los próximos partidos reales antes de que arranquen.",
+    color: "#f0907e",
+    available: true,
+  },
 ];
 
 function addDays(dateStr, delta) {
