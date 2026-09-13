@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CalendarDays, Copy, Crown, Link2, LogOut, Plus, Shield, Swords, Trophy, Users } from "lucide-react";
+import { CalendarDays, Copy, Crown, Flame, Link2, LogOut, Plus, Shield, Swords, Trophy, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -10,6 +10,7 @@ import Avatar from "../components/Avatar.jsx";
 import QuestionBank from "../components/QuestionBank.jsx";
 import WeeklyChallenges from "../components/WeeklyChallenges.jsx";
 import GroupCup from "../components/GroupCup.jsx";
+import DuelBets from "../components/DuelBets.jsx";
 
 const currentMonth = new Date().toISOString().slice(0, 7);
 
@@ -29,6 +30,7 @@ export default function Group() {
   const [rival, setRival] = useState(null);
   const [myRivalId, setMyRivalId] = useState(null);
   const [rivalBusy, setRivalBusy] = useState(false);
+  const [streak, setStreak] = useState(null);
 
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
@@ -78,6 +80,10 @@ export default function Group() {
       .get("/stats/champions", { params })
       .then(({ data }) => setChampions(data.champions))
       .catch(() => setChampions([]));
+    api
+      .get("/stats/group-streak", { params })
+      .then(({ data }) => setStreak(data))
+      .catch(() => setStreak(null));
   }, [activeGroupId]);
 
   const handleCreate = async (e) => {
@@ -330,6 +336,24 @@ export default function Group() {
                 )}
               </div>
 
+              {streak && streak.streak > 0 && (
+                <div className="mb-5 rounded-card border border-amber-500/30 bg-amber-500/5 px-4 py-3.5 flex items-center gap-3">
+                  <Flame size={22} className="text-amber-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold">
+                      Racha grupal: {streak.streak} día{streak.streak === 1 ? "" : "s"} seguido{streak.streak === 1 ? "" : "s"}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {streak.today_complete
+                        ? "Todos jugaron hoy — sigue viva."
+                        : streak.missing_today?.length > 0
+                          ? `Faltan hoy: ${streak.missing_today.join(", ")}`
+                          : "Todavía nadie jugó hoy."}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {rival && (
                 <div className="mb-5 rounded-card border border-red-500/30 bg-red-500/5 px-4 py-3.5">
                   <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide font-semibold text-red-400 mb-3">
@@ -406,7 +430,7 @@ export default function Group() {
                     <div className="shrink-0 text-right">
                       <p className="font-semibold text-sm">{r.points} pts</p>
                       <p className="text-[11px] text-gray-600">
-                        {r.trivia_points} trivia · {r.mode_b_points} especial{r.duel_points ? ` · ${r.duel_points} duelos` : ""}{r.wordle_points ? ` · ${r.wordle_points} fulbodle` : ""}{r.quiniela_points ? ` · ${r.quiniela_points} quiniela` : ""}
+                        {r.trivia_points} trivia · {r.mode_b_points} especial{r.duel_points ? ` · ${r.duel_points} duelos` : ""}{r.wordle_points ? ` · ${r.wordle_points} fulbodle` : ""}{r.quiniela_points ? ` · ${r.quiniela_points} quiniela` : ""}{r.bet_points ? ` · ${r.bet_points > 0 ? "+" : ""}${r.bet_points} apuestas` : ""}
                       </p>
                     </div>
                     {r.id !== user?.id && (
@@ -483,6 +507,12 @@ export default function Group() {
       {activeGroupId && (
         <div className="mt-6">
           <GroupCup groupId={activeGroupId} />
+        </div>
+      )}
+
+      {activeGroupId && (
+        <div className="mt-6">
+          <DuelBets groupId={activeGroupId} />
         </div>
       )}
 

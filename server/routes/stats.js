@@ -153,6 +153,20 @@ async function quinielaPointsByUser(memberIds, from, to) {
   return new Map(result.rows.map((r) => [r.user_id, Number(r.points)]));
 }
 
+// Puntos de apuestas cruzadas ya liquidadas (ver settleBets en duels.js) —
+// pueden ser negativos, así que se suman tal cual quedaron.
+async function betPointsByUser(groupId, from, to) {
+  const result = await db.execute({
+    sql: `SELECT user_id, COALESCE(SUM(result_points), 0) AS points
+          FROM duel_bets
+          WHERE group_id = ? AND settled = 1
+            AND date(created_at) >= ? AND date(created_at) <= ?
+          GROUP BY user_id`,
+    args: [groupId, from, to],
+  });
+  return new Map(result.rows.map((r) => [r.user_id, Number(r.points)]));
+}
+
 // Ranking del grupo acotado a un rango de fechas. Los puntos de trivia son del
 // usuario (no del grupo), igual que en el ranking histórico; los de Modo B,
 // duelos y Liga DT sí son por grupo.
@@ -188,6 +202,7 @@ async function rankingBetween(groupId, from, to) {
   const dtLeagueByUser = await dtLeaguePointsByUser(groupId, from, to);
   const wordleByUser = await wordlePointsByUser(memberIds, from, to);
   const quinielaByUser = await quinielaPointsByUser(memberIds, from, to);
+  const betByUser = await betPointsByUser(groupId, from, to);
 
   return members
     .map((m) => {
@@ -198,6 +213,7 @@ async function rankingBetween(groupId, from, to) {
       const dt_league_points = dtLeagueByUser.get(m.id) || 0;
       const wordle_points = wordleByUser.get(m.id) || 0;
       const quiniela_points = quinielaByUser.get(m.id) || 0;
+      const bet_points = betByUser.get(m.id) || 0;
       const answered = trivia ? Number(trivia.answered) : 0;
       const correct = trivia ? Number(trivia.correct) : 0;
       return {
@@ -211,7 +227,8 @@ async function rankingBetween(groupId, from, to) {
         dt_league_points,
         wordle_points,
         quiniela_points,
-        points: trivia_points + mode_b_points + duel_points + dt_league_points + wordle_points + quiniela_points,
+        bet_points,
+        points: trivia_points + mode_b_points + duel_points + dt_league_points + wordle_points + quiniela_points + bet_points,
         answered,
         correct,
         accuracy: answered > 0 ? Math.round((correct / answered) * 100) : 0,

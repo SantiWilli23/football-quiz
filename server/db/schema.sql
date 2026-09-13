@@ -570,3 +570,22 @@ CREATE TABLE IF NOT EXISTS group_cup_matches (
 );
 
 CREATE INDEX IF NOT EXISTS idx_group_cup_matches_cup ON group_cup_matches(cup_id, round);
+
+-- Apuestas cruzadas: cualquier miembro del grupo que NO sea parte de un
+-- duelo abierto puede apostar puntos propios a quién lo gana. Se resuelve
+-- solo, en el mismo momento en que el duelo se resuelve (ver duelSidePoints
+-- y resolveIfComplete en duels.js) — result_points queda en null hasta ahí.
+CREATE TABLE IF NOT EXISTS duel_bets (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  duel_id INTEGER NOT NULL REFERENCES duels(id),
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  picked_user_id INTEGER NOT NULL REFERENCES users(id),
+  amount INTEGER NOT NULL,
+  settled INTEGER NOT NULL DEFAULT 0,
+  result_points INTEGER,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(duel_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_duel_bets_group ON duel_bets(group_id, settled);

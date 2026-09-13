@@ -141,6 +141,24 @@ export function duelSidePoints(difficulty, outcome, wildcard) {
   return wildcard ? base * 2 : base;
 }
 
+// Al resolverse el duelo, se liquidan las apuestas cruzadas que otros
+// miembros del grupo hayan hecho sobre él: acertás quién gana y ganás lo
+// apostado, fallás y lo perdés (empate: nadie gana ni pierde nada).
+async function settleBets(duel) {
+  const bets = await db.execute({
+    sql: "SELECT * FROM duel_bets WHERE duel_id = ? AND settled = 0",
+    args: [duel.id],
+  });
+  for (const bet of bets.rows) {
+    const resultPoints =
+      duel.winner_id === null ? 0 : bet.picked_user_id === duel.winner_id ? bet.amount : -bet.amount;
+    await db.execute({
+      sql: "UPDATE duel_bets SET settled = 1, result_points = ? WHERE id = ?",
+      args: [resultPoints, bet.id],
+    });
+  }
+}
+
 function pointsFor(duel, userId) {
   if (duel.status !== "terminado") return 0;
   const iAmChallenger = duel.challenger_id === userId;
@@ -397,6 +415,113 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Duelos abiertos del grupo en los que NO soy parte, para poder apostar.
+router.get("/bettable", async (req, res) => {
+  const groupId = Number(req.query.groupId);
+  if (!groupId) return res.status(400).json({ error: "Falta groupId" });
+
+  try {
+    if (!(await requireMembership(groupId, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+
+    const result = await db.execute({
+      sql: `SELECT d.id, d.challenger_id, d.opponent_id, d.difficulty,
+                   c.username AS challenger_name, o.username AS opponent_name,
+                   (SELECT COUNT(*) FROM duel_bets b WHERE b.duel_id = d.id AND b.user_id = ?) AS already_bet
+            FROM duels d
+            JOIN users c ON c.id = d.challenger_id
+            JOIN users o ON o.id = d.opponent_id
+            WHERE d.group_id = ? AND d.status = 'esperando'
+              AND d.challenger_id != ? AND d.opponent_id != ?
+            ORDER BY d.created_at DESC`,
+      args: [req.userId, groupId, req.userId, req.userId],
+    });
+
+    res.json({
+      duels: result.rows.map((r) => ({ ...r, already_bet: Number(r.already_bet) > 0 })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Apostar puntos propios a quién gana un duelo abierto en el que no soy
+// parte. Una sola apuesta por persona por duelo, no se puede cambiar.
+router.post("/:id/bet", async (req, res) => {
+  const duelId = Number(req.params.id);
+  const pickedUserId = Number(req.body?.picked_user_id);
+  const amount = Math.floor(Number(req.body?.amount));
+
+  if (!pickedUserId || !amount || amount < 1 || amount > 20) {
+    return res.status(400).json({ error: "Apuesta inválida (entre 1 y 20 puntos)" });
+  }
+
+  try {
+    const result = await db.execute({ sql: "SELECT * FROM duels WHERE id = ?", args: [duelId] });
+    const duel = result.rows[0];
+    if (!duel) return res.status(404).json({ error: "Duelo no encontrado" });
+    if (duel.status !== "esperando") return res.status(400).json({ error: "Este duelo ya terminó" });
+    if (duel.challenger_id === req.userId || duel.opponent_id === req.userId) {
+      return res.status(400).json({ error: "No podés apostar en tu propio duelo" });
+    }
+    if (!(await requireMembership(duel.group_id, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+    if (pickedUserId !== duel.challenger_id && pickedUserId !== duel.opponent_id) {
+      return res.status(400).json({ error: "Tenés que elegir a uno de los dos rivales" });
+    }
+
+    try {
+      await db.execute({
+        sql: `INSERT INTO duel_bets (duel_id, group_id, user_id, picked_user_id, amount)
+              VALUES (?, ?, ?, ?, ?)`,
+        args: [duelId, duel.group_id, req.userId, pickedUserId, amount],
+      });
+    } catch {
+      return res.status(409).json({ error: "Ya apostaste en este duelo" });
+    }
+
+    res.status(201).json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Mis apuestas en el grupo (activas y ya resueltas).
+router.get("/bets/mine", async (req, res) => {
+  const groupId = Number(req.query.groupId);
+  if (!groupId) return res.status(400).json({ error: "Falta groupId" });
+
+  try {
+    if (!(await requireMembership(groupId, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+
+    const result = await db.execute({
+      sql: `SELECT b.*, d.status AS duel_status, d.winner_id,
+                   c.username AS challenger_name, o.username AS opponent_name,
+                   p.username AS picked_name
+            FROM duel_bets b
+            JOIN duels d ON d.id = b.duel_id
+            JOIN users c ON c.id = d.challenger_id
+            JOIN users o ON o.id = d.opponent_id
+            JOIN users p ON p.id = b.picked_user_id
+            WHERE b.group_id = ? AND b.user_id = ?
+            ORDER BY b.created_at DESC
+            LIMIT 30`,
+      args: [groupId, req.userId],
+    });
+
+    res.json({ bets: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 // Las preguntas de un duelo. Sólo las que todavía no respondí, y sin la
 // respuesta correcta hasta que conteste.
 router.get("/:id", async (req, res) => {
@@ -494,9 +619,12 @@ router.post("/:id/answer", async (req, res) => {
     }
 
     const after = await resolveIfComplete(duel);
-    if (after.status === "terminado" && duel.status !== "terminado" && after.tournament_match_id) {
-      const { advanceTournamentForDuel } = await import("./duel-tournaments.js");
-      await advanceTournamentForDuel(after);
+    if (after.status === "terminado" && duel.status !== "terminado") {
+      await settleBets(after);
+      if (after.tournament_match_id) {
+        const { advanceTournamentForDuel } = await import("./duel-tournaments.js");
+        await advanceTournamentForDuel(after);
+      }
     }
     const mine = await answersOf(duelId, req.userId);
 
