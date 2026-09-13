@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
-import { duelPointsFor } from "./duels.js";
+import { duelSidePoints } from "./duels.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -183,7 +183,7 @@ router.get("/:id", async (req, res) => {
 
     const rankingResult = await db.execute({
       sql: `SELECT
-              u.id, u.username, u.avatar, u.avatar_config,
+              u.id, u.username, u.avatar, u.avatar_config, gm.rival_id,
               COALESCE(SUM(a.points), 0) AS points,
               COUNT(a.id) AS answered,
               COALESCE(SUM(a.is_correct), 0) AS correct
@@ -206,20 +206,18 @@ router.get("/:id", async (req, res) => {
     const modeBByUser = new Map(modeBResult.rows.map((r) => [r.user_id, Number(r.points)]));
 
     const duelsResult = await db.execute({
-      sql: `SELECT challenger_id, opponent_id, winner_id, difficulty FROM duels
-            WHERE group_id = ? AND status = 'terminado'`,
+      sql: `SELECT challenger_id, opponent_id, winner_id, difficulty, challenger_wildcard, opponent_wildcard
+            FROM duels WHERE group_id = ? AND status = 'terminado'`,
       args: [groupId],
     });
     const duelByUser = new Map();
     const addDuel = (userId, amount) =>
       duelByUser.set(userId, (duelByUser.get(userId) || 0) + amount);
     for (const row of duelsResult.rows) {
-      if (row.winner_id === null) {
-        addDuel(row.challenger_id, duelPointsFor(row.difficulty, "draw"));
-        addDuel(row.opponent_id, duelPointsFor(row.difficulty, "draw"));
-      } else {
-        addDuel(row.winner_id, duelPointsFor(row.difficulty, "win"));
-      }
+      const challengerOutcome = row.winner_id === null ? "draw" : row.winner_id === row.challenger_id ? "win" : "loss";
+      const opponentOutcome = row.winner_id === null ? "draw" : row.winner_id === row.opponent_id ? "win" : "loss";
+      addDuel(row.challenger_id, duelSidePoints(row.difficulty, challengerOutcome, !!row.challenger_wildcard));
+      addDuel(row.opponent_id, duelSidePoints(row.difficulty, opponentOutcome, !!row.opponent_wildcard));
     }
 
     const ranking = rankingResult.rows
@@ -232,6 +230,7 @@ router.get("/:id", async (req, res) => {
           username: r.username,
           avatar: r.avatar,
           avatar_config: r.avatar_config,
+          rival_id: r.rival_id ?? null,
           trivia_points,
           mode_b_points,
           duel_points,
@@ -244,7 +243,72 @@ router.get("/:id", async (req, res) => {
       .sort((a, b) => b.points - a.points || b.correct - a.correct)
       .map((row, idx) => ({ position: idx + 1, ...row }));
 
-    res.json({ group, ranking });
+    // Rivalidad: si elegiste un archienemigo en este grupo, se arma el
+    // cara a cara — puntos totales de cada uno y el historial de duelos
+    // específicamente entre ustedes dos (no todos sus duelos, solo los mutuos).
+    const me = ranking.find((r) => r.id === req.userId);
+    let rival = null;
+    if (me?.rival_id) {
+      const rivalRow = ranking.find((r) => r.id === me.rival_id);
+      if (rivalRow) {
+        const h2hResult = await db.execute({
+          sql: `SELECT challenger_id, opponent_id, winner_id FROM duels
+                WHERE group_id = ? AND status = 'terminado'
+                  AND ((challenger_id = ? AND opponent_id = ?) OR (challenger_id = ? AND opponent_id = ?))`,
+          args: [groupId, req.userId, me.rival_id, me.rival_id, req.userId],
+        });
+        let won = 0, lost = 0, drawn = 0;
+        for (const d of h2hResult.rows) {
+          if (d.winner_id === null) drawn++;
+          else if (d.winner_id === req.userId) won++;
+          else lost++;
+        }
+        rival = {
+          id: rivalRow.id,
+          username: rivalRow.username,
+          avatar: rivalRow.avatar,
+          avatar_config: rivalRow.avatar_config,
+          my_points: me.points,
+          rival_points: rivalRow.points,
+          duels: { won, lost, drawn },
+        };
+      }
+    }
+
+    res.json({ group, ranking, my_rival_id: me?.rival_id ?? null, rival });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Elegir (o quitar) tu archienemigo dentro de este grupo. rival_id: null limpia.
+router.put("/:id/rival", async (req, res) => {
+  const groupId = Number(req.params.id);
+  const rivalId = req.body?.rival_id === null || req.body?.rival_id === undefined ? null : Number(req.body.rival_id);
+
+  try {
+    const membership = await db.execute({
+      sql: "SELECT id FROM group_members WHERE group_id = ? AND user_id = ?",
+      args: [groupId, req.userId],
+    });
+    if (membership.rows.length === 0) return res.status(403).json({ error: "No perteneces a este grupo" });
+
+    if (rivalId !== null) {
+      if (rivalId === req.userId) return res.status(400).json({ error: "No podés elegirte a vos mismo como rival" });
+      const rivalMembership = await db.execute({
+        sql: "SELECT id FROM group_members WHERE group_id = ? AND user_id = ?",
+        args: [groupId, rivalId],
+      });
+      if (rivalMembership.rows.length === 0) return res.status(400).json({ error: "Esa persona no está en el grupo" });
+    }
+
+    await db.execute({
+      sql: "UPDATE group_members SET rival_id = ? WHERE group_id = ? AND user_id = ?",
+      args: [rivalId, groupId, req.userId],
+    });
+
+    res.json({ rival_id: rivalId });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

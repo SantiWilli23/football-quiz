@@ -35,6 +35,7 @@ export async function initSchema() {
   await migrateAvatarConfig();
   await migrateDuelDifficulty();
   await migrateDuelWildcard();
+  await migrateGroupMemberRival();
   await migrateDtLeagueColumns();
 }
 
@@ -84,6 +85,15 @@ async function migrateDuelWildcard() {
   const names = new Set(info.rows.map((r) => r.name));
   if (!names.has("challenger_wildcard")) await db.execute("ALTER TABLE duels ADD COLUMN challenger_wildcard INTEGER NOT NULL DEFAULT 0");
   if (!names.has("opponent_wildcard")) await db.execute("ALTER TABLE duels ADD COLUMN opponent_wildcard INTEGER NOT NULL DEFAULT 0");
+}
+
+// Rivalidades: cada miembro puede marcar a otro del mismo grupo como su
+// "archienemigo" (ver groups.js). Columna nueva y nullable.
+async function migrateGroupMemberRival() {
+  const info = await db.execute("PRAGMA table_info(group_members)");
+  if (info.rows.length === 0) return;
+  if (info.rows.some((r) => r.name === "rival_id")) return;
+  await db.execute("ALTER TABLE group_members ADD COLUMN rival_id INTEGER REFERENCES users(id)");
 }
 
 // Instalaciones anteriores tienen `users` sin la columna del avatar dibujado.

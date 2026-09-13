@@ -1,6 +1,6 @@
 import {
   Lock, Flame, Trophy, Star, Medal, TrendingUp, Wallet, Smile, Meh, Frown,
-  HeartPulse, Mail, PenLine, Newspaper, ShieldAlert, PlayCircle,
+  HeartPulse, Mail, PenLine, Newspaper, ShieldAlert, PlayCircle, Target,
 } from "lucide-react";
 import { useCareer } from "../context/CareerContext.jsx";
 import { teamById } from "../data/teams.js";
@@ -17,6 +17,22 @@ const COPA_ROUNDS = ["Dieciseisavos", "Cuartos de final", "Semifinal", "Final"];
 const COPA_WEEKS  = [6, 14, 22, 30];
 
 const LEAGUE_LABELS = { premier: "Premier League", laliga: "La Liga", seriea: "Serie A", bundesliga: "Bundesliga" };
+
+// Mismos umbrales que usa CareerContext al cerrar la temporada (evaluateObjective)
+// — se repiten acá porque ahí son internos, no exportados, y esto es solo lectura.
+const OBJECTIVE_THRESHOLDS = { ganar_liga: 1, top3: 3, top4: 4, top6: 6, top8: 8, top10: 10, top12: 12, salvarse: 17 };
+const OBJECTIVE_LABELS = {
+  ganar_liga: "Ganar la liga", top3: "Terminar top 3", top4: "Terminar top 4", top6: "Terminar top 6",
+  top8: "Terminar top 8", top10: "Terminar top 10", top12: "Terminar top 12", salvarse: "Salvar la categoría",
+};
+
+function objectiveProgress(objective, position, leagueSize) {
+  const threshold = OBJECTIVE_THRESHOLDS[objective] || 17;
+  const onTrack = position <= threshold;
+  const span = Math.max(1, leagueSize - threshold);
+  const pct = onTrack ? 100 : Math.max(4, Math.min(96, Math.round(((leagueSize - position) / span) * 100)));
+  return { threshold, onTrack, pct, label: OBJECTIVE_LABELS[objective] || "Objetivo de la directiva" };
+}
 
 function prestigeLabel(p) {
   if (p >= 80) return { text: "Leyenda", color: "text-amber" };
@@ -103,6 +119,7 @@ export default function Dashboard({ onPlayMatch }) {
     ? Math.round(state.squad.reduce((sum, p) => sum + ((state.morale || {})[p.id] ?? 70), 0) / state.squad.length)
     : 70;
   const MoraleIcon = moraleIcon(avgMorale);
+  const objective = objectiveProgress(team.boardObjective, myPos, standingsSorted.length);
 
   // Ventana de transferencias
   const w = state.week;
@@ -225,6 +242,31 @@ export default function Dashboard({ onPlayMatch }) {
           <p className="text-2xl font-bold leading-none">{avgMorale}</p>
           <p className="text-[11px] text-gray-500 mt-1.5">moral del plantel</p>
         </div>
+      </div>
+
+      {/* Objetivo de temporada */}
+      <div className="bg-panel border border-border rounded-2xl p-4">
+        <div className="flex items-center justify-between gap-3 mb-2.5">
+          <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide font-semibold text-gray-500">
+            <Target size={13} />
+            <span>Objetivo de la directiva</span>
+          </div>
+          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
+            objective.onTrack ? "text-emerald border-emerald/30 bg-emerald/10" : "text-amber border-amber/30 bg-amber/10"
+          }`}>
+            {objective.onTrack ? "En camino" : "Afuera por ahora"}
+          </span>
+        </div>
+        <p className="text-sm font-semibold mb-2">{objective.label}</p>
+        <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+          <div
+            className="h-full rounded-full transition-[width]"
+            style={{ width: `${objective.pct}%`, background: objective.onTrack ? "#3fae9a" : "#d9a441" }}
+          />
+        </div>
+        <p className="text-[11px] text-gray-500 mt-1.5">
+          Vas {myPos}° — hace falta {objective.threshold === 1 ? "terminar 1°" : `terminar entre los primeros ${objective.threshold}`}.
+        </p>
       </div>
 
       {/* Trofeos ganados esta temporada */}

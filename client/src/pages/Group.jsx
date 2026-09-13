@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CalendarDays, Copy, Crown, Link2, LogOut, Plus, Shield, Trophy, Users } from "lucide-react";
+import { CalendarDays, Copy, Crown, Link2, LogOut, Plus, Shield, Swords, Trophy, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -26,6 +26,9 @@ export default function Group() {
   const [seasonRanking, setSeasonRanking] = useState([]);
   const [champions, setChampions] = useState([]);
   const [scope, setScope] = useState("mes");
+  const [rival, setRival] = useState(null);
+  const [myRivalId, setMyRivalId] = useState(null);
+  const [rivalBusy, setRivalBusy] = useState(false);
 
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
@@ -56,10 +59,14 @@ export default function Group() {
       .then(({ data }) => {
         setDetail(data.group);
         setRanking(data.ranking);
+        setRival(data.rival);
+        setMyRivalId(data.my_rival_id);
       })
       .catch(() => {
         setDetail(null);
         setRanking([]);
+        setRival(null);
+        setMyRivalId(null);
       });
 
     const params = { groupId: activeGroupId };
@@ -133,6 +140,23 @@ export default function Group() {
       setLeaveError(err.response?.data?.error || "No se pudo salir del grupo");
     } finally {
       setLeaving(false);
+    }
+  };
+
+  const toggleRival = async (targetId) => {
+    if (rivalBusy) return;
+    const nextId = myRivalId === targetId ? null : targetId;
+    setRivalBusy(true);
+    try {
+      await api.put(`/groups/${activeGroupId}/rival`, { rival_id: nextId });
+      const { data } = await api.get(`/groups/${activeGroupId}`);
+      setRanking(data.ranking);
+      setRival(data.rival);
+      setMyRivalId(data.my_rival_id);
+    } catch {
+      // Si falla, el estado local ya reflejaba lo de antes — no hace falta revertir nada.
+    } finally {
+      setRivalBusy(false);
     }
   };
 
@@ -306,6 +330,30 @@ export default function Group() {
                 )}
               </div>
 
+              {rival && (
+                <div className="mb-5 rounded-card border border-red-500/30 bg-red-500/5 px-4 py-3.5">
+                  <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide font-semibold text-red-400 mb-3">
+                    <Swords size={13} />
+                    <span>Tu rival</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-center flex-1">
+                      <Avatar user={user} size={36} className="mx-auto mb-1.5" />
+                      <p className="text-sm font-semibold">{rival.my_points} pts</p>
+                    </div>
+                    <span className="text-xs text-gray-500 font-medium shrink-0">vs</span>
+                    <div className="text-center flex-1">
+                      <Avatar user={rival} size={36} className="mx-auto mb-1.5" />
+                      <p className="text-sm font-medium truncate">{rival.username}</p>
+                      <p className="text-sm font-semibold">{rival.rival_points} pts</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 text-center mt-3">
+                    Duelos entre ustedes: {rival.duels.won} ganados · {rival.duels.drawn} empatados · {rival.duels.lost} perdidos
+                  </p>
+                </div>
+              )}
+
               {/* La temporada del mes es la que se mira día a día: el histórico
                   lo gana siempre el que arrancó primero. */}
               <div className="flex items-center gap-2 mb-4 flex-wrap">
@@ -361,6 +409,20 @@ export default function Group() {
                         {r.trivia_points} trivia · {r.mode_b_points} especial{r.duel_points ? ` · ${r.duel_points} duelos` : ""}
                       </p>
                     </div>
+                    {r.id !== user?.id && (
+                      <button
+                        onClick={() => toggleRival(r.id)}
+                        disabled={rivalBusy}
+                        title={myRivalId === r.id ? "Quitar como rival" : "Marcar como rival"}
+                        className={`shrink-0 p-2 rounded-card border transition-colors disabled:opacity-40 ${
+                          myRivalId === r.id
+                            ? "border-red-500/50 bg-red-500/10 text-red-400"
+                            : "border-border text-gray-500 hover:text-red-400 hover:border-red-500/30"
+                        }`}
+                      >
+                        <Swords size={14} />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

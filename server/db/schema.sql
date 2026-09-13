@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS group_members (
   group_id INTEGER NOT NULL REFERENCES groups_t(id),
   user_id INTEGER NOT NULL REFERENCES users(id),
   joined_at TEXT NOT NULL DEFAULT (datetime('now')),
+  rival_id INTEGER REFERENCES users(id),
   UNIQUE(group_id, user_id)
 );
 
