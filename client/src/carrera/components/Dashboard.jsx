@@ -105,7 +105,7 @@ export default function Dashboard({ onPlayMatch }) {
       <div className="text-center py-16">
         <p className="text-2xl font-bold mb-2">Despedido 😔</p>
         <p className="text-gray-400 mb-6">La directiva perdió la confianza en tu proyecto en {team.name}.</p>
-        <button onClick={resetCareer} className="bg-accent text-black font-semibold px-5 py-2.5 rounded-2xl">
+        <button onClick={resetCareer} className="bg-accent text-onaccent font-semibold px-5 py-2.5 rounded-2xl">
           Empezar nueva carrera
         </button>
       </div>
@@ -162,7 +162,7 @@ export default function Dashboard({ onPlayMatch }) {
             <>
               <p className="font-semibold text-lg">{fixture.home ? `vs ${rival.name} (Local)` : `vs ${rival.name} (Visitante)`}</p>
               <p className="text-xs text-gray-500 mb-4">Jornada {fixture.week}</p>
-              <button onClick={handlePlay} className="w-full bg-accent text-black font-semibold py-2.5 rounded-2xl hover:brightness-110 transition">
+              <button onClick={handlePlay} className="w-full bg-accent text-onaccent font-semibold py-2.5 rounded-2xl hover:brightness-110 transition">
                 Jugar partido
               </button>
             </>

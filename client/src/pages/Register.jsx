@@ -104,7 +104,7 @@ export default function Register() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-accent hover:bg-accent-dark disabled:opacity-50 transition-colors text-black font-semibold rounded-card py-2.5 text-sm"
+              className="w-full bg-accent hover:bg-accent-dark disabled:opacity-50 transition-colors text-onaccent font-semibold rounded-card py-2.5 text-sm"
             >
               {loading ? "Creando cuenta..." : "Crear cuenta"}
             </button>

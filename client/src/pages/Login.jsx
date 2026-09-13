@@ -34,7 +34,7 @@ export default function Login() {
     <div className="min-h-screen flex bg-bg text-white">
       <div className="hidden lg:flex flex-1 flex-col items-center justify-center gap-10 p-12 bg-panel border-r border-border text-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-14 h-14 rounded-card bg-gradient-to-br from-accent-light to-emerald-500 flex items-center justify-center text-black font-extrabold text-xl">
+          <div className="w-14 h-14 rounded-card bg-gradient-to-br from-accent-light to-emerald-500 flex items-center justify-center text-onaccent font-extrabold text-xl">
             FT
           </div>
           <h1 className="text-5xl font-extrabold tracking-tight bg-gradient-to-r from-accent-light via-accent to-emerald-500 bg-clip-text text-transparent">
@@ -60,7 +60,7 @@ export default function Login() {
           </div>
           <Link
             to="/registro"
-            className="rounded-full bg-gradient-to-r from-accent to-accent-light px-8 py-3 text-sm font-semibold text-black hover:opacity-90 transition-opacity"
+            className="rounded-full bg-gradient-to-r from-accent to-accent-light px-8 py-3 text-sm font-semibold text-onaccent hover:opacity-90 transition-opacity"
           >
             Jugar ahora
           </Link>
@@ -101,7 +101,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-accent hover:bg-accent-dark disabled:opacity-50 transition-colors text-black font-semibold rounded-card py-2.5 text-sm"
+              className="w-full bg-accent hover:bg-accent-dark disabled:opacity-50 transition-colors text-onaccent font-semibold rounded-card py-2.5 text-sm"
             >
               {loading ? "Ingresando..." : "Ingresar"}
             </button>

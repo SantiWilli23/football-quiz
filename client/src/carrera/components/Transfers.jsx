@@ -342,7 +342,7 @@ function StepIndicator({ stage }) {
       {[1, 2].map((n) => (
         <div key={n} className="flex items-center gap-2 flex-1">
           <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
-            step >= n ? "bg-accent text-black" : "bg-bg border border-border text-gray-500"
+            step >= n ? "bg-accent text-onaccent" : "bg-bg border border-border text-gray-500"
           }`}>
             {n}
           </div>
@@ -456,7 +456,7 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, isOnOffe
                     onChange={(e) => setFeeInput(Number(e.target.value))}
                     className="w-full bg-bg border border-border rounded-2xl px-4 py-3 text-sm"
                   />
-                  <button onClick={() => submitFee()} className="w-full bg-accent text-black font-semibold py-2.5 rounded-2xl hover:brightness-110 transition">
+                  <button onClick={() => submitFee()} className="w-full bg-accent text-onaccent font-semibold py-2.5 rounded-2xl hover:brightness-110 transition">
                     {feeResult && !feeResult.accepted ? "Volver a ofertar" : "Enviar oferta al club"}
                   </button>
                 </>
@@ -502,7 +502,7 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, isOnOffe
               <select value={years} onChange={(e) => setYears(Number(e.target.value))} className="w-full bg-bg border border-border rounded-2xl px-4 py-3 text-sm">
                 {[1, 2, 3, 4, 5].map((y) => <option key={y} value={y}>{y} año{y === 1 ? "" : "s"}</option>)}
               </select>
-              <button onClick={submitWage} className="w-full bg-accent text-black font-semibold py-2.5 rounded-2xl hover:brightness-110 transition">
+              <button onClick={submitWage} className="w-full bg-accent text-onaccent font-semibold py-2.5 rounded-2xl hover:brightness-110 transition">
                 {wageResult && !wageResult.accepted ? "Volver a ofrecer" : "Ofrecer contrato al jugador"}
               </button>
             </>
@@ -536,7 +536,7 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, isOnOffe
           {stage === "done" && (
             <>
               <p className="text-sm text-emerald font-semibold">🎉 ¡Fichaje cerrado! {player.name} ya es tuyo.</p>
-              <button onClick={onClose} className="w-full bg-accent text-black font-semibold py-2.5 rounded-2xl hover:brightness-110 transition">
+              <button onClick={onClose} className="w-full bg-accent text-onaccent font-semibold py-2.5 rounded-2xl hover:brightness-110 transition">
                 Cerrar
               </button>
             </>

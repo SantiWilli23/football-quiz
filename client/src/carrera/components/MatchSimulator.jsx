@@ -204,7 +204,7 @@ export default function MatchSimulator({ matchResult, onFinish }) {
 
               <button
                 onClick={confirmSubstitutions}
-                className="w-full mt-4 bg-accent text-black font-semibold py-2.5 rounded-card hover:brightness-110"
+                className="w-full mt-4 bg-accent text-onaccent font-semibold py-2.5 rounded-card hover:brightness-110"
               >
                 {subs.length ? `Continuar con ${subs.length} cambio${subs.length === 1 ? "" : "s"}` : "Continuar sin cambios"}
               </button>
@@ -251,7 +251,7 @@ export default function MatchSimulator({ matchResult, onFinish }) {
             <button
               onClick={onFinish}
               disabled={!!pressQuestion && !pressChoice}
-              className="w-full bg-accent text-black font-semibold py-2.5 rounded-card hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full bg-accent text-onaccent font-semibold py-2.5 rounded-card hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Continuar
             </button>

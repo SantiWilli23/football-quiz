@@ -88,7 +88,7 @@ function DuelPlay({ duelId, onFinished, onCancel }) {
         <p className="text-sm text-gray-400 mb-4">Ya respondiste todas tus preguntas de este duelo.</p>
         <button
           onClick={onFinished}
-          className="bg-accent hover:bg-accent-dark text-black font-semibold rounded-card px-5 py-2.5 text-sm transition-colors"
+          className="bg-accent hover:bg-accent-dark text-onaccent font-semibold rounded-card px-5 py-2.5 text-sm transition-colors"
         >
           Volver
         </button>
@@ -156,7 +156,7 @@ function DuelPlay({ duelId, onFinished, onCancel }) {
             <button
               onClick={submit}
               disabled={!selected || busy}
-              className="bg-accent hover:bg-accent-dark disabled:opacity-40 text-black font-semibold rounded-card px-5 py-2.5 text-sm transition-colors"
+              className="bg-accent hover:bg-accent-dark disabled:opacity-40 text-onaccent font-semibold rounded-card px-5 py-2.5 text-sm transition-colors"
             >
               {busy ? "Enviando..." : "Responder"}
             </button>
@@ -171,7 +171,7 @@ function DuelPlay({ duelId, onFinished, onCancel }) {
             </p>
             <button
               onClick={next}
-              className="bg-accent hover:bg-accent-dark text-black font-semibold rounded-card px-5 py-2.5 text-sm transition-colors"
+              className="bg-accent hover:bg-accent-dark text-onaccent font-semibold rounded-card px-5 py-2.5 text-sm transition-colors"
             >
               {feedback.answered >= feedback.total_questions ? "Terminar" : "Siguiente"}
             </button>
@@ -448,7 +448,7 @@ export default function Duels() {
                 </div>
                 <button
                   onClick={() => setPlaying(d.id)}
-                  className="px-4 py-2 rounded-card text-sm font-semibold text-black shrink-0 transition-opacity hover:opacity-90"
+                  className="px-4 py-2 rounded-card text-sm font-semibold text-onaccent shrink-0 transition-opacity hover:opacity-90"
                   style={{ background: COLOR }}
                 >
                   {d.my_answered > 0 ? "Seguir" : "Jugar"}

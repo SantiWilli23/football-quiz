@@ -185,7 +185,7 @@ export default function DtLeagueRoom() {
               <button
                 onClick={handleStart}
                 disabled={!everyoneReady || starting}
-                className="w-full bg-accent text-black font-semibold py-3 rounded-2xl hover:brightness-110 disabled:opacity-40 transition"
+                className="w-full bg-accent text-onaccent font-semibold py-3 rounded-2xl hover:brightness-110 disabled:opacity-40 transition"
               >
                 {!everyoneReady
                   ? "Esperando a que todos elijan equipo…"

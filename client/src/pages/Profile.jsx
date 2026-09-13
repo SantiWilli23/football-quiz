@@ -8,6 +8,7 @@ import Avatar from "../components/Avatar.jsx";
 import AvatarEditor from "../components/AvatarEditor.jsx";
 import PushToggle from "../components/PushToggle.jsx";
 import AccountSettings from "../components/AccountSettings.jsx";
+import ThemeSettings from "../components/ThemeSettings.jsx";
 
 export default function Profile() {
   const { user, stats, refreshMe } = useAuth();
@@ -71,6 +72,10 @@ export default function Profile() {
 
       <div className="mb-6">
         <AvatarEditor user={user} onSaved={refreshMe} />
+      </div>
+
+      <div className="mb-6">
+        <ThemeSettings />
       </div>
 
       <div className="mb-6">

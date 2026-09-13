@@ -4,6 +4,120 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   Temas: cada bloque define las mismas variables con valores
+   distintos. tailwind.config.js las referencia con
+   rgb(var(--x) / <alpha-value>), así que TODAS las clases de
+   siempre (bg-bg, bg-panel, text-white, bg-accent, bg-blue-500,
+   etc.) cambian de color solo con este atributo — no hace falta
+   tocar un solo componente.
+
+   Nocturno es el default (sin atributo, o data-theme="nocturno").
+   Azul es la paleta "unificada" que ya tenía la app. Bengala es
+   clara. Ver client/src/context/ThemeContext.jsx para cómo se
+   aplica el atributo y se persiste la elección.
+   ============================================================ */
+
+:root,
+[data-theme="nocturno"] {
+  --c-bg: 14 19 23;
+  --c-panel: 22 29 35;
+  --c-panel-hi: 30 39 46;
+  --c-border: 40 51 60;
+
+  --c-white: 233 239 241;
+  --c-onaccent: 14 19 23;
+
+  --c-gray-200: 40 51 60;
+  --c-gray-300: 195 205 211;
+  --c-gray-400: 168 180 187;
+  --c-gray-500: 143 160 170;
+  --c-gray-600: 97 114 125;
+  --c-gray-700: 74 89 96;
+  --c-gray-800: 40 51 60;
+  --c-gray-900: 11 15 18;
+
+  --c-accent: 47 182 115;
+  --c-accent-dark: 30 110 73;
+  --c-accent-light: 111 217 168;
+
+  --c-blue: 79 179 232;
+  --c-purple: 201 169 232;
+  --c-emerald: 47 182 115;
+  --c-amber: 240 169 62;
+  --c-orange: 138 100 35;
+  --c-red: 224 102 79;
+
+  --radius-card: 10px;
+  --theme-color: #0e1317;
+}
+
+[data-theme="azul"] {
+  --c-bg: 38 43 53;
+  --c-panel: 43 52 68;
+  --c-panel-hi: 53 66 84;
+  --c-border: 69 71 76;
+
+  --c-white: 242 242 240;
+  --c-onaccent: 38 43 53;
+
+  --c-gray-200: 69 71 76;
+  --c-gray-300: 201 202 204;
+  --c-gray-400: 168 169 172;
+  --c-gray-500: 138 139 142;
+  --c-gray-600: 111 112 116;
+  --c-gray-700: 87 88 92;
+  --c-gray-800: 69 71 76;
+  --c-gray-900: 30 32 35;
+
+  --c-accent: 59 157 214;
+  --c-accent-dark: 33 94 130;
+  --c-accent-light: 124 196 234;
+
+  --c-blue: 59 157 214;
+  --c-purple: 240 198 116;
+  --c-emerald: 63 174 154;
+  --c-amber: 217 164 65;
+  --c-orange: 138 100 35;
+  --c-red: 240 144 126;
+
+  --radius-card: 4px;
+  --theme-color: #262b35;
+}
+
+[data-theme="bengala"] {
+  --c-bg: 246 246 248;
+  --c-panel: 255 255 255;
+  --c-panel-hi: 255 255 255;
+  --c-border: 226 228 233;
+
+  --c-white: 15 17 21;
+  --c-onaccent: 255 255 255;
+
+  --c-gray-200: 226 228 233;
+  --c-gray-300: 199 203 211;
+  --c-gray-400: 171 177 188;
+  --c-gray-500: 154 161 174;
+  --c-gray-600: 90 97 110;
+  --c-gray-700: 68 75 88;
+  --c-gray-800: 38 43 51;
+  --c-gray-900: 15 17 21;
+
+  --c-accent: 255 77 23;
+  --c-accent-dark: 204 61 18;
+  --c-accent-light: 255 138 94;
+
+  --c-blue: 59 130 246;
+  --c-purple: 139 127 232;
+  --c-emerald: 0 179 122;
+  --c-amber: 240 180 41;
+  --c-orange: 204 61 18;
+  --c-red: 229 72 77;
+
+  --radius-card: 16px;
+  --theme-color: #f6f6f8;
+}
+
 html,
 body,
 #root {
@@ -12,13 +126,14 @@ body,
 
 body {
   font-family: Archivo, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  background-color: #262b35;
+  background-color: rgb(var(--c-bg));
 
   /* Dos manchas muy tenues para que el fondo no quede plano. Van fijas al
-     viewport así no se mueven al hacer scroll. */
+     viewport así no se mueven al hacer scroll. En el tema claro (Bengala)
+     casi no se notan, que es lo que se busca — ahí el aire lo da el blanco. */
   background-image:
-    radial-gradient(ellipse 80% 50% at 20% 0%, rgba(242, 242, 240, 0.04), transparent 70%),
-    radial-gradient(ellipse 60% 40% at 85% 100%, rgba(242, 242, 240, 0.03), transparent 70%);
+    radial-gradient(ellipse 80% 50% at 20% 0%, rgb(var(--c-white) / 0.04), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 85% 100%, rgb(var(--c-white) / 0.03), transparent 70%);
   background-attachment: fixed;
 }
 
@@ -28,18 +143,18 @@ body {
    bg-panel/95), que necesitan seguir siendo un color sólido para que el
    alpha-blending funcione. */
 .bg-panel {
-  background-image: linear-gradient(160deg, #354254, #2b3444);
+  background-image: linear-gradient(160deg, rgb(var(--c-panel-hi)), rgb(var(--c-panel)));
 }
 
 ::-webkit-scrollbar {
   width: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #45474c;
+  background: rgb(var(--c-border));
   border-radius: 8px;
 }
 
 /* Separadores en trazo punteado en vez de línea llena. */
 .chalk-line {
-  border-bottom: 1px dashed #45474c;
+  border-bottom: 1px dashed rgb(var(--c-border));
 }

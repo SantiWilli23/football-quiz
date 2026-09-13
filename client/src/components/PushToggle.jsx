@@ -162,7 +162,7 @@ export default function PushToggle() {
           <button
             onClick={enable}
             disabled={busy}
-            className="bg-accent hover:bg-accent-dark disabled:opacity-50 text-black font-semibold rounded-card px-5 py-2.5 text-sm transition-colors"
+            className="bg-accent hover:bg-accent-dark disabled:opacity-50 text-onaccent font-semibold rounded-card px-5 py-2.5 text-sm transition-colors"
           >
             {busy ? "Activando..." : "Activar notificaciones"}
           </button>

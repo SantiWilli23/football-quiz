@@ -81,7 +81,7 @@ export default function GameScreen({ state, mySeat, isLocal, onAttempt, onTimeou
           <p className="text-xl font-bold mb-4">{state.playerNames[state.turnSeat]}</p>
           <button
             onClick={() => setPassGateOpen(false)}
-            className="bg-accent text-black font-semibold px-6 py-2.5 rounded-2xl hover:brightness-110 transition"
+            className="bg-accent text-onaccent font-semibold px-6 py-2.5 rounded-2xl hover:brightness-110 transition"
           >
             Listo, es mi turno
           </button>

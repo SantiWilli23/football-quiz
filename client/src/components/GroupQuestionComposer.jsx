@@ -60,7 +60,7 @@ export default function GroupQuestionComposer({ groupId, onCreated }) {
             </p>
             <button
               onClick={() => setOpen(true)}
-              className="px-4 py-2.5 rounded-card text-sm font-semibold text-black transition-opacity hover:opacity-90"
+              className="px-4 py-2.5 rounded-card text-sm font-semibold text-onaccent transition-opacity hover:opacity-90"
               style={{ background: COLOR }}
             >
               Escribir la pregunta de hoy
@@ -126,7 +126,7 @@ export default function GroupQuestionComposer({ groupId, onCreated }) {
               <button
                 type="submit"
                 disabled={saving}
-                className="px-4 py-2.5 rounded-card text-sm font-semibold text-black disabled:opacity-50 transition-opacity hover:opacity-90"
+                className="px-4 py-2.5 rounded-card text-sm font-semibold text-onaccent disabled:opacity-50 transition-opacity hover:opacity-90"
                 style={{ background: COLOR }}
               >
                 {saving ? "Publicando..." : "Publicar para el grupo"}

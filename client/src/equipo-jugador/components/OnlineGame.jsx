@@ -249,7 +249,7 @@ export default function OnlineGame({ onExit }) {
             Modo "de a hartos": eliminación directa hasta que quede uno solo. Ideal para un desafío de grupo.
           </p>
         )}
-        <button onClick={handleCreate} disabled={!myName.trim()} className="w-full bg-accent text-black font-semibold py-2.5 rounded-2xl hover:brightness-110 disabled:opacity-40 transition">
+        <button onClick={handleCreate} disabled={!myName.trim()} className="w-full bg-accent text-onaccent font-semibold py-2.5 rounded-2xl hover:brightness-110 disabled:opacity-40 transition">
           Crear sala
         </button>
         <button onClick={() => setSetupMode(null)} className="w-full text-center text-xs text-gray-500 hover:text-gray-300">Atrás</button>
@@ -270,7 +270,7 @@ export default function OnlineGame({ onExit }) {
         <button
           onClick={handleJoin}
           disabled={joinCode.trim().length < 4 || !myName.trim()}
-          className="w-full bg-accent text-black font-semibold py-2.5 rounded-2xl hover:brightness-110 disabled:opacity-40 transition"
+          className="w-full bg-accent text-onaccent font-semibold py-2.5 rounded-2xl hover:brightness-110 disabled:opacity-40 transition"
         >
           Unirse
         </button>
@@ -342,7 +342,7 @@ export default function OnlineGame({ onExit }) {
           <button
             onClick={handleStart}
             disabled={roster.length < playerCount}
-            className="w-full bg-accent text-black font-semibold py-3 rounded-2xl hover:brightness-110 disabled:opacity-40 transition"
+            className="w-full bg-accent text-onaccent font-semibold py-3 rounded-2xl hover:brightness-110 disabled:opacity-40 transition"
           >
             {roster.length < playerCount ? "Esperando a más jugadores…" : "Empezar"}
           </button>

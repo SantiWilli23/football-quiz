@@ -67,7 +67,7 @@ export default function LocalGame({ onExit }) {
           />
         ))}
         <div className="flex gap-2">
-          <button onClick={start} className="flex-1 bg-accent text-black font-semibold py-2.5 rounded-2xl hover:brightness-110 transition">
+          <button onClick={start} className="flex-1 bg-accent text-onaccent font-semibold py-2.5 rounded-2xl hover:brightness-110 transition">
             Empezar
           </button>
           <button onClick={onExit} className="px-4 bg-panel border border-border text-gray-400 rounded-2xl hover:text-white transition">

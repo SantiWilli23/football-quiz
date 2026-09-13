@@ -87,7 +87,7 @@ export default function TeamSelector({ onBack }) {
             </p>
             <button
               onClick={() => selectTeam(chosen.id)}
-              className="w-full bg-accent text-black font-semibold py-2.5 rounded-card hover:brightness-110 transition"
+              className="w-full bg-accent text-onaccent font-semibold py-2.5 rounded-card hover:brightness-110 transition"
             >
               Empezar Carrera
             </button>

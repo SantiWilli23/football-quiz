@@ -74,7 +74,7 @@ export default function QuestionBank({ groupId }) {
       {!open ? (
         <button
           onClick={() => setOpen(true)}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-card text-sm font-semibold text-black transition-opacity hover:opacity-90 mb-5"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-card text-sm font-semibold text-onaccent transition-opacity hover:opacity-90 mb-5"
           style={{ background: COLOR }}
         >
           <Plus size={15} />
@@ -140,7 +140,7 @@ export default function QuestionBank({ groupId }) {
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2.5 rounded-card text-sm font-semibold text-black disabled:opacity-50 transition-opacity hover:opacity-90"
+              className="px-4 py-2.5 rounded-card text-sm font-semibold text-onaccent disabled:opacity-50 transition-opacity hover:opacity-90"
               style={{ background: COLOR }}
             >
               {saving ? "Guardando..." : "Guardar en el banco"}

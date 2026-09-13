@@ -1,36 +1,29 @@
 /** @type {import('tailwindcss').Config} */
 
-// Tema "Paleta unificada": el mismo esquema de color en toda la app —
-// Futotal, Draft Europeo 8a2 y Cotrero — en vez de que cada uno tenga su
-// propia identidad. Fondo gris azulado oscuro con tres acentos: azul
-// (marca/CTA principal, antes lo llevaba el amarillo), verde azulado
-// (secundario) y dorado (valores especiales: puntajes, rachas, ratings).
-// Reemplaza al tema "Pizarra" (verde pizarrón + amarillo).
+// Sistema de temas: los mismos nombres de clase de siempre (bg-bg, bg-panel,
+// bg-accent, text-white, bg-blue-500, etc.) pero resueltos en tiempo de
+// EJECUCIÓN contra variables CSS, no en tiempo de build contra un hex fijo.
+// Así el usuario puede cambiar de tema desde Configuración sin que haga
+// falta recompilar nada — ver client/src/index.css (los valores de cada
+// tema) y client/src/context/ThemeContext.jsx (cómo se aplican).
 //
-// Los nombres de las claves (yellow/blue/green/pink/red/orange) se
-// mantienen aunque el color de fondo haya cambiado, para no tener que tocar
-// las ~20 referencias a chalk.* / CHALK.* ya esparcidas por la app — sólo
-// cambia qué significan.
-const chalk = {
-  board: "#262b35",
-  boardLight: "#2b3444",
-  line: "#45474c",
-  white: "#f2f2f0",
-  yellow: "#d9a441",
-  blue: "#3b9dd6",
-  green: "#3fae9a",
-  pink: "#f0c674",
-  red: "#f0907e",
-  orange: "#8a6423",
-};
+// Cada variable CSS guarda un triplete RGB sin comas ("R G B"), para que
+// Tailwind pueda seguir generando las variantes de opacidad (bg-accent/10,
+// bg-red-500/80, etc.) con la función `rgb(var(--x) / <alpha-value>)`.
+function withOpacity(variable) {
+  return ({ opacityValue }) =>
+    opacityValue === undefined ? `rgb(var(${variable}))` : `rgb(var(${variable}) / ${opacityValue})`;
+}
 
-// Una tiza con sus variantes de opacidad ya resueltas, para que clases como
-// `bg-red-500/10` sigan funcionando igual que antes.
-const scale = (hex) => ({
-  400: hex,
-  500: hex,
-  600: hex,
-  DEFAULT: hex,
+// Antes existían clases como blue-400/blue-500/blue-600 que ya apuntaban
+// todas al mismo hex (no había una escala real). Se mantiene ese mismo
+// comportamiento: las cuatro claves de cada color resuelven a la misma
+// variable.
+const scale = (variable) => ({
+  400: withOpacity(variable),
+  500: withOpacity(variable),
+  600: withOpacity(variable),
+  DEFAULT: withOpacity(variable),
 });
 
 export default {
@@ -38,47 +31,46 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: chalk.board,
-        panel: chalk.boardLight,
-        border: chalk.line,
+        bg: withOpacity("--c-bg"),
+        panel: withOpacity("--c-panel"),
+        border: withOpacity("--c-border"),
 
-        // El blanco puro quema sobre verde oscuro: el "blanco" del tema es tiza.
-        // Y el negro es el propio pizarrón, para el texto sobre botones amarillos.
-        white: chalk.white,
-        black: chalk.board,
+        // "white" es el color de texto/primer plano del tema, no blanco puro
+        // — se llama así porque así nació (ver comentario en index.css) y
+        // cambiarle el nombre habría significado tocar cientos de clases.
+        // "onaccent" es el texto que va SOBRE un botón bg-accent: oscuro en
+        // los temas oscuros, claro en los temas claros.
+        white: withOpacity("--c-white"),
+        onaccent: withOpacity("--c-onaccent"),
 
-        // Grises neutros (con un toque frío, no verdes) para lo que caiga
-        // fuera de la paleta con nombre.
         gray: {
-          // El 200 es el borde por defecto de Tailwind: hoy nadie lo dibuja con
-          // ancho, pero si alguien agrega un borde sin clase de color, que
-          // herede el borde del tema y no un gris claro que rompería el fondo.
-          200: "#45474c",
-          300: "#c9cacc",
-          400: "#a8a9ac",
-          500: "#8a8b8e",
-          600: "#6f7074",
-          700: "#57585c",
-          800: "#45474c",
-          900: "#1e2023",
+          200: withOpacity("--c-gray-200"),
+          300: withOpacity("--c-gray-300"),
+          400: withOpacity("--c-gray-400"),
+          500: withOpacity("--c-gray-500"),
+          600: withOpacity("--c-gray-600"),
+          700: withOpacity("--c-gray-700"),
+          800: withOpacity("--c-gray-800"),
+          900: withOpacity("--c-gray-900"),
         },
 
         accent: {
-          DEFAULT: chalk.blue,
-          dark: "#215e82",
-          light: "#7cc4ea",
+          DEFAULT: withOpacity("--c-accent"),
+          dark: withOpacity("--c-accent-dark"),
+          light: withOpacity("--c-accent-light"),
         },
 
-        blue: scale(chalk.blue),
-        purple: scale(chalk.pink),
-        emerald: scale(chalk.green),
-        amber: scale(chalk.yellow),
-        orange: scale(chalk.orange),
-        red: scale(chalk.red),
+        blue: scale("--c-blue"),
+        purple: scale("--c-purple"),
+        emerald: scale("--c-emerald"),
+        amber: scale("--c-amber"),
+        orange: scale("--c-orange"),
+        red: scale("--c-red"),
       },
       borderRadius: {
-        // Casi sin redondeo: en un pizarrón las cosas se marcan con regla.
-        card: "4px",
+        // También por variable: el tema Bengala pide esquinas bien redondeadas,
+        // los otros dos casi sin redondeo.
+        card: "var(--radius-card)",
       },
       fontFamily: {
         sans: ["Archivo", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],

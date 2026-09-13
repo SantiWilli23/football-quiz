@@ -157,9 +157,9 @@ export default function Formation() {
               <div
                 className={`w-20 h-20 rounded-full flex items-center justify-center text-lg font-extrabold border-2 shadow-lg pointer-events-none transition-all ${
                   selected
-                    ? "bg-white border-white text-black ring-4 ring-white/50 scale-110"
+                    ? "bg-white border-white text-onaccent ring-4 ring-white/50 scale-110"
                     : p
-                    ? (penalty > 0 ? "bg-amber/90 border-amber text-black" : "bg-accent border-accent-light text-white")
+                    ? (penalty > 0 ? "bg-amber/90 border-amber text-onaccent" : "bg-accent border-accent-light text-white")
                     : "bg-panel border-dashed border-gray-500 text-gray-400 text-sm"
                 }`}
               >
@@ -169,7 +169,7 @@ export default function Formation() {
                 {p ? p.name.split(" ").slice(-1)[0] : slot.slot}
               </span>
               {label && (
-                <span className={`text-[9px] px-1 rounded pointer-events-none ${label.tone === "critical" ? "bg-red-500/80" : label.tone === "bad" ? "bg-orange-500/80" : "bg-amber/80 text-black"} text-white`}>
+                <span className={`text-[9px] px-1 rounded pointer-events-none ${label.tone === "critical" ? "bg-red-500/80" : label.tone === "bad" ? "bg-orange-500/80" : "bg-amber/80 text-onaccent"} text-white`}>
                   {label.text}
                 </span>
               )}

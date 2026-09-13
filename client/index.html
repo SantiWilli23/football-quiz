@@ -9,7 +9,7 @@
     <!-- Sin manifest, iOS no instala la app en la pantalla de inicio, y sin eso
          Apple no permite activar las notificaciones push. -->
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#262b35" />
+    <meta name="theme-color" content="#0e1317" />
 
     <!-- iOS ignora el manifest para el ícono y el modo pantalla completa:
          necesita sus propias etiquetas. -->
@@ -19,6 +19,17 @@
     <meta name="apple-mobile-web-app-title" content="Futotal" />
 
     <link rel="icon" type="image/png" href="/icon-192.png" />
+
+    <!-- Aplica el tema guardado ANTES del primer paint, para no arrancar en
+         Nocturno (el default) y saltar al tema elegido un instante después. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("fq_theme");
+          if (t === "azul" || t === "bengala") document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body class="bg-bg text-white">
     <div id="root"></div>

@@ -203,7 +203,7 @@ export default function QuestionCard({ item, index, total, onAnswered, timedMode
         <button
           onClick={() => handleAnswer()}
           disabled={!selected || submitting}
-          className="mt-6 w-full bg-accent hover:bg-accent-dark disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-black font-semibold rounded-card py-3 text-sm"
+          className="mt-6 w-full bg-accent hover:bg-accent-dark disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-onaccent font-semibold rounded-card py-3 text-sm"
         >
           {submitting ? "Enviando..." : "Responder"}
         </button>

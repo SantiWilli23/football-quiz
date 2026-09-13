@@ -72,7 +72,7 @@ export default function SaveManager({ onNewCareer }) {
 
         <button
           onClick={onNewCareer}
-          className="w-full bg-accent text-black font-semibold py-3 rounded-2xl hover:brightness-110 transition"
+          className="w-full bg-accent text-onaccent font-semibold py-3 rounded-2xl hover:brightness-110 transition"
         >
           + Nueva carrera
         </button>

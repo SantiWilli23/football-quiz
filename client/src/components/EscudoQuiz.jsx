@@ -80,7 +80,7 @@ export default function EscudoQuiz() {
       {selected && (
         <button
           onClick={handleNext}
-          className="mt-5 w-full bg-accent hover:bg-accent-dark transition-colors text-black font-semibold rounded-card py-2.5 text-sm"
+          className="mt-5 w-full bg-accent hover:bg-accent-dark transition-colors text-onaccent font-semibold rounded-card py-2.5 text-sm"
         >
           Siguiente escudo
         </button>

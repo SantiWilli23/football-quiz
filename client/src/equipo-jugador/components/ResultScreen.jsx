@@ -44,7 +44,7 @@ export default function ResultScreen({ state, mySeat, mode = "local", onPlayAgai
 
       <div className="flex gap-2 justify-center pt-2">
         {onPlayAgain && (
-          <button onClick={onPlayAgain} className="bg-accent text-black font-semibold px-6 py-2.5 rounded-2xl hover:brightness-110 transition">
+          <button onClick={onPlayAgain} className="bg-accent text-onaccent font-semibold px-6 py-2.5 rounded-2xl hover:brightness-110 transition">
             Jugar de nuevo
           </button>
         )}
