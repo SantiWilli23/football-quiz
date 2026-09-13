@@ -87,10 +87,11 @@ export const teams = [
   { id: "kiel", name: "Holstein Kiel", shortName: "KIE", league: "bundesliga", tier: 3, budget: 12, boardObjective: "salvarse", prestige: 2, colors: { primary: "#003087", secondary: "#FFFFFF" } },
 ];
 
-// Escudos reales verificados contra la API pública de TheSportsDB. Sólo
-// quedan sin confirmar Alavés (la única coincidencia encontrada era la del
-// equipo femenino) y Valladolid (la búsqueda no devolvió resultado) — esos
-// dos siguen mostrando el escudo placeholder con los colores del club.
+// Escudos reales verificados contra la API pública de TheSportsDB (todas
+// las URLs devolvieron HTTP 200 al chequearlas). Sólo quedan sin confirmar
+// Alavés (la única coincidencia encontrada era la del equipo femenino) y
+// Valladolid (la búsqueda no devolvió resultado) — esos dos siguen
+// mostrando el escudo placeholder con los colores del club.
 export const CLUB_LOGOS = {
   // Premier League
   mancity: "https://r2.thesportsdb.com/images/media/team/badge/vwpvry1467462651.png",
@@ -133,6 +134,48 @@ export const CLUB_LOGOS = {
   laspalmas: "https://r2.thesportsdb.com/images/media/team/badge/mmhyb11616443601.png",
   leganes: "https://r2.thesportsdb.com/images/media/team/badge/tm0adr1616443898.png",
   espanyol: "https://r2.thesportsdb.com/images/media/team/badge/867nzz1681703222.png",
+
+  // Serie A
+  inter: "https://r2.thesportsdb.com/images/media/team/badge/ryhu6d1617113103.png",
+  juventus: "https://r2.thesportsdb.com/images/media/team/badge/uxf0gr1742983727.png",
+  milan: "https://r2.thesportsdb.com/images/media/team/badge/wvspur1448806617.png",
+  napoli: "https://r2.thesportsdb.com/images/media/team/badge/l8qyxv1742982541.png",
+  roma: "https://r2.thesportsdb.com/images/media/team/badge/jwro2s1760820674.png",
+  atalanta: "https://r2.thesportsdb.com/images/media/team/badge/qix5ku1780561327.png",
+  lazio: "https://r2.thesportsdb.com/images/media/team/badge/rwqyvs1448806608.png",
+  fiorentina: "https://r2.thesportsdb.com/images/media/team/badge/hc8nhu1656098030.png",
+  bologna: "https://r2.thesportsdb.com/images/media/team/badge/2qi1u31655592366.png",
+  torino: "https://r2.thesportsdb.com/images/media/team/badge/xxprty1448806802.png",
+  udinese: "https://r2.thesportsdb.com/images/media/team/badge/vwvstr1448806811.png",
+  genoa: "https://r2.thesportsdb.com/images/media/team/badge/52s8dn1655553600.png",
+  monza: "https://r2.thesportsdb.com/images/media/team/badge/bxearg1603170113.png",
+  cagliari: "https://r2.thesportsdb.com/images/media/team/badge/wvsvxt1447534471.png",
+  verona: "https://r2.thesportsdb.com/images/media/team/badge/p6camf1593457737.png",
+  empoli: "https://r2.thesportsdb.com/images/media/team/badge/c1ie6b1622561483.png",
+  lecce: "https://r2.thesportsdb.com/images/media/team/badge/j4vznr1567365249.png",
+  parma: "https://r2.thesportsdb.com/images/media/team/badge/6yiaxs1627406063.png",
+  como: "https://r2.thesportsdb.com/images/media/team/badge/02x81t1627405841.png",
+  venezia: "https://r2.thesportsdb.com/images/media/team/badge/vbiget1781026964.png",
+
+  // Bundesliga
+  bayern: "https://r2.thesportsdb.com/images/media/team/badge/01ogkh1716960412.png",
+  dortmund: "https://r2.thesportsdb.com/images/media/team/badge/tqo8ge1716960353.png",
+  leverkusen: "https://r2.thesportsdb.com/images/media/team/badge/3x9k851726760113.png",
+  leipzig: "https://r2.thesportsdb.com/images/media/team/badge/zjgapo1594244951.png",
+  frankfurt: "https://r2.thesportsdb.com/images/media/team/badge/rurwpy1473453269.png",
+  stuttgart: "https://r2.thesportsdb.com/images/media/team/badge/yppyux1473454085.png",
+  gladbach: "https://r2.thesportsdb.com/images/media/team/badge/sysurw1473453380.png",
+  wolfsburg: "https://r2.thesportsdb.com/images/media/team/badge/ci9trv1778399557.png",
+  freiburg: "https://r2.thesportsdb.com/images/media/team/badge/urwtup1473453288.png",
+  unionberlin: "https://r2.thesportsdb.com/images/media/team/badge/q0o5001599679795.png",
+  werder: "https://r2.thesportsdb.com/images/media/team/badge/tkvqan1716960454.png",
+  mainz: "https://r2.thesportsdb.com/images/media/team/badge/fhm9v51552134916.png",
+  hoffenheim: "https://r2.thesportsdb.com/images/media/team/badge/9hwvb21621593919.png",
+  augsburg: "https://r2.thesportsdb.com/images/media/team/badge/xqyyvq1473453233.png",
+  bochum: "https://r2.thesportsdb.com/images/media/team/badge/kag3jy1599821108.png",
+  heidenheim: "https://r2.thesportsdb.com/images/media/team/badge/lbj7g01608236988.png",
+  stpauli: "https://r2.thesportsdb.com/images/media/team/badge/5qupxa1608237013.png",
+  kiel: "https://r2.thesportsdb.com/images/media/team/badge/1fpmgs1514394524.png",
 };
 
 export function badgeFor(teamId) {
