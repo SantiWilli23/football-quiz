@@ -622,6 +622,33 @@ CREATE TABLE IF NOT EXISTS group_cup_matches (
 
 CREATE INDEX IF NOT EXISTS idx_group_cup_matches_cup ON group_cup_matches(cup_id, round);
 
+-- Encuesta relámpago: cualquier miembro tira una pregunta libre de sí/no o
+-- A-B al grupo entero, resultados visibles en vivo (a diferencia de "Quién
+-- es más"/"Qué preferís", que son contenido fijo del día — acá el contenido
+-- lo pone el propio usuario). Solo una encuesta abierta a la vez por grupo.
+CREATE TABLE IF NOT EXISTS polls (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  created_by INTEGER NOT NULL REFERENCES users(id),
+  question TEXT NOT NULL,
+  option_a TEXT NOT NULL,
+  option_b TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'abierta' CHECK (status IN ('abierta', 'cerrada')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS poll_votes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  poll_id INTEGER NOT NULL REFERENCES polls(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  choice TEXT NOT NULL CHECK (choice IN ('a', 'b')),
+  voted_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(poll_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_polls_group ON polls(group_id, status);
+CREATE INDEX IF NOT EXISTS idx_poll_votes_poll ON poll_votes(poll_id);
+
 -- Apuestas cruzadas: cualquier miembro del grupo que NO sea parte de un
 -- duelo abierto puede apostar puntos propios a quién lo gana. Se resuelve
 -- solo, en el mismo momento en que el duelo se resuelve (ver duelSidePoints

@@ -9,6 +9,8 @@ import Card from "../components/Card.jsx";
 import Avatar from "../components/Avatar.jsx";
 import QuestionBank from "../components/QuestionBank.jsx";
 import WeeklyChallenges from "../components/WeeklyChallenges.jsx";
+import FlashPoll from "../components/FlashPoll.jsx";
+import AnniversaryBanner from "../components/AnniversaryBanner.jsx";
 import GroupCup from "../components/GroupCup.jsx";
 import DuelBets from "../components/DuelBets.jsx";
 
@@ -175,6 +177,7 @@ export default function Group() {
 
   return (
     <Layout>
+      {activeGroupId && <AnniversaryBanner groupId={activeGroupId} />}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold mb-1">Mi grupo</h1>
@@ -513,6 +516,12 @@ export default function Group() {
       {activeGroupId && (
         <div className="mt-6">
           <DuelBets groupId={activeGroupId} />
+        </div>
+      )}
+
+      {activeGroupId && (
+        <div className="mt-6">
+          <FlashPoll groupId={activeGroupId} />
         </div>
       )}
 

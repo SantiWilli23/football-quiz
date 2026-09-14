@@ -27,6 +27,7 @@ import wordleRoutes from "./routes/wordle.js";
 import quinielaRoutes from "./routes/quiniela.js";
 import seasonPredictionsRoutes from "./routes/season-predictions.js";
 import unMinutoRoutes from "./routes/un-minuto.js";
+import pollsRoutes from "./routes/polls.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -57,6 +58,7 @@ app.use("/api/wordle", wordleRoutes);
 app.use("/api/quiniela", quinielaRoutes);
 app.use("/api/season-predictions", seasonPredictionsRoutes);
 app.use("/api/un-minuto", unMinutoRoutes);
+app.use("/api/polls", pollsRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 

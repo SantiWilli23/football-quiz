@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { duelSidePoints } from "./duels.js";
+import { getCurrentStreak } from "../utils/points.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -283,6 +284,83 @@ router.get("/:id", async (req, res) => {
 });
 
 // Elegir (o quitar) tu archienemigo dentro de este grupo. rival_id: null limpia.
+// Resumen automático que aparece solo el día exacto del aniversario del
+// grupo (mismo mes/día que su creación, un año o más después). No hay que
+// guardar nada especial: se recalcula al vuelo con lo que ya hay en la base.
+router.get("/:id/anniversary", async (req, res) => {
+  const groupId = Number(req.params.id);
+
+  try {
+    const membership = await db.execute({
+      sql: "SELECT id FROM group_members WHERE group_id = ? AND user_id = ?",
+      args: [groupId, req.userId],
+    });
+    if (membership.rows.length === 0) return res.status(403).json({ error: "No perteneces a este grupo" });
+
+    const groupResult = await db.execute({ sql: "SELECT * FROM groups_t WHERE id = ?", args: [groupId] });
+    const group = groupResult.rows[0];
+    if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+
+    const created = new Date(group.created_at.replace(" ", "T") + "Z");
+    const now = new Date();
+    const years = now.getUTCFullYear() - created.getUTCFullYear();
+    const isAnniversary = years >= 1 && now.getUTCMonth() === created.getUTCMonth() && now.getUTCDate() === created.getUTCDate();
+
+    if (!isAnniversary) return res.json({ anniversary: null });
+
+    const topResult = await db.execute({
+      sql: `SELECT u.id, u.username, COALESCE(SUM(a.points), 0) AS points
+            FROM group_members gm
+            JOIN users u ON u.id = gm.user_id
+            LEFT JOIN answers a ON a.user_id = u.id
+            WHERE gm.group_id = ?
+            GROUP BY u.id
+            ORDER BY points DESC
+            LIMIT 1`,
+      args: [groupId],
+    });
+    const topScorer = topResult.rows[0] || null;
+
+    const membersResult = await db.execute({ sql: "SELECT user_id FROM group_members WHERE group_id = ?", args: [groupId] });
+    const streaks = await Promise.all(membersResult.rows.map(async (m) => {
+      const usernameRow = await db.execute({ sql: "SELECT username FROM users WHERE id = ?", args: [m.user_id] });
+      return { username: usernameRow.rows[0]?.username, streak: await getCurrentStreak(m.user_id) };
+    }));
+    const longestStreak = streaks.reduce((best, s) => (s.streak > (best?.streak ?? -1) ? s : best), null);
+
+    const duelsResult = await db.execute({
+      sql: `SELECT d.challenger_correct, d.opponent_correct, uc.username AS challenger_name, uo.username AS opponent_name
+            FROM duels d
+            JOIN users uc ON uc.id = d.challenger_id
+            JOIN users uo ON uo.id = d.opponent_id
+            WHERE d.group_id = ? AND d.status = 'terminado'`,
+      args: [groupId],
+    });
+    let closestDuel = null;
+    let closestMargin = Infinity;
+    for (const d of duelsResult.rows) {
+      const margin = Math.abs(Number(d.challenger_correct) - Number(d.opponent_correct));
+      if (margin < closestMargin) {
+        closestMargin = margin;
+        closestDuel = { a: d.challenger_name, b: d.opponent_name, scoreA: d.challenger_correct, scoreB: d.opponent_correct };
+      }
+    }
+
+    res.json({
+      anniversary: {
+        years,
+        groupName: group.name,
+        topScorer,
+        longestStreak: longestStreak?.streak > 0 ? longestStreak : null,
+        closestDuel,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 router.put("/:id/rival", async (req, res) => {
   const groupId = Number(req.params.id);
   const rivalId = req.body?.rival_id === null || req.body?.rival_id === undefined ? null : Number(req.body.rival_id);
