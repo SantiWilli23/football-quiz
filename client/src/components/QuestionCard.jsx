@@ -229,6 +229,12 @@ export default function QuestionCard({ item, index, total, onAnswered, timedMode
           </span>
         </div>
       )}
+
+      {result?.trap && (
+        <p className="mt-2 text-xs text-amber flex items-center gap-1.5">
+          🪤 Pregunta trampa: {100 - result.correctPct}% del resto le erró.
+        </p>
+      )}
       </Card>
     </div>
   );

@@ -140,6 +140,17 @@ router.post("/:id/answer", async (req, res) => {
 
     const current_streak = await getCurrentStreak(req.userId);
 
+    // "Pregunta trampa": si con una muestra mínima la mayoría le erró, se
+    // marca así en el resultado — no hace falta elegirla de antemano, se
+    // descubre sola con lo que la gente fue contestando.
+    const agg = await db.execute({
+      sql: "SELECT COUNT(*) AS total, COALESCE(SUM(is_correct), 0) AS correct FROM answers WHERE question_id = ?",
+      args: [questionId],
+    });
+    const total = Number(agg.rows[0].total);
+    const correctCount = Number(agg.rows[0].correct);
+    const trap = total >= 5 && correctCount / total < 0.5;
+
     res.status(201).json({
       is_correct,
       points,
@@ -147,6 +158,8 @@ router.post("/:id/answer", async (req, res) => {
       current_streak,
       timedOut: !onTime,
       dailyRank: settlement?.rank ?? null,
+      trap,
+      correctPct: total > 0 ? Math.round((correctCount / total) * 100) : null,
     });
   } catch (err) {
     console.error(err);
