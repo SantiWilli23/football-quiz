@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Radio, Skull, Swords, Timer, User } from "lucide-react";
+import { Radio, Shield, Skull, Swords, Timer, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -177,6 +177,12 @@ export default function Trivia() {
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded border border-gray-600 text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
             >
               <Timer size={14} /> Un Minuto
+            </Link>
+            <Link
+              to="/escudos"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded border border-gray-600 text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
+            >
+              <Shield size={14} /> Escudos
             </Link>
           </div>
 

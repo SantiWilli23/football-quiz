@@ -15,6 +15,7 @@ import Survival from "./pages/Survival.jsx";
 import Wordle from "./pages/Wordle.jsx";
 import Quiniela from "./pages/Quiniela.jsx";
 import UnMinuto from "./pages/UnMinuto.jsx";
+import CrestQuiz from "./pages/CrestQuiz.jsx";
 import SeasonPredictions from "./pages/SeasonPredictions.jsx";
 import CareerMode from "./carrera/index.jsx";
 import EquipoJugador from "./equipo-jugador/index.jsx";
@@ -170,6 +171,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <UnMinuto />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/escudos"
+        element={
+          <PrivateRoute>
+            <CrestQuiz />
           </PrivateRoute>
         }
       />
