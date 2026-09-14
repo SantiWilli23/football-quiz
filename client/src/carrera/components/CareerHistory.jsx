@@ -2,17 +2,8 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCareer } from "../context/CareerContext.jsx";
 import { teamById } from "../data/teams.js";
-
-function buildLegacy(history, team) {
-  const seasons = history.filter((h) => !h.note);
-  const titles = seasons.filter((h) => h.objectiveMet).length;
-  const copas = seasons.filter((h) => h.copaChampion).length;
-  const continental = seasons.filter((h) => h.continentalChampion).length;
-  const best = seasons.reduce((min, h) => (h.position < (min?.position ?? Infinity) ? h : min), null);
-  const clubsManaged = [...new Set(seasons.map((h) => h.teamId))].map((id) => teamById(id)?.name).filter(Boolean);
-  const named = seasons.filter((h) => h.seasonName);
-  return { seasonsCount: seasons.length, titles, copas, continental, best, clubsManaged, named };
-}
+import { buildLegacy } from "../utils/legacy.js";
+import LegacyCompare from "./LegacyCompare.jsx";
 
 export default function CareerHistory() {
   const { state, team, retireCareer } = useCareer();
@@ -160,6 +151,8 @@ export default function CareerHistory() {
           )}
         </div>
       )}
+
+      <LegacyCompare />
     </div>
   );
 }

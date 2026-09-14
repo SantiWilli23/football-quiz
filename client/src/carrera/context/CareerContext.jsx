@@ -3,8 +3,9 @@ import { teams, teamById, teamsByLeague } from "../data/teams.js";
 import { players as allPlayers, playersByTeam } from "../data/players.js";
 import {
   loadCareer, saveCareer, clearCareer, createSaveSlot, deleteSaveSlot,
-  listSaveSlots, getActiveSlotId, setActiveSlotId,
+  listSaveSlots, getActiveSlotId, setActiveSlotId, saveLegacy,
 } from "../hooks/useCareerSave.js";
+import { buildLegacy } from "../utils/legacy.js";
 import { simulateUserMatch, simulateQuickMatch, simulateHalf, combineHalves, dayFormFactor } from "../engine/matchEngine.js";
 import { ageSquad, generateYouthProspects, applyPositionTrainings } from "../engine/playerGrowth.js";
 import { assignInitialNumbers, nextAvailableNumber } from "../engine/squadNumbers.js";
@@ -357,6 +358,7 @@ export function CareerProvider({ children }) {
   // pero desde adentro de la partida (el "legado" que se muestra antes se
   // arma solo con state.history, no hace falta guardar nada especial).
   function retireCareer() {
+    if (state) saveLegacy(buildLegacy(state.history, team));
     const slotId = getActiveSlotId();
     if (slotId) deleteSaveSlot(slotId);
     setSaveSlots(listSaveSlots());
@@ -370,6 +372,23 @@ export function CareerProvider({ children }) {
   function setSlider(key, value) { setState((s) => ({ ...s, sliders: { ...s.sliders, [key]: value } })); }
   function setLineup(lineup) { setState((s) => ({ ...s, lineup })); }
   function setTrainingFocus(focus) { setState((s) => ({ ...s, trainingFocus: focus })); }
+
+  // Objetivo personal del usuario, aparte del que fija la directiva — texto
+  // libre porque no hay forma de trackear automáticamente algo arbitrario
+  // ("ganar la Champions con juveniles"), así que el propio DT marca cuándo
+  // lo cumplió.
+  function setCustomObjective(text) {
+    setState((s) => ({ ...s, customObjective: { text, done: false } }));
+  }
+  function toggleCustomObjectiveDone() {
+    setState((s) => ({
+      ...s,
+      customObjective: s.customObjective ? { ...s.customObjective, done: !s.customObjective.done } : s.customObjective,
+    }));
+  }
+  function clearCustomObjective() {
+    setState((s) => ({ ...s, customObjective: null }));
+  }
 
   function applyTacticsPreset(preset) {
     setState((s) => ({
@@ -1411,6 +1430,9 @@ export function CareerProvider({ children }) {
       setSlider,
       setLineup,
       setTrainingFocus,
+      setCustomObjective,
+      toggleCustomObjectiveDone,
+      clearCustomObjective,
       assignSlot,
       setSlotPosition,
       resetLineupPositions,

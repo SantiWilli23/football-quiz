@@ -549,7 +549,33 @@ router.get("/:code/fixtures", async (req, res) => {
   });
 
   const nameByTeam = Object.fromEntries(teamsForLeague(league.league_key).map((t) => [t.id, t.name]));
+  const tierByTeam = Object.fromEntries(teamsForLeague(league.league_key).map((t) => [t.id, t.tier]));
   const memberByTeam = Object.fromEntries(members.filter((m) => m.team_id).map((m) => [m.team_id, m]));
+
+  // "El clásico" de cada jornada: el partido sin jugar más importante — el
+  // de menor suma de tier (cuanto más chico, más grande el club: tier 1 es
+  // el más top), y a igualdad de suma, el que enfrenta a dos managers
+  // humanos. Uno por jornada, no uno global.
+  const byWeek = {};
+  for (const r of result.rows) {
+    if (r.played) continue;
+    (byWeek[r.week] ||= []).push(r);
+  }
+  const clasicoIdByWeek = {};
+  for (const [week, fixtures] of Object.entries(byWeek)) {
+    let best = null;
+    let bestScore = Infinity;
+    for (const fx of fixtures) {
+      const tierSum = (tierByTeam[fx.home_team_id] || 3) + (tierByTeam[fx.away_team_id] || 3);
+      const isPvp = !!memberByTeam[fx.home_team_id] && !!memberByTeam[fx.away_team_id];
+      const score = tierSum - (isPvp ? 0.5 : 0);
+      if (score < bestScore) {
+        bestScore = score;
+        best = fx;
+      }
+    }
+    if (best) clasicoIdByWeek[week] = best.id;
+  }
 
   res.json({
     month,
@@ -580,6 +606,7 @@ router.get("/:code/fixtures", async (req, res) => {
         involvesMe: !!involvesMe,
         canPlaySolo: involvesMe && !isPvp && !r.played,
         canPlayLive: involvesMe && isPvp && !r.played,
+        isClasico: clasicoIdByWeek[r.week] === r.id,
       };
     }),
   });

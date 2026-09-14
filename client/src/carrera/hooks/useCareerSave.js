@@ -6,6 +6,7 @@ const LEGACY_KEY = "futotal_career_save";
 const SLOTS_KEY = "futotal_career_slots";
 const ACTIVE_KEY = "futotal_career_active_slot";
 const slotDataKey = (id) => `futotal_career_save_${id}`;
+const LEGACIES_KEY = "futotal_career_legacies";
 
 function readJSON(key) {
   try {
@@ -106,4 +107,16 @@ export function deleteSaveSlot(id) {
 // "Salir" de la carrera activa sin borrarla — vuelve a la pantalla de slots.
 export function clearCareer() {
   writeJSON(ACTIVE_KEY, null);
+}
+
+// Fichas de legado de DTs retirados — se guardan acá porque retireCareer()
+// borra el slot entero, así que si no se archiva antes el resumen se pierde
+// para siempre y no habría nada que comparar en "legado cruzado".
+export function listLegacies() {
+  return readJSON(LEGACIES_KEY) || [];
+}
+
+export function saveLegacy(legacy) {
+  const legacies = listLegacies();
+  writeJSON(LEGACIES_KEY, [...legacies, { ...legacy, id: `legacy_${Date.now()}`, retiredAt: Date.now() }]);
 }

@@ -350,9 +350,10 @@ function FixturesTab({ code, league, myTeamId, onAdvanced }) {
             <div
               key={f.id}
               className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl border text-sm ${
-                f.involvesMe ? "border-accent/40 bg-accent/5" : "border-border bg-panel"
+                f.isClasico ? "border-amber/40 bg-amber/5" : f.involvesMe ? "border-accent/40 bg-accent/5" : "border-border bg-panel"
               }`}
             >
+              {f.isClasico && <span title="El clásico de la jornada" className="shrink-0">⭐</span>}
               <span className={`flex-1 text-right ${f.homeTeamId === myTeamId ? "font-semibold text-accent" : ""}`}>{f.homeTeamName}</span>
               <span className="w-16 text-center font-bold tabular-nums shrink-0">
                 {f.played ? `${f.homeGoals} - ${f.awayGoals}` : "vs"}

@@ -129,12 +129,92 @@ function SeasonNameEditor({ value, onSave }) {
   );
 }
 
+// Objetivo propio del DT, aparte del que fija la directiva — texto libre
+// porque nada arbitrario ("ganar la Champions con juveniles") se puede
+// trackear solo, así que el usuario marca a mano cuándo lo cumplió.
+function CustomObjectiveCard({ objective, onSet, onToggleDone, onClear }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(objective?.text || "");
+
+  if (!objective && !editing) {
+    return (
+      <button
+        onClick={() => { setDraft(""); setEditing(true); }}
+        className="w-full bg-panel border border-dashed border-border rounded-2xl p-4 text-left text-sm text-gray-500 hover:text-gray-300 hover:border-white/30 transition-colors flex items-center gap-2"
+      >
+        <Target size={14} />
+        Ponete un objetivo propio para esta temporada
+      </button>
+    );
+  }
+
+  if (editing) {
+    return (
+      <div className="bg-panel border border-border rounded-2xl p-4">
+        <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide font-semibold text-gray-500 mb-2.5">
+          <Target size={13} />
+          <span>Tu objetivo personal</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && draft.trim()) { onSet(draft.trim()); setEditing(false); }
+              if (e.key === "Escape") setEditing(false);
+            }}
+            maxLength={80}
+            placeholder='Ej: "Debutar a 3 canteranos"'
+            className="bg-bg border border-border rounded-card px-3 py-1.5 text-sm flex-1 focus:outline-none focus:border-accent"
+          />
+          <button
+            onClick={() => { if (draft.trim()) { onSet(draft.trim()); setEditing(false); } }}
+            className="text-xs font-medium px-3 py-1.5 rounded-card bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20 transition-colors shrink-0"
+          >
+            Guardar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-panel border border-border rounded-2xl p-4">
+      <div className="flex items-center justify-between gap-3 mb-2.5">
+        <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide font-semibold text-gray-500">
+          <Target size={13} />
+          <span>Tu objetivo personal</span>
+        </div>
+        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
+          objective.done ? "text-emerald border-emerald/30 bg-emerald/10" : "text-gray-400 border-border"
+        }`}>
+          {objective.done ? "Cumplido" : "En progreso"}
+        </span>
+      </div>
+      <p className={`text-sm font-semibold mb-3 ${objective.done ? "line-through text-gray-500" : ""}`}>{objective.text}</p>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onToggleDone}
+          className="text-xs font-medium px-3 py-1.5 rounded-card bg-white/5 border border-border hover:border-white/30 transition-colors"
+        >
+          {objective.done ? "Marcar como pendiente" : "Marcar como cumplido"}
+        </button>
+        <button onClick={onClear} className="text-xs text-gray-500 hover:text-red-400 transition-colors">
+          Quitar
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard({ onPlayMatch }) {
   const {
     state, team, currentFixture, isRivalMatch, playNextMatchFirstHalf, playCopaMatch, copaIsAvailable,
     playContinentalMatch, continentalIsAvailable, standingsSorted, resetCareer, acceptJobOffer, declineJobOffer,
     renewContract, releasePlayer,
     preseasonAvailable, playPreseasonMatch, setSeasonName,
+    setCustomObjective, toggleCustomObjectiveDone, clearCustomObjective,
     COPA_ROUNDS: CR, COPA_WEEKS: CW, CONTINENTAL_ROUNDS, CONTINENTAL_WEEKS, CONTINENTAL_LABELS,
   } = useCareer();
   const fixture   = currentFixture();
@@ -312,6 +392,13 @@ export default function Dashboard({ onPlayMatch }) {
           Vas {myPos}° — hace falta {objective.threshold === 1 ? "terminar 1°" : `terminar entre los primeros ${objective.threshold}`}.
         </p>
       </div>
+
+      <CustomObjectiveCard
+        objective={state.customObjective}
+        onSet={setCustomObjective}
+        onToggleDone={toggleCustomObjectiveDone}
+        onClear={clearCustomObjective}
+      />
 
       {/* Trofeos ganados esta temporada */}
       {(copa?.champion || continental?.champion) && (
