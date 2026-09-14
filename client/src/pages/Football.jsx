@@ -9,11 +9,18 @@ import {
   Link2,
   Radio,
   Shield,
+  Skull,
+  Sparkles,
   Star,
+  Swords,
   Table2,
   Target,
+  Timer,
   Trophy,
+  TrendingUp,
+  User,
   Users,
+  Zap,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../api.js";
@@ -34,15 +41,8 @@ const LIVE_TABS = [
   { key: "goleadores", label: "Goleadores", icon: Trophy },
 ];
 
-const GAMES = [
-  {
-    href: "/draft-europeo.html",
-    label: "Draft Europeo 8a2",
-    icon: Star,
-    description: "Armá tu XI con jugadores de 138 planteles históricos de la Champions League.",
-    color: "#d9a441",
-    available: true,
-  },
+// Clásicos: los juegos individuales de siempre, cada uno standalone.
+const CLASSIC_GAMES = [
   {
     href: "/cotrero.html",
     label: "Cotrero",
@@ -53,18 +53,46 @@ const GAMES = [
   },
   {
     to: "/carrera-dt",
-    label: "Modo Carrera DT",
+    label: "Modo DT",
     icon: Shield,
-    description: "Dirigí un equipo de Premier League o La Liga: tácticas, fichajes y partidos en vivo.",
+    description: "Dirigí un equipo de Premier League o La Liga: tácticas, fichajes, selección nacional y partidos en vivo.",
     color: "#8a6423",
     available: true,
   },
   {
+    href: "/draft-europeo.html",
+    label: "8a2",
+    icon: Star,
+    description: "Armá tu XI con jugadores de 138 planteles históricos de la Champions League.",
+    color: "#d9a441",
+    available: true,
+  },
+];
+
+// Grupo: todo lo que se juega (o se compite) entre los miembros de un grupo.
+const GROUP_GAMES = [
+  {
     to: "/dt-liga",
-    label: "Liga Online DT",
+    label: "Modo DT Online",
     icon: Users,
     description: "Armá una liga con amigos: cada uno elige un club real y compite temporada a temporada.",
     color: "#d97a41",
+    available: true,
+  },
+  {
+    href: "/mentiroso.html",
+    label: "Mentiroso",
+    icon: Zap,
+    description: "Duelo 1 contra 1: ¿sabés más jugadores que el otro antes de que se te acaben?",
+    color: "#c9a9e8",
+    available: true,
+  },
+  {
+    to: "/fantasyfiction",
+    label: "FantasyFiction",
+    icon: TrendingUp,
+    description: "Liga simulada con todo tu grupo: arrancá jornadas semanales y dos mercados de pases (miércoles y domingo) apenas se sumen todos.",
+    color: "#4fb3e8",
     available: true,
   },
   {
@@ -75,6 +103,34 @@ const GAMES = [
     color: "#5ba3d9",
     available: true,
   },
+  {
+    to: "/copa-8a2",
+    label: "Copa 8a2",
+    icon: Trophy,
+    description: "Torneo de eliminación directa del grupo: cada uno arma su equipo draftando jugadores reales.",
+    color: "#f0a93e",
+    available: true,
+  },
+  {
+    to: "/duelos",
+    label: "Duelos",
+    icon: Swords,
+    description: "Uno contra uno con las preguntas más difíciles del grupo.",
+    color: "#e0664f",
+    available: true,
+  },
+  {
+    to: "/supervivencia",
+    label: "Supervivencia",
+    icon: Skull,
+    description: "Trivia sin margen de error: una vida, a ver hasta dónde llegás.",
+    color: "#a8a9ac",
+    available: true,
+  },
+];
+
+// Nuevos: lo último que se agregó, todavía sin un lugar fijo propio.
+const NEW_GAMES = [
   {
     href: "/fichado/",
     label: "Fichado",
@@ -99,6 +155,35 @@ const GAMES = [
     color: "#d9a441",
     available: true,
   },
+  {
+    to: "/un-minuto",
+    label: "Un Minuto",
+    icon: Timer,
+    description: "Trivia contrarreloj: respondé todas las que puedas antes de que se acabe el reloj.",
+    color: "#e0664f",
+    available: true,
+  },
+  {
+    to: "/fulbodle",
+    label: "Fulbodle",
+    icon: User,
+    description: "El Wordle del fútbol: adiviná al jugador secreto en 6 intentos con pistas de cada uno.",
+    color: "#4fb3e8",
+    available: true,
+  },
+  {
+    label: "Fantasy Liga Real",
+    icon: TrendingUp,
+    description: "Armá tu 11 con jugadores reales y sumá puntos según cómo rindan en cada jornada real de su liga.",
+    color: "#3b9dd6",
+    available: false,
+  },
+];
+
+const GAME_SECTIONS = [
+  { key: "clasicos", title: "Clásicos", subtitle: "Los de siempre, para jugar solo.", icon: Star, games: CLASSIC_GAMES },
+  { key: "grupo", title: "Grupo", subtitle: "Se juegan o se compiten entre los miembros de tu grupo.", icon: Users, games: GROUP_GAMES },
+  { key: "nuevos", title: "Nuevos", subtitle: "Lo último que se sumó a Futotal.", icon: Sparkles, games: NEW_GAMES },
 ];
 
 function addDays(dateStr, delta) {
@@ -173,56 +258,71 @@ function BlockedByPlan() {
   );
 }
 
+function GameTile({ href, to, label, icon: Icon, description, color, available }) {
+  const inner = (
+    <>
+      <div
+        className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"
+        style={{ background: `${color}22`, border: `1px solid ${color}44` }}
+      >
+        <Icon size={24} style={{ color }} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <p className="font-semibold">{label}</p>
+          {!available && (
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-600/50 text-gray-400 border border-gray-600/50">
+              Próximamente
+            </span>
+          )}
+        </div>
+        <p className="text-sm text-gray-500 leading-snug">{description}</p>
+      </div>
+    </>
+  );
+
+  const className = "flex items-center gap-4 px-5 py-5 rounded-2xl border border-border bg-panel hover:border-white/20 hover:bg-white/5 transition-colors";
+
+  if (to) {
+    return (
+      <Link to={to} className={className}>
+        {inner}
+      </Link>
+    );
+  }
+
+  if (!href) {
+    return (
+      <div className="flex items-center gap-4 px-5 py-5 rounded-2xl border border-border bg-panel opacity-60 cursor-default">
+        {inner}
+      </div>
+    );
+  }
+
+  return (
+    <a href={href} className={className}>
+      {inner}
+    </a>
+  );
+}
+
 function GamesSection() {
   return (
-    <div className="space-y-3">
-      {GAMES.map(({ href, to, label, icon: Icon, description, color, available }) => {
-        const inner = (
-          <>
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"
-              style={{ background: `${color}22`, border: `1px solid ${color}44` }}
-            >
-              <Icon size={24} style={{ color }} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <p className="font-semibold">{label}</p>
-                {!available && (
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-600/50 text-gray-400 border border-gray-600/50">
-                    Próximamente
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-gray-500 leading-snug">{description}</p>
-            </div>
-          </>
-        );
-
-        const className = "flex items-center gap-4 px-5 py-5 rounded-2xl border border-border bg-panel hover:border-white/20 hover:bg-white/5 transition-colors";
-
-        if (to) {
-          return (
-            <Link key={to} to={to} className={className}>
-              {inner}
-            </Link>
-          );
-        }
-
-        if (!href) {
-          return (
-            <div key={label} className="flex items-center gap-4 px-5 py-5 rounded-2xl border border-border bg-panel opacity-60 cursor-default">
-              {inner}
-            </div>
-          );
-        }
-
-        return (
-          <a key={href} href={href} className={className}>
-            {inner}
-          </a>
-        );
-      })}
+    <div className="space-y-8">
+      {GAME_SECTIONS.map(({ key, title, subtitle, icon: SectionIcon, games }) => (
+        <div key={key}>
+          <div className="flex items-center gap-2 mb-1">
+            <SectionIcon size={16} className="text-accent" />
+            <h2 className="font-semibold">{title}</h2>
+          </div>
+          <p className="text-xs text-gray-500 mb-3">{subtitle}</p>
+          <div className="space-y-3">
+            {games.map((game) => (
+              <GameTile key={game.to || game.href || game.label} {...game} />
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

@@ -1,0 +1,378 @@
+import { useEffect, useState } from "react";
+import { Crown, Lock, TrendingUp, Unlock, X } from "lucide-react";
+import api from "../api.js";
+import { useAuth } from "../context/AuthContext.jsx";
+import { useGroups } from "../context/GroupContext.jsx";
+import Layout from "../components/Layout.jsx";
+import Card from "../components/Card.jsx";
+import GroupSelector from "../components/GroupSelector.jsx";
+
+function useDebouncedValue(value, delay) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debounced;
+}
+
+function PlayerSearch({ leagueId, budgetLeft, exclude, onPick }) {
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(query, 300);
+  const [results, setResults] = useState([]);
+
+  useEffect(() => {
+    if (debouncedQuery.trim().length < 2) {
+      setResults([]);
+      return;
+    }
+    api
+      .get(`/fantasyfiction/${leagueId}/players`, { params: { q: debouncedQuery.trim() } })
+      .then(({ data }) => setResults(data.players.filter((p) => !exclude.includes(p.id))))
+      .catch(() => setResults([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQuery]);
+
+  return (
+    <div className="relative">
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Buscar jugador..."
+        className="w-full bg-panel border border-border rounded-card px-4 py-2.5 text-sm focus:outline-none focus:border-accent"
+      />
+      {results.length > 0 && (
+        <div className="absolute z-10 mt-1 w-full bg-panel border border-border rounded-card overflow-hidden shadow-lg max-h-64 overflow-y-auto">
+          {results.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => onPick(p)}
+              disabled={p.price > budgetLeft}
+              className="w-full text-left px-4 py-2.5 text-sm hover:bg-accent/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-between gap-2"
+            >
+              <span>
+                {p.name} <span className="text-xs text-gray-500">· {p.position || p.nationality}</span>
+              </span>
+              <span className="text-xs font-semibold text-accent shrink-0">{p.price}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SquadDraft({ league, onJoined }) {
+  const [squad, setSquad] = useState([]); // [{id, name, price}]
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const spent = squad.reduce((sum, p) => sum + p.price, 0);
+  const budgetLeft = league.budgetTotal - spent;
+
+  const addPlayer = (p) => {
+    if (squad.length >= league.squadSize) return;
+    setSquad((prev) => [...prev, p]);
+  };
+  const removePlayer = (id) => setSquad((prev) => prev.filter((p) => p.id !== id));
+
+  const confirm = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const { data } = await api.post(`/fantasyfiction/${league.id}/join`, { squad: squad.map((p) => p.id) });
+      onJoined(data.league);
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo armar el plantel");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="rounded-card border border-border bg-bg p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium">
+          Armá tu plantel ({squad.length}/{league.squadSize})
+        </p>
+        <p className="text-sm font-semibold text-accent">
+          {budgetLeft} / {league.budgetTotal}
+        </p>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {squad.map((p) => (
+          <span key={p.id} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-accent/40 bg-accent/10 text-accent">
+            {p.name} · {p.price}
+            <button onClick={() => removePlayer(p.id)}>
+              <X size={12} />
+            </button>
+          </span>
+        ))}
+      </div>
+
+      {squad.length < league.squadSize && (
+        <PlayerSearch
+          leagueId={league.id}
+          budgetLeft={budgetLeft}
+          exclude={squad.map((p) => p.id)}
+          onPick={addPlayer}
+        />
+      )}
+
+      {error && <p className="text-sm text-red-400">{error}</p>}
+
+      <button
+        onClick={confirm}
+        disabled={squad.length !== league.squadSize || loading}
+        className="w-full bg-accent hover:bg-accent-dark disabled:opacity-40 text-onaccent font-semibold rounded-card py-2.5 text-sm transition-colors"
+      >
+        {loading ? "Confirmando..." : "Confirmar plantel"}
+      </button>
+    </div>
+  );
+}
+
+function TransferMarket({ league, onChanged }) {
+  const [sellId, setSellId] = useState(null);
+  const [buyCandidate, setBuyCandidate] = useState(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const sellPlayer = league.mySquad.find((p) => p.id === sellId);
+  const budgetIfSell = sellPlayer ? league.myBudgetRemaining + sellPlayer.price : league.myBudgetRemaining;
+
+  const confirmTransfer = async () => {
+    if (!sellId || !buyCandidate) return;
+    setError("");
+    setLoading(true);
+    try {
+      const { data } = await api.post(`/fantasyfiction/${league.id}/transfer`, {
+        sellPlayerId: sellId,
+        buyPlayerId: buyCandidate.id,
+      });
+      onChanged(data.league);
+      setSellId(null);
+      setBuyCandidate(null);
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo hacer el fichaje");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!league.marketOpen) {
+    return (
+      <div className="rounded-card border border-border bg-bg p-4 flex items-center gap-3 text-sm text-gray-400">
+        <Lock size={16} />
+        El mercado abre los miércoles y domingos. Volvé ese día para hacer fichajes.
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-card border border-accent/40 bg-accent/5 p-4 space-y-3">
+      <div className="flex items-center gap-2 text-sm font-medium text-accent">
+        <Unlock size={15} />
+        Mercado abierto hoy
+      </div>
+
+      <div>
+        <p className="text-xs text-gray-500 mb-2">1. Elegí a quién vender</p>
+        <div className="flex flex-wrap gap-2">
+          {league.mySquad.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setSellId(p.id === sellId ? null : p.id)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                sellId === p.id ? "border-accent bg-accent/20 text-accent" : "border-border text-gray-300 hover:border-white/30"
+              }`}
+            >
+              {p.name} · {p.price}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {sellId && (
+        <div>
+          <p className="text-xs text-gray-500 mb-2">
+            2. Elegí a quién comprar (presupuesto disponible: {budgetIfSell})
+          </p>
+          <PlayerSearch
+            leagueId={league.id}
+            budgetLeft={budgetIfSell}
+            exclude={league.mySquad.map((p) => p.id)}
+            onPick={setBuyCandidate}
+          />
+          {buyCandidate && (
+            <div className="mt-2 flex items-center justify-between rounded-card border border-border bg-panel px-3 py-2">
+              <span className="text-sm">
+                {buyCandidate.name} <span className="text-xs text-gray-500">· {buyCandidate.price}</span>
+              </span>
+              <button onClick={() => setBuyCandidate(null)} className="text-gray-500 hover:text-white">
+                <X size={14} />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {error && <p className="text-sm text-red-400">{error}</p>}
+
+      {sellId && buyCandidate && (
+        <button
+          onClick={confirmTransfer}
+          disabled={loading}
+          className="w-full bg-accent hover:bg-accent-dark disabled:opacity-40 text-onaccent font-semibold rounded-card py-2.5 text-sm transition-colors"
+        >
+          {loading ? "Confirmando..." : "Confirmar fichaje"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+export default function FantasyFiction() {
+  const { user } = useAuth();
+  const { activeGroupId: groupId, groups } = useGroups();
+  const [league, setLeague] = useState(undefined); // undefined = cargando, null = no hay
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const load = () => {
+    if (!groupId) return;
+    api
+      .get("/fantasyfiction", { params: { groupId } })
+      .then(({ data }) => setLeague(data.league))
+      .catch(() => setLeague(null));
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId]);
+
+  useEffect(() => {
+    if (!league) return;
+    const id = setInterval(load, 15000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [league?.id, league?.status]);
+
+  const create = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const { data } = await api.post("/fantasyfiction", { groupId });
+      setLeague(data.league);
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo crear la liga");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (groups.length === 0) {
+    return (
+      <Layout>
+        <h1 className="text-xl sm:text-2xl font-bold mb-1">FantasyFiction</h1>
+        <p className="text-gray-400 text-sm mb-6">Liga fantasy simulada con todo tu grupo</p>
+        <Card>
+          <p className="text-gray-400 text-center py-6">Necesitás estar en un grupo para jugar FantasyFiction.</p>
+        </Card>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2">
+            <TrendingUp size={22} className="text-accent" />
+            FantasyFiction
+          </h1>
+          <p className="text-gray-400 text-sm">
+            Armá un plantel real con presupuesto limitado. La liga arranca cuando se suma todo el grupo: una
+            jornada por semana, mercado de pases los miércoles y domingos.
+          </p>
+        </div>
+        <GroupSelector />
+      </div>
+
+      {league === undefined && <p className="text-sm text-gray-500">Cargando...</p>}
+
+      {league === null && (
+        <Card>
+          <p className="text-sm text-gray-400 mb-4">Todavía no hay una FantasyFiction en este grupo.</p>
+          {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
+          <button
+            onClick={create}
+            disabled={busy}
+            className="px-4 py-2 rounded-card text-sm font-medium bg-accent hover:bg-accent-dark disabled:opacity-50 text-onaccent transition-colors"
+          >
+            {busy ? "Creando..." : "Crear FantasyFiction"}
+          </button>
+        </Card>
+      )}
+
+      {league && league.status === "draft" && (
+        <Card>
+          <p className="text-sm text-gray-400 mb-1">
+            {league.participantCount}/{league.memberCount} del grupo ya armaron su plantel.
+          </p>
+          <p className="text-xs text-gray-600 mb-4">
+            La liga arranca a simular sola apenas se sume el último miembro del grupo.
+          </p>
+          {league.iJoined ? (
+            <p className="text-sm text-accent">Ya armaste tu plantel. Esperando al resto del grupo...</p>
+          ) : (
+            <SquadDraft league={league} onJoined={setLeague} />
+          )}
+        </Card>
+      )}
+
+      {league && (league.status === "active" || league.status === "finished") && (
+        <div className="space-y-6">
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Tabla — Jornada {league.jornada}</h3>
+            </div>
+            <div className="space-y-2">
+              {league.standings.map((s) => (
+                <div
+                  key={s.userId}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-card border ${
+                    s.isMe ? "border-accent/40 bg-accent/5" : "border-border"
+                  }`}
+                >
+                  <div className="w-6 text-center text-sm font-semibold text-gray-400 flex items-center justify-center">
+                    {s.position === 1 ? <Crown size={15} className="text-accent" /> : s.position}
+                  </div>
+                  <p className="flex-1 text-sm font-medium truncate">{s.username}</p>
+                  <p className="text-sm font-semibold">{s.points} pts</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {league.iJoined && (
+            <Card>
+              <h3 className="font-semibold mb-4">Tu plantel</h3>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {league.mySquad.map((p) => (
+                  <span key={p.id} className="text-xs px-3 py-1.5 rounded-full border border-border bg-bg">
+                    {p.name} · {p.price}
+                  </span>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mb-4">Presupuesto disponible: {league.myBudgetRemaining}</p>
+              <TransferMarket league={league} onChanged={setLeague} />
+            </Card>
+          )}
+        </div>
+      )}
+    </Layout>
+  );
+}

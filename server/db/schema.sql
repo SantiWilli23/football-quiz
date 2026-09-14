@@ -666,4 +666,49 @@ CREATE TABLE IF NOT EXISTS duel_bets (
   UNIQUE(duel_id, user_id)
 );
 
+-- FantasyFiction: liga fantasy simulada con todo el grupo. Cada uno arma un
+-- plantel de jugadores reales (mismo pool que Equipo-Jugador) con un
+-- presupuesto, y la liga arranca a simular jornadas recién cuando TODOS los
+-- miembros del grupo se sumaron con su plantel. El mercado de pases (vender
+-- un jugador y comprar otro) sólo está abierto los miércoles y domingos.
+-- Las jornadas se resuelven solas, una por semana, la primera vez que
+-- alguien entra a la liga después de que pasó una semana desde la última.
+CREATE TABLE IF NOT EXISTS fantasy_leagues (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'active', 'finished')),
+  budget_total INTEGER NOT NULL DEFAULT 3000,
+  squad_size INTEGER NOT NULL DEFAULT 8,
+  jornada INTEGER NOT NULL DEFAULT 0,
+  last_jornada_at TEXT,
+  created_by INTEGER NOT NULL REFERENCES users(id),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_fantasy_leagues_group ON fantasy_leagues(group_id);
+
+CREATE TABLE IF NOT EXISTS fantasy_participants (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES fantasy_leagues(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  squad TEXT NOT NULL,
+  budget_remaining INTEGER NOT NULL,
+  points_total INTEGER NOT NULL DEFAULT 0,
+  joined_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(league_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_fantasy_participants_league ON fantasy_participants(league_id);
+
+CREATE TABLE IF NOT EXISTS fantasy_jornada_scores (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES fantasy_leagues(id),
+  jornada INTEGER NOT NULL,
+  participant_id INTEGER NOT NULL REFERENCES fantasy_participants(id),
+  points INTEGER NOT NULL,
+  UNIQUE(league_id, jornada, participant_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_fantasy_jornada_scores_league ON fantasy_jornada_scores(league_id, jornada);
+
 CREATE INDEX IF NOT EXISTS idx_duel_bets_group ON duel_bets(group_id, settled);

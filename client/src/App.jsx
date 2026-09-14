@@ -22,6 +22,8 @@ import EquipoJugador from "./equipo-jugador/index.jsx";
 import DtLeagueHome from "./dt-liga/DtLeagueHome.jsx";
 import DtLeagueRoom from "./dt-liga/DtLeagueRoom.jsx";
 import LiveMatch from "./dt-liga/LiveMatch.jsx";
+import Copa8a2 from "./pages/Copa8a2.jsx";
+import FantasyFiction from "./pages/FantasyFiction.jsx";
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -179,6 +181,22 @@ export default function App() {
         element={
           <PrivateRoute>
             <CrestQuiz />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/copa-8a2"
+        element={
+          <PrivateRoute>
+            <Copa8a2 />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/fantasyfiction"
+        element={
+          <PrivateRoute>
+            <FantasyFiction />
           </PrivateRoute>
         }
       />
