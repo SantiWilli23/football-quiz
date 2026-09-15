@@ -1,14 +1,15 @@
 import { NavLink } from "react-router-dom";
-import { BarChart3, Flame, Home, HelpCircle, LogOut, Newspaper, Swords, User, Users } from "lucide-react";
+import { Flame, Gamepad2, Home, HelpCircle, LogOut, User, Users } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import Avatar from "./Avatar.jsx";
 
+// Mismo criterio que el menú de escritorio (Sidebar.jsx): secciones, no
+// juegos sueltos — Duelos ya vive adentro de Juegos/Trivia.
 const links = [
   { to: "/panel", label: "Inicio", icon: Home, end: true },
   { to: "/trivia", label: "Trivia", icon: HelpCircle },
-  { to: "/futbol", label: "Fútbol", icon: Newspaper },
+  { to: "/juegos", label: "Juegos", icon: Gamepad2 },
   { to: "/grupo", label: "Grupo", icon: Users },
-  { to: "/duelos", label: "Duelos", icon: Swords },
   { to: "/perfil", label: "Perfil", icon: User },
 ];
 

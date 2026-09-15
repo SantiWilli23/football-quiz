@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Flame, Globe2, HelpCircle, Newspaper, Sparkles, Star, Users } from "lucide-react";
+import {
+  BarChart3, Flame, Gamepad2, Globe2, HelpCircle, Radio, Sparkles, Star, Swords, Users,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import Layout from "../components/Layout.jsx";
+import Card from "../components/Card.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 import TutorialModal from "../components/TutorialModal.jsx";
 import api from "../api.js";
@@ -11,9 +14,9 @@ import api from "../api.js";
 const FAVORITES_KEY = "fq_favorite_sections";
 const tutorialSeenKey = (userId) => `fq_tutorial_seen_${userId}`;
 
-// El inicio muestra solo las secciones generales — cada una agrupa sus
-// propios modos adentro (Trivia: trivia diaria, duelos, supervivencia;
-// Fútbol: resultados en vivo + subapartado de juegos).
+// "En vivo" y "Juegos" eran una sola sección ("Fútbol") que mezclaba datos
+// reales con el catálogo de 23 juegos — ver client/src/pages/Football.jsx y
+// Games.jsx, que ahora son pantallas separadas.
 const SECTIONS = [
   {
     to: "/trivia",
@@ -23,11 +26,18 @@ const SECTIONS = [
     color: "#f0907e",
   },
   {
-    to: "/futbol",
-    label: "Fútbol",
-    icon: Newspaper,
-    description: "Resultados en vivo, tabla de posiciones, goleadores y todos los juegos de fútbol.",
+    to: "/juegos",
+    label: "Juegos",
+    icon: Gamepad2,
+    description: "Los 23 modos de Futotal, agrupados por cómo se juegan: solo, con amigos, contrarreloj...",
     color: "#3b9dd6",
+  },
+  {
+    to: "/futbol",
+    label: "En vivo",
+    icon: Radio,
+    description: "Resultados, tabla de posiciones y goleadores reales de las principales ligas.",
+    color: "#4fb3e8",
   },
   {
     to: "/grupo",
@@ -67,12 +77,33 @@ export default function Dashboard() {
     try { return JSON.parse(localStorage.getItem(FAVORITES_KEY)) || []; } catch { return []; }
   });
   const [showTutorial, setShowTutorial] = useState(false);
+  const [pendingTrivia, setPendingTrivia] = useState(0);
+  const [pendingDuels, setPendingDuels] = useState(0);
 
   useEffect(() => {
     if (!groupId) { setGroupDetail(null); return; }
     api.get(`/groups/${groupId}`)
       .then(({ data }) => setGroupDetail(data.group))
       .catch(() => setGroupDetail(null));
+  }, [groupId]);
+
+  // "Qué te falta hoy" — antes el inicio repetía en tarjetas lo que ya está
+  // en el menú; esto contesta una pregunta distinta, que no está en ningún
+  // otro lado: trivia sin responder hoy y duelos esperando tu turno.
+  useEffect(() => {
+    api.get("/questions/today")
+      .then(({ data }) => setPendingTrivia((data.questions || []).filter((q) => !q.answered).length))
+      .catch(() => setPendingTrivia(0));
+  }, []);
+
+  useEffect(() => {
+    if (!groupId) { setPendingDuels(0); return; }
+    api.get("/duels", { params: { groupId } })
+      .then(({ data }) => {
+        const waiting = (data.duels || []).filter((d) => d.status === "esperando" && d.my_turn).length;
+        setPendingDuels(waiting);
+      })
+      .catch(() => setPendingDuels(0));
   }, [groupId]);
 
   useEffect(() => {
@@ -101,10 +132,27 @@ export default function Dashboard() {
   const best = stats?.best_streak ?? 0;
   const streakPct = best > 0 ? Math.min(100, Math.round((current / best) * 100)) : current > 0 ? 100 : 0;
 
+  const pending = [
+    pendingTrivia > 0 && {
+      key: "trivia",
+      to: "/trivia",
+      label: `Trivia del día · ${pendingTrivia} pregunta${pendingTrivia === 1 ? "" : "s"} sin responder`,
+      icon: HelpCircle,
+      tw: "red",
+    },
+    pendingDuels > 0 && {
+      key: "duelos",
+      to: "/duelos",
+      label: `${pendingDuels} duelo${pendingDuels === 1 ? "" : "s"} esperando tu turno`,
+      icon: Swords,
+      tw: "amber",
+    },
+  ].filter(Boolean);
+
   return (
     <Layout>
       {/* Header */}
-      <div className="mb-12 flex items-start justify-between gap-4 flex-wrap">
+      <div className="mb-10 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <p className="text-[11px] font-medium text-accent/90 uppercase tracking-[0.2em] mb-3">Panel</p>
           <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight mb-3">
@@ -117,6 +165,52 @@ export default function Dashboard() {
         </div>
         <GroupSelector />
       </div>
+
+      {/* Racha + pendientes del día — lo único que se pierde si no entrás,
+          antes relegado a una columna lateral chica. */}
+      <Card variant="feature" className="mb-10">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <Flame size={14} className={current > 0 ? "text-orange-400" : "text-gray-500"} />
+              <span className="text-[11px] font-medium text-gray-400 uppercase tracking-[0.2em]">Racha</span>
+            </div>
+            <p className="text-4xl font-semibold tracking-tight tabular-nums">
+              {current}
+              <span className="text-sm font-normal text-gray-500 ml-2">días</span>
+            </p>
+          </div>
+          <div className="flex-1 min-w-[160px] max-w-xs">
+            <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div className="h-full bg-orange-400/70 transition-[width]" style={{ width: `${streakPct}%` }} />
+            </div>
+            <p className="text-xs text-gray-500 mt-2">Mejor racha: {best} días</p>
+          </div>
+        </div>
+
+        {pending.length > 0 && (
+          <div className="mt-5 pt-5 border-t border-white/10 space-y-0">
+            {pending.map((item) => (
+              <Card key={item.key} variant="row">
+                <Link to={item.to} className="flex items-center gap-3 group">
+                  <span className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-${item.tw}-500/15 text-${item.tw}-500`}>
+                    <item.icon size={14} />
+                  </span>
+                  <span className="text-sm text-gray-300 group-hover:text-white transition-colors flex-1">
+                    {item.label}
+                  </span>
+                </Link>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {pending.length === 0 && (
+          <p className="text-xs text-gray-500 mt-5 pt-5 border-t border-white/10">
+            No te falta nada por hoy — ya respondiste la trivia y no hay duelos esperándote.
+          </p>
+        )}
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-x-14 gap-y-12">
         <div>
@@ -151,24 +245,6 @@ export default function Dashboard() {
         {/* Panel lateral */}
         <div className="space-y-8">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Flame size={14} className={current > 0 ? "text-orange-400" : "text-gray-600"} />
-              <span className="text-[11px] font-medium text-gray-500 uppercase tracking-[0.2em]">Racha</span>
-            </div>
-            <p className="text-4xl font-semibold tracking-tight tabular-nums">
-              {current}
-              <span className="text-sm font-normal text-gray-500 ml-2">días</span>
-            </p>
-            <div className="mt-4 h-px bg-white/10 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-orange-400/70 transition-[width]"
-                style={{ width: `${streakPct}%` }}
-              />
-            </div>
-            <p className="text-xs text-gray-600 mt-2">Mejor: {best} días</p>
-          </div>
-
-          <div className="pt-8 border-t border-white/5">
             <p className="text-[11px] font-medium text-gray-500 uppercase tracking-[0.2em] mb-4">Mis stats</p>
             <div className="divide-y divide-white/5">
               <StatRow label="Puntos" value={stats?.total_points ?? 0} />

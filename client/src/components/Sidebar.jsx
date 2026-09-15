@@ -1,24 +1,50 @@
 import { NavLink } from "react-router-dom";
-import { Home, HelpCircle, Users, History, BarChart3, Swords, Newspaper, User, LogOut, Flame, Star, Crown, Zap } from "lucide-react";
+import { Home, HelpCircle, Users, History, BarChart3, Gamepad2, Radio, User, LogOut, Flame } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import Avatar from "./Avatar.jsx";
 
+// El menú contesta "¿a qué PARTE de la app voy?", no "¿a qué juego?" — antes
+// mezclaba 8 secciones con 3 juegos sueltos sin acceso desde ningún otro
+// lado (y un "Adivina el Jugador — Pronto" que no llevaba a ninguna parte).
+// Los juegos ahora entran todos por /juegos; "En vivo" y "Juegos" separan
+// lo que antes vivía junto en una sola pantalla de Fútbol.
 const links = [
   { to: "/panel", label: "Inicio", icon: Home, end: true },
   { to: "/trivia", label: "Trivia", icon: HelpCircle },
-  { to: "/futbol", label: "Fútbol", icon: Newspaper },
+  { to: "/juegos", label: "Juegos", icon: Gamepad2 },
+  { to: "/futbol", label: "En vivo", icon: Radio },
   { to: "/grupo", label: "Mi grupo", icon: Users },
-  { to: "/duelos", label: "Duelos", icon: Swords },
+];
+
+const accountLinks = [
   { to: "/estadisticas", label: "Estadísticas", icon: BarChart3 },
   { to: "/historial", label: "Historial", icon: History },
   { to: "/perfil", label: "Mi perfil", icon: User },
 ];
 
-const externalLinks = [
-  { href: "/draft-europeo.html", label: "Draft Europeo 8a2", icon: Star },
-  { href: "/cotrero.html", label: "Cotrero", icon: Crown },
-  { href: null, label: "Adivina el Jugador", icon: Zap, soon: true },
-];
+function NavGroup({ items }) {
+  return (
+    <>
+      {items.map(({ to, label, icon: Icon, end }) => (
+        <NavLink
+          key={to}
+          to={to}
+          end={end}
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-3 py-2.5 rounded-card text-sm font-medium transition-colors ${
+              isActive
+                ? "bg-accent/15 text-accent border border-accent/30"
+                : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
+            }`
+          }
+        >
+          <Icon size={18} />
+          {label}
+        </NavLink>
+      ))}
+    </>
+  );
+}
 
 export default function Sidebar() {
   const { user, stats, logout } = useAuth();
@@ -33,48 +59,12 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 flex flex-col gap-1">
-        {links.map(({ to, label, icon: Icon, end }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={end}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-card text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-accent/15 text-accent border border-accent/30"
-                  : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
-              }`
-            }
-          >
-            <Icon size={18} />
-            {label}
-          </NavLink>
-        ))}
-        {externalLinks.map(({ href, label, icon: Icon, soon }) =>
-          href ? (
-            <a
-              key={href}
-              href={href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-card text-sm font-medium transition-colors text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
-            >
-              <Icon size={18} />
-              {label}
-            </a>
-          ) : (
-            <div
-              key={label}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-card text-sm font-medium text-gray-600 border border-transparent cursor-default"
-            >
-              <Icon size={18} />
-              <span>{label}</span>
-              {soon && (
-                <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-gray-700/60 text-gray-500 border border-gray-600/40">
-                  Pronto
-                </span>
-              )}
-            </div>
-          )
-        )}
+        <NavGroup items={links} />
+
+        <p className="px-3 pt-5 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-600">
+          Vos
+        </p>
+        <NavGroup items={accountLinks} />
       </nav>
 
       <div className="border-t border-border pt-4 mt-4">

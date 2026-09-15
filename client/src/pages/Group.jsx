@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CalendarDays, Copy, Crown, Flame, Link2, LogOut, Plus, Shield, Swords, Trophy, Users } from "lucide-react";
+import { BarChart3, CalendarDays, Copy, Crown, Flame, Link2, LogOut, MessageSquareText, Plus, Shield, Swords, Trophy, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -34,6 +34,7 @@ export default function Group() {
   const [myRivalId, setMyRivalId] = useState(null);
   const [rivalBusy, setRivalBusy] = useState(false);
   const [streak, setStreak] = useState(null);
+  const [tab, setTab] = useState("ranking");
 
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
@@ -401,6 +402,33 @@ export default function Group() {
                 </div>
               )}
 
+              {/* Antes esto era un solo scroll de 8 bloques con el mismo peso
+                  — ranking, Copa, apuestas, encuesta, retos y banco de
+                  preguntas, todos apilados. Tres pestañas para que no
+                  compitan entre sí: lo que se mira todos los días
+                  (Ranking), los modos estructurados con el grupo (Jugar
+                  juntos) y lo más liviano/social (Actividad). */}
+              <div className="flex items-center gap-2 mb-5 border-b border-border">
+                {[
+                  { key: "ranking", label: "Ranking", icon: BarChart3 },
+                  { key: "jugar", label: "Jugar juntos", icon: Trophy },
+                  { key: "actividad", label: "Actividad", icon: MessageSquareText },
+                ].map(({ key, label, icon: Icon }) => (
+                  <button
+                    key={key}
+                    onClick={() => setTab(key)}
+                    className={`flex items-center gap-1.5 px-3.5 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                      tab === key ? "border-accent text-accent" : "border-transparent text-gray-500 hover:text-white"
+                    }`}
+                  >
+                    <Icon size={14} />
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {tab === "ranking" && (
+              <>
               {/* La temporada del mes es la que se mira día a día: el histórico
                   lo gana siempre el que arrancó primero. */}
               <div className="flex items-center gap-2 mb-4 flex-wrap">
@@ -497,62 +525,46 @@ export default function Group() {
                   </div>
                 </div>
               )}
+              </>
+              )}
             </Card>
           )}
         </div>
       )}
 
-      {activeGroupId && (
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Link
-            to="/dt-liga"
-            className="flex items-center gap-3 px-4 py-3.5 rounded-card border border-border bg-panel hover:border-accent/40 transition-colors"
-          >
-            <Shield size={18} className="text-[#d97a41] shrink-0" />
-            <div className="min-w-0">
-              <p className="text-sm font-semibold">Crear Liga Online DT</p>
-              <p className="text-xs text-gray-500">Invitá al grupo, cada uno elige un club real y compiten toda una temporada.</p>
-            </div>
-          </Link>
-          <Link
-            to="/equipo-jugador"
-            className="flex items-center gap-3 px-4 py-3.5 rounded-card border border-border bg-panel hover:border-accent/40 transition-colors"
-          >
-            <Link2 size={18} className="text-[#5ba3d9] shrink-0" />
-            <div className="min-w-0">
-              <p className="text-sm font-semibold">Desafío grupal: Equipo-Jugador</p>
-              <p className="text-xs text-gray-500">Sala online de 6 u 8: cadena de fútbol con eliminación hasta que quede uno solo.</p>
-            </div>
-          </Link>
-        </div>
-      )}
-
-      {activeGroupId && (
-        <div className="mt-6">
+      {tab === "jugar" && activeGroupId && (
+        <div className="mt-6 space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Link
+              to="/dt-liga"
+              className="flex items-center gap-3 px-4 py-3.5 rounded-card border border-border bg-panel hover:border-accent/40 transition-colors"
+            >
+              <Shield size={18} className="text-[#d97a41] shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">Crear Liga Online DT</p>
+                <p className="text-xs text-gray-500">Invitá al grupo, cada uno elige un club real y compiten toda una temporada.</p>
+              </div>
+            </Link>
+            <Link
+              to="/equipo-jugador"
+              className="flex items-center gap-3 px-4 py-3.5 rounded-card border border-border bg-panel hover:border-accent/40 transition-colors"
+            >
+              <Link2 size={18} className="text-[#5ba3d9] shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">Desafío grupal: Equipo-Jugador</p>
+                <p className="text-xs text-gray-500">Sala online de 6 u 8: cadena de fútbol con eliminación hasta que quede uno solo.</p>
+              </div>
+            </Link>
+          </div>
           <GroupCup groupId={activeGroupId} />
-        </div>
-      )}
-
-      {activeGroupId && (
-        <div className="mt-6">
           <DuelBets groupId={activeGroupId} />
-        </div>
-      )}
-
-      {activeGroupId && (
-        <div className="mt-6">
-          <FlashPoll groupId={activeGroupId} />
-        </div>
-      )}
-
-      {activeGroupId && (
-        <div className="mt-6">
           <WeeklyChallenges groupId={activeGroupId} />
         </div>
       )}
 
-      {activeGroupId && (
-        <div className="mt-6">
+      {tab === "actividad" && activeGroupId && (
+        <div className="mt-6 space-y-5">
+          <FlashPoll groupId={activeGroupId} />
           <QuestionBank groupId={activeGroupId} />
         </div>
       )}
