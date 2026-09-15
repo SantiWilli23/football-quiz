@@ -3,6 +3,7 @@ import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { addDays, getBestStreak, getCurrentStreak, todayStr } from "../utils/points.js";
 import { duelSidePoints } from "./duels.js";
+import { rankEntries } from "../utils/challenges.js";
 import {
   QUESTION_KINDS,
   answersFor,
@@ -57,30 +58,72 @@ router.get("/weekly-recap", async (req, res) => {
   }
 });
 
+// Puntos de "retos" (la versión semanal de cada juego nuevo — Cotrero,
+// Fichado, Equipo-Jugador, Arbitraje/VAR, etc. — más el ranking histórico
+// de Cotrero) por usuario, sumados across TODOS los grupos y semanas. No
+// están precalculados: challenge_scores guarda el puntaje crudo, así que
+// hay que rankear cada (juego, período, grupo) igual que /challenges/leaderboard
+// y sumar los puntos 100/50/30/10 que le tocaron a cada uno en cada uno.
+async function challengePointsByUser() {
+  const result = await db.execute(
+    "SELECT game_key, period_key, group_id, user_id, score FROM challenge_scores"
+  );
+
+  const buckets = new Map();
+  for (const row of result.rows) {
+    const key = `${row.game_key}|${row.period_key}|${row.group_id}`;
+    if (!buckets.has(key)) buckets.set(key, { gameKey: row.game_key, rows: [] });
+    buckets.get(key).rows.push(row);
+  }
+
+  const totals = new Map();
+  for (const { gameKey, rows } of buckets.values()) {
+    for (const entry of rankEntries(rows, gameKey)) {
+      if (!entry.points) continue;
+      totals.set(entry.user_id, (totals.get(entry.user_id) || 0) + entry.points);
+    }
+  }
+  return totals;
+}
+
 // Ranking entre TODOS los usuarios de la app, no solo los de un grupo —
-// misma fórmula que auth.js GET /me (trivia_points + mode_b_points), pero
-// agregada por usuario en vez de filtrada a uno solo.
+// misma fórmula que auth.js GET /me (trivia_points + mode_b_points), sumando
+// además los puntos de retos (challenge_points, ver arriba) para que los
+// juegos nuevos también cuenten acá. Agregada por usuario en vez de
+// filtrada a uno solo.
 router.get("/global-ranking", async (req, res) => {
   try {
-    const result = await db.execute(`
-      SELECT
-        u.id, u.username, u.avatar, u.avatar_config,
-        COALESCE(a.trivia_points, 0) AS trivia_points,
-        COALESCE(mb.mode_b_points, 0) AS mode_b_points,
-        COALESCE(a.trivia_points, 0) + COALESCE(mb.mode_b_points, 0) AS total_points
-      FROM users u
-      LEFT JOIN (
-        SELECT user_id, SUM(points) AS trivia_points FROM answers GROUP BY user_id
-      ) a ON a.user_id = u.id
-      LEFT JOIN (
-        SELECT user_id, SUM(points) AS mode_b_points FROM mode_b_scores GROUP BY user_id
-      ) mb ON mb.user_id = u.id
-      WHERE COALESCE(a.trivia_points, 0) + COALESCE(mb.mode_b_points, 0) > 0
-      ORDER BY total_points DESC
-      LIMIT 100
-    `);
+    const [result, challengePoints] = await Promise.all([
+      db.execute(`
+        SELECT
+          u.id, u.username, u.avatar, u.avatar_config,
+          COALESCE(a.trivia_points, 0) AS trivia_points,
+          COALESCE(mb.mode_b_points, 0) AS mode_b_points
+        FROM users u
+        LEFT JOIN (
+          SELECT user_id, SUM(points) AS trivia_points FROM answers GROUP BY user_id
+        ) a ON a.user_id = u.id
+        LEFT JOIN (
+          SELECT user_id, SUM(points) AS mode_b_points FROM mode_b_scores GROUP BY user_id
+        ) mb ON mb.user_id = u.id
+      `),
+      challengePointsByUser(),
+    ]);
 
-    const ranking = result.rows.map((r, i) => ({ ...r, position: i + 1 }));
+    const ranking = result.rows
+      .map((r) => {
+        const challenge_points = challengePoints.get(r.id) || 0;
+        return {
+          ...r,
+          challenge_points,
+          total_points: Number(r.trivia_points) + Number(r.mode_b_points) + challenge_points,
+        };
+      })
+      .filter((r) => r.total_points > 0)
+      .sort((a, b) => b.total_points - a.total_points)
+      .slice(0, 100)
+      .map((r, i) => ({ ...r, position: i + 1 }));
+
     const mine = ranking.find((r) => r.id === req.userId);
 
     res.json({ ranking, myPosition: mine?.position ?? null });
