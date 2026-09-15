@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Flame, Globe2, HelpCircle, Newspaper, Star, Users } from "lucide-react";
+import { BarChart3, Flame, Globe2, HelpCircle, Newspaper, Sparkles, Star, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -49,6 +49,13 @@ const SECTIONS = [
     icon: Globe2,
     description: "Los 100 con más puntos de toda la app, sin importar el grupo.",
     color: "#8b5cf6",
+  },
+  {
+    to: "/vida-fut",
+    label: "Vida FUT",
+    icon: Sparkles,
+    description: "Jugador en Cotrero, después 3 temporadas de DT y 3 de presidente — una carrera larga en tres etapas.",
+    color: "#f0a93e",
   },
 ];
 

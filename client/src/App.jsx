@@ -34,6 +34,7 @@ const FantasyFiction = lazy(() => import("./pages/FantasyFiction.jsx"));
 const Presidente = lazy(() => import("./pages/Presidente.jsx"));
 const ArbitrajeVar = lazy(() => import("./pages/ArbitrajeVar.jsx"));
 const GlobalRanking = lazy(() => import("./pages/GlobalRanking.jsx"));
+const VidaFut = lazy(() => import("./pages/VidaFut.jsx"));
 
 function RouteFallback() {
   return (
@@ -224,6 +225,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <Presidente />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/vida-fut"
+        element={
+          <PrivateRoute>
+            <VidaFut />
           </PrivateRoute>
         }
       />
