@@ -11,6 +11,7 @@ import QuestionBank from "../components/QuestionBank.jsx";
 import WeeklyChallenges from "../components/WeeklyChallenges.jsx";
 import FlashPoll from "../components/FlashPoll.jsx";
 import AnniversaryBanner from "../components/AnniversaryBanner.jsx";
+import WeeklyRecap from "../components/WeeklyRecap.jsx";
 import GroupCup from "../components/GroupCup.jsx";
 import DuelBets from "../components/DuelBets.jsx";
 
@@ -46,6 +47,7 @@ export default function Group() {
   const [joinLoading, setJoinLoading] = useState(false);
 
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [leaveError, setLeaveError] = useState("");
@@ -175,9 +177,17 @@ export default function Group() {
     setTimeout(() => setCopied(false), 1500);
   };
 
+  const copyInviteLink = () => {
+    if (!detail) return;
+    navigator.clipboard.writeText(`${window.location.origin}/invitacion/${detail.invite_code}`);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 1500);
+  };
+
   return (
     <Layout>
       {activeGroupId && <AnniversaryBanner groupId={activeGroupId} />}
+      {activeGroupId && <WeeklyRecap groupId={activeGroupId} />}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold mb-1">Mi grupo</h1>
@@ -288,13 +298,23 @@ export default function Group() {
                     <p className="text-sm text-gray-400 mt-0.5">{detail.description}</p>
                   )}
                 </div>
-                <button
-                  onClick={copyCode}
-                  className="flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-card border border-border text-gray-300 hover:text-white hover:border-white/30 transition-colors shrink-0"
-                >
-                  <Copy size={14} />
-                  {copied ? "Copiado" : detail.invite_code}
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={copyCode}
+                    className="flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-card border border-border text-gray-300 hover:text-white hover:border-white/30 transition-colors"
+                  >
+                    <Copy size={14} />
+                    {copied ? "Copiado" : detail.invite_code}
+                  </button>
+                  <button
+                    onClick={copyInviteLink}
+                    title="Copiar link de invitación (con preview del grupo, sin necesidad de tipear el código)"
+                    className="flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-card border border-accent/30 text-accent hover:bg-accent/10 transition-colors"
+                  >
+                    <Link2 size={14} />
+                    {linkCopied ? "Copiado" : "Link"}
+                  </button>
+                </div>
               </div>
 
               {/* Salir es difícil de deshacer (hace falta el código para

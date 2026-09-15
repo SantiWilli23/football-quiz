@@ -16,6 +16,80 @@ import {
 const router = Router();
 router.use(requireAuth);
 
+function mondayOfWeek(dateStr) {
+  const d = new Date(dateStr + "T00:00:00Z");
+  const day = (d.getUTCDay() + 6) % 7; // 0 = lunes
+  return addDays(dateStr, -day);
+}
+
+// Recap semanal: misma agregación que ya usa /season (rankingBetween), pero
+// acotada a la semana en curso (lunes a hoy) en vez de a un mes — se puede
+// pedir cualquier día, no hace falta esperar al domingo a la noche.
+router.get("/weekly-recap", async (req, res) => {
+  const groupId = Number(req.query.groupId);
+  if (!groupId) return res.status(400).json({ error: "Falta groupId" });
+
+  try {
+    if (!(await requireMembership(groupId, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+
+    const today = todayStr();
+    const monday = mondayOfWeek(today);
+    const ranking = await rankingBetween(groupId, monday, today);
+    const sorted = [...ranking].sort((a, b) => b.points - a.points);
+
+    const top = sorted[0] || null;
+    const me = ranking.find((r) => r.id === req.userId) || null;
+    const myPosition = me ? sorted.findIndex((r) => r.id === req.userId) + 1 : null;
+
+    res.json({
+      weekStart: monday,
+      weekEnd: today,
+      ranking: sorted,
+      top,
+      me,
+      myPosition,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Ranking entre TODOS los usuarios de la app, no solo los de un grupo —
+// misma fórmula que auth.js GET /me (trivia_points + mode_b_points), pero
+// agregada por usuario en vez de filtrada a uno solo.
+router.get("/global-ranking", async (req, res) => {
+  try {
+    const result = await db.execute(`
+      SELECT
+        u.id, u.username, u.avatar, u.avatar_config,
+        COALESCE(a.trivia_points, 0) AS trivia_points,
+        COALESCE(mb.mode_b_points, 0) AS mode_b_points,
+        COALESCE(a.trivia_points, 0) + COALESCE(mb.mode_b_points, 0) AS total_points
+      FROM users u
+      LEFT JOIN (
+        SELECT user_id, SUM(points) AS trivia_points FROM answers GROUP BY user_id
+      ) a ON a.user_id = u.id
+      LEFT JOIN (
+        SELECT user_id, SUM(points) AS mode_b_points FROM mode_b_scores GROUP BY user_id
+      ) mb ON mb.user_id = u.id
+      WHERE COALESCE(a.trivia_points, 0) + COALESCE(mb.mode_b_points, 0) > 0
+      ORDER BY total_points DESC
+      LIMIT 100
+    `);
+
+    const ranking = result.rows.map((r, i) => ({ ...r, position: i + 1 }));
+    const mine = ranking.find((r) => r.id === req.userId);
+
+    res.json({ ranking, myPosition: mine?.position ?? null });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 async function requireMembership(groupId, userId) {
   const membership = await db.execute({
     sql: "SELECT id FROM group_members WHERE group_id = ? AND user_id = ?",
@@ -478,24 +552,22 @@ router.get("/mode-b", async (req, res) => {
 
 // Logros: se calculan al vuelo desde los datos, no se guardan. Cada uno lleva
 // su progreso para que los que faltan también digan algo.
-router.get("/achievements", async (req, res) => {
-  const groupId = Number(req.query.groupId) || null;
+// Extraído a función aparte (no solo la ruta) porque auth.js también la
+// necesita: para guardar un marco de avatar cosmético tiene que validar
+// server-side que el usuario de verdad lo tiene desbloqueado, no confiar en
+// lo que mande el cliente — ver PUT /auth/avatar.
+export async function computeAchievements(userId, groupId) {
+  if (groupId) await settleGroup(groupId);
 
-  try {
-    if (groupId && !(await requireMembership(groupId, req.userId))) {
-      return res.status(403).json({ error: "No perteneces a este grupo" });
-    }
-    if (groupId) await settleGroup(groupId);
-
-    const userResult = await db.execute({
-      sql: "SELECT username FROM users WHERE id = ?",
-      args: [req.userId],
-    });
-    const username = userResult.rows[0]?.username;
+  const userResult = await db.execute({
+    sql: "SELECT username FROM users WHERE id = ?",
+    args: [userId],
+  });
+  const username = userResult.rows[0]?.username;
 
     const triviaResult = await db.execute({
       sql: `SELECT COALESCE(SUM(is_correct), 0) AS correct FROM answers WHERE user_id = ?`,
-      args: [req.userId],
+      args: [userId],
     });
     const triviaCorrect = Number(triviaResult.rows[0].correct);
 
@@ -504,11 +576,11 @@ router.get("/achievements", async (req, res) => {
             FROM answers a JOIN questions q ON q.id = a.question_id
             WHERE a.user_id = ? AND a.is_correct = 1
             GROUP BY q.scheduled_date HAVING correct >= 3`,
-      args: [req.userId],
+      args: [userId],
     });
     const perfectDays = perfectDaysResult.rows.length;
 
-    const bestStreak = await getBestStreak(req.userId);
+    const bestStreak = await getBestStreak(userId);
 
     let modeBAnswers = 0;
     let correctPredictions = 0;
@@ -527,7 +599,7 @@ router.get("/achievements", async (req, res) => {
         sql: `SELECT COALESCE(SUM(answered_count), 0) AS answered,
                      COALESCE(SUM(correct_predictions), 0) AS correct
               FROM mode_b_scores WHERE group_id = ? AND user_id = ?`,
-        args: [groupId, req.userId],
+        args: [groupId, userId],
       });
       modeBAnswers = Number(scoreResult.rows[0].answered);
       correctPredictions = Number(scoreResult.rows[0].correct);
@@ -535,7 +607,7 @@ router.get("/achievements", async (req, res) => {
       const fullDaysResult = await db.execute({
         sql: `SELECT COUNT(*) AS total FROM mode_b_scores
               WHERE group_id = ? AND user_id = ? AND answered_count >= 3`,
-        args: [groupId, req.userId],
+        args: [groupId, userId],
       });
       fullDays = Number(fullDaysResult.rows[0].total);
 
@@ -544,7 +616,7 @@ router.get("/achievements", async (req, res) => {
               FROM special_answers sa
               JOIN special_questions sq ON sq.id = sa.special_question_id
               WHERE sa.group_id = ? AND sq.type = 'quien_es_mas' AND sa.answer_value = ?`,
-        args: [groupId, String(req.userId)],
+        args: [groupId, String(userId)],
       });
       votesReceived = Number(votesResult.rows[0].votes);
 
@@ -557,7 +629,7 @@ router.get("/achievements", async (req, res) => {
 
       const authoredResult = await db.execute({
         sql: "SELECT COUNT(*) AS total FROM group_questions WHERE group_id = ? AND author_id = ?",
-        args: [groupId, req.userId],
+        args: [groupId, userId],
       });
       authoredQuestions = Number(authoredResult.rows[0].total);
 
@@ -566,18 +638,18 @@ router.get("/achievements", async (req, res) => {
               WHERE group_id = ? AND status = 'terminado'
                 AND (challenger_id = ? OR opponent_id = ?)
               ORDER BY resolved_at ASC`,
-        args: [groupId, req.userId, req.userId],
+        args: [groupId, userId, userId],
       });
       const myDuels = duelsResult.rows;
-      duelsWon = myDuels.filter((d) => d.winner_id === req.userId).length;
+      duelsWon = myDuels.filter((d) => d.winner_id === userId).length;
       demonDuelsWon = myDuels.filter(
-        (d) => d.winner_id === req.userId && d.difficulty === "demonio"
+        (d) => d.winner_id === userId && d.difficulty === "demonio"
       ).length;
 
       // Racha más larga de duelos ganados al hilo, en orden cronológico.
       let run = 0;
       for (const duel of myDuels) {
-        run = duel.winner_id === req.userId ? run + 1 : 0;
+        run = duel.winner_id === userId ? run + 1 : 0;
         bestDuelRun = Math.max(bestDuelRun, run);
       }
 
@@ -587,14 +659,14 @@ router.get("/achievements", async (req, res) => {
         sql: `SELECT COUNT(*) AS total FROM mode_b_scores
               WHERE group_id = ? AND user_id = ? AND answered_count >= 3
                 AND correct_predictions = answered_count`,
-        args: [groupId, req.userId],
+        args: [groupId, userId],
       });
       perfectPredictionDays = Number(plenoResult.rows[0].total);
 
       const bankUsedResult = await db.execute({
         sql: `SELECT COUNT(*) AS total FROM group_question_bank
               WHERE group_id = ? AND author_id = ? AND used_on IS NOT NULL`,
-        args: [groupId, req.userId],
+        args: [groupId, userId],
       });
       bankQuestionsUsed = Number(bankUsedResult.rows[0].total);
     }
@@ -742,11 +814,20 @@ router.get("/achievements", async (req, res) => {
       progress: Math.min(100, Math.round((a.current / a.target) * 100)),
     }));
 
-    res.json({
+    return {
       achievements,
       unlocked_count: achievements.filter((a) => a.unlocked).length,
       total: achievements.length,
-    });
+    };
+}
+
+router.get("/achievements", async (req, res) => {
+  const groupId = Number(req.query.groupId) || null;
+  try {
+    if (groupId && !(await requireMembership(groupId, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+    res.json(await computeAchievements(req.userId, groupId));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

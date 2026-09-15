@@ -89,6 +89,33 @@ export const ACCESSORIES = [
 
 export const JERSEYS = ["lisa", "rayas", "banda", "mitades"];
 
+// Marcos cosméticos: no se compran, se desbloquean acumulando logros (ver
+// unlocked_count en GET /stats/achievements). Puramente decorativo — un
+// anillo alrededor del avatar, nada que afecte el dibujo en sí.
+export const FRAMES = ["ninguno", "bronce", "plata", "oro", "fuego", "leyenda"];
+
+export const FRAME_REQUIREMENTS = {
+  ninguno: 0,
+  bronce: 3,
+  plata: 6,
+  oro: 10,
+  fuego: 14,
+  leyenda: 17,
+};
+
+const FRAME_STYLES = {
+  ninguno: null,
+  bronce: { boxShadow: "0 0 0 3px #a5670f" },
+  plata: { boxShadow: "0 0 0 3px #b6bec7" },
+  oro: { boxShadow: "0 0 0 3px #d9a441" },
+  fuego: { boxShadow: "0 0 0 3px #d9534f, 0 0 14px 1px #f0907e88" },
+  leyenda: { boxShadow: "0 0 0 3px #8b5cf6, 0 0 16px 2px #8b5cf699" },
+};
+
+export function frameStyle(frame) {
+  return FRAME_STYLES[frame] || null;
+}
+
 export const DEFAULT_AVATAR = {
   bg: BACKGROUNDS[0],
   skin: SKINS[2],
@@ -98,6 +125,7 @@ export const DEFAULT_AVATAR = {
   accessory: "ninguno",
   jersey: "lisa",
   jerseyColor: JERSEY_COLORS[0],
+  frame: "ninguno",
 };
 
 export function parseAvatarConfig(raw) {
@@ -404,13 +432,14 @@ function AvatarSvg({ config, size }) {
 export default function Avatar({ user, size = 32, className = "" }) {
   const config = parseAvatarConfig(user?.avatar_config);
   const initial = user?.avatar || user?.username?.charAt(0).toUpperCase() || "?";
+  const ring = config ? frameStyle(config.frame) : null;
 
   return (
     <span
       className={`inline-flex items-center justify-center rounded-full overflow-hidden shrink-0 ${
         config ? "" : "bg-accent/15 border border-accent/30 text-accent font-semibold"
       } ${className}`}
-      style={{ width: size, height: size, fontSize: Math.round(size * 0.4) }}
+      style={{ width: size, height: size, fontSize: Math.round(size * 0.4), ...ring }}
       title={user?.username}
     >
       {config ? <AvatarSvg config={config} size={size} /> : initial}

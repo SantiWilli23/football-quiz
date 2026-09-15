@@ -1,31 +1,47 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./context/AuthContext.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Splash from "./pages/Splash.jsx";
+import InvitePreview from "./pages/InvitePreview.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
-import Trivia from "./pages/Trivia.jsx";
-import Group from "./pages/Group.jsx";
-import History from "./pages/History.jsx";
-import Profile from "./pages/Profile.jsx";
-import Stats from "./pages/Stats.jsx";
-import Duels from "./pages/Duels.jsx";
-import Football from "./pages/Football.jsx";
-import Survival from "./pages/Survival.jsx";
-import Wordle from "./pages/Wordle.jsx";
-import Quiniela from "./pages/Quiniela.jsx";
-import UnMinuto from "./pages/UnMinuto.jsx";
-import CrestQuiz from "./pages/CrestQuiz.jsx";
-import SeasonPredictions from "./pages/SeasonPredictions.jsx";
-import CareerMode from "./carrera/index.jsx";
-import EquipoJugador from "./equipo-jugador/index.jsx";
-import DtLeagueHome from "./dt-liga/DtLeagueHome.jsx";
-import DtLeagueRoom from "./dt-liga/DtLeagueRoom.jsx";
-import LiveMatch from "./dt-liga/LiveMatch.jsx";
-import Copa8a2 from "./pages/Copa8a2.jsx";
-import FantasyFiction from "./pages/FantasyFiction.jsx";
-import Presidente from "./pages/Presidente.jsx";
-import ArbitrajeVar from "./pages/ArbitrajeVar.jsx";
+
+// Todo lo que no hace falta para el primer pantallazo (login/splash/panel) se
+// separa en su propio chunk — el bundle venía creciendo con cada juego nuevo
+// (ya pasaba los 750kb) y la enorme mayoría de una sesión nunca visita, por
+// ejemplo, Carrera DT o Equipo-Jugador.
+const Trivia = lazy(() => import("./pages/Trivia.jsx"));
+const Group = lazy(() => import("./pages/Group.jsx"));
+const History = lazy(() => import("./pages/History.jsx"));
+const Profile = lazy(() => import("./pages/Profile.jsx"));
+const Stats = lazy(() => import("./pages/Stats.jsx"));
+const Duels = lazy(() => import("./pages/Duels.jsx"));
+const Football = lazy(() => import("./pages/Football.jsx"));
+const Survival = lazy(() => import("./pages/Survival.jsx"));
+const Wordle = lazy(() => import("./pages/Wordle.jsx"));
+const Quiniela = lazy(() => import("./pages/Quiniela.jsx"));
+const UnMinuto = lazy(() => import("./pages/UnMinuto.jsx"));
+const CrestQuiz = lazy(() => import("./pages/CrestQuiz.jsx"));
+const SeasonPredictions = lazy(() => import("./pages/SeasonPredictions.jsx"));
+const CareerMode = lazy(() => import("./carrera/index.jsx"));
+const EquipoJugador = lazy(() => import("./equipo-jugador/index.jsx"));
+const DtLeagueHome = lazy(() => import("./dt-liga/DtLeagueHome.jsx"));
+const DtLeagueRoom = lazy(() => import("./dt-liga/DtLeagueRoom.jsx"));
+const LiveMatch = lazy(() => import("./dt-liga/LiveMatch.jsx"));
+const Copa8a2 = lazy(() => import("./pages/Copa8a2.jsx"));
+const FantasyFiction = lazy(() => import("./pages/FantasyFiction.jsx"));
+const Presidente = lazy(() => import("./pages/Presidente.jsx"));
+const ArbitrajeVar = lazy(() => import("./pages/ArbitrajeVar.jsx"));
+const GlobalRanking = lazy(() => import("./pages/GlobalRanking.jsx"));
+
+function RouteFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-bg text-gray-500 text-sm">
+      Cargando...
+    </div>
+  );
+}
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -37,7 +53,7 @@ function PrivateRoute({ children }) {
     );
   }
   if (!user) return <Navigate to="/login" replace />;
-  return children;
+  return <Suspense fallback={<RouteFallback />}>{children}</Suspense>;
 }
 
 function PublicRoute({ children }) {
@@ -58,6 +74,7 @@ export default function App() {
           </PublicRoute>
         }
       />
+      <Route path="/invitacion/:code" element={<InvitePreview />} />
       <Route
         path="/registro"
         element={
@@ -215,6 +232,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <ArbitrajeVar />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/ranking-global"
+        element={
+          <PrivateRoute>
+            <GlobalRanking />
           </PrivateRoute>
         }
       />

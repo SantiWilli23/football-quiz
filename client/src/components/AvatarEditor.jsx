@@ -1,20 +1,33 @@
-import { useState } from "react";
-import { Shuffle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Lock, Shuffle } from "lucide-react";
 import api from "../api.js";
 import Card from "./Card.jsx";
+import { useGroups } from "../context/GroupContext.jsx";
 import {
   ACCESSORIES,
   AvatarSvg,
   BACKGROUNDS,
   DEFAULT_AVATAR,
   FACES,
+  FRAMES,
+  FRAME_REQUIREMENTS,
   HAIRS,
   HAIR_COLORS,
   JERSEYS,
   JERSEY_COLORS,
   SKINS,
+  frameStyle,
   parseAvatarConfig,
 } from "./Avatar.jsx";
+
+const FRAME_LABELS = {
+  ninguno: "Ninguno",
+  bronce: "Bronce",
+  plata: "Plata",
+  oro: "Oro",
+  fuego: "Fuego",
+  leyenda: "Leyenda",
+};
 
 const HAIR_LABELS = {
   corto: "Corto",
@@ -117,10 +130,19 @@ function OptionRow({ label, options, labels, value, onChange }) {
 }
 
 export default function AvatarEditor({ user, onSaved }) {
+  const { activeGroupId } = useGroups();
   const [config, setConfig] = useState(parseAvatarConfig(user?.avatar_config) ?? DEFAULT_AVATAR);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [unlockedCount, setUnlockedCount] = useState(0);
+
+  useEffect(() => {
+    api
+      .get("/stats/achievements", { params: activeGroupId ? { groupId: activeGroupId } : {} })
+      .then(({ data }) => setUnlockedCount(data.unlocked_count || 0))
+      .catch(() => setUnlockedCount(0));
+  }, [activeGroupId]);
 
   const set = (key) => (value) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
@@ -128,7 +150,7 @@ export default function AvatarEditor({ user, onSaved }) {
   };
 
   const randomize = () => {
-    setConfig({
+    setConfig((prev) => ({
       bg: pick(BACKGROUNDS),
       skin: pick(SKINS),
       hair: pick(HAIRS),
@@ -137,7 +159,8 @@ export default function AvatarEditor({ user, onSaved }) {
       accessory: pick(ACCESSORIES),
       jersey: pick(JERSEYS),
       jerseyColor: pick(JERSEY_COLORS),
-    });
+      frame: prev.frame, // el marco se gana, no se sortea
+    }));
     setSaved(false);
   };
 
@@ -145,7 +168,7 @@ export default function AvatarEditor({ user, onSaved }) {
     setSaving(true);
     setError("");
     try {
-      await api.put("/auth/avatar", { config });
+      await api.put("/auth/avatar", { config, groupId: activeGroupId });
       setSaved(true);
       onSaved();
     } catch (err) {
@@ -163,7 +186,7 @@ export default function AvatarEditor({ user, onSaved }) {
         {/* En escritorio el muñequito queda fijo a la vista mientras se
             recorren las opciones, que ahora son muchas. */}
         <div className="flex sm:flex-col items-center gap-3 shrink-0 sm:sticky sm:top-6 sm:self-start">
-          <div className="rounded-full overflow-hidden">
+          <div className="rounded-full overflow-hidden" style={frameStyle(config.frame) || {}}>
             <AvatarSvg config={config} size={112} />
           </div>
           <button
@@ -221,6 +244,36 @@ export default function AvatarEditor({ user, onSaved }) {
             value={config.jerseyColor}
             onChange={set("jerseyColor")}
           />
+
+          <div>
+            <p className="text-xs text-gray-500 mb-2">Marco ({unlockedCount} logros desbloqueados)</p>
+            <div className="flex gap-2 flex-wrap">
+              {FRAMES.map((frame) => {
+                const need = FRAME_REQUIREMENTS[frame];
+                const available = unlockedCount >= need;
+                return (
+                  <button
+                    key={frame}
+                    type="button"
+                    disabled={!available}
+                    onClick={() => available && set("frame")(frame)}
+                    aria-pressed={config.frame === frame}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-card text-xs font-medium border transition-colors ${
+                      config.frame === frame
+                        ? "border-accent/50 bg-accent/10 text-accent"
+                        : available
+                        ? "border-border text-gray-400 hover:text-white hover:border-white/30"
+                        : "border-border text-gray-600 cursor-not-allowed opacity-60"
+                    }`}
+                  >
+                    {!available && <Lock size={11} />}
+                    {FRAME_LABELS[frame]}
+                    {!available && <span className="text-[10px]">({need})</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 

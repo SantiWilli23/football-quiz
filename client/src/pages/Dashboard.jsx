@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Flame, HelpCircle, Newspaper, Users } from "lucide-react";
+import { BarChart3, Flame, Globe2, HelpCircle, Newspaper, Star, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import Layout from "../components/Layout.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
+import TutorialModal from "../components/TutorialModal.jsx";
 import api from "../api.js";
+
+const FAVORITES_KEY = "fq_favorite_sections";
+const tutorialSeenKey = (userId) => `fq_tutorial_seen_${userId}`;
 
 // El inicio muestra solo las secciones generales — cada una agrupa sus
 // propios modos adentro (Trivia: trivia diaria, duelos, supervivencia;
@@ -39,12 +43,23 @@ const SECTIONS = [
     description: "Resumen semanal, compatibilidad con el grupo y logros desbloqueados.",
     color: "#3fae9a",
   },
+  {
+    to: "/ranking-global",
+    label: "Ranking global",
+    icon: Globe2,
+    description: "Los 100 con más puntos de toda la app, sin importar el grupo.",
+    color: "#8b5cf6",
+  },
 ];
 
 export default function Dashboard() {
   const { user, stats } = useAuth();
   const { groups, activeGroupId: groupId } = useGroups();
   const [groupDetail, setGroupDetail] = useState(null);
+  const [favorites, setFavorites] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(FAVORITES_KEY)) || []; } catch { return []; }
+  });
+  const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
     if (!groupId) { setGroupDetail(null); return; }
@@ -52,6 +67,28 @@ export default function Dashboard() {
       .then(({ data }) => setGroupDetail(data.group))
       .catch(() => setGroupDetail(null));
   }, [groupId]);
+
+  useEffect(() => {
+    if (!user) return;
+    try {
+      if (!localStorage.getItem(tutorialSeenKey(user.id))) setShowTutorial(true);
+    } catch { /* localStorage no disponible: se omite el tutorial sin romper nada */ }
+  }, [user]);
+
+  function finishTutorial(picked) {
+    try {
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify(picked));
+      if (user) localStorage.setItem(tutorialSeenKey(user.id), "1");
+    } catch { /* noop */ }
+    setFavorites(picked);
+    setShowTutorial(false);
+  }
+
+  const sortedSections = [...SECTIONS].sort((a, b) => {
+    const fa = favorites.includes(a.to) ? 0 : 1;
+    const fb = favorites.includes(b.to) ? 0 : 1;
+    return fa - fb;
+  });
 
   const current = stats?.current_streak ?? 0;
   const best = stats?.best_streak ?? 0;
@@ -80,7 +117,7 @@ export default function Dashboard() {
             Secciones
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/5 rounded-2xl overflow-hidden">
-            {SECTIONS.map(({ to, label, icon: Icon, description, color }) => (
+            {sortedSections.map(({ to, label, icon: Icon, description, color }) => (
               <Link
                 key={to}
                 to={to}
@@ -93,8 +130,9 @@ export default function Dashboard() {
                   <Icon size={19} />
                 </div>
                 <div className="min-w-0 pt-1">
-                  <p className="text-sm font-medium mb-1 group-hover:text-white transition-colors">
+                  <p className="text-sm font-medium mb-1 group-hover:text-white transition-colors flex items-center gap-1.5">
                     {label}
+                    {favorites.includes(to) && <Star size={11} className="text-accent" fill="currentColor" />}
                   </p>
                   <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
                 </div>
@@ -162,6 +200,8 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {showTutorial && <TutorialModal sections={SECTIONS} onDone={finishTutorial} />}
     </Layout>
   );
 }

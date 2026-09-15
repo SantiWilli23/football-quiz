@@ -33,10 +33,25 @@ export function AuthProvider({ children }) {
     refreshMe();
   }, [refreshMe]);
 
+  // Si llegaste por un link de invitación (/invitacion/:code) y te tuviste
+  // que registrar antes de poder unirte, el código quedó guardado — apenas
+  // hay sesión, se une solo, sin que el usuario tenga que volver a tipearlo.
+  const joinPendingInviteIfAny = async () => {
+    const pending = localStorage.getItem("fq_pending_invite");
+    if (!pending) return;
+    localStorage.removeItem("fq_pending_invite");
+    try {
+      await api.post("/groups/join", { invite_code: pending });
+    } catch {
+      /* si ya era miembro o el código venció, no rompe el login/registro */
+    }
+  };
+
   const login = async (email, password) => {
     const { data } = await api.post("/auth/login", { email, password });
     localStorage.setItem("fq_token", data.token);
     setUser(data.user);
+    await joinPendingInviteIfAny();
     await refreshMe();
   };
 
@@ -44,6 +59,7 @@ export function AuthProvider({ children }) {
     const { data } = await api.post("/auth/register", { username, email, password });
     localStorage.setItem("fq_token", data.token);
     setUser(data.user);
+    await joinPendingInviteIfAny();
     await refreshMe();
   };
 

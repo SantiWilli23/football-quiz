@@ -5,6 +5,30 @@ import { duelSidePoints } from "./duels.js";
 import { getCurrentStreak } from "../utils/points.js";
 
 const router = Router();
+
+// Preview pública (sin login) de una invitación por código — para que el
+// link se pueda mandar por WhatsApp y quien lo recibe vea algo antes de
+// registrarse, en vez de un formulario de código a ciegas. Va ANTES del
+// requireAuth de abajo a propósito: es la única ruta de este router abierta.
+router.get("/invite/:code/preview", async (req, res) => {
+  const code = String(req.params.code || "").trim().toUpperCase();
+  try {
+    const result = await db.execute({
+      sql: `SELECT g.name, g.description, COUNT(gm.id) AS member_count
+            FROM groups_t g LEFT JOIN group_members gm ON gm.group_id = g.id
+            WHERE g.invite_code = ?
+            GROUP BY g.id`,
+      args: [code],
+    });
+    const group = result.rows[0];
+    if (!group) return res.status(404).json({ error: "Código de invitación inválido" });
+    res.json({ name: group.name, description: group.description, member_count: Number(group.member_count) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 router.use(requireAuth);
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";

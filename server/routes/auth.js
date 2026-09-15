@@ -4,6 +4,13 @@ import jwt from "jsonwebtoken";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { getCurrentStreak, getBestStreak } from "../utils/points.js";
+import { computeAchievements } from "./stats.js";
+
+// Espejo de FRAME_REQUIREMENTS en client/src/components/Avatar.jsx — los
+// marcos son cosméticos desbloqueables por logros, no elegibles libremente,
+// así que se revalida acá cuántos logros tiene de verdad en vez de confiar
+// en lo que mande el cliente.
+const FRAME_REQUIREMENTS = { ninguno: 0, bronce: 3, plata: 6, oro: 10, fuego: 14, leyenda: 17 };
 
 const router = Router();
 
@@ -57,7 +64,21 @@ router.put("/avatar", requireAuth, async (req, res) => {
     clean[key] = config[key];
   }
 
+  const frame = config.frame || "ninguno";
+  if (!(frame in FRAME_REQUIREMENTS)) {
+    return res.status(400).json({ error: "Marco inválido" });
+  }
+
   try {
+    if (frame !== "ninguno") {
+      const groupId = Number(req.body?.groupId) || null;
+      const { unlocked_count } = await computeAchievements(req.userId, groupId);
+      if (unlocked_count < FRAME_REQUIREMENTS[frame]) {
+        return res.status(403).json({ error: "Todavía no desbloqueaste ese marco" });
+      }
+    }
+    clean.frame = frame;
+
     await db.execute({
       sql: "UPDATE users SET avatar_config = ? WHERE id = ?",
       args: [JSON.stringify(clean), req.userId],
