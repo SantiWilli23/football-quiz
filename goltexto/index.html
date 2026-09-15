@@ -7,6 +7,22 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <title>Fichado</title>
+
+    <!-- Fichado se sirve desde el mismo origen que el resto de Futotal y
+         comparte localStorage (ver weeklyChallenge.ts) — el tema elegido en
+         Configuración también aplica acá. Se lee ANTES del primer paint
+         para no arrancar en Nocturno y saltar al tema elegido después,
+         mismo patrón que client/index.html. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("fq_theme");
+          if (t === "azul" || t === "bengala") document.documentElement.setAttribute("data-theme", t);
+          var s = localStorage.getItem("fq_shape");
+          if (s === "cancha") document.documentElement.setAttribute("data-shape", s);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

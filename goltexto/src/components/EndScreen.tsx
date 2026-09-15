@@ -6,12 +6,13 @@ interface Props {
   secret: Player;
   attemptsUsed: number;
   maxAttempts: number;
+  points: number;
   shareText: string;
   onRestart: () => void;
   onHome: () => void;
 }
 
-export default function EndScreen({ status, secret, attemptsUsed, maxAttempts, shareText, onRestart, onHome }: Props) {
+export default function EndScreen({ status, secret, attemptsUsed, maxAttempts, points, shareText, onRestart, onHome }: Props) {
   const [copied, setCopied] = useState(false);
 
   async function handleShare() {
@@ -31,16 +32,20 @@ export default function EndScreen({ status, secret, attemptsUsed, maxAttempts, s
       {status === "won" ? (
         <>
           <p className="text-lg font-bold mt-3 mb-1 text-accent">¡Lo adivinaste!</p>
-          <p className="text-sm text-gray-300 mb-5">
+          <p className="text-sm text-gray-300 mb-1">
             {secret.name} en {attemptsUsed} de {maxAttempts} intentos.
           </p>
         </>
       ) : (
         <>
           <p className="text-lg font-bold mt-3 mb-1">Se acabaron los intentos.</p>
-          <p className="text-sm text-gray-400 mb-5">El jugador secreto era {secret.name}.</p>
+          <p className="text-sm text-gray-400 mb-1">El jugador secreto era {secret.name}.</p>
         </>
       )}
+
+      <p className="text-xs text-gray-500 mb-5">
+        {points > 0 ? <>+{points} puntos para el ranking semanal del grupo.</> : "No sumaste puntos esta vez."}
+      </p>
 
       <div className="flex flex-wrap gap-2 justify-center">
         <button

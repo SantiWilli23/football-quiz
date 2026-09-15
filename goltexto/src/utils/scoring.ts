@@ -97,3 +97,35 @@ export function scoreGuess(secret: Player, guess: Player): number {
 export function sortByScoreDesc<T extends { score: number }>(items: T[]): T[] {
   return [...items].sort((a, b) => b.score - a.score);
 }
+
+/**
+ * Puntos que suma esta partida al ranking semanal del grupo (challenge_scores
+ * en el backend, "más alto gana" como cualquier otro juego de Futotal — antes
+ * Fichado era el único que rankeaba "menos intentos gana" sin distinguir
+ * dificultad ni pistas usadas, así que ganarlo en fácil valía lo mismo que en
+ * difícil).
+ *
+ * Ganada: 40 a 100 puntos según lo eficiente que fuiste (intentos gastados,
+ * contando cada pista como 3 — ver HINT_COST), multiplicado por qué tan
+ * difícil era el secreto. Perdida: un consuelo chico según lo cerca que
+ * llegaste a estar en tu mejor intento, para que perder por poco valga algo.
+ */
+export function finalScore(opts: {
+  status: "won" | "lost";
+  guessesUsed: number;
+  hintsUsed: number;
+  maxAttempts: number;
+  pointsMultiplier: number;
+  bestGuessScore: number;
+}): number {
+  const { status, guessesUsed, hintsUsed, maxAttempts, pointsMultiplier, bestGuessScore } = opts;
+
+  if (status === "won") {
+    const cost = guessesUsed + hintsUsed * 3;
+    const efficiency = clamp(1 - (cost - 1) / Math.max(1, maxAttempts - 1), 0, 1);
+    const base = 40 + efficiency * 60;
+    return Math.round(base * pointsMultiplier);
+  }
+
+  return Math.round(bestGuessScore * 0.15 * pointsMultiplier);
+}

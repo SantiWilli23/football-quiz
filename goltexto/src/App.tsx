@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import playersData from "./data/players.json";
 import type { Guess, Player } from "./types/player";
-import { scoreGuess } from "./utils/scoring";
-import { attemptsFor, difficultyById, type DifficultyId } from "./utils/difficulty";
+import { finalScore, scoreGuess } from "./utils/scoring";
+import { attemptsFor, difficultyById, pointsMultiplierFor, type DifficultyId } from "./utils/difficulty";
 import {
-  buildShareText, clearSavedGame, dailyEditionNumber, guessesToStored,
-  hintForAttribute, loadGame, pickDailySecret, pickRandomSecret, saveGame, todayKey,
+  HINT_COST, buildShareText, clearSavedGame, dailyEditionNumber, guessesToStored,
+  hintForAttribute, loadGame, pickDailySecret, pickRandomSecret, saveGame, secretPoolFor, todayKey,
 } from "./utils/gameUtils";
 import { submitChallengeScore } from "./utils/weeklyChallenge";
 import StartScreen from "./components/StartScreen";
@@ -27,10 +27,11 @@ export default function App() {
   const [hintsUsed, setHintsUsed] = useState(0);
   const [status, setStatus] = useState<"playing" | "won" | "lost">("playing");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [earnedPoints, setEarnedPoints] = useState(0);
 
   const hasSavedGame = useMemo(() => loadGame() != null, [screen]);
   const maxAttempts = attemptsFor(difficulty);
-  const attemptsUsed = guesses.length + hintsUsed;
+  const attemptsUsed = guesses.length + hintsUsed * HINT_COST;
   const guessedIds = useMemo(() => new Set(guesses.map((g) => g.player.id)), [guesses]);
   const latestPlayerId = guesses.length ? guesses[guesses.length - 1].player.id : null;
   const revealedHints = useMemo(
@@ -52,8 +53,12 @@ export default function App() {
     });
   }, [secret, guesses, status, hintsUsed, mode, difficulty, maxAttempts, screen]);
 
-  function startGame(nextDifficulty: DifficultyId, nextMode: "random" | "daily") {
-    const nextSecret = nextMode === "daily" ? pickDailySecret(players) : pickRandomSecret(players);
+  function startGame(chosenDifficulty: DifficultyId, nextMode: "random" | "daily") {
+    // El diario no deja elegir dificultad: siempre Normal, para que la
+    // edición del día sea la misma experiencia para todos.
+    const nextDifficulty = nextMode === "daily" ? "normal" : chosenDifficulty;
+    const pool = secretPoolFor(players, nextDifficulty);
+    const nextSecret = nextMode === "daily" ? pickDailySecret(pool) : pickRandomSecret(pool);
     setSecret(nextSecret);
     setDifficulty(nextDifficulty);
     setMode(nextMode);
@@ -61,6 +66,7 @@ export default function App() {
     setHintsUsed(0);
     setStatus("playing");
     setErrorMessage(null);
+    setEarnedPoints(0);
     setScreen("playing");
   }
 
@@ -74,14 +80,29 @@ export default function App() {
     setDifficulty(saved.difficulty ?? "normal");
     setHintsUsed(saved.hintsUsed);
     setStatus(saved.status);
-    setGuesses(
-      saved.guesses
-        .map((g) => {
-          const p = players.find((pl) => pl.id === g.playerId);
-          return p ? { player: p, score: g.score } : null;
+    const restoredGuesses = saved.guesses
+      .map((g) => {
+        const p = players.find((pl) => pl.id === g.playerId);
+        return p ? { player: p, score: g.score } : null;
+      })
+      .filter((g): g is Guess => g != null);
+    setGuesses(restoredGuesses);
+
+    // Solo para mostrar en pantalla — el puntaje ya se mandó al ranking
+    // semanal cuando terminó la partida, no se vuelve a submitear acá.
+    if (saved.status !== "playing") {
+      const bestGuessScore = restoredGuesses.reduce((max, g) => Math.max(max, g.score), 0);
+      setEarnedPoints(
+        finalScore({
+          status: saved.status,
+          guessesUsed: restoredGuesses.length,
+          hintsUsed: saved.hintsUsed,
+          maxAttempts: saved.maxAttempts,
+          pointsMultiplier: pointsMultiplierFor(saved.difficulty ?? "normal"),
+          bestGuessScore,
         })
-        .filter((g): g is Guess => g != null)
-    );
+      );
+    }
     setScreen(saved.status === "playing" ? "playing" : "ended");
   }
 
@@ -98,6 +119,22 @@ export default function App() {
     setSecret(null);
   }
 
+  function finish(nextStatus: "won" | "lost", nextGuesses: Guess[], nextHintsUsed: number) {
+    setStatus(nextStatus);
+    setScreen("ended");
+    const bestGuessScore = nextGuesses.reduce((max, g) => Math.max(max, g.score), 0);
+    const points = finalScore({
+      status: nextStatus,
+      guessesUsed: nextGuesses.length,
+      hintsUsed: nextHintsUsed,
+      maxAttempts,
+      pointsMultiplier: pointsMultiplierFor(difficulty),
+      bestGuessScore,
+    });
+    setEarnedPoints(points);
+    submitChallengeScore(points);
+  }
+
   function submitGuess(player: Player) {
     if (!secret || status !== "playing") return;
     setErrorMessage(null);
@@ -112,14 +149,11 @@ export default function App() {
     setGuesses(nextGuesses);
 
     if (score >= 100) {
-      setStatus("won");
-      setScreen("ended");
-      submitChallengeScore(nextGuesses.length + hintsUsed);
+      finish("won", nextGuesses, hintsUsed);
       return;
     }
-    if (nextGuesses.length + hintsUsed >= maxAttempts) {
-      setStatus("lost");
-      setScreen("ended");
+    if (nextGuesses.length + hintsUsed * HINT_COST >= maxAttempts) {
+      finish("lost", nextGuesses, hintsUsed);
     }
   }
 
@@ -127,9 +161,8 @@ export default function App() {
     if (!secret || status !== "playing" || hintsUsed >= HINT_ORDER.length) return;
     const nextHints = hintsUsed + 1;
     setHintsUsed(nextHints);
-    if (guesses.length + nextHints >= maxAttempts) {
-      setStatus("lost");
-      setScreen("ended");
+    if (guesses.length + nextHints * HINT_COST >= maxAttempts) {
+      finish("lost", guesses, nextHints);
     }
   }
 
@@ -189,10 +222,10 @@ export default function App() {
               </p>
               <button
                 onClick={useHint}
-                disabled={hintsUsed >= HINT_ORDER.length}
+                disabled={hintsUsed >= HINT_ORDER.length || maxAttempts - attemptsUsed < HINT_COST}
                 className="text-xs font-medium border border-border rounded-full px-3.5 py-1.5 hover:border-accent hover:text-accent disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0 ml-3"
               >
-                Pista (−1)
+                Pista (−3)
               </button>
             </div>
           </>
@@ -205,6 +238,7 @@ export default function App() {
               secret={secret}
               attemptsUsed={attemptsUsed}
               maxAttempts={maxAttempts}
+              points={earnedPoints}
               shareText={shareText}
               onRestart={restart}
               onHome={goHome}

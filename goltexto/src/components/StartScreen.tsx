@@ -10,10 +10,18 @@ interface Props {
 export default function StartScreen({ onStart, hasSavedGame, onResume }: Props) {
   const [difficulty, setDifficulty] = useState<DifficultyId>("normal");
   const [mode, setMode] = useState<"random" | "daily">("random");
+  const isDaily = mode === "daily";
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
+        <a
+          href="/panel"
+          className="flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-white transition-colors mb-6 -ml-1 px-1.5 py-1 rounded-lg hover:bg-panel w-fit"
+        >
+          ← Volver a Futotal
+        </a>
+
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-accent text-black text-xl font-bold mb-4">
             F
@@ -48,20 +56,21 @@ export default function StartScreen({ onStart, hasSavedGame, onResume }: Props) 
               </button>
             ))}
           </div>
-          {mode === "daily" && (
-            <p className="text-xs text-gray-500 mt-2.5 px-0.5">El mismo jugador secreto para todos hoy.</p>
+          {isDaily && (
+            <p className="text-xs text-gray-500 mt-2.5 px-0.5">El mismo jugador secreto para todos hoy — dificultad Normal para que sea la misma prueba para todos.</p>
           )}
         </div>
 
         <div className="mb-9">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-3">Dificultad</p>
-          <div className="space-y-2">
+          <div className={`space-y-2 ${isDaily ? "opacity-40 pointer-events-none" : ""}`}>
             {DIFFICULTIES.map((d) => {
-              const active = difficulty === d.id;
+              const active = isDaily ? d.id === "normal" : difficulty === d.id;
               return (
                 <button
                   key={d.id}
                   onClick={() => setDifficulty(d.id)}
+                  disabled={isDaily}
                   className={`w-full flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
                     active
                       ? "bg-accent/15 text-white border-accent"

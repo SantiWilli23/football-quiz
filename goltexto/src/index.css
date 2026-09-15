@@ -2,8 +2,121 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mismos tres temas que el resto de Futotal — copiado de client/src/index.css
+   a propósito (Fichado es un build aparte, no puede importar CSS de otro
+   paquete) en vez de referenciarlo, así que si se agrega un cuarto tema allá
+   hay que repetirlo acá también. */
+:root,
+[data-theme="nocturno"] {
+  --c-bg: 14 19 23;
+  --c-panel: 22 29 35;
+  --c-panel-hi: 30 39 46;
+  --c-border: 40 51 60;
+
+  --c-white: 233 239 241;
+  --c-onaccent: 14 19 23;
+
+  --c-gray-200: 40 51 60;
+  --c-gray-300: 195 205 211;
+  --c-gray-400: 168 180 187;
+  --c-gray-500: 143 160 170;
+  --c-gray-600: 97 114 125;
+  --c-gray-700: 74 89 96;
+  --c-gray-800: 40 51 60;
+  --c-gray-900: 11 15 18;
+
+  --c-accent: 47 182 115;
+  --c-accent-dark: 30 110 73;
+  --c-accent-light: 111 217 168;
+
+  --radius-card: 10px;
+  --theme-color: #0e1317;
+}
+
+[data-theme="azul"] {
+  --c-bg: 38 43 53;
+  --c-panel: 43 52 68;
+  --c-panel-hi: 53 66 84;
+  --c-border: 69 71 76;
+
+  --c-white: 242 242 240;
+  --c-onaccent: 38 43 53;
+
+  --c-gray-200: 69 71 76;
+  --c-gray-300: 201 202 204;
+  --c-gray-400: 168 169 172;
+  --c-gray-500: 138 139 142;
+  --c-gray-600: 111 112 116;
+  --c-gray-700: 87 88 92;
+  --c-gray-800: 69 71 76;
+  --c-gray-900: 30 32 35;
+
+  --c-accent: 59 157 214;
+  --c-accent-dark: 33 94 130;
+  --c-accent-light: 124 196 234;
+
+  --radius-card: 4px;
+  --theme-color: #262b35;
+}
+
+[data-theme="bengala"] {
+  --c-bg: 246 246 248;
+  --c-panel: 255 255 255;
+  --c-panel-hi: 255 255 255;
+  --c-border: 226 228 233;
+
+  --c-white: 15 17 21;
+  --c-onaccent: 255 255 255;
+
+  --c-gray-200: 226 228 233;
+  --c-gray-300: 199 203 211;
+  --c-gray-400: 171 177 188;
+  --c-gray-500: 154 161 174;
+  --c-gray-600: 90 97 110;
+  --c-gray-700: 68 75 88;
+  --c-gray-800: 38 43 51;
+  --c-gray-900: 15 17 21;
+
+  --c-accent: 255 77 23;
+  --c-accent-dark: 204 61 18;
+  --c-accent-light: 255 138 94;
+
+  --radius-card: 16px;
+  --theme-color: #f6f6f8;
+}
+
 body {
   @apply bg-bg text-white;
+  font-family: Archivo, system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.bg-panel {
+  background-image: linear-gradient(160deg, rgb(var(--c-panel-hi)), rgb(var(--c-panel)));
+}
+
+/* Forma "Cancha": mismo eje independiente del color que en el resto de la
+   app — ver client/src/index.css para el comentario completo. */
+:root {
+  --cut-lg: 0px;
+  --cut-sm: 0px;
+}
+[data-shape="cancha"] {
+  --cut-lg: 12px;
+  --cut-sm: 5px;
+}
+
+[data-shape="cancha"] .rounded-card,
+[data-shape="cancha"] .rounded-2xl,
+[data-shape="cancha"] .rounded-xl {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--cut-lg)) 0,
+    100% var(--cut-lg),
+    100% 100%,
+    var(--cut-lg) 100%,
+    0 calc(100% - var(--cut-lg))
+  );
 }

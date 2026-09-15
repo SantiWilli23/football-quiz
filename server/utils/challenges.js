@@ -6,9 +6,11 @@ export function pointsForRank(rank) {
   return RANK_POINTS[rank] || 0;
 }
 
-// Juegos donde GANA quien tiene el número más BAJO (ej. Fichado: menos
-// intentos es mejor). Todo lo que no está acá se ordena de mayor a menor.
-export const LOWER_IS_BETTER = new Set(["fichado"]);
+// Juegos donde GANA quien tiene el número más BAJO. Fichado mandaba acá
+// (menos intentos = mejor) hasta que pasó a un puntaje real que ya pondera
+// dificultad/pistas/eficiencia (ver goltexto/src/utils/scoring.ts) — ahora
+// se ordena de mayor a menor como cualquier otro juego.
+export const LOWER_IS_BETTER = new Set([]);
 
 export function todayKey() {
   return new Date().toISOString().slice(0, 10);

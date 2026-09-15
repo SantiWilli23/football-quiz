@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { scoreGuess, sortByScoreDesc } from "./scoring";
+import { finalScore, scoreGuess, sortByScoreDesc } from "./scoring";
 import type { Player } from "../types/player";
 
 function makePlayer(overrides: Partial<Player>): Player {
@@ -89,5 +89,40 @@ describe("sortByScoreDesc", () => {
   it("ordena de mayor a menor score", () => {
     const items = [{ score: 10 }, { score: 90 }, { score: 50 }];
     expect(sortByScoreDesc(items).map((i) => i.score)).toEqual([90, 50, 10]);
+  });
+});
+
+describe("finalScore", () => {
+  const base = { status: "won" as const, maxAttempts: 8, pointsMultiplier: 1, bestGuessScore: 0 };
+
+  it("da el máximo (100) cuando ganás al primer intento sin pistas", () => {
+    expect(finalScore({ ...base, guessesUsed: 1, hintsUsed: 0 })).toBe(100);
+  });
+
+  it("da menos puntos cuantos más intentos gastás", () => {
+    const few = finalScore({ ...base, guessesUsed: 2, hintsUsed: 0 });
+    const many = finalScore({ ...base, guessesUsed: 7, hintsUsed: 0 });
+    expect(few).toBeGreaterThan(many);
+  });
+
+  it("usar una pista cuesta lo mismo que 3 intentos", () => {
+    const withHint = finalScore({ ...base, guessesUsed: 3, hintsUsed: 1 });
+    const equivalentGuesses = finalScore({ ...base, guessesUsed: 6, hintsUsed: 0 });
+    expect(withHint).toBe(equivalentGuesses);
+  });
+
+  it("la misma partida vale más en difícil que en fácil (multiplicador)", () => {
+    const facil = finalScore({ ...base, guessesUsed: 3, hintsUsed: 0, pointsMultiplier: 1 });
+    const dificil = finalScore({ ...base, guessesUsed: 3, hintsUsed: 0, pointsMultiplier: 1.6 });
+    expect(dificil).toBeGreaterThan(facil);
+  });
+
+  it("perder sin haber acertado nada da 0 puntos", () => {
+    expect(finalScore({ ...base, status: "lost", guessesUsed: 8, hintsUsed: 0, bestGuessScore: 0 })).toBe(0);
+  });
+
+  it("perder por poco (score alto en el mejor intento) da algo de consuelo", () => {
+    const close = finalScore({ ...base, status: "lost", guessesUsed: 8, hintsUsed: 0, bestGuessScore: 90 });
+    expect(close).toBeGreaterThan(0);
   });
 });

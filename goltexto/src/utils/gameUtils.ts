@@ -3,6 +3,31 @@ import type { DifficultyId } from "./difficulty";
 
 const STORAGE_KEY = "fichado_game_v2";
 
+// Cuánto cuesta una pista, en "intentos equivalentes" — antes costaba 1
+// (igual que probar un jugador), ahora sale bastante más caro: usarla dos
+// veces ya te deja con la mitad de los 8 intentos gastados.
+export const HINT_COST = 3;
+
+// players.json arranca con las superestrellas más reconocibles del mundo
+// (Messi, Cristiano, Neymar, Mbappé, De Bruyne...) porque así está curada
+// la base fuente (ver scripts/build-players.cjs) — se aprovecha ese orden
+// como proxy de "qué tan conocido es" en vez de mantener un campo de fama
+// aparte. Fácil restringe el secreto a ese primer tramo más popular; difícil
+// no filtra nada, puede tocar cualquiera de los ~630 jugadores de la base.
+const POOL_SIZE: Record<DifficultyId, number | null> = {
+  facil: 150,
+  normal: 350,
+  dificil: null,
+};
+
+/** El pool de candidatos a SECRETO según la dificultad. El de autocompletado
+ * para buscar (GuessInput) siempre es la base completa — solo el secreto se
+ * restringe, adivinar sigue pudiendo ser cualquier jugador de la base. */
+export function secretPoolFor(players: Player[], difficulty: DifficultyId): Player[] {
+  const size = POOL_SIZE[difficulty];
+  return size == null ? players : players.slice(0, Math.min(size, players.length));
+}
+
 export interface StoredGame {
   mode: "random" | "daily";
   dailyKey?: string;

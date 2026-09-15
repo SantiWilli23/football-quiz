@@ -1,14 +1,22 @@
 import type { Guess } from "../types/player";
 
-// Interpola de un gris apagado al azul de acento según el score (0-99). El
-// 100 se resuelve aparte como fila destacada en acento.
+/** Lee un triplete "R G B" de una variable CSS del tema activo (ver index.css). */
+function readRgbVar(name: string, fallback: [number, number, number]): [number, number, number] {
+  if (typeof window === "undefined") return fallback;
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const parts = raw.split(/\s+/).map(Number);
+  return parts.length === 3 && parts.every((n) => !Number.isNaN(n)) ? (parts as [number, number, number]) : fallback;
+}
+
+// Interpola de un gris apagado al acento del tema activo según el score
+// (0-99) — antes eran dos hex fijos, así que no seguían el tema elegido en
+// Configuración. El 100 se resuelve aparte como fila destacada en acento.
 function barColor(score: number): string {
   const t = Math.max(0, Math.min(1, score / 100));
-  // gray-600 (#6f7074) -> accent (#3b9dd6)
-  const from = { r: 0x6f, g: 0x70, b: 0x74 };
-  const to = { r: 0x3b, g: 0x9d, b: 0xd6 };
+  const from = readRgbVar("--c-gray-600", [111, 112, 116]);
+  const to = readRgbVar("--c-accent", [59, 157, 214]);
   const mix = (a: number, b: number) => Math.round(a + (b - a) * t);
-  return `rgb(${mix(from.r, to.r)}, ${mix(from.g, to.g)}, ${mix(from.b, to.b)})`;
+  return `rgb(${mix(from[0], to[0])}, ${mix(from[1], to[1])}, ${mix(from[2], to[2])})`;
 }
 
 interface Props {
