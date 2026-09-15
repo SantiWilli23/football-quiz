@@ -4,10 +4,11 @@ import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
+import PlayDiagram from "../components/PlayDiagram.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 
 const TOTAL_SITUATIONS = 10;
-const SECONDS_PER_SITUATION = 8;
+const SECONDS_PER_SITUATION = 18;
 
 export default function ArbitrajeVar() {
   const { activeGroupId: groupId } = useGroups();
@@ -73,7 +74,7 @@ export default function ArbitrajeVar() {
     clearInterval(timerRef.current);
     try {
       const { data } = await api.post("/arbitraje-var/decide", { situationId: current.id, decisionIdx: idx });
-      setFeedback({ correct: data.correct, correctIdx: data.correctIdx, pickedIdx: idx });
+      setFeedback({ correct: data.correct, correctIdx: data.correctIdx, pickedIdx: idx, why: data.why });
       setCorrectCount((c) => {
         const next = data.correct ? c + 1 : c;
         const nextSeen = [...seenRef.current, current.id];
@@ -86,7 +87,7 @@ export default function ArbitrajeVar() {
             else fetchSituation(nextSeen);
             return nextRound;
           });
-        }, 900);
+        }, 4500);
         return next;
       });
     } catch {
@@ -156,6 +157,7 @@ export default function ArbitrajeVar() {
 
           {situation && (
             <Card>
+              <PlayDiagram type={situation.diagram} />
               <p className="font-medium mb-4">{situation.text}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {situation.options.map((opt, idx) => {
@@ -180,10 +182,13 @@ export default function ArbitrajeVar() {
                 })}
               </div>
               {feedback && (
-                <p className={`mt-3 text-sm font-medium flex items-center gap-1.5 ${feedback.correct ? "text-emerald" : "text-red-400"}`}>
-                  {feedback.correct ? <Check size={15} /> : <X size={15} />}
-                  {feedback.correct ? "¡Decisión correcta!" : `El VAR dice: ${situation.options[feedback.correctIdx]}`}
-                </p>
+                <div className="mt-3">
+                  <p className={`text-sm font-medium flex items-center gap-1.5 ${feedback.correct ? "text-emerald" : "text-red-400"}`}>
+                    {feedback.correct ? <Check size={15} /> : <X size={15} />}
+                    {feedback.correct ? "¡Decisión correcta!" : `El VAR dice: ${situation.options[feedback.correctIdx]}`}
+                  </p>
+                  {feedback.why && <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">{feedback.why}</p>}
+                </div>
               )}
             </Card>
           )}
