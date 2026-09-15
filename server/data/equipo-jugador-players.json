@@ -20731,6 +20731,8347 @@
           "fin": null
         }
       ]
+    },
+    {
+      "nombre": "Ronald Koeman",
+      "nacionalidad": "Países Bajos",
+      "posicion": "Defensa",
+      "nacimiento": 1963,
+      "carrera": [
+        {
+          "club": "Groningen",
+          "inicio": 1980,
+          "fin": 1983
+        },
+        {
+          "club": "Ajax",
+          "inicio": 1983,
+          "fin": 1986
+        },
+        {
+          "club": "PSV",
+          "inicio": 1986,
+          "fin": 1989
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 1989,
+          "fin": 1995
+        },
+        {
+          "club": "Feyenoord",
+          "inicio": 1995,
+          "fin": 1997
+        }
+      ]
+    },
+    {
+      "nombre": "Frank Rijkaard",
+      "nacionalidad": "Países Bajos",
+      "posicion": "Defensa",
+      "nacimiento": 1962,
+      "carrera": [
+        {
+          "club": "Ajax",
+          "inicio": 1980,
+          "fin": 1987
+        },
+        {
+          "club": "Sporting CP",
+          "inicio": 1987,
+          "fin": 1988
+        },
+        {
+          "club": "Real Zaragoza",
+          "inicio": 1988,
+          "fin": 1988
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 1988,
+          "fin": 1993
+        },
+        {
+          "club": "Ajax",
+          "inicio": 1993,
+          "fin": 1995
+        }
+      ]
+    },
+    {
+      "nombre": "Marco van Basten",
+      "nacionalidad": "Países Bajos",
+      "posicion": "Delantero",
+      "nacimiento": 1964,
+      "carrera": [
+        {
+          "club": "Ajax",
+          "inicio": 1981,
+          "fin": 1987
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 1987,
+          "fin": 1995
+        }
+      ]
+    },
+    {
+      "nombre": "Ruud Gullit",
+      "nacionalidad": "Países Bajos",
+      "posicion": "Mediocampista",
+      "nacimiento": 1962,
+      "carrera": [
+        {
+          "club": "Feyenoord",
+          "inicio": 1979,
+          "fin": 1982
+        },
+        {
+          "club": "PSV",
+          "inicio": 1982,
+          "fin": 1985
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 1987,
+          "fin": 1993
+        },
+        {
+          "club": "Sampdoria",
+          "inicio": 1993,
+          "fin": 1994
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 1995,
+          "fin": 1998
+        }
+      ]
+    },
+    {
+      "nombre": "Dennis Bergkamp",
+      "nacionalidad": "Países Bajos",
+      "posicion": "Delantero",
+      "nacimiento": 1969,
+      "carrera": [
+        {
+          "club": "Ajax",
+          "inicio": 1986,
+          "fin": 1993
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 1993,
+          "fin": 1995
+        },
+        {
+          "club": "Arsenal",
+          "inicio": 1995,
+          "fin": 2006
+        }
+      ]
+    },
+    {
+      "nombre": "Edgar Davids",
+      "nacionalidad": "Países Bajos",
+      "posicion": "Mediocampista",
+      "nacimiento": 1973,
+      "carrera": [
+        {
+          "club": "Ajax",
+          "inicio": 1991,
+          "fin": 1996
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 1996,
+          "fin": 1997
+        },
+        {
+          "club": "Juventus",
+          "inicio": 1997,
+          "fin": 2004
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2004,
+          "fin": 2005
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2005,
+          "fin": 2005
+        },
+        {
+          "club": "Tottenham",
+          "inicio": 2005,
+          "fin": 2007
+        }
+      ]
+    },
+    {
+      "nombre": "Clarence Seedorf",
+      "nacionalidad": "Países Bajos",
+      "posicion": "Mediocampista",
+      "nacimiento": 1976,
+      "carrera": [
+        {
+          "club": "Ajax",
+          "inicio": 1992,
+          "fin": 1995
+        },
+        {
+          "club": "Sampdoria",
+          "inicio": 1995,
+          "fin": 1996
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 1996,
+          "fin": 1999
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 1999,
+          "fin": 2002
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2002,
+          "fin": 2012
+        }
+      ]
+    },
+    {
+      "nombre": "Patrick Kluivert",
+      "nacionalidad": "Países Bajos",
+      "posicion": "Delantero",
+      "nacimiento": 1976,
+      "carrera": [
+        {
+          "club": "Ajax",
+          "inicio": 1994,
+          "fin": 1997
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 1997,
+          "fin": 1998
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 1998,
+          "fin": 2004
+        },
+        {
+          "club": "Newcastle",
+          "inicio": 2004,
+          "fin": 2005
+        },
+        {
+          "club": "Valencia",
+          "inicio": 2005,
+          "fin": 2007
+        },
+        {
+          "club": "PSV",
+          "inicio": 2007,
+          "fin": 2008
+        }
+      ]
+    },
+    {
+      "nombre": "Robin van Persie",
+      "nacionalidad": "Países Bajos",
+      "posicion": "Delantero",
+      "nacimiento": 1983,
+      "carrera": [
+        {
+          "club": "Feyenoord",
+          "inicio": 2001,
+          "fin": 2004
+        },
+        {
+          "club": "Arsenal",
+          "inicio": 2004,
+          "fin": 2012
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2012,
+          "fin": 2015
+        },
+        {
+          "club": "Fenerbahçe",
+          "inicio": 2015,
+          "fin": 2018
+        }
+      ]
+    },
+    {
+      "nombre": "Wesley Sneijder",
+      "nacionalidad": "Países Bajos",
+      "posicion": "Mediocampista",
+      "nacimiento": 1984,
+      "carrera": [
+        {
+          "club": "Ajax",
+          "inicio": 2002,
+          "fin": 2007
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2007,
+          "fin": 2009
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2009,
+          "fin": 2013
+        },
+        {
+          "club": "Galatasaray",
+          "inicio": 2013,
+          "fin": 2017
+        }
+      ]
+    },
+    {
+      "nombre": "Arjen Robben",
+      "nacionalidad": "Países Bajos",
+      "posicion": "Delantero",
+      "nacimiento": 1984,
+      "carrera": [
+        {
+          "club": "Groningen",
+          "inicio": 2000,
+          "fin": 2002
+        },
+        {
+          "club": "PSV",
+          "inicio": 2002,
+          "fin": 2004
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2004,
+          "fin": 2007
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2007,
+          "fin": 2009
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2009,
+          "fin": 2019
+        }
+      ]
+    },
+    {
+      "nombre": "Virgil van Dijk",
+      "nacionalidad": "Países Bajos",
+      "posicion": "Defensa",
+      "nacimiento": 1991,
+      "carrera": [
+        {
+          "club": "Groningen",
+          "inicio": 2011,
+          "fin": 2013
+        },
+        {
+          "club": "Celtic",
+          "inicio": 2013,
+          "fin": 2015
+        },
+        {
+          "club": "Southampton",
+          "inicio": 2015,
+          "fin": 2018
+        },
+        {
+          "club": "Liverpool",
+          "inicio": 2018,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Memphis Depay",
+      "nacionalidad": "Países Bajos",
+      "posicion": "Delantero",
+      "nacimiento": 1994,
+      "carrera": [
+        {
+          "club": "PSV",
+          "inicio": 2011,
+          "fin": 2015
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2015,
+          "fin": 2017
+        },
+        {
+          "club": "Lyon",
+          "inicio": 2017,
+          "fin": 2021
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2021,
+          "fin": 2023
+        },
+        {
+          "club": "Atlético de Madrid",
+          "inicio": 2023,
+          "fin": 2024
+        },
+        {
+          "club": "Corinthians",
+          "inicio": 2024,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Matthijs de Ligt",
+      "nacionalidad": "Países Bajos",
+      "posicion": "Defensa",
+      "nacimiento": 1999,
+      "carrera": [
+        {
+          "club": "Ajax",
+          "inicio": 2016,
+          "fin": 2019
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2019,
+          "fin": 2022
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2022,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Frenkie de Jong",
+      "nacionalidad": "Países Bajos",
+      "posicion": "Mediocampista",
+      "nacimiento": 1997,
+      "carrera": [
+        {
+          "club": "Ajax",
+          "inicio": 2015,
+          "fin": 2019
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2019,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Francesco Totti",
+      "nacionalidad": "Italia",
+      "posicion": "Delantero",
+      "nacimiento": 1976,
+      "carrera": [
+        {
+          "club": "Roma",
+          "inicio": 1992,
+          "fin": 2017
+        }
+      ]
+    },
+    {
+      "nombre": "Alessandro Del Piero",
+      "nacionalidad": "Italia",
+      "posicion": "Delantero",
+      "nacimiento": 1974,
+      "carrera": [
+        {
+          "club": "Padova",
+          "inicio": 1991,
+          "fin": 1993
+        },
+        {
+          "club": "Juventus",
+          "inicio": 1993,
+          "fin": 2012
+        },
+        {
+          "club": "Sydney FC",
+          "inicio": 2012,
+          "fin": 2014
+        }
+      ]
+    },
+    {
+      "nombre": "Roberto Baggio",
+      "nacionalidad": "Italia",
+      "posicion": "Delantero",
+      "nacimiento": 1967,
+      "carrera": [
+        {
+          "club": "Vicenza",
+          "inicio": 1982,
+          "fin": 1985
+        },
+        {
+          "club": "Fiorentina",
+          "inicio": 1985,
+          "fin": 1990
+        },
+        {
+          "club": "Juventus",
+          "inicio": 1990,
+          "fin": 1995
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 1995,
+          "fin": 1997
+        },
+        {
+          "club": "Bologna",
+          "inicio": 1997,
+          "fin": 1998
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 1998,
+          "fin": 2000
+        },
+        {
+          "club": "Brescia",
+          "inicio": 2000,
+          "fin": 2004
+        }
+      ]
+    },
+    {
+      "nombre": "Christian Vieri",
+      "nacionalidad": "Italia",
+      "posicion": "Delantero",
+      "nacimiento": 1973,
+      "carrera": [
+        {
+          "club": "Torino",
+          "inicio": 1991,
+          "fin": 1992
+        },
+        {
+          "club": "Pisa",
+          "inicio": 1992,
+          "fin": 1993
+        },
+        {
+          "club": "Ravenna",
+          "inicio": 1993,
+          "fin": 1993
+        },
+        {
+          "club": "Venezia",
+          "inicio": 1993,
+          "fin": 1994
+        },
+        {
+          "club": "Atalanta",
+          "inicio": 1994,
+          "fin": 1996
+        },
+        {
+          "club": "Juventus",
+          "inicio": 1996,
+          "fin": 1997
+        },
+        {
+          "club": "Atlético de Madrid",
+          "inicio": 1997,
+          "fin": 1998
+        },
+        {
+          "club": "Lazio",
+          "inicio": 1998,
+          "fin": 1999
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 1999,
+          "fin": 2005
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2005,
+          "fin": 2007
+        }
+      ]
+    },
+    {
+      "nombre": "Fabio Cannavaro",
+      "nacionalidad": "Italia",
+      "posicion": "Defensa",
+      "nacimiento": 1973,
+      "carrera": [
+        {
+          "club": "Napoli",
+          "inicio": 1992,
+          "fin": 1995
+        },
+        {
+          "club": "Parma",
+          "inicio": 1995,
+          "fin": 2002
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2002,
+          "fin": 2004
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2004,
+          "fin": 2006
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2006,
+          "fin": 2009
+        },
+        {
+          "club": "Al-Ahli",
+          "inicio": 2009,
+          "fin": 2010
+        }
+      ]
+    },
+    {
+      "nombre": "Gennaro Gattuso",
+      "nacionalidad": "Italia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1978,
+      "carrera": [
+        {
+          "club": "Perugia",
+          "inicio": 1996,
+          "fin": 1997
+        },
+        {
+          "club": "Rangers",
+          "inicio": 1997,
+          "fin": 1998
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 1999,
+          "fin": 2012
+        },
+        {
+          "club": "Sion",
+          "inicio": 2012,
+          "fin": 2013
+        }
+      ]
+    },
+    {
+      "nombre": "Daniele De Rossi",
+      "nacionalidad": "Italia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1983,
+      "carrera": [
+        {
+          "club": "Roma",
+          "inicio": 2001,
+          "fin": 2019
+        },
+        {
+          "club": "Boca Juniors",
+          "inicio": 2019,
+          "fin": 2019
+        }
+      ]
+    },
+    {
+      "nombre": "Gianluigi Donnarumma",
+      "nacionalidad": "Italia",
+      "posicion": "Arquero",
+      "nacimiento": 1999,
+      "carrera": [
+        {
+          "club": "AC Milan",
+          "inicio": 2015,
+          "fin": 2021
+        },
+        {
+          "club": "PSG",
+          "inicio": 2021,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Leonardo Bonucci",
+      "nacionalidad": "Italia",
+      "posicion": "Defensa",
+      "nacimiento": 1987,
+      "carrera": [
+        {
+          "club": "Inter de Milán",
+          "inicio": 2005,
+          "fin": 2005
+        },
+        {
+          "club": "Bari",
+          "inicio": 2009,
+          "fin": 2010
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2010,
+          "fin": 2017
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2017,
+          "fin": 2018
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2018,
+          "fin": 2024
+        }
+      ]
+    },
+    {
+      "nombre": "Giorgio Chiellini",
+      "nacionalidad": "Italia",
+      "posicion": "Defensa",
+      "nacimiento": 1984,
+      "carrera": [
+        {
+          "club": "Fiorentina",
+          "inicio": 2002,
+          "fin": 2004
+        },
+        {
+          "club": "Livorno",
+          "inicio": 2004,
+          "fin": 2005
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2005,
+          "fin": 2022
+        },
+        {
+          "club": "LA FC",
+          "inicio": 2022,
+          "fin": 2024
+        }
+      ]
+    },
+    {
+      "nombre": "Ciro Immobile",
+      "nacionalidad": "Italia",
+      "posicion": "Delantero",
+      "nacimiento": 1990,
+      "carrera": [
+        {
+          "club": "Juventus",
+          "inicio": 2009,
+          "fin": 2011
+        },
+        {
+          "club": "Genoa",
+          "inicio": 2011,
+          "fin": 2012
+        },
+        {
+          "club": "Torino",
+          "inicio": 2012,
+          "fin": 2013
+        },
+        {
+          "club": "Borussia Dortmund",
+          "inicio": 2014,
+          "fin": 2015
+        },
+        {
+          "club": "Sevilla",
+          "inicio": 2015,
+          "fin": 2016
+        },
+        {
+          "club": "Lazio",
+          "inicio": 2016,
+          "fin": 2024
+        },
+        {
+          "club": "Besiktas",
+          "inicio": 2024,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Kevin De Bruyne",
+      "nacionalidad": "Bélgica",
+      "posicion": "Mediocampista",
+      "nacimiento": 1991,
+      "carrera": [
+        {
+          "club": "Genk",
+          "inicio": 2008,
+          "fin": 2012
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2012,
+          "fin": 2014
+        },
+        {
+          "club": "Werder Bremen",
+          "inicio": 2012,
+          "fin": 2013
+        },
+        {
+          "club": "Wolfsburgo",
+          "inicio": 2014,
+          "fin": 2015
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2015,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Romelu Lukaku",
+      "nacionalidad": "Bélgica",
+      "posicion": "Delantero",
+      "nacimiento": 1993,
+      "carrera": [
+        {
+          "club": "Anderlecht",
+          "inicio": 2009,
+          "fin": 2011
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2011,
+          "fin": 2014
+        },
+        {
+          "club": "West Bromwich",
+          "inicio": 2012,
+          "fin": 2013
+        },
+        {
+          "club": "Everton",
+          "inicio": 2014,
+          "fin": 2017
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2017,
+          "fin": 2019
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2019,
+          "fin": 2021
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2021,
+          "fin": 2022
+        },
+        {
+          "club": "Roma",
+          "inicio": 2022,
+          "fin": 2023
+        },
+        {
+          "club": "Napoli",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Vincent Kompany",
+      "nacionalidad": "Bélgica",
+      "posicion": "Defensa",
+      "nacimiento": 1986,
+      "carrera": [
+        {
+          "club": "Anderlecht",
+          "inicio": 2003,
+          "fin": 2006
+        },
+        {
+          "club": "Hamburgo",
+          "inicio": 2006,
+          "fin": 2008
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2008,
+          "fin": 2019
+        }
+      ]
+    },
+    {
+      "nombre": "Thibaut Courtois",
+      "nacionalidad": "Bélgica",
+      "posicion": "Arquero",
+      "nacimiento": 1992,
+      "carrera": [
+        {
+          "club": "Genk",
+          "inicio": 2009,
+          "fin": 2011
+        },
+        {
+          "club": "Atlético de Madrid",
+          "inicio": 2011,
+          "fin": 2014
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2014,
+          "fin": 2018
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2018,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Dries Mertens",
+      "nacionalidad": "Bélgica",
+      "posicion": "Delantero",
+      "nacimiento": 1987,
+      "carrera": [
+        {
+          "club": "Utrecht",
+          "inicio": 2006,
+          "fin": 2009
+        },
+        {
+          "club": "PSV",
+          "inicio": 2009,
+          "fin": 2013
+        },
+        {
+          "club": "Napoli",
+          "inicio": 2013,
+          "fin": 2022
+        },
+        {
+          "club": "Galatasaray",
+          "inicio": 2022,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Didier Drogba",
+      "nacionalidad": "Costa de Marfil",
+      "posicion": "Delantero",
+      "nacimiento": 1978,
+      "carrera": [
+        {
+          "club": "Le Mans",
+          "inicio": 1998,
+          "fin": 2002
+        },
+        {
+          "club": "Guingamp",
+          "inicio": 2002,
+          "fin": 2003
+        },
+        {
+          "club": "Marsella",
+          "inicio": 2003,
+          "fin": 2004
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2004,
+          "fin": 2012
+        },
+        {
+          "club": "Shanghai Shenhua",
+          "inicio": 2012,
+          "fin": 2013
+        },
+        {
+          "club": "Galatasaray",
+          "inicio": 2013,
+          "fin": 2014
+        },
+        {
+          "club": "Montreal Impact",
+          "inicio": 2015,
+          "fin": 2016
+        }
+      ]
+    },
+    {
+      "nombre": "Yaya Touré",
+      "nacionalidad": "Costa de Marfil",
+      "posicion": "Mediocampista",
+      "nacimiento": 1983,
+      "carrera": [
+        {
+          "club": "Beveren",
+          "inicio": 2001,
+          "fin": 2003
+        },
+        {
+          "club": "Metalurh Donetsk",
+          "inicio": 2003,
+          "fin": 2005
+        },
+        {
+          "club": "Monaco",
+          "inicio": 2005,
+          "fin": 2006
+        },
+        {
+          "club": "Olympiacos",
+          "inicio": 2006,
+          "fin": 2007
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2007,
+          "fin": 2010
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2010,
+          "fin": 2018
+        }
+      ]
+    },
+    {
+      "nombre": "Sadio Mané",
+      "nacionalidad": "Senegal",
+      "posicion": "Delantero",
+      "nacimiento": 1992,
+      "carrera": [
+        {
+          "club": "Metz",
+          "inicio": 2011,
+          "fin": 2012
+        },
+        {
+          "club": "Red Bull Salzburgo",
+          "inicio": 2012,
+          "fin": 2014
+        },
+        {
+          "club": "Southampton",
+          "inicio": 2014,
+          "fin": 2016
+        },
+        {
+          "club": "Liverpool",
+          "inicio": 2016,
+          "fin": 2022
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2022,
+          "fin": 2023
+        },
+        {
+          "club": "Al-Nassr",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Mohamed Salah",
+      "nacionalidad": "Egipto",
+      "posicion": "Delantero",
+      "nacimiento": 1992,
+      "carrera": [
+        {
+          "club": "Al Mokawloon",
+          "inicio": 2010,
+          "fin": 2012
+        },
+        {
+          "club": "Basilea",
+          "inicio": 2012,
+          "fin": 2014
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2014,
+          "fin": 2016
+        },
+        {
+          "club": "Fiorentina",
+          "inicio": 2015,
+          "fin": 2015
+        },
+        {
+          "club": "Roma",
+          "inicio": 2015,
+          "fin": 2017
+        },
+        {
+          "club": "Liverpool",
+          "inicio": 2017,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Pierre-Emerick Aubameyang",
+      "nacionalidad": "Gabón",
+      "posicion": "Delantero",
+      "nacimiento": 1989,
+      "carrera": [
+        {
+          "club": "AC Milan",
+          "inicio": 2007,
+          "fin": 2008
+        },
+        {
+          "club": "Monaco",
+          "inicio": 2008,
+          "fin": 2011
+        },
+        {
+          "club": "Saint-Étienne",
+          "inicio": 2011,
+          "fin": 2012
+        },
+        {
+          "club": "Borussia Dortmund",
+          "inicio": 2013,
+          "fin": 2018
+        },
+        {
+          "club": "Arsenal",
+          "inicio": 2018,
+          "fin": 2022
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2022,
+          "fin": 2022
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2022,
+          "fin": 2023
+        },
+        {
+          "club": "Marsella",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Bruno Fernandes",
+      "nacionalidad": "Portugal",
+      "posicion": "Mediocampista",
+      "nacimiento": 1994,
+      "carrera": [
+        {
+          "club": "Boavista",
+          "inicio": 2012,
+          "fin": 2013
+        },
+        {
+          "club": "Novara",
+          "inicio": 2013,
+          "fin": 2013
+        },
+        {
+          "club": "Udinese",
+          "inicio": 2013,
+          "fin": 2017
+        },
+        {
+          "club": "Sampdoria",
+          "inicio": 2016,
+          "fin": 2017
+        },
+        {
+          "club": "Sporting CP",
+          "inicio": 2017,
+          "fin": 2020
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2020,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Bernardo Silva",
+      "nacionalidad": "Portugal",
+      "posicion": "Mediocampista",
+      "nacimiento": 1994,
+      "carrera": [
+        {
+          "club": "Benfica",
+          "inicio": 2012,
+          "fin": 2014
+        },
+        {
+          "club": "Monaco",
+          "inicio": 2014,
+          "fin": 2017
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2017,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Rúben Dias",
+      "nacionalidad": "Portugal",
+      "posicion": "Defensa",
+      "nacimiento": 1997,
+      "carrera": [
+        {
+          "club": "Benfica",
+          "inicio": 2016,
+          "fin": 2020
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2020,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Nani",
+      "nacionalidad": "Portugal",
+      "posicion": "Delantero",
+      "nacimiento": 1986,
+      "carrera": [
+        {
+          "club": "Sporting CP",
+          "inicio": 2005,
+          "fin": 2007
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2007,
+          "fin": 2015
+        },
+        {
+          "club": "Fenerbahçe",
+          "inicio": 2015,
+          "fin": 2017
+        },
+        {
+          "club": "Valencia",
+          "inicio": 2017,
+          "fin": 2018
+        },
+        {
+          "club": "Lazio",
+          "inicio": 2018,
+          "fin": 2019
+        },
+        {
+          "club": "Orlando City",
+          "inicio": 2019,
+          "fin": 2022
+        }
+      ]
+    },
+    {
+      "nombre": "Luís Figo",
+      "nacionalidad": "Portugal",
+      "posicion": "Delantero",
+      "nacimiento": 1972,
+      "carrera": [
+        {
+          "club": "Sporting CP",
+          "inicio": 1989,
+          "fin": 1995
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 1995,
+          "fin": 2000
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2000,
+          "fin": 2005
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2005,
+          "fin": 2009
+        }
+      ]
+    },
+    {
+      "nombre": "Isco",
+      "nacionalidad": "España",
+      "posicion": "Mediocampista",
+      "nacimiento": 1992,
+      "carrera": [
+        {
+          "club": "Valencia",
+          "inicio": 2010,
+          "fin": 2011
+        },
+        {
+          "club": "Málaga",
+          "inicio": 2011,
+          "fin": 2013
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2013,
+          "fin": 2020
+        },
+        {
+          "club": "Sevilla",
+          "inicio": 2020,
+          "fin": 2023
+        },
+        {
+          "club": "Union Berlín",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Koke",
+      "nacionalidad": "España",
+      "posicion": "Mediocampista",
+      "nacimiento": 1992,
+      "carrera": [
+        {
+          "club": "Atlético de Madrid",
+          "inicio": 2009,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Thiago Alcântara",
+      "nacionalidad": "España",
+      "posicion": "Mediocampista",
+      "nacimiento": 1991,
+      "carrera": [
+        {
+          "club": "Barcelona",
+          "inicio": 2009,
+          "fin": 2013
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2013,
+          "fin": 2020
+        },
+        {
+          "club": "Liverpool",
+          "inicio": 2020,
+          "fin": 2024
+        }
+      ]
+    },
+    {
+      "nombre": "Rodri",
+      "nacionalidad": "España",
+      "posicion": "Mediocampista",
+      "nacimiento": 1996,
+      "carrera": [
+        {
+          "club": "Real Madrid",
+          "inicio": 2015,
+          "fin": 2015
+        },
+        {
+          "club": "Villarreal",
+          "inicio": 2015,
+          "fin": 2018
+        },
+        {
+          "club": "Atlético de Madrid",
+          "inicio": 2018,
+          "fin": 2019
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2019,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Pedri",
+      "nacionalidad": "España",
+      "posicion": "Mediocampista",
+      "nacimiento": 2002,
+      "carrera": [
+        {
+          "club": "Las Palmas",
+          "inicio": 2019,
+          "fin": 2020
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2020,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Unai Simón",
+      "nacionalidad": "España",
+      "posicion": "Arquero",
+      "nacimiento": 1997,
+      "carrera": [
+        {
+          "club": "Athletic Club",
+          "inicio": 2017,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Zinedine Zidane",
+      "nacionalidad": "Francia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1972,
+      "carrera": [
+        {
+          "club": "Cannes",
+          "inicio": 1989,
+          "fin": 1992
+        },
+        {
+          "club": "Bordeaux",
+          "inicio": 1992,
+          "fin": 1996
+        },
+        {
+          "club": "Juventus",
+          "inicio": 1996,
+          "fin": 2001
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2001,
+          "fin": 2006
+        }
+      ]
+    },
+    {
+      "nombre": "Patrick Vieira",
+      "nacionalidad": "Francia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1976,
+      "carrera": [
+        {
+          "club": "Cannes",
+          "inicio": 1993,
+          "fin": 1995
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 1995,
+          "fin": 1996
+        },
+        {
+          "club": "Arsenal",
+          "inicio": 1996,
+          "fin": 2005
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2005,
+          "fin": 2006
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2006,
+          "fin": 2010
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2010,
+          "fin": 2011
+        }
+      ]
+    },
+    {
+      "nombre": "Marcel Desailly",
+      "nacionalidad": "Francia",
+      "posicion": "Defensa",
+      "nacimiento": 1968,
+      "carrera": [
+        {
+          "club": "Nantes",
+          "inicio": 1986,
+          "fin": 1992
+        },
+        {
+          "club": "Marsella",
+          "inicio": 1992,
+          "fin": 1993
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 1993,
+          "fin": 1998
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 1998,
+          "fin": 2004
+        }
+      ]
+    },
+    {
+      "nombre": "Lilian Thuram",
+      "nacionalidad": "Francia",
+      "posicion": "Defensa",
+      "nacimiento": 1972,
+      "carrera": [
+        {
+          "club": "Monaco",
+          "inicio": 1991,
+          "fin": 1996
+        },
+        {
+          "club": "Parma",
+          "inicio": 1996,
+          "fin": 2001
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2001,
+          "fin": 2006
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2006,
+          "fin": 2008
+        }
+      ]
+    },
+    {
+      "nombre": "Franck Ribéry",
+      "nacionalidad": "Francia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1983,
+      "carrera": [
+        {
+          "club": "Boulogne",
+          "inicio": 2000,
+          "fin": 2002
+        },
+        {
+          "club": "Brest",
+          "inicio": 2002,
+          "fin": 2004
+        },
+        {
+          "club": "Metz",
+          "inicio": 2004,
+          "fin": 2005
+        },
+        {
+          "club": "Galatasaray",
+          "inicio": 2005,
+          "fin": 2005
+        },
+        {
+          "club": "Marsella",
+          "inicio": 2005,
+          "fin": 2007
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2007,
+          "fin": 2019
+        },
+        {
+          "club": "Fiorentina",
+          "inicio": 2019,
+          "fin": 2021
+        },
+        {
+          "club": "Salernitana",
+          "inicio": 2021,
+          "fin": 2022
+        }
+      ]
+    },
+    {
+      "nombre": "N'Golo Kanté",
+      "nacionalidad": "Francia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1991,
+      "carrera": [
+        {
+          "club": "Boulogne",
+          "inicio": 2012,
+          "fin": 2013
+        },
+        {
+          "club": "Caen",
+          "inicio": 2013,
+          "fin": 2015
+        },
+        {
+          "club": "Leicester City",
+          "inicio": 2015,
+          "fin": 2016
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2016,
+          "fin": 2023
+        },
+        {
+          "club": "Al-Ittihad",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Paul Pogba",
+      "nacionalidad": "Francia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1993,
+      "carrera": [
+        {
+          "club": "Manchester United",
+          "inicio": 2011,
+          "fin": 2012
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2012,
+          "fin": 2016
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2016,
+          "fin": 2022
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2022,
+          "fin": 2024
+        }
+      ]
+    },
+    {
+      "nombre": "Olivier Giroud",
+      "nacionalidad": "Francia",
+      "posicion": "Delantero",
+      "nacimiento": 1986,
+      "carrera": [
+        {
+          "club": "Grenoble",
+          "inicio": 2005,
+          "fin": 2008
+        },
+        {
+          "club": "Tours",
+          "inicio": 2008,
+          "fin": 2010
+        },
+        {
+          "club": "Montpellier",
+          "inicio": 2010,
+          "fin": 2012
+        },
+        {
+          "club": "Arsenal",
+          "inicio": 2012,
+          "fin": 2018
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2018,
+          "fin": 2021
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2021,
+          "fin": 2024
+        },
+        {
+          "club": "Los Angeles FC",
+          "inicio": 2024,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Ousmane Dembélé",
+      "nacionalidad": "Francia",
+      "posicion": "Delantero",
+      "nacimiento": 1997,
+      "carrera": [
+        {
+          "club": "Rennes",
+          "inicio": 2015,
+          "fin": 2016
+        },
+        {
+          "club": "Borussia Dortmund",
+          "inicio": 2016,
+          "fin": 2017
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2017,
+          "fin": 2023
+        },
+        {
+          "club": "PSG",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Philipp Lahm",
+      "nacionalidad": "Alemania",
+      "posicion": "Defensa",
+      "nacimiento": 1983,
+      "carrera": [
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2002,
+          "fin": 2003
+        },
+        {
+          "club": "Stuttgart",
+          "inicio": 2003,
+          "fin": 2005
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2005,
+          "fin": 2017
+        }
+      ]
+    },
+    {
+      "nombre": "Bastian Schweinsteiger",
+      "nacionalidad": "Alemania",
+      "posicion": "Mediocampista",
+      "nacimiento": 1984,
+      "carrera": [
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2002,
+          "fin": 2015
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2015,
+          "fin": 2017
+        },
+        {
+          "club": "Chicago Fire",
+          "inicio": 2017,
+          "fin": 2019
+        }
+      ]
+    },
+    {
+      "nombre": "Miroslav Klose",
+      "nacionalidad": "Alemania",
+      "posicion": "Delantero",
+      "nacimiento": 1978,
+      "carrera": [
+        {
+          "club": "Homburg",
+          "inicio": 1999,
+          "fin": 2001
+        },
+        {
+          "club": "Kaiserslautern",
+          "inicio": 2001,
+          "fin": 2004
+        },
+        {
+          "club": "Werder Bremen",
+          "inicio": 2004,
+          "fin": 2007
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2007,
+          "fin": 2011
+        },
+        {
+          "club": "Lazio",
+          "inicio": 2011,
+          "fin": 2016
+        }
+      ]
+    },
+    {
+      "nombre": "Michael Ballack",
+      "nacionalidad": "Alemania",
+      "posicion": "Mediocampista",
+      "nacimiento": 1976,
+      "carrera": [
+        {
+          "club": "Chemnitzer",
+          "inicio": 1995,
+          "fin": 1997
+        },
+        {
+          "club": "Kaiserslautern",
+          "inicio": 1997,
+          "fin": 1999
+        },
+        {
+          "club": "Bayer Leverkusen",
+          "inicio": 1999,
+          "fin": 2002
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2002,
+          "fin": 2006
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2006,
+          "fin": 2010
+        },
+        {
+          "club": "Bayer Leverkusen",
+          "inicio": 2010,
+          "fin": 2012
+        }
+      ]
+    },
+    {
+      "nombre": "Mesut Özil",
+      "nacionalidad": "Alemania",
+      "posicion": "Mediocampista",
+      "nacimiento": 1988,
+      "carrera": [
+        {
+          "club": "Schalke 04",
+          "inicio": 2006,
+          "fin": 2008
+        },
+        {
+          "club": "Werder Bremen",
+          "inicio": 2008,
+          "fin": 2010
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2010,
+          "fin": 2013
+        },
+        {
+          "club": "Arsenal",
+          "inicio": 2013,
+          "fin": 2021
+        },
+        {
+          "club": "Fenerbahçe",
+          "inicio": 2021,
+          "fin": 2022
+        }
+      ]
+    },
+    {
+      "nombre": "Manuel Neuer",
+      "nacionalidad": "Alemania",
+      "posicion": "Arquero",
+      "nacimiento": 1986,
+      "carrera": [
+        {
+          "club": "Schalke 04",
+          "inicio": 2005,
+          "fin": 2011
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2011,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Mats Hummels",
+      "nacionalidad": "Alemania",
+      "posicion": "Defensa",
+      "nacimiento": 1988,
+      "carrera": [
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2006,
+          "fin": 2008
+        },
+        {
+          "club": "Borussia Dortmund",
+          "inicio": 2008,
+          "fin": 2016
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2016,
+          "fin": 2019
+        },
+        {
+          "club": "Borussia Dortmund",
+          "inicio": 2019,
+          "fin": 2023
+        },
+        {
+          "club": "Roma",
+          "inicio": 2023,
+          "fin": 2024
+        }
+      ]
+    },
+    {
+      "nombre": "Marco Reus",
+      "nacionalidad": "Alemania",
+      "posicion": "Mediocampista",
+      "nacimiento": 1989,
+      "carrera": [
+        {
+          "club": "Rot Weiss Ahlen",
+          "inicio": 2006,
+          "fin": 2009
+        },
+        {
+          "club": "Borussia Mönchengladbach",
+          "inicio": 2009,
+          "fin": 2012
+        },
+        {
+          "club": "Borussia Dortmund",
+          "inicio": 2012,
+          "fin": 2024
+        },
+        {
+          "club": "LA Galaxy",
+          "inicio": 2024,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "İlkay Gündoğan",
+      "nacionalidad": "Alemania",
+      "posicion": "Mediocampista",
+      "nacimiento": 1990,
+      "carrera": [
+        {
+          "club": "Nürnberg",
+          "inicio": 2009,
+          "fin": 2011
+        },
+        {
+          "club": "Borussia Dortmund",
+          "inicio": 2011,
+          "fin": 2016
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2016,
+          "fin": 2023
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Joshua Kimmich",
+      "nacionalidad": "Alemania",
+      "posicion": "Defensa",
+      "nacimiento": 1995,
+      "carrera": [
+        {
+          "club": "Stuttgart",
+          "inicio": 2013,
+          "fin": 2015
+        },
+        {
+          "club": "RB Leipzig",
+          "inicio": 2013,
+          "fin": 2015
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2015,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Timo Werner",
+      "nacionalidad": "Alemania",
+      "posicion": "Delantero",
+      "nacimiento": 1996,
+      "carrera": [
+        {
+          "club": "Stuttgart",
+          "inicio": 2013,
+          "fin": 2016
+        },
+        {
+          "club": "RB Leipzig",
+          "inicio": 2016,
+          "fin": 2020
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2020,
+          "fin": 2022
+        },
+        {
+          "club": "RB Leipzig",
+          "inicio": 2022,
+          "fin": 2023
+        },
+        {
+          "club": "Tottenham",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Antonio Rüdiger",
+      "nacionalidad": "Alemania",
+      "posicion": "Defensa",
+      "nacimiento": 1993,
+      "carrera": [
+        {
+          "club": "Stuttgart",
+          "inicio": 2011,
+          "fin": 2015
+        },
+        {
+          "club": "Roma",
+          "inicio": 2015,
+          "fin": 2017
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2017,
+          "fin": 2022
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2022,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Diego Simeone",
+      "nacionalidad": "Argentina",
+      "posicion": "Mediocampista",
+      "nacimiento": 1970,
+      "carrera": [
+        {
+          "club": "Vélez Sarsfield",
+          "inicio": 1987,
+          "fin": 1990
+        },
+        {
+          "club": "Pisa",
+          "inicio": 1990,
+          "fin": 1992
+        },
+        {
+          "club": "Sevilla",
+          "inicio": 1992,
+          "fin": 1994
+        },
+        {
+          "club": "Atlético de Madrid",
+          "inicio": 1994,
+          "fin": 1997
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 1997,
+          "fin": 1999
+        },
+        {
+          "club": "Lazio",
+          "inicio": 1999,
+          "fin": 2003
+        },
+        {
+          "club": "Racing Club",
+          "inicio": 2005,
+          "fin": 2006
+        }
+      ]
+    },
+    {
+      "nombre": "Gabriel Batistuta",
+      "nacionalidad": "Argentina",
+      "posicion": "Delantero",
+      "nacimiento": 1969,
+      "carrera": [
+        {
+          "club": "Newell's Old Boys",
+          "inicio": 1988,
+          "fin": 1989
+        },
+        {
+          "club": "River Plate",
+          "inicio": 1989,
+          "fin": 1990
+        },
+        {
+          "club": "Boca Juniors",
+          "inicio": 1990,
+          "fin": 1991
+        },
+        {
+          "club": "Fiorentina",
+          "inicio": 1991,
+          "fin": 2000
+        },
+        {
+          "club": "Roma",
+          "inicio": 2000,
+          "fin": 2003
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2003,
+          "fin": 2003
+        },
+        {
+          "club": "Al-Arabi",
+          "inicio": 2003,
+          "fin": 2005
+        }
+      ]
+    },
+    {
+      "nombre": "Hernán Crespo",
+      "nacionalidad": "Argentina",
+      "posicion": "Delantero",
+      "nacimiento": 1975,
+      "carrera": [
+        {
+          "club": "River Plate",
+          "inicio": 1993,
+          "fin": 1996
+        },
+        {
+          "club": "Parma",
+          "inicio": 1996,
+          "fin": 2000
+        },
+        {
+          "club": "Lazio",
+          "inicio": 2000,
+          "fin": 2002
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2002,
+          "fin": 2003
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2003,
+          "fin": 2004
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2004,
+          "fin": 2005
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2006,
+          "fin": 2009
+        },
+        {
+          "club": "Génova",
+          "inicio": 2009,
+          "fin": 2010
+        }
+      ]
+    },
+    {
+      "nombre": "Juan Román Riquelme",
+      "nacionalidad": "Argentina",
+      "posicion": "Mediocampista",
+      "nacimiento": 1978,
+      "carrera": [
+        {
+          "club": "Boca Juniors",
+          "inicio": 1996,
+          "fin": 2002
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2002,
+          "fin": 2003
+        },
+        {
+          "club": "Villarreal",
+          "inicio": 2003,
+          "fin": 2007
+        },
+        {
+          "club": "Boca Juniors",
+          "inicio": 2007,
+          "fin": 2013
+        },
+        {
+          "club": "Argentinos Juniors",
+          "inicio": 2013,
+          "fin": 2014
+        }
+      ]
+    },
+    {
+      "nombre": "Javier Zanetti",
+      "nacionalidad": "Argentina",
+      "posicion": "Defensa",
+      "nacimiento": 1973,
+      "carrera": [
+        {
+          "club": "Talleres",
+          "inicio": 1992,
+          "fin": 1993
+        },
+        {
+          "club": "Banfield",
+          "inicio": 1993,
+          "fin": 1995
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 1995,
+          "fin": 2014
+        }
+      ]
+    },
+    {
+      "nombre": "Javier Mascherano",
+      "nacionalidad": "Argentina",
+      "posicion": "Mediocampista",
+      "nacimiento": 1984,
+      "carrera": [
+        {
+          "club": "River Plate",
+          "inicio": 2002,
+          "fin": 2005
+        },
+        {
+          "club": "Corinthians",
+          "inicio": 2005,
+          "fin": 2006
+        },
+        {
+          "club": "West Ham",
+          "inicio": 2006,
+          "fin": 2007
+        },
+        {
+          "club": "Liverpool",
+          "inicio": 2007,
+          "fin": 2010
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2010,
+          "fin": 2018
+        },
+        {
+          "club": "Hebei",
+          "inicio": 2018,
+          "fin": 2019
+        },
+        {
+          "club": "Estudiantes",
+          "inicio": 2020,
+          "fin": 2023
+        }
+      ]
+    },
+    {
+      "nombre": "Gonzalo Higuaín",
+      "nacionalidad": "Argentina",
+      "posicion": "Delantero",
+      "nacimiento": 1987,
+      "carrera": [
+        {
+          "club": "River Plate",
+          "inicio": 2005,
+          "fin": 2007
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2007,
+          "fin": 2013
+        },
+        {
+          "club": "Napoli",
+          "inicio": 2013,
+          "fin": 2016
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2016,
+          "fin": 2019
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2018,
+          "fin": 2019
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2019,
+          "fin": 2019
+        },
+        {
+          "club": "Inter Miami",
+          "inicio": 2020,
+          "fin": 2023
+        }
+      ]
+    },
+    {
+      "nombre": "Ángel Di María",
+      "nacionalidad": "Argentina",
+      "posicion": "Delantero",
+      "nacimiento": 1988,
+      "carrera": [
+        {
+          "club": "Rosario Central",
+          "inicio": 2005,
+          "fin": 2007
+        },
+        {
+          "club": "Benfica",
+          "inicio": 2007,
+          "fin": 2010
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2010,
+          "fin": 2014
+        },
+        {
+          "club": "PSG",
+          "inicio": 2015,
+          "fin": 2022
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2022,
+          "fin": 2023
+        },
+        {
+          "club": "Benfica",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Sergio Agüero",
+      "nacionalidad": "Argentina",
+      "posicion": "Delantero",
+      "nacimiento": 1988,
+      "carrera": [
+        {
+          "club": "Independiente",
+          "inicio": 2003,
+          "fin": 2006
+        },
+        {
+          "club": "Atlético de Madrid",
+          "inicio": 2006,
+          "fin": 2011
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2011,
+          "fin": 2021
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2021,
+          "fin": 2021
+        }
+      ]
+    },
+    {
+      "nombre": "Carlos Tevez",
+      "nacionalidad": "Argentina",
+      "posicion": "Delantero",
+      "nacimiento": 1984,
+      "carrera": [
+        {
+          "club": "Boca Juniors",
+          "inicio": 2001,
+          "fin": 2004
+        },
+        {
+          "club": "West Ham",
+          "inicio": 2006,
+          "fin": 2007
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2007,
+          "fin": 2009
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2009,
+          "fin": 2013
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2013,
+          "fin": 2015
+        },
+        {
+          "club": "Boca Juniors",
+          "inicio": 2015,
+          "fin": 2017
+        },
+        {
+          "club": "Shanghai Shenhua",
+          "inicio": 2017,
+          "fin": 2018
+        }
+      ]
+    },
+    {
+      "nombre": "Rodrigo De Paul",
+      "nacionalidad": "Argentina",
+      "posicion": "Mediocampista",
+      "nacimiento": 1994,
+      "carrera": [
+        {
+          "club": "Racing Club",
+          "inicio": 2013,
+          "fin": 2014
+        },
+        {
+          "club": "Valencia",
+          "inicio": 2014,
+          "fin": 2019
+        },
+        {
+          "club": "Udinese",
+          "inicio": 2016,
+          "fin": 2021
+        },
+        {
+          "club": "Atlético de Madrid",
+          "inicio": 2021,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Julián Álvarez",
+      "nacionalidad": "Argentina",
+      "posicion": "Delantero",
+      "nacimiento": 2000,
+      "carrera": [
+        {
+          "club": "River Plate",
+          "inicio": 2018,
+          "fin": 2022
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2022,
+          "fin": 2024
+        },
+        {
+          "club": "Atlético de Madrid",
+          "inicio": 2024,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Lautaro Martínez",
+      "nacionalidad": "Argentina",
+      "posicion": "Delantero",
+      "nacimiento": 1997,
+      "carrera": [
+        {
+          "club": "Racing Club",
+          "inicio": 2016,
+          "fin": 2018
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2018,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Romário",
+      "nacionalidad": "Brasil",
+      "posicion": "Delantero",
+      "nacimiento": 1966,
+      "carrera": [
+        {
+          "club": "Vasco da Gama",
+          "inicio": 1985,
+          "fin": 1988
+        },
+        {
+          "club": "PSV",
+          "inicio": 1988,
+          "fin": 1993
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 1993,
+          "fin": 1995
+        },
+        {
+          "club": "Flamengo",
+          "inicio": 1995,
+          "fin": 1996
+        },
+        {
+          "club": "Valencia",
+          "inicio": 1996,
+          "fin": 1997
+        }
+      ]
+    },
+    {
+      "nombre": "Cafu",
+      "nacionalidad": "Brasil",
+      "posicion": "Defensa",
+      "nacimiento": 1970,
+      "carrera": [
+        {
+          "club": "São Paulo",
+          "inicio": 1989,
+          "fin": 1994
+        },
+        {
+          "club": "Zaragoza",
+          "inicio": 1994,
+          "fin": 1995
+        },
+        {
+          "club": "Palmeiras",
+          "inicio": 1995,
+          "fin": 1997
+        },
+        {
+          "club": "Roma",
+          "inicio": 1997,
+          "fin": 2003
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2003,
+          "fin": 2008
+        }
+      ]
+    },
+    {
+      "nombre": "Roberto Carlos",
+      "nacionalidad": "Brasil",
+      "posicion": "Defensa",
+      "nacimiento": 1973,
+      "carrera": [
+        {
+          "club": "Palmeiras",
+          "inicio": 1991,
+          "fin": 1993
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 1995,
+          "fin": 1996
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 1996,
+          "fin": 2007
+        },
+        {
+          "club": "Fenerbahçe",
+          "inicio": 2007,
+          "fin": 2008
+        },
+        {
+          "club": "Corinthians",
+          "inicio": 2008,
+          "fin": 2009
+        },
+        {
+          "club": "Anzhi",
+          "inicio": 2010,
+          "fin": 2011
+        }
+      ]
+    },
+    {
+      "nombre": "Kaká",
+      "nacionalidad": "Brasil",
+      "posicion": "Mediocampista",
+      "nacimiento": 1982,
+      "carrera": [
+        {
+          "club": "São Paulo",
+          "inicio": 2001,
+          "fin": 2003
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2003,
+          "fin": 2009
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2009,
+          "fin": 2013
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2013,
+          "fin": 2014
+        },
+        {
+          "club": "Orlando City",
+          "inicio": 2014,
+          "fin": 2017
+        }
+      ]
+    },
+    {
+      "nombre": "Thiago Silva",
+      "nacionalidad": "Brasil",
+      "posicion": "Defensa",
+      "nacimiento": 1984,
+      "carrera": [
+        {
+          "club": "Fluminense",
+          "inicio": 2003,
+          "fin": 2004
+        },
+        {
+          "club": "Dinamo Moscú",
+          "inicio": 2005,
+          "fin": 2006
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2009,
+          "fin": 2012
+        },
+        {
+          "club": "PSG",
+          "inicio": 2012,
+          "fin": 2020
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2020,
+          "fin": 2024
+        },
+        {
+          "club": "Fluminense",
+          "inicio": 2024,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Marcelo",
+      "nacionalidad": "Brasil",
+      "posicion": "Defensa",
+      "nacimiento": 1988,
+      "carrera": [
+        {
+          "club": "Fluminense",
+          "inicio": 2005,
+          "fin": 2007
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2007,
+          "fin": 2022
+        },
+        {
+          "club": "Olympiacos",
+          "inicio": 2022,
+          "fin": 2023
+        },
+        {
+          "club": "Fluminense",
+          "inicio": 2023,
+          "fin": 2024
+        }
+      ]
+    },
+    {
+      "nombre": "Casemiro",
+      "nacionalidad": "Brasil",
+      "posicion": "Mediocampista",
+      "nacimiento": 1992,
+      "carrera": [
+        {
+          "club": "São Paulo",
+          "inicio": 2010,
+          "fin": 2013
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2013,
+          "fin": 2022
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2022,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Fabinho",
+      "nacionalidad": "Brasil",
+      "posicion": "Mediocampista",
+      "nacimiento": 1993,
+      "carrera": [
+        {
+          "club": "Fluminense",
+          "inicio": 2012,
+          "fin": 2013
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2013,
+          "fin": 2013
+        },
+        {
+          "club": "Monaco",
+          "inicio": 2013,
+          "fin": 2018
+        },
+        {
+          "club": "Liverpool",
+          "inicio": 2018,
+          "fin": 2023
+        },
+        {
+          "club": "Al-Ittihad",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Philippe Coutinho",
+      "nacionalidad": "Brasil",
+      "posicion": "Mediocampista",
+      "nacimiento": 1992,
+      "carrera": [
+        {
+          "club": "Vasco da Gama",
+          "inicio": 2008,
+          "fin": 2010
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2010,
+          "fin": 2013
+        },
+        {
+          "club": "Espanyol",
+          "inicio": 2012,
+          "fin": 2012
+        },
+        {
+          "club": "Liverpool",
+          "inicio": 2013,
+          "fin": 2018
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2018,
+          "fin": 2022
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2019,
+          "fin": 2020
+        },
+        {
+          "club": "Aston Villa",
+          "inicio": 2022,
+          "fin": 2023
+        }
+      ]
+    },
+    {
+      "nombre": "Vinícius Júnior",
+      "nacionalidad": "Brasil",
+      "posicion": "Delantero",
+      "nacimiento": 2000,
+      "carrera": [
+        {
+          "club": "Flamengo",
+          "inicio": 2017,
+          "fin": 2018
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2018,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Rodrygo",
+      "nacionalidad": "Brasil",
+      "posicion": "Delantero",
+      "nacimiento": 2001,
+      "carrera": [
+        {
+          "club": "Santos",
+          "inicio": 2018,
+          "fin": 2019
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2019,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Gabriel Jesus",
+      "nacionalidad": "Brasil",
+      "posicion": "Delantero",
+      "nacimiento": 1997,
+      "carrera": [
+        {
+          "club": "Palmeiras",
+          "inicio": 2015,
+          "fin": 2017
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2017,
+          "fin": 2022
+        },
+        {
+          "club": "Arsenal",
+          "inicio": 2022,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "James Rodríguez",
+      "nacionalidad": "Colombia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1991,
+      "carrera": [
+        {
+          "club": "Envigado",
+          "inicio": 2008,
+          "fin": 2008
+        },
+        {
+          "club": "Banfield",
+          "inicio": 2008,
+          "fin": 2010
+        },
+        {
+          "club": "Porto",
+          "inicio": 2010,
+          "fin": 2013
+        },
+        {
+          "club": "Monaco",
+          "inicio": 2013,
+          "fin": 2014
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2014,
+          "fin": 2017
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2017,
+          "fin": 2019
+        },
+        {
+          "club": "Everton",
+          "inicio": 2020,
+          "fin": 2021
+        },
+        {
+          "club": "Al-Rayyan",
+          "inicio": 2021,
+          "fin": 2022
+        },
+        {
+          "club": "Olympiacos",
+          "inicio": 2022,
+          "fin": 2023
+        },
+        {
+          "club": "São Paulo",
+          "inicio": 2023,
+          "fin": 2023
+        },
+        {
+          "club": "Rayo Vallecano",
+          "inicio": 2024,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Radamel Falcao",
+      "nacionalidad": "Colombia",
+      "posicion": "Delantero",
+      "nacimiento": 1986,
+      "carrera": [
+        {
+          "club": "River Plate",
+          "inicio": 2005,
+          "fin": 2009
+        },
+        {
+          "club": "Porto",
+          "inicio": 2009,
+          "fin": 2011
+        },
+        {
+          "club": "Atlético de Madrid",
+          "inicio": 2011,
+          "fin": 2013
+        },
+        {
+          "club": "Monaco",
+          "inicio": 2013,
+          "fin": 2019
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2014,
+          "fin": 2015
+        },
+        {
+          "club": "Galatasaray",
+          "inicio": 2019,
+          "fin": 2022
+        },
+        {
+          "club": "Rayo Vallecano",
+          "inicio": 2022,
+          "fin": 2024
+        }
+      ]
+    },
+    {
+      "nombre": "Juan Cuadrado",
+      "nacionalidad": "Colombia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1988,
+      "carrera": [
+        {
+          "club": "Independiente Medellín",
+          "inicio": 2008,
+          "fin": 2009
+        },
+        {
+          "club": "Udinese",
+          "inicio": 2009,
+          "fin": 2012
+        },
+        {
+          "club": "Lille",
+          "inicio": 2011,
+          "fin": 2012
+        },
+        {
+          "club": "Fiorentina",
+          "inicio": 2012,
+          "fin": 2015
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2015,
+          "fin": 2015
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2015,
+          "fin": 2023
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2023,
+          "fin": 2024
+        }
+      ]
+    },
+    {
+      "nombre": "Diego Forlán",
+      "nacionalidad": "Uruguay",
+      "posicion": "Delantero",
+      "nacimiento": 1979,
+      "carrera": [
+        {
+          "club": "Independiente",
+          "inicio": 1998,
+          "fin": 2002
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2002,
+          "fin": 2004
+        },
+        {
+          "club": "Villarreal",
+          "inicio": 2004,
+          "fin": 2007
+        },
+        {
+          "club": "Atlético de Madrid",
+          "inicio": 2007,
+          "fin": 2011
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2011,
+          "fin": 2012
+        },
+        {
+          "club": "Cerezo Osaka",
+          "inicio": 2012,
+          "fin": 2014
+        }
+      ]
+    },
+    {
+      "nombre": "Edinson Cavani",
+      "nacionalidad": "Uruguay",
+      "posicion": "Delantero",
+      "nacimiento": 1987,
+      "carrera": [
+        {
+          "club": "Danubio",
+          "inicio": 2005,
+          "fin": 2007
+        },
+        {
+          "club": "Palermo",
+          "inicio": 2007,
+          "fin": 2010
+        },
+        {
+          "club": "Napoli",
+          "inicio": 2010,
+          "fin": 2013
+        },
+        {
+          "club": "PSG",
+          "inicio": 2013,
+          "fin": 2020
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2020,
+          "fin": 2022
+        },
+        {
+          "club": "Valencia",
+          "inicio": 2022,
+          "fin": 2023
+        },
+        {
+          "club": "Boca Juniors",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Diego Godín",
+      "nacionalidad": "Uruguay",
+      "posicion": "Defensa",
+      "nacimiento": 1986,
+      "carrera": [
+        {
+          "club": "Nacional",
+          "inicio": 2005,
+          "fin": 2007
+        },
+        {
+          "club": "Villarreal",
+          "inicio": 2007,
+          "fin": 2010
+        },
+        {
+          "club": "Atlético de Madrid",
+          "inicio": 2010,
+          "fin": 2019
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2019,
+          "fin": 2020
+        },
+        {
+          "club": "Cagliari",
+          "inicio": 2020,
+          "fin": 2022
+        },
+        {
+          "club": "Vélez Sarsfield",
+          "inicio": 2022,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Federico Valverde",
+      "nacionalidad": "Uruguay",
+      "posicion": "Mediocampista",
+      "nacimiento": 1998,
+      "carrera": [
+        {
+          "club": "Peñarol",
+          "inicio": 2016,
+          "fin": 2016
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2016,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Darwin Núñez",
+      "nacionalidad": "Uruguay",
+      "posicion": "Delantero",
+      "nacimiento": 1999,
+      "carrera": [
+        {
+          "club": "Peñarol",
+          "inicio": 2017,
+          "fin": 2019
+        },
+        {
+          "club": "Almería",
+          "inicio": 2019,
+          "fin": 2020
+        },
+        {
+          "club": "Benfica",
+          "inicio": 2020,
+          "fin": 2022
+        },
+        {
+          "club": "Liverpool",
+          "inicio": 2022,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Marcelo Salas",
+      "nacionalidad": "Chile",
+      "posicion": "Delantero",
+      "nacimiento": 1974,
+      "carrera": [
+        {
+          "club": "Universidad de Chile",
+          "inicio": 1993,
+          "fin": 1996
+        },
+        {
+          "club": "River Plate",
+          "inicio": 1996,
+          "fin": 1998
+        },
+        {
+          "club": "Lazio",
+          "inicio": 1998,
+          "fin": 2001
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2001,
+          "fin": 2003
+        },
+        {
+          "club": "River Plate",
+          "inicio": 2003,
+          "fin": 2004
+        },
+        {
+          "club": "Universidad de Chile",
+          "inicio": 2005,
+          "fin": 2008
+        }
+      ]
+    },
+    {
+      "nombre": "Iván Zamorano",
+      "nacionalidad": "Chile",
+      "posicion": "Delantero",
+      "nacimiento": 1967,
+      "carrera": [
+        {
+          "club": "Universidad Católica",
+          "inicio": 1986,
+          "fin": 1988
+        },
+        {
+          "club": "St. Gallen",
+          "inicio": 1988,
+          "fin": 1991
+        },
+        {
+          "club": "Sevilla",
+          "inicio": 1991,
+          "fin": 1992
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 1992,
+          "fin": 1996
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 1996,
+          "fin": 2001
+        },
+        {
+          "club": "Málaga",
+          "inicio": 2001,
+          "fin": 2003
+        }
+      ]
+    },
+    {
+      "nombre": "Claudio Bravo",
+      "nacionalidad": "Chile",
+      "posicion": "Arquero",
+      "nacimiento": 1983,
+      "carrera": [
+        {
+          "club": "Colo-Colo",
+          "inicio": 2001,
+          "fin": 2006
+        },
+        {
+          "club": "Real Sociedad",
+          "inicio": 2006,
+          "fin": 2014
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2014,
+          "fin": 2016
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2016,
+          "fin": 2020
+        },
+        {
+          "club": "Betis",
+          "inicio": 2020,
+          "fin": 2022
+        }
+      ]
+    },
+    {
+      "nombre": "Gary Medel",
+      "nacionalidad": "Chile",
+      "posicion": "Defensa",
+      "nacimiento": 1987,
+      "carrera": [
+        {
+          "club": "Universidad Católica",
+          "inicio": 2005,
+          "fin": 2009
+        },
+        {
+          "club": "Boca Juniors",
+          "inicio": 2009,
+          "fin": 2011
+        },
+        {
+          "club": "Sevilla",
+          "inicio": 2011,
+          "fin": 2013
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2014,
+          "fin": 2017
+        },
+        {
+          "club": "West Ham",
+          "inicio": 2017,
+          "fin": 2018
+        },
+        {
+          "club": "Besiktas",
+          "inicio": 2018,
+          "fin": 2021
+        },
+        {
+          "club": "Bologna",
+          "inicio": 2021,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "José Luis Chilavert",
+      "nacionalidad": "Paraguay",
+      "posicion": "Arquero",
+      "nacimiento": 1965,
+      "carrera": [
+        {
+          "club": "Sportivo Luqueño",
+          "inicio": 1982,
+          "fin": 1985
+        },
+        {
+          "club": "Guaraní",
+          "inicio": 1985,
+          "fin": 1988
+        },
+        {
+          "club": "Peñarol",
+          "inicio": 1988,
+          "fin": 1990
+        },
+        {
+          "club": "Vélez Sarsfield",
+          "inicio": 1990,
+          "fin": 1996
+        },
+        {
+          "club": "Strasbourg",
+          "inicio": 1996,
+          "fin": 2003
+        }
+      ]
+    },
+    {
+      "nombre": "Roque Santa Cruz",
+      "nacionalidad": "Paraguay",
+      "posicion": "Delantero",
+      "nacimiento": 1981,
+      "carrera": [
+        {
+          "club": "Olimpia",
+          "inicio": 1997,
+          "fin": 1998
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 1999,
+          "fin": 2007
+        },
+        {
+          "club": "Blackburn",
+          "inicio": 2007,
+          "fin": 2009
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2009,
+          "fin": 2011
+        },
+        {
+          "club": "Málaga",
+          "inicio": 2011,
+          "fin": 2012
+        },
+        {
+          "club": "Cruz Azul",
+          "inicio": 2013,
+          "fin": 2013
+        }
+      ]
+    },
+    {
+      "nombre": "Teófilo Cubillas",
+      "nacionalidad": "Perú",
+      "posicion": "Mediocampista",
+      "nacimiento": 1949,
+      "carrera": [
+        {
+          "club": "Alianza Lima",
+          "inicio": 1967,
+          "fin": 1972
+        },
+        {
+          "club": "Basilea",
+          "inicio": 1973,
+          "fin": 1976
+        },
+        {
+          "club": "Porto",
+          "inicio": 1976,
+          "fin": 1979
+        },
+        {
+          "club": "Alianza Lima",
+          "inicio": 1979,
+          "fin": 1980
+        },
+        {
+          "club": "Fort Lauderdale Strikers",
+          "inicio": 1980,
+          "fin": 1983
+        }
+      ]
+    },
+    {
+      "nombre": "Paolo Guerrero",
+      "nacionalidad": "Perú",
+      "posicion": "Delantero",
+      "nacimiento": 1984,
+      "carrera": [
+        {
+          "club": "Alianza Lima",
+          "inicio": 2002,
+          "fin": 2003
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2003,
+          "fin": 2006
+        },
+        {
+          "club": "Hamburgo",
+          "inicio": 2006,
+          "fin": 2012
+        },
+        {
+          "club": "Corinthians",
+          "inicio": 2012,
+          "fin": 2015
+        },
+        {
+          "club": "Flamengo",
+          "inicio": 2015,
+          "fin": 2019
+        },
+        {
+          "club": "Internacional",
+          "inicio": 2019,
+          "fin": 2022
+        },
+        {
+          "club": "Racing Club",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Antonio Valencia",
+      "nacionalidad": "Ecuador",
+      "posicion": "Delantero",
+      "nacimiento": 1985,
+      "carrera": [
+        {
+          "club": "El Nacional",
+          "inicio": 2003,
+          "fin": 2005
+        },
+        {
+          "club": "Villarreal",
+          "inicio": 2005,
+          "fin": 2006
+        },
+        {
+          "club": "Wigan",
+          "inicio": 2006,
+          "fin": 2009
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2009,
+          "fin": 2019
+        }
+      ]
+    },
+    {
+      "nombre": "Moisés Caicedo",
+      "nacionalidad": "Ecuador",
+      "posicion": "Mediocampista",
+      "nacimiento": 2001,
+      "carrera": [
+        {
+          "club": "Independiente del Valle",
+          "inicio": 2019,
+          "fin": 2021
+        },
+        {
+          "club": "Brighton",
+          "inicio": 2021,
+          "fin": 2023
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Landon Donovan",
+      "nacionalidad": "Estados Unidos",
+      "posicion": "Delantero",
+      "nacimiento": 1982,
+      "carrera": [
+        {
+          "club": "Bayer Leverkusen",
+          "inicio": 1999,
+          "fin": 2001
+        },
+        {
+          "club": "San Jose Earthquakes",
+          "inicio": 2001,
+          "fin": 2005
+        },
+        {
+          "club": "LA Galaxy",
+          "inicio": 2005,
+          "fin": 2016
+        },
+        {
+          "club": "Everton",
+          "inicio": 2010,
+          "fin": 2010
+        }
+      ]
+    },
+    {
+      "nombre": "Christian Pulisic",
+      "nacionalidad": "Estados Unidos",
+      "posicion": "Mediocampista",
+      "nacimiento": 1998,
+      "carrera": [
+        {
+          "club": "Borussia Dortmund",
+          "inicio": 2015,
+          "fin": 2019
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2019,
+          "fin": 2023
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Alphonso Davies",
+      "nacionalidad": "Canadá",
+      "posicion": "Defensa",
+      "nacimiento": 2000,
+      "carrera": [
+        {
+          "club": "Vancouver Whitecaps",
+          "inicio": 2016,
+          "fin": 2018
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2019,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Son Heung-min",
+      "nacionalidad": "Corea del Sur",
+      "posicion": "Delantero",
+      "nacimiento": 1992,
+      "carrera": [
+        {
+          "club": "Hamburgo",
+          "inicio": 2010,
+          "fin": 2013
+        },
+        {
+          "club": "Bayer Leverkusen",
+          "inicio": 2013,
+          "fin": 2015
+        },
+        {
+          "club": "Tottenham",
+          "inicio": 2015,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Kim Min-jae",
+      "nacionalidad": "Corea del Sur",
+      "posicion": "Defensa",
+      "nacimiento": 1996,
+      "carrera": [
+        {
+          "club": "Jeonbuk Hyundai Motors",
+          "inicio": 2017,
+          "fin": 2019
+        },
+        {
+          "club": "Beijing Guoan",
+          "inicio": 2019,
+          "fin": 2021
+        },
+        {
+          "club": "Fenerbahçe",
+          "inicio": 2021,
+          "fin": 2022
+        },
+        {
+          "club": "Napoli",
+          "inicio": 2022,
+          "fin": 2023
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Shinji Kagawa",
+      "nacionalidad": "Japón",
+      "posicion": "Mediocampista",
+      "nacimiento": 1989,
+      "carrera": [
+        {
+          "club": "Cerezo Osaka",
+          "inicio": 2006,
+          "fin": 2010
+        },
+        {
+          "club": "Borussia Dortmund",
+          "inicio": 2010,
+          "fin": 2012
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2012,
+          "fin": 2014
+        },
+        {
+          "club": "Borussia Dortmund",
+          "inicio": 2014,
+          "fin": 2019
+        },
+        {
+          "club": "Besiktas",
+          "inicio": 2019,
+          "fin": 2020
+        },
+        {
+          "club": "PAOK",
+          "inicio": 2021,
+          "fin": 2022
+        },
+        {
+          "club": "Cerezo Osaka",
+          "inicio": 2022,
+          "fin": 2023
+        }
+      ]
+    },
+    {
+      "nombre": "Takefusa Kubo",
+      "nacionalidad": "Japón",
+      "posicion": "Delantero",
+      "nacimiento": 2001,
+      "carrera": [
+        {
+          "club": "FC Tokio",
+          "inicio": 2019,
+          "fin": 2019
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2019,
+          "fin": 2019
+        },
+        {
+          "club": "Villarreal",
+          "inicio": 2019,
+          "fin": 2020
+        },
+        {
+          "club": "Mallorca",
+          "inicio": 2020,
+          "fin": 2021
+        },
+        {
+          "club": "Getafe",
+          "inicio": 2021,
+          "fin": 2022
+        },
+        {
+          "club": "Real Sociedad",
+          "inicio": 2022,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Edin Džeko",
+      "nacionalidad": "Bosnia y Herzegovina",
+      "posicion": "Delantero",
+      "nacimiento": 1986,
+      "carrera": [
+        {
+          "club": "Zeljeznicar",
+          "inicio": 2005,
+          "fin": 2007
+        },
+        {
+          "club": "Teplice",
+          "inicio": 2007,
+          "fin": 2007
+        },
+        {
+          "club": "Wolfsburgo",
+          "inicio": 2007,
+          "fin": 2011
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2011,
+          "fin": 2015
+        },
+        {
+          "club": "Roma",
+          "inicio": 2015,
+          "fin": 2021
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2021,
+          "fin": 2023
+        },
+        {
+          "club": "Fenerbahçe",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Ivan Rakitić",
+      "nacionalidad": "Croacia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1988,
+      "carrera": [
+        {
+          "club": "Basilea",
+          "inicio": 2005,
+          "fin": 2007
+        },
+        {
+          "club": "Schalke 04",
+          "inicio": 2007,
+          "fin": 2011
+        },
+        {
+          "club": "Sevilla",
+          "inicio": 2011,
+          "fin": 2014
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2014,
+          "fin": 2020
+        },
+        {
+          "club": "Sevilla",
+          "inicio": 2020,
+          "fin": 2023
+        },
+        {
+          "club": "Al-Shabab",
+          "inicio": 2023,
+          "fin": 2024
+        }
+      ]
+    },
+    {
+      "nombre": "Mario Mandžukić",
+      "nacionalidad": "Croacia",
+      "posicion": "Delantero",
+      "nacimiento": 1986,
+      "carrera": [
+        {
+          "club": "Dinamo Zagreb",
+          "inicio": 2007,
+          "fin": 2010
+        },
+        {
+          "club": "Wolfsburgo",
+          "inicio": 2010,
+          "fin": 2012
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2012,
+          "fin": 2014
+        },
+        {
+          "club": "Atlético de Madrid",
+          "inicio": 2014,
+          "fin": 2015
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2015,
+          "fin": 2019
+        },
+        {
+          "club": "Al-Duhail",
+          "inicio": 2020,
+          "fin": 2021
+        }
+      ]
+    },
+    {
+      "nombre": "Nemanja Vidić",
+      "nacionalidad": "Serbia",
+      "posicion": "Defensa",
+      "nacimiento": 1981,
+      "carrera": [
+        {
+          "club": "Red Star Belgrado",
+          "inicio": 2000,
+          "fin": 2004
+        },
+        {
+          "club": "Spartak Moscú",
+          "inicio": 2004,
+          "fin": 2006
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2006,
+          "fin": 2014
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2014,
+          "fin": 2015
+        }
+      ]
+    },
+    {
+      "nombre": "Dušan Tadić",
+      "nacionalidad": "Serbia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1988,
+      "carrera": [
+        {
+          "club": "Vojvodina",
+          "inicio": 2006,
+          "fin": 2010
+        },
+        {
+          "club": "Groningen",
+          "inicio": 2010,
+          "fin": 2012
+        },
+        {
+          "club": "Twente",
+          "inicio": 2012,
+          "fin": 2014
+        },
+        {
+          "club": "Southampton",
+          "inicio": 2014,
+          "fin": 2018
+        },
+        {
+          "club": "Ajax",
+          "inicio": 2018,
+          "fin": 2023
+        },
+        {
+          "club": "Fenerbahçe",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Jan Oblak",
+      "nacionalidad": "Eslovenia",
+      "posicion": "Arquero",
+      "nacimiento": 1993,
+      "carrera": [
+        {
+          "club": "Olimpija Ljubljana",
+          "inicio": 2010,
+          "fin": 2010
+        },
+        {
+          "club": "Benfica",
+          "inicio": 2010,
+          "fin": 2014
+        },
+        {
+          "club": "Atlético de Madrid",
+          "inicio": 2014,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Marek Hamšík",
+      "nacionalidad": "Eslovaquia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1987,
+      "carrera": [
+        {
+          "club": "Slovan Bratislava",
+          "inicio": 2004,
+          "fin": 2004
+        },
+        {
+          "club": "Brescia",
+          "inicio": 2004,
+          "fin": 2007
+        },
+        {
+          "club": "Napoli",
+          "inicio": 2007,
+          "fin": 2019
+        },
+        {
+          "club": "Dalian Pro",
+          "inicio": 2019,
+          "fin": 2022
+        },
+        {
+          "club": "Trabzonspor",
+          "inicio": 2022,
+          "fin": 2023
+        },
+        {
+          "club": "Göztepe",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Petr Čech",
+      "nacionalidad": "República Checa",
+      "posicion": "Arquero",
+      "nacimiento": 1982,
+      "carrera": [
+        {
+          "club": "Chmel Blsany",
+          "inicio": 1999,
+          "fin": 2001
+        },
+        {
+          "club": "Sparta Praga",
+          "inicio": 2001,
+          "fin": 2002
+        },
+        {
+          "club": "Rennes",
+          "inicio": 2002,
+          "fin": 2004
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2004,
+          "fin": 2015
+        },
+        {
+          "club": "Arsenal",
+          "inicio": 2015,
+          "fin": 2019
+        }
+      ]
+    },
+    {
+      "nombre": "Wojciech Szczęsny",
+      "nacionalidad": "Polonia",
+      "posicion": "Arquero",
+      "nacimiento": 1990,
+      "carrera": [
+        {
+          "club": "Legia Varsovia",
+          "inicio": 2006,
+          "fin": 2007
+        },
+        {
+          "club": "Arsenal",
+          "inicio": 2007,
+          "fin": 2015
+        },
+        {
+          "club": "Roma",
+          "inicio": 2015,
+          "fin": 2017
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2017,
+          "fin": 2024
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2024,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Alan Shearer",
+      "nacionalidad": "Inglaterra",
+      "posicion": "Delantero",
+      "nacimiento": 1970,
+      "carrera": [
+        {
+          "club": "Southampton",
+          "inicio": 1988,
+          "fin": 1992
+        },
+        {
+          "club": "Blackburn Rovers",
+          "inicio": 1992,
+          "fin": 1996
+        },
+        {
+          "club": "Newcastle",
+          "inicio": 1996,
+          "fin": 2006
+        }
+      ]
+    },
+    {
+      "nombre": "Michael Owen",
+      "nacionalidad": "Inglaterra",
+      "posicion": "Delantero",
+      "nacimiento": 1979,
+      "carrera": [
+        {
+          "club": "Liverpool",
+          "inicio": 1996,
+          "fin": 2004
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2004,
+          "fin": 2005
+        },
+        {
+          "club": "Newcastle",
+          "inicio": 2005,
+          "fin": 2009
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2009,
+          "fin": 2012
+        },
+        {
+          "club": "Stoke City",
+          "inicio": 2012,
+          "fin": 2013
+        }
+      ]
+    },
+    {
+      "nombre": "Frank Lampard",
+      "nacionalidad": "Inglaterra",
+      "posicion": "Mediocampista",
+      "nacimiento": 1978,
+      "carrera": [
+        {
+          "club": "West Ham",
+          "inicio": 1995,
+          "fin": 2001
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2001,
+          "fin": 2014
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2014,
+          "fin": 2015
+        },
+        {
+          "club": "New York City FC",
+          "inicio": 2015,
+          "fin": 2016
+        }
+      ]
+    },
+    {
+      "nombre": "Steven Gerrard",
+      "nacionalidad": "Inglaterra",
+      "posicion": "Mediocampista",
+      "nacimiento": 1980,
+      "carrera": [
+        {
+          "club": "Liverpool",
+          "inicio": 1998,
+          "fin": 2015
+        },
+        {
+          "club": "LA Galaxy",
+          "inicio": 2015,
+          "fin": 2016
+        }
+      ]
+    },
+    {
+      "nombre": "Wayne Rooney",
+      "nacionalidad": "Inglaterra",
+      "posicion": "Delantero",
+      "nacimiento": 1985,
+      "carrera": [
+        {
+          "club": "Everton",
+          "inicio": 2002,
+          "fin": 2004
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2004,
+          "fin": 2017
+        },
+        {
+          "club": "Everton",
+          "inicio": 2017,
+          "fin": 2018
+        },
+        {
+          "club": "DC United",
+          "inicio": 2018,
+          "fin": 2019
+        },
+        {
+          "club": "Derby County",
+          "inicio": 2020,
+          "fin": 2020
+        }
+      ]
+    },
+    {
+      "nombre": "Rio Ferdinand",
+      "nacionalidad": "Inglaterra",
+      "posicion": "Defensa",
+      "nacimiento": 1978,
+      "carrera": [
+        {
+          "club": "West Ham",
+          "inicio": 1995,
+          "fin": 2000
+        },
+        {
+          "club": "Leeds United",
+          "inicio": 2000,
+          "fin": 2002
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2002,
+          "fin": 2014
+        },
+        {
+          "club": "QPR",
+          "inicio": 2014,
+          "fin": 2015
+        }
+      ]
+    },
+    {
+      "nombre": "John Terry",
+      "nacionalidad": "Inglaterra",
+      "posicion": "Defensa",
+      "nacimiento": 1980,
+      "carrera": [
+        {
+          "club": "Chelsea",
+          "inicio": 1998,
+          "fin": 2017
+        },
+        {
+          "club": "Aston Villa",
+          "inicio": 2017,
+          "fin": 2018
+        }
+      ]
+    },
+    {
+      "nombre": "Peter Crouch",
+      "nacionalidad": "Inglaterra",
+      "posicion": "Delantero",
+      "nacimiento": 1981,
+      "carrera": [
+        {
+          "club": "Tottenham",
+          "inicio": 1998,
+          "fin": 2000
+        },
+        {
+          "club": "Portsmouth",
+          "inicio": 2001,
+          "fin": 2002
+        },
+        {
+          "club": "Aston Villa",
+          "inicio": 2002,
+          "fin": 2005
+        },
+        {
+          "club": "Southampton",
+          "inicio": 2005,
+          "fin": 2005
+        },
+        {
+          "club": "Liverpool",
+          "inicio": 2005,
+          "fin": 2008
+        },
+        {
+          "club": "Portsmouth",
+          "inicio": 2008,
+          "fin": 2008
+        },
+        {
+          "club": "Tottenham",
+          "inicio": 2009,
+          "fin": 2011
+        },
+        {
+          "club": "Stoke City",
+          "inicio": 2011,
+          "fin": 2018
+        },
+        {
+          "club": "Burnley",
+          "inicio": 2018,
+          "fin": 2019
+        }
+      ]
+    },
+    {
+      "nombre": "James Milner",
+      "nacionalidad": "Inglaterra",
+      "posicion": "Mediocampista",
+      "nacimiento": 1986,
+      "carrera": [
+        {
+          "club": "Leeds United",
+          "inicio": 2002,
+          "fin": 2004
+        },
+        {
+          "club": "Newcastle",
+          "inicio": 2004,
+          "fin": 2008
+        },
+        {
+          "club": "Aston Villa",
+          "inicio": 2008,
+          "fin": 2010
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2010,
+          "fin": 2015
+        },
+        {
+          "club": "Liverpool",
+          "inicio": 2015,
+          "fin": 2023
+        },
+        {
+          "club": "Brighton",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Trent Alexander-Arnold",
+      "nacionalidad": "Inglaterra",
+      "posicion": "Defensa",
+      "nacimiento": 1998,
+      "carrera": [
+        {
+          "club": "Liverpool",
+          "inicio": 2016,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Declan Rice",
+      "nacionalidad": "Inglaterra",
+      "posicion": "Mediocampista",
+      "nacimiento": 1999,
+      "carrera": [
+        {
+          "club": "Chelsea",
+          "inicio": 2014,
+          "fin": 2014
+        },
+        {
+          "club": "West Ham",
+          "inicio": 2017,
+          "fin": 2023
+        },
+        {
+          "club": "Arsenal",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Jude Bellingham",
+      "nacionalidad": "Inglaterra",
+      "posicion": "Mediocampista",
+      "nacimiento": 2003,
+      "carrera": [
+        {
+          "club": "Birmingham City",
+          "inicio": 2019,
+          "fin": 2020
+        },
+        {
+          "club": "Borussia Dortmund",
+          "inicio": 2020,
+          "fin": 2023
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Jack Grealish",
+      "nacionalidad": "Inglaterra",
+      "posicion": "Delantero",
+      "nacimiento": 1995,
+      "carrera": [
+        {
+          "club": "Aston Villa",
+          "inicio": 2013,
+          "fin": 2021
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2021,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Bukayo Saka",
+      "nacionalidad": "Inglaterra",
+      "posicion": "Delantero",
+      "nacimiento": 2001,
+      "carrera": [
+        {
+          "club": "Arsenal",
+          "inicio": 2018,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Raheem Sterling",
+      "nacionalidad": "Inglaterra",
+      "posicion": "Delantero",
+      "nacimiento": 1994,
+      "carrera": [
+        {
+          "club": "Liverpool",
+          "inicio": 2012,
+          "fin": 2015
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2015,
+          "fin": 2022
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2022,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Marta",
+      "nacionalidad": "Brasil",
+      "posicion": "Delantero",
+      "nacimiento": 1986,
+      "carrera": [
+        {
+          "club": "Vasco da Gama",
+          "inicio": 2000,
+          "fin": 2002
+        },
+        {
+          "club": "Umeå IK",
+          "inicio": 2004,
+          "fin": 2008
+        },
+        {
+          "club": "Los Angeles Sol",
+          "inicio": 2009,
+          "fin": 2009
+        },
+        {
+          "club": "FC Gold Pride",
+          "inicio": 2010,
+          "fin": 2010
+        },
+        {
+          "club": "Western New York Flash",
+          "inicio": 2011,
+          "fin": 2012
+        },
+        {
+          "club": "Tyresö FF",
+          "inicio": 2013,
+          "fin": 2014
+        },
+        {
+          "club": "Orlando Pride",
+          "inicio": 2017,
+          "fin": 2023
+        }
+      ]
+    },
+    {
+      "nombre": "Alex Morgan",
+      "nacionalidad": "Estados Unidos",
+      "posicion": "Delantero",
+      "nacimiento": 1989,
+      "carrera": [
+        {
+          "club": "Western New York Flash",
+          "inicio": 2011,
+          "fin": 2013
+        },
+        {
+          "club": "Portland Thorns",
+          "inicio": 2014,
+          "fin": 2016
+        },
+        {
+          "club": "Lyon",
+          "inicio": 2017,
+          "fin": 2017
+        },
+        {
+          "club": "Orlando Pride",
+          "inicio": 2017,
+          "fin": 2023
+        },
+        {
+          "club": "San Diego Wave",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Ada Hegerberg",
+      "nacionalidad": "Noruega",
+      "posicion": "Delantero",
+      "nacimiento": 1995,
+      "carrera": [
+        {
+          "club": "Kolbotn",
+          "inicio": 2009,
+          "fin": 2011
+        },
+        {
+          "club": "Stabæk",
+          "inicio": 2012,
+          "fin": 2012
+        },
+        {
+          "club": "Lyon",
+          "inicio": 2014,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Alexia Putellas",
+      "nacionalidad": "España",
+      "posicion": "Mediocampista",
+      "nacimiento": 1994,
+      "carrera": [
+        {
+          "club": "Barcelona",
+          "inicio": 2012,
+          "fin": 2013
+        },
+        {
+          "club": "Espanyol",
+          "inicio": 2013,
+          "fin": 2015
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2015,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Sam Kerr",
+      "nacionalidad": "Australia",
+      "posicion": "Delantero",
+      "nacimiento": 1993,
+      "carrera": [
+        {
+          "club": "Perth Glory",
+          "inicio": 2009,
+          "fin": 2013
+        },
+        {
+          "club": "Sky Blue FC",
+          "inicio": 2013,
+          "fin": 2014
+        },
+        {
+          "club": "Chicago Red Stars",
+          "inicio": 2015,
+          "fin": 2019
+        },
+        {
+          "club": "Perth Glory",
+          "inicio": 2013,
+          "fin": 2019
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2019,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Pelé",
+      "nacionalidad": "Brasil",
+      "posicion": "Delantero",
+      "nacimiento": 1940,
+      "carrera": [
+        {
+          "club": "Santos",
+          "inicio": 1956,
+          "fin": 1974
+        },
+        {
+          "club": "New York Cosmos",
+          "inicio": 1975,
+          "fin": 1977
+        }
+      ]
+    },
+    {
+      "nombre": "Garrincha",
+      "nacionalidad": "Brasil",
+      "posicion": "Delantero",
+      "nacimiento": 1933,
+      "carrera": [
+        {
+          "club": "Botafogo",
+          "inicio": 1953,
+          "fin": 1965
+        },
+        {
+          "club": "Corinthians",
+          "inicio": 1966,
+          "fin": 1966
+        },
+        {
+          "club": "Flamengo",
+          "inicio": 1968,
+          "fin": 1969
+        }
+      ]
+    },
+    {
+      "nombre": "Zico",
+      "nacionalidad": "Brasil",
+      "posicion": "Mediocampista",
+      "nacimiento": 1953,
+      "carrera": [
+        {
+          "club": "Flamengo",
+          "inicio": 1971,
+          "fin": 1983
+        },
+        {
+          "club": "Udinese",
+          "inicio": 1983,
+          "fin": 1985
+        },
+        {
+          "club": "Flamengo",
+          "inicio": 1985,
+          "fin": 1989
+        }
+      ]
+    },
+    {
+      "nombre": "Sócrates",
+      "nacionalidad": "Brasil",
+      "posicion": "Mediocampista",
+      "nacimiento": 1954,
+      "carrera": [
+        {
+          "club": "Botafogo-SP",
+          "inicio": 1974,
+          "fin": 1978
+        },
+        {
+          "club": "Corinthians",
+          "inicio": 1978,
+          "fin": 1984
+        },
+        {
+          "club": "Fiorentina",
+          "inicio": 1984,
+          "fin": 1985
+        },
+        {
+          "club": "Flamengo",
+          "inicio": 1985,
+          "fin": 1986
+        },
+        {
+          "club": "Santos",
+          "inicio": 1988,
+          "fin": 1989
+        }
+      ]
+    },
+    {
+      "nombre": "Falcão",
+      "nacionalidad": "Brasil",
+      "posicion": "Mediocampista",
+      "nacimiento": 1953,
+      "carrera": [
+        {
+          "club": "Internacional",
+          "inicio": 1971,
+          "fin": 1980
+        },
+        {
+          "club": "Roma",
+          "inicio": 1980,
+          "fin": 1985
+        },
+        {
+          "club": "São Paulo",
+          "inicio": 1985,
+          "fin": 1986
+        }
+      ]
+    },
+    {
+      "nombre": "Bebeto",
+      "nacionalidad": "Brasil",
+      "posicion": "Delantero",
+      "nacimiento": 1964,
+      "carrera": [
+        {
+          "club": "Flamengo",
+          "inicio": 1984,
+          "fin": 1989
+        },
+        {
+          "club": "Vasco da Gama",
+          "inicio": 1989,
+          "fin": 1992
+        },
+        {
+          "club": "Deportivo La Coruña",
+          "inicio": 1992,
+          "fin": 1996
+        },
+        {
+          "club": "Flamengo",
+          "inicio": 1996,
+          "fin": 1997
+        },
+        {
+          "club": "Botafogo",
+          "inicio": 1997,
+          "fin": 1998
+        }
+      ]
+    },
+    {
+      "nombre": "Dunga",
+      "nacionalidad": "Brasil",
+      "posicion": "Mediocampista",
+      "nacimiento": 1963,
+      "carrera": [
+        {
+          "club": "Internacional",
+          "inicio": 1981,
+          "fin": 1984
+        },
+        {
+          "club": "Santos",
+          "inicio": 1984,
+          "fin": 1985
+        },
+        {
+          "club": "Vasco da Gama",
+          "inicio": 1985,
+          "fin": 1987
+        },
+        {
+          "club": "Fiorentina",
+          "inicio": 1987,
+          "fin": 1993
+        },
+        {
+          "club": "Pescara",
+          "inicio": 1993,
+          "fin": 1994
+        },
+        {
+          "club": "VfB Stuttgart",
+          "inicio": 1994,
+          "fin": 1995
+        },
+        {
+          "club": "Jubilo Iwata",
+          "inicio": 1995,
+          "fin": 1998
+        }
+      ]
+    },
+    {
+      "nombre": "Diego Maradona",
+      "nacionalidad": "Argentina",
+      "posicion": "Mediocampista",
+      "nacimiento": 1960,
+      "carrera": [
+        {
+          "club": "Argentinos Juniors",
+          "inicio": 1976,
+          "fin": 1981
+        },
+        {
+          "club": "Boca Juniors",
+          "inicio": 1981,
+          "fin": 1982
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 1982,
+          "fin": 1984
+        },
+        {
+          "club": "Napoli",
+          "inicio": 1984,
+          "fin": 1991
+        },
+        {
+          "club": "Sevilla",
+          "inicio": 1992,
+          "fin": 1993
+        },
+        {
+          "club": "Newell's Old Boys",
+          "inicio": 1993,
+          "fin": 1994
+        },
+        {
+          "club": "Boca Juniors",
+          "inicio": 1995,
+          "fin": 1997
+        }
+      ]
+    },
+    {
+      "nombre": "Mario Kempes",
+      "nacionalidad": "Argentina",
+      "posicion": "Delantero",
+      "nacimiento": 1952,
+      "carrera": [
+        {
+          "club": "Instituto de Córdoba",
+          "inicio": 1970,
+          "fin": 1973
+        },
+        {
+          "club": "Rosario Central",
+          "inicio": 1973,
+          "fin": 1976
+        },
+        {
+          "club": "Valencia",
+          "inicio": 1976,
+          "fin": 1981
+        },
+        {
+          "club": "River Plate",
+          "inicio": 1981,
+          "fin": 1982
+        },
+        {
+          "club": "Valencia",
+          "inicio": 1982,
+          "fin": 1984
+        }
+      ]
+    },
+    {
+      "nombre": "Daniel Passarella",
+      "nacionalidad": "Argentina",
+      "posicion": "Defensa",
+      "nacimiento": 1953,
+      "carrera": [
+        {
+          "club": "River Plate",
+          "inicio": 1974,
+          "fin": 1982
+        },
+        {
+          "club": "Fiorentina",
+          "inicio": 1982,
+          "fin": 1986
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 1986,
+          "fin": 1988
+        },
+        {
+          "club": "River Plate",
+          "inicio": 1988,
+          "fin": 1989
+        }
+      ]
+    },
+    {
+      "nombre": "Jorge Valdano",
+      "nacionalidad": "Argentina",
+      "posicion": "Delantero",
+      "nacimiento": 1955,
+      "carrera": [
+        {
+          "club": "Newell's Old Boys",
+          "inicio": 1975,
+          "fin": 1975
+        },
+        {
+          "club": "Alavés",
+          "inicio": 1975,
+          "fin": 1980
+        },
+        {
+          "club": "Zaragoza",
+          "inicio": 1980,
+          "fin": 1984
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 1984,
+          "fin": 1988
+        },
+        {
+          "club": "Tenerife",
+          "inicio": 1988,
+          "fin": 1989
+        }
+      ]
+    },
+    {
+      "nombre": "Gabriel Milito",
+      "nacionalidad": "Argentina",
+      "posicion": "Defensa",
+      "nacimiento": 1980,
+      "carrera": [
+        {
+          "club": "Independiente",
+          "inicio": 1998,
+          "fin": 2003
+        },
+        {
+          "club": "Zaragoza",
+          "inicio": 2003,
+          "fin": 2007
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2007,
+          "fin": 2011
+        }
+      ]
+    },
+    {
+      "nombre": "Fernando Redondo",
+      "nacionalidad": "Argentina",
+      "posicion": "Mediocampista",
+      "nacimiento": 1969,
+      "carrera": [
+        {
+          "club": "Argentinos Juniors",
+          "inicio": 1988,
+          "fin": 1990
+        },
+        {
+          "club": "Tenerife",
+          "inicio": 1990,
+          "fin": 1994
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 1994,
+          "fin": 2000
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2000,
+          "fin": 2004
+        }
+      ]
+    },
+    {
+      "nombre": "Ariel Ortega",
+      "nacionalidad": "Argentina",
+      "posicion": "Mediocampista",
+      "nacimiento": 1974,
+      "carrera": [
+        {
+          "club": "River Plate",
+          "inicio": 1991,
+          "fin": 1997
+        },
+        {
+          "club": "Valencia",
+          "inicio": 1997,
+          "fin": 1998
+        },
+        {
+          "club": "Sampdoria",
+          "inicio": 1998,
+          "fin": 1999
+        },
+        {
+          "club": "Parma",
+          "inicio": 1999,
+          "fin": 2000
+        },
+        {
+          "club": "Fenerbahçe",
+          "inicio": 2000,
+          "fin": 2002
+        },
+        {
+          "club": "River Plate",
+          "inicio": 2002,
+          "fin": 2004
+        }
+      ]
+    },
+    {
+      "nombre": "Pablo Aimar",
+      "nacionalidad": "Argentina",
+      "posicion": "Mediocampista",
+      "nacimiento": 1979,
+      "carrera": [
+        {
+          "club": "River Plate",
+          "inicio": 1997,
+          "fin": 2001
+        },
+        {
+          "club": "Valencia",
+          "inicio": 2001,
+          "fin": 2006
+        },
+        {
+          "club": "Real Zaragoza",
+          "inicio": 2006,
+          "fin": 2008
+        },
+        {
+          "club": "Benfica",
+          "inicio": 2008,
+          "fin": 2012
+        },
+        {
+          "club": "River Plate",
+          "inicio": 2012,
+          "fin": 2015
+        }
+      ]
+    },
+    {
+      "nombre": "Marcelo Gallardo",
+      "nacionalidad": "Argentina",
+      "posicion": "Mediocampista",
+      "nacimiento": 1976,
+      "carrera": [
+        {
+          "club": "River Plate",
+          "inicio": 1994,
+          "fin": 1999
+        },
+        {
+          "club": "Monaco",
+          "inicio": 1999,
+          "fin": 2003
+        },
+        {
+          "club": "PSG",
+          "inicio": 2003,
+          "fin": 2004
+        },
+        {
+          "club": "River Plate",
+          "inicio": 2004,
+          "fin": 2005
+        },
+        {
+          "club": "DC United",
+          "inicio": 2007,
+          "fin": 2008
+        },
+        {
+          "club": "Nacional",
+          "inicio": 2009,
+          "fin": 2011
+        }
+      ]
+    },
+    {
+      "nombre": "Kily González",
+      "nacionalidad": "Argentina",
+      "posicion": "Mediocampista",
+      "nacimiento": 1974,
+      "carrera": [
+        {
+          "club": "Rosario Central",
+          "inicio": 1993,
+          "fin": 1996
+        },
+        {
+          "club": "Valencia",
+          "inicio": 1996,
+          "fin": 2003
+        },
+        {
+          "club": "River Plate",
+          "inicio": 2003,
+          "fin": 2005
+        }
+      ]
+    },
+    {
+      "nombre": "Marcos Rojo",
+      "nacionalidad": "Argentina",
+      "posicion": "Defensa",
+      "nacimiento": 1990,
+      "carrera": [
+        {
+          "club": "Estudiantes",
+          "inicio": 2008,
+          "fin": 2011
+        },
+        {
+          "club": "Spartak Moscú",
+          "inicio": 2011,
+          "fin": 2014
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2014,
+          "fin": 2021
+        },
+        {
+          "club": "Boca Juniors",
+          "inicio": 2021,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Nicolás Tagliafico",
+      "nacionalidad": "Argentina",
+      "posicion": "Defensa",
+      "nacimiento": 1992,
+      "carrera": [
+        {
+          "club": "Banfield",
+          "inicio": 2012,
+          "fin": 2015
+        },
+        {
+          "club": "Independiente",
+          "inicio": 2015,
+          "fin": 2018
+        },
+        {
+          "club": "Ajax",
+          "inicio": 2018,
+          "fin": 2022
+        },
+        {
+          "club": "Lyon",
+          "inicio": 2022,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Guido Rodríguez",
+      "nacionalidad": "Argentina",
+      "posicion": "Mediocampista",
+      "nacimiento": 1994,
+      "carrera": [
+        {
+          "club": "América",
+          "inicio": 2015,
+          "fin": 2018
+        },
+        {
+          "club": "Real Betis",
+          "inicio": 2018,
+          "fin": 2024
+        },
+        {
+          "club": "West Ham",
+          "inicio": 2024,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Leandro Paredes",
+      "nacionalidad": "Argentina",
+      "posicion": "Mediocampista",
+      "nacimiento": 1994,
+      "carrera": [
+        {
+          "club": "Boca Juniors",
+          "inicio": 2013,
+          "fin": 2014
+        },
+        {
+          "club": "Chievo Verona",
+          "inicio": 2014,
+          "fin": 2016
+        },
+        {
+          "club": "Zenit",
+          "inicio": 2016,
+          "fin": 2019
+        },
+        {
+          "club": "PSG",
+          "inicio": 2019,
+          "fin": 2023
+        },
+        {
+          "club": "Roma",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Marcos Acuña",
+      "nacionalidad": "Argentina",
+      "posicion": "Defensa",
+      "nacimiento": 1991,
+      "carrera": [
+        {
+          "club": "Ferro Carril Oeste",
+          "inicio": 2011,
+          "fin": 2013
+        },
+        {
+          "club": "Racing Club",
+          "inicio": 2014,
+          "fin": 2016
+        },
+        {
+          "club": "Sporting CP",
+          "inicio": 2016,
+          "fin": 2020
+        },
+        {
+          "club": "Sevilla",
+          "inicio": 2020,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Ademir de Menezes",
+      "nacionalidad": "Brasil",
+      "posicion": "Delantero",
+      "nacimiento": 1922,
+      "carrera": [
+        {
+          "club": "Recife",
+          "inicio": 1940,
+          "fin": 1942
+        },
+        {
+          "club": "Vasco da Gama",
+          "inicio": 1942,
+          "fin": 1945
+        },
+        {
+          "club": "Fluminense",
+          "inicio": 1945,
+          "fin": 1954
+        }
+      ]
+    },
+    {
+      "nombre": "Zé Roberto",
+      "nacionalidad": "Brasil",
+      "posicion": "Mediocampista",
+      "nacimiento": 1976,
+      "carrera": [
+        {
+          "club": "São Paulo",
+          "inicio": 1994,
+          "fin": 1996
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 1997,
+          "fin": 1999
+        },
+        {
+          "club": "Bayer Leverkusen",
+          "inicio": 1999,
+          "fin": 2002
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2002,
+          "fin": 2006
+        },
+        {
+          "club": "Santos",
+          "inicio": 2006,
+          "fin": 2007
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2007,
+          "fin": 2010
+        },
+        {
+          "club": "Palmeiras",
+          "inicio": 2010,
+          "fin": 2015
+        }
+      ]
+    },
+    {
+      "nombre": "Ronaldinho Gaúcho",
+      "nacionalidad": "Brasil",
+      "posicion": "Mediocampista",
+      "nacimiento": 1980,
+      "carrera": [
+        {
+          "club": "Grêmio",
+          "inicio": 1998,
+          "fin": 2001
+        },
+        {
+          "club": "PSG",
+          "inicio": 2001,
+          "fin": 2003
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2003,
+          "fin": 2008
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2008,
+          "fin": 2011
+        },
+        {
+          "club": "Flamengo",
+          "inicio": 2011,
+          "fin": 2012
+        }
+      ]
+    },
+    {
+      "nombre": "Alexandre Pato",
+      "nacionalidad": "Brasil",
+      "posicion": "Delantero",
+      "nacimiento": 1989,
+      "carrera": [
+        {
+          "club": "Internacional",
+          "inicio": 2007,
+          "fin": 2007
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2007,
+          "fin": 2013
+        },
+        {
+          "club": "Corinthians",
+          "inicio": 2013,
+          "fin": 2017
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2016,
+          "fin": 2016
+        },
+        {
+          "club": "São Paulo",
+          "inicio": 2017,
+          "fin": 2019
+        }
+      ]
+    },
+    {
+      "nombre": "Hulk",
+      "nacionalidad": "Brasil",
+      "posicion": "Delantero",
+      "nacimiento": 1986,
+      "carrera": [
+        {
+          "club": "Vitória",
+          "inicio": 2003,
+          "fin": 2005
+        },
+        {
+          "club": "Kawasaki Frontale",
+          "inicio": 2005,
+          "fin": 2005
+        },
+        {
+          "club": "Tokyo Verdy",
+          "inicio": 2005,
+          "fin": 2008
+        },
+        {
+          "club": "Porto",
+          "inicio": 2008,
+          "fin": 2012
+        },
+        {
+          "club": "Zenit",
+          "inicio": 2012,
+          "fin": 2016
+        },
+        {
+          "club": "Shanghai SIPG",
+          "inicio": 2016,
+          "fin": 2021
+        },
+        {
+          "club": "Atlético Mineiro",
+          "inicio": 2021,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Oscar",
+      "nacionalidad": "Brasil",
+      "posicion": "Mediocampista",
+      "nacimiento": 1991,
+      "carrera": [
+        {
+          "club": "Internacional",
+          "inicio": 2008,
+          "fin": 2010
+        },
+        {
+          "club": "São Paulo",
+          "inicio": 2010,
+          "fin": 2012
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2012,
+          "fin": 2016
+        },
+        {
+          "club": "Shanghai SIPG",
+          "inicio": 2017,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Firmino",
+      "nacionalidad": "Brasil",
+      "posicion": "Delantero",
+      "nacimiento": 1991,
+      "carrera": [
+        {
+          "club": "Figueirense",
+          "inicio": 2009,
+          "fin": 2011
+        },
+        {
+          "club": "Hoffenheim",
+          "inicio": 2011,
+          "fin": 2015
+        },
+        {
+          "club": "Liverpool",
+          "inicio": 2015,
+          "fin": 2023
+        },
+        {
+          "club": "Al-Ahli",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Antony",
+      "nacionalidad": "Brasil",
+      "posicion": "Delantero",
+      "nacimiento": 2000,
+      "carrera": [
+        {
+          "club": "São Paulo",
+          "inicio": 2018,
+          "fin": 2020
+        },
+        {
+          "club": "Ajax",
+          "inicio": 2020,
+          "fin": 2022
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2022,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Lucas Paquetá",
+      "nacionalidad": "Brasil",
+      "posicion": "Mediocampista",
+      "nacimiento": 1997,
+      "carrera": [
+        {
+          "club": "Flamengo",
+          "inicio": 2016,
+          "fin": 2018
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2018,
+          "fin": 2020
+        },
+        {
+          "club": "Lyon",
+          "inicio": 2020,
+          "fin": 2022
+        },
+        {
+          "club": "West Ham",
+          "inicio": 2022,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Alisson Becker",
+      "nacionalidad": "Brasil",
+      "posicion": "Arquero",
+      "nacimiento": 1992,
+      "carrera": [
+        {
+          "club": "Internacional",
+          "inicio": 2013,
+          "fin": 2016
+        },
+        {
+          "club": "Roma",
+          "inicio": 2016,
+          "fin": 2018
+        },
+        {
+          "club": "Liverpool",
+          "inicio": 2018,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Ederson",
+      "nacionalidad": "Brasil",
+      "posicion": "Arquero",
+      "nacimiento": 1993,
+      "carrera": [
+        {
+          "club": "Ribeirão",
+          "inicio": 2011,
+          "fin": 2014
+        },
+        {
+          "club": "Benfica",
+          "inicio": 2014,
+          "fin": 2017
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2017,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Danilo",
+      "nacionalidad": "Brasil",
+      "posicion": "Defensa",
+      "nacimiento": 1991,
+      "carrera": [
+        {
+          "club": "América Mineiro",
+          "inicio": 2009,
+          "fin": 2010
+        },
+        {
+          "club": "Santos",
+          "inicio": 2010,
+          "fin": 2011
+        },
+        {
+          "club": "Porto",
+          "inicio": 2011,
+          "fin": 2015
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2015,
+          "fin": 2017
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2017,
+          "fin": 2019
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2019,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Ivan Perišić",
+      "nacionalidad": "Croacia",
+      "posicion": "Delantero",
+      "nacimiento": 1989,
+      "carrera": [
+        {
+          "club": "Sochaux",
+          "inicio": 2007,
+          "fin": 2010
+        },
+        {
+          "club": "Club Brujas",
+          "inicio": 2010,
+          "fin": 2011
+        },
+        {
+          "club": "Borussia Dortmund",
+          "inicio": 2011,
+          "fin": 2013
+        },
+        {
+          "club": "Wolfsburgo",
+          "inicio": 2011,
+          "fin": 2011
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2015,
+          "fin": 2022
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2022,
+          "fin": 2024
+        },
+        {
+          "club": "Tottenham",
+          "inicio": 2024,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Vedran Ćorluka",
+      "nacionalidad": "Croacia",
+      "posicion": "Defensa",
+      "nacimiento": 1986,
+      "carrera": [
+        {
+          "club": "Dinamo Zagreb",
+          "inicio": 2003,
+          "fin": 2007
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2007,
+          "fin": 2008
+        },
+        {
+          "club": "Tottenham",
+          "inicio": 2008,
+          "fin": 2012
+        },
+        {
+          "club": "Bayer Leverkusen",
+          "inicio": 2012,
+          "fin": 2014
+        },
+        {
+          "club": "Lokomotiv Moscú",
+          "inicio": 2014,
+          "fin": 2019
+        }
+      ]
+    },
+    {
+      "nombre": "Niko Kovač",
+      "nacionalidad": "Croacia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1971,
+      "carrera": [
+        {
+          "club": "Bayern Múnich",
+          "inicio": 1994,
+          "fin": 1996
+        },
+        {
+          "club": "Bayer Leverkusen",
+          "inicio": 1996,
+          "fin": 1999
+        },
+        {
+          "club": "Hertha Berlín",
+          "inicio": 1999,
+          "fin": 2001
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2001,
+          "fin": 2003
+        },
+        {
+          "club": "Hertha Berlín",
+          "inicio": 2003,
+          "fin": 2005
+        }
+      ]
+    },
+    {
+      "nombre": "Nikola Vlašić",
+      "nacionalidad": "Croacia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1997,
+      "carrera": [
+        {
+          "club": "Hajduk Split",
+          "inicio": 2015,
+          "fin": 2017
+        },
+        {
+          "club": "Everton",
+          "inicio": 2017,
+          "fin": 2020
+        },
+        {
+          "club": "CSKA Moscú",
+          "inicio": 2020,
+          "fin": 2021
+        },
+        {
+          "club": "West Ham",
+          "inicio": 2021,
+          "fin": 2023
+        },
+        {
+          "club": "Torino",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Zlatko Vujović",
+      "nacionalidad": "Croacia",
+      "posicion": "Delantero",
+      "nacimiento": 1958,
+      "carrera": [
+        {
+          "club": "Hajduk Split",
+          "inicio": 1976,
+          "fin": 1984
+        },
+        {
+          "club": "Girondins de Burdeos",
+          "inicio": 1984,
+          "fin": 1989
+        },
+        {
+          "club": "Panathinaikos",
+          "inicio": 1989,
+          "fin": 1991
+        }
+      ]
+    },
+    {
+      "nombre": "Aleksandar Kolarov",
+      "nacionalidad": "Serbia",
+      "posicion": "Defensa",
+      "nacimiento": 1985,
+      "carrera": [
+        {
+          "club": "Red Star Belgrado",
+          "inicio": 2003,
+          "fin": 2007
+        },
+        {
+          "club": "Lazio",
+          "inicio": 2007,
+          "fin": 2010
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2010,
+          "fin": 2017
+        },
+        {
+          "club": "Roma",
+          "inicio": 2017,
+          "fin": 2020
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2020,
+          "fin": 2021
+        }
+      ]
+    },
+    {
+      "nombre": "Miralem Pjanić",
+      "nacionalidad": "Bosnia y Herzegovina",
+      "posicion": "Mediocampista",
+      "nacimiento": 1990,
+      "carrera": [
+        {
+          "club": "Metz",
+          "inicio": 2006,
+          "fin": 2008
+        },
+        {
+          "club": "Lyon",
+          "inicio": 2008,
+          "fin": 2011
+        },
+        {
+          "club": "Roma",
+          "inicio": 2011,
+          "fin": 2016
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2016,
+          "fin": 2020
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2020,
+          "fin": 2021
+        },
+        {
+          "club": "Besiktas",
+          "inicio": 2022,
+          "fin": 2022
+        },
+        {
+          "club": "Sharjah",
+          "inicio": 2022,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Emil Forsberg",
+      "nacionalidad": "Suecia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1991,
+      "carrera": [
+        {
+          "club": "Malmö FF",
+          "inicio": 2010,
+          "fin": 2015
+        },
+        {
+          "club": "RB Leipzig",
+          "inicio": 2015,
+          "fin": 2024
+        },
+        {
+          "club": "New York Red Bulls",
+          "inicio": 2024,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Henrik Larsson",
+      "nacionalidad": "Suecia",
+      "posicion": "Delantero",
+      "nacimiento": 1971,
+      "carrera": [
+        {
+          "club": "Helsingborg",
+          "inicio": 1989,
+          "fin": 1992
+        },
+        {
+          "club": "Feyenoord",
+          "inicio": 1992,
+          "fin": 1993
+        },
+        {
+          "club": "Celtic",
+          "inicio": 1997,
+          "fin": 2004
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2004,
+          "fin": 2006
+        },
+        {
+          "club": "Helsingborg",
+          "inicio": 2006,
+          "fin": 2009
+        }
+      ]
+    },
+    {
+      "nombre": "Freddie Ljungberg",
+      "nacionalidad": "Suecia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1977,
+      "carrera": [
+        {
+          "club": "Halmstad",
+          "inicio": 1994,
+          "fin": 1998
+        },
+        {
+          "club": "Arsenal",
+          "inicio": 1998,
+          "fin": 2007
+        },
+        {
+          "club": "West Ham",
+          "inicio": 2007,
+          "fin": 2008
+        },
+        {
+          "club": "Seattle Sounders",
+          "inicio": 2009,
+          "fin": 2010
+        }
+      ]
+    },
+    {
+      "nombre": "John Arne Riise",
+      "nacionalidad": "Noruega",
+      "posicion": "Defensa",
+      "nacimiento": 1980,
+      "carrera": [
+        {
+          "club": "Aalesund",
+          "inicio": 1996,
+          "fin": 1998
+        },
+        {
+          "club": "Mónaco",
+          "inicio": 1998,
+          "fin": 2001
+        },
+        {
+          "club": "Liverpool",
+          "inicio": 2001,
+          "fin": 2008
+        },
+        {
+          "club": "Roma",
+          "inicio": 2008,
+          "fin": 2011
+        },
+        {
+          "club": "Fulham",
+          "inicio": 2011,
+          "fin": 2013
+        }
+      ]
+    },
+    {
+      "nombre": "Erling Haaland",
+      "nacionalidad": "Noruega",
+      "posicion": "Delantero",
+      "nacimiento": 2000,
+      "carrera": [
+        {
+          "club": "Bryne",
+          "inicio": 2016,
+          "fin": 2017
+        },
+        {
+          "club": "Molde",
+          "inicio": 2017,
+          "fin": 2019
+        },
+        {
+          "club": "Red Bull Salzburgo",
+          "inicio": 2019,
+          "fin": 2020
+        },
+        {
+          "club": "Borussia Dortmund",
+          "inicio": 2020,
+          "fin": 2022
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2022,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Martin Ødegaard",
+      "nacionalidad": "Noruega",
+      "posicion": "Mediocampista",
+      "nacimiento": 1998,
+      "carrera": [
+        {
+          "club": "Strømsgodset",
+          "inicio": 2014,
+          "fin": 2015
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2015,
+          "fin": 2021
+        },
+        {
+          "club": "Heerenveen",
+          "inicio": 2017,
+          "fin": 2017
+        },
+        {
+          "club": "Vitesse",
+          "inicio": 2018,
+          "fin": 2019
+        },
+        {
+          "club": "Real Sociedad",
+          "inicio": 2019,
+          "fin": 2021
+        },
+        {
+          "club": "Arsenal",
+          "inicio": 2021,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Peter Schmeichel",
+      "nacionalidad": "Dinamarca",
+      "posicion": "Arquero",
+      "nacimiento": 1963,
+      "carrera": [
+        {
+          "club": "Hvidovre",
+          "inicio": 1984,
+          "fin": 1987
+        },
+        {
+          "club": "Brøndby",
+          "inicio": 1987,
+          "fin": 1991
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 1991,
+          "fin": 1999
+        },
+        {
+          "club": "Sporting CP",
+          "inicio": 1999,
+          "fin": 2001
+        },
+        {
+          "club": "Aston Villa",
+          "inicio": 2001,
+          "fin": 2002
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2002,
+          "fin": 2003
+        }
+      ]
+    },
+    {
+      "nombre": "Michael Laudrup",
+      "nacionalidad": "Dinamarca",
+      "posicion": "Mediocampista",
+      "nacimiento": 1964,
+      "carrera": [
+        {
+          "club": "Brøndby",
+          "inicio": 1981,
+          "fin": 1982
+        },
+        {
+          "club": "Lazio",
+          "inicio": 1983,
+          "fin": 1985
+        },
+        {
+          "club": "Juventus",
+          "inicio": 1985,
+          "fin": 1989
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 1989,
+          "fin": 1994
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 1994,
+          "fin": 1996
+        },
+        {
+          "club": "Vissel Kobe",
+          "inicio": 1996,
+          "fin": 1997
+        },
+        {
+          "club": "Ajax",
+          "inicio": 1997,
+          "fin": 1998
+        }
+      ]
+    },
+    {
+      "nombre": "Christian Eriksen",
+      "nacionalidad": "Dinamarca",
+      "posicion": "Mediocampista",
+      "nacimiento": 1992,
+      "carrera": [
+        {
+          "club": "Ajax",
+          "inicio": 2010,
+          "fin": 2013
+        },
+        {
+          "club": "Tottenham",
+          "inicio": 2013,
+          "fin": 2020
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2020,
+          "fin": 2022
+        },
+        {
+          "club": "Brentford",
+          "inicio": 2022,
+          "fin": 2023
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Simon Kjær",
+      "nacionalidad": "Dinamarca",
+      "posicion": "Defensa",
+      "nacimiento": 1989,
+      "carrera": [
+        {
+          "club": "Midtjylland",
+          "inicio": 2006,
+          "fin": 2008
+        },
+        {
+          "club": "Palermo",
+          "inicio": 2008,
+          "fin": 2010
+        },
+        {
+          "club": "Wolfsburgo",
+          "inicio": 2010,
+          "fin": 2011
+        },
+        {
+          "club": "Roma",
+          "inicio": 2011,
+          "fin": 2013
+        },
+        {
+          "club": "Lille",
+          "inicio": 2013,
+          "fin": 2014
+        },
+        {
+          "club": "Sevilla",
+          "inicio": 2014,
+          "fin": 2016
+        },
+        {
+          "club": "Fenerbahçe",
+          "inicio": 2016,
+          "fin": 2018
+        },
+        {
+          "club": "Atalanta",
+          "inicio": 2018,
+          "fin": 2019
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2019,
+          "fin": 2023
+        }
+      ]
+    },
+    {
+      "nombre": "Kasper Schmeichel",
+      "nacionalidad": "Dinamarca",
+      "posicion": "Arquero",
+      "nacimiento": 1986,
+      "carrera": [
+        {
+          "club": "Manchester City",
+          "inicio": 2007,
+          "fin": 2009
+        },
+        {
+          "club": "Notts County",
+          "inicio": 2009,
+          "fin": 2009
+        },
+        {
+          "club": "Leeds United",
+          "inicio": 2010,
+          "fin": 2011
+        },
+        {
+          "club": "Leicester City",
+          "inicio": 2011,
+          "fin": 2022
+        },
+        {
+          "club": "Niza",
+          "inicio": 2022,
+          "fin": 2023
+        },
+        {
+          "club": "Celtic",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Jesper Grønkjær",
+      "nacionalidad": "Dinamarca",
+      "posicion": "Delantero",
+      "nacimiento": 1977,
+      "carrera": [
+        {
+          "club": "Ajax",
+          "inicio": 1996,
+          "fin": 2000
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2000,
+          "fin": 2003
+        },
+        {
+          "club": "Birmingham City",
+          "inicio": 2003,
+          "fin": 2007
+        },
+        {
+          "club": "Atlético de Madrid",
+          "inicio": 2007,
+          "fin": 2008
+        }
+      ]
+    },
+    {
+      "nombre": "Rasmus Højlund",
+      "nacionalidad": "Dinamarca",
+      "posicion": "Delantero",
+      "nacimiento": 2003,
+      "carrera": [
+        {
+          "club": "Copenhague",
+          "inicio": 2020,
+          "fin": 2022
+        },
+        {
+          "club": "Sturm Graz",
+          "inicio": 2022,
+          "fin": 2022
+        },
+        {
+          "club": "Atalanta",
+          "inicio": 2022,
+          "fin": 2023
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Gylfi Sigurðsson",
+      "nacionalidad": "Islandia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1989,
+      "carrera": [
+        {
+          "club": "Reading",
+          "inicio": 2005,
+          "fin": 2010
+        },
+        {
+          "club": "Hoffenheim",
+          "inicio": 2010,
+          "fin": 2012
+        },
+        {
+          "club": "Tottenham",
+          "inicio": 2012,
+          "fin": 2014
+        },
+        {
+          "club": "Swansea",
+          "inicio": 2014,
+          "fin": 2017
+        },
+        {
+          "club": "Everton",
+          "inicio": 2017,
+          "fin": 2022
+        }
+      ]
+    },
+    {
+      "nombre": "Aron Gunnarsson",
+      "nacionalidad": "Islandia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1989,
+      "carrera": [
+        {
+          "club": "Coventry City",
+          "inicio": 2007,
+          "fin": 2011
+        },
+        {
+          "club": "Cardiff City",
+          "inicio": 2011,
+          "fin": 2019
+        },
+        {
+          "club": "Al-Arabi",
+          "inicio": 2019,
+          "fin": 2021
+        },
+        {
+          "club": "Grasshopper",
+          "inicio": 2021,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Robert Lewandowski",
+      "nacionalidad": "Polonia",
+      "posicion": "Delantero",
+      "nacimiento": 1988,
+      "carrera": [
+        {
+          "club": "Znicz Pruszków",
+          "inicio": 2006,
+          "fin": 2008
+        },
+        {
+          "club": "Lech Poznań",
+          "inicio": 2008,
+          "fin": 2010
+        },
+        {
+          "club": "Borussia Dortmund",
+          "inicio": 2010,
+          "fin": 2014
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2014,
+          "fin": 2022
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2022,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Jakub Błaszczykowski",
+      "nacionalidad": "Polonia",
+      "posicion": "Delantero",
+      "nacimiento": 1985,
+      "carrera": [
+        {
+          "club": "Wisła Kraków",
+          "inicio": 2005,
+          "fin": 2007
+        },
+        {
+          "club": "Borussia Dortmund",
+          "inicio": 2007,
+          "fin": 2018
+        },
+        {
+          "club": "Fiorentina",
+          "inicio": 2018,
+          "fin": 2019
+        },
+        {
+          "club": "Wisła Kraków",
+          "inicio": 2019,
+          "fin": 2022
+        }
+      ]
+    },
+    {
+      "nombre": "Grzegorz Lato",
+      "nacionalidad": "Polonia",
+      "posicion": "Delantero",
+      "nacimiento": 1950,
+      "carrera": [
+        {
+          "club": "Stal Mielec",
+          "inicio": 1968,
+          "fin": 1978
+        },
+        {
+          "club": "Lokeren",
+          "inicio": 1978,
+          "fin": 1980
+        },
+        {
+          "club": "KSV Waregem",
+          "inicio": 1980,
+          "fin": 1984
+        }
+      ]
+    },
+    {
+      "nombre": "Kazimierz Deyna",
+      "nacionalidad": "Polonia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1947,
+      "carrera": [
+        {
+          "club": "Legia Varsovia",
+          "inicio": 1966,
+          "fin": 1978
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 1978,
+          "fin": 1981
+        },
+        {
+          "club": "San Diego Sockers",
+          "inicio": 1981,
+          "fin": 1984
+        }
+      ]
+    },
+    {
+      "nombre": "Zbigniew Boniek",
+      "nacionalidad": "Polonia",
+      "posicion": "Delantero",
+      "nacimiento": 1956,
+      "carrera": [
+        {
+          "club": "Widzew Łódź",
+          "inicio": 1973,
+          "fin": 1981
+        },
+        {
+          "club": "Juventus",
+          "inicio": 1982,
+          "fin": 1985
+        },
+        {
+          "club": "Roma",
+          "inicio": 1985,
+          "fin": 1988
+        }
+      ]
+    },
+    {
+      "nombre": "Robert Gonzalez Chilavert",
+      "nacionalidad": "Paraguay",
+      "posicion": "Mediocampista",
+      "nacimiento": 1980,
+      "carrera": [
+        {
+          "club": "Cerro Porteño",
+          "inicio": 1998,
+          "fin": 2002
+        },
+        {
+          "club": "Puebla",
+          "inicio": 2002,
+          "fin": 2004
+        }
+      ]
+    },
+    {
+      "nombre": "Nolberto Solano",
+      "nacionalidad": "Perú",
+      "posicion": "Mediocampista",
+      "nacimiento": 1974,
+      "carrera": [
+        {
+          "club": "Sporting Cristal",
+          "inicio": 1992,
+          "fin": 1995
+        },
+        {
+          "club": "Boca Juniors",
+          "inicio": 1996,
+          "fin": 1997
+        },
+        {
+          "club": "Newcastle",
+          "inicio": 1998,
+          "fin": 2004
+        },
+        {
+          "club": "Aston Villa",
+          "inicio": 2004,
+          "fin": 2006
+        },
+        {
+          "club": "West Ham",
+          "inicio": 2006,
+          "fin": 2009
+        },
+        {
+          "club": "Hull City",
+          "inicio": 2009,
+          "fin": 2010
+        }
+      ]
+    },
+    {
+      "nombre": "Jefferson Farfán",
+      "nacionalidad": "Perú",
+      "posicion": "Delantero",
+      "nacimiento": 1984,
+      "carrera": [
+        {
+          "club": "Alianza Lima",
+          "inicio": 2002,
+          "fin": 2004
+        },
+        {
+          "club": "PSV",
+          "inicio": 2004,
+          "fin": 2008
+        },
+        {
+          "club": "Schalke 04",
+          "inicio": 2008,
+          "fin": 2018
+        },
+        {
+          "club": "Lokomotiv Moscú",
+          "inicio": 2018,
+          "fin": 2020
+        },
+        {
+          "club": "Alianza Lima",
+          "inicio": 2021,
+          "fin": 2022
+        }
+      ]
+    },
+    {
+      "nombre": "Christian Cueva",
+      "nacionalidad": "Perú",
+      "posicion": "Mediocampista",
+      "nacimiento": 1991,
+      "carrera": [
+        {
+          "club": "Universidad César Vallejo",
+          "inicio": 2009,
+          "fin": 2012
+        },
+        {
+          "club": "Sporting Cristal",
+          "inicio": 2013,
+          "fin": 2013
+        },
+        {
+          "club": "São Paulo",
+          "inicio": 2014,
+          "fin": 2016
+        },
+        {
+          "club": "Santos",
+          "inicio": 2016,
+          "fin": 2017
+        },
+        {
+          "club": "Alianza Lima",
+          "inicio": 2018,
+          "fin": 2018
+        }
+      ]
+    },
+    {
+      "nombre": "Faryd Mondragón",
+      "nacionalidad": "Colombia",
+      "posicion": "Arquero",
+      "nacimiento": 1971,
+      "carrera": [
+        {
+          "club": "Independiente Medellín",
+          "inicio": 1990,
+          "fin": 1993
+        },
+        {
+          "club": "América de Cali",
+          "inicio": 1994,
+          "fin": 1996
+        },
+        {
+          "club": "Galatasaray",
+          "inicio": 1996,
+          "fin": 1998
+        },
+        {
+          "club": "Metz",
+          "inicio": 2000,
+          "fin": 2003
+        },
+        {
+          "club": "Colonia",
+          "inicio": 2003,
+          "fin": 2008
+        },
+        {
+          "club": "Deportivo Cali",
+          "inicio": 2011,
+          "fin": 2012
+        }
+      ]
+    },
+    {
+      "nombre": "Carlos Valderrama",
+      "nacionalidad": "Colombia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1961,
+      "carrera": [
+        {
+          "club": "Santa Marta",
+          "inicio": 1981,
+          "fin": 1984
+        },
+        {
+          "club": "Millonarios",
+          "inicio": 1984,
+          "fin": 1988
+        },
+        {
+          "club": "Montpellier",
+          "inicio": 1988,
+          "fin": 1990
+        },
+        {
+          "club": "Junior",
+          "inicio": 1990,
+          "fin": 1991
+        },
+        {
+          "club": "Tampa Bay Mutiny",
+          "inicio": 1996,
+          "fin": 1998
+        },
+        {
+          "club": "Miami Fusion",
+          "inicio": 1999,
+          "fin": 2001
+        }
+      ]
+    },
+    {
+      "nombre": "Freddy Rincón",
+      "nacionalidad": "Colombia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1966,
+      "carrera": [
+        {
+          "club": "Santa Fe",
+          "inicio": 1985,
+          "fin": 1987
+        },
+        {
+          "club": "América de Cali",
+          "inicio": 1987,
+          "fin": 1991
+        },
+        {
+          "club": "Napoli",
+          "inicio": 1991,
+          "fin": 1994
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 1994,
+          "fin": 1995
+        },
+        {
+          "club": "Corinthians",
+          "inicio": 1995,
+          "fin": 1997
+        },
+        {
+          "club": "Palmeiras",
+          "inicio": 1998,
+          "fin": 1999
+        }
+      ]
+    },
+    {
+      "nombre": "Iván Córdoba",
+      "nacionalidad": "Colombia",
+      "posicion": "Defensa",
+      "nacimiento": 1976,
+      "carrera": [
+        {
+          "club": "Deportivo Independiente Medellín",
+          "inicio": 1994,
+          "fin": 1998
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 1999,
+          "fin": 2012
+        }
+      ]
+    },
+    {
+      "nombre": "Duván Zapata",
+      "nacionalidad": "Colombia",
+      "posicion": "Delantero",
+      "nacimiento": 1991,
+      "carrera": [
+        {
+          "club": "Nacional",
+          "inicio": 2008,
+          "fin": 2013
+        },
+        {
+          "club": "Napoli",
+          "inicio": 2013,
+          "fin": 2015
+        },
+        {
+          "club": "Udinese",
+          "inicio": 2015,
+          "fin": 2018
+        },
+        {
+          "club": "Sampdoria",
+          "inicio": 2016,
+          "fin": 2018
+        },
+        {
+          "club": "Atalanta",
+          "inicio": 2018,
+          "fin": 2023
+        },
+        {
+          "club": "Torino",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Andrés Guardado",
+      "nacionalidad": "México",
+      "posicion": "Mediocampista",
+      "nacimiento": 1986,
+      "carrera": [
+        {
+          "club": "Atlas",
+          "inicio": 2005,
+          "fin": 2007
+        },
+        {
+          "club": "Deportivo La Coruña",
+          "inicio": 2007,
+          "fin": 2010
+        },
+        {
+          "club": "Valencia",
+          "inicio": 2010,
+          "fin": 2012
+        },
+        {
+          "club": "Bayer Leverkusen",
+          "inicio": 2012,
+          "fin": 2017
+        },
+        {
+          "club": "PSV",
+          "inicio": 2017,
+          "fin": 2018
+        },
+        {
+          "club": "Real Betis",
+          "inicio": 2018,
+          "fin": 2023
+        }
+      ]
+    },
+    {
+      "nombre": "Rafael Márquez",
+      "nacionalidad": "México",
+      "posicion": "Defensa",
+      "nacimiento": 1979,
+      "carrera": [
+        {
+          "club": "Atlas",
+          "inicio": 1996,
+          "fin": 1999
+        },
+        {
+          "club": "Monaco",
+          "inicio": 1999,
+          "fin": 2003
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2003,
+          "fin": 2010
+        },
+        {
+          "club": "New York Red Bulls",
+          "inicio": 2010,
+          "fin": 2012
+        },
+        {
+          "club": "León",
+          "inicio": 2012,
+          "fin": 2018
+        }
+      ]
+    },
+    {
+      "nombre": "Hirving Lozano",
+      "nacionalidad": "México",
+      "posicion": "Delantero",
+      "nacimiento": 1995,
+      "carrera": [
+        {
+          "club": "Pachuca",
+          "inicio": 2014,
+          "fin": 2017
+        },
+        {
+          "club": "PSV",
+          "inicio": 2017,
+          "fin": 2019
+        },
+        {
+          "club": "Napoli",
+          "inicio": 2019,
+          "fin": 2024
+        },
+        {
+          "club": "San Diego FC",
+          "inicio": 2024,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Guillermo Ochoa",
+      "nacionalidad": "México",
+      "posicion": "Arquero",
+      "nacimiento": 1985,
+      "carrera": [
+        {
+          "club": "América",
+          "inicio": 2003,
+          "fin": 2011
+        },
+        {
+          "club": "Ajaccio",
+          "inicio": 2011,
+          "fin": 2014
+        },
+        {
+          "club": "Málaga",
+          "inicio": 2014,
+          "fin": 2016
+        },
+        {
+          "club": "Standard Lieja",
+          "inicio": 2016,
+          "fin": 2017
+        },
+        {
+          "club": "América",
+          "inicio": 2017,
+          "fin": 2019
+        },
+        {
+          "club": "Standard Lieja",
+          "inicio": 2019,
+          "fin": 2021
+        },
+        {
+          "club": "Salernitana",
+          "inicio": 2021,
+          "fin": 2022
+        },
+        {
+          "club": "América",
+          "inicio": 2022,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Javier Hernández",
+      "nacionalidad": "México",
+      "posicion": "Delantero",
+      "nacimiento": 1988,
+      "carrera": [
+        {
+          "club": "Guadalajara",
+          "inicio": 2006,
+          "fin": 2010
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2010,
+          "fin": 2015
+        },
+        {
+          "club": "Bayer Leverkusen",
+          "inicio": 2015,
+          "fin": 2017
+        },
+        {
+          "club": "West Ham",
+          "inicio": 2017,
+          "fin": 2019
+        },
+        {
+          "club": "Sevilla",
+          "inicio": 2019,
+          "fin": 2020
+        },
+        {
+          "club": "LA Galaxy",
+          "inicio": 2020,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Keylor Navas",
+      "nacionalidad": "Costa Rica",
+      "posicion": "Arquero",
+      "nacimiento": 1986,
+      "carrera": [
+        {
+          "club": "Saprissa",
+          "inicio": 2005,
+          "fin": 2010
+        },
+        {
+          "club": "Albacete",
+          "inicio": 2010,
+          "fin": 2011
+        },
+        {
+          "club": "Levante",
+          "inicio": 2011,
+          "fin": 2014
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2014,
+          "fin": 2019
+        },
+        {
+          "club": "PSG",
+          "inicio": 2019,
+          "fin": 2023
+        },
+        {
+          "club": "Newell's Old Boys",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Bryan Ruiz",
+      "nacionalidad": "Costa Rica",
+      "posicion": "Delantero",
+      "nacimiento": 1985,
+      "carrera": [
+        {
+          "club": "Alajuelense",
+          "inicio": 2003,
+          "fin": 2005
+        },
+        {
+          "club": "Gent",
+          "inicio": 2005,
+          "fin": 2009
+        },
+        {
+          "club": "Twente",
+          "inicio": 2009,
+          "fin": 2011
+        },
+        {
+          "club": "Fulham",
+          "inicio": 2011,
+          "fin": 2014
+        },
+        {
+          "club": "PSV",
+          "inicio": 2014,
+          "fin": 2015
+        },
+        {
+          "club": "Sporting CP",
+          "inicio": 2015,
+          "fin": 2018
+        },
+        {
+          "club": "Alajuelense",
+          "inicio": 2018,
+          "fin": 2021
+        }
+      ]
+    },
+    {
+      "nombre": "Michael Essien",
+      "nacionalidad": "Ghana",
+      "posicion": "Mediocampista",
+      "nacimiento": 1982,
+      "carrera": [
+        {
+          "club": "Liberty Professionals",
+          "inicio": 2000,
+          "fin": 2000
+        },
+        {
+          "club": "Bastia",
+          "inicio": 2000,
+          "fin": 2003
+        },
+        {
+          "club": "Lyon",
+          "inicio": 2003,
+          "fin": 2005
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2005,
+          "fin": 2014
+        },
+        {
+          "club": "Real Madrid",
+          "inicio": 2014,
+          "fin": 2015
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2015,
+          "fin": 2016
+        }
+      ]
+    },
+    {
+      "nombre": "Sulley Muntari",
+      "nacionalidad": "Ghana",
+      "posicion": "Mediocampista",
+      "nacimiento": 1984,
+      "carrera": [
+        {
+          "club": "Udinese",
+          "inicio": 2003,
+          "fin": 2005
+        },
+        {
+          "club": "Portsmouth",
+          "inicio": 2005,
+          "fin": 2007
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2007,
+          "fin": 2008
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2008,
+          "fin": 2016
+        }
+      ]
+    },
+    {
+      "nombre": "Stephen Appiah",
+      "nacionalidad": "Ghana",
+      "posicion": "Mediocampista",
+      "nacimiento": 1980,
+      "carrera": [
+        {
+          "club": "Udinese",
+          "inicio": 1999,
+          "fin": 2003
+        },
+        {
+          "club": "Parma",
+          "inicio": 2003,
+          "fin": 2003
+        },
+        {
+          "club": "Fenerbahçe",
+          "inicio": 2003,
+          "fin": 2005
+        },
+        {
+          "club": "Juventus",
+          "inicio": 2005,
+          "fin": 2008
+        },
+        {
+          "club": "Bologna",
+          "inicio": 2008,
+          "fin": 2011
+        }
+      ]
+    },
+    {
+      "nombre": "Thomas Partey",
+      "nacionalidad": "Ghana",
+      "posicion": "Mediocampista",
+      "nacimiento": 1993,
+      "carrera": [
+        {
+          "club": "Atlético de Madrid",
+          "inicio": 2012,
+          "fin": 2020
+        },
+        {
+          "club": "Arsenal",
+          "inicio": 2020,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Nwankwo Kanu",
+      "nacionalidad": "Nigeria",
+      "posicion": "Delantero",
+      "nacimiento": 1976,
+      "carrera": [
+        {
+          "club": "Iwuanyanwu Nationale",
+          "inicio": 1992,
+          "fin": 1993
+        },
+        {
+          "club": "Ajax",
+          "inicio": 1993,
+          "fin": 1996
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 1996,
+          "fin": 1999
+        },
+        {
+          "club": "Arsenal",
+          "inicio": 1999,
+          "fin": 2004
+        },
+        {
+          "club": "West Bromwich",
+          "inicio": 2004,
+          "fin": 2006
+        },
+        {
+          "club": "Portsmouth",
+          "inicio": 2006,
+          "fin": 2010
+        }
+      ]
+    },
+    {
+      "nombre": "Jay-Jay Okocha",
+      "nacionalidad": "Nigeria",
+      "posicion": "Mediocampista",
+      "nacimiento": 1973,
+      "carrera": [
+        {
+          "club": "Borussia Neunkirchen",
+          "inicio": 1990,
+          "fin": 1992
+        },
+        {
+          "club": "Eintracht Frankfurt",
+          "inicio": 1992,
+          "fin": 1996
+        },
+        {
+          "club": "Fenerbahçe",
+          "inicio": 1996,
+          "fin": 1998
+        },
+        {
+          "club": "PSG",
+          "inicio": 1998,
+          "fin": 2002
+        },
+        {
+          "club": "Bolton",
+          "inicio": 2002,
+          "fin": 2006
+        },
+        {
+          "club": "Qatar SC",
+          "inicio": 2006,
+          "fin": 2008
+        }
+      ]
+    },
+    {
+      "nombre": "Victor Moses",
+      "nacionalidad": "Nigeria",
+      "posicion": "Delantero",
+      "nacimiento": 1990,
+      "carrera": [
+        {
+          "club": "Crystal Palace",
+          "inicio": 2007,
+          "fin": 2010
+        },
+        {
+          "club": "Wigan",
+          "inicio": 2010,
+          "fin": 2012
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2012,
+          "fin": 2021
+        },
+        {
+          "club": "Fenerbahçe",
+          "inicio": 2018,
+          "fin": 2019
+        },
+        {
+          "club": "Inter Miami",
+          "inicio": 2021,
+          "fin": 2021
+        },
+        {
+          "club": "Spartak Moscú",
+          "inicio": 2022,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Victor Osimhen",
+      "nacionalidad": "Nigeria",
+      "posicion": "Delantero",
+      "nacimiento": 1998,
+      "carrera": [
+        {
+          "club": "Ultimate Strikers",
+          "inicio": 2016,
+          "fin": 2017
+        },
+        {
+          "club": "Wolfsburgo",
+          "inicio": 2017,
+          "fin": 2019
+        },
+        {
+          "club": "Charleroi",
+          "inicio": 2018,
+          "fin": 2019
+        },
+        {
+          "club": "Lille",
+          "inicio": 2019,
+          "fin": 2020
+        },
+        {
+          "club": "Napoli",
+          "inicio": 2020,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Alex Iwobi",
+      "nacionalidad": "Nigeria",
+      "posicion": "Mediocampista",
+      "nacimiento": 1996,
+      "carrera": [
+        {
+          "club": "Arsenal",
+          "inicio": 2015,
+          "fin": 2019
+        },
+        {
+          "club": "Everton",
+          "inicio": 2019,
+          "fin": 2023
+        },
+        {
+          "club": "Fulham",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Michael Olise",
+      "nacionalidad": "Francia",
+      "posicion": "Delantero",
+      "nacimiento": 2001,
+      "carrera": [
+        {
+          "club": "Reading",
+          "inicio": 2019,
+          "fin": 2021
+        },
+        {
+          "club": "Crystal Palace",
+          "inicio": 2021,
+          "fin": 2024
+        },
+        {
+          "club": "Bayern Múnich",
+          "inicio": 2024,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Habib Diallo",
+      "nacionalidad": "Senegal",
+      "posicion": "Delantero",
+      "nacimiento": 1995,
+      "carrera": [
+        {
+          "club": "Metz",
+          "inicio": 2016,
+          "fin": 2021
+        },
+        {
+          "club": "Strasbourg",
+          "inicio": 2021,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Papiss Cissé",
+      "nacionalidad": "Senegal",
+      "posicion": "Delantero",
+      "nacimiento": 1985,
+      "carrera": [
+        {
+          "club": "Astres de Douanes",
+          "inicio": 2005,
+          "fin": 2006
+        },
+        {
+          "club": "Metz",
+          "inicio": 2007,
+          "fin": 2009
+        },
+        {
+          "club": "Freiburg",
+          "inicio": 2009,
+          "fin": 2010
+        },
+        {
+          "club": "Sankt Pauli",
+          "inicio": 2010,
+          "fin": 2012
+        },
+        {
+          "club": "Newcastle",
+          "inicio": 2012,
+          "fin": 2016
+        },
+        {
+          "club": "Shandong Luneng",
+          "inicio": 2016,
+          "fin": 2019
+        },
+        {
+          "club": "Alanyaspor",
+          "inicio": 2019,
+          "fin": 2020
+        }
+      ]
+    },
+    {
+      "nombre": "Demba Ba",
+      "nacionalidad": "Senegal",
+      "posicion": "Delantero",
+      "nacimiento": 1985,
+      "carrera": [
+        {
+          "club": "Rouen",
+          "inicio": 2004,
+          "fin": 2005
+        },
+        {
+          "club": "Hoffenheim",
+          "inicio": 2007,
+          "fin": 2009
+        },
+        {
+          "club": "West Ham",
+          "inicio": 2009,
+          "fin": 2011
+        },
+        {
+          "club": "Newcastle",
+          "inicio": 2011,
+          "fin": 2013
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2013,
+          "fin": 2015
+        },
+        {
+          "club": "Besiktas",
+          "inicio": 2015,
+          "fin": 2018
+        }
+      ]
+    },
+    {
+      "nombre": "Bakary Koné",
+      "nacionalidad": "Costa de Marfil",
+      "posicion": "Delantero",
+      "nacimiento": 1988,
+      "carrera": [
+        {
+          "club": "ASEC Mimosas",
+          "inicio": 2005,
+          "fin": 2008
+        },
+        {
+          "club": "Sion",
+          "inicio": 2008,
+          "fin": 2010
+        },
+        {
+          "club": "Lyon",
+          "inicio": 2010,
+          "fin": 2013
+        },
+        {
+          "club": "Sevilla",
+          "inicio": 2013,
+          "fin": 2016
+        }
+      ]
+    },
+    {
+      "nombre": "Seydou Doumbia",
+      "nacionalidad": "Costa de Marfil",
+      "posicion": "Delantero",
+      "nacimiento": 1987,
+      "carrera": [
+        {
+          "club": "Young Africans",
+          "inicio": 2007,
+          "fin": 2008
+        },
+        {
+          "club": "CSKA Moscú",
+          "inicio": 2010,
+          "fin": 2015
+        },
+        {
+          "club": "Roma",
+          "inicio": 2015,
+          "fin": 2016
+        },
+        {
+          "club": "Basilea",
+          "inicio": 2017,
+          "fin": 2019
+        }
+      ]
+    },
+    {
+      "nombre": "Max-Alain Gradel",
+      "nacionalidad": "Costa de Marfil",
+      "posicion": "Delantero",
+      "nacimiento": 1987,
+      "carrera": [
+        {
+          "club": "Sedan",
+          "inicio": 2005,
+          "fin": 2010
+        },
+        {
+          "club": "Leicester City",
+          "inicio": 2010,
+          "fin": 2011
+        },
+        {
+          "club": "Saint-Étienne",
+          "inicio": 2011,
+          "fin": 2015
+        },
+        {
+          "club": "Bournemouth",
+          "inicio": 2015,
+          "fin": 2018
+        },
+        {
+          "club": "Toulouse",
+          "inicio": 2018,
+          "fin": 2021
+        },
+        {
+          "club": "Sivasspor",
+          "inicio": 2021,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Sofiane Feghouli",
+      "nacionalidad": "Argelia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1989,
+      "carrera": [
+        {
+          "club": "Grenoble",
+          "inicio": 2007,
+          "fin": 2010
+        },
+        {
+          "club": "Valencia",
+          "inicio": 2010,
+          "fin": 2016
+        },
+        {
+          "club": "West Ham",
+          "inicio": 2016,
+          "fin": 2018
+        },
+        {
+          "club": "Galatasaray",
+          "inicio": 2018,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Riyad Mahrez",
+      "nacionalidad": "Argelia",
+      "posicion": "Delantero",
+      "nacimiento": 1991,
+      "carrera": [
+        {
+          "club": "Le Havre",
+          "inicio": 2009,
+          "fin": 2014
+        },
+        {
+          "club": "Leicester City",
+          "inicio": 2014,
+          "fin": 2018
+        },
+        {
+          "club": "Manchester City",
+          "inicio": 2018,
+          "fin": 2023
+        },
+        {
+          "club": "Al-Ahli",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Islam Slimani",
+      "nacionalidad": "Argelia",
+      "posicion": "Delantero",
+      "nacimiento": 1988,
+      "carrera": [
+        {
+          "club": "USM Alger",
+          "inicio": 2008,
+          "fin": 2013
+        },
+        {
+          "club": "Sporting CP",
+          "inicio": 2013,
+          "fin": 2016
+        },
+        {
+          "club": "Leicester City",
+          "inicio": 2016,
+          "fin": 2019
+        },
+        {
+          "club": "Fenerbahçe",
+          "inicio": 2018,
+          "fin": 2018
+        },
+        {
+          "club": "Monaco",
+          "inicio": 2019,
+          "fin": 2020
+        },
+        {
+          "club": "Lyon",
+          "inicio": 2020,
+          "fin": 2021
+        }
+      ]
+    },
+    {
+      "nombre": "Aïssa Mandi",
+      "nacionalidad": "Argelia",
+      "posicion": "Defensa",
+      "nacimiento": 1991,
+      "carrera": [
+        {
+          "club": "Stade Reims",
+          "inicio": 2010,
+          "fin": 2015
+        },
+        {
+          "club": "Real Betis",
+          "inicio": 2015,
+          "fin": 2021
+        },
+        {
+          "club": "Villarreal",
+          "inicio": 2021,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Hakim Ziyech",
+      "nacionalidad": "Marruecos",
+      "posicion": "Mediocampista",
+      "nacimiento": 1993,
+      "carrera": [
+        {
+          "club": "Heerenveen",
+          "inicio": 2013,
+          "fin": 2016
+        },
+        {
+          "club": "Ajax",
+          "inicio": 2016,
+          "fin": 2020
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2020,
+          "fin": 2024
+        },
+        {
+          "club": "Galatasaray",
+          "inicio": 2023,
+          "fin": 2023
+        }
+      ]
+    },
+    {
+      "nombre": "Achraf Hakimi",
+      "nacionalidad": "Marruecos",
+      "posicion": "Defensa",
+      "nacimiento": 1998,
+      "carrera": [
+        {
+          "club": "Real Madrid",
+          "inicio": 2017,
+          "fin": 2020
+        },
+        {
+          "club": "Borussia Dortmund",
+          "inicio": 2018,
+          "fin": 2020
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2020,
+          "fin": 2021
+        },
+        {
+          "club": "PSG",
+          "inicio": 2021,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Sofyan Amrabat",
+      "nacionalidad": "Marruecos",
+      "posicion": "Mediocampista",
+      "nacimiento": 1996,
+      "carrera": [
+        {
+          "club": "Utrecht",
+          "inicio": 2016,
+          "fin": 2018
+        },
+        {
+          "club": "Feyenoord",
+          "inicio": 2018,
+          "fin": 2019
+        },
+        {
+          "club": "Verona",
+          "inicio": 2019,
+          "fin": 2020
+        },
+        {
+          "club": "Fiorentina",
+          "inicio": 2020,
+          "fin": 2024
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2023,
+          "fin": 2024
+        },
+        {
+          "club": "Fenerbahçe",
+          "inicio": 2024,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Youssef En-Nesyri",
+      "nacionalidad": "Marruecos",
+      "posicion": "Delantero",
+      "nacimiento": 1997,
+      "carrera": [
+        {
+          "club": "Málaga",
+          "inicio": 2016,
+          "fin": 2018
+        },
+        {
+          "club": "Leganés",
+          "inicio": 2018,
+          "fin": 2019
+        },
+        {
+          "club": "Sevilla",
+          "inicio": 2019,
+          "fin": 2024
+        },
+        {
+          "club": "Fenerbahçe",
+          "inicio": 2024,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Yassine Bounou",
+      "nacionalidad": "Marruecos",
+      "posicion": "Arquero",
+      "nacimiento": 1991,
+      "carrera": [
+        {
+          "club": "Wydad",
+          "inicio": 2011,
+          "fin": 2012
+        },
+        {
+          "club": "Zaragoza",
+          "inicio": 2012,
+          "fin": 2014
+        },
+        {
+          "club": "Girona",
+          "inicio": 2014,
+          "fin": 2019
+        },
+        {
+          "club": "Sevilla",
+          "inicio": 2019,
+          "fin": 2024
+        },
+        {
+          "club": "Al-Hilal",
+          "inicio": 2024,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Sami Al-Jaber",
+      "nacionalidad": "Arabia Saudita",
+      "posicion": "Delantero",
+      "nacimiento": 1972,
+      "carrera": [
+        {
+          "club": "Al-Hilal",
+          "inicio": 1990,
+          "fin": 2009
+        }
+      ]
+    },
+    {
+      "nombre": "Salem Al-Dawsari",
+      "nacionalidad": "Arabia Saudita",
+      "posicion": "Delantero",
+      "nacimiento": 1991,
+      "carrera": [
+        {
+          "club": "Al-Hilal",
+          "inicio": 2011,
+          "fin": 2018
+        },
+        {
+          "club": "Villarreal",
+          "inicio": 2018,
+          "fin": 2019
+        },
+        {
+          "club": "Al-Hilal",
+          "inicio": 2019,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Son Jong-gug",
+      "nacionalidad": "Corea del Sur",
+      "posicion": "Defensa",
+      "nacimiento": 1971,
+      "carrera": [
+        {
+          "club": "Hyundai Horang-i",
+          "inicio": 1994,
+          "fin": 2004
+        }
+      ]
+    },
+    {
+      "nombre": "Park Ji-sung",
+      "nacionalidad": "Corea del Sur",
+      "posicion": "Mediocampista",
+      "nacimiento": 1981,
+      "carrera": [
+        {
+          "club": "Kyoto Purple Sanga",
+          "inicio": 2000,
+          "fin": 2003
+        },
+        {
+          "club": "PSV",
+          "inicio": 2003,
+          "fin": 2005
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2005,
+          "fin": 2012
+        },
+        {
+          "club": "QPR",
+          "inicio": 2012,
+          "fin": 2014
+        }
+      ]
+    },
+    {
+      "nombre": "Ki Sung-yueng",
+      "nacionalidad": "Corea del Sur",
+      "posicion": "Mediocampista",
+      "nacimiento": 1989,
+      "carrera": [
+        {
+          "club": "FC Seoul",
+          "inicio": 2006,
+          "fin": 2009
+        },
+        {
+          "club": "Celtic",
+          "inicio": 2009,
+          "fin": 2012
+        },
+        {
+          "club": "Swansea",
+          "inicio": 2012,
+          "fin": 2018
+        },
+        {
+          "club": "Newcastle",
+          "inicio": 2018,
+          "fin": 2020
+        },
+        {
+          "club": "Mallorca",
+          "inicio": 2020,
+          "fin": 2022
+        }
+      ]
+    },
+    {
+      "nombre": "Hidetoshi Nakata",
+      "nacionalidad": "Japón",
+      "posicion": "Mediocampista",
+      "nacimiento": 1977,
+      "carrera": [
+        {
+          "club": "Bellmare Hiratsuka",
+          "inicio": 1995,
+          "fin": 1998
+        },
+        {
+          "club": "Perugia",
+          "inicio": 1998,
+          "fin": 2000
+        },
+        {
+          "club": "Roma",
+          "inicio": 2000,
+          "fin": 2001
+        },
+        {
+          "club": "Parma",
+          "inicio": 2001,
+          "fin": 2002
+        },
+        {
+          "club": "Bologna",
+          "inicio": 2002,
+          "fin": 2004
+        },
+        {
+          "club": "Fiorentina",
+          "inicio": 2004,
+          "fin": 2005
+        },
+        {
+          "club": "Bolton",
+          "inicio": 2005,
+          "fin": 2006
+        }
+      ]
+    },
+    {
+      "nombre": "Yuto Nagatomo",
+      "nacionalidad": "Japón",
+      "posicion": "Defensa",
+      "nacimiento": 1986,
+      "carrera": [
+        {
+          "club": "FC Tokio",
+          "inicio": 2004,
+          "fin": 2010
+        },
+        {
+          "club": "Cesena",
+          "inicio": 2010,
+          "fin": 2011
+        },
+        {
+          "club": "Inter de Milán",
+          "inicio": 2011,
+          "fin": 2019
+        },
+        {
+          "club": "Galatasaray",
+          "inicio": 2019,
+          "fin": 2020
+        },
+        {
+          "club": "FC Tokio",
+          "inicio": 2020,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Maya Yoshida",
+      "nacionalidad": "Japón",
+      "posicion": "Defensa",
+      "nacimiento": 1988,
+      "carrera": [
+        {
+          "club": "Nagoya Grampus",
+          "inicio": 2008,
+          "fin": 2010
+        },
+        {
+          "club": "VVV-Venlo",
+          "inicio": 2010,
+          "fin": 2012
+        },
+        {
+          "club": "Southampton",
+          "inicio": 2012,
+          "fin": 2020
+        },
+        {
+          "club": "Sampdoria",
+          "inicio": 2020,
+          "fin": 2023
+        },
+        {
+          "club": "Schalke 04",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Wataru Endo",
+      "nacionalidad": "Japón",
+      "posicion": "Mediocampista",
+      "nacimiento": 1993,
+      "carrera": [
+        {
+          "club": "Shonan Bellmare",
+          "inicio": 2015,
+          "fin": 2017
+        },
+        {
+          "club": "Urawa Reds",
+          "inicio": 2018,
+          "fin": 2019
+        },
+        {
+          "club": "Sint-Truiden",
+          "inicio": 2019,
+          "fin": 2021
+        },
+        {
+          "club": "Stuttgart",
+          "inicio": 2021,
+          "fin": 2023
+        },
+        {
+          "club": "Liverpool",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Tim Cahill",
+      "nacionalidad": "Australia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1979,
+      "carrera": [
+        {
+          "club": "Millwall",
+          "inicio": 1997,
+          "fin": 2004
+        },
+        {
+          "club": "Everton",
+          "inicio": 2004,
+          "fin": 2012
+        },
+        {
+          "club": "New York Red Bulls",
+          "inicio": 2012,
+          "fin": 2016
+        },
+        {
+          "club": "Melbourne City",
+          "inicio": 2016,
+          "fin": 2017
+        }
+      ]
+    },
+    {
+      "nombre": "Mark Schwarzer",
+      "nacionalidad": "Australia",
+      "posicion": "Arquero",
+      "nacimiento": 1972,
+      "carrera": [
+        {
+          "club": "Marconi Stallions",
+          "inicio": 1991,
+          "fin": 1993
+        },
+        {
+          "club": "Bradford City",
+          "inicio": 1993,
+          "fin": 1996
+        },
+        {
+          "club": "Middlesbrough",
+          "inicio": 1997,
+          "fin": 2008
+        },
+        {
+          "club": "Fulham",
+          "inicio": 2008,
+          "fin": 2011
+        },
+        {
+          "club": "Chelsea",
+          "inicio": 2011,
+          "fin": 2013
+        },
+        {
+          "club": "Leicester City",
+          "inicio": 2013,
+          "fin": 2015
+        }
+      ]
+    },
+    {
+      "nombre": "Mile Jedinak",
+      "nacionalidad": "Australia",
+      "posicion": "Mediocampista",
+      "nacimiento": 1984,
+      "carrera": [
+        {
+          "club": "Central Coast Mariners",
+          "inicio": 2005,
+          "fin": 2007
+        },
+        {
+          "club": "Turquía Genclerbirligi",
+          "inicio": 2007,
+          "fin": 2008
+        },
+        {
+          "club": "Antalyaspor",
+          "inicio": 2008,
+          "fin": 2009
+        },
+        {
+          "club": "Crystal Palace",
+          "inicio": 2011,
+          "fin": 2016
+        },
+        {
+          "club": "Aston Villa",
+          "inicio": 2016,
+          "fin": 2018
+        }
+      ]
+    },
+    {
+      "nombre": "Chris Wondolowski",
+      "nacionalidad": "Estados Unidos",
+      "posicion": "Delantero",
+      "nacimiento": 1983,
+      "carrera": [
+        {
+          "club": "Houston Dynamo",
+          "inicio": 2005,
+          "fin": 2009
+        },
+        {
+          "club": "San Jose Earthquakes",
+          "inicio": 2009,
+          "fin": 2020
+        }
+      ]
+    },
+    {
+      "nombre": "Tim Howard",
+      "nacionalidad": "Estados Unidos",
+      "posicion": "Arquero",
+      "nacimiento": 1979,
+      "carrera": [
+        {
+          "club": "MetroStars",
+          "inicio": 1998,
+          "fin": 2003
+        },
+        {
+          "club": "Manchester United",
+          "inicio": 2003,
+          "fin": 2007
+        },
+        {
+          "club": "Everton",
+          "inicio": 2007,
+          "fin": 2016
+        },
+        {
+          "club": "Colorado Rapids",
+          "inicio": 2016,
+          "fin": 2019
+        }
+      ]
+    },
+    {
+      "nombre": "Kellyn Acosta",
+      "nacionalidad": "Estados Unidos",
+      "posicion": "Mediocampista",
+      "nacimiento": 1995,
+      "carrera": [
+        {
+          "club": "FC Dallas",
+          "inicio": 2013,
+          "fin": 2018
+        },
+        {
+          "club": "Colorado Rapids",
+          "inicio": 2018,
+          "fin": 2020
+        },
+        {
+          "club": "FC Dallas",
+          "inicio": 2021,
+          "fin": 2021
+        },
+        {
+          "club": "LAFC",
+          "inicio": 2021,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Sergiño Dest",
+      "nacionalidad": "Estados Unidos",
+      "posicion": "Defensa",
+      "nacimiento": 2000,
+      "carrera": [
+        {
+          "club": "Ajax",
+          "inicio": 2018,
+          "fin": 2020
+        },
+        {
+          "club": "Barcelona",
+          "inicio": 2020,
+          "fin": 2023
+        },
+        {
+          "club": "AC Milan",
+          "inicio": 2023,
+          "fin": 2024
+        },
+        {
+          "club": "PSV",
+          "inicio": 2024,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Giovanni Reyna",
+      "nacionalidad": "Estados Unidos",
+      "posicion": "Mediocampista",
+      "nacimiento": 2002,
+      "carrera": [
+        {
+          "club": "Borussia Dortmund",
+          "inicio": 2019,
+          "fin": 2024
+        },
+        {
+          "club": "Nottingham Forest",
+          "inicio": 2024,
+          "fin": null
+        }
+      ]
+    },
+    {
+      "nombre": "Folarin Balogun",
+      "nacionalidad": "Estados Unidos",
+      "posicion": "Delantero",
+      "nacimiento": 2001,
+      "carrera": [
+        {
+          "club": "Arsenal",
+          "inicio": 2019,
+          "fin": 2023
+        },
+        {
+          "club": "Reims",
+          "inicio": 2021,
+          "fin": 2022
+        },
+        {
+          "club": "Monaco",
+          "inicio": 2023,
+          "fin": null
+        }
+      ]
     }
   ]
 }

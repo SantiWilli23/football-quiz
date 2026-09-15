@@ -36,15 +36,13 @@ const POSITION_MAP = {
   "Delantero": "Delantero",
 };
 
-// Idempotente: si ya hay jugadores cargados, no vuelve a insertar (el seed
-// corre en cada arranque del server, junto con el resto de las preguntas).
+// Idempotente y ACUMULATIVO: corre en cada arranque del server, pero nunca
+// duplica nada — cada INSERT de jugador/club/paso de carrera usa
+// ON CONFLICT DO NOTHING contra su propio UNIQUE. Antes cortaba apenas
+// encontraba un solo jugador ya cargado, así que agregar gente nueva a
+// equipo-jugador-players.json nunca llegaba a un server ya desplegado;
+// ahora simplemente vuelve a recorrer el archivo y suma lo que falte.
 export async function seedEquipoJugador() {
-  const existing = await db.execute("SELECT COUNT(*) as c FROM ej_players");
-  const already = Number(existing.rows[0].c);
-  if (already > 0) {
-    return { skipped: true, players: already };
-  }
-
   if (!fs.existsSync(DATA_PATH)) {
     console.warn(`Equipo-Jugador: no se encontró ${DATA_PATH}, se omite el seed.`);
     return { skipped: true, players: 0 };
