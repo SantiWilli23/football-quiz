@@ -1,8 +1,9 @@
 // Motor puro de Modo Presidente: un nivel arriba del DT. Acá no se dirige
 // la cancha (eso ya lo cubre Modo DT) — se maneja el club: plata, estadio,
-// sponsors y la relación con la hinchada y la directiva. Los resultados
-// deportivos se resuelven de forma abstracta al cierre de temporada, según
-// cuánto invertiste en el proyecto comparado con el resto de la liga.
+// sponsors, plantel, fichajes y la relación con la hinchada, la directiva
+// y el propio DT. La liga se juega de verdad: fixture de todos contra
+// todos (ida y vuelta) y una tabla que se actualiza fecha a fecha, no un
+// cálculo abstracto al cierre de temporada.
 import { teamsByLeague, teamById } from "../carrera/data/teams.js";
 
 // Mismos umbrales que usa Carrera DT (CareerContext.jsx evaluateObjective) —
@@ -22,7 +23,7 @@ export function objectiveFor(teamId) {
   return { key, label: OBJECTIVE_LABELS[key] || "Salvar la categoría", threshold: OBJECTIVE_THRESHOLDS[key] || 17 };
 }
 
-export const WEEKS_PER_SEASON = 34;
+export const WEEKS_PER_SEASON = 34; // fallback antes de elegir club — la temporada real sale de 2*(equipos-1)
 export const TICKET_PRICE_LEVELS = [20, 30, 40, 55, 70];
 export const STADIUM_TIERS = [
   { tier: 1, capacity: 25000, upgradeCost: 0 },
@@ -43,19 +44,179 @@ export const ACADEMY_TIERS = [
   { tier: 2, cost: 25, dtQualityPerSeason: 4, label: "Academia nacional" },
   { tier: 3, cost: 50, dtQualityPerSeason: 6, label: "Academia de élite" },
 ];
+// Predio de entrenamiento: tercer eje de inversión, aparte de estadio y
+// academia — suma directo a la fuerza del equipo cada partido (mejor
+// preparación física/táctica), no al plantel en sí.
+export const TRAINING_TIERS = [
+  { tier: 1, cost: 15, strengthBoost: 3, label: "Predio regional" },
+  { tier: 2, cost: 35, strengthBoost: 6, label: "Predio de alto rendimiento" },
+  { tier: 3, cost: 70, strengthBoost: 10, label: "Ciudad deportiva de élite" },
+];
+// Candidatos a DT: perfiles con estilo y precio distintos, para cuando se
+// echa al anterior. La calidad es un piso nuevo, no un delta — cambiar de
+// DT es una apuesta, no un ajuste fino.
+export const DT_CANDIDATES = [
+  { id: "dt_estrella", name: "Diego Ibarra", style: "Estrella mediática", cost: 9, quality: 68, fanBoost: 6 },
+  { id: "dt_tactico", name: "Hans Richter", style: "Técnico disciplinado", cost: 5, quality: 58, fanBoost: 0 },
+  { id: "dt_formador", name: "Paulo Ferreira", style: "Formador de juveniles", cost: 2, quality: 46, fanBoost: 2 },
+  { id: "dt_veterano", name: "Ricardo Suels", style: "Veterano de la casa", cost: 0, quality: 50, fanBoost: 4 },
+];
+// Por encima de esta deuda la directiva mete un límite salarial de emergencia:
+// no se puede invertir en nada nuevo (estadio, sponsor, academia, predio,
+// DT) hasta bajarla.
+export const DEBT_CEILING = 45;
 
 function clamp(v, a, b) {
   return Math.max(a, Math.min(b, v));
 }
 
-export function initialPresidentState(teamId, teamName, league, prestige) {
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+const FIRST_NAMES = ["Mateo", "Lucas", "Thiago", "Bruno", "Diego", "Iker", "Rodri", "Kevin", "Marco", "Yusuf", "Noah", "Luca", "Enzo", "Tomás", "Adama", "Kian"];
+const LAST_NAMES = ["Fernández", "Silva", "Okafor", "Nilsson", "Varela", "Rossi", "Dubois", "Alonso", "Kovač", "Haruna", "Petrov", "Castillo", "Moreau", "Lindqvist"];
+const TARGET_POSITIONS = ["Delantero", "Extremo", "Mediocampista", "Defensor central", "Lateral", "Arquero"];
+
+function randomName() {
+  return `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`;
+}
+
+function buildStaff() {
   return {
-    version: 1,
+    captain: { name: randomName(), role: "Capitán" },
+    topScorer: { name: randomName(), role: "Goleador del plantel" },
+    wonderkid: { name: randomName(), role: "Joya de la cantera", age: 17 + Math.floor(Math.random() * 3) },
+  };
+}
+
+// === Fixture real: todos contra todos, ida y vuelta (método del círculo) ===
+function circleRoundRobin(teamIds) {
+  const ids = [...teamIds];
+  if (ids.length % 2 !== 0) ids.push(null);
+  const n = ids.length;
+  const half = n / 2;
+  let arr = ids.slice();
+  const rounds = [];
+  for (let r = 0; r < n - 1; r++) {
+    const pairs = [];
+    for (let i = 0; i < half; i++) {
+      const a = arr[i];
+      const b = arr[n - 1 - i];
+      if (a !== null && b !== null) pairs.push(r % 2 === 0 ? [a, b] : [b, a]);
+    }
+    rounds.push(pairs);
+    arr = [arr[0], arr[arr.length - 1], ...arr.slice(1, arr.length - 1)];
+  }
+  return rounds;
+}
+
+export function buildFixtures(league) {
+  const ids = teamsByLeague(league).map((t) => t.id);
+  const firstLeg = circleRoundRobin(ids);
+  const secondLeg = firstLeg.map((round) => round.map(([a, b]) => [b, a]));
+  return [...firstLeg, ...secondLeg];
+}
+
+export function buildLeagueTable(league) {
+  return teamsByLeague(league).map((t) => ({ id: t.id, name: t.name, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, pts: 0 }));
+}
+
+export function sortedLeagueTable(table) {
+  return [...table].sort((a, b) => b.pts - a.pts || (b.gf - b.gc) - (a.gf - a.gc) || b.gf - a.gf);
+}
+
+export function myLeaguePosition(state) {
+  const sorted = sortedLeagueTable(state.leagueTable || []);
+  return sorted.findIndex((r) => r.id === state.teamId) + 1;
+}
+
+function teamMatchStrength(state, teamId) {
+  if (teamId === state.teamId) {
+    const trainingBoost = state.trainingTier ? TRAINING_TIERS[state.trainingTier - 1].strengthBoost : 0;
+    return (state.dtBudgetGiven || 0) * 1.2 + state.dtQuality + state.stadiumTier * 3 + trainingBoost;
+  }
+  const t = teamById(teamId);
+  return (t?.budget || 40) * 0.5 + (t?.prestige || 5) * 3;
+}
+
+function poissonish(lambda) {
+  let g = 0;
+  let p = Math.exp(-lambda);
+  let s = p;
+  const u = Math.random();
+  while (s < u && g < 8) {
+    g++;
+    p *= lambda / g;
+    s += p;
+  }
+  return g;
+}
+
+function simulateOneMatch(strengthA, strengthB) {
+  const diff = strengthA - strengthB;
+  const goalsA = poissonish(clamp(1.3 + diff / 40, 0.2, 4.2));
+  const goalsB = poissonish(clamp(1.3 - diff / 40, 0.2, 4.2));
+  return [goalsA, goalsB];
+}
+
+function applyResultToTable(table, homeId, awayId, gh, ga) {
+  return table.map((row) => {
+    if (row.id !== homeId && row.id !== awayId) return row;
+    const isHome = row.id === homeId;
+    const gf = isHome ? gh : ga;
+    const gc = isHome ? ga : gh;
+    const win = gf > gc;
+    const draw = gf === gc;
+    return {
+      ...row,
+      pj: row.pj + 1,
+      pg: row.pg + (win ? 1 : 0),
+      pe: row.pe + (draw ? 1 : 0),
+      pp: row.pp + (!win && !draw ? 1 : 0),
+      gf: row.gf + gf,
+      gc: row.gc + gc,
+      pts: row.pts + (win ? 3 : draw ? 1 : 0),
+    };
+  });
+}
+
+// Simula toda la fecha (mi partido + el resto de la liga) y devuelve la
+// tabla actualizada + mi resultado, si me tocaba jugar esta semana.
+function simulateMatchweek(state) {
+  const round = state.fixtures?.[state.week];
+  if (!round || !round.length) return { table: state.leagueTable, myResult: null };
+
+  let table = state.leagueTable || [];
+  let myResult = null;
+  for (const [homeId, awayId] of round) {
+    const [gh, ga] = simulateOneMatch(teamMatchStrength(state, homeId), teamMatchStrength(state, awayId));
+    table = applyResultToTable(table, homeId, awayId, gh, ga);
+    if (homeId === state.teamId || awayId === state.teamId) {
+      const isHome = homeId === state.teamId;
+      myResult = {
+        opponentId: isHome ? awayId : homeId,
+        isHome,
+        myGoals: isHome ? gh : ga,
+        rivalGoals: isHome ? ga : gh,
+        isClasico: (isHome ? awayId : homeId) === state.rivalId,
+      };
+    }
+  }
+  return { table, myResult };
+}
+
+export function initialPresidentState(teamId, teamName, league, prestige) {
+  const fixtures = buildFixtures(league);
+  const rivals = teamsByLeague(league).filter((t) => t.id !== teamId);
+  return {
+    version: 2,
     teamId,
     teamName,
     league,
     season: 1,
     week: 0,
+    weeksPerSeason: fixtures.length,
     budget: 15,
     debt: 0,
     fanHappiness: 60,
@@ -64,12 +225,24 @@ export function initialPresidentState(teamId, teamName, league, prestige) {
     stadiumTier: 1,
     sponsorTier: 0,
     academyTier: 0,
+    trainingTier: 0,
     dtBudgetGiven: 0,
     dtQuality: clamp(40 + (prestige || 5) * 2, 30, 75),
+    dtName: `Cuerpo técnico de ${teamName}`,
+    dtStyle: "Balanceado",
+    dtConfidence: 65,
+    staff: buildStaff(),
+    rivalId: rivals.length ? pick(rivals).id : null,
+    transferTargets: [],
+    pendingSale: null,
+    internationalQualified: false,
+    fixtures,
+    leagueTable: buildLeagueTable(league),
     leaguePosition: null,
     seasonInvestment: 0,
     history: [],
     titlesWon: 0,
+    voteCrisisUsed: false,
     news: [`Asumiste la presidencia de ${teamName}.`],
     gameOver: false,
     currentDecision: null,
@@ -88,13 +261,21 @@ export function weeklyIncome(state) {
   const ticketRevenue = (attendance * ticketPrice) / 1_000_000; // en millones
   const sponsorRevenue = state.sponsorTier > 0 ? SPONSOR_TIERS[state.sponsorTier - 1].weeklyIncome : 0;
   const tvRevenue = 0.15 + state.stadiumTier * 0.05;
-  return { ticketRevenue, sponsorRevenue, tvRevenue, attendance, total: ticketRevenue + sponsorRevenue + tvRevenue };
+  // La tienda oficial y el merchandising no se compran aparte: rinden solo
+  // si la hinchada está contenta y el club tiene vitrina — plata pasiva
+  // ligada a cómo vas gestionando lo demás, no una inversión más.
+  const merchRevenue = 0.04 + state.fanHappiness / 1400 + (state.titlesWon || 0) * 0.03;
+  const internationalRevenue = state.internationalQualified ? 0.3 : 0;
+  return {
+    ticketRevenue, sponsorRevenue, tvRevenue, merchRevenue, internationalRevenue, attendance,
+    total: ticketRevenue + sponsorRevenue + tvRevenue + merchRevenue + internationalRevenue,
+  };
 }
 
 export function weeklyExpenses(state) {
-  const wages = 0.25 + state.dtQuality / 100 * 0.6;
+  const wages = 0.25 + (state.dtQuality / 100) * 0.6;
   const upkeep = state.stadiumTier * 0.08;
-  const debtInterest = state.debt * 0.01;
+  const debtInterest = state.debt * (state.debt > DEBT_CEILING ? 0.03 : 0.01);
   return { wages, upkeep, debtInterest, total: wages + upkeep + debtInterest };
 }
 
@@ -267,6 +448,34 @@ export const DECISIONS_POOL = [
       { boardTrust: 5, fanHappiness: 4 },
     ],
   },
+  {
+    id: "p13",
+    context: "La prensa te tira el micrófono después del clásico: te preguntan por la victoria/derrota frente al rival de siempre.",
+    options: [
+      { text: "Le bajás el precio: 'un partido más, quedan muchos puntos'." },
+      { text: "Le das el gusto al hincha y calentás el clásico para la revancha." },
+      { text: "No hacés declaraciones." },
+    ],
+    effects: [
+      { boardTrust: 2 },
+      { fanHappiness: 6, boardTrust: -2 },
+      {},
+    ],
+  },
+  {
+    id: "p14",
+    context: "Un periodista te pregunta si el mercado de pases estuvo a la altura de lo que pedía el DT.",
+    options: [
+      { text: "Reconocés que faltó presupuesto." },
+      { text: "Decís que el plantel actual alcanza y sobra." },
+      { text: "Cambiás de tema." },
+    ],
+    effects: [
+      { dtQuality: 2, boardTrust: -1 },
+      { boardTrust: 2, dtQuality: -1 },
+      {},
+    ],
+  },
 ];
 
 export function pickDecision(usedIds = []) {
@@ -288,14 +497,18 @@ export function applyDecisionEffects(state, decision, optionIdx) {
   return next;
 }
 
+function investmentsLocked(state) {
+  return state.debt > DEBT_CEILING;
+}
+
 export function canUpgradeStadium(state) {
   const next = STADIUM_TIERS[state.stadiumTier];
-  return next && state.budget >= next.upgradeCost;
+  return next && !investmentsLocked(state) && state.budget >= next.upgradeCost;
 }
 
 export function upgradeStadium(state) {
   const next = STADIUM_TIERS[state.stadiumTier];
-  if (!next || state.budget < next.upgradeCost) return state;
+  if (!next || investmentsLocked(state) || state.budget < next.upgradeCost) return state;
   return {
     ...state,
     budget: Math.round((state.budget - next.upgradeCost) * 20) / 20,
@@ -307,7 +520,7 @@ export function upgradeStadium(state) {
 
 export function hireSponsor(state, tier) {
   const cost = tier * 1.5;
-  if (state.budget < cost) return state;
+  if (investmentsLocked(state) || state.budget < cost) return state;
   return {
     ...state,
     budget: Math.round((state.budget - cost) * 20) / 20,
@@ -318,7 +531,7 @@ export function hireSponsor(state, tier) {
 
 export function hireAcademy(state, tier) {
   const cost = ACADEMY_TIERS[tier - 1]?.cost;
-  if (cost == null || state.academyTier >= tier || state.budget < cost) return state;
+  if (cost == null || investmentsLocked(state) || state.academyTier >= tier || state.budget < cost) return state;
   return {
     ...state,
     budget: Math.round((state.budget - cost) * 20) / 20,
@@ -327,9 +540,25 @@ export function hireAcademy(state, tier) {
   };
 }
 
+export function hireTraining(state, tier) {
+  const cost = TRAINING_TIERS[tier - 1]?.cost;
+  if (cost == null || investmentsLocked(state) || state.trainingTier >= tier || state.budget < cost) return state;
+  return {
+    ...state,
+    budget: Math.round((state.budget - cost) * 20) / 20,
+    trainingTier: tier,
+    news: [`🏗️ Inauguraste el ${TRAINING_TIERS[tier - 1].label.toLowerCase()} — el equipo rinde mejor cada fecha.`, ...state.news].slice(0, 8),
+  };
+}
+
+// Echar al DT lo deja vacante — hay que elegir reemplazo antes de poder
+// seguir jugando (ver hireDt). La hinchada lo festeja, la directiva no
+// tanto, y tu confianza en el próximo arranca de nuevo.
 export function fireDt(state) {
   return {
     ...state,
+    dtName: null,
+    dtStyle: null,
     dtQuality: clamp(state.dtQuality - 5, 20, 95),
     boardTrust: clamp(state.boardTrust - 3, 0, 100),
     fanHappiness: clamp(state.fanHappiness + 5, 0, 100),
@@ -337,7 +566,113 @@ export function fireDt(state) {
   };
 }
 
+export function hireDt(state, candidateId) {
+  const candidate = DT_CANDIDATES.find((d) => d.id === candidateId);
+  if (!candidate || investmentsLocked(state) || state.budget < candidate.cost) return state;
+  return {
+    ...state,
+    budget: Math.round((state.budget - candidate.cost) * 20) / 20,
+    dtName: candidate.name,
+    dtStyle: candidate.style,
+    dtQuality: candidate.quality,
+    dtConfidence: 65,
+    fanHappiness: clamp(state.fanHappiness + candidate.fanBoost, 0, 100),
+    news: [`✍️ Se presentó ${candidate.name} como nuevo DT (perfil: ${candidate.style.toLowerCase()}).`, ...state.news].slice(0, 8),
+  };
+}
+
+// === Fichajes en mira: el presidente scoutea nombres, marca cuáles son
+// prioridad, y el DT los evalúa semana a semana. El DT puede rechazar un
+// fichaje marcado como prioridad — pero eso le cuesta la confianza que el
+// presidente tiene en él (dtConfidence), no la confianza de la directiva.
+export function scoutTarget(state) {
+  const target = {
+    id: `t${Date.now()}${Math.floor(Math.random() * 1000)}`,
+    name: randomName(),
+    position: pick(TARGET_POSITIONS),
+    cost: Math.round((3 + Math.random() * 20) * 2) / 2,
+    priority: false,
+    status: "watching",
+  };
+  const list = [target, ...(state.transferTargets || [])].slice(0, 8);
+  return {
+    ...state,
+    transferTargets: list,
+    news: [`🔎 Los ojeadores marcaron a ${target.name} (${target.position}, ~€${target.cost}M) en la mira.`, ...state.news].slice(0, 8),
+  };
+}
+
+export function markTargetPriority(state, targetId) {
+  return {
+    ...state,
+    transferTargets: (state.transferTargets || []).map((t) => (t.id === targetId ? { ...t, priority: true } : t)),
+  };
+}
+
+function resolveTransferWeek(state) {
+  const targets = state.transferTargets || [];
+  const pending = targets.find((t) => t.priority && t.status === "watching");
+  if (!pending) return state;
+
+  const costPenalty = clamp((pending.cost - state.budget) * 3, 0, 40);
+  const rejectChance = clamp(30 - (state.dtConfidence - 50) / 2 + costPenalty, 5, 85);
+  const roll = Math.random() * 100;
+  const nextTargets = targets.map((t) => ({ ...t }));
+  const idx = nextTargets.findIndex((t) => t.id === pending.id);
+
+  let { dtConfidence, budget, dtQuality, news } = state;
+
+  if (roll < rejectChance) {
+    nextTargets[idx].status = "rejected";
+    dtConfidence = clamp(dtConfidence - 12, 0, 100);
+    news = [`🚫 El DT rechazó fichar a ${pending.name} (${pending.position}) pese a que la marcaste como prioridad — tu confianza en él bajó.`, ...news].slice(0, 8);
+  } else if (state.budget >= pending.cost) {
+    budget = Math.round((state.budget - pending.cost) * 20) / 20;
+    dtQuality = clamp(state.dtQuality + 3, 20, 99);
+    nextTargets[idx].status = "signed";
+    news = [`✅ Fichaje cerrado: ${pending.name} (${pending.position}) se suma al plantel.`, ...news].slice(0, 8);
+  } else {
+    news = [`💬 El DT aceptó ir por ${pending.name}, pero todavía no alcanza el presupuesto (€${pending.cost}M).`, ...news].slice(0, 8);
+  }
+
+  return { ...state, transferTargets: nextTargets, dtConfidence, budget, dtQuality, news };
+}
+
+// === Venta de jugador estrella: oferta rara por tu goleador. ===
+function maybeTriggerSaleOffer(state) {
+  if (state.pendingSale || state.week < 3 || Math.random() > 0.05) return state;
+  const amount = Math.round((10 + Math.random() * 25) * 2) / 2;
+  return {
+    ...state,
+    pendingSale: { player: state.staff?.topScorer?.name || "tu goleador", amount },
+    news: [`💰 Llegó una oferta de €${amount}M por ${state.staff?.topScorer?.name || "tu goleador"}.`, ...state.news].slice(0, 8),
+  };
+}
+
+export function resolveSaleOffer(state, accept) {
+  if (!state.pendingSale) return state;
+  const { player, amount } = state.pendingSale;
+  if (accept) {
+    return {
+      ...state,
+      pendingSale: null,
+      budget: Math.round((state.budget + amount) * 20) / 20,
+      dtQuality: clamp(state.dtQuality - 6, 20, 95),
+      fanHappiness: clamp(state.fanHappiness - 8, 0, 100),
+      news: [`✈️ Vendiste a ${player} por €${amount}M. La hinchada no lo tomó bien.`, ...state.news].slice(0, 8),
+    };
+  }
+  return {
+    ...state,
+    pendingSale: null,
+    boardTrust: clamp(state.boardTrust + 2, 0, 100),
+    news: [`🛡️ Rechazaste la oferta por ${player} — sigue en el plantel.`, ...state.news].slice(0, 8),
+  };
+}
+
 export function advanceWeek(state) {
+  if (!state.dtName) return state; // no se puede avanzar con el banco vacío
+
   const income = weeklyIncome(state);
   const expenses = weeklyExpenses(state);
   const net = income.total - expenses.total;
@@ -353,8 +688,25 @@ export function advanceWeek(state) {
     boardTrust = clamp(boardTrust - 5, 0, 100);
   }
 
+  const { table, myResult } = simulateMatchweek(state);
+  let leagueTable = table;
+  let news = state.news;
+  if (myResult) {
+    const { opponentId, myGoals, rivalGoals, isClasico, isHome } = myResult;
+    const opponent = teamById(opponentId);
+    const win = myGoals > rivalGoals;
+    const draw = myGoals === rivalGoals;
+    const scoreline = isHome ? `${myGoals}-${rivalGoals}` : `${rivalGoals}-${myGoals}`;
+    const tag = isClasico ? "🔥 CLÁSICO — " : "⚽ ";
+    news = [`${tag}${win ? "Ganaste" : draw ? "Empataste" : "Perdiste"} ${scoreline} vs ${opponent?.name || "rival"}.`, ...news].slice(0, 8);
+    if (isClasico) {
+      fanHappiness = clamp(fanHappiness + (win ? 10 : draw ? 0 : -10), 0, 100);
+    } else {
+      fanHappiness = clamp(fanHappiness + (win ? 2 : draw ? 0 : -2), 0, 100);
+    }
+  }
+
   const week = state.week + 1;
-  const seasonInvestment = (state.seasonInvestment || 0) + (state.dtBudgetGiven || 0) * 0 + net * 0; // placeholder, se recalcula abajo
   const usedIds = (state._usedDecisions || []).slice();
 
   let next = {
@@ -363,71 +715,87 @@ export function advanceWeek(state) {
     debt,
     boardTrust,
     fanHappiness,
+    leagueTable,
     week,
+    news,
     decisionUsed: false,
     currentDecision: pickDecision(usedIds),
     _usedDecisions: [...usedIds].slice(-10),
   };
 
-  const gameOver = boardTrust <= 0;
-  if (gameOver) {
+  next = resolveTransferWeek(next);
+  next = maybeTriggerSaleOffer(next);
+
+  // Voto de confianza: la primera vez que la directiva llega a "cero"
+  // confianza, en vez de destituirte directo convoca una asamblea de
+  // socios — sobrevivís raspando, una sola vez por gestión.
+  if (next.boardTrust <= 0 && !next.voteCrisisUsed) {
+    next = {
+      ...next,
+      boardTrust: 15,
+      voteCrisisUsed: true,
+      news: [`🗳️ La directiva convocó una asamblea de socios por tu gestión — sobreviviste raspando, con el margen mínimo.`, ...next.news].slice(0, 8),
+    };
+  } else if (next.boardTrust <= 0) {
     next = { ...next, gameOver: true, news: [`❌ La directiva te destituyó como presidente.`, ...next.news].slice(0, 8) };
   }
 
-  if (week >= WEEKS_PER_SEASON) {
+  if (week >= (state.weeksPerSeason || WEEKS_PER_SEASON)) {
     next = resolveSeason(next);
   }
 
   return next;
 }
 
-// Cierre de temporada: la posición final sale de comparar tu "inversión
-// deportiva" (presupuesto que le diste al DT + calidad del DT + prestigio
-// del estadio) contra el resto de los clubes de tu liga.
+// Cierre de temporada: la posición final sale de la tabla real, no de un
+// cálculo abstracto — ya viene de simular fecha a fecha en advanceWeek.
 export function resolveSeason(state) {
-  const rivals = teamsByLeague(state.league).filter((t) => t.id !== state.teamId);
-  const academyBoost = state.academyTier > 0 ? ACADEMY_TIERS[state.academyTier - 1].dtQualityPerSeason : 0;
-  const myStrength = (state.dtBudgetGiven || 0) * 1.5 + state.dtQuality + state.stadiumTier * 4;
-  const table = [
-    { id: state.teamId, name: state.teamName, strength: myStrength + (Math.random() * 20 - 10) },
-    ...rivals.map((t) => ({ id: t.id, name: t.name, strength: (t.budget || 40) * 0.6 + (t.prestige || 5) * 3 + Math.random() * 20 })),
-  ].sort((a, b) => b.strength - a.strength);
-
-  const position = table.findIndex((r) => r.id === state.teamId) + 1;
-  const leagueSize = table.length;
+  const sorted = sortedLeagueTable(state.leagueTable || []);
+  const position = sorted.findIndex((r) => r.id === state.teamId) + 1;
+  const leagueSize = sorted.length || teamsByLeague(state.league).length;
   const goodSeason = position <= Math.ceil(leagueSize / 3);
   const badSeason = position >= leagueSize - 2;
 
   const objective = objectiveFor(state.teamId);
   const objectiveMet = position <= objective.threshold;
   const champion = position === 1;
+  const qualifiesInternational = position <= 4;
+
+  const academyBoost = state.academyTier > 0 ? ACADEMY_TIERS[state.academyTier - 1].dtQualityPerSeason : 0;
 
   let boardTrust = clamp(state.boardTrust + (goodSeason ? 10 : badSeason ? -15 : -2), 0, 100);
   let fanHappiness = clamp(state.fanHappiness + (goodSeason ? 12 : badSeason ? -12 : 0), 0, 100);
   // El objetivo de la directiva pesa aparte de "buena/mala temporada" en
   // general — cumplirlo (o no) es lo que de verdad evalúan arriba.
   boardTrust = clamp(boardTrust + (objectiveMet ? 6 : -10), 0, 100);
-  const prizeMoney = (goodSeason ? 6 : badSeason ? 0 : 2) + (objectiveMet ? 3 : 0) + (champion ? 5 : 0);
+  const prizeMoney = (goodSeason ? 6 : badSeason ? 0 : 2) + (objectiveMet ? 3 : 0) + (champion ? 5 : 0) + (qualifiesInternational ? 4 : 0);
+
+  const fixtures = buildFixtures(state.league);
 
   return {
     ...state,
     season: state.season + 1,
     week: 0,
+    weeksPerSeason: fixtures.length,
+    fixtures,
+    leagueTable: buildLeagueTable(state.league),
     leaguePosition: position,
     boardTrust,
     fanHappiness,
     budget: Math.round((state.budget + prizeMoney) * 20) / 20,
     dtBudgetGiven: 0,
     dtQuality: clamp(state.dtQuality + academyBoost, 20, 99),
+    dtConfidence: clamp(state.dtConfidence + (objectiveMet ? 5 : -5), 0, 100),
+    internationalQualified: qualifiesInternational,
     titlesWon: (state.titlesWon || 0) + (champion ? 1 : 0),
     history: [
-      { season: state.season, position, leagueSize, budget: state.budget, stadiumTier: state.stadiumTier, objectiveMet, objectiveLabel: objective.label, champion },
+      { season: state.season, position, leagueSize, budget: state.budget, stadiumTier: state.stadiumTier, objectiveMet, objectiveLabel: objective.label, champion, qualifiesInternational },
       ...state.history,
     ],
     currentDecision: pickDecision(state._usedDecisions || []),
     decisionUsed: false,
     news: [
-      `📊 Temporada ${state.season} cerrada: terminaste ${position}° de ${leagueSize} — objetivo (${objective.label}) ${objectiveMet ? "cumplido ✅" : "no cumplido ❌"}. +€${prizeMoney}M de premios.`,
+      `📊 Temporada ${state.season} cerrada: terminaste ${position}° de ${leagueSize} — objetivo (${objective.label}) ${objectiveMet ? "cumplido ✅" : "no cumplido ❌"}.${qualifiesInternational ? " 🌍 Clasificaron a competencia internacional." : ""} +€${prizeMoney}M de premios.`,
       ...state.news,
     ].slice(0, 8),
   };

@@ -6,6 +6,7 @@ export function buildPresidenteLegacy(state) {
   const seasons = state.history || [];
   const objectivesMet = seasons.filter((s) => s.objectiveMet).length;
   const best = seasons.reduce((min, s) => (s.position < (min?.position ?? Infinity) ? s : min), null);
+  const legacyScore = (state.titlesWon || 0) * 100 + objectivesMet * 40 + seasons.length * 10 + state.stadiumTier * 15;
   return {
     teamName: state.teamName,
     seasonsCount: seasons.length,
@@ -14,5 +15,6 @@ export function buildPresidenteLegacy(state) {
     best,
     finalStadiumTier: state.stadiumTier,
     finalBudget: state.budget,
+    legacyScore,
   };
 }
