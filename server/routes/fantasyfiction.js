@@ -17,8 +17,13 @@ function ratingForPlayer(id) {
   return 74 + (h % 19); // 74..92
 }
 
+// Rating 74..92 mapeado a precio 4..12 — un plantel de 13 "promedio" (rating
+// ~83) cuesta ~104, así que con 100 de presupuesto no entra cualquier
+// combinación: hay que elegir entre algunas figuras caras o completar con
+// más jugadores baratos, como cualquier fantasy real.
 function priceForPlayer(id) {
-  return Math.round((ratingForPlayer(id) - 50) * 12);
+  const rating = ratingForPlayer(id);
+  return Math.round(4 + ((rating - 74) / 18) * 8);
 }
 
 function squadCost(playerIds) {
@@ -120,9 +125,30 @@ async function resolvePendingJornadas(league) {
   return loadLeagueById(league.id);
 }
 
+async function loadPendingTradeOffers(leagueId) {
+  const result = await db.execute({
+    sql: `SELECT t.*, fp_from.user_id AS from_user_id, u_from.username AS from_username,
+                 fp_to.user_id AS to_user_id, u_to.username AS to_username
+          FROM fantasy_trade_offers t
+          JOIN fantasy_participants fp_from ON fp_from.id = t.from_participant_id
+          JOIN users u_from ON u_from.id = fp_from.user_id
+          JOIN fantasy_participants fp_to ON fp_to.id = t.to_participant_id
+          JOIN users u_to ON u_to.id = fp_to.user_id
+          WHERE t.league_id = ? AND t.status = 'pendiente'
+          ORDER BY t.created_at DESC`,
+    args: [leagueId],
+  });
+  return result.rows;
+}
+
 async function serializeLeague(league, userId) {
   const participants = await loadParticipants(league.id);
   const allIds = [...new Set(participants.flatMap((p) => p.squad))];
+  const offers = await loadPendingTradeOffers(league.id);
+  for (const o of offers) {
+    if (!allIds.includes(o.offer_player_id)) allIds.push(o.offer_player_id);
+    if (!allIds.includes(o.want_player_id)) allIds.push(o.want_player_id);
+  }
   const namesById = await playerNamesById(allIds);
   const memberCount = (await db.execute({
     sql: "SELECT COUNT(*) as c FROM group_members WHERE group_id = ?",
@@ -130,6 +156,14 @@ async function serializeLeague(league, userId) {
   })).rows[0].c;
 
   const myParticipant = participants.find((p) => p.user_id === userId) || null;
+
+  const asOffer = (o) => ({
+    id: o.id,
+    fromUsername: o.from_username,
+    toUsername: o.to_username,
+    offerPlayer: { id: o.offer_player_id, name: namesById[o.offer_player_id] || "?", price: priceForPlayer(o.offer_player_id) },
+    wantPlayer: { id: o.want_player_id, name: namesById[o.want_player_id] || "?", price: priceForPlayer(o.want_player_id) },
+  });
 
   return {
     id: league.id,
@@ -153,6 +187,15 @@ async function serializeLeague(league, userId) {
       points: p.points_total,
       isMe: p.user_id === userId,
     })),
+    otherParticipants: participants
+      .filter((p) => p.user_id !== userId)
+      .map((p) => ({
+        userId: p.user_id,
+        username: p.username,
+        squad: p.squad.map((id) => ({ id, name: namesById[id] || "?", price: priceForPlayer(id) })),
+      })),
+    tradeOffersReceived: myParticipant ? offers.filter((o) => o.to_user_id === userId).map(asOffer) : [],
+    tradeOffersSent: myParticipant ? offers.filter((o) => o.from_user_id === userId).map(asOffer) : [],
   };
 }
 
@@ -191,7 +234,7 @@ router.post("/", async (req, res) => {
   if (existing.rows.length) return res.status(400).json({ error: "Ya hay una FantasyFiction en curso en este grupo" });
 
   const result = await db.execute({
-    sql: "INSERT INTO fantasy_leagues (group_id, created_by) VALUES (?, ?)",
+    sql: "INSERT INTO fantasy_leagues (group_id, created_by, budget_total, squad_size) VALUES (?, ?, 100, 13)",
     args: [groupId, req.userId],
   });
   const league = await loadLeagueById(Number(result.lastInsertRowid));
@@ -309,6 +352,110 @@ router.post("/:leagueId/transfer", async (req, res) => {
   });
 
   league = await resolvePendingJornadas(league);
+  res.json({ league: await serializeLeague(league, req.userId) });
+});
+
+async function myParticipantIn(leagueId, userId) {
+  const result = await db.execute({
+    sql: "SELECT * FROM fantasy_participants WHERE league_id = ? AND user_id = ?",
+    args: [leagueId, userId],
+  });
+  return result.rows[0] || null;
+}
+
+// Proponerle un cambio 1x1 a otro participante de la misma liga — no toca
+// presupuesto, es un intercambio directo. No hace falta que sea mié/dom: eso
+// es solo para el mercado con dinero, esto es un acuerdo entre dos personas.
+router.post("/:leagueId/trade-offer", async (req, res) => {
+  const league = await loadLeagueById(Number(req.params.leagueId));
+  if (!league) return res.status(404).json({ error: "Liga no encontrada" });
+  if (!(await assertMember(req.userId, league.group_id))) return res.status(403).json({ error: "No pertenecés a ese grupo" });
+  if (league.status !== "active") return res.status(400).json({ error: "La liga todavía no arrancó" });
+
+  const toUserId = Number(req.body?.toUserId);
+  const offerPlayerId = Number(req.body?.offerPlayerId);
+  const wantPlayerId = Number(req.body?.wantPlayerId);
+  if (!Number.isInteger(toUserId) || !Number.isInteger(offerPlayerId) || !Number.isInteger(wantPlayerId)) {
+    return res.status(400).json({ error: "Faltan datos de la oferta" });
+  }
+  if (toUserId === req.userId) return res.status(400).json({ error: "No te podés hacer una oferta a vos mismo" });
+
+  const me = await myParticipantIn(league.id, req.userId);
+  if (!me) return res.status(400).json({ error: "Todavía no armaste tu plantel" });
+  const mySquad = JSON.parse(me.squad);
+  if (!mySquad.includes(offerPlayerId)) return res.status(400).json({ error: "Ese jugador no es tuyo" });
+
+  const target = await myParticipantIn(league.id, toUserId);
+  if (!target) return res.status(404).json({ error: "Ese jugador de la liga no existe" });
+  const targetSquad = JSON.parse(target.squad);
+  if (!targetSquad.includes(wantPlayerId)) return res.status(400).json({ error: "Ese jugador no está en el plantel del otro" });
+
+  const result = await db.execute({
+    sql: `INSERT INTO fantasy_trade_offers (league_id, from_participant_id, to_participant_id, offer_player_id, want_player_id)
+          VALUES (?, ?, ?, ?, ?)`,
+    args: [league.id, me.id, target.id, offerPlayerId, wantPlayerId],
+  });
+
+  res.status(201).json({ offerId: Number(result.lastInsertRowid), league: await serializeLeague(league, req.userId) });
+});
+
+async function loadOwnOffer(offerId, leagueId) {
+  const result = await db.execute({
+    sql: "SELECT * FROM fantasy_trade_offers WHERE id = ? AND league_id = ? AND status = 'pendiente'",
+    args: [offerId, leagueId],
+  });
+  return result.rows[0] || null;
+}
+
+router.post("/:leagueId/trade-offer/:offerId/accept", async (req, res) => {
+  const league = await loadLeagueById(Number(req.params.leagueId));
+  if (!league) return res.status(404).json({ error: "Liga no encontrada" });
+  if (!(await assertMember(req.userId, league.group_id))) return res.status(403).json({ error: "No pertenecés a ese grupo" });
+
+  const offer = await loadOwnOffer(Number(req.params.offerId), league.id);
+  if (!offer) return res.status(404).json({ error: "Esa oferta ya no está disponible" });
+
+  const me = await myParticipantIn(league.id, req.userId);
+  if (!me || me.id !== offer.to_participant_id) return res.status(403).json({ error: "Esa oferta no es para vos" });
+
+  const fromResult = await db.execute({ sql: "SELECT * FROM fantasy_participants WHERE id = ?", args: [offer.from_participant_id] });
+  const from = fromResult.rows[0];
+  const fromSquad = JSON.parse(from.squad);
+  const toSquad = JSON.parse(me.squad);
+
+  if (!fromSquad.includes(offer.offer_player_id) || !toSquad.includes(offer.want_player_id)) {
+    await db.execute({ sql: "UPDATE fantasy_trade_offers SET status = 'cancelada', resolved_at = datetime('now') WHERE id = ?", args: [offer.id] });
+    return res.status(409).json({ error: "Alguno de los dos jugadores ya no está disponible — la oferta se canceló sola" });
+  }
+
+  const newFromSquad = fromSquad.map((id) => (id === offer.offer_player_id ? offer.want_player_id : id));
+  const newToSquad = toSquad.map((id) => (id === offer.want_player_id ? offer.offer_player_id : id));
+
+  await db.execute({ sql: "UPDATE fantasy_participants SET squad = ? WHERE id = ?", args: [JSON.stringify(newFromSquad), from.id] });
+  await db.execute({ sql: "UPDATE fantasy_participants SET squad = ? WHERE id = ?", args: [JSON.stringify(newToSquad), me.id] });
+  await db.execute({ sql: "UPDATE fantasy_trade_offers SET status = 'aceptada', resolved_at = datetime('now') WHERE id = ?", args: [offer.id] });
+
+  res.json({ league: await serializeLeague(league, req.userId) });
+});
+
+router.post("/:leagueId/trade-offer/:offerId/decline", async (req, res) => {
+  const league = await loadLeagueById(Number(req.params.leagueId));
+  if (!league) return res.status(404).json({ error: "Liga no encontrada" });
+  if (!(await assertMember(req.userId, league.group_id))) return res.status(403).json({ error: "No pertenecés a ese grupo" });
+
+  const offer = await loadOwnOffer(Number(req.params.offerId), league.id);
+  if (!offer) return res.status(404).json({ error: "Esa oferta ya no está disponible" });
+
+  const me = await myParticipantIn(league.id, req.userId);
+  const isRecipient = me && me.id === offer.to_participant_id;
+  const isSender = me && me.id === offer.from_participant_id;
+  if (!isRecipient && !isSender) return res.status(403).json({ error: "Esa oferta no es tuya" });
+
+  await db.execute({
+    sql: `UPDATE fantasy_trade_offers SET status = ?, resolved_at = datetime('now') WHERE id = ?`,
+    args: [isSender ? "cancelada" : "rechazada", offer.id],
+  });
+
   res.json({ league: await serializeLeague(league, req.userId) });
 });
 

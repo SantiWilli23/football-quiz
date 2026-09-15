@@ -677,8 +677,8 @@ CREATE TABLE IF NOT EXISTS fantasy_leagues (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   group_id INTEGER NOT NULL REFERENCES groups_t(id),
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'active', 'finished')),
-  budget_total INTEGER NOT NULL DEFAULT 3000,
-  squad_size INTEGER NOT NULL DEFAULT 8,
+  budget_total INTEGER NOT NULL DEFAULT 100,
+  squad_size INTEGER NOT NULL DEFAULT 13,
   jornada INTEGER NOT NULL DEFAULT 0,
   last_jornada_at TEXT,
   created_by INTEGER NOT NULL REFERENCES users(id),
@@ -710,5 +710,24 @@ CREATE TABLE IF NOT EXISTS fantasy_jornada_scores (
 );
 
 CREATE INDEX IF NOT EXISTS idx_fantasy_jornada_scores_league ON fantasy_jornada_scores(league_id, jornada);
+
+-- Cambios directos entre dos participantes de la misma liga (no pasan por el
+-- mercado ni por presupuesto — es un intercambio 1x1 de jugadores). Solo el
+-- destinatario puede aceptar o rechazar, y el que ofrece puede cancelar
+-- mientras siga pendiente.
+CREATE TABLE IF NOT EXISTS fantasy_trade_offers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES fantasy_leagues(id),
+  from_participant_id INTEGER NOT NULL REFERENCES fantasy_participants(id),
+  to_participant_id INTEGER NOT NULL REFERENCES fantasy_participants(id),
+  offer_player_id INTEGER NOT NULL,
+  want_player_id INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pendiente' CHECK (status IN ('pendiente', 'aceptada', 'rechazada', 'cancelada')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  resolved_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_fantasy_trade_offers_league ON fantasy_trade_offers(league_id, status);
+CREATE INDEX IF NOT EXISTS idx_fantasy_trade_offers_to ON fantasy_trade_offers(to_participant_id, status);
 
 CREATE INDEX IF NOT EXISTS idx_duel_bets_group ON duel_bets(group_id, settled);

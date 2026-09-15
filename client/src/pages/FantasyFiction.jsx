@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Crown, Lock, TrendingUp, Unlock, X } from "lucide-react";
+import { ArrowLeftRight, Check, Crown, Lock, TrendingUp, Unlock, X } from "lucide-react";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -233,6 +233,162 @@ function TransferMarket({ league, onChanged }) {
   );
 }
 
+// Intercambio directo 1x1 con otro participante — no toca presupuesto, es
+// un acuerdo entre dos personas ("vender a otro jugador" en vez de al
+// mercado con dinero).
+function TradeOffers({ league, onChanged }) {
+  const [otherId, setOtherId] = useState(league.otherParticipants[0]?.userId ?? null);
+  const [mineId, setMineId] = useState(null);
+  const [theirsId, setTheirsId] = useState(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const other = league.otherParticipants.find((p) => p.userId === otherId) || null;
+
+  const propose = async () => {
+    if (!other || !mineId || !theirsId) return;
+    setError("");
+    setBusy(true);
+    try {
+      const { data } = await api.post(`/fantasyfiction/${league.id}/trade-offer`, {
+        toUserId: other.userId,
+        offerPlayerId: mineId,
+        wantPlayerId: theirsId,
+      });
+      onChanged(data.league);
+      setMineId(null);
+      setTheirsId(null);
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo mandar la oferta");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const respond = async (offerId, action) => {
+    setBusy(true);
+    setError("");
+    try {
+      const { data } = await api.post(`/fantasyfiction/${league.id}/trade-offer/${offerId}/${action}`);
+      onChanged(data.league);
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo actualizar la oferta");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {league.tradeOffersReceived.length > 0 && (
+        <div>
+          <p className="text-xs text-gray-500 mb-2">Te ofrecieron</p>
+          <div className="space-y-2">
+            {league.tradeOffersReceived.map((o) => (
+              <div key={o.id} className="flex items-center justify-between gap-3 rounded-card border border-accent/30 bg-accent/5 px-3 py-2.5">
+                <p className="text-sm">
+                  <span className="font-medium">{o.fromUsername}</span> te da {o.offerPlayer.name} ({o.offerPlayer.price}) por tu {o.wantPlayer.name} ({o.wantPlayer.price})
+                </p>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button onClick={() => respond(o.id, "accept")} disabled={busy} className="p-1.5 rounded-card bg-accent/20 text-accent hover:bg-accent/30 transition-colors">
+                    <Check size={14} />
+                  </button>
+                  <button onClick={() => respond(o.id, "decline")} disabled={busy} className="p-1.5 rounded-card bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors">
+                    <X size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {league.tradeOffersSent.length > 0 && (
+        <div>
+          <p className="text-xs text-gray-500 mb-2">Ofertas que mandaste</p>
+          <div className="space-y-2">
+            {league.tradeOffersSent.map((o) => (
+              <div key={o.id} className="flex items-center justify-between gap-3 rounded-card border border-border bg-bg px-3 py-2.5">
+                <p className="text-sm text-gray-300">
+                  Le ofreciste {o.offerPlayer.name} a <span className="font-medium">{o.toUsername}</span> por {o.wantPlayer.name}
+                </p>
+                <button onClick={() => respond(o.id, "decline")} disabled={busy} className="text-xs text-gray-500 hover:text-white transition-colors shrink-0">
+                  Cancelar
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {league.otherParticipants.length === 0 ? (
+        <p className="text-sm text-gray-500">No hay nadie más en esta liga todavía.</p>
+      ) : (
+        <div className="rounded-card border border-border bg-bg p-4 space-y-3">
+          <p className="text-xs text-gray-500">Ofrecerle un cambio a otro jugador de la liga</p>
+
+          <select
+            value={otherId || ""}
+            onChange={(e) => { setOtherId(Number(e.target.value)); setTheirsId(null); }}
+            className="w-full bg-panel border border-border rounded-card px-3 py-2 text-sm focus:outline-none focus:border-accent"
+          >
+            {league.otherParticipants.map((p) => (
+              <option key={p.userId} value={p.userId}>{p.username}</option>
+            ))}
+          </select>
+
+          {other && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-[11px] text-gray-500 mb-1.5">Vos das</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {league.mySquad.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setMineId(p.id === mineId ? null : p.id)}
+                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                        mineId === p.id ? "border-accent bg-accent/20 text-accent" : "border-border text-gray-300 hover:border-white/30"
+                      }`}
+                    >
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-[11px] text-gray-500 mb-1.5">Vos pedís</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {other.squad.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setTheirsId(p.id === theirsId ? null : p.id)}
+                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                        theirsId === p.id ? "border-accent bg-accent/20 text-accent" : "border-border text-gray-300 hover:border-white/30"
+                      }`}
+                    >
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {error && <p className="text-sm text-red-400">{error}</p>}
+
+          <button
+            onClick={propose}
+            disabled={!mineId || !theirsId || busy}
+            className="w-full bg-accent hover:bg-accent-dark disabled:opacity-40 text-onaccent font-semibold rounded-card py-2.5 text-sm transition-colors"
+          >
+            Mandar oferta
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function FantasyFiction() {
   const { user } = useAuth();
   const { activeGroupId: groupId, groups } = useGroups();
@@ -369,6 +525,16 @@ export default function FantasyFiction() {
               </div>
               <p className="text-xs text-gray-500 mb-4">Presupuesto disponible: {league.myBudgetRemaining}</p>
               <TransferMarket league={league} onChanged={setLeague} />
+            </Card>
+          )}
+
+          {league.iJoined && (
+            <Card>
+              <div className="flex items-center gap-2 mb-4">
+                <ArrowLeftRight size={16} className="text-accent" />
+                <h3 className="font-semibold">Cambios con otros jugadores</h3>
+              </div>
+              <TradeOffers league={league} onChanged={setLeague} />
             </Card>
           )}
         </div>
