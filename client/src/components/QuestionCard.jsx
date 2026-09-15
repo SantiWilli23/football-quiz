@@ -12,7 +12,7 @@ const SLOT_COLORS = Object.fromEntries(
   ])
 );
 
-const TIMER_SECONDS = 20;
+const TIMER_SECONDS = 10;
 
 export default function QuestionCard({ item, index, total, onAnswered, timedMode, powerups, onUsePowerup }) {
   const { question } = item;

@@ -179,14 +179,13 @@ export async function getLiveFixtures(leagueKey) {
 // A diferencia de "en vivo", este sí exige temporada — y el plan gratis sólo
 // deja fechas de un margen de pocos días alrededor de hoy, lo que en la
 // práctica choca con el rango de temporadas permitido (2022-2024): no hay
-// ninguna combinación de fecha+temporada que el plan gratis deje pasar acá,
-// así que no tiene sentido un fallback "demo" — se marca directamente como
-// bloqueado por el plan para que la pantalla lo explique en vez de mostrar
-// una lista vacía sin motivo.
-//
-// El bloqueo se cachea igual que un resultado real: sin esto, cada vez que
-// alguien abre esta pestaña se gasta un pedido contra la API sabiendo de
-// antemano que va a fallar por el plan.
+// ninguna combinación de fecha+temporada actual que el plan gratis deje
+// pasar acá. Antes esto se devolvía como `blocked_by_plan` y la pantalla
+// (Quiniela) se quedaba sin nada que mostrar — igual que standings/scorers,
+// ahora cae a la MISMA fecha (mismo mes/día) pero de FALLBACK_SEASON, y se
+// marca `demo: true` para que la pantalla lo diga. Así Quiniela siempre
+// tiene partidos reales (de esa temporada) para predecir, sin depender de
+// que alguien intervenga manualmente cada vez que cambia el año real.
 export async function getFixturesByDate(leagueKey, date) {
   const league = LEAGUES[leagueKey];
   if (!league) throw new FootballApiError("Liga desconocida", 400);
@@ -201,19 +200,77 @@ export async function getFixturesByDate(leagueKey, date) {
       season: currentSeason(leagueKey),
       date,
     });
-    const result = { data, blocked_by_plan: false };
+    const result = { data, blocked_by_plan: false, demo: false };
     await writeCache(cacheKey, result);
     return result;
   } catch (err) {
     if (isSeasonPlanError(err)) {
-      const result = { data: [], blocked_by_plan: true };
-      await writeCache(cacheKey, result);
-      return result;
+      try {
+        const result = { data: await demoFixturesFor(league, date), blocked_by_plan: false, demo: true };
+        await writeCache(cacheKey, result);
+        return result;
+      } catch {
+        const result = { data: [], blocked_by_plan: true, demo: false };
+        await writeCache(cacheKey, result);
+        return result;
+      }
     }
     const stale = await readCache(cacheKey, Infinity);
     if (stale) return stale;
     throw err;
   }
+}
+
+// Probado a mano contra la API real: el plan gratis bloquea el filtro
+// `date` en CUALQUIER temporada (hasta pedir season=2023 + date=2023-xx-xx
+// tira "Free plans do not have access to this date"), pero pedir la
+// temporada ENTERA sin `date` sí funciona — 380 partidos de una. Por eso el
+// fallback no repite el mismo truco de "misma fecha, temporada vieja": trae
+// la temporada de muestra completa una sola vez (caché larga, son datos que
+// no cambian) y elige una fecha real de esa temporada de forma
+// determinística a partir de la fecha pedida — mismo criterio que el
+// secreto diario de Fichado, para que todos vean la misma "jornada de
+// muestra" ese día sin tener que guardar nada.
+function hashDateString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  return hash;
+}
+
+async function getDemoSeasonFixtures(league) {
+  const cacheKey = `demo-season:${league.id}:${FALLBACK_SEASON}`;
+  const cached = await readCache(cacheKey, 30 * 24 * 3600); // un mes: son datos históricos fijos
+  if (cached) return cached;
+  const data = await rawApiRequest("/fixtures", { league: league.id, season: FALLBACK_SEASON });
+  await writeCache(cacheKey, data);
+  return data;
+}
+
+async function demoFixturesFor(league, date) {
+  const season = await getDemoSeasonFixtures(league);
+  const byDate = new Map();
+  for (const fx of season) {
+    const d = fx.fixture.date.slice(0, 10);
+    if (!byDate.has(d)) byDate.set(d, []);
+    byDate.get(d).push(fx);
+  }
+  const dates = [...byDate.keys()].sort();
+  if (dates.length === 0) return [];
+  const pick = dates[hashDateString(date) % dates.length];
+  return byDate.get(pick);
+}
+
+// La fecha que ve el cliente en un partido de muestra es la fecha REAL del
+// partido dentro de la temporada de muestra (ej. "2023-12-19"), no la fecha
+// de hoy que se usó para elegirlo — si /predict volviera a pasar esa fecha
+// por demoFixturesFor() la hashearía de nuevo y probablemente caería en OTRA
+// jornada de muestra, sin el partido que se está tratando de confirmar. Por
+// eso la revalidación busca directo por id en toda la temporada, no por fecha.
+export async function findDemoFixtureById(leagueKey, fixtureId) {
+  const league = LEAGUES[leagueKey];
+  if (!league) return null;
+  const season = await getDemoSeasonFixtures(league);
+  return season.find((fx) => fx.fixture.id === fixtureId) || null;
 }
 
 export async function getStandings(leagueKey) {

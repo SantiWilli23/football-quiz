@@ -14,7 +14,7 @@ router.use(requireAuth);
 // (se resetea si el server reinicia): es una traba disuasiva, no una
 // auditoría de seguridad, y no vale la pena una tabla nueva para esto.
 const firstServedAt = new Map(); // `${userId}:${dateStr}` -> timestamp (ms)
-const SECONDS_PER_QUESTION = 20;
+const SECONDS_PER_QUESTION = 10;
 const GRACE_SECONDS = 15; // margen por latencia de red + tiempo de lectura del enunciado
 const MAX_QUESTIONS_PER_DAY = 3;
 const TIME_BUDGET_MS = (SECONDS_PER_QUESTION + GRACE_SECONDS) * MAX_QUESTIONS_PER_DAY * 1000;

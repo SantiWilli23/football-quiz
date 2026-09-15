@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
-import { LEAGUES, getFixturesByDate } from "../utils/football-api.js";
+import { LEAGUES, getFixturesByDate, findDemoFixtureById } from "../utils/football-api.js";
 import { todayStr, addDays } from "../utils/points.js";
 
 const EXACT_POINTS = 5;
@@ -50,14 +50,21 @@ async function scorePendingPredictions(userId) {
   for (const [key, preds] of byKey) {
     const [league, date] = key.split(":");
     let fixtures;
+    let demo = false;
     try {
-      const { data } = await getFixturesByDate(league, date);
-      fixtures = data;
+      const fetched = await getFixturesByDate(league, date);
+      fixtures = fetched.data;
+      demo = fetched.demo;
     } catch {
       continue; // la API falló para ese día — se reintenta la próxima vez que se pida
     }
     for (const pred of preds) {
-      const fx = fixtures.find((f) => f.fixture.id === pred.fixture_id);
+      // Mismo motivo que en /predict: la fecha guardada es la fecha REAL del
+      // partido de muestra, no la fecha de hoy que lo eligió — re-pedirla acá
+      // puede caer en otra jornada de muestra, así que se busca por id en
+      // toda la temporada si hace falta.
+      let fx = fixtures.find((f) => f.fixture.id === pred.fixture_id);
+      if (!fx && demo) fx = await findDemoFixtureById(league, pred.fixture_id);
       if (!fx || !FINISHED_STATUSES.has(fx.fixture.status.short)) continue;
       const actualHome = fx.goals.home;
       const actualAway = fx.goals.away;
@@ -86,12 +93,19 @@ router.get("/week", async (req, res) => {
     const dates = Array.from({ length: 7 }, (_, i) => addDays(todayStr(), i));
     const fixtures = [];
     let blockedByPlan = false;
+    let isDemo = false;
 
     for (const date of dates) {
-      const { data, blocked_by_plan } = await getFixturesByDate(league, date);
+      const { data, blocked_by_plan, demo } = await getFixturesByDate(league, date);
       if (blocked_by_plan) { blockedByPlan = true; break; }
+      if (demo) isDemo = true;
       for (const fx of data) {
-        if (fx.fixture.status.short !== "NS") continue;
+        // En modo real solo tiene sentido predecir partidos que no arrancaron
+        // (NS). En modo demo (temporada 2023-24 de muestra, la única que deja
+        // pasar el plan gratis de la API) todos están terminados hace rato —
+        // no hay ningún "NS" posible ahí, así que se aceptan todos: es
+        // práctica con resultados reales que no viste, no partidos en vivo.
+        if (!demo && fx.fixture.status.short !== "NS") continue;
         fixtures.push({
           id: fx.fixture.id,
           date: fx.fixture.date,
@@ -101,7 +115,7 @@ router.get("/week", async (req, res) => {
       }
     }
 
-    res.json({ league, fixtures, blocked_by_plan: blockedByPlan });
+    res.json({ league, fixtures, blocked_by_plan: blockedByPlan, demo: isDemo });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });
@@ -129,11 +143,12 @@ router.post("/predict", async (req, res) => {
     // Se revalida en el momento que el partido siga sin arrancar — no alcanza
     // con confiar en lo que mandó el cliente, pudo haber arrancado mientras
     // tanto.
-    const { data, blocked_by_plan } = await getFixturesByDate(league, fixtureDate);
+    const { data, blocked_by_plan, demo } = await getFixturesByDate(league, fixtureDate);
     if (blocked_by_plan) return res.status(503).json({ error: "La quiniela no está disponible ahora mismo (plan de la API de fútbol)" });
-    const fx = data.find((f) => f.fixture.id === fixtureId);
+    let fx = data.find((f) => f.fixture.id === fixtureId);
+    if (!fx && demo) fx = await findDemoFixtureById(league, fixtureId);
     if (!fx) return res.status(404).json({ error: "Ese partido no existe" });
-    if (fx.fixture.status.short !== "NS") return res.status(400).json({ error: "Ese partido ya arrancó — es tarde para predecirlo" });
+    if (!demo && fx.fixture.status.short !== "NS") return res.status(400).json({ error: "Ese partido ya arrancó — es tarde para predecirlo" });
 
     await db.execute({
       sql: `INSERT INTO quiniela_predictions (user_id, league, fixture_id, fixture_date, home_team, away_team, predicted_home, predicted_away)

@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
-import { AlertTriangle, Check, Minus, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { AlertTriangle, Check, FlaskConical, Minus, Trophy, X } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import LeagueTabs from "../components/LeagueTabs.jsx";
+
+function championPromptDismissedKey(league) {
+  return `fq_quiniela_champion_prompt_${league}`;
+}
 
 function formatKickoff(iso) {
   const d = new Date(iso);
@@ -32,6 +37,8 @@ export default function Quiniela() {
   const [saving, setSaving] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [championPicks, setChampionPicks] = useState([]);
+  const [showChampionPrompt, setShowChampionPrompt] = useState(false);
 
   useEffect(() => {
     api.get("/football/leagues").then(({ data }) => {
@@ -39,7 +46,33 @@ export default function Quiniela() {
       if (data.leagues.length > 0) setLeague(data.leagues[0].key);
     });
     api.get("/quiniela/mine").then(({ data }) => setMine(data.predictions)).catch(() => setMine([]));
+    api
+      .get("/season-predictions/mine")
+      .then(({ data }) => setChampionPicks(data.predictions))
+      .catch(() => setChampionPicks([]));
   }, []);
+
+  // La primera vez que alguien abre la quiniela de una liga sin haber
+  // predicho el campeón de esa liga todavía, se lo ofrecemos — son dos
+  // formas de predecir que van juntas (partido a partido vs. la temporada
+  // entera) y es fácil no enterarse de que existe la segunda. Se puede
+  // cerrar y no vuelve a insistir para esa liga.
+  useEffect(() => {
+    if (!league) return;
+    const hasPick = championPicks.some((p) => p.league === league);
+    let dismissed = false;
+    try {
+      dismissed = localStorage.getItem(championPromptDismissedKey(league)) === "1";
+    } catch { /* noop */ }
+    setShowChampionPrompt(!hasPick && !dismissed);
+  }, [league, championPicks]);
+
+  function dismissChampionPrompt() {
+    try {
+      localStorage.setItem(championPromptDismissedKey(league), "1");
+    } catch { /* noop */ }
+    setShowChampionPrompt(false);
+  }
 
   const loadWeek = useCallback(async () => {
     if (!league) return;
@@ -101,6 +134,45 @@ export default function Quiniela() {
 
       {leagues.length > 0 && league && (
         <LeagueTabs leagues={leagues} active={league} onChange={setLeague} />
+      )}
+
+      {showChampionPrompt && (
+        <Card className="mb-6 border-accent/30">
+          <div className="flex items-start gap-3">
+            <Trophy size={18} className="text-accent shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">¿Quién sale campeón esta temporada?</p>
+              <p className="text-xs text-gray-500 mt-1 mb-3">
+                Además de predecir partido a partido, podés apostar quién gana la liga entera — se juega una sola vez por temporada.
+              </p>
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/pronosticos"
+                  className="text-xs font-medium px-3 py-2 rounded-card bg-accent/10 text-accent border border-accent/30 hover:bg-accent/20 transition-colors"
+                >
+                  Predecir el campeón
+                </Link>
+                <button onClick={dismissChampionPrompt} className="text-xs text-gray-500 hover:text-white transition-colors">
+                  Ahora no
+                </button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {!loading && week?.demo && (
+        <Card className="mb-6">
+          <div className="flex items-start gap-3">
+            <FlaskConical size={18} className="text-amber shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium">Modo práctica</p>
+              <p className="text-xs text-gray-500 mt-1">
+                El plan actual de la API de fútbol no deja consultar el calendario real de esta temporada, así que estos partidos son de una temporada de muestra (2023-24) — los resultados ya pasaron, pero tu predicción cuenta igual para practicar y sumar puntos.
+              </p>
+            </div>
+          </div>
+        </Card>
       )}
 
       {mine.length > 0 && (
