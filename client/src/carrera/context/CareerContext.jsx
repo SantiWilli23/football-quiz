@@ -23,6 +23,7 @@ import {
 import { clubDecision, playerDecision } from "../engine/transferMarket.js";
 import { rollMatchInjuries, recoverInjuries, forceInjury } from "../engine/injuryEngine.js";
 import { rollEvent } from "../engine/eventEngine.js";
+import { INTERNATIONAL_WINDOW_WEEKS, NATIONAL_TEAM_PRESTIGE_MIN, countryForLeague, simulateNationalMatch } from "../engine/nationalTeam.js";
 
 const CareerContext = createContext(null);
 
@@ -304,6 +305,8 @@ function buildInitialState(teamId) {
     playerInstructions: {},
     preseason: generatePreseason(teamId),
     scoutCooldowns: {},
+    nationalTeam: null,
+    pendingNationalOffer: false,
   };
 }
 
@@ -1405,6 +1408,92 @@ export function CareerProvider({ children }) {
     };
   }
 
+  // ===== Selección Nacional (modo secundario dentro de Modo DT) =====
+  // No es una segunda carrera aparte: es una oferta ocasional en ventana
+  // FIFA que, si la aceptás, corre en paralelo a tu club con su propio
+  // historial de partidos — resuelta con un simulador propio y liviano
+  // (nationalTeam.js), sin tocar el motor de partidos de club para nada.
+
+  function maybeOfferNationalTeam() {
+    setState((s) => {
+      if (!s || s.nationalTeam?.active || s.pendingNationalOffer) return s;
+      if (!INTERNATIONAL_WINDOW_WEEKS.includes(s.week)) return s;
+      if ((s.managerPrestige ?? 50) < NATIONAL_TEAM_PRESTIGE_MIN) return s;
+      if (Math.random() >= 0.5) return s;
+      const country = countryForLeague(team?.league);
+      return {
+        ...s,
+        pendingNationalOffer: true,
+        news: [`🌍 La federación de ${country} te ofrece dirigir a la Selección en la próxima fecha FIFA.`, ...s.news].slice(0, 8),
+      };
+    });
+  }
+
+  function acceptNationalTeamJob() {
+    setState((s) => {
+      if (!s?.pendingNationalOffer) return s;
+      const country = countryForLeague(team?.league);
+      return {
+        ...s,
+        pendingNationalOffer: false,
+        nationalTeam: { active: true, country, caps: 0, wins: 0, draws: 0, losses: 0, history: [] },
+        news: [`🌍 Aceptaste dirigir a la Selección de ${country}, en paralelo a tu club.`, ...s.news].slice(0, 8),
+      };
+    });
+  }
+
+  function declineNationalTeamOffer() {
+    setState((s) => (s?.pendingNationalOffer ? { ...s, pendingNationalOffer: false } : s));
+  }
+
+  function playNationalMatch() {
+    if (!state?.nationalTeam?.active) return null;
+    const result = simulateNationalMatch(state.managerPrestige ?? 50);
+    const win = result.myGoals > result.rivalGoals;
+    const draw = result.myGoals === result.rivalGoals;
+    setState((s) => {
+      const nt = s.nationalTeam;
+      const updatedNt = {
+        ...nt,
+        caps: nt.caps + 1,
+        wins: nt.wins + (win ? 1 : 0),
+        draws: nt.draws + (draw ? 1 : 0),
+        losses: nt.losses + (!win && !draw ? 1 : 0),
+        history: [
+          { rival: result.rivalName, myGoals: result.myGoals, rivalGoals: result.rivalGoals, week: s.week },
+          ...nt.history,
+        ].slice(0, 10),
+      };
+      const prestigeDelta = win ? 3 : draw ? 0 : -2;
+      return {
+        ...s,
+        nationalTeam: updatedNt,
+        managerPrestige: Math.max(0, Math.min(100, (s.managerPrestige ?? 50) + prestigeDelta)),
+        news: [
+          win
+            ? `🌍 Selección: victoria ${result.myGoals}-${result.rivalGoals} vs ${result.rivalName}.`
+            : draw
+              ? `🌍 Selección: empate ${result.myGoals}-${result.rivalGoals} vs ${result.rivalName}.`
+              : `🌍 Selección: derrota ${result.myGoals}-${result.rivalGoals} vs ${result.rivalName}.`,
+          ...s.news,
+        ].slice(0, 8),
+      };
+    });
+    return result;
+  }
+
+  function resignNationalTeam() {
+    setState((s) =>
+      s?.nationalTeam?.active
+        ? {
+            ...s,
+            nationalTeam: { ...s.nationalTeam, active: false },
+            news: [`Dejaste el cargo en la Selección para enfocarte en el club.`, ...s.news].slice(0, 8),
+          }
+        : s
+    );
+  }
+
   const value = useMemo(
     () => ({
       state,
@@ -1473,6 +1562,11 @@ export function CareerProvider({ children }) {
       releasePlayer,
       holdSquadMeeting,
       answerPressConference,
+      maybeOfferNationalTeam,
+      acceptNationalTeamJob,
+      declineNationalTeamOffer,
+      playNationalMatch,
+      resignNationalTeam,
       standingsSorted: state ? sortStandings(state.standings) : [],
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps

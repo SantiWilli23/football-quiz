@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Lock, Flame, Trophy, Star, Medal, TrendingUp, Wallet, Smile, Meh, Frown,
   HeartPulse, Mail, PenLine, Newspaper, ShieldAlert, PlayCircle, Target,
@@ -7,6 +7,7 @@ import { useCareer } from "../context/CareerContext.jsx";
 import { teamById } from "../data/teams.js";
 import { getInjury } from "../engine/injuryEngine.js";
 import TeamCrest from "./TeamCrest.jsx";
+import NationalTeamCard from "./NationalTeamCard.jsx";
 
 const CONFIDENCE_GRADIENT = {
   good: "linear-gradient(90deg, #3fae9a, #3b9dd6)",
@@ -216,7 +217,13 @@ export default function Dashboard({ onPlayMatch }) {
     preseasonAvailable, playPreseasonMatch, setSeasonName,
     setCustomObjective, toggleCustomObjectiveDone, clearCustomObjective,
     COPA_ROUNDS: CR, COPA_WEEKS: CW, CONTINENTAL_ROUNDS, CONTINENTAL_WEEKS, CONTINENTAL_LABELS,
+    maybeOfferNationalTeam,
   } = useCareer();
+
+  useEffect(() => {
+    maybeOfferNationalTeam();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.week]);
   const fixture   = currentFixture();
   const fixtureIsDerby = fixture ? isRivalMatch(fixture.opponentTeamId) : false;
   const rival     = fixture ? teamById(fixture.opponentTeamId) : null;
@@ -291,6 +298,8 @@ export default function Dashboard({ onPlayMatch }) {
           </p>
         </div>
       )}
+
+      <NationalTeamCard />
 
       {/* Club header */}
       <div className="bg-panel border border-border rounded-2xl p-5">

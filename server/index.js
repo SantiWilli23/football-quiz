@@ -29,6 +29,7 @@ import seasonPredictionsRoutes from "./routes/season-predictions.js";
 import unMinutoRoutes from "./routes/un-minuto.js";
 import pollsRoutes from "./routes/polls.js";
 import fantasyFictionRoutes from "./routes/fantasyfiction.js";
+import arbitrajeVarRoutes from "./routes/arbitraje-var.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -61,6 +62,7 @@ app.use("/api/season-predictions", seasonPredictionsRoutes);
 app.use("/api/un-minuto", unMinutoRoutes);
 app.use("/api/polls", pollsRoutes);
 app.use("/api/fantasyfiction", fantasyFictionRoutes);
+app.use("/api/arbitraje-var", arbitrajeVarRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 

@@ -24,6 +24,8 @@ import DtLeagueRoom from "./dt-liga/DtLeagueRoom.jsx";
 import LiveMatch from "./dt-liga/LiveMatch.jsx";
 import Copa8a2 from "./pages/Copa8a2.jsx";
 import FantasyFiction from "./pages/FantasyFiction.jsx";
+import Presidente from "./pages/Presidente.jsx";
+import ArbitrajeVar from "./pages/ArbitrajeVar.jsx";
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -197,6 +199,22 @@ export default function App() {
         element={
           <PrivateRoute>
             <FantasyFiction />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/presidente"
+        element={
+          <PrivateRoute>
+            <Presidente />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/arbitraje-var"
+        element={
+          <PrivateRoute>
+            <ArbitrajeVar />
           </PrivateRoute>
         }
       />

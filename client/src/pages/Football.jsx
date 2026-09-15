@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   AlertTriangle,
+  Building2,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
   Crown,
   Gamepad2,
+  Gavel,
+  GitBranch,
   Link2,
   Radio,
   Shield,
@@ -169,6 +172,22 @@ const NEW_GAMES = [
     icon: User,
     description: "El Wordle del fútbol: adiviná al jugador secreto en 6 intentos con pistas de cada uno.",
     color: "#4fb3e8",
+    available: true,
+  },
+  {
+    to: "/presidente",
+    label: "Modo Presidente",
+    icon: Building2,
+    description: "Un nivel arriba del DT: manejás la plata del club, el estadio, los sponsors y la hinchada.",
+    color: "#8a6423",
+    available: true,
+  },
+  {
+    to: "/arbitraje-var",
+    label: "Arbitraje / VAR",
+    icon: Gavel,
+    description: "Se te describe la jugada: decidí como el árbitro contra reloj y comparate con el VAR.",
+    color: "#a8a9ac",
     available: true,
   },
   {

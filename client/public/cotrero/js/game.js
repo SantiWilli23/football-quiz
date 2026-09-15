@@ -619,6 +619,7 @@ let currentView = "menu";
 let currentMatchId = null;
 let pendingPersonalityReveal = null;
 let expandedHofIds = new Set();
+let pendingDynasty = null; // { bonus, surname, generation } — se consume en start_game
 
 const SAVE_KEY = "cotrero_v1";
 
@@ -676,6 +677,57 @@ function recordCareerInHallOfFame() {
   };
   const list = [entry, ...getHallOfFame()].sort((a, b) => b.goals - a.goals).slice(0, HOF_MAX);
   try { localStorage.setItem(HOF_KEY, JSON.stringify(list)); } catch { /* almacenamiento lleno: se ignora */ }
+}
+
+// ── DINASTÍA FAMILIAR ─────────────────────────────────────────────
+// A diferencia del Salón de la Fama (todas las carreras, ordenadas por
+// goles), la dinastía es una línea de tiempo: generación 1, 2, 3... Cada
+// retiro queda anotado acá, y desde game_over se puede arrancar la
+// siguiente generación como hijo/a del jugador que se retira, heredando
+// un pequeño plus de potencial según qué tan bueno fue el padre/madre.
+const DYNASTY_KEY = "cotrero_dynasty_v1";
+const DYNASTY_MAX = 30;
+let dynastyRecorded = false;
+
+function getDynasty() {
+  try {
+    const raw = localStorage.getItem(DYNASTY_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list : [];
+  } catch { return []; }
+}
+
+function recordDynastyGeneration() {
+  if (!state || dynastyRecorded) return;
+  dynastyRecorded = true;
+  const career = state.career;
+  const player = state.player;
+  const list = getDynasty();
+  const generation = (list[0]?.generation || 0) + 1;
+  const entry = {
+    generation,
+    name: player.name,
+    position: player.position,
+    peakOvr: player.ovr,
+    goals: career.goals,
+    trophies: (career.trophies || []).length,
+    seasons: career.season - 1,
+    date: Date.now(),
+  };
+  const updated = [entry, ...list].slice(0, DYNASTY_MAX);
+  try { localStorage.setItem(DYNASTY_KEY, JSON.stringify(updated)); } catch { /* se ignora */ }
+}
+
+// Bono de potencial para el heredero: cuanto mejor terminó el padre/madre,
+// mejor arranca la próxima generación (tope +6, para que igual haga falta
+// jugar bien y no sea solo heredar de arriba).
+function dynastyBonusFor(peakOvr) {
+  return Math.max(0, Math.min(6, Math.round((peakOvr - 70) / 4)));
+}
+
+function familySurname(fullName) {
+  const parts = String(fullName || "").trim().split(/\s+/);
+  return parts.length > 1 ? parts[parts.length - 1] : fullName;
 }
 
 function shareCareerText() {
@@ -1741,6 +1793,7 @@ function renderHub() {
                 <div class="player-name">${p.name}</div>
                 <div class="player-meta">${p.country ? p.country.flag + " " : ""}${pos.label} · ${p.age} años · ${state.club.name}</div>
                 ${p.archetypeName ? `<div class="player-meta" style="margin-top:2px;color:var(--gold-dim)">${p.archetypeName}</div>` : ""}
+                ${p.dynastyGeneration ? `<div class="player-meta" style="margin-top:2px;color:var(--gold-dim)">👨‍👦 Generación ${p.dynastyGeneration}</div>` : ""}
                 ${career.caps ? `<div class="player-meta" style="margin-top:2px">${career.caps} caps${career.natGoals ? ` · ${career.natGoals} goles con la selección` : ""}</div>` : ""}
               </div>
               <div style="margin-left:auto;text-align:right">
@@ -2276,6 +2329,8 @@ function renderSeasonEnd() {
 function renderGameOver() {
   const wasWeeklyChallenge = !!(state && state.isWeeklyChallenge) && !weeklyScoreSubmitted;
   recordCareerInHallOfFame();
+  recordDynastyGeneration();
+  const dynasty = getDynasty();
   if (wasWeeklyChallenge && state) {
     weeklyScoreSubmitted = true;
     var trophyCount = (state.career.trophies || []).length;
@@ -2328,6 +2383,26 @@ function renderGameOver() {
         <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold-dim)">Legado</div>
         <div class="personality-name">${rankLabel}</div>
       </div>
+      ${dynasty.length > 0 ? `
+        <div class="card" style="width:100%;max-width:480px;border-color:var(--gold-border)">
+          <div class="card-body">
+            <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold-dim);margin-bottom:8px">
+              Legado familiar · Generación ${dynasty[0].generation}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px">
+              ${dynasty.slice(0, 4).map(g => `
+                <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-muted)">
+                  <span>Gen. ${g.generation} · ${g.name}</span>
+                  <span>${g.peakOvr} OVR · ${g.goals} goles</span>
+                </div>
+              `).join("")}
+            </div>
+            <button class="btn btn-primary" data-action="start_heir">
+              👨‍👦 Continuar el legado (Generación ${dynasty[0].generation + 1})
+            </button>
+          </div>
+        </div>
+      ` : ""}
       ${state && state.club && DT_COMPATIBLE_CLUBS.has(state.club.id) ? `
         <div class="card" style="width:100%;max-width:480px;border-color:var(--gold-border)">
           <div class="card-body" style="text-align:center">
@@ -2461,6 +2536,25 @@ function handleClick(e) {
       navigate("hall_of_fame");
       break;
 
+    case "start_heir": {
+      const dynasty = getDynasty();
+      const parent = dynasty[0];
+      if (!parent) return;
+      hofRecorded = false; weeklyScoreSubmitted = false;
+      pendingDynasty = {
+        bonus: dynastyBonusFor(parent.peakOvr),
+        surname: familySurname(parent.name),
+        generation: parent.generation + 1,
+      };
+      creation = {
+        step: 1, position: null, archetype: null, shownArchetypes: [],
+        name: pendingDynasty.surname ? `${pendingDynasty.surname} Jr.` : "",
+        countryIdx: 0, clubIdx: 0, ironman: false,
+      };
+      navigate("creation");
+      break;
+    }
+
     case "share_result": {
       const text = shareCareerText();
       const done = () => { el.textContent = "✅ Copiado"; setTimeout(() => { el.textContent = "📋 Compartir resultado"; }, 1500); };
@@ -2540,6 +2634,17 @@ function handleClick(e) {
       const country = COUNTRIES[creation.countryIdx];
       const club = country.clubs[creation.clubIdx];
       initNewGame(creation.name.trim(), creation.position, creation.archetype, club, country, creation.ironman);
+      if (pendingDynasty) {
+        state.player.potential = Math.min(99, state.player.potential + pendingDynasty.bonus);
+        state.player.dynastyGeneration = pendingDynasty.generation;
+        state.news.unshift(
+          pendingDynasty.bonus > 0
+            ? `👨‍👦 Generación ${pendingDynasty.generation} de la familia ${pendingDynasty.surname}: arrancás con un plus de potencial por el legado familiar.`
+            : `👨‍👦 Generación ${pendingDynasty.generation} de la familia ${pendingDynasty.surname}. A escribir tu propia historia.`
+        );
+        save();
+        pendingDynasty = null;
+      }
       navigate("hub");
       break;
     }
