@@ -4,6 +4,8 @@ import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 
+const GLOBAL_TAB = { key: "global", label: "Todos" };
+
 function Cell({ label, children, tone }) {
   const toneClass =
     tone === "good" ? "bg-emerald/15 border-emerald/40 text-emerald"
@@ -36,6 +38,8 @@ function GuessRow({ g }) {
 }
 
 export default function Wordle() {
+  const [leagues, setLeagues] = useState([]);
+  const [league, setLeague] = useState("global");
   const [players, setPlayers] = useState([]);
   const [today, setToday] = useState(null);
   const [query, setQuery] = useState("");
@@ -45,13 +49,19 @@ export default function Wordle() {
   const inputRef = useRef(null);
 
   useEffect(() => {
+    api.get("/wordle/leagues").then((r) => setLeagues(r.data.leagues)).catch(() => setLeagues([]));
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    setError("");
     Promise.all([
-      api.get("/wordle/players").then((r) => setPlayers(r.data.players)),
-      api.get("/wordle/today").then((r) => setToday(r.data)),
+      api.get("/wordle/players", { params: { league } }).then((r) => setPlayers(r.data.players)),
+      api.get("/wordle/today", { params: { league } }).then((r) => setToday(r.data)),
     ])
       .catch(() => setError("No se pudo cargar Fulbodle"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [league]);
 
   const suggestions = query.trim().length >= 2
     ? players.filter((p) => p.toLowerCase().includes(query.trim().toLowerCase())).slice(0, 8)
@@ -62,7 +72,7 @@ export default function Wordle() {
     setBusy(true);
     setError("");
     try {
-      const { data } = await api.post("/wordle/guess", { name });
+      const { data } = await api.post("/wordle/guess", { name, league });
       setToday((prev) => ({
         ...prev,
         attempts: data.attempt,
@@ -79,10 +89,28 @@ export default function Wordle() {
     }
   }
 
+  const tabs = [GLOBAL_TAB, ...leagues];
+
   return (
     <Layout>
       <h1 className="text-xl sm:text-2xl font-bold mb-1">Fulbodle</h1>
-      <p className="text-gray-400 text-sm mb-6">Un jugador real secreto por día — adivinalo con la menor cantidad de intentos.</p>
+      <p className="text-gray-400 text-sm mb-4">Un jugador real secreto por día — adivinalo con la menor cantidad de intentos.</p>
+
+      <div className="flex gap-1.5 flex-wrap mb-6">
+        {tabs.map((l) => (
+          <button
+            key={l.key}
+            onClick={() => setLeague(l.key)}
+            className={`px-3 py-1.5 rounded-card text-xs font-medium border transition-colors ${
+              league === l.key
+                ? "border-accent/40 bg-accent/10 text-accent"
+                : "border-border text-gray-400 hover:text-white hover:border-white/30"
+            }`}
+          >
+            {l.label}
+          </button>
+        ))}
+      </div>
 
       {loading && <p className="text-sm text-gray-500">Cargando...</p>}
 

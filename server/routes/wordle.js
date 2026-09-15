@@ -5,14 +5,42 @@ import { fileURLToPath } from "node:url";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { todayStr } from "../utils/points.js";
+import { LEAGUES, leagueForClub } from "../data/league-clubs.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = path.join(__dirname, "../data/equipo-jugador-players.json");
 const RAW = JSON.parse(fs.readFileSync(DATA_PATH, "utf-8"));
-const PLAYERS = RAW.jugadores;
+const ALL_PLAYERS = RAW.jugadores;
 
-const MAX_POINTS = 10;
-const MIN_POINTS = 1;
+const LEAGUE_KEYS = new Set(LEAGUES.map((l) => l.key));
+
+// El "club actual": el que no tiene fecha de fin, o si ya se retiró de
+// todos, el último por orden de inicio. Se usa tanto para el feedback como
+// para filtrar los jugadores de cada liga.
+function currentClubOf(player) {
+  const carrera = player.carrera || [];
+  const active = carrera.find((c) => c.fin === null);
+  if (active) return active.club;
+  const last = [...carrera].sort((a, b) => (b.inicio || 0) - (a.inicio || 0))[0];
+  return last?.club ?? null;
+}
+
+// Un pool de jugadores por liga — se calcula una sola vez al arrancar, no
+// en cada request. "global" son todos; el resto, solo los del club actual
+// en esa liga (ver server/data/league-clubs.js para el mapeo de nombres).
+const PLAYERS_BY_LEAGUE = { global: ALL_PLAYERS };
+for (const { key } of LEAGUES) {
+  PLAYERS_BY_LEAGUE[key] = ALL_PLAYERS.filter((p) => leagueForClub(currentClubOf(p)) === key);
+}
+
+function leagueKeyFrom(raw) {
+  const key = String(raw || "global");
+  return LEAGUE_KEYS.has(key) ? key : "global";
+}
+
+function playersFor(leagueKey) {
+  return PLAYERS_BY_LEAGUE[leagueKey] || PLAYERS_BY_LEAGUE.global;
+}
 
 function normalize(s) {
   return String(s || "")
@@ -21,29 +49,21 @@ function normalize(s) {
 }
 
 // Hash determinístico y estable de la fecha (mismo jugador para todo el
-// mundo el mismo día, sin tener que guardar nada en la base).
-function hashDate(dateStr) {
+// mundo el mismo día, sin tener que guardar nada en la base). Se combina
+// con la liga para que cada una tenga su propio secreto.
+function hashKey(key) {
   let h = 2166136261;
-  for (let i = 0; i < dateStr.length; i++) {
-    h ^= dateStr.charCodeAt(i);
+  for (let i = 0; i < key.length; i++) {
+    h ^= key.charCodeAt(i);
     h = Math.imul(h, 16777619);
   }
   return Math.abs(h);
 }
 
-function secretFor(dateStr) {
-  const idx = hashDate(dateStr) % PLAYERS.length;
-  return PLAYERS[idx];
-}
-
-// El "club actual": el que no tiene fecha de fin, o si ya se retiró de
-// todos, el último por orden de inicio.
-function currentClubOf(player) {
-  const carrera = player.carrera || [];
-  const active = carrera.find((c) => c.fin === null);
-  if (active) return active.club;
-  const last = [...carrera].sort((a, b) => (b.inicio || 0) - (a.inicio || 0))[0];
-  return last?.club ?? null;
+function secretFor(dateStr, leagueKey) {
+  const players = playersFor(leagueKey);
+  const idx = hashKey(`${dateStr}|${leagueKey}`) % players.length;
+  return players[idx];
 }
 
 function feedbackFor(guess, secret) {
@@ -62,36 +82,46 @@ function feedbackFor(guess, secret) {
 }
 
 function pointsForAttempts(attempts) {
+  const MAX_POINTS = 10;
+  const MIN_POINTS = 1;
   return Math.max(MIN_POINTS, MAX_POINTS - (attempts - 1));
 }
 
 const router = Router();
 router.use(requireAuth);
 
-// Nombres para el autocompletado — se manda una sola vez, el cliente lo
-// cachea (son 750, no vale la pena paginar).
+router.get("/leagues", (req, res) => {
+  res.json({ leagues: LEAGUES.map((l) => ({ ...l, playerCount: playersFor(l.key).length })) });
+});
+
+// Nombres para el autocompletado — según la liga elegida (en "global" son
+// todos). El cliente los recacha cada vez que cambia de liga.
 router.get("/players", (req, res) => {
-  res.json({ players: PLAYERS.map((p) => p.nombre).sort() });
+  const league = leagueKeyFrom(req.query.league);
+  res.json({ players: playersFor(league).map((p) => p.nombre).sort() });
 });
 
 router.get("/today", async (req, res) => {
   const date = todayStr();
+  const league = leagueKeyFrom(req.query.league);
   try {
     const guessesResult = await db.execute({
-      sql: "SELECT attempt_number, guess_name, is_correct FROM wordle_guesses WHERE user_id = ? AND date = ? ORDER BY attempt_number",
-      args: [req.userId, date],
+      sql: "SELECT attempt_number, guess_name, is_correct FROM wordle_guesses WHERE user_id = ? AND date = ? AND league = ? ORDER BY attempt_number",
+      args: [req.userId, date, league],
     });
     const resultResult = await db.execute({
-      sql: "SELECT attempts, points FROM wordle_results WHERE user_id = ? AND date = ?",
-      args: [req.userId, date],
+      sql: "SELECT attempts, points FROM wordle_results WHERE user_id = ? AND date = ? AND league = ?",
+      args: [req.userId, date, league],
     });
-    const secret = secretFor(date);
+    const players = playersFor(league);
+    const secret = secretFor(date, league);
     const solved = resultResult.rows[0] || null;
 
-    const guesses = guessesResult.rows.map((g) => feedbackFor(PLAYERS.find((p) => p.nombre === g.guess_name) || { nombre: g.guess_name, nacionalidad: "?", posicion: "?", nacimiento: 0, carrera: [] }, secret));
+    const guesses = guessesResult.rows.map((g) => feedbackFor(players.find((p) => p.nombre === g.guess_name) || { nombre: g.guess_name, nacionalidad: "?", posicion: "?", nacimiento: 0, carrera: [] }, secret));
 
     res.json({
       date,
+      league,
       attempts: guessesResult.rows.length,
       solved: !!solved,
       points: solved?.points ?? null,
@@ -107,39 +137,41 @@ router.get("/today", async (req, res) => {
 
 router.post("/guess", async (req, res) => {
   const guessName = String(req.body?.name || "").trim();
+  const league = leagueKeyFrom(req.body?.league);
   if (!guessName) return res.status(400).json({ error: "Falta el nombre" });
 
   const date = todayStr();
   try {
     const already = await db.execute({
-      sql: "SELECT id FROM wordle_results WHERE user_id = ? AND date = ?",
-      args: [req.userId, date],
+      sql: "SELECT id FROM wordle_results WHERE user_id = ? AND date = ? AND league = ?",
+      args: [req.userId, date, league],
     });
     if (already.rows.length > 0) return res.status(400).json({ error: "Ya adivinaste el de hoy" });
 
-    const guess = PLAYERS.find((p) => normalize(p.nombre) === normalize(guessName));
+    const players = playersFor(league);
+    const guess = players.find((p) => normalize(p.nombre) === normalize(guessName));
     if (!guess) return res.status(400).json({ error: "Ese jugador no está en la lista — elegilo del buscador" });
 
     const countResult = await db.execute({
-      sql: "SELECT COUNT(*) AS c FROM wordle_guesses WHERE user_id = ? AND date = ?",
-      args: [req.userId, date],
+      sql: "SELECT COUNT(*) AS c FROM wordle_guesses WHERE user_id = ? AND date = ? AND league = ?",
+      args: [req.userId, date, league],
     });
     const attemptNumber = Number(countResult.rows[0].c) + 1;
 
-    const secret = secretFor(date);
+    const secret = secretFor(date, league);
     const isCorrect = normalize(guess.nombre) === normalize(secret.nombre);
 
     await db.execute({
-      sql: "INSERT INTO wordle_guesses (user_id, date, attempt_number, guess_name, is_correct) VALUES (?, ?, ?, ?, ?)",
-      args: [req.userId, date, attemptNumber, guess.nombre, isCorrect ? 1 : 0],
+      sql: "INSERT INTO wordle_guesses (user_id, date, league, attempt_number, guess_name, is_correct) VALUES (?, ?, ?, ?, ?, ?)",
+      args: [req.userId, date, league, attemptNumber, guess.nombre, isCorrect ? 1 : 0],
     });
 
     let points = null;
     if (isCorrect) {
       points = pointsForAttempts(attemptNumber);
       await db.execute({
-        sql: "INSERT INTO wordle_results (user_id, date, attempts, points) VALUES (?, ?, ?, ?)",
-        args: [req.userId, date, attemptNumber, points],
+        sql: "INSERT INTO wordle_results (user_id, date, league, attempts, points) VALUES (?, ?, ?, ?, ?)",
+        args: [req.userId, date, league, attemptNumber, points],
       });
     }
 

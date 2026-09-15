@@ -39,6 +39,63 @@ export async function initSchema() {
   await migrateGroupMemberRival();
   await migrateDtLeagueColumns();
   await migrateDtLeagueDraft();
+  await migrateWordleLeague();
+}
+
+// Fulbodle sumó un apartado de liga (premier/laliga/seriea/bundesliga)
+// además del jugador secreto general — cada uno necesita su propia fila
+// por día, así que "league" entra a la UNIQUE de ambas tablas. SQLite no
+// deja agregar una columna a una UNIQUE existente con ALTER TABLE, así que
+// hay que reconstruirlas (mismo patrón que migrateModeBKindConstraint).
+async function migrateWordleLeague() {
+  const guessesInfo = await db.execute("PRAGMA table_info(wordle_guesses)");
+  if (guessesInfo.rows.length === 0) return; // instalación nueva: ya sale del schema.sql
+  if (guessesInfo.rows.some((r) => r.name === "league")) return;
+
+  await db.execute("PRAGMA foreign_keys = OFF");
+
+  await db.execute(`
+    CREATE TABLE wordle_guesses_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      date TEXT NOT NULL,
+      league TEXT NOT NULL DEFAULT 'global',
+      attempt_number INTEGER NOT NULL,
+      guess_name TEXT NOT NULL,
+      is_correct INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(user_id, date, league, attempt_number)
+    )
+  `);
+  await db.execute(`
+    INSERT INTO wordle_guesses_new (id, user_id, date, attempt_number, guess_name, is_correct, created_at)
+    SELECT id, user_id, date, attempt_number, guess_name, is_correct, created_at FROM wordle_guesses
+  `);
+  await db.execute("DROP TABLE wordle_guesses");
+  await db.execute("ALTER TABLE wordle_guesses_new RENAME TO wordle_guesses");
+
+  await db.execute(`
+    CREATE TABLE wordle_results_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      date TEXT NOT NULL,
+      league TEXT NOT NULL DEFAULT 'global',
+      attempts INTEGER NOT NULL,
+      points INTEGER NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(user_id, date, league)
+    )
+  `);
+  await db.execute(`
+    INSERT INTO wordle_results_new (id, user_id, date, attempts, points, created_at)
+    SELECT id, user_id, date, attempts, points, created_at FROM wordle_results
+  `);
+  await db.execute("DROP TABLE wordle_results");
+  await db.execute("ALTER TABLE wordle_results_new RENAME TO wordle_results");
+
+  await db.execute("PRAGMA foreign_keys = ON");
+  await db.execute("CREATE INDEX IF NOT EXISTS idx_wordle_guesses_user_date ON wordle_guesses(user_id, date)");
+  await db.execute("CREATE INDEX IF NOT EXISTS idx_wordle_results_date ON wordle_results(date)");
 }
 
 // Draft de liga: orden de turnos para elegir equipo, opcional por liga.

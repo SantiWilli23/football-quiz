@@ -321,25 +321,30 @@ CREATE INDEX IF NOT EXISTS idx_tourn_players_tournament ON duel_tournament_playe
 -- usuario queda acá — wordle_results guarda el resultado final una sola vez
 -- por persona por día, para que sume al ranking del grupo como cualquier
 -- otro puntaje.
+-- "league" separa el jugador secreto general ('global') del de cada liga
+-- (premier/laliga/seriea/bundesliga) — cada una tiene su propio secreto del
+-- día y su propio resultado, por eso entra en la UNIQUE de ambas tablas.
 CREATE TABLE IF NOT EXISTS wordle_guesses (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES users(id),
   date TEXT NOT NULL,
+  league TEXT NOT NULL DEFAULT 'global',
   attempt_number INTEGER NOT NULL,
   guess_name TEXT NOT NULL,
   is_correct INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  UNIQUE(user_id, date, attempt_number)
+  UNIQUE(user_id, date, league, attempt_number)
 );
 
 CREATE TABLE IF NOT EXISTS wordle_results (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES users(id),
   date TEXT NOT NULL,
+  league TEXT NOT NULL DEFAULT 'global',
   attempts INTEGER NOT NULL,
   points INTEGER NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  UNIQUE(user_id, date)
+  UNIQUE(user_id, date, league)
 );
 
 CREATE INDEX IF NOT EXISTS idx_wordle_guesses_user_date ON wordle_guesses(user_id, date);
