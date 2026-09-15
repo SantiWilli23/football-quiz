@@ -3,7 +3,24 @@
 // sponsors y la relación con la hinchada y la directiva. Los resultados
 // deportivos se resuelven de forma abstracta al cierre de temporada, según
 // cuánto invertiste en el proyecto comparado con el resto de la liga.
-import { teamsByLeague } from "../carrera/data/teams.js";
+import { teamsByLeague, teamById } from "../carrera/data/teams.js";
+
+// Mismos umbrales que usa Carrera DT (CareerContext.jsx evaluateObjective) —
+// acá el objetivo lo fija la directiva del club real (team.boardObjective) y
+// se evalúa en el cierre de temporada, además del efecto genérico de
+// terminar arriba/abajo de la tabla.
+const OBJECTIVE_THRESHOLDS = { ganar_liga: 1, top3: 3, top4: 4, top6: 6, top8: 8, top10: 10, top12: 12, salvarse: 17 };
+const OBJECTIVE_LABELS = {
+  ganar_liga: "Salir campeón", top3: "Terminar en el top 3", top4: "Clasificar a copas europeas (top 4)",
+  top6: "Pelear puestos europeos (top 6)", top8: "Entrar entre los primeros 8", top10: "Entrar entre los primeros 10",
+  top12: "Entrar entre los primeros 12", salvarse: "Salvar la categoría",
+};
+
+export function objectiveFor(teamId) {
+  const team = teamById(teamId);
+  const key = team?.boardObjective || "salvarse";
+  return { key, label: OBJECTIVE_LABELS[key] || "Salvar la categoría", threshold: OBJECTIVE_THRESHOLDS[key] || 17 };
+}
 
 export const WEEKS_PER_SEASON = 34;
 export const TICKET_PRICE_LEVELS = [20, 30, 40, 55, 70];
@@ -17,6 +34,14 @@ export const SPONSOR_TIERS = [
   { tier: 1, weeklyIncome: 0.3, label: "Sponsor local" },
   { tier: 2, weeklyIncome: 0.7, label: "Sponsor nacional" },
   { tier: 3, weeklyIncome: 1.4, label: "Sponsor internacional" },
+];
+// Academia juvenil: en vez de darle presupuesto de fichajes al DT (efecto
+// inmediato y se gasta), invertir acá sube la calidad del plantel de forma
+// lenta pero permanente — cantera propia en vez de mercado.
+export const ACADEMY_TIERS = [
+  { tier: 1, cost: 10, dtQualityPerSeason: 2, label: "Academia regional" },
+  { tier: 2, cost: 25, dtQualityPerSeason: 4, label: "Academia nacional" },
+  { tier: 3, cost: 50, dtQualityPerSeason: 6, label: "Academia de élite" },
 ];
 
 function clamp(v, a, b) {
@@ -38,11 +63,13 @@ export function initialPresidentState(teamId, teamName, league, prestige) {
     ticketPriceLevel: 1,
     stadiumTier: 1,
     sponsorTier: 0,
+    academyTier: 0,
     dtBudgetGiven: 0,
     dtQuality: clamp(40 + (prestige || 5) * 2, 30, 75),
     leaguePosition: null,
     seasonInvestment: 0,
     history: [],
+    titlesWon: 0,
     news: [`Asumiste la presidencia de ${teamName}.`],
     gameOver: false,
     currentDecision: null,
@@ -170,6 +197,76 @@ export const DECISIONS_POOL = [
       { fanHappiness: -6 },
     ],
   },
+  {
+    id: "p08",
+    context: "Un club rival te ofrece armar un amistoso de pretemporada de alto perfil, con buena bolsa de dinero.",
+    options: [
+      { text: "Aceptás — la plata sirve, aunque cansa al plantel." },
+      { text: "Proponés uno más chico, menos exigente." },
+      { text: "Rechazás para cuidar la pretemporada." },
+    ],
+    effects: [
+      { budget: 2.5, dtQuality: -2 },
+      { budget: 1 },
+      { fanHappiness: -2 },
+    ],
+  },
+  {
+    id: "p09",
+    context: "Periodistas te preguntan directo si el DT sigue el año que viene.",
+    options: [
+      { text: "Le das tu respaldo público total." },
+      { text: "Contestás con ambigüedad calculada." },
+      { text: "Dejás la puerta abierta a un cambio." },
+    ],
+    effects: [
+      { dtQuality: 3, boardTrust: -1 },
+      {},
+      { fanHappiness: 3, dtQuality: -2 },
+    ],
+  },
+  {
+    id: "p10",
+    context: "Se abre la chance de renovar el naming rights del estadio por varios años.",
+    options: [
+      { text: "Firmás un contrato largo y grande." },
+      { text: "Firmás algo más corto y modesto." },
+      { text: "No tocás el nombre del estadio — pesa la historia." },
+    ],
+    effects: [
+      { budget: 6, fanHappiness: -6, boardTrust: 4 },
+      { budget: 2.5 },
+      { fanHappiness: 4 },
+    ],
+  },
+  {
+    id: "p11",
+    context: "El club de al lado te ofrece un canje de socios/beneficios cruzados con la comunidad.",
+    options: [
+      { text: "Aceptás — buena imagen institucional." },
+      { text: "Lo evaluás para más adelante." },
+      { text: "No, son rivales históricos." },
+    ],
+    effects: [
+      { fanHappiness: 5, boardTrust: 2 },
+      {},
+      { fanHappiness: -1 },
+    ],
+  },
+  {
+    id: "p12",
+    context: "Un fondo de inversión se acerca a comprar un porcentaje minoritario del club.",
+    options: [
+      { text: "Abrís la negociación en serio." },
+      { text: "Escuchás la oferta sin comprometerte." },
+      { text: "Cerrás la puerta — el club sigue 100% de los socios." },
+    ],
+    effects: [
+      { budget: 15, boardTrust: -5, special: "fund_pressure" },
+      {},
+      { boardTrust: 5, fanHappiness: 4 },
+    ],
+  },
 ];
 
 export function pickDecision(usedIds = []) {
@@ -216,6 +313,17 @@ export function hireSponsor(state, tier) {
     budget: Math.round((state.budget - cost) * 20) / 20,
     sponsorTier: tier,
     news: [`🤝 Firmaste con un ${SPONSOR_TIERS[tier - 1].label.toLowerCase()}.`, ...state.news].slice(0, 8),
+  };
+}
+
+export function hireAcademy(state, tier) {
+  const cost = ACADEMY_TIERS[tier - 1]?.cost;
+  if (cost == null || state.academyTier >= tier || state.budget < cost) return state;
+  return {
+    ...state,
+    budget: Math.round((state.budget - cost) * 20) / 20,
+    academyTier: tier,
+    news: [`🌱 Invertiste en ${ACADEMY_TIERS[tier - 1].label.toLowerCase()} — la cantera va a rendir de a poco.`, ...state.news].slice(0, 8),
   };
 }
 
@@ -278,6 +386,7 @@ export function advanceWeek(state) {
 // del estadio) contra el resto de los clubes de tu liga.
 export function resolveSeason(state) {
   const rivals = teamsByLeague(state.league).filter((t) => t.id !== state.teamId);
+  const academyBoost = state.academyTier > 0 ? ACADEMY_TIERS[state.academyTier - 1].dtQualityPerSeason : 0;
   const myStrength = (state.dtBudgetGiven || 0) * 1.5 + state.dtQuality + state.stadiumTier * 4;
   const table = [
     { id: state.teamId, name: state.teamName, strength: myStrength + (Math.random() * 20 - 10) },
@@ -289,9 +398,16 @@ export function resolveSeason(state) {
   const goodSeason = position <= Math.ceil(leagueSize / 3);
   const badSeason = position >= leagueSize - 2;
 
-  const boardTrust = clamp(state.boardTrust + (goodSeason ? 10 : badSeason ? -15 : -2), 0, 100);
-  const fanHappiness = clamp(state.fanHappiness + (goodSeason ? 12 : badSeason ? -12 : 0), 0, 100);
-  const prizeMoney = goodSeason ? 6 : badSeason ? 0 : 2;
+  const objective = objectiveFor(state.teamId);
+  const objectiveMet = position <= objective.threshold;
+  const champion = position === 1;
+
+  let boardTrust = clamp(state.boardTrust + (goodSeason ? 10 : badSeason ? -15 : -2), 0, 100);
+  let fanHappiness = clamp(state.fanHappiness + (goodSeason ? 12 : badSeason ? -12 : 0), 0, 100);
+  // El objetivo de la directiva pesa aparte de "buena/mala temporada" en
+  // general — cumplirlo (o no) es lo que de verdad evalúan arriba.
+  boardTrust = clamp(boardTrust + (objectiveMet ? 6 : -10), 0, 100);
+  const prizeMoney = (goodSeason ? 6 : badSeason ? 0 : 2) + (objectiveMet ? 3 : 0) + (champion ? 5 : 0);
 
   return {
     ...state,
@@ -302,16 +418,16 @@ export function resolveSeason(state) {
     fanHappiness,
     budget: Math.round((state.budget + prizeMoney) * 20) / 20,
     dtBudgetGiven: 0,
+    dtQuality: clamp(state.dtQuality + academyBoost, 20, 99),
+    titlesWon: (state.titlesWon || 0) + (champion ? 1 : 0),
     history: [
-      { season: state.season, position, leagueSize, budget: state.budget, stadiumTier: state.stadiumTier },
+      { season: state.season, position, leagueSize, budget: state.budget, stadiumTier: state.stadiumTier, objectiveMet, objectiveLabel: objective.label, champion },
       ...state.history,
     ],
     currentDecision: pickDecision(state._usedDecisions || []),
     decisionUsed: false,
     news: [
-      `📊 Temporada ${state.season} cerrada: terminaste ${position}° de ${leagueSize}. ${
-        goodSeason ? "¡Gran temporada!" : badSeason ? "Temporada para el olvido." : "Temporada correcta."
-      } +€${prizeMoney}M de premios.`,
+      `📊 Temporada ${state.season} cerrada: terminaste ${position}° de ${leagueSize} — objetivo (${objective.label}) ${objectiveMet ? "cumplido ✅" : "no cumplido ❌"}. +€${prizeMoney}M de premios.`,
       ...state.news,
     ].slice(0, 8),
   };
