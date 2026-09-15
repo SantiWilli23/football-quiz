@@ -28,67 +28,155 @@ const POSITIONS = {
   },
 };
 
+// El arquetipo define tu estilo de juego (no hay "rareza" ni power creep:
+// cada uno es una forma distinta de jugar, no una versión mejor de otra).
+// goalProfile/assistProfile los usa resolveMatch() para inclinar el reparto
+// entre gol propio y asistencia según el estilo elegido.
 const ARCHETYPES = {
   delantero: [
-    { id: "killer", name: "Killer del área", desc: "Instinto puro de gol. Dentro del área sos el mejor.", bonus: { disparo: 8 }, rareza: "rare" },
-    { id: "extremo", name: "Extremo desequilibrante", desc: "Velocidad y regate como armas. El uno a uno es tu zona de confort.", bonus: { velocidad: 5, regate: 4 }, rareza: "common" },
-    { id: "asociativo", name: "Ariete asociativo", desc: "Más que meter goles, los generás. Jugador para el colectivo.", bonus: { pase: 5, disparo: 3 }, rareza: "common" },
-    { id: "ruptura", name: "Delantero de ruptura", desc: "Tu arma es la espalda. Velocidad y profundidad constante.", bonus: { velocidad: 7, resistencia: 2 }, rareza: "legendary" },
+    { id: "killer", name: "Killer del área", desc: "Instinto puro de gol. Dentro del área sos el mejor.", bonus: { disparo: 8 }, goalBias: 1.3, assistBias: 0.7 },
+    { id: "cazagoles", name: "Cazagoles puro", desc: "Vivís pegado al área rival. Poco toque, mucha definición.", bonus: { disparo: 9 }, goalBias: 1.4, assistBias: 0.5 },
+    { id: "extremo", name: "Extremo desequilibrante", desc: "Velocidad y regate como armas. El uno a uno es tu zona de confort.", bonus: { velocidad: 5, regate: 4 }, goalBias: 1.0, assistBias: 1.2 },
+    { id: "asociativo", name: "Ariete asociativo", desc: "Más que meter goles, los generás. Jugador para el colectivo.", bonus: { pase: 5, disparo: 3 }, goalBias: 0.9, assistBias: 1.3 },
+    { id: "falso9", name: "Falso 9", desc: "Bajás a buscar el juego y desarmás la defensa rival desde ahí.", bonus: { pase: 6, regate: 3 }, goalBias: 0.85, assistBias: 1.4 },
+    { id: "ruptura", name: "Delantero de ruptura", desc: "Tu arma es la espalda. Velocidad y profundidad constante.", bonus: { velocidad: 7, resistencia: 2 }, goalBias: 1.2, assistBias: 0.8 },
+    { id: "referencia", name: "Referencia de área", desc: "Juego aéreo y presencia física. El área es tuya.", bonus: { disparo: 5, resistencia: 3 }, goalBias: 1.15, assistBias: 0.9 },
+    { id: "segundo9", name: "Segundo delantero", desc: "Jugás un poco más suelto, entre líneas, apoyando al 9 de área.", bonus: { regate: 5, pase: 3 }, goalBias: 1.0, assistBias: 1.1 },
   ],
   mediocampista: [
-    { id: "motor", name: "Motor de mediocampo", desc: "Correr, correr y correr. El equipo vive de tu energía.", bonus: { potencia: 7, resistencia: 2 }, rareza: "common" },
-    { id: "metronomo", name: "Metrónomo", desc: "El ritmo lo ponés vos. Pase corto, pase largo, siempre con criterio.", bonus: { pase: 7, control: 2 }, rareza: "rare" },
-    { id: "creativo", name: "Mediocampista creativo", desc: "El último pase, la jugada que nadie vio. Creatividad como diferencial.", bonus: { vision: 8 }, rareza: "legendary" },
-    { id: "recuperador", name: "Recuperador", desc: "Robar balones y distribuir rápido. El primero en defender, el primero en salir.", bonus: { potencia: 4, control: 5 }, rareza: "common" },
+    { id: "motor", name: "Motor de mediocampo", desc: "Correr, correr y correr. El equipo vive de tu energía.", bonus: { potencia: 7, resistencia: 2 }, goalBias: 0.9, assistBias: 1.0 },
+    { id: "metronomo", name: "Metrónomo", desc: "El ritmo lo ponés vos. Pase corto, pase largo, siempre con criterio.", bonus: { pase: 7, control: 2 }, goalBias: 0.8, assistBias: 1.3 },
+    { id: "creativo", name: "Mediocampista creativo", desc: "El último pase, la jugada que nadie vio. Creatividad como diferencial.", bonus: { vision: 8 }, goalBias: 0.9, assistBias: 1.4 },
+    { id: "recuperador", name: "Recuperador", desc: "Robar balones y distribuir rápido. El primero en defender, el primero en salir.", bonus: { potencia: 4, control: 5 }, goalBias: 0.7, assistBias: 0.9 },
+    { id: "enganche", name: "Enganche", desc: "Jugás entre líneas, sos el último pase antes del gol.", bonus: { vision: 6, control: 3 }, goalBias: 1.0, assistBias: 1.4 },
+    { id: "box2box", name: "Box-to-box", desc: "Aparecés en las dos áreas. Nunca falta tu carrera de más.", bonus: { potencia: 5, resistencia: 4 }, goalBias: 1.1, assistBias: 1.0 },
+    { id: "contencion", name: "Volante de contención", desc: "Primero se defiende: cortás circuitos antes de que empiecen.", bonus: { control: 6, potencia: 2 }, goalBias: 0.6, assistBias: 0.8 },
+    { id: "interior", name: "Interior ofensivo", desc: "Llegás desde segunda línea, sorprendés por dentro.", bonus: { pase: 5, vision: 3 }, goalBias: 1.15, assistBias: 1.1 },
   ],
   defensa: [
-    { id: "muro", name: "Muro", desc: "Físico y determinación. Pocos pasan cuando estás bien parado.", bonus: { fisico: 5, defensa: 4 }, rareza: "common" },
-    { id: "lider", name: "Líder defensivo", desc: "Organizás la línea, levantás al equipo. Tu valor va más allá del juego.", bonus: { liderazgo: 7, defensa: 2 }, rareza: "rare" },
-    { id: "moderno", name: "Defensor moderno", desc: "Salís jugando, te sumás al ataque. Más que detener, construís.", bonus: { pase: 6, fisico: 3 }, rareza: "legendary" },
-    { id: "agresivo", name: "Defensor agresivo", desc: "Presión alta, duelos ganados. La agresividad como herramienta.", bonus: { defensa: 5, fisico: 4 }, rareza: "common" },
+    { id: "muro", name: "Muro", desc: "Físico y determinación. Pocos pasan cuando estás bien parado.", bonus: { fisico: 5, defensa: 4 }, goalBias: 0.7, assistBias: 0.6 },
+    { id: "lider", name: "Líder defensivo", desc: "Organizás la línea, levantás al equipo. Tu valor va más allá del juego.", bonus: { liderazgo: 7, defensa: 2 }, goalBias: 0.8, assistBias: 0.7 },
+    { id: "moderno", name: "Defensor moderno", desc: "Salís jugando, te sumás al ataque. Más que detener, construís.", bonus: { pase: 6, fisico: 3 }, goalBias: 1.0, assistBias: 1.2 },
+    { id: "agresivo", name: "Defensor agresivo", desc: "Presión alta, duelos ganados. La agresividad como herramienta.", bonus: { defensa: 5, fisico: 4 }, goalBias: 0.9, assistBias: 0.7 },
+    { id: "libero", name: "Líbero", desc: "Leés el juego un paso antes que todos y salís jugando limpio.", bonus: { pase: 5, liderazgo: 3 }, goalBias: 0.8, assistBias: 1.1 },
+    { id: "marcador", name: "Marcador personal", desc: "Tu rival directo no respira en toda la tarde.", bonus: { defensa: 6, fisico: 2 }, goalBias: 0.6, assistBias: 0.6 },
+    { id: "aereo", name: "Central aéreo", desc: "Ganás todo lo que sube. Un peligro más en cada córner rival.", bonus: { fisico: 6, defensa: 2 }, goalBias: 1.3, assistBias: 0.6 },
+    { id: "carrilero", name: "Carrilero", desc: "Subís y bajás toda la banda sin parar en todo el partido.", bonus: { pase: 4, fisico: 3, resistencia: 2 }, goalBias: 1.0, assistBias: 1.3 },
   ],
 };
 
 const COUNTRIES = [
   { name: "Argentina", flag: "🇦🇷", clubs: [
-    { id: "river", name: "River Plate", tier: 1, prestige: 90 },
-    { id: "boca", name: "Boca Juniors", tier: 1, prestige: 90 },
-    { id: "racing", name: "Racing Club", tier: 2, prestige: 65 },
-    { id: "sanlorenzo", name: "San Lorenzo", tier: 2, prestige: 60 },
-    { id: "huracan", name: "Huracán", tier: 3, prestige: 38 },
+    { id: "river", name: "River Plate", tier: 1, prestige: 90, colors: { primary: "#E30613", secondary: "#FFFFFF" } },
+    { id: "boca", name: "Boca Juniors", tier: 1, prestige: 90, colors: { primary: "#0F3B82", secondary: "#F7D117" } },
+    { id: "racing", name: "Racing Club", tier: 2, prestige: 65, colors: { primary: "#5CB5E5", secondary: "#FFFFFF" } },
+    { id: "sanlorenzo", name: "San Lorenzo", tier: 2, prestige: 60, colors: { primary: "#0F1E3D", secondary: "#C8102E" } },
+    { id: "huracan", name: "Huracán", tier: 3, prestige: 38, colors: { primary: "#F5A623", secondary: "#FFFFFF" } },
   ]},
   { name: "España", flag: "🇪🇸", clubs: [
-    { id: "realmadrid", name: "Real Madrid", tier: 1, prestige: 98 },
-    { id: "barcelona", name: "FC Barcelona", tier: 1, prestige: 97 },
-    { id: "atletico", name: "Atlético Madrid", tier: 1, prestige: 85 },
-    { id: "sevilla", name: "Sevilla FC", tier: 2, prestige: 70 },
-    { id: "valencia", name: "Valencia CF", tier: 2, prestige: 63 },
+    { id: "realmadrid", name: "Real Madrid", tier: 1, prestige: 98, colors: { primary: "#FFFFFF", secondary: "#00529F" } },
+    { id: "barcelona", name: "FC Barcelona", tier: 1, prestige: 97, colors: { primary: "#A50044", secondary: "#004D98" } },
+    { id: "atletico", name: "Atlético Madrid", tier: 1, prestige: 85, colors: { primary: "#CE3524", secondary: "#FFFFFF" } },
+    { id: "sevilla", name: "Sevilla FC", tier: 2, prestige: 70, colors: { primary: "#D80027", secondary: "#FFFFFF" } },
+    { id: "valencia", name: "Valencia CF", tier: 2, prestige: 63, colors: { primary: "#FF7300", secondary: "#000000" } },
   ]},
   { name: "Inglaterra", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", clubs: [
-    { id: "mancity", name: "Manchester City", tier: 1, prestige: 95 },
-    { id: "liverpool", name: "Liverpool FC", tier: 1, prestige: 93 },
-    { id: "arsenal", name: "Arsenal FC", tier: 1, prestige: 85 },
-    { id: "chelsea", name: "Chelsea FC", tier: 2, prestige: 80 },
-    { id: "newcastle", name: "Newcastle United", tier: 2, prestige: 62 },
+    { id: "mancity", name: "Manchester City", tier: 1, prestige: 95, colors: { primary: "#6CABDD", secondary: "#1C2C5B" } },
+    { id: "liverpool", name: "Liverpool FC", tier: 1, prestige: 93, colors: { primary: "#C8102E", secondary: "#F6EB61" } },
+    { id: "arsenal", name: "Arsenal FC", tier: 1, prestige: 85, colors: { primary: "#EF0107", secondary: "#FFFFFF" } },
+    { id: "chelsea", name: "Chelsea FC", tier: 2, prestige: 80, colors: { primary: "#034694", secondary: "#FFFFFF" } },
+    { id: "newcastle", name: "Newcastle United", tier: 2, prestige: 62, colors: { primary: "#241F20", secondary: "#FFFFFF" } },
   ]},
   { name: "Brasil", flag: "🇧🇷", clubs: [
-    { id: "flamengo", name: "Flamengo", tier: 1, prestige: 88 },
-    { id: "palmeiras", name: "Palmeiras", tier: 1, prestige: 85 },
-    { id: "corinthians", name: "Corinthians", tier: 2, prestige: 70 },
-    { id: "saopaulo", name: "São Paulo FC", tier: 2, prestige: 65 },
+    { id: "flamengo", name: "Flamengo", tier: 1, prestige: 88, colors: { primary: "#C8102E", secondary: "#000000" } },
+    { id: "palmeiras", name: "Palmeiras", tier: 1, prestige: 85, colors: { primary: "#006437", secondary: "#FFFFFF" } },
+    { id: "corinthians", name: "Corinthians", tier: 2, prestige: 70, colors: { primary: "#000000", secondary: "#FFFFFF" } },
+    { id: "saopaulo", name: "São Paulo FC", tier: 2, prestige: 65, colors: { primary: "#C1121C", secondary: "#000000" } },
   ]},
   { name: "Italia", flag: "🇮🇹", clubs: [
-    { id: "juventus", name: "Juventus FC", tier: 1, prestige: 90 },
-    { id: "intermilan", name: "Inter de Milán", tier: 1, prestige: 88 },
-    { id: "milan", name: "AC Milan", tier: 1, prestige: 87 },
-    { id: "napoli", name: "Nápoles", tier: 2, prestige: 72 },
+    { id: "juventus", name: "Juventus FC", tier: 1, prestige: 90, colors: { primary: "#000000", secondary: "#FFFFFF" } },
+    { id: "intermilan", name: "Inter de Milán", tier: 1, prestige: 88, colors: { primary: "#0B3E97", secondary: "#000000" } },
+    { id: "milan", name: "AC Milan", tier: 1, prestige: 87, colors: { primary: "#FB090B", secondary: "#000000" } },
+    { id: "napoli", name: "Nápoles", tier: 2, prestige: 72, colors: { primary: "#12A0D7", secondary: "#FFFFFF" } },
   ]},
   { name: "Francia", flag: "🇫🇷", clubs: [
-    { id: "psg", name: "Paris Saint-Germain", tier: 1, prestige: 92 },
-    { id: "monaco", name: "AS Monaco", tier: 2, prestige: 68 },
-    { id: "lyon", name: "Olympique de Lyon", tier: 2, prestige: 72 },
+    { id: "psg", name: "Paris Saint-Germain", tier: 1, prestige: 92, colors: { primary: "#004170", secondary: "#DA291C" } },
+    { id: "monaco", name: "AS Monaco", tier: 2, prestige: 68, colors: { primary: "#E8112D", secondary: "#FFFFFF" } },
+    { id: "lyon", name: "Olympique de Lyon", tier: 2, prestige: 72, colors: { primary: "#0E1E5B", secondary: "#DA0F19" } },
   ]},
 ];
+
+// Iniciales para el escudo generado (no hay assets de imagen, así que el
+// "escudo" es una placa con las iniciales del club en sus propios colores).
+function clubInitials(name) {
+  const stop = new Set(["fc", "cf", "de", "as", "sc"]);
+  const words = name.split(/\s+/).filter(w => !stop.has(w.toLowerCase()));
+  const letters = (words.length >= 2 ? [words[0], words[words.length - 1]] : [words[0] || name])
+    .map(w => w[0]);
+  return letters.join("").toUpperCase().slice(0, 3);
+}
+
+function readableTextColor(hex) {
+  const h = (hex || "#888888").replace("#", "");
+  const r = parseInt(h.substring(0, 2), 16) || 0;
+  const g = parseInt(h.substring(2, 4), 16) || 0;
+  const b = parseInt(h.substring(4, 6), 16) || 0;
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6 ? "#1a1408" : "#f2f2f0";
+}
+
+function clubCrestHtml(club, size) {
+  size = size || 44;
+  const colors = club.colors || { primary: "#8A6423", secondary: "#F2F2F0" };
+  const textColor = readableTextColor(colors.primary);
+  return `
+    <div style="width:${size}px;height:${size}px;border-radius:${Math.round(size * 0.22)}px;
+      background:linear-gradient(160deg, ${colors.primary}, ${colors.primary}CC);
+      border:2px solid ${colors.secondary}; display:flex; align-items:center; justify-content:center;
+      font-family:'Barlow Condensed',sans-serif; font-weight:900; color:${textColor};
+      font-size:${Math.round(size * 0.36)}px; letter-spacing:0.5px; flex-shrink:0;">
+      ${clubInitials(club.name)}
+    </div>
+  `;
+}
+
+// El club "toma protagonismo" en colores: mientras estés en su plantel, el
+// dorado de acento de toda la interfaz pasa a ser el color primario del
+// club (con el secundario como variante clara), igual que el selector de
+// temas del resto de Futotal pisa variables CSS por afuera de React.
+function colorVividness(hex) {
+  // Qué tan "usable" es un color como acento sobre fondo oscuro: castiga el
+  // blanco/negro puro (mucho contraste pero cero personalidad como acento).
+  const h = (hex || "").replace("#", "");
+  const r = parseInt(h.substring(0, 2), 16) || 0;
+  const g = parseInt(h.substring(2, 4), 16) || 0;
+  const b = parseInt(h.substring(4, 6), 16) || 0;
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  const sat = (Math.max(r, g, b) - Math.min(r, g, b)) / 255;
+  const midtoneScore = 1 - Math.abs(luminance - 0.5) * 2; // mejor cerca de la mitad
+  return sat * 0.7 + midtoneScore * 0.3;
+}
+
+function applyClubTheme(club) {
+  if (!club || !club.colors) return;
+  const root = document.documentElement.style;
+  // El escudo usa primario/secundario tal cual (son los colores reales del
+  // club); el acento de la interfaz usa el que mejor funcione como color de
+  // botones/texto sobre fondo oscuro, así un club todo blanco o negro (River,
+  // Real Madrid, Juventus) no deja la app ilegible.
+  const accent = colorVividness(club.colors.primary) >= colorVividness(club.colors.secondary)
+    ? club.colors.primary
+    : club.colors.secondary;
+  root.setProperty("--gold", accent);
+  root.setProperty("--gold-light", club.colors.secondary === accent ? club.colors.primary : club.colors.secondary);
+  root.setProperty("--gold-border", accent + "48");
+  root.setProperty("--gold-subtle", accent + "1F");
+}
+
+function resetClubTheme() {
+  const root = document.documentElement.style;
+  ["--gold", "--gold-light", "--gold-border", "--gold-subtle"].forEach(v => root.removeProperty(v));
+}
 
 // ── RETO SEMANAL ─────────────────────────────────────────────────
 // Un jugador real (con su posición y el club real donde arrancó su carrera
@@ -1250,21 +1338,26 @@ function resolveMatch(matchId, situationChoice) {
   const draw = Math.abs(diff) <= 3;
   const loss = !win && !draw;
 
-  // Player stats
+  // Player stats — el arquetipo (estilo de juego) inclina el reparto entre
+  // gol propio y asistencia: un "Cazagoles" mete más goles y da menos
+  // asistencias que un "Falso 9", por ejemplo.
   let goals = 0, assists = 0;
   const pos = state.player.position;
+  const archDef = (ARCHETYPES[pos] || []).find(a => a.id === state.player.archetype);
+  const goalBias = archDef ? archDef.goalBias : 1;
+  const assistBias = archDef ? archDef.assistBias : 1;
   if (!sidelined && (win || draw)) {
     if (pos === "delantero") {
-      if (Math.random() < 0.45) goals = 1;
-      if (Math.random() < 0.18) goals = 2;
-      if (Math.random() < 0.25) assists = 1;
+      if (Math.random() < 0.45 * goalBias) goals = 1;
+      if (Math.random() < 0.18 * goalBias) goals = 2;
+      if (Math.random() < 0.25 * assistBias) assists = 1;
     } else if (pos === "mediocampista") {
-      if (Math.random() < 0.18) goals = 1;
-      if (Math.random() < 0.38) assists = 1;
-      if (Math.random() < 0.1) assists = 2;
+      if (Math.random() < 0.18 * goalBias) goals = 1;
+      if (Math.random() < 0.38 * assistBias) assists = 1;
+      if (Math.random() < 0.1 * assistBias) assists = 2;
     } else {
-      if (Math.random() < 0.1) goals = 1;
-      if (Math.random() < 0.16) assists = 1;
+      if (Math.random() < 0.1 * goalBias) goals = 1;
+      if (Math.random() < 0.16 * assistBias) assists = 1;
     }
 
     // Ser el pateador de penales del equipo da una chance extra de gol,
@@ -1272,17 +1365,19 @@ function resolveMatch(matchId, situationChoice) {
     if (state.player.setPieceRole === "penales" && Math.random() < 0.12) goals += 1;
   }
 
-  // El marcador siempre respeta win/draw/loss (antes se sorteaban por separado
-  // y podían contradecirse, ej. "Victoria" con 1-1).
+  // El marcador siempre respeta win/draw/loss Y nunca contradice lo que hizo
+  // el jugador: si metiste 2 goles, el equipo metió como mínimo esos 2 (antes
+  // se sorteaban por completo aparte y podía salir "1-0" con 2 goles tuyos).
+  const teamFloor = goals + assists;
   let teamGoals, rivalGoals;
   if (win) {
     rivalGoals = Math.floor(Math.random() * 2);
-    teamGoals = rivalGoals + 1 + Math.floor(Math.random() * 2);
+    teamGoals = Math.max(teamFloor, rivalGoals + 1 + Math.floor(Math.random() * 2));
   } else if (loss) {
-    teamGoals = Math.floor(Math.random() * 2);
-    rivalGoals = teamGoals + 1 + Math.floor(Math.random() * 2);
+    teamGoals = Math.max(teamFloor, Math.floor(Math.random() * 2));
+    rivalGoals = Math.max(teamGoals + 1 + Math.floor(Math.random() * 2), teamGoals + 1);
   } else {
-    teamGoals = rivalGoals = Math.floor(Math.random() * 3);
+    teamGoals = rivalGoals = Math.max(teamFloor, Math.floor(Math.random() * 3));
   }
 
   const result = { win, draw, loss, teamGoals, rivalGoals, goals, assists, injured, benched };
@@ -1308,6 +1403,23 @@ function resolveMatch(matchId, situationChoice) {
 }
 
 function advanceWeek() {
+  // Si había un partido programado para esta semana y no se jugó a mano
+  // (pantalla de partido con situaciones), se resuelve solo antes de pasar
+  // de semana — antes quedaba sin jugarse para siempre si no lo tocabas.
+  const dueMatch = state.schedule.matches.find(m => m.week === state.career.week && !m.played);
+  if (dueMatch) {
+    const result = resolveMatch(dueMatch.id, null);
+    if (result) {
+      const label = result.win ? "Victoria" : result.draw ? "Empate" : "Derrota";
+      const personal = result.goals > 0
+        ? ` (marcaste ${result.goals} gol${result.goals > 1 ? "es" : ""})`
+        : result.assists > 0
+          ? ` (diste ${result.assists} asistencia${result.assists > 1 ? "s" : ""})`
+          : "";
+      addNews(`⚽ ${label} ${result.teamGoals}-${result.rivalGoals} vs ${dueMatch.rival.name}${personal}.`, true);
+    }
+  }
+
   state.career.week++;
 
   // Flavor feedback from last week
@@ -1322,7 +1434,7 @@ function advanceWeek() {
   }
 
   // Weekly forma drift (slight)
-  state.player.forma = Math.max(10, Math.min(100, state.player.forma + (Math.random() * 4 - 2)));
+  state.player.forma = Math.round(Math.max(10, Math.min(100, state.player.forma + (Math.random() * 4 - 2))));
 
   // ── Lesiones ──
   if (state.player.injuryStatus) {
@@ -1425,10 +1537,14 @@ function startNewSeason() {
 
   if (age < declineAge) {
     const growRate = age <= 19 ? 3 : age <= 22 ? 2.2 : age <= 25 ? 1.4 : 0.7;
+    const focus = state.player.trainingFocus;
     pos.stats.forEach(s => {
       const gap = state.player.potential - (state.player.stats[s] || 60);
       if (gap > 0) {
-        const delta = Math.floor(Math.random() * growRate * (gap / 25 + 0.3));
+        // El entrenamiento elegido concentra la mejora en esa zona (x2) y le
+        // resta un poco al resto — no es más crecimiento total, es a dónde va.
+        const focusMult = !focus ? 1 : s === focus ? 2 : 0.55;
+        const delta = Math.floor(Math.random() * growRate * focusMult * (gap / 25 + 0.3));
         if (delta > 0) state.player.stats[s] = Math.min(97, (state.player.stats[s] || 60) + delta);
       }
     });
@@ -1510,6 +1626,7 @@ function initNewGame(name, position, archetype, club, country, ironman) {
       isCaptain: false,
       setPieceRole: null,
       salaryLevel: 0,
+      trainingFocus: null,
       injuryRisk: 15,
       injuryStatus: null,
       personality: { lider: 0, solitario: 0, fiestero: 0, profesional: 0 },
@@ -1560,12 +1677,14 @@ function navigate(view, params = {}) {
 
 function render() {
   const app = document.getElementById("app");
+  if (state && state.club) applyClubTheme(state.club); else resetClubTheme();
   switch (currentView) {
     case "menu":       app.innerHTML = renderMenu(); break;
     case "creation":   app.innerHTML = renderCreation(); break;
     case "hub":        app.innerHTML = renderHub(); break;
     case "decisions":  app.innerHTML = renderDecisions(); break;
     case "historial":  app.innerHTML = renderHistorial(); break;
+    case "entrenamiento": app.innerHTML = renderEntrenamiento(); break;
     case "decision":   app.innerHTML = renderDecision(); break;
     case "match":      app.innerHTML = renderMatch(); break;
     case "season_end": app.innerHTML = renderSeasonEnd(); break;
@@ -1632,8 +1751,6 @@ function renderCreationStep1() {
 
 function renderCreationStep2() {
   const archetypes = creation.shownArchetypes;
-  const badgeClass = { common: "badge-common", rare: "badge-rare", legendary: "badge-legendary" };
-  const badgeLabel = { common: "Común", rare: "Raro", legendary: "Legendario" };
 
   return `
     <div class="screen creation-screen fade-in">
@@ -1648,7 +1765,6 @@ function renderCreationStep2() {
             data-action="select_archetype" data-arch="${arch.id}">
             <div class="sel-card-name">${arch.name}</div>
             <div class="sel-card-desc">${arch.desc}</div>
-            <span class="sel-card-badge ${badgeClass[arch.rareza]}">${badgeLabel[arch.rareza]}</span>
           </button>
         `).join("")}
       </div>
@@ -1731,6 +1847,7 @@ function renderTabBar(active) {
         Decisiones${showDot ? `<span class="hub-tab-dot"></span>` : ""}
       </button>
       <button class="hub-tab ${active === "historial" ? "active" : ""}" data-action="go_historial">Historial</button>
+      <button class="hub-tab ${active === "entrenamiento" ? "active" : ""}" data-action="go_entrenamiento">Entrenamiento</button>
     </div>
   `;
 }
@@ -1788,10 +1905,10 @@ function renderHub() {
         <div class="card player-card">
           <div class="card-body">
             <div class="player-identity">
-              <div class="player-pos-badge">${pos.icon}</div>
+              ${clubCrestHtml(state.club, 48)}
               <div>
                 <div class="player-name">${p.name}</div>
-                <div class="player-meta">${p.country ? p.country.flag + " " : ""}${pos.label} · ${p.age} años · ${state.club.name}</div>
+                <div class="player-meta">${p.country ? p.country.flag + " " : ""}${pos.label} · ${p.age} años · <span style="color:var(--gold);font-weight:700">${state.club.name}</span></div>
                 ${p.archetypeName ? `<div class="player-meta" style="margin-top:2px;color:var(--gold-dim)">${p.archetypeName}</div>` : ""}
                 ${p.dynastyGeneration ? `<div class="player-meta" style="margin-top:2px;color:var(--gold-dim)">👨‍👦 Generación ${p.dynastyGeneration}</div>` : ""}
                 ${career.caps ? `<div class="player-meta" style="margin-top:2px">${career.caps} caps${career.natGoals ? ` · ${career.natGoals} goles con la selección` : ""}</div>` : ""}
@@ -1818,9 +1935,9 @@ function renderHub() {
             <div class="forma-row">
               <div class="forma-label">Forma</div>
               <div class="forma-bar-bg">
-                <div class="forma-bar-fill" style="width:${p.forma}%;background:${formaColor}"></div>
+                <div class="forma-bar-fill" style="width:${Math.round(p.forma)}%;background:${formaColor}"></div>
               </div>
-              <div class="forma-value" style="color:${formaColor}">${p.forma}</div>
+              <div class="forma-value" style="color:${formaColor}">${Math.round(p.forma)}</div>
             </div>
 
             <div class="forma-row" style="margin-top:8px;padding-top:0;border-top:none">
@@ -1964,8 +2081,15 @@ function renderHub() {
         ${seasonDone ? `
           <button class="btn btn-primary" data-action="end_season">Ver resumen de temporada →</button>
         ` : `
-          <button class="btn btn-primary" data-action="advance_week">Avanzar semana →</button>
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px">
+            <button class="btn btn-primary" data-action="advance_week" data-weeks="1">Avanzar semana →</button>
+            <button class="btn btn-outline" data-action="advance_week" data-weeks="2">+2 sem.</button>
+            <button class="btn btn-outline" data-action="advance_week" data-weeks="3">+3 sem.</button>
+            <button class="btn btn-outline" data-action="advance_week" data-weeks="4">+1 mes</button>
+          </div>
         `}
+
+        <button class="btn btn-ghost" data-action="go_menu" style="margin-top:8px">🏠 Volver al inicio</button>
 
         <div style="height:20px"></div>
       </div>
@@ -2113,6 +2237,54 @@ function renderHistorial() {
                 </div>
               </div>
             `).join("")}
+          </div>
+        </div>
+
+        <div style="height:20px"></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderEntrenamiento() {
+  const p = state.player;
+  const pos = POSITIONS[p.position];
+  const focus = p.trainingFocus;
+
+  return `
+    <div class="screen hub-screen fade-in">
+      <div class="hub-topbar">
+        <div class="hub-logo">COTRERO</div>
+        <div class="hub-week">Temporada ${state.career.season} · Semana ${state.career.week}/34</div>
+      </div>
+
+      ${renderTabBar("entrenamiento")}
+
+      <div class="hub-body">
+        <div class="card">
+          <div class="card-header">Foco de entrenamiento</div>
+          <div class="card-body">
+            <p style="font-size:12.5px;color:var(--text-muted);margin-bottom:14px">
+              Elegí en qué zona concentrar tu trabajo. Al cierre de cada temporada, esa estadística
+              crece bastante más que el resto (no es más crecimiento total: es a dónde va).
+            </p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px">
+              ${pos.stats.map(s => `
+                <button class="btn ${focus === s ? "btn-primary" : "btn-outline"}" data-action="set_training_focus" data-stat="${s}" style="padding:12px 8px">
+                  <div style="font-size:12.5px;font-weight:700">${pos.labels[s]}</div>
+                  <div style="font-size:16px;font-weight:900;margin-top:2px">${p.stats[s] || 60}</div>
+                </button>
+              `).join("")}
+            </div>
+            ${focus ? `
+              <p style="margin-top:14px;font-size:12px;color:var(--gold)">
+                🎯 Entrenando ${pos.labels[focus]}. Se nota al cierre de la temporada ${state.career.season}.
+              </p>
+            ` : `
+              <p style="margin-top:14px;font-size:12px;color:var(--text-dim)">
+                Sin foco elegido: el crecimiento se reparte parejo entre todas tus estadísticas.
+              </p>
+            `}
           </div>
         </div>
 
@@ -2593,7 +2765,7 @@ function handleClick(e) {
       creation.position = el.dataset.pos;
       creation.archetype = null;
       const allArch = ARCHETYPES[creation.position];
-      creation.shownArchetypes = shuffleArray(allArch).slice(0, 3);
+      creation.shownArchetypes = shuffleArray(allArch).slice(0, 4);
       render();
       break;
 
@@ -2663,6 +2835,16 @@ function handleClick(e) {
 
     case "go_historial":
       navigate("historial");
+      break;
+
+    case "go_entrenamiento":
+      navigate("entrenamiento");
+      break;
+
+    case "set_training_focus":
+      state.player.trainingFocus = el.dataset.stat;
+      save();
+      navigate("entrenamiento");
       break;
 
     case "free_decision":
@@ -2735,11 +2917,15 @@ function handleClick(e) {
       break;
     }
 
-    case "advance_week":
-      if (state.career.week >= 34) return;
-      advanceWeek();
+    case "advance_week": {
+      const weeksToSkip = Math.max(1, parseInt(el.dataset.weeks, 10) || 1);
+      for (let i = 0; i < weeksToSkip; i++) {
+        if (state.career.week >= 34) break;
+        advanceWeek();
+      }
       navigate("hub");
       break;
+    }
 
     case "end_season":
       navigate("season_end");
