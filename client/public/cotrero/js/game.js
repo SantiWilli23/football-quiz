@@ -589,6 +589,192 @@ const INJURY_TYPES = [
 
 const INTL_WINDOWS = [11, 28];
 
+// ── LIGA, OBJETIVOS Y TROFEOS ────────────────────────────────────────
+const MATCH_WEEKS = [3, 6, 9, 13, 17, 19, 23, 26, 29, 33];
+
+function buildLeagueTable(club) {
+  const rivals = getLeagueRivals(club);
+  const allTeams = [club, ...rivals];
+  const table = {};
+  allTeams.forEach(t => {
+    table[t.id] = { id: t.id, name: t.name, played: 0, won: 0, drawn: 0, lost: 0, gf: 0, ga: 0, pts: 0 };
+  });
+  return table;
+}
+
+function sortedLeagueTable() {
+  if (!state.leagueTable) return [];
+  return Object.values(state.leagueTable).sort((a, b) => b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf);
+}
+
+function myLeaguePosition() {
+  const sorted = sortedLeagueTable();
+  const idx = sorted.findIndex(r => r.id === state.club.id);
+  return idx === -1 ? null : idx + 1;
+}
+
+// Objetivo de la temporada según la jerarquía del club — pelear un título
+// no es lo mismo que salvar la categoría, y tiene consecuencias distintas.
+function assignSeasonObjective(club) {
+  const leagueSize = 1 + getLeagueRivals(club).length;
+  if (club.tier === 1) return { label: "Pelear el título", targetPosition: 1, leagueSize };
+  if (club.tier === 2) return { label: "Terminar entre los mejores", targetPosition: Math.max(2, Math.ceil(leagueSize / 2)), leagueSize };
+  return { label: "Salvar la categoría", targetPosition: leagueSize - 1, leagueSize };
+}
+
+// Simula la fecha de liga completa: mi partido ya se resolvió en resolveMatch
+// (se usa ese resultado tal cual), el resto de los clubes de mi liga juegan
+// entre sí con un sorteo liviano basado en prestigio, para que la tabla se
+// sienta viva sin tener que simular partido por partido de cada rival.
+function simulateLeagueMatchday(myFixture) {
+  if (!state.leagueTable) return;
+  const club = state.club;
+  const rivals = getLeagueRivals(club);
+  const allTeams = [club, ...rivals];
+  const involved = new Set();
+
+  function apply(idA, idB, golesA, golesB) {
+    const rowA = state.leagueTable[idA], rowB = state.leagueTable[idB];
+    if (!rowA || !rowB) return;
+    rowA.played++; rowB.played++;
+    rowA.gf += golesA; rowA.ga += golesB;
+    rowB.gf += golesB; rowB.ga += golesA;
+    if (golesA > golesB) { rowA.won++; rowA.pts += 3; rowB.lost++; }
+    else if (golesA < golesB) { rowB.won++; rowB.pts += 3; rowA.lost++; }
+    else { rowA.drawn++; rowB.drawn++; rowA.pts += 1; rowB.pts += 1; }
+  }
+
+  if (myFixture && myFixture.result && myFixture.rival && state.leagueTable[myFixture.rival.id]) {
+    const r = myFixture.result;
+    const golesA = myFixture.home ? r.teamGoals : r.rivalGoals;
+    const golesB = myFixture.home ? r.rivalGoals : r.teamGoals;
+    apply(club.id, myFixture.rival.id, golesA, golesB);
+    involved.add(club.id); involved.add(myFixture.rival.id);
+  }
+
+  const rest = allTeams.filter(t => !involved.has(t.id)).sort(() => Math.random() - 0.5);
+  for (let i = 0; i < rest.length - 1; i += 2) {
+    const a = rest[i], b = rest[i + 1];
+    const diff = (a.prestige || 60) - (b.prestige || 60) + (Math.random() * 20 - 10);
+    const golesA = Math.max(0, Math.round(1.2 + diff / 25 + Math.random() * 1.6 - 0.8));
+    const golesB = Math.max(0, Math.round(1.0 - diff / 25 + Math.random() * 1.6 - 0.8));
+    apply(a.id, b.id, golesA, golesB);
+  }
+}
+
+// ── ENTREVISTAS POST-PARTIDO ─────────────────────────────────────────
+// Después de un partido con algo en juego (clásico, goleada, derrota dura)
+// te espera la prensa a la salida. Se reutiliza el mismo sistema de
+// decisión de siempre (misma pantalla, mismo formato), solo que la
+// dispara el partido en vez de la semana.
+const INTERVIEW_DECISIONS = [
+  {
+    id: "int_win",
+    context: "Ganaste y la prensa te espera a la salida del vestuario. Te preguntan a qué se debió el buen partido.",
+    options: [
+      { text: "Le das el crédito al equipo." },
+      { text: "Te lo adjudicás a tu nivel individual." },
+      { text: "Contestás con generalidades, sin comprometerte." },
+    ],
+    effects: [
+      { dt: 3, p: { lider: 1 } },
+      { dt: -2, p: { solitario: 1 }, forma: 2 },
+      { p: { profesional: 1 } },
+    ],
+  },
+  {
+    id: "int_loss",
+    context: "Perdieron y en la conferencia buscan explicaciones. Un periodista pregunta directamente qué falló.",
+    options: [
+      { text: "Asumís tu parte de responsabilidad." },
+      { text: "Señalás que el equipo no estuvo a la altura, sin nombrar a nadie." },
+      { text: "Te vas sin contestar." },
+    ],
+    effects: [
+      { dt: 4, forma: -2, p: { profesional: 1 } },
+      { dt: -5, p: { lider: 1 } },
+      { forma: -3, p: { solitario: 1 } },
+    ],
+  },
+  {
+    id: "int_clasico",
+    context: "Se terminó el clásico y todos quieren tu palabra sobre el resultado y el ambiente caliente del partido.",
+    options: [
+      { text: "Hablás con respeto del rival, bajás el tono." },
+      { text: "Te subís a la tribuna: mandás un mensaje directo a la hinchada rival." },
+      { text: "Evitás el tema por completo." },
+    ],
+    effects: [
+      { dt: 2, p: { profesional: 1 } },
+      { forma: 3, p: { fiestero: 1 }, dt: -3 },
+      { p: { solitario: 1 } },
+    ],
+  },
+];
+
+function maybeQueueInterview(match, result) {
+  if (!match || !result || state.player.injuryStatus) return;
+  if (state.schedule.currentDecision && !state.schedule.decisionUsed) return;
+  const qualifies = match.type === "clasico" || (result.win && result.teamGoals - result.rivalGoals >= 3) || (result.loss && result.rivalGoals - result.teamGoals >= 2);
+  if (!qualifies || Math.random() > 0.6) return;
+  const pick = match.type === "clasico" ? INTERVIEW_DECISIONS[2] : result.win ? INTERVIEW_DECISIONS[0] : INTERVIEW_DECISIONS[1];
+  state.schedule.currentDecision = pick;
+  state.schedule.decisionUsed = false;
+}
+
+function addTrophy(name, season) {
+  if (!state.career.trophies) state.career.trophies = [];
+  state.career.trophies.push({ name, season });
+}
+
+// ── RASGOS PERMANENTES ───────────────────────────────────────────────
+// A diferencia de la personalidad (que se revela una sola vez al llegar a
+// 8 puntos en un rasgo dominante), esto premia la CONSTANCIA: seguir
+// eligiendo el mismo tipo de decisión mucho después de revelada tu
+// personalidad desbloquea un rasgo permanente con un bonus pasivo chico.
+const TRAIT_DEFS = {
+  profesional: { threshold: 15, name: "Ejemplar", desc: "Nunca falta a un entrenamiento. La directiva lo nota.", bonusText: "+1 relación con el DT cada semana" },
+  lider: { threshold: 15, name: "Capitán nato", desc: "El vestuario te escucha antes que a nadie.", bonusText: "+1 forma extra en cada victoria" },
+  solitario: { threshold: 15, name: "Lobo solitario", desc: "Rendís mejor cuando nadie espera nada de vos.", bonusText: "Menos golpes de forma en las derrotas" },
+  fiestero: { threshold: 15, name: "Ídolo popular", desc: "Fuera de la cancha sos una estrella — y se nota en la prensa.", bonusText: "La prensa te perdona más rápido" },
+};
+
+function checkTraitUnlocks() {
+  const p = state.player;
+  if (!p.traits) p.traits = [];
+  Object.entries(TRAIT_DEFS).forEach(([key, def]) => {
+    const count = p.personality[key] || 0;
+    if (count >= def.threshold && !p.traits.includes(key)) {
+      p.traits.push(key);
+      addNews(`⭐ Nuevo rasgo permanente: "${def.name}". ${def.bonusText}.`, true);
+    }
+  });
+}
+
+// ── EVENTOS DE VIDA ──────────────────────────────────────────────────
+const LIFE_EVENTS = [
+  { id: "casamiento", label: "Te casaste", desc: "Encontraste estabilidad fuera de la cancha.", weeks: 6 },
+  { id: "hijo", label: "Fuiste padre/madre", desc: "Una alegría enorme que te cambia las prioridades.", weeks: 8 },
+  { id: "mudanza", label: "Te mudaste de casa", desc: "Un nuevo lugar para desconectar después de cada partido.", weeks: 4 },
+];
+
+function maybeTriggerLifeEvent() {
+  if (state.player.lifeEvent) return;
+  if (Math.random() >= 0.02) return;
+  const ev = LIFE_EVENTS[Math.floor(Math.random() * LIFE_EVENTS.length)];
+  state.player.lifeEvent = { id: ev.id, label: ev.label, weeksLeft: ev.weeks };
+  addNews(`💍 ${ev.label}. ${ev.desc}`, true);
+}
+
+function tickLifeEvent() {
+  const ev = state.player.lifeEvent;
+  if (!ev) return;
+  ev.weeksLeft--;
+  // Mientras dura, la forma no puede caer tan abajo — la estabilidad personal amortigua las malas rachas.
+  if (state.player.forma < 45) state.player.forma = 45;
+  if (ev.weeksLeft <= 0) state.player.lifeEvent = null;
+}
+
 // Cuando el "calor" de prensa (pressHeat) se acumula demasiado por varias
 // decisiones polémicas seguidas, se dispara una de estas en vez de una
 // decisión normal — la crisis mediática tiene más en juego que el resto.
@@ -733,6 +919,7 @@ const HOF_KEY = "cotrero_hof";
 const HOF_MAX = 20;
 let hofRecorded = false; // evita duplicar el registro si se renderiza game_over más de una vez
 let weeklyScoreSubmitted = false; // idem, para no mandar el puntaje del reto semanal más de una vez
+let legacyScoreSubmitted = false; // idem, para el ranking histórico (no semanal) del grupo
 
 function getHallOfFame() {
   try {
@@ -949,6 +1136,7 @@ function applyDecisionEffects(decision, optionIdx) {
       state.player.personality[t] = (state.player.personality[t] || 0) + v;
     });
     checkPersonality();
+    checkTraitUnlocks();
   }
   if (fx.special) applySpecial(fx.special);
 
@@ -983,7 +1171,29 @@ function absWeek(career) {
   return career.season * 100 + career.week;
 }
 
+const SPONSOR_NAMES = ["una marca de indumentaria", "una bebida energética", "una marca de botines", "una cadena de gimnasios"];
+
 const FREE_DECISIONS = [
+  {
+    id: "patrocinio",
+    icon: "🤳",
+    label: "Firmar un patrocinio personal",
+    sub: "Te exigen mantener el nivel. Si tu forma se cae mucho, te cortan el contrato.",
+    cooldownWeeks: 10,
+    blocked(p) {
+      return p.personalSponsor ? `Ya tenés un contrato vigente con ${p.personalSponsor.label}.` : null;
+    },
+    resolve(p) {
+      const chance = Math.max(0.15, Math.min(0.75, 0.2 + (p.ovr - 65) / 60));
+      const success = Math.random() < chance;
+      if (success) {
+        const label = SPONSOR_NAMES[Math.floor(Math.random() * SPONSOR_NAMES.length)];
+        p.personalSponsor = { label, minForma: 35 };
+        return { success, text: `Firmaste tu primer contrato personal con ${label}. Mantené el nivel o te lo cortan.` };
+      }
+      return { success, text: "Ninguna marca se interesó todavía. Capaz con más nivel la próxima." };
+    },
+  },
   {
     id: "titularidad",
     icon: "🎯",
@@ -1392,9 +1602,15 @@ function resolveMatch(matchId, situationChoice) {
     state.career.seasonAssists += assists;
     state.career.appearances += 1;
 
-    // Forma update
-    if (win) state.player.forma = Math.min(100, state.player.forma + 6);
-    else if (loss) state.player.forma = Math.max(10, state.player.forma - 7);
+    // Forma update — los rasgos permanentes (ver TRAIT_DEFS) suman matices acá.
+    const traits = state.player.traits || [];
+    if (win) {
+      const bonus = traits.includes("lider") ? 1 : 0;
+      state.player.forma = Math.min(100, state.player.forma + 6 + bonus);
+    } else if (loss) {
+      const softened = traits.includes("solitario") ? 4 : 7;
+      state.player.forma = Math.max(10, state.player.forma - softened);
+    }
   }
 
   if (benched) delete state._benchedNextMatch;
@@ -1417,6 +1633,28 @@ function advanceWeek() {
           ? ` (diste ${result.assists} asistencia${result.assists > 1 ? "s" : ""})`
           : "";
       addNews(`⚽ ${label} ${result.teamGoals}-${result.rivalGoals} vs ${dueMatch.rival.name}${personal}.`, true);
+    }
+    simulateLeagueMatchday(dueMatch);
+  }
+
+  // ── Cláusula de rescisión: un club rival la puede pagar y forzarte la
+  // salida, aunque vos no quieras irte. Sólo aplica si sos bueno, tu
+  // relación con el DT no es pésima (si es mala, es tu club el que te
+  // deja ir más fácil, no un extraño pagando de golpe) y no pasó hace poco.
+  if (!state._clauseCooldownUntil || state.career.week >= state._clauseCooldownUntil) {
+    const clause = buyoutClause(state.player, state.club);
+    const buyerChance = state.player.ovr >= 78 ? 0.02 : 0.008;
+    if (clause < 900000000 && Math.random() < buyerChance) {
+      const buyer = pickOfferClub(state.club);
+      if (buyer && buyer.prestige >= state.club.prestige) {
+        addNews(`💸 ${buyer.name} pagó tu cláusula de rescisión (€${(clause / 1000000).toFixed(1)}M). El pase se cerró sin que nadie te preguntara.`, true);
+        state.club = buyer;
+        state.player.dtRelation = 50;
+        state.leagueTable = buildLeagueTable(buyer);
+        state.seasonObjective = assignSeasonObjective(buyer);
+        regenerateRemainingMatches(buyer);
+        state._clauseCooldownUntil = state.career.week + 10;
+      }
     }
   }
 
@@ -1445,15 +1683,34 @@ function advanceWeek() {
       state.player.injuryRisk = Math.max(10, state.player.injuryRisk - 20);
     }
   } else {
-    const weeklyChance = 0.015 + (state.player.injuryRisk / 100) * 0.05;
+    const chronicMult = state.player.chronicWeakness ? 1.6 : 1;
+    const weeklyChance = (0.015 + (state.player.injuryRisk / 100) * 0.05) * chronicMult;
     if (Math.random() < weeklyChance) {
       const type = pickInjuryType();
       state.player.injuryStatus = { name: type.name, weeksLeft: type.weeks };
       state.player.forma = Math.max(10, state.player.forma - 6);
       addNews(`🩹 Sufriste ${type.name.toLowerCase()}. Vas a estar afuera ${type.weeks} semana${type.weeks === 1 ? "" : "s"}.`, true);
+
+      // Lesión crónica: si te repetís el mismo tipo de lesión una segunda vez,
+      // te queda una debilidad permanente en esa zona (más chance a futuro).
+      if (!state.player.injuryHistory) state.player.injuryHistory = [];
+      state.player.injuryHistory.push(type.name);
+      const repeats = state.player.injuryHistory.filter(n => n === type.name).length;
+      if (repeats >= 2 && state.player.chronicWeakness !== type.name) {
+        state.player.chronicWeakness = type.name;
+        addNews(`⚠️ Te quedó una debilidad crónica de ${type.name.toLowerCase()}: vas a ser más propenso a repetirla.`, true);
+      }
     } else {
       state.player.injuryRisk = Math.max(10, state.player.injuryRisk - 1);
     }
+  }
+
+  // ── Eventos de vida y patrocinio personal ──
+  maybeTriggerLifeEvent();
+  tickLifeEvent();
+  if (state.player.personalSponsor && state.player.forma < state.player.personalSponsor.minForma) {
+    addNews(`📉 ${state.player.personalSponsor.label} rescindió tu contrato: tu nivel viene muy por debajo de lo pactado.`, true);
+    state.player.personalSponsor = null;
   }
 
   // ── Oferta de mercado (si tu representante mencionó interés en una decisión reciente) ──
@@ -1484,7 +1741,12 @@ function advanceWeek() {
   }
 
   // ── Prensa acumulada: mucho ruido seguido dispara una crisis mediática ──
-  state.pressHeat = Math.max(0, (state.pressHeat || 0) - 5);
+  const traitsNow = state.player.traits || [];
+  const pressDecay = traitsNow.includes("fiestero") ? 9 : 5;
+  state.pressHeat = Math.max(0, (state.pressHeat || 0) - pressDecay);
+  if (traitsNow.includes("profesional")) {
+    state.player.dtRelation = Math.min(100, state.player.dtRelation + 1);
+  }
   let forcedDecision = null;
   if (state.pressHeat >= 60) {
     addNews("📰 Los medios no te sueltan. Se armó una bola de nieve mediática.", true);
@@ -1581,6 +1843,43 @@ function startNewSeason() {
     }
   }
 
+  // ── Objetivo de temporada: se evalúa con la tabla tal cual quedó ──
+  const finishedSeason = state.career.season;
+  const finalPosition = myLeaguePosition();
+  const objective = state.seasonObjective;
+  if (objective && finalPosition != null) {
+    const objectiveMet = finalPosition <= objective.targetPosition;
+    if (finalPosition === 1) {
+      addTrophy(`Campeón de liga`, finishedSeason);
+      addNews(`🏆 ¡Campeón! Terminaste 1° con ${state.club.name}.`, true);
+      state.player.dtRelation = Math.min(100, state.player.dtRelation + 8);
+    } else if (objectiveMet) {
+      addNews(`✅ Objetivo cumplido: terminaste ${finalPosition}° de ${objective.leagueSize} (buscabas "${objective.label.toLowerCase()}").`, true);
+      state.player.dtRelation = Math.min(100, state.player.dtRelation + 3);
+    } else {
+      addNews(`❌ Objetivo incumplido: terminaste ${finalPosition}° de ${objective.leagueSize}, se pedía "${objective.label.toLowerCase()}".`, true);
+      state.player.dtRelation = Math.max(0, state.player.dtRelation - 6);
+    }
+  }
+  if (state.career.seasonGoals >= 20) {
+    addTrophy(`Goleador (${state.career.seasonGoals} goles)`, finishedSeason);
+    addNews(`⚽ Terminaste la temporada como goleador con ${state.career.seasonGoals} goles.`, true);
+  }
+
+  // ── Negociación con el agente: si la temporada fue buena, en vez de una
+  // sola oferta tomalo-o-dejalo, el agente trae 2-3 alternativas reales
+  // (plata/prestigio/continuidad) para elegir entre ellas.
+  if (!state.agentOffers && finalPosition != null && finalPosition <= 3 && state.player.ovr >= 70 && Math.random() < 0.5) {
+    const candidates = allClubs()
+      .filter(c => c.id !== state.club.id && c.prestige >= state.club.prestige - 15)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3);
+    if (candidates.length >= 2) {
+      state.agentOffers = candidates.map(c => ({ club: c }));
+      addNews(`🤝 Tu agente te trae ${candidates.length} propuestas para la próxima temporada. Revisalas con calma.`, true);
+    }
+  }
+
   // New season
   state.career.season++;
   state.career.week = 0;
@@ -1591,6 +1890,8 @@ function startNewSeason() {
     currentDecision: null,
     decisionUsed: false,
   };
+  state.leagueTable = buildLeagueTable(state.club);
+  state.seasonObjective = assignSeasonObjective(state.club);
 
   // Check retirement
   if (state.player.age >= 37 || (state.player.ovr < 58 && state.player.age >= 32)) {
@@ -1632,10 +1933,18 @@ function initNewGame(name, position, archetype, club, country, ironman) {
       personality: { lider: 0, solitario: 0, fiestero: 0, profesional: 0 },
       personalityRevealed: null,
       rival: generateRivalTeammate(ovr),
+      traits: [],
+      lifeEvent: null,
+      personalSponsor: null,
+      chronicWeakness: null,
+      injuryHistory: [],
     },
     club,
     ironman: !!ironman,
     pendingOffer: null,
+    agentOffers: null,
+    leagueTable: buildLeagueTable(club),
+    seasonObjective: assignSeasonObjective(club),
     pressHeat: 0,
     career: {
       season: 1,
@@ -1685,6 +1994,7 @@ function render() {
     case "decisions":  app.innerHTML = renderDecisions(); break;
     case "historial":  app.innerHTML = renderHistorial(); break;
     case "entrenamiento": app.innerHTML = renderEntrenamiento(); break;
+    case "liga":       app.innerHTML = renderLiga(); break;
     case "decision":   app.innerHTML = renderDecision(); break;
     case "match":      app.innerHTML = renderMatch(); break;
     case "season_end": app.innerHTML = renderSeasonEnd(); break;
@@ -1848,6 +2158,7 @@ function renderTabBar(active) {
       </button>
       <button class="hub-tab ${active === "historial" ? "active" : ""}" data-action="go_historial">Historial</button>
       <button class="hub-tab ${active === "entrenamiento" ? "active" : ""}" data-action="go_entrenamiento">Entrenamiento</button>
+      <button class="hub-tab ${active === "liga" ? "active" : ""}" data-action="go_liga">Liga</button>
     </div>
   `;
 }
@@ -1994,6 +2305,22 @@ function renderHub() {
                 <button class="btn btn-primary" style="flex:1" data-action="accept_offer">Aceptar</button>
                 <button class="btn btn-outline" style="flex:1" data-action="reject_offer">Rechazar</button>
               </div>
+            </div>
+          </div>
+        ` : ""}
+
+        <!-- Ofertas del agente (varias, elegís una o te quedás) -->
+        ${state.agentOffers ? `
+          <div class="card" style="border-color:var(--gold-border)">
+            <div class="card-header">🤝 Propuestas de tu agente</div>
+            <div class="card-body" style="display:flex; flex-direction:column; gap:8px">
+              ${state.agentOffers.map((o, i) => `
+                <button class="btn btn-outline" data-action="choose_agent_offer" data-idx="${i}" style="text-align:left; display:flex; justify-content:space-between; align-items:center">
+                  <span>${o.club.name}</span>
+                  <span style="font-size:11px; color:var(--text-dim)">Prestigio ${o.club.prestige}</span>
+                </button>
+              `).join("")}
+              <button class="btn btn-ghost" data-action="decline_agent_offers">Quedarme en ${state.club.name}</button>
             </div>
           </div>
         ` : ""}
@@ -2154,6 +2481,9 @@ function renderDecisions() {
             ${p.isStarter ? `<p style="margin-top:12px;font-size:12px;color:var(--gold)">🎯 Sos titular indiscutido.</p>` : ""}
             ${p.isCaptain ? `<p style="margin-top:8px;font-size:12px;color:var(--gold)">🧢 Sos el capitán del equipo.</p>` : ""}
             ${p.setPieceRole === "penales" ? `<p style="margin-top:8px;font-size:12px;color:var(--gold)">🎯 Pateador de penales del equipo.</p>` : ""}
+            ${p.personalSponsor ? `<p style="margin-top:8px;font-size:12px;color:var(--gold)">🤳 Patrocinado por ${p.personalSponsor.label} (mantené la forma arriba de ${p.personalSponsor.minForma}).</p>` : ""}
+            ${p.lifeEvent ? `<p style="margin-top:8px;font-size:12px;color:var(--gold)">💍 ${p.lifeEvent.label} (${p.lifeEvent.weeksLeft} sem. restantes de estabilidad extra).</p>` : ""}
+            ${p.chronicWeakness ? `<p style="margin-top:8px;font-size:12px;color:var(--danger)">⚠️ Debilidad crónica: ${p.chronicWeakness}.</p>` : ""}
             <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted)">
               <span>💰 Sueldo semanal</span>
               <span style="color:var(--text);font-weight:600">${formatMoney(salaryAmount(p))}</span>
@@ -2287,6 +2617,119 @@ function renderEntrenamiento() {
             `}
           </div>
         </div>
+
+        <div style="height:20px"></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderLiga() {
+  const p = state.player;
+  const table = sortedLeagueTable();
+  const objective = state.seasonObjective;
+  const myPos = myLeaguePosition();
+  const trophies = state.career.trophies || [];
+  const potentialPct = Math.round((p.ovr / p.potential) * 100);
+
+  return `
+    <div class="screen hub-screen fade-in">
+      <div class="hub-topbar">
+        <div class="hub-logo">COTRERO</div>
+        <div class="hub-week">Temporada ${state.career.season} · Semana ${state.career.week}/34</div>
+      </div>
+
+      ${renderTabBar("liga")}
+
+      <div class="hub-body">
+        ${objective ? `
+          <div class="card">
+            <div class="card-header">Objetivo de la temporada</div>
+            <div class="card-body">
+              <p style="font-size:14px;font-weight:700;margin-bottom:4px">${objective.label}</p>
+              <p style="font-size:12px;color:var(--text-muted)">
+                Necesitás terminar ${objective.targetPosition}° o mejor de ${objective.leagueSize}.
+                ${myPos ? `Ahora mismo estás ${myPos}°.` : ""}
+              </p>
+            </div>
+          </div>
+        ` : ""}
+
+        <div class="card">
+          <div class="card-header">Tabla de posiciones</div>
+          <div class="card-body" style="overflow-x:auto">
+            <table style="width:100%; border-collapse:collapse; font-size:12.5px; white-space:nowrap">
+              <thead>
+                <tr style="color:var(--text-dim); text-align:left">
+                  <th style="padding:4px 6px">#</th>
+                  <th style="padding:4px 6px">Club</th>
+                  <th style="padding:4px 6px; text-align:center">PJ</th>
+                  <th style="padding:4px 6px; text-align:center">G</th>
+                  <th style="padding:4px 6px; text-align:center">E</th>
+                  <th style="padding:4px 6px; text-align:center">P</th>
+                  <th style="padding:4px 6px; text-align:center">DG</th>
+                  <th style="padding:4px 6px; text-align:center">Pts</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${table.map((row, i) => `
+                  <tr style="border-top:1px solid var(--border); ${row.id === state.club.id ? "color:var(--gold); font-weight:700" : ""}">
+                    <td style="padding:5px 6px">${i + 1}</td>
+                    <td style="padding:5px 6px">${row.name}</td>
+                    <td style="padding:5px 6px; text-align:center">${row.played}</td>
+                    <td style="padding:5px 6px; text-align:center">${row.won}</td>
+                    <td style="padding:5px 6px; text-align:center">${row.drawn}</td>
+                    <td style="padding:5px 6px; text-align:center">${row.lost}</td>
+                    <td style="padding:5px 6px; text-align:center">${row.gf - row.ga}</td>
+                    <td style="padding:5px 6px; text-align:center">${row.pts}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Margen de crecimiento</div>
+          <div class="card-body">
+            <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-muted); margin-bottom:6px">
+              <span>OVR actual: ${p.ovr}</span>
+              <span>Potencial: ${p.potential}</span>
+            </div>
+            <div class="forma-bar-bg"><div class="forma-bar-fill" style="width:${Math.min(100, potentialPct)}%; background:var(--gold)"></div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Vitrina de trofeos</div>
+          <div class="card-body">
+            ${trophies.length === 0 ? `
+              <p style="font-size:12.5px; color:var(--text-dim)">Todavía no ganaste nada. Empezá por la liga.</p>
+            ` : `
+              <div style="display:flex; flex-wrap:wrap; gap:8px">
+                ${trophies.map(t => `
+                  <span style="display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:999px; border:1px solid var(--gold-border); background:var(--gold-subtle); font-size:12px">
+                    🏆 ${t.name} <span style="color:var(--text-dim)">· T${t.season}</span>
+                  </span>
+                `).join("")}
+              </div>
+            `}
+          </div>
+        </div>
+
+        ${p.traits && p.traits.length ? `
+          <div class="card">
+            <div class="card-header">Rasgos permanentes</div>
+            <div class="card-body" style="display:flex; flex-direction:column; gap:8px">
+              ${p.traits.map(key => `
+                <div>
+                  <p style="font-size:13px; font-weight:700; color:var(--gold)">⭐ ${TRAIT_DEFS[key].name}</p>
+                  <p style="font-size:12px; color:var(--text-muted)">${TRAIT_DEFS[key].desc}</p>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+        ` : ""}
 
         <div style="height:20px"></div>
       </div>
@@ -2511,6 +2954,16 @@ function renderGameOver() {
     );
     submitChallengeScore("cotrero", finalScore);
   }
+  // Ranking histórico del grupo (no se resetea cada semana como el reto de
+  // arriba — queda la mejor carrera de siempre de cada uno).
+  if (state && !legacyScoreSubmitted) {
+    legacyScoreSubmitted = true;
+    const trophyCount2 = (state.career.trophies || []).length;
+    const legacyScore = Math.round(
+      state.player.ovr * 5 + state.career.goals * 2 + state.career.assists * 1.5 + trophyCount2 * 15
+    );
+    submitChallengeScore("cotrero_legado", legacyScore);
+  }
   const career = state ? state.career : { goals: 0, assists: 0, appearances: 0, season: 1 };
   const player = state ? state.player : { name: "—", ovr: 0, age: 37 };
   const rankLabel = career.goals > 150 ? "Leyenda" : career.goals > 80 ? "Ídolo" : career.goals > 40 ? "Crack" : "Jugador correcto";
@@ -2555,6 +3008,34 @@ function renderGameOver() {
         <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold-dim)">Legado</div>
         <div class="personality-name">${rankLabel}</div>
       </div>
+      ${career.seasonHistory && career.seasonHistory.length > 0 ? `
+        <div class="card" style="width:100%;max-width:480px">
+          <div class="card-header">La película completa</div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:0">
+            ${career.seasonHistory.map((s, i) => `
+              <div style="display:flex;gap:10px;padding:8px 0;${i > 0 ? "border-top:1px dashed var(--border)" : ""}">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:18px;color:var(--gold-dim);width:26px;flex-shrink:0">${s.season}</div>
+                <div style="flex:1;min-width:0">
+                  <p style="font-size:13px;font-weight:600">${s.club} · ${s.age} años</p>
+                  <p style="font-size:11.5px;color:var(--text-muted)">${s.goals} goles, ${s.assists} asistencias · ${s.ovr} OVR</p>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      ` : ""}
+      ${(state && (state.career.trophies || []).length > 0) ? `
+        <div class="card" style="width:100%;max-width:480px">
+          <div class="card-header">Vitrina final</div>
+          <div class="card-body" style="display:flex;flex-wrap:wrap;gap:8px">
+            ${state.career.trophies.map(t => `
+              <span style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;border:1px solid var(--gold-border);background:var(--gold-subtle);font-size:12px">
+                🏆 ${t.name} <span style="color:var(--text-dim)">· T${t.season}</span>
+              </span>
+            `).join("")}
+          </div>
+        </div>
+      ` : ""}
       ${dynasty.length > 0 ? `
         <div class="card" style="width:100%;max-width:480px;border-color:var(--gold-border)">
           <div class="card-body">
@@ -2686,13 +3167,13 @@ function handleClick(e) {
 
   switch (action) {
     case "new_game":
-      hofRecorded = false; weeklyScoreSubmitted = false;
+      hofRecorded = false; weeklyScoreSubmitted = false; legacyScoreSubmitted = false;
       creation = { step: 1, position: null, archetype: null, shownArchetypes: [], name: "", countryIdx: 0, clubIdx: 0, ironman: false };
       navigate("creation");
       break;
 
     case "weekly_challenge": {
-      hofRecorded = false; weeklyScoreSubmitted = false;
+      hofRecorded = false; weeklyScoreSubmitted = false; legacyScoreSubmitted = false;
       const entry = currentWeeklyPlayer();
       const { country, club } = resolveWeeklyClub(entry);
       if (!country || !club) { navigate("menu"); break; }
@@ -2712,7 +3193,7 @@ function handleClick(e) {
       const dynasty = getDynasty();
       const parent = dynasty[0];
       if (!parent) return;
-      hofRecorded = false; weeklyScoreSubmitted = false;
+      hofRecorded = false; weeklyScoreSubmitted = false; legacyScoreSubmitted = false;
       pendingDynasty = {
         bonus: dynastyBonusFor(parent.peakOvr),
         surname: familySurname(parent.name),
@@ -2841,6 +3322,10 @@ function handleClick(e) {
       navigate("entrenamiento");
       break;
 
+    case "go_liga":
+      navigate("liga");
+      break;
+
     case "set_training_focus":
       state.player.trainingFocus = el.dataset.stat;
       save();
@@ -2873,6 +3358,8 @@ function handleClick(e) {
       const sitIdx = parseInt(el.dataset.sit);
       const result = resolveMatch(mId, sitIdx);
       const match = state.schedule.matches.find(m => m.id === mId);
+      simulateLeagueMatchday(match);
+      maybeQueueInterview(match, result);
       save();
       document.getElementById("app").innerHTML = renderMatchResult(result, match);
       attachEvents();
@@ -2883,6 +3370,8 @@ function handleClick(e) {
       const mId = el.dataset.match;
       const result = resolveMatch(mId, null);
       const match = state.schedule.matches.find(m => m.id === mId);
+      simulateLeagueMatchday(match);
+      maybeQueueInterview(match, result);
       save();
       document.getElementById("app").innerHTML = renderMatchResult(result, match);
       attachEvents();
@@ -2906,6 +3395,31 @@ function handleClick(e) {
       if (!state.pendingOffer) return;
       addNews(`Rechazaste la oferta de ${state.pendingOffer.club.name}. Seguís en ${state.club.name}.`);
       state.pendingOffer = null;
+      save();
+      navigate("hub");
+      break;
+
+    case "choose_agent_offer": {
+      if (!state.agentOffers) return;
+      const idx = parseInt(el.dataset.idx, 10);
+      const chosen = state.agentOffers[idx];
+      if (!chosen) return;
+      addNews(`✍️ Fichaje cerrado por tu agente: ahora jugás en ${chosen.club.name}.`, true);
+      state.club = chosen.club;
+      state.agentOffers = null;
+      state.player.dtRelation = 50;
+      state.leagueTable = buildLeagueTable(chosen.club);
+      state.seasonObjective = assignSeasonObjective(chosen.club);
+      regenerateRemainingMatches(chosen.club);
+      save();
+      navigate("hub");
+      break;
+    }
+
+    case "decline_agent_offers":
+      if (!state.agentOffers) return;
+      addNews(`Le dijiste a tu agente que por ahora seguís en ${state.club.name}.`);
+      state.agentOffers = null;
       save();
       navigate("hub");
       break;
@@ -2938,7 +3452,7 @@ function handleClick(e) {
       break;
 
     case "new_game_after":
-      hofRecorded = false; weeklyScoreSubmitted = false;
+      hofRecorded = false; weeklyScoreSubmitted = false; legacyScoreSubmitted = false;
       deleteSave();
       creation = { step: 1, position: null, archetype: null, shownArchetypes: [], name: "", countryIdx: 0, clubIdx: 0, ironman: false };
       navigate("creation");

@@ -8,10 +8,15 @@ router.use(requireAuth);
 
 // Los "retos" semanales que hoy tienen versión especial. Trivia diaria se
 // rankea aparte (en vivo, sin submit) porque ya se registra sola en `answers`.
-const ALLOWED_GAMES = new Set(["draft_europeo", "cotrero", "fichado", "equipo_jugador", "un_minuto", "escudos", "arbitraje_var"]);
+const ALLOWED_GAMES = new Set(["draft_europeo", "cotrero", "fichado", "equipo_jugador", "un_minuto", "escudos", "arbitraje_var", "cotrero_legado"]);
+
+// "cotrero_legado" es la excepción: no se resetea cada semana como el
+// resto de los retos — es un ranking histórico de la mejor carrera de
+// siempre de cada uno, así que su period_key es fijo en vez de la semana ISO.
+const FIXED_PERIOD_GAMES = { cotrero_legado: "alltime" };
 
 function periodKeyFor(gameKey) {
-  return isoWeekKey();
+  return FIXED_PERIOD_GAMES[gameKey] || isoWeekKey();
 }
 
 async function assertMember(userId, groupId) {

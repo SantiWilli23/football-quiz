@@ -11,6 +11,7 @@ const GAMES = [
   { key: "trivia", label: "Trivia del día", endpoint: "trivia-leaderboard" },
   { key: "draft_europeo", label: "Draft Europeo · Bayern 2020", endpoint: "leaderboard" },
   { key: "cotrero", label: "Cotrero · Reto semanal", endpoint: "leaderboard" },
+  { key: "cotrero_legado", label: "Cotrero · Mejor carrera de siempre", endpoint: "leaderboard" },
   { key: "fichado", label: "Fichado · Menos intentos gana", endpoint: "leaderboard" },
   { key: "equipo_jugador", label: "Equipo-Jugador · Eliminación de a hartos (4+)", endpoint: "leaderboard" },
   { key: "un_minuto", label: "Un Minuto · Trivia contrarreloj", endpoint: "leaderboard" },
