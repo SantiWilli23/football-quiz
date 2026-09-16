@@ -19,10 +19,38 @@ function mentalityScore(mentality) {
   return { attack: 0.7 + mentality * 0.12, defense: 1.3 - mentality * 0.1 };
 }
 
+// Las 8 instrucciones de equipo (ver Tactics.jsx) — hasta acá solo pressing
+// y tempo pesaban en la simulación, el resto (línea defensiva, amplitud,
+// profundidad ofensiva, duelos, salida de balón, transición) no hacían
+// nada. Cada una ahora mueve algo concreto, con 50 como neutro para no
+// romper el balance ya calibrado en el valor por defecto.
 function slidersScore(sliders) {
-  const pressBoost = sliders.pressing / 100;
-  const tempoBoost = sliders.tempo / 100;
-  return { pressBoost, tempoBoost };
+  const s = { pressing: 50, defLine: 50, tempo: 50, width: 50, offDepth: 50, duels: 50, buildUp: 50, transition: 50, ...sliders };
+  const norm = (v) => (v - 50) / 100; // -0.5 (mínimo) .. 0.5 (máximo), 0 = neutro
+
+  const pressBoost = s.pressing / 100; // escala original (no centrada) — ya calibrada en foulRate/fatiga
+  const tempoBoost = s.tempo / 100;    // ídem, ya calibrada en goalChance/posesión
+
+  const defLine = norm(s.defLine);         // alta = más exposición a contras, más presión arriba
+  const width = norm(s.width);             // amplia = más centros/variantes, más huecos atrás
+  const offDepth = norm(s.offDepth);       // alta = ataque más directo, más pérdidas/offside
+  const duels = norm(s.duels);             // buscar duelo = más recuperaciones y más faltas
+  const buildUp = norm(s.buildUp);         // "corto" (alto) = más posesión, menos verticalidad
+  const transition = norm(s.transition);   // "contraatacar" (alto) = letal cuanto más bajo el bloque
+
+  // El contragolpe depende de la línea defensiva: un bloque bajo (defLine
+  // negativo) que ataca en transición (transition alto) es mucho más
+  // letal que el mismo transition con línea alta — como en la realidad.
+  const counterBonus = Math.max(0, transition) * Math.max(0, -defLine) * 4;
+
+  return {
+    pressBoost, tempoBoost,
+    atkAdj: defLine * 6 + width * 3 + offDepth * 5 - buildUp * 2 + counterBonus,
+    defAdj: -defLine * 5 - width * 2 + duels * 4 - Math.max(0, -transition) * 2,
+    possessionAdj: buildUp * 6 - offDepth * 3,
+    foulAdj: duels,
+    cornerAdj: width,
+  };
 }
 
 function trainingMods(focus) {
@@ -55,17 +83,17 @@ function computeRates({
   const tm = trainingMods(trainingFocus);
   const homeBonus = isHome ? 2.2 : 0;
 
-  const attackingPower = ((myOvr + homeBonus) * 0.4 + ms.attack * 20 + (myFormScore || 60) * 0.15 + tm.atkMod) * myDay;
-  const defensivePower = ((myOvr + homeBonus) * 0.4 + ms.defense * 15 + (myFormScore || 60) * 0.1 + tm.defMod) * myDay;
+  const attackingPower = ((myOvr + homeBonus) * 0.4 + ms.attack * 20 + (myFormScore || 60) * 0.15 + tm.atkMod + ss.atkAdj) * myDay;
+  const defensivePower = ((myOvr + homeBonus) * 0.4 + ms.defense * 15 + (myFormScore || 60) * 0.1 + tm.defMod + ss.defAdj) * myDay;
   const rivalAttack = (rivalOvr * 0.4 + rms.attack * 20 + (rivalFormScore || 60) * 0.15 + 6) * rivalDay;
   const rivalDefense = (rivalOvr * 0.4 + rms.defense * 15 + (rivalFormScore || 60) * 0.1 + 4) * rivalDay;
 
   const effectivePressBoost = ss.pressBoost + tm.pressMod;
   const goalChancePerMin = clampRate((attackingPower - rivalDefense) / 900 + 0.0075 + ss.tempoBoost * 0.004);
   const concededChancePerMin = clampRate((rivalAttack - defensivePower) / 900 + 0.0075);
-  const myPossessionBase = clamp(48 + (myOvr - rivalOvr) * 0.55 + ss.tempoBoost * 4, 28, 74);
+  const myPossessionBase = clamp(48 + (myOvr - rivalOvr) * 0.55 + ss.tempoBoost * 4 + ss.possessionAdj, 22, 80);
 
-  return { goalChancePerMin, concededChancePerMin, effectivePressBoost, tm, myPossessionBase };
+  return { goalChancePerMin, concededChancePerMin, effectivePressBoost, tm, myPossessionBase, foulAdj: ss.foulAdj, cornerAdj: ss.cornerAdj };
 }
 
 // Simula un tiempo (1-45 o 46-90) con una alineación dada. Permite hacer
@@ -79,7 +107,7 @@ export function simulateHalf({
     myPlayers, lineup, myMentality, mySliders, myFormScore,
     rivalOvr, rivalFormScore, isHome, rivalMentality, morale, fatigue, trainingFocus, myDay, rivalDay,
   });
-  const { goalChancePerMin, concededChancePerMin, effectivePressBoost, tm } = rates;
+  const { goalChancePerMin, concededChancePerMin, effectivePressBoost, tm, foulAdj, cornerAdj } = rates;
 
   const minStart = half === 1 ? 1 : 46;
   const minEnd = half === 1 ? 45 : 90;
@@ -127,9 +155,9 @@ export function simulateHalf({
     } else if (Math.random() < concededChancePerMin * 2.5) {
       rivalShots++; if (Math.random() < 0.5) rivalShotsOnTarget++;
       events.push({ min, type: "shot", team: "rival", text: "💨 Tiro del rival, atento el arquero" });
-    } else if (Math.random() < 0.03) {
+    } else if (Math.random() < 0.03 + cornerAdj * 0.015) {
       if (Math.random() < 0.5) myCorners++; else rivalCorners++;
-    } else if (Math.random() < 0.02 + effectivePressBoost * 0.015) {
+    } else if (Math.random() < 0.02 + effectivePressBoost * 0.015 + foulAdj * 0.015) {
       const mine = Math.random() < 0.5;
       if (mine) {
         myFouls++;
@@ -198,117 +226,29 @@ export function combineHalves(h1, h2) {
   };
 }
 
+// Un partido completo con una sola alineación de punta a punta (sin cambios
+// reales al entretiempo) — se arma con las mismas dos mitades que usa el
+// flujo con cambios (simulateHalf + combineHalves), para que ambos caminos
+// de simulación respondan exactamente igual a mentalidad/sliders/táctica
+// en vez de tener la fórmula duplicada y potencialmente desincronizada.
 export function simulateUserMatch({
   myPlayers, myLineup, myMentality, mySliders, myFormScore,
   rivalOvr, rivalFormScore, isHome, rivalMentality = 3,
   morale = {}, fatigue = {}, instructions = {}, trainingFocus = "balanced",
 }) {
-  const myOvr = squadOvr(myPlayers, myLineup, morale, fatigue);
-  const ms = mentalityScore(myMentality);
-  const rms = mentalityScore(rivalMentality);
-  const ss = slidersScore(mySliders || { pressing: 50, tempo: 50 });
-  const tm = trainingMods(trainingFocus);
-  const homeBonus = isHome ? 2.2 : 0;
-
   const myDay = dayFormFactor();
   const rivalDay = dayFormFactor();
 
-  const attackingPower = ((myOvr + homeBonus) * 0.4 + ms.attack * 20 + (myFormScore || 60) * 0.15 + tm.atkMod) * myDay;
-  const defensivePower = ((myOvr + homeBonus) * 0.4 + ms.defense * 15 + (myFormScore || 60) * 0.1  + tm.defMod) * myDay;
-  const rivalAttack    = (rivalOvr * 0.4 + rms.attack  * 20 + (rivalFormScore || 60) * 0.15 + 6) * rivalDay;
-  const rivalDefense   = (rivalOvr * 0.4 + rms.defense * 15 + (rivalFormScore || 60) * 0.1  + 4) * rivalDay;
-
-  const effectivePressBoost = ss.pressBoost + tm.pressMod;
-  const goalChancePerMin    = clampRate((attackingPower - rivalDefense) / 900 + 0.0075 + ss.tempoBoost * 0.004);
-  const concededChancePerMin = clampRate((rivalAttack - defensivePower) / 900 + 0.0075);
-
-  const events = [];
-  let myGoals = 0, rivalGoals = 0;
-  let myShots = 0, rivalShots = 0, myShotsOnTarget = 0, rivalShotsOnTarget = 0;
-  let myCorners = 0, rivalCorners = 0, myFouls = 0, rivalFouls = 0, myYellow = 0, rivalYellow = 0;
-  let myPossession = clamp(48 + (myOvr - rivalOvr) * 0.55 + ss.tempoBoost * 4, 28, 74);
-
-  const scorers = pickWeightedScorers(myPlayers, myLineup, instructions);
-  const xi = (myLineup || []).map(slot => myPlayers.find(p => p.id === slot.playerId)).filter(Boolean);
-  const cardPool = xi.filter((p) => instructions[p.id] !== "conservador");
-  let scorerIdx = 0;
-
-  const playerMatchStats = {};
-
-  for (let min = 1; min <= 90; min++) {
-    const fatigueFactor = min > tm.fatThreshold && effectivePressBoost > 0.6 ? 0.85 : 1;
-
-    if (Math.random() < goalChancePerMin * fatigueFactor) {
-      myGoals++;
-      const scorer = scorers[scorerIdx % scorers.length];
-      scorerIdx++;
-      const otherXi = xi.filter(p => p.id !== scorer?.id);
-      const assister = Math.random() < 0.6 && otherXi.length
-        ? otherXi[Math.floor(Math.random() * otherXi.length)]
-        : null;
-      if (scorer?.id) {
-        playerMatchStats[scorer.id] = playerMatchStats[scorer.id] || { goals: 0, assists: 0, yellowCards: 0 };
-        playerMatchStats[scorer.id].goals++;
-      }
-      if (assister?.id) {
-        playerMatchStats[assister.id] = playerMatchStats[assister.id] || { goals: 0, assists: 0, yellowCards: 0 };
-        playerMatchStats[assister.id].assists++;
-      }
-      events.push({
-        min, type: "goal", team: "me", scorerId: scorer?.id, assistId: assister?.id,
-        text: `⚽ GOL! ${scorer ? scorer.name : "Tu equipo"} marca${assister ? ` (asist. ${assister.name.split(" ").slice(-1)[0]})` : ""}. ${myGoals}-${rivalGoals}`,
-      });
-    } else if (Math.random() < concededChancePerMin) {
-      rivalGoals++;
-      events.push({ min, type: "goal", team: "rival", text: `⚽ Gol del rival. ${myGoals}-${rivalGoals}` });
-    } else if (Math.random() < goalChancePerMin * 2.5) {
-      myShots++; if (Math.random() < 0.5) myShotsOnTarget++;
-      events.push({ min, type: "shot", team: "me", text: "💨 Remate que se va cerca" });
-    } else if (Math.random() < concededChancePerMin * 2.5) {
-      rivalShots++; if (Math.random() < 0.5) rivalShotsOnTarget++;
-      events.push({ min, type: "shot", team: "rival", text: "💨 Tiro del rival, atento el arquero" });
-    } else if (Math.random() < 0.03) {
-      if (Math.random() < 0.5) myCorners++; else rivalCorners++;
-    } else if (Math.random() < 0.02 + effectivePressBoost * 0.015) {
-      const mine = Math.random() < 0.5;
-      if (mine) {
-        myFouls++;
-        if (Math.random() < 0.12) {
-          myYellow++;
-          const pool = cardPool.length ? cardPool : xi;
-          const cardPlayer = pool[Math.floor(Math.random() * pool.length)];
-          if (cardPlayer?.id) {
-            playerMatchStats[cardPlayer.id] = playerMatchStats[cardPlayer.id] || { goals: 0, assists: 0, yellowCards: 0 };
-            playerMatchStats[cardPlayer.id].yellowCards++;
-          }
-          events.push({ min, type: "card", team: "me", cardPlayerId: cardPlayer?.id, text: "🟨 Tarjeta amarilla para tu equipo" });
-        }
-      } else {
-        rivalFouls++;
-        if (Math.random() < 0.12) {
-          rivalYellow++;
-          events.push({ min, type: "card", team: "rival", text: "🟨 Tarjeta amarilla para el rival" });
-        }
-      }
-    }
-    if (min === 45) events.push({ min: 45, type: "half", team: null, text: "⏸ FIN DEL PRIMER TIEMPO" });
-  }
-  events.push({ min: 90, type: "full", team: null, text: `⏹ FINAL DEL PARTIDO: ${myGoals}-${rivalGoals}` });
-
-  const starterIds = (myLineup || []).filter(s => s.playerId).map(s => s.playerId);
-
-  return {
-    myGoals, rivalGoals, events, myOvr, rivalOvr, myDay, rivalDay,
-    playerMatchStats, starterIds,
-    stats: {
-      possession: Math.round(myPossession),
-      shots: { me: myShots + myGoals, rival: rivalShots + rivalGoals },
-      shotsOnTarget: { me: myShotsOnTarget + myGoals, rival: rivalShotsOnTarget + rivalGoals },
-      corners: { me: myCorners, rival: rivalCorners },
-      fouls: { me: myFouls, rival: rivalFouls },
-      yellow: { me: myYellow, rival: rivalYellow },
-    },
+  const sharedArgs = {
+    myPlayers, lineup: myLineup, myMentality, mySliders, myFormScore,
+    rivalOvr, rivalFormScore, isHome, rivalMentality, morale, fatigue, instructions, trainingFocus, myDay, rivalDay,
   };
+
+  const h1 = simulateHalf({ ...sharedArgs, half: 1 });
+  const h2 = simulateHalf({ ...sharedArgs, half: 2 });
+  const combined = combineHalves(h1, h2);
+
+  return { ...combined, myOvr: squadOvr(myPlayers, myLineup, morale, fatigue), rivalOvr, myDay, rivalDay };
 }
 
 function pickWeightedScorers(players, lineup, instructions = {}) {
