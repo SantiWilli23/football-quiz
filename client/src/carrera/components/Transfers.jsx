@@ -296,7 +296,7 @@ function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, 
 
       <section>
         <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-2.5">☆ Jugadores que seguís</h3>
-        {!watchlist.length && <p className="text-xs text-gray-600">Marcá jugadores con la estrella en el Mercado para seguirlos acá.</p>}
+        {!watchlist.length && <p className="text-xs text-gray-600">Marcá jugadores con la estrella en el Mercado o en Scouting para seguirlos acá.</p>}
         <div className="grid sm:grid-cols-2 gap-2.5">
           {watchlist.map((id) => {
             const p = findAnyPlayer(state, id);

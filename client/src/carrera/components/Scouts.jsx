@@ -65,9 +65,21 @@ function HireAgentCard({ title, description, onHire, cost, disabled, extraField 
   );
 }
 
+function WatchButton({ watched, onToggle }) {
+  return (
+    <button
+      onClick={onToggle}
+      title={watched ? "Quitar de seguimiento" : "Seguir jugador (aparece en Central de Transferencias)"}
+      className={`text-lg leading-none shrink-0 ${watched ? "text-amber" : "text-gray-600 hover:text-gray-300"}`}
+    >
+      {watched ? "★" : "☆"}
+    </button>
+  );
+}
+
 export default function Scouts() {
   const {
-    state, team, hireScout, sendScoutMission, hireAcademyAgent, signAcademyProspect,
+    state, team, hireScout, sendScoutMission, hireAcademyAgent, signAcademyProspect, toggleWatchlist,
   } = useCareer();
   const [teamId, setTeamId] = useState(team.id);
   const [query, setQuery] = useState("");
@@ -78,6 +90,8 @@ export default function Scouts() {
   const academyAgents = state.academyAgents || [];
   const academyPool = state.academyPool || [];
   const scoutReports = state.scoutReports || {};
+  const watchlist = state.watchlist || [];
+  const ownSquadIds = new Set(state.squad.map((p) => p.id));
 
   const pool = useMemo(
     () => (teamId === team.id ? state.squad : allPlayers.filter((p) => p.teamId === teamId)),
@@ -171,9 +185,11 @@ export default function Scouts() {
               {filtered.map((p) => {
                 const report = scoutReports[p.id];
                 const pending = scoutMissions.some((m) => m.playerIds.includes(p.id));
+                const isOwn = ownSquadIds.has(p.id);
                 return (
                   <div key={p.id} className="bg-panel border border-border rounded-2xl overflow-hidden">
                     <div className="flex items-center gap-3 px-4 py-3">
+                      {!isOwn && <WatchButton watched={watchlist.includes(p.id)} onToggle={() => toggleWatchlist(p.id)} />}
                       <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-[11px] font-bold text-gray-400">
                         {p.position}
                       </div>
@@ -229,8 +245,10 @@ export default function Scouts() {
             if (!p) return null;
             const report = scoutReports[id];
             const t = teamById(p.teamId);
+            const isOwn = ownSquadIds.has(p.id);
             return (
               <div key={id} className="bg-panel border border-border rounded-2xl px-4 py-3 flex items-center gap-3 flex-wrap">
+                {!isOwn && <WatchButton watched={watchlist.includes(p.id)} onToggle={() => toggleWatchlist(p.id)} />}
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold truncate">{p.name}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{t?.name} · {p.age} años</p>
