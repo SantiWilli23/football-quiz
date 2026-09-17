@@ -824,27 +824,48 @@ export function CareerProvider({ children }) {
         isDerby: derby,
         h1,
         lineupFirst: s.lineup.starters,
+        benchAtHalftime: s.lineup.bench,
       },
     }));
 
     return { phase: "half1", ...h1, rival, isDerby: derby };
   }
 
-  function playNextMatchSecondHalf(subs = []) {
+  // `halftimeChanges` permite ajustar la táctica real a mitad de partido —
+  // no solo cambios de jugadores: mentalidad, sliders y hasta la formación
+  // completa (que reordena a los titulares en las nuevas posiciones). Lo
+  // elegido queda además como la táctica por defecto de ahí en adelante,
+  // como haría cualquier DT real que ajusta el plan en el entretiempo.
+  function playNextMatchSecondHalf(subs = [], halftimeChanges = {}) {
     const pm = state.pendingMatch;
     if (!pm) return null;
     const rival = teamById(pm.rivalId);
 
-    const lineup2 = pm.lineupFirst.map((slot) => {
+    let lineup2 = pm.lineupFirst.map((slot) => {
       const sub = subs.find((sb) => sb.outId === slot.playerId);
       return sub ? { ...slot, playerId: sub.inId } : slot;
     });
 
+    const nextFormation = halftimeChanges.formation && halftimeChanges.formation !== state.formation
+      ? halftimeChanges.formation
+      : null;
+    if (nextFormation) {
+      const remapped = remapLineupToFormation(
+        state.squad,
+        { starters: lineup2, bench: pm.benchAtHalftime || [] },
+        nextFormation
+      );
+      lineup2 = remapped.starters;
+    }
+
+    const nextMentality = halftimeChanges.mentality ?? state.mentality;
+    const nextSliders = halftimeChanges.sliders ? { ...state.sliders, ...halftimeChanges.sliders } : state.sliders;
+
     const h2 = simulateHalf({
       myPlayers: state.squad,
       lineup: lineup2,
-      myMentality: state.mentality,
-      mySliders: state.sliders,
+      myMentality: nextMentality,
+      mySliders: nextSliders,
       myFormScore: 65,
       rivalOvr: pm.rivalOvr,
       rivalFormScore: pm.rivalFormScore,
@@ -936,7 +957,15 @@ export function CareerProvider({ children }) {
 
       const allPlayed = calendar.every((c) => c.played);
       const competitionLabel = pm.isDerby ? "🔥 Clásico · Liga" : "Liga";
-      let next = { ...s, ...eventPatches, standings, calendar, managerPrestige, lastMatch: { ...result, rival, isDerby: pm.isDerby, competitionLabel }, news, week: newWeek, playerStats, morale, fatigue, injuries, pendingMatch: null };
+      // Los cambios de táctica hechos en el entretiempo (formación, mentalidad,
+      // sliders) quedan como el plan por defecto de ahí en adelante, como un DT
+      // real que ajusta el planteo y sigue con eso — no solo para este partido.
+      const tacticsPatch = {
+        mentality: nextMentality,
+        sliders: nextSliders,
+        ...(nextFormation ? { formation: nextFormation, lineup: remapLineupToFormation(s.squad, { starters: lineup2, bench: pm.benchAtHalftime || [] }, nextFormation) } : {}),
+      };
+      let next = { ...s, ...eventPatches, ...tacticsPatch, standings, calendar, managerPrestige, lastMatch: { ...result, rival, isDerby: pm.isDerby, competitionLabel }, news, week: newWeek, playerStats, morale, fatigue, injuries, pendingMatch: null };
 
       const trainingResult = applyPositionTrainings(next.squad, next.week);
       if (trainingResult.news.length) {
@@ -1029,7 +1058,7 @@ export function CareerProvider({ children }) {
       return next;
     });
 
-    return { phase: "final", ...result, rival, isDerby: pm.isDerby, competitionLabel: pm.isDerby ? "🔥 Clásico · Liga" : "Liga" };
+    return { phase: "final", ...result, rival, isDerby: pm.isDerby, competitionLabel: pm.isDerby ? "🔥 Clásico · Liga" : "Liga", activeLineup: lineup2 };
   }
 
   function answerPressConference(effects) {

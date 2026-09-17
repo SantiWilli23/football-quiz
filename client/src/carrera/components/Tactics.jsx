@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useCareer } from "../context/CareerContext.jsx";
 
-const MENTALITY_LABELS = ["Muy defensivo", "Defensivo", "Equilibrado", "Ofensivo", "Muy ofensivo"];
-const SLIDER_DEFS = [
+export const MENTALITY_LABELS = ["Muy defensivo", "Defensivo", "Equilibrado", "Ofensivo", "Muy ofensivo"];
+export const SLIDER_DEFS = [
   ["pressing", "Pressing", "Bajo", "Alto"],
   ["defLine", "Línea defensiva", "Baja", "Alta"],
   ["tempo", "Tempo", "Lento", "Rápido"],

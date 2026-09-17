@@ -1,4 +1,14 @@
 import { effectiveOvr } from "./positions.js";
+import { layoutSlots } from "./pitchLayout.js";
+
+// Carriles genéricos para ubicar al rival en la cancha — no tenemos su XI
+// real (solo un OVR agregado), así que en vez de mandar todo al centro
+// como antes, se sortea un carril con más peso hacia el medio (más
+// realista: la mayoría de las jugadas pasan por ahí, pero no todas).
+const RIVAL_LANES = [18, 32, 50, 50, 50, 68, 82];
+function rivalLaneX() {
+  return RIVAL_LANES[Math.floor(Math.random() * RIVAL_LANES.length)];
+}
 
 function squadOvr(players, lineupSlots, morale = {}, fatigue = {}) {
   const xi = (lineupSlots || [])
@@ -117,6 +127,16 @@ export function simulateHalf({
   const cardPool = xi.filter((p) => instructions[p.id] !== "conservador");
   let scorerIdx = 0;
 
+  // Coordenadas reales de cada titular según la formación (mismo layout que
+  // dibuja la cancha en vivo) — así el remate/gol/falta de "mi" equipo pasa
+  // por el carril del jugador que participó, en vez de ir siempre al centro.
+  const coordsByPlayerId = {};
+  layoutSlots(lineup || []).forEach((c, i) => {
+    const pid = (lineup || [])[i]?.playerId;
+    if (pid) coordsByPlayerId[pid] = c;
+  });
+  const jitter = (v, spread = 8) => clamp(v + (Math.random() * spread * 2 - spread), 6, 94);
+
   const events = [];
   let myGoals = 0, rivalGoals = 0;
   let myShots = 0, rivalShots = 0, myShotsOnTarget = 0, rivalShotsOnTarget = 0;
@@ -145,16 +165,21 @@ export function simulateHalf({
       events.push({
         min, type: "goal", team: "me", scorerId: scorer?.id, assistId: assister?.id,
         text: `⚽ GOL! ${scorer ? scorer.name : "Tu equipo"} marca${assister ? ` (asist. ${assister.name.split(" ").slice(-1)[0]})` : ""}.`,
+        x: jitter(coordsByPlayerId[scorer?.id]?.x ?? 50, 10), y: jitter(8, 4),
       });
     } else if (Math.random() < concededChancePerMin) {
       rivalGoals++;
-      events.push({ min, type: "goal", team: "rival", text: "⚽ Gol del rival." });
+      events.push({ min, type: "goal", team: "rival", text: "⚽ Gol del rival.", x: rivalLaneX(), y: jitter(92, 4) });
     } else if (Math.random() < goalChancePerMin * 2.5) {
       myShots++; if (Math.random() < 0.5) myShotsOnTarget++;
-      events.push({ min, type: "shot", team: "me", text: "💨 Remate que se va cerca" });
+      const shooter = scorers[Math.floor(Math.random() * scorers.length)];
+      events.push({
+        min, type: "shot", team: "me", shooterId: shooter?.id, text: "💨 Remate que se va cerca",
+        x: jitter(coordsByPlayerId[shooter?.id]?.x ?? 50, 12), y: jitter(26, 8),
+      });
     } else if (Math.random() < concededChancePerMin * 2.5) {
       rivalShots++; if (Math.random() < 0.5) rivalShotsOnTarget++;
-      events.push({ min, type: "shot", team: "rival", text: "💨 Tiro del rival, atento el arquero" });
+      events.push({ min, type: "shot", team: "rival", text: "💨 Tiro del rival, atento el arquero", x: rivalLaneX(), y: jitter(74, 8) });
     } else if (Math.random() < 0.03 + cornerAdj * 0.015) {
       if (Math.random() < 0.5) myCorners++; else rivalCorners++;
     } else if (Math.random() < 0.02 + effectivePressBoost * 0.015 + foulAdj * 0.015) {
@@ -169,13 +194,16 @@ export function simulateHalf({
             playerMatchStats[cardPlayer.id] = playerMatchStats[cardPlayer.id] || { goals: 0, assists: 0, yellowCards: 0 };
             playerMatchStats[cardPlayer.id].yellowCards++;
           }
-          events.push({ min, type: "card", team: "me", cardPlayerId: cardPlayer?.id, text: "🟨 Tarjeta amarilla para tu equipo" });
+          events.push({
+            min, type: "card", team: "me", cardPlayerId: cardPlayer?.id, text: "🟨 Tarjeta amarilla para tu equipo",
+            x: jitter(coordsByPlayerId[cardPlayer?.id]?.x ?? 50, 14), y: jitter(50, 14),
+          });
         }
       } else {
         rivalFouls++;
         if (Math.random() < 0.12) {
           rivalYellow++;
-          events.push({ min, type: "card", team: "rival", text: "🟨 Tarjeta amarilla para el rival" });
+          events.push({ min, type: "card", team: "rival", text: "🟨 Tarjeta amarilla para el rival", x: rivalLaneX(), y: jitter(50, 14) });
         }
       }
     }

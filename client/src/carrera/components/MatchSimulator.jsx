@@ -4,17 +4,25 @@ import { getInjury } from "../engine/injuryEngine.js";
 import { layoutSlots } from "../engine/pitchLayout.js";
 import { getPressQuestion } from "../engine/pressEngine.js";
 import TeamCrest from "./TeamCrest.jsx";
+import { MENTALITY_LABELS, SLIDER_DEFS } from "./Tactics.jsx";
 
 const MAX_SUBS = 3;
 const TICK_MS = 1000;
 const RIVAL_FORMATION = ["GK", "RB", "CB", "CB", "LB", "CDM", "CM", "CM", "RW", "ST", "LW"].map((slot) => ({ slot }));
 
+// El bloque entero se corre hacia el arco rival cuando ataca "mi" equipo, y
+// hacia el propio cuando ataca el rival — antes las 22 fichas quedaban
+// clavadas en su spot toda la mitad y solo se movía la pelota.
+function attackShift(event) {
+  if (!event) return 0;
+  if ((event.type === "goal" || event.type === "shot") && event.team === "me") return -5;
+  if ((event.type === "goal" || event.type === "shot") && event.team === "rival") return 5;
+  return 0;
+}
+
 function ballPositionFor(event) {
-  if (!event) return { x: 50, y: 50 };
-  if (event.type === "goal") return event.team === "me" ? { x: 50, y: 6 } : { x: 50, y: 94 };
-  if (event.type === "shot") return event.team === "me" ? { x: 50, y: 24 } : { x: 50, y: 76 };
-  if (event.type === "card") return { x: 50, y: 50 };
-  return { x: 50, y: 50 };
+  if (!event || event.x == null || event.y == null) return { x: 50, y: 50 };
+  return { x: event.x, y: event.y };
 }
 
 function LivePitch({ myColor, starters, byId, lastEvent }) {
@@ -25,6 +33,9 @@ function LivePitch({ myColor, starters, byId, lastEvent }) {
   );
   const ball = ballPositionFor(lastEvent);
   const goalFlash = lastEvent?.type === "goal";
+  const shift = attackShift(lastEvent);
+  const clampY = (y) => Math.max(4, Math.min(96, y));
+  const involvedId = lastEvent?.scorerId || lastEvent?.shooterId || lastEvent?.cardPlayerId || null;
 
   return (
     <div
@@ -38,14 +49,15 @@ function LivePitch({ myColor, starters, byId, lastEvent }) {
       {starters.map((slot, i) => {
         const p = byId[slot.playerId];
         const pos = myCoords[i] || { x: 50, y: 50 };
+        const isInvolved = involvedId && slot.playerId === involvedId;
         return (
           <div
             key={`me-${i}`}
             className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5"
-            style={{ left: `${pos.x}%`, top: `${pos.y}%`, transition: "left 0.4s ease, top 0.4s ease" }}
+            style={{ left: `${pos.x}%`, top: `${clampY(pos.y + shift)}%`, transition: "left 0.4s ease, top 0.5s ease" }}
           >
             <div
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[11px] sm:text-xs font-bold text-white shadow-md border border-black/20"
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[11px] sm:text-xs font-bold text-white shadow-md border ${isInvolved ? "border-amber ring-2 ring-amber/70" : "border-black/20"}`}
               style={{ background: myColor }}
             >
               {p?.number ?? "?"}
@@ -58,7 +70,7 @@ function LivePitch({ myColor, starters, byId, lastEvent }) {
         <div
           key={`riv-${i}`}
           className="absolute -translate-x-1/2 -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-[10px] sm:text-[11px] font-bold bg-gray-700 text-gray-200 border border-gray-500"
-          style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+          style={{ left: `${pos.x}%`, top: `${clampY(pos.y + shift)}%`, transition: "left 0.4s ease, top 0.5s ease" }}
         >
           {i + 1}
         </div>
@@ -73,12 +85,17 @@ function LivePitch({ myColor, starters, byId, lastEvent }) {
 }
 
 export default function MatchSimulator({ matchResult, onFinish }) {
-  const { team, state, playNextMatchSecondHalf, answerPressConference } = useCareer();
+  const { team, state, formations, playNextMatchSecondHalf, answerPressConference } = useCareer();
   const [data, setData] = useState(matchResult);
   const [shown, setShown] = useState([]);
   const [playing, setPlaying] = useState(true);
   const [subs, setSubs] = useState([]);
   const [pressChoice, setPressChoice] = useState(null);
+  const [htFormation, setHtFormation] = useState(state.formation);
+  const [htMentality, setHtMentality] = useState(state.mentality);
+  const [htSliders, setHtSliders] = useState(state.sliders);
+  const [showTactics, setShowTactics] = useState(false);
+  const [activeStarters, setActiveStarters] = useState(() => (state.lineup.starters || []).filter((s) => s.playerId));
   const idxRef = useRef(0);
   const timerRef = useRef(null);
 
@@ -105,11 +122,16 @@ export default function MatchSimulator({ matchResult, onFinish }) {
   }
 
   function confirmSubstitutions() {
-    const result = playNextMatchSecondHalf(subs);
+    const changed = {};
+    if (htFormation !== state.formation) changed.formation = htFormation;
+    if (htMentality !== state.mentality) changed.mentality = htMentality;
+    if (JSON.stringify(htSliders) !== JSON.stringify(state.sliders)) changed.sliders = htSliders;
+    const result = playNextMatchSecondHalf(subs, changed);
     if (!result) return;
     setData(result);
     // Ya se mostraron los eventos del primer tiempo; seguimos animando desde ahí.
     setShown(result.events.slice(0, idxRef.current));
+    if (result.activeLineup) setActiveStarters(result.activeLineup.filter((s) => s.playerId));
     setSubs([]);
     setPlaying(true);
   }
@@ -162,7 +184,7 @@ export default function MatchSimulator({ matchResult, onFinish }) {
           {!eventsDone && <p className="text-xs text-gray-500 mt-2">Min {shown.length ? shown[shown.length - 1].min : 0}'</p>}
         </div>
 
-        <LivePitch myColor={team.colors?.primary || "#3fae9a"} starters={starters} byId={byId} lastEvent={lastEvent} />
+        <LivePitch myColor={team.colors?.primary || "#3fae9a"} starters={activeStarters} byId={byId} lastEvent={lastEvent} />
 
         {!eventsDone && (
           <div className="flex gap-2 mb-4">
@@ -201,6 +223,64 @@ export default function MatchSimulator({ matchResult, onFinish }) {
               {subs.length < MAX_SUBS && availableOut.length > 0 && availableIn.length > 0 && (
                 <SubPicker starters={availableOut} bench={availableIn} playerById={playerById} onAdd={addSub} />
               )}
+
+              <div className="mt-4 pt-4 border-t border-amber/20">
+                <button
+                  onClick={() => setShowTactics((v) => !v)}
+                  className="w-full flex items-center justify-between text-left"
+                >
+                  <span className="text-sm font-semibold">🧠 Cambiar planteo para el segundo tiempo</span>
+                  <span className="text-xs text-gray-500">{showTactics ? "Ocultar" : "Ajustar"}</span>
+                </button>
+
+                {showTactics && (
+                  <div className="mt-3 space-y-4">
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Formación</p>
+                      <select
+                        value={htFormation}
+                        onChange={(e) => setHtFormation(e.target.value)}
+                        className="w-full bg-bg border border-border rounded-card px-3 py-2 text-sm"
+                      >
+                        {formations.map((f) => <option key={f} value={f}>{f}</option>)}
+                      </select>
+                      {htFormation !== state.formation && (
+                        <p className="text-[11px] text-amber mt-1">Reordena a los mismos titulares (post-cambios) en la nueva forma.</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1.5">
+                        Mentalidad — {MENTALITY_LABELS[htMentality - 1]}
+                      </p>
+                      <input
+                        type="range" min={1} max={5} step={1} value={htMentality}
+                        onChange={(e) => setHtMentality(Number(e.target.value))}
+                        className="w-full accent-accent"
+                      />
+                    </div>
+
+                    <div className="space-y-3">
+                      {SLIDER_DEFS.map(([key, label, lo, hi]) => (
+                        <div key={key}>
+                          <div className="flex justify-between text-xs text-gray-400 mb-1">
+                            <span>{label}</span>
+                            <span>{htSliders[key]}</span>
+                          </div>
+                          <input
+                            type="range" min={0} max={100} step={5} value={htSliders[key]}
+                            onChange={(e) => setHtSliders((s) => ({ ...s, [key]: Number(e.target.value) }))}
+                            className="w-full accent-accent"
+                          />
+                          <div className="flex justify-between text-[10px] text-gray-500">
+                            <span>{lo}</span><span>{hi}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <button
                 onClick={confirmSubstitutions}
