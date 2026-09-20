@@ -1,6 +1,6 @@
 import {
   Building2, CalendarDays, Crown, Gavel, Link2, Shield, ShieldCheck, Skull, Sparkles,
-  Star, Swords, Target, Timer, Trophy, TrendingUp, User, Users, Zap,
+  Star, Swords, Target, Timer, Trophy, TrendingUp, Users, Zap,
 } from "lucide-react";
 
 // Familias de color secundario: reemplazan los ~14 hex sueltos que tenía
@@ -21,9 +21,8 @@ export const FAMILY_ORDER = ["solo", "grupo", "reloj", "pronostico", "carrera"];
 
 export const GAMES = [
   // ---- Solo ----
-  { href: "/fichado/", label: "Fichado", icon: Target, description: "Adiviná al futbolista secreto: cada intento te dice qué tan cerca estás.", family: "solo", available: true },
-  { to: "/fulbodle", label: "Fulbodle", icon: User, description: "El Wordle del fútbol: adiviná al jugador secreto en 6 intentos con pistas de cada uno.", family: "solo", available: true },
-  { to: "/escudos", label: "Escudos borrosos", icon: ShieldCheck, description: "El escudo aparece borroso y se va aclarando: adiviná el club con la menor cantidad de pistas.", family: "solo", available: true },
+  { to: "/fulbodle", label: "Fichado", icon: Target, description: "Adiviná al futbolista secreto con colores, número de parecido, ligas y dificultades. Diario o aleatorio; la partida suma al reto semanal del grupo.", family: "solo", available: true },
+  { to: "/escudos", label: "Escudos a ciegas", icon: ShieldCheck, description: "Práctica con pistas o reto semanal sin pistas: adiviná el club solo por el escudo borroso.", family: "solo", available: true },
   { to: "/supervivencia", label: "Supervivencia", icon: Skull, description: "Trivia sin margen de error: una vida, a ver hasta dónde llegás.", family: "solo", available: true },
   { href: "/draft-europeo.html", label: "8a2", icon: Star, description: "Armá tu XI con jugadores de 138 planteles históricos de la Champions League.", family: "solo", available: true },
 

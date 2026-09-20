@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { Crown, Globe2 } from "lucide-react";
+import { Crown, Globe2, Trophy } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import Avatar from "../components/Avatar.jsx";
+import EmptyState from "../components/EmptyState.jsx";
+import { SkeletonRows } from "../components/Skeleton.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
@@ -27,7 +29,7 @@ export default function GlobalRanking() {
     <Layout>
       <div className="flex items-center gap-2 mb-1">
         <Globe2 size={20} className="text-accent" />
-        <h1 className="text-xl sm:text-2xl font-bold">Ranking global</h1>
+        <h1 className="t-title">Ranking global</h1>
       </div>
       <p className="text-gray-400 text-sm mb-6">
         Los 100 usuarios con más puntos de toda la app, sin importar el grupo. Se suman los mismos puntos que ves en tu perfil (trivia + modo especial).
@@ -41,11 +43,16 @@ export default function GlobalRanking() {
         </Card>
       )}
 
-      {ranking === null && <p className="text-sm text-gray-500">Cargando...</p>}
+      {ranking === null && <Card><SkeletonRows rows={8} /></Card>}
 
       {ranking && ranking.length === 0 && (
         <Card>
-          <p className="text-sm text-gray-500">Todavía nadie sumó puntos.</p>
+          <EmptyState
+            icon={Trophy}
+            title="La tabla está en cero"
+            hint="Respondé la trivia de hoy y abrís el ranking."
+            actions={[{ label: "Jugar trivia", to: "/trivia" }, { label: "Invitar amigos", to: "/grupo", ghost: true }]}
+          />
         </Card>
       )}
 

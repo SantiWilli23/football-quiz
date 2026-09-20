@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { Zap, X } from "lucide-react";
+import { BarChart3, Zap, X } from "lucide-react";
 import api from "../api.js";
 import Card from "./Card.jsx";
+import EmptyState from "./EmptyState.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function FlashPoll({ groupId }) {
@@ -87,7 +88,7 @@ export default function FlashPoll({ groupId }) {
       </div>
 
       {!poll && !creating && (
-        <p className="text-sm text-gray-500">Nadie lanzó una encuesta todavía. Tirá una pregunta rápida al grupo.</p>
+        <EmptyState compact icon={BarChart3} title="Sin encuestas por ahora" hint="Tirá una pregunta rápida al grupo y mirá cómo votan." />
       )}
 
       {creating && (

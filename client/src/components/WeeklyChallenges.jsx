@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Crown, Trophy } from "lucide-react";
 import api from "../api.js";
 import Card from "./Card.jsx";
+import EmptyState from "./EmptyState.jsx";
+import { SkeletonRows } from "./Skeleton.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
 // Un solo lugar para ver cómo va cada uno en los "retos" — la versión
@@ -13,10 +15,10 @@ const GAMES = [
   { key: "cotrero", label: "Cotrero · Reto semanal", endpoint: "leaderboard" },
   { key: "cotrero_legado", label: "Cotrero · Mejor carrera de siempre", endpoint: "leaderboard" },
   { key: "presidente_legado", label: "Presidente · Mejor gestión de siempre", endpoint: "leaderboard" },
-  { key: "fichado", label: "Fichado · Menos intentos gana", endpoint: "leaderboard" },
+  { key: "fichado", label: "Fichado · Más puntos gana", endpoint: "leaderboard" },
   { key: "equipo_jugador", label: "Equipo-Jugador · Eliminación de a hartos (4+)", endpoint: "leaderboard" },
   { key: "un_minuto", label: "Un Minuto · Trivia contrarreloj", endpoint: "leaderboard" },
-  { key: "escudos", label: "Escudos borrosos · Adiviná el club", endpoint: "leaderboard" },
+  { key: "escudos", label: "Escudos a ciegas · Semanal sin pistas", endpoint: "leaderboard" },
   { key: "arbitraje_var", label: "Arbitraje/VAR · Mejor árbitro", endpoint: "leaderboard" },
 ];
 
@@ -73,10 +75,10 @@ export default function WeeklyChallenges({ groupId }) {
         ))}
       </div>
 
-      {loading && <p className="text-sm text-gray-500 py-3">Cargando...</p>}
+      {loading && <SkeletonRows rows={3} avatar={false} />}
 
       {!loading && entries && entries.length === 0 && (
-        <p className="text-sm text-gray-500 py-3">Todavía nadie del grupo jugó este reto.</p>
+        <EmptyState compact icon={Trophy} title="Nadie jugó este reto todavía" hint="Sé el primero y quedás arriba de la tabla del grupo." />
       )}
 
       {!loading && entries && entries.length > 0 && (

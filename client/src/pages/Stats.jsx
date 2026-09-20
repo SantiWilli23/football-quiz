@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
+import { SkeletonCard } from "../components/Skeleton.jsx";
 import Avatar from "../components/Avatar.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -142,7 +143,7 @@ export default function Stats() {
         </div>
       </div>
 
-      {loading && <p className="text-sm text-gray-500">Cargando...</p>}
+      {loading && <div className="space-y-4"><SkeletonCard /><SkeletonCard lines={2} /></div>}
 
       {!loading && insights.length > 0 && (
         <Card className="mb-6">

@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Gamepad2 } from "lucide-react";
+import { Gamepad2, Search } from "lucide-react";
+import EmptyState from "../components/EmptyState.jsx";
 import Layout from "../components/Layout.jsx";
 import { FAMILIES, FAMILY_ORDER, gamesByFamily } from "../data/gameCatalog.js";
 
@@ -43,21 +45,63 @@ function GameTile({ href, to, label, icon: Icon, description, available, style }
 }
 
 export default function Games() {
+  const [query, setQuery] = useState("");
+  const [only, setOnly] = useState("todos");
+  const q = query.trim().toLowerCase();
+  const matches = (g) => !q || `${g.label} ${g.description}`.toLowerCase().includes(q);
+  const visibleKeys = FAMILY_ORDER.filter((k) => (only === "todos" || only === k) && gamesByFamily(k).some(matches));
+
   return (
     <Layout>
       <div className="mb-8 flex items-center gap-3">
         <Gamepad2 size={22} className="text-accent shrink-0" />
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold mb-1">Juegos</h1>
+          <h1 className="t-title mb-1">Juegos</h1>
           <p className="text-gray-400 text-sm">Agrupados por cómo se juegan, no por cuándo se agregaron.</p>
         </div>
       </div>
 
+      <div className="mb-8 space-y-3">
+        <div className="flex items-center gap-2 bg-panel border border-border rounded-card px-3 py-2.5">
+          <Search size={15} className="text-gray-500 shrink-0" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar un juego…"
+            aria-label="Buscar un juego"
+            className="flex-1 bg-transparent text-sm focus:outline-none"
+          />
+        </div>
+        <div className="flex gap-1.5 flex-wrap">
+          {[["todos", "Todos"], ...FAMILY_ORDER.map((k) => [k, FAMILIES[k].label])].map(([k, label]) => (
+            <button
+              key={k}
+              onClick={() => setOnly(k)}
+              className={`px-3 py-1.5 rounded-card text-xs font-medium border transition-colors ${
+                only === k ? "border-accent/40 bg-accent/10 text-accent" : "border-border text-gray-400 hover:text-white hover:border-white/30"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {visibleKeys.length === 0 && (
+        <EmptyState
+          icon={Search}
+          title="No hay juegos con ese nombre"
+          hint="Probá con otra palabra o mirá todas las familias."
+          actions={[{ label: "Ver todos", onClick: () => { setQuery(""); setOnly("todos"); } }]}
+        />
+      )}
+
       <div className="space-y-10">
         {FAMILY_ORDER.map((key) => {
+          if (!visibleKeys.includes(key)) return null;
           const family = FAMILIES[key];
           const style = FAMILY_STYLE[family.tw];
-          const games = gamesByFamily(key);
+          const games = gamesByFamily(key).filter(matches);
           if (games.length === 0) return null;
 
           return (

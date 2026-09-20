@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import Avatar from "../components/Avatar.jsx";
 import QuestionBank from "../components/QuestionBank.jsx";
 import WeeklyChallenges from "../components/WeeklyChallenges.jsx";
@@ -457,9 +458,12 @@ export default function Group() {
 
               <div className="space-y-2">
                 {shownRanking.length === 0 && (
-                  <p className="text-sm text-gray-500 py-4">
-                    Todavía nadie sumó puntos {scope === "mes" ? "este mes" : "en el grupo"}.
-                  </p>
+                  <EmptyState
+                    icon={Trophy}
+                    title={`Nadie sumó puntos ${scope === "mes" ? "este mes" : "todavía"}`}
+                    hint="Respondé la trivia de hoy y abrís el ranking del grupo."
+                    actions={[{ label: "Jugar trivia", to: "/trivia" }]}
+                  />
                 )}
                 {shownRanking.map((r) => (
                   <div

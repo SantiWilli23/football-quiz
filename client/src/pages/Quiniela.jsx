@@ -4,6 +4,7 @@ import { AlertTriangle, Check, FlaskConical, Minus, Trophy, X } from "lucide-rea
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
+import { SkeletonCard } from "../components/Skeleton.jsx";
 import LeagueTabs from "../components/LeagueTabs.jsx";
 
 function championPromptDismissedKey(league) {
@@ -185,7 +186,7 @@ export default function Quiniela() {
         </Card>
       )}
 
-      {loading && <p className="text-sm text-gray-500">Cargando partidos...</p>}
+      {loading && <div className="space-y-3"><SkeletonCard lines={2} /><SkeletonCard lines={2} /></div>}
       {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
 
       {!loading && week?.blocked_by_plan && (

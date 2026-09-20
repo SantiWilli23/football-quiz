@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Gavel, Trophy, X } from "lucide-react";
+import { Check, Gavel, X } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
+import ResultScreen from "../components/ResultScreen.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 import PlayDiagram from "../components/PlayDiagram.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -196,24 +197,14 @@ export default function ArbitrajeVar() {
       )}
 
       {phase === "done" && (
-        <Card className="mt-4 text-center py-10">
-          <Trophy size={32} className="mx-auto text-accent mb-3" />
-          <p className="text-3xl font-bold mb-1">{correctCount}/{TOTAL_SITUATIONS}</p>
-          <p className="text-sm text-gray-400 mb-5">decisiones correctas</p>
-          {!groupId && <p className="text-xs text-gray-500 mb-5">Unite a un grupo para que tu marca cuente en un ranking.</p>}
-          {saveState === "saving" && <p className="text-xs text-gray-500 mb-5">Guardando marca...</p>}
-          {saveState && saveState !== "saving" && (
-            <p className="text-xs text-accent mb-5">
-              {saveState.improved ? "Nueva mejor marca de la semana" : "Guardado (no superó tu mejor marca de esta semana)"}
-            </p>
-          )}
-          <button
-            onClick={start}
-            className="px-6 py-2.5 rounded-card bg-accent text-onaccent font-semibold text-sm hover:opacity-90 transition-opacity"
-          >
-            Jugar de nuevo
-          </button>
-        </Card>
+        <ResultScreen
+          score={`${correctCount}/${TOTAL_SITUATIONS}`}
+          unit="decisiones correctas"
+          groupId={groupId}
+          saveState={saveState}
+          onAgain={start}
+          shareText={`⚽ Futotal · Arbitraje / VAR: ${correctCount}/${TOTAL_SITUATIONS} — ¿me ganás?`}
+        />
       )}
     </Layout>
   );

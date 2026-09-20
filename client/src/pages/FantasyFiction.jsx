@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
+import { SkeletonCard } from "../components/Skeleton.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 
 function useDebouncedValue(value, delay) {
@@ -457,7 +458,7 @@ export default function FantasyFiction() {
         <GroupSelector />
       </div>
 
-      {league === undefined && <p className="text-sm text-gray-500">Cargando...</p>}
+      {league === undefined && <SkeletonCard />}
 
       {league === null && (
         <Card>
