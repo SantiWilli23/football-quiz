@@ -57,6 +57,9 @@ async function loadPlayersByPosition() {
 // Plantel inicial "regalado": 2 arqueros, 4 defensas, 4 medios y 3 delanteros
 // al azar cuyo valor total ronda el presupuesto (~200M) sin pasarse. Cada
 // llamada sortea uno nuevo, así que sirve también para "sortear otro".
+// Último plantel sorteado por usuario y liga: solo se puede confirmar uno de estos.
+const issuedStarters = new Map();
+
 async function buildStarterSquad(budget, modern) {
   const pool = await loadPlayersByPosition();
   let best = null;
@@ -314,6 +317,7 @@ router.get("/:leagueId/starter", async (req, res) => {
   if (!league) return res.status(404).json({ error: "Liga no encontrada" });
   if (!(await assertMember(req.userId, league.group_id))) return res.status(403).json({ error: "No pertenecés a ese grupo" });
   const { squad, cost } = await buildStarterSquad(league.budget_total, isModern(league));
+  issuedStarters.set(`${league.id}:${req.userId}`, squad.map((p) => p.id).sort((a, b) => a - b).join(","));
   res.json({ squad, cost, budgetTotal: league.budget_total });
 });
 
@@ -328,6 +332,11 @@ router.post("/:leagueId/join", async (req, res) => {
   const squad = Array.isArray(req.body?.squad) ? req.body.squad.map(Number).filter(Number.isInteger) : [];
   if (squad.length !== league.squad_size || new Set(squad).size !== squad.length) {
     return res.status(400).json({ error: `Elegí ${league.squad_size} jugadores distintos` });
+  }
+
+  const issued = issuedStarters.get(`${league.id}:${req.userId}`);
+  if (!issued || issued !== [...squad].sort((a, b) => a - b).join(",")) {
+    return res.status(400).json({ error: "El plantel inicial es solo por sorteo: pedí uno y confirmalo" });
   }
 
   const already = await db.execute({

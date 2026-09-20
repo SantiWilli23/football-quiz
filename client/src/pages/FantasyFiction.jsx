@@ -65,7 +65,7 @@ function PlayerSearch({ leagueId, budgetLeft, exclude, onPick }) {
 
 // Plantel inicial sorteado por el servidor (~200M): el jugador puede pedir
 // otro sorteo o quedarse con este. Si prefiere armarlo a mano, cae en SquadDraft.
-function StarterSquad({ league, onJoined, onManual }) {
+function StarterSquad({ league, onJoined }) {
   const unit = league.unit ? ` ${league.unit}` : "";
   const [starter, setStarter] = useState(null);
   const [rolls, setRolls] = useState(1);
@@ -138,9 +138,6 @@ function StarterSquad({ league, onJoined, onManual }) {
           className="px-4 py-2.5 rounded-card border border-border text-sm text-gray-300 hover:text-white hover:border-white/30"
         >
           Sortear otro ({rolls})
-        </button>
-        <button onClick={onManual} className="px-4 py-2.5 rounded-card text-sm text-gray-500 hover:text-gray-300">
-          Armarlo a mano
         </button>
       </div>
     </div>
@@ -478,7 +475,6 @@ export default function FantasyFiction() {
   const { user } = useAuth();
   const { activeGroupId: groupId, groups } = useGroups();
   const [league, setLeague] = useState(undefined); // undefined = cargando, null = no hay
-  const [manualDraft, setManualDraft] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -536,7 +532,7 @@ export default function FantasyFiction() {
             FantasyFiction
           </h1>
           <p className="text-gray-400 text-sm">
-            Arrancás con un plantel de unos 200M€ que te sorteamos (o lo armás a mano) y lo mejorás en el mercado. La liga arranca cuando se suma todo el grupo: una
+            Arrancás con un plantel de unos 200M€ que te sorteamos y lo mejorás en el mercado. La liga arranca cuando se suma todo el grupo: una
             jornada por semana, mercado de pases los miércoles y domingos.
           </p>
         </div>
@@ -570,9 +566,7 @@ export default function FantasyFiction() {
           {league.iJoined ? (
             <p className="text-sm text-accent">Ya armaste tu plantel. Esperando al resto del grupo...</p>
           ) : (
-            manualDraft
-              ? <SquadDraft league={league} onJoined={setLeague} />
-              : <StarterSquad league={league} onJoined={setLeague} onManual={() => setManualDraft(true)} />
+            <StarterSquad league={league} onJoined={setLeague} />
           )}
         </Card>
       )}
