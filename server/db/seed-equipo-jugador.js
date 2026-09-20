@@ -5,6 +5,7 @@ import { db } from "./client.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = path.join(__dirname, "../data/equipo-jugador-players.json");
+const ALIASES_PATH = path.join(__dirname, "../data/club-aliases.json");
 
 export function normalize(str) {
   return String(str || "")
@@ -35,6 +36,30 @@ const POSITION_MAP = {
   "Volante": "Mediocampista",
   "Delantero": "Delantero",
 };
+
+// Bases ya desplegadas: antes de unificar los nombres de club, "Inter Milan" e
+// "Inter de Milán" (o "PSG" y "Paris Saint-Germain") eran clubes distintos y
+// cortaban las cadenas. Esto junta cada alias con su club canónico, moviendo
+// sus pasos de carrera. Idempotente: si no queda nada por juntar, no hace nada.
+async function mergeAliasClubs() {
+  if (!fs.existsSync(ALIASES_PATH)) return 0;
+  const alias = JSON.parse(fs.readFileSync(ALIASES_PATH, "utf-8")).alias || {};
+  const canonicalOf = new Map(Object.entries(alias).map(([a, c]) => [normalize(a), normalize(c)]));
+  const rows = (await db.execute("SELECT id, normalized_name FROM ej_clubs")).rows;
+  const idByName = new Map(rows.map((r) => [r.normalized_name, r.id]));
+  let merged = 0;
+  for (const r of rows) {
+    const target = canonicalOf.get(r.normalized_name);
+    const targetId = target && target !== r.normalized_name ? idByName.get(target) : null;
+    if (!targetId) continue;
+    // OR IGNORE: si el jugador ya tenía ese paso en el club canónico, el duplicado queda sin mover y se borra abajo.
+    await db.execute({ sql: "UPDATE OR IGNORE ej_player_clubs SET club_id = ? WHERE club_id = ?", args: [targetId, r.id] });
+    await db.execute({ sql: "DELETE FROM ej_player_clubs WHERE club_id = ?", args: [r.id] });
+    await db.execute({ sql: "DELETE FROM ej_clubs WHERE id = ?", args: [r.id] });
+    merged++;
+  }
+  return merged;
+}
 
 // Idempotente y ACUMULATIVO: corre en cada arranque del server, pero nunca
 // duplica nada — cada INSERT de jugador/club/paso de carrera usa
@@ -106,6 +131,9 @@ export async function seedEquipoJugador() {
       if (stintRes.rowsAffected > 0) stintsInserted++;
     }
   }
+
+  const mergedClubs = await mergeAliasClubs();
+  if (mergedClubs > 0) console.log(`Equipo-Jugador: ${mergedClubs} clubes duplicados unificados.`);
 
   console.log(
     `Equipo-Jugador: seed completado — ${playersInserted} jugadores, ${clubIds.size} clubes, ${stintsInserted} pasos de carrera.`

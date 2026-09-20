@@ -1,0 +1,239 @@
+# Cargas y correcciones sobre la base única de jugadores.
+# Se aplican con: node server/scripts/unify-players.cjs   (ver el encabezado del script)
+#
+#  =Nombre|Nacionalidad|Posición|Nacimiento|Club:2015-2020;Club (cedido):2018-2019;Club:2020-     jugador completo
+#  ~Nombre|Nacionalidad|Posición|Nacimiento|AñoDebut|AñoRetiro     leyendas de Mentiroso: clubes de mentiroso-legacy.json, años repartidos (orientativos)
+#  +Nombre|Club:2015-2020;Club:2021-2022     suma pasos que faltan a un jugador que ya existe (falla si no lo encuentra)
+#  >Nombre|Club nuevo|Año[|AñoFin]     traspaso: cierra el paso abierto y abre el nuevo
+#  @NombreEnMentiroso|NombreEnElMaestro     el mismo jugador con otro nombre
+
+@Vinícius Jr|Vinicius Junior
+@Alexander Sørloth|Alexander Sorloth
+
+# ---------- Traspasos que la base tenía desactualizados ----------
+>Xavi Simons|Tottenham Hotspur|2025
+>Randal Kolo Muani|Tottenham Hotspur (cedido)|2025
+>Gianluigi Donnarumma|Manchester City|2025
+>Rasmus Hojlund|Napoli (cedido)|2025
+>Alejandro Garnacho|Chelsea|2025
+>Ilkay Gundogan|Galatasaray|2025
+>Alexis Sanchez|Sevilla|2025
+>Marcus Rashford|Barcelona (cedido)|2025
+>Leroy Sane|Galatasaray|2025
+>Kyle Walker|Burnley|2025
+>Lucas Chevalier|Paris Saint-Germain|2025
+>Moise Kean|Fiorentina|2025
+>Darwin Nunez|Al Hilal|2025
+
+# ---------- Jugadores actuales que faltaban ----------
+=Dean Huijsen|España|Defensa|2005|Juventus:2023-2024;Bournemouth:2024-2025;Real Madrid:2025-
+=Nick Woltemade|Alemania|Delantero|2002|Werder Bremen:2019-2022;VfB Stuttgart:2022-2025;Newcastle United:2025-
+=Jamie Gittens|Inglaterra|Delantero|2004|Manchester City:2020-2020;Borussia Dortmund:2020-2025;Chelsea:2025-
+=Jadon Sancho|Inglaterra|Delantero|2000|Manchester City:2015-2017;Borussia Dortmund:2017-2021;Manchester United:2021-2025;Chelsea (cedido):2024-2025;Aston Villa (cedido):2025-
+=Rayan Cherki|Francia|Mediocampista|2003|Lyon:2019-2025;Manchester City:2025-
+=Milos Kerkez|Hungría|Defensa|2003|AZ Alkmaar:2021-2023;Bournemouth:2023-2025;Liverpool:2025-
+=Jorrel Hato|Países Bajos|Defensa|2006|Ajax:2022-2025;Chelsea:2025-
+=Alvaro Carreras|España|Defensa|2003|Manchester United:2019-2022;Benfica:2022-2025;Real Madrid:2025-
+=Joan Garcia|España|Portero|2001|Espanyol:2019-2025;Barcelona:2025-
+=Marc Casado|España|Mediocampista|2003|Barcelona:2018-2025
+=Giuliano Simeone|Argentina|Delantero|2002|Atletico Madrid:2022-
+=Jeremy Doku|Bélgica|Delantero|2002|Anderlecht:2019-2020;Rennes:2020-2023;Manchester City:2023-
+=Rayan Ait-Nouri|Argelia|Defensa|2001|Angers:2018-2020;Wolverhampton:2020-2025;Manchester City:2025-
+=Khephren Thuram|Francia|Mediocampista|2001|Nice:2019-2023;Juventus:2023-
+=Myles Lewis-Skelly|Inglaterra|Defensa|2006|Arsenal:2022-
+=Ethan Nwaneri|Inglaterra|Mediocampista|2007|Arsenal:2022-
+=Joelinton|Brasil|Delantero|1996|Sport Recife:2014-2016;Rapid Vienna:2016-2017;Hoffenheim:2017-2019;Newcastle United:2019-
+=Harvey Barnes|Inglaterra|Delantero|1997|Leicester City:2015-2023;Newcastle United:2023-
+=Jacob Murphy|Inglaterra|Delantero|1995|Newcastle United:2017-
+=Tino Livramento|Inglaterra|Defensa|2002|Chelsea:2019-2021;Southampton:2021-2023;Newcastle United:2023-
+=Lewis Hall|Inglaterra|Defensa|2004|Chelsea:2020-2023;Newcastle United:2023-
+=Nick Pope|Inglaterra|Portero|1992|Burnley:2016-2022;Newcastle United:2022-
+=Morgan Rogers|Inglaterra|Mediocampista|2002|Aston Villa:2022-
+=Adam Wharton|Inglaterra|Mediocampista|2004|Blackburn Rovers:2021-2024;Crystal Palace:2024-
+=Jean-Philippe Mateta|Francia|Delantero|1997|Lyon:2014-2017;Mainz 05:2017-2021;Crystal Palace:2021-
+=Daniel Munoz|Colombia|Defensa|1996|Genk:2022-2024;Crystal Palace:2024-
+=Dean Henderson|Inglaterra|Portero|1997|Manchester United:2015-2022;Nottingham Forest (cedido):2022-2023;Crystal Palace:2023-
+=Joao Palhinha|Portugal|Mediocampista|1995|Sporting CP:2018-2022;Fulham:2022-2024;Bayern Munich:2024-2025;Tottenham Hotspur:2025-
+=Pape Matar Sarr|Senegal|Mediocampista|2002|Metz:2020-2023;Tottenham Hotspur:2023-
+=Wilson Odobert|Francia|Delantero|2004|Troyes:2021-2023;Burnley:2023-2024;Tottenham Hotspur:2024-
+=Lucas Bergvall|Suecia|Mediocampista|2006|Djurgarden:2021-2024;Tottenham Hotspur:2024-
+=Mathys Tel|Francia|Delantero|2005|Rennes:2021-2022;Bayern Munich:2022-2025;Tottenham Hotspur:2025-
+=Igor Jesus|Brasil|Delantero|2001|Botafogo:2023-2025;Nottingham Forest:2025-
+=Callum Hudson-Odoi|Inglaterra|Delantero|2000|Chelsea:2018-2023;Nottingham Forest:2023-
+=Crysencio Summerville|Países Bajos|Delantero|2001|Leeds United:2020-2024;West Ham United:2024-
+=Mario Gila|España|Defensa|2000|Real Madrid Castilla:2019-2022;Lazio:2022-
+=Nicolo Rovella|Italia|Mediocampista|2001|Juventus:2021-2022;Lazio:2022-
+=Matias Soule|Argentina|Delantero|2003|Juventus:2021-2023;Roma:2023-
+=Dodo|Brasil|Defensa|1998|Shakhtar Donetsk:2019-2023;Fiorentina:2023-
+=Albert Gudmundsson|Islandia|Delantero|1997|Genoa:2022-2024;Fiorentina:2024-
+=Adrien Rabiot|Francia|Mediocampista|1995|Paris Saint-Germain:2012-2019;Juventus:2019-2023;Marseille:2023-2025;AC Milan:2025-
+=Youssouf Fofana|Francia|Mediocampista|1999|Monaco:2018-2024;AC Milan:2024-
+=Presnel Kimpembe|Francia|Defensa|1995|Paris Saint-Germain:2014-
+=Kingsley Coman|Francia|Delantero|1996|Paris Saint-Germain:2013-2014;Juventus:2014-2015;Bayern Munich:2015-2025;Al Nassr:2025-
+=Niklas Sule|Alemania|Defensa|1995|Hoffenheim:2013-2017;Bayern Munich:2017-2022;Borussia Dortmund:2022-
+=Marc Cucurella|España|Defensa|1998|Barcelona:2016-2019;Eibar (cedido):2018-2019;Getafe:2019-2021;Brighton:2021-2022;Chelsea:2022-
+=Ferran Torres|España|Delantero|2000|Valencia:2017-2020;Manchester City:2020-2022;Barcelona:2022-
+=Pau Torres|España|Defensa|1997|Villarreal:2015-2023;Aston Villa:2023-
+=Jakub Kiwior|Polonia|Defensa|2000|Spezia:2021-2023;Arsenal:2023-2025;Porto:2025-
+=Lee Kang-in|Corea del Sur|Mediocampista|2001|Valencia:2018-2021;Mallorca:2021-2023;Paris Saint-Germain:2023-
+=Alexander Sorloth|Noruega|Delantero|1995|Trabzonspor:2019-2020;RB Leipzig:2020-2021;Real Sociedad (cedido):2021-2022;Villarreal:2022-2025;Atletico Madrid:2025-
+=Ismaila Sarr|Senegal|Delantero|1998|Metz:2015-2016;Rennes:2016-2019;Watford:2019-2023;Marseille:2023-2024;Crystal Palace:2024-
+=Nicolas Pepe|Costa de Marfil|Delantero|1995|Angers:2013-2017;Lille:2017-2019;Arsenal:2019-2022;Trabzonspor:2022-2024;Villarreal:2024-
+=Franck Kessie|Costa de Marfil|Mediocampista|1996|Atalanta:2015-2017;AC Milan:2017-2021;Barcelona:2021-2023;Al Ahli:2023-
+=Edouard Mendy|Senegal|Portero|1992|Cherbourg:2011-2014;Reims:2015-2019;Rennes:2019-2020;Chelsea:2020-2023;Al Ahli:2023-
+=Noussair Mazraoui|Marruecos|Defensa|1997|Ajax:2015-2022;Bayern Munich:2022-2023;Manchester United:2023-
+=Samuel Chukwueze|Nigeria|Delantero|1999|Villarreal:2017-2023;AC Milan:2023-2025;Fulham:2025-
+=Wilfried Zaha|Costa de Marfil|Delantero|1992|Crystal Palace:2010-2013;Manchester United:2013-2015;Crystal Palace:2015-2023;Galatasaray:2023-2024;Charlotte FC:2024-
+=Sead Kolasinac|Bosnia y Herzegovina|Defensa|1993|Schalke 04:2011-2017;Arsenal:2017-2021;Marseille (cedido):2021-2022;Atalanta:2022-
+=Hugo Lloris|Francia|Portero|1986|Nice:2005-2008;Lyon:2008-2012;Tottenham Hotspur:2012-2023;Los Angeles FC:2024-
+=Danny Welbeck|Inglaterra|Delantero|1990|Manchester United:2008-2014;Arsenal:2014-2019;Watford:2019-2020;Brighton:2020-
+=Facundo Pellistri|Uruguay|Delantero|2001|Penarol:2018-2020;Manchester United:2020-2025;Panathinaikos:2025-
+=Mauro Icardi|Argentina|Delantero|1993|Sampdoria:2011-2013;Inter Milan:2013-2019;Paris Saint-Germain:2019-2021;Galatasaray:2021-
+=Georginio Wijnaldum|Países Bajos|Mediocampista|1990|Feyenoord:2007-2011;PSV Eindhoven:2011-2015;Newcastle United:2015-2016;Liverpool:2016-2021;Paris Saint-Germain:2021-2023;Al Ettifaq:2023-
+=David Ospina|Colombia|Portero|1988|Atletico Nacional:2005-2008;Nice:2008-2014;Arsenal:2014-2019;Napoli:2019-2023;Al Nassr:2023-
+=Rafael Santos Borre|Colombia|Delantero|1995|Deportivo Cali:2013-2015;Atletico Madrid:2015-2016;River Plate:2018-2021;Eintracht Frankfurt:2021-2022;Werder Bremen (cedido):2022-2023;Internacional:2023-
+=David de Gea|España|Portero|1990|Atletico Madrid:2009-2011;Manchester United:2011-2023;Fiorentina:2024-
+=Edwin van der Sar|Países Bajos|Portero|1970|Ajax:1990-1999;Juventus:1999-2001;Fulham:2001-2005;Manchester United:2005-2011
+=Raphael Varane|Francia|Defensa|1993|Lens:2010-2011;Real Madrid:2011-2021;Manchester United:2021-2024;Como:2024-2025
+=Andre-Pierre Gignac|Francia|Delantero|1985|Toulouse:2004-2010;Marseille:2010-2015;Tigres UANL:2015-
+=Aitana Bonmati|España|Mediocampista|1998|Barcelona:2016-
+=Wendie Renard|Francia|Defensa|1990|Lyon:2006-
+
+# ---------- Leyendas y ex jugadores de Mentiroso (años orientativos) ----------
+~Esteban Cambiasso|Argentina|Mediocampista|1980|1996|2017
+~Óscar Ruggeri|Argentina|Defensa|1962|1980|1998
+~Willian|Brasil|Delantero|1988|2006|2024
+~Douglas Costa|Brasil|Delantero|1990|2008|2024
+~Pepe|Portugal|Defensa|1983|2001|2024
+~Jorge Valdivia|Chile|Mediocampista|1983|2002|2020
+~Samir Nasri|Francia|Mediocampista|1987|2004|2021
+~Nicolas Anelka|Francia|Delantero|1979|1996|2017
+~Laurent Blanc|Francia|Defensa|1965|1983|2003
+~Frank de Boer|Países Bajos|Defensa|1970|1988|2006
+~Rafael van der Vaart|Países Bajos|Mediocampista|1983|2000|2019
+~Dirk Kuyt|Países Bajos|Delantero|1980|1998|2017
+~Zlatko Zahovič|Eslovenia|Mediocampista|1971|1990|2006
+~Luka Jović|Serbia|Delantero|1997|2014|2025
+~Dejan Stanković|Serbia|Mediocampista|1978|1994|2013
+~Zvonimir Boban|Croacia|Mediocampista|1968|1985|2001
+~Davor Šuker|Croacia|Delantero|1968|1985|2003
+~Josip Iličić|Eslovenia|Mediocampista|1988|2007|2023
+~Robert Prosinečki|Croacia|Mediocampista|1969|1986|2004
+~Alen Bokšić|Croacia|Delantero|1970|1988|2004
+~Nicklas Bendtner|Dinamarca|Delantero|1988|2005|2021
+~Jan Koller|República Checa|Delantero|1973|1991|2010
+~Milan Baroš|República Checa|Delantero|1981|1998|2019
+~Grzegorz Krychowiak|Polonia|Mediocampista|1990|2008|2024
+~Kamil Glik|Polonia|Defensa|1988|2006|2024
+~Roman Yaremchuk|Ucrania|Delantero|1995|2012|2025
+~Erik Lamela|Argentina|Mediocampista|1992|2009|2024
+~Ever Banega|Argentina|Mediocampista|1988|2005|2024
+~Maxi Rodríguez|Argentina|Mediocampista|1981|1999|2018
+~Walter Samuel|Argentina|Defensa|1978|1996|2014
+~Roberto Ayala|Argentina|Defensa|1973|1990|2009
+~Nery Pumpido|Argentina|Portero|1957|1975|1996
+~Sergio Goycochea|Argentina|Portero|1963|1981|1999
+~Claudio Caniggia|Argentina|Delantero|1967|1985|2004
+~Ezequiel Lavezzi|Argentina|Delantero|1985|2003|2019
+~Ricardo Álvarez|Argentina|Mediocampista|1988|2006|2019
+~Salvador Cabañas|Paraguay|Delantero|1980|1999|2012
+~Justo Villar|Paraguay|Portero|1977|1996|2019
+~Diego Lugano|Uruguay|Defensa|1980|1998|2016
+~Álvaro Recoba|Uruguay|Delantero|1976|1994|2016
+~Enzo Francescoli|Uruguay|Delantero|1961|1980|1997
+~Steven N'Zonzi|Francia|Mediocampista|1988|2006|2023
+~Moussa Sissoko|Francia|Mediocampista|1989|2007|2024
+~William Gallas|Francia|Defensa|1977|1995|2014
+~Bacary Sagna|Francia|Defensa|1983|2001|2019
+~Asamoah Gyan|Ghana|Delantero|1985|2003|2019
+~John Obi Mikel|Nigeria|Mediocampista|1987|2005|2022
+~Emmanuel Eboué|Costa de Marfil|Defensa|1983|2003|2016
+~Salomon Kalou|Costa de Marfil|Delantero|1985|2003|2019
+~Serge Aurier|Costa de Marfil|Defensa|1992|2010|2024
+~Wilfried Bony|Costa de Marfil|Delantero|1988|2006|2022
+~Mohamed Diamé|Senegal|Mediocampista|1987|2005|2021
+~El Hadji Diouf|Senegal|Delantero|1981|1999|2016
+~Wael Gomaa|Egipto|Defensa|1975|1995|2015
+~Vincent Aboubakar|Camerún|Delantero|1992|2009|2025
+~Rigobert Song|Camerún|Defensa|1976|1993|2010
+~DaMarcus Beasley|Estados Unidos|Defensa|1982|2000|2019
+~Keisuke Honda|Japón|Mediocampista|1986|2004|2023
+~Harry Kewell|Australia|Delantero|1978|1995|2014
+~Josip Šimunić|Croacia|Defensa|1978|1996|2014
+~José Callejón|España|Delantero|1987|2005|2024
+~Antoine Kombouaré|Francia|Defensa|1963|1981|1998
+~Bixente Lizarazu|Francia|Defensa|1969|1988|2006
+~Youri Djorkaeff|Francia|Mediocampista|1968|1986|2006
+~Emmanuel Petit|Francia|Mediocampista|1970|1988|2004
+~Christian Karembeu|Francia|Mediocampista|1970|1989|2007
+~Sylvain Wiltord|Francia|Delantero|1974|1991|2010
+~Steve Mandanda|Francia|Portero|1985|2003|2025
+~Samir Handanović|Eslovenia|Portero|1984|2002|2024
+~Boštjan Cesar|Eslovenia|Defensa|1982|2001|2018
+~Jérôme Boateng|Alemania|Defensa|1988|2006|2024
+~Rudi Völler|Alemania|Delantero|1960|1977|1996
+~Stefan Effenberg|Alemania|Mediocampista|1968|1987|2003
+~Julian Draxler|Alemania|Mediocampista|1993|2010|2024
+~Kim Källström|Suecia|Mediocampista|1982|2001|2016
+~Ole Gunnar Solskjær|Noruega|Delantero|1973|1990|2007
+~Kolbeinn Sigþórsson|Islandia|Delantero|1990|2008|2022
+~Dele Alli|Inglaterra|Mediocampista|1996|2012|2025
+~Ross Barkley|Inglaterra|Mediocampista|1993|2010|2025
+~Gary Neville|Inglaterra|Defensa|1975|1992|2011
+~Emile Heskey|Inglaterra|Delantero|1978|1994|2016
+~Andy Cole|Inglaterra|Delantero|1971|1988|2008
+~Robbie Fowler|Inglaterra|Delantero|1975|1993|2012
+~Teddy Sheringham|Inglaterra|Delantero|1966|1983|2008
+~David Seaman|Inglaterra|Portero|1963|1981|2004
+~Sol Campbell|Inglaterra|Defensa|1974|1992|2011
+~Ledley King|Inglaterra|Defensa|1980|1998|2012
+~Owen Hargreaves|Inglaterra|Mediocampista|1981|1998|2012
+~Joe Cole|Inglaterra|Mediocampista|1981|1998|2016
+~Shaun Wright-Phillips|Inglaterra|Delantero|1981|1999|2016
+~Aaron Lennon|Inglaterra|Delantero|1987|2004|2021
+~Theo Walcott|Inglaterra|Delantero|1989|2005|2023
+~Danny Ings|Inglaterra|Delantero|1992|2010|2025
+~Nigel de Jong|Países Bajos|Mediocampista|1984|2001|2019
+~Gianluca Zambrotta|Italia|Defensa|1977|1994|2012
+~Marco Materazzi|Italia|Defensa|1973|1991|2011
+~Ricardo Quaresma|Portugal|Delantero|1983|2001|2022
+~Eric Abidal|Francia|Defensa|1979|1998|2013
+~Dragan Stojković|Serbia|Mediocampista|1965|1983|2001
+~Branislav Ivanović|Serbia|Defensa|1984|2002|2019
+~Tomáš Rosický|República Checa|Mediocampista|1980|1997|2016
+~Krzysztof Piątek|Polonia|Delantero|1995|2013|2025
+~Gareth Barry|Inglaterra|Mediocampista|1981|1998|2020
+~Andros Townsend|Inglaterra|Delantero|1991|2009|2023
+~Megan Rapinoe|Estados Unidos|Delantero|1985|2003|2023
+~Vivianne Miedema|Países Bajos|Delantero|1996|2013|2025
+
+=Mohamed Elneny|Egipto|Mediocampista|1992|Al Mokawloon:2010-2014;Basel:2014-2016;Arsenal:2016-2023;Besiktas (cedido):2020-2021;Al Jazira:2023-
+=Yannick Carrasco|Bélgica|Delantero|1993|Monaco:2010-2015;Atletico Madrid:2015-2018;Dalian Yifang:2018-2020;Atletico Madrid:2020-2023;Al Shabab:2023-
+=Fred|Brasil|Mediocampista|1993|Internacional:2012-2013;Shakhtar Donetsk:2013-2018;Manchester United:2018-2023;Fenerbahce:2023-
+
+# ---------- Pasos de carrera que faltaban en jugadores que ya estaban ----------
++Toni Kroos|Bayer Leverkusen (cedido):2009-2010
++Samuel Eto'o|Anzhi:2011-2013
++Ivan Zamorano|Club America:2001-2003
++Juan Sebastian Veron|Parma:1996-1998
++Alfredo Di Stefano|Espanyol:1964-1966
++Adriano|Roma:2010-2011
++Bruno Fernandes|Sporting CP:2017-2020
++Eduardo Vargas|Universidad de Chile:2007-2011
++Nathan Ake|Watford (cedido):2015-2016
++Denzel Dumfries|Heerenveen:2014-2018
++Mario Mandzukic|AC Milan:2020-2021
++Peter Schmeichel|Brondby:1987-1991
++Piotr Zielinski|Zaglebie Lubin:2011-2013;Empoli:2014-2016
++Alexis Mac Allister|Boca Juniors (cedido):2019-2020
++Marcos Rojo|Sporting CP:2012-2014
++Mario Kempes|Rosario Central:1973-1976
++Carlos Valderrama|Real Valladolid:1988-1991
++Florian Thauvin|Lens:2023-2024
++Dimitri Payet|Lille:2009-2011
++Randal Kolo Muani|Juventus (cedido):2025-2025
++Hakim Ziyech|Twente:2013-2016
++Weston McKennie|Leeds United (cedido):2023-2023
++Jonathan David|Gent:2018-2020
++Alvaro Morata|Galatasaray (cedido):2025-2025
++Andre Schurrle|Fulham (cedido):2018-2019
