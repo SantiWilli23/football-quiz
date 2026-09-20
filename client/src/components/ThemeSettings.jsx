@@ -1,8 +1,11 @@
 import { useTheme } from "../context/ThemeContext.jsx";
+import { useState } from "react";
 import Card from "./Card.jsx";
+import { DENSITIES, readDensity, setDensity } from "../utils/density.js";
 
 export default function ThemeSettings() {
   const { theme, setTheme, themes, shape, setShape, shapes } = useTheme();
+  const [density, setDensityState] = useState(readDensity);
 
   return (
     <Card>
@@ -63,6 +66,22 @@ export default function ThemeSettings() {
             </button>
           );
         })}
+      </div>
+
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mt-6 mb-2.5">Densidad</p>
+      <div className="grid grid-cols-2 gap-3">
+        {DENSITIES.map((d) => (
+          <button
+            key={d.id}
+            onClick={() => { setDensity(d.id); setDensityState(d.id); }}
+            className={`text-left p-3.5 rounded-card border transition-colors ${
+              density === d.id ? "border-accent bg-accent/10" : "border-border hover:border-gray-500"
+            }`}
+          >
+            <span className="text-sm font-medium">{d.label}</span>
+            <p className="text-xs text-gray-500 mt-0.5">{d.hint}</p>
+          </button>
+        ))}
       </div>
     </Card>
   );

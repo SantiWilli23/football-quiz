@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Gamepad2, Search } from "lucide-react";
 import EmptyState from "../components/EmptyState.jsx";
 import Layout from "../components/Layout.jsx";
-import { FAMILIES, FAMILY_ORDER, gamesByFamily } from "../data/gameCatalog.js";
+import { FAMILIES, FAMILY_ORDER, TIME_FILTERS, gamesByFamily, minutesOf } from "../data/gameCatalog.js";
 
 // Clases de Tailwind escritas literales a propósito (no armadas con string
 // interpolation) — el color de cada familia ya sale de --c-blue/--c-purple/
@@ -47,8 +47,10 @@ function GameTile({ href, to, label, icon: Icon, description, available, style }
 export default function Games() {
   const [query, setQuery] = useState("");
   const [only, setOnly] = useState("todos");
+  const [time, setTime] = useState("todos");
+  const timeTest = TIME_FILTERS.find((t) => t.key === time).test;
   const q = query.trim().toLowerCase();
-  const matches = (g) => !q || `${g.label} ${g.description}`.toLowerCase().includes(q);
+  const matches = (g) => timeTest(minutesOf(g)) && (!q || `${g.label} ${g.description}`.toLowerCase().includes(q));
   const visibleKeys = FAMILY_ORDER.filter((k) => (only === "todos" || only === k) && gamesByFamily(k).some(matches));
 
   return (
@@ -73,6 +75,19 @@ export default function Games() {
           />
         </div>
         <div className="flex gap-1.5 flex-wrap">
+          {TIME_FILTERS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTime(t.key)}
+              className={`px-3 py-1.5 rounded-card text-xs font-medium border transition-colors ${
+                time === t.key ? "border-accent/40 bg-accent/10 text-accent" : "border-border text-gray-400 hover:text-white hover:border-white/30"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1.5 flex-wrap">
           {[["todos", "Todos"], ...FAMILY_ORDER.map((k) => [k, FAMILIES[k].label])].map(([k, label]) => (
             <button
               key={k}
@@ -91,8 +106,8 @@ export default function Games() {
         <EmptyState
           icon={Search}
           title="No hay juegos con ese nombre"
-          hint="Probá con otra palabra o mirá todas las familias."
-          actions={[{ label: "Ver todos", onClick: () => { setQuery(""); setOnly("todos"); } }]}
+          hint="Probá con otra palabra o sacá algún filtro."
+          actions={[{ label: "Ver todos", onClick: () => { setQuery(""); setOnly("todos"); setTime("todos"); } }]}
         />
       )}
 

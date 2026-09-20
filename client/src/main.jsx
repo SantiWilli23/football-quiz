@@ -5,7 +5,11 @@ import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { GroupProvider } from "./context/GroupContext.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
+import { ToastProvider } from "./context/ToastContext.jsx";
+import { applyStoredDensity } from "./utils/density.js";
 import "./index.css";
+
+applyStoredDensity();
 
 // Registrar el service worker de una vez (no solo cuando el usuario activa
 // push, como era antes) para que la PWA sea instalable y funcione el modo
@@ -24,7 +28,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <BrowserRouter>
         <AuthProvider>
           <GroupProvider>
-            <App />
+            <ToastProvider>
+              <App />
+            </ToastProvider>
           </GroupProvider>
         </AuthProvider>
       </BrowserRouter>

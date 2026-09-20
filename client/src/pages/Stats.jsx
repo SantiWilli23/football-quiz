@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import { SkeletonCard } from "../components/Skeleton.jsx";
+import StatsCharts from "../components/StatsCharts.jsx";
 import Avatar from "../components/Avatar.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -142,6 +143,8 @@ export default function Stats() {
           </button>
         </div>
       </div>
+
+      <StatsCharts />
 
       {loading && <div className="space-y-4"><SkeletonCard /><SkeletonCard lines={2} /></div>}
 

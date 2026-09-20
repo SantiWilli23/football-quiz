@@ -50,6 +50,22 @@ export const GAMES = [
   { to: "/vida-fut", label: "Vida FUT", icon: Sparkles, description: "Jugador en Cotrero, después 3 temporadas de DT y 3 de presidente: una carrera larga en tres etapas.", family: "carrera", available: true },
 ];
 
+// Duración aproximada de una partida, en minutos. Sirve para filtrar en /juegos.
+const MINUTES = {
+  Fichado: 5, Fulbodle: 5, "Escudos borrosos": 5, Supervivencia: 10, "8a2": 15,
+  Duelos: 10, Mentiroso: 10, "Copa 8a2": 30, "Equipo-Jugador": 15, FantasyFiction: 10, "Modo DT Online": 60,
+  "Un Minuto": 1, "Arbitraje / VAR": 3, "Quiniela semanal": 5, "Campeón y descenso": 5,
+  Cotrero: 60, "Modo DT": 120, "Modo Presidente": 120, "Vida FUT": 240,
+};
+export const minutesOf = (game) => MINUTES[game.label] ?? 15;
+
+export const TIME_FILTERS = [
+  { key: "todos", label: "Cualquier duración", test: () => true },
+  { key: "corto", label: "Menos de 5 min", test: (m) => m <= 5 },
+  { key: "medio", label: "5 a 30 min", test: (m) => m > 5 && m <= 30 },
+  { key: "largo", label: "Más de 30 min", test: (m) => m > 30 },
+];
+
 export function gamesByFamily(familyKey) {
   return GAMES.filter((g) => g.family === familyKey);
 }

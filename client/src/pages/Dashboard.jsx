@@ -9,6 +9,7 @@ import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 import TutorialModal from "../components/TutorialModal.jsx";
+import ContinuePlaying, { findSavedGames } from "../components/ContinuePlaying.jsx";
 import api from "../api.js";
 
 const FAVORITES_KEY = "fq_favorite_sections";
@@ -79,6 +80,7 @@ export default function Dashboard() {
   const [showTutorial, setShowTutorial] = useState(false);
   const [pendingTrivia, setPendingTrivia] = useState(0);
   const [pendingDuels, setPendingDuels] = useState(0);
+  const [savedGames] = useState(findSavedGames);
 
   useEffect(() => {
     if (!groupId) { setGroupDetail(null); return; }
@@ -211,6 +213,8 @@ export default function Dashboard() {
           </p>
         )}
       </Card>
+
+      <ContinuePlaying items={savedGames} />
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-x-14 gap-y-12">
         <div>

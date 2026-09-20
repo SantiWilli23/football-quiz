@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useToast } from "../context/ToastContext.jsx";
 import { Check, RotateCcw, Share2, Trophy } from "lucide-react";
 import Card from "./Card.jsx";
 
@@ -9,6 +10,7 @@ export default function ResultScreen({
   score, unit, groupId, saveState, onAgain, shareText, highlight,
 }) {
   const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
 
   async function share() {
     const text = shareText || `⚽ Futotal · ${score} ${unit}`;
@@ -23,6 +25,11 @@ export default function ResultScreen({
   }
 
   const improved = saveState && saveState !== "saving" && saveState.improved;
+  const saved = saveState && saveState !== "saving";
+
+  useEffect(() => {
+    if (saved) toast(improved ? "Marca guardada · nuevo récord de la semana" : "Marca guardada");
+  }, [saved, improved, toast]);
 
   return (
     <Card className="mt-4 text-center py-10">

@@ -1335,4 +1335,38 @@ router.get("/export", async (req, res) => {
   }
 });
 
+// Puntos y aciertos propios de los últimos 30 días, para los gráficos de
+// Estadísticas. Sale de answers + questions.scheduled_date (no de mode_b) y no
+// pide groupId: es la actividad personal, sin importar el grupo.
+router.get("/my-daily", async (req, res) => {
+  try {
+    const today = todayStr();
+    const since = addDays(today, -29);
+    const result = await db.execute({
+      sql: `SELECT q.scheduled_date AS date, SUM(a.points) AS points,
+                   SUM(a.is_correct) AS correct, COUNT(*) AS total
+            FROM answers a JOIN questions q ON q.id = a.question_id
+            WHERE a.user_id = ? AND q.scheduled_date >= ? AND q.scheduled_date <= ?
+            GROUP BY q.scheduled_date ORDER BY q.scheduled_date`,
+      args: [req.userId, since, today],
+    });
+    const byDate = new Map(result.rows.map((r) => [r.date, r]));
+    const days = [];
+    for (let i = 29; i >= 0; i--) {
+      const date = addDays(today, -i);
+      const r = byDate.get(date);
+      days.push({
+        date,
+        points: r ? Number(r.points) : 0,
+        correct: r ? Number(r.correct) : 0,
+        total: r ? Number(r.total) : 0,
+      });
+    }
+    res.json({ days });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 export default router;

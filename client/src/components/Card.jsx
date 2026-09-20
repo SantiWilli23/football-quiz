@@ -8,9 +8,9 @@
 //   - "feature": lo único destacado de la pantalla — borde de acento y
 //                fondo con degradé. Usar como mucho una vez por pantalla.
 const VARIANTS = {
-  panel: "bg-panel border border-border rounded-2xl p-6",
+  panel: "bg-panel border border-border rounded-2xl card-pad",
   row: "border-b border-border last:border-0 py-3",
-  feature: "border border-accent/40 rounded-2xl p-6 bg-gradient-to-br from-accent/10 to-transparent",
+  feature: "border border-accent/40 rounded-2xl card-pad bg-gradient-to-br from-accent/10 to-transparent",
 };
 
 export default function Card({ children, className = "", variant = "panel" }) {

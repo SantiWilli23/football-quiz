@@ -6,6 +6,7 @@ import Register from "./pages/Register.jsx";
 import Splash from "./pages/Splash.jsx";
 import InvitePreview from "./pages/InvitePreview.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
+import CommandPalette from "./components/CommandPalette.jsx";
 
 // Todo lo que no hace falta para el primer pantallazo (login/splash/panel) se
 // separa en su propio chunk — el bundle venía creciendo con cada juego nuevo
@@ -67,6 +68,8 @@ function PublicRoute({ children }) {
 
 export default function App() {
   return (
+    <>
+    <CommandPalette />
     <Routes>
       <Route
         path="/login"
@@ -303,5 +306,6 @@ export default function App() {
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }
