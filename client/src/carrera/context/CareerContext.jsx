@@ -732,7 +732,7 @@ export function CareerProvider({ children }) {
     setState((s) => ({
       ...s,
       scoutMissions: [...(s.scoutMissions || []), mission],
-      news: [`🧳 Mandaste al ojeador a investigar a ${player.name} (informe en ${mission.resolveWeek - s.week} semana${mission.resolveWeek - s.week === 1 ? "" : "s"}).`, ...s.news].slice(0, 8),
+      news: [`🧳 Mandaste al ojeador a investigar a ${player.name} (viaja a la liga ~${mission.days} días, vuelve en la jornada ${mission.resolveWeek}).`, ...s.news].slice(0, 8),
     }));
     return { success: true, mission };
   }
@@ -1030,7 +1030,7 @@ export function CareerProvider({ children }) {
           ...next,
           scoutReports,
           scoutMissions: (next.scoutMissions || []).filter((m) => m.resolveWeek > next.week),
-          news: [`📋 Llegó el informe de scouting sobre ${reportedNames.join(", ")} (y varios compañeros de liga).`, ...next.news].slice(0, 8),
+          news: [`📋 Llegó el informe de scouting sobre ${reportedNames.join(", ")} (más ${Math.max(0, dueMissions.reduce((n, m) => n + m.playerIds.length - 1, 0))} jugadores de su liga).`, ...next.news].slice(0, 8),
         };
       }
 

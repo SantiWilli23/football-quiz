@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useCareer } from "../context/CareerContext.jsx";
 import { teams, teamById } from "../data/teams.js";
 import { players as allPlayers } from "../data/players.js";
-import { formatRange } from "../engine/scouting.js";
+import { formatRange, reportFor } from "../engine/scouting.js";
 import { HINT_LABEL } from "../engine/transferMarket.js";
 import Scouts from "./Scouts.jsx";
 
@@ -10,6 +10,7 @@ function findAnyPlayer(state, playerId) {
   return state.squad.find((p) => p.id === playerId) || allPlayers.find((p) => p.id === playerId);
 }
 
+const LEAGUE_OPTIONS = [["premier", "Premier League"], ["laliga", "La Liga"], ["seriea", "Serie A"], ["bundesliga", "Bundesliga"]];
 const ALL_POSITIONS = [...new Set(allPlayers.map((p) => p.position))].sort();
 
 export default function Transfers() {
@@ -19,9 +20,15 @@ export default function Transfers() {
     toggleWatchlist, respondToIncomingOffer, sendScoutMission,
   } = useCareer();
   const [subTab, setSubTab] = useState("mercado");
-  const [teamId, setTeamId] = useState(teams.find((t) => t.id !== team.id).id);
+  const [leagueFilter, setLeagueFilter] = useState("");
+  const [teamId, setTeamId] = useState("");
   const [query, setQuery] = useState("");
   const [posFilter, setPosFilter] = useState("");
+  const [ageMin, setAgeMin] = useState("");
+  const [ageMax, setAgeMax] = useState("");
+  const [ovrMin, setOvrMin] = useState("");
+  const [ovrMax, setOvrMax] = useState("");
+  const [availability, setAvailability] = useState(""); // "" | contract | scouted
   const [target, setTarget] = useState(null);
 
   const windowOpen = isTransferWindowOpen();
@@ -36,23 +43,44 @@ export default function Transfers() {
   const pendingIncoming = incomingOffers.filter((o) => o.status === "pending");
   const releaseClauses = state.releaseClauses || {};
 
-  // Con búsqueda activa recorremos TODAS las ligas (para no tener que
-  // clickear equipo por equipo buscando a alguien); sin búsqueda, se navega
-  // por plantel como antes.
-  const searching = query.trim().length > 0;
+  // Buscador de jugadores: filtra por liga, club, edad, OVR (solo entre los
+  // scouteados — al resto no se le conoce el nivel) y disponibilidad. Sin
+  // filtros muestra los mejores del mundo.
   const pool = useMemo(
-    () => (searching ? allPlayers : allPlayers.filter((p) => p.teamId === teamId)).filter((p) => !ownedIds.has(p.id)),
+    () => allPlayers.filter((p) => !ownedIds.has(p.id)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [teamId, searching, (state.acquired || []).length, state.squad.length]
+    [(state.acquired || []).length, state.squad.length]
   );
-  const filtered = useMemo(() => {
+  const clubsForLeague = useMemo(
+    () => teams.filter((t) => t.id !== team.id && (!leagueFilter || t.league === leagueFilter)),
+    [leagueFilter, team.id]
+  );
+  const scoutReports = state.scoutReports || {};
+  const { filtered, totalMatches } = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return pool
+    const aMin = ageMin === "" ? null : Number(ageMin);
+    const aMax = ageMax === "" ? null : Number(ageMax);
+    const oMin = ovrMin === "" ? null : Number(ovrMin);
+    const oMax = ovrMax === "" ? null : Number(ovrMax);
+    const list = pool
       .filter((p) => !q || p.name.toLowerCase().includes(q))
       .filter((p) => !posFilter || p.position === posFilter)
-      .sort((a, b) => b.ovr - a.ovr)
-      .slice(0, 40);
-  }, [pool, query, posFilter]);
+      .filter((p) => !teamId || p.teamId === teamId)
+      .filter((p) => !leagueFilter || teamById(p.teamId)?.league === leagueFilter)
+      .filter((p) => aMin == null || p.age >= aMin)
+      .filter((p) => aMax == null || p.age <= aMax)
+      .filter((p) => {
+        if (oMin == null && oMax == null) return true;
+        const r = reportFor(scoutReports, p);
+        if (!r) return false; // sin scoutear no se le conoce el OVR
+        const mid = (r.ovrRange[0] + r.ovrRange[1]) / 2;
+        return (oMin == null || mid >= oMin) && (oMax == null || mid <= oMax);
+      })
+      .filter((p) => availability !== "contract" || p.contractYears <= 1)
+      .filter((p) => availability !== "scouted" || !!reportFor(scoutReports, p))
+      .sort((a, b) => b.ovr - a.ovr);
+    return { filtered: list.slice(0, 50), totalMatches: list.length };
+  }, [pool, query, posFilter, teamId, leagueFilter, ageMin, ageMax, ovrMin, ovrMax, availability, scoutReports]);
 
   const hiredScouts = state.hiredScouts || [];
   const scoutMissions = state.scoutMissions || [];
@@ -103,45 +131,73 @@ export default function Transfers() {
 
       {subTab === "mercado" && (
         <>
-          <div className="flex flex-wrap gap-3 items-center">
-            <select
-              value={teamId}
-              onChange={(e) => setTeamId(e.target.value)}
-              disabled={searching}
-              title={searching ? "Al buscar por nombre se mira en todos los equipos" : undefined}
-              className="bg-panel border border-border rounded-2xl px-4 py-3 text-sm max-w-[220px] disabled:opacity-40"
-            >
-              {teams.filter((t) => t.id !== team.id).map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-            <select value={posFilter} onChange={(e) => setPosFilter(e.target.value)} className="bg-panel border border-border rounded-2xl px-4 py-3 text-sm">
-              <option value="">Cualquier posición</option>
-              {ALL_POSITIONS.map((pos) => <option key={pos} value={pos}>{pos}</option>)}
-            </select>
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar jugador en todas las ligas…"
-              className="bg-panel border border-border rounded-2xl px-4 py-3 text-sm flex-1 min-w-[160px]"
-            />
+          <div className="bg-panel border border-border rounded-2xl p-4 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">🔍 Buscar jugadores</p>
+            <div className="flex flex-wrap gap-3 items-center">
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Nombre del jugador…"
+                className="bg-bg border border-border rounded-2xl px-4 py-2.5 text-sm flex-1 min-w-[160px]"
+              />
+              <select
+                value={leagueFilter}
+                onChange={(e) => { setLeagueFilter(e.target.value); setTeamId(""); }}
+                className="bg-bg border border-border rounded-2xl px-3 py-2.5 text-sm"
+              >
+                <option value="">Todas las ligas</option>
+                {LEAGUE_OPTIONS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+              </select>
+              <select value={teamId} onChange={(e) => setTeamId(e.target.value)} className="bg-bg border border-border rounded-2xl px-3 py-2.5 text-sm max-w-[200px]">
+                <option value="">Todos los clubes</option>
+                {clubsForLeague.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+              <select value={posFilter} onChange={(e) => setPosFilter(e.target.value)} className="bg-bg border border-border rounded-2xl px-3 py-2.5 text-sm">
+                <option value="">Cualquier posición</option>
+                {ALL_POSITIONS.map((pos) => <option key={pos} value={pos}>{pos}</option>)}
+              </select>
+            </div>
+            <div className="flex flex-wrap gap-3 items-center text-xs text-gray-400">
+              <span>Edad</span>
+              <input type="number" min={15} max={45} value={ageMin} onChange={(e) => setAgeMin(e.target.value)} placeholder="mín" className="w-16 bg-bg border border-border rounded-xl px-2 py-2 text-sm" />
+              <span>a</span>
+              <input type="number" min={15} max={45} value={ageMax} onChange={(e) => setAgeMax(e.target.value)} placeholder="máx" className="w-16 bg-bg border border-border rounded-xl px-2 py-2 text-sm" />
+              <span className="ml-2" title="Solo filtra entre los jugadores scouteados">OVR (scouteados)</span>
+              <input type="number" min={30} max={99} value={ovrMin} onChange={(e) => setOvrMin(e.target.value)} placeholder="mín" className="w-16 bg-bg border border-border rounded-xl px-2 py-2 text-sm" />
+              <span>a</span>
+              <input type="number" min={30} max={99} value={ovrMax} onChange={(e) => setOvrMax(e.target.value)} placeholder="máx" className="w-16 bg-bg border border-border rounded-xl px-2 py-2 text-sm" />
+              <select value={availability} onChange={(e) => setAvailability(e.target.value)} className="ml-auto bg-bg border border-border rounded-2xl px-3 py-2 text-sm text-gray-300">
+                <option value="">Mercado: todos</option>
+                <option value="contract">Último año de contrato</option>
+                <option value="scouted">Solo scouteados</option>
+              </select>
+            </div>
+            <p className="text-[11px] text-gray-600">{totalMatches} jugador{totalMatches === 1 ? "" : "es"} — mostrando los {filtered.length} de mayor OVR.</p>
           </div>
-          {searching && (
-            <p className="text-xs text-gray-600 -mt-2">Buscando en todos los equipos por "{query}".</p>
-          )}
+
+          <div className="hidden md:flex items-center gap-3 px-4 text-[10px] uppercase tracking-wide text-gray-600">
+            <span className="w-5" />
+            <span className="w-9" />
+            <span className="flex-1">Jugador</span>
+            <span className="w-16 text-center">OVR act.</span>
+            <span className="w-16 text-center">OVR pot.</span>
+            <span className="w-20 text-center">Valor</span>
+            <span className="w-[170px]" />
+          </div>
 
           <div className="space-y-2">
             {filtered.map((p) => {
-              const report = state.scoutReports[p.id];
+              const report = reportFor(scoutReports, p);
               const cooling = isOnOfferCooldown(p.id);
               const watched = watchlist.includes(p.id);
               const clause = releaseClauses[p.id];
+              const scouting = scoutMissions.some((m) => m.playerIds.includes(p.id));
               return (
                 <div key={p.id} className="bg-panel border border-border rounded-2xl px-4 py-3 flex items-center gap-3 flex-wrap sm:flex-nowrap">
                   <button
                     onClick={() => toggleWatchlist(p.id)}
-                    title={watched ? "Quitar de seguimiento" : "Seguir jugador"}
-                    className={`text-lg leading-none shrink-0 ${watched ? "text-amber" : "text-gray-600 hover:text-gray-300"}`}
+                    title={watched ? "Quitar de la Central de Transferencias" : "Poner en la Central de Transferencias"}
+                    className={`text-lg leading-none shrink-0 w-5 ${watched ? "text-amber" : "text-gray-600 hover:text-gray-300"}`}
                   >
                     {watched ? "★" : "☆"}
                   </button>
@@ -151,34 +207,36 @@ export default function Transfers() {
                   </div>
 
                   <div className="min-w-0 flex-1 basis-full sm:basis-auto">
-                    <p className="text-sm font-semibold truncate">{p.name}</p>
+                    <p className="text-sm font-semibold truncate">{p.name}{report?.isPublic && <span className="ml-1.5 text-[10px] text-accent" title="Figura mundial: ya viene scouteado">● conocido</span>}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      {searching && <>{teamById(p.teamId)?.name} · </>}
-                      {p.age} años · OVR est. {report ? formatRange(report.ovrRange) : <span className="text-gray-600">sin scoutear</span>}
+                      {teamById(p.teamId)?.name} · {p.age} años
+                      {clause != null && <span className="text-amber ml-1.5">· cláusula €{clause}M</span>}
                       {p.contractYears <= 1 && <span className="text-amber ml-1.5">· último año de contrato</span>}
                     </p>
                   </div>
 
-                  <div className="hidden md:flex flex-col items-center w-20 shrink-0">
-                    <span className="text-[10px] uppercase tracking-wide text-gray-600">Valor</span>
+                  <div className="flex flex-col items-center w-16 shrink-0">
+                    <span className="md:hidden text-[10px] uppercase tracking-wide text-gray-600">OVR act.</span>
+                    <span className="text-sm font-semibold">{report ? formatRange(report.ovrRange) : <span className="text-gray-600">—</span>}</span>
+                  </div>
+
+                  <div className="flex flex-col items-center w-16 shrink-0">
+                    <span className="md:hidden text-[10px] uppercase tracking-wide text-gray-600">OVR pot.</span>
+                    <span className="text-sm text-gray-300">{report?.potentialEstimate != null ? `~${report.potentialEstimate}` : <span className="text-gray-600">—</span>}</span>
+                  </div>
+
+                  <div className="flex flex-col items-center w-20 shrink-0">
+                    <span className="md:hidden text-[10px] uppercase tracking-wide text-gray-600">Valor</span>
                     <span className="text-sm font-semibold">€{p.value}M</span>
                   </div>
 
-                  <div className="hidden md:flex flex-col items-center w-24 shrink-0">
-                    <span className="text-[10px] uppercase tracking-wide text-gray-600">Cláusula</span>
-                    {clause != null
-                      ? <span className="text-amber text-sm font-medium">€{clause}M</span>
-                      : <span className="text-gray-600 text-sm">—</span>
-                    }
-                  </div>
-
-                  <div className="shrink-0 ml-auto sm:ml-0 flex items-center gap-1.5">
-                    {!report && !scoutMissions.some((m) => m.playerIds.includes(p.id)) && (
+                  <div className="shrink-0 ml-auto sm:ml-0 flex items-center gap-1.5 sm:w-[170px] justify-end">
+                    {!report && !scouting && (
                       hiredScouts.length ? (
                         <select
                           defaultValue=""
                           onChange={(e) => { if (e.target.value) sendScoutMission(e.target.value, p.id); e.target.value = ""; }}
-                          title="Mandar a un ojeador a investigarlo"
+                          title="Mandar a un ojeador a la liga de este jugador"
                           className="text-sm font-medium px-3 py-2.5 rounded-2xl bg-panel border border-border text-gray-300 hover:border-gray-500 transition-colors"
                         >
                           <option value="">🔎 Scoutear…</option>
@@ -190,9 +248,7 @@ export default function Transfers() {
                         <span className="text-xs text-gray-600" title="Contratá un ojeador en la pestaña Scouting">🔎 sin ojeadores</span>
                       )
                     )}
-                    {scoutMissions.some((m) => m.playerIds.includes(p.id)) && (
-                      <span className="text-xs text-gray-600 px-2">🔎 en camino…</span>
-                    )}
+                    {scouting && <span className="text-xs text-gray-600 px-2">🔎 en camino…</span>}
                     {cooling ? (
                       <span className="text-xs text-gray-600 px-3 py-2.5 inline-block" title="Te rechazaron hace poco">
                         Esperá {weeksUntilCanOffer(p.id)} sem.
@@ -202,7 +258,7 @@ export default function Transfers() {
                         onClick={() => setTarget(p)}
                         className="text-sm font-medium px-4 py-2.5 rounded-2xl bg-accent/10 text-accent border border-accent/40 hover:bg-accent/20 transition-colors whitespace-nowrap"
                       >
-                        Ofertar
+                        Fichar
                       </button>
                     )}
                   </div>
@@ -210,12 +266,12 @@ export default function Transfers() {
               );
             })}
             {!filtered.length && (
-              <p className="px-4 py-6 text-center text-gray-600 text-sm bg-panel border border-border rounded-2xl">Sin resultados.</p>
+              <p className="px-4 py-6 text-center text-gray-600 text-sm bg-panel border border-border rounded-2xl">Sin resultados con esos filtros.</p>
             )}
           </div>
 
           <p className="text-xs text-gray-600">
-            El OVR de un jugador ajeno es una estimación — mandá un reclutador en la pestaña Scouting antes de ofertar. La cláusula (🟡) permite pagarla directamente y el club está obligado a vender.
+            Las figuras mundiales (●) ya vienen scouteadas. Para el resto, el OVR es un "—" hasta que mandes un ojeador: viaja a la liga del jugador entre 3 y 14 días (más rápido cuanto más conocido) y trae informes de varios jugadores de esa liga. La estrella lo suma a la Central de Transferencias.
           </p>
         </>
       )}
@@ -238,7 +294,7 @@ export default function Transfers() {
         <OfferFlow
           player={target}
           budget={state.budget}
-          report={state.scoutReports[target.id]}
+          report={reportFor(state.scoutReports, target)}
           releaseClause={releaseClauses[target.id]}
           windowOpen={windowOpen}
           isOnOfferCooldown={isOnOfferCooldown}
@@ -309,7 +365,7 @@ function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, 
                 </div>
                 <div className="flex gap-1.5 shrink-0">
                   <button onClick={() => onOffer(p)} className="text-xs font-medium px-3 py-1.5 rounded-full bg-accent/10 text-accent border border-accent/40 hover:bg-accent/20 transition-colors">
-                    Ofertar
+                    Fichar
                   </button>
                   <button onClick={() => onUnwatch(id)} className="text-xs px-2.5 py-1.5 rounded-full border border-border text-gray-500 hover:text-white hover:border-gray-500 transition-colors">
                     Quitar

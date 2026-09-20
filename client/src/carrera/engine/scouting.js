@@ -27,10 +27,21 @@ export const SCOUT_SPECIALTIES = {
 
 export const MAX_SCOUTS = 3;
 export const SPECIALTY_GAP = 10;
-export const SCOUT_MISSION_MIN_WEEKS = 1;
-export const SCOUT_MISSION_MAX_WEEKS = 3;
-// Cuántos compañeros de liga trae de yapa el informe del jugador pedido.
-export const SCOUT_LEAGUEMATES_COUNT = 5;
+// El viaje dura entre 3 y 14 días (cada jornada son 7): cuanto más conocido
+// es el jugador pedido, más rápido se lo ubica; a los desconocidos hay que
+// ir a buscarlos a canchas chicas. Y cuantos más días se queda el ojeador
+// en la liga, más jugadores de ahí trae en el informe.
+export const SCOUT_MISSION_MIN_DAYS = 3;
+export const SCOUT_MISSION_MAX_DAYS = 14;
+export const DAYS_PER_WEEK = 7;
+
+// Los jugadores archiconocidos (Mbappé, Haaland...) ya vienen scouteados de
+// entrada: no hace falta mandar a nadie a confirmar que son buenos.
+export const FAMOUS_OVR = 86;
+export const FAMOUS_VALUE = 60;
+export function isFamous(player) {
+  return !!player && (player.ovr >= FAMOUS_OVR || player.value >= FAMOUS_VALUE);
+}
 
 function costRangeFor(specialty) {
   return specialty === "both" ? [15, 15] : [5, 7];
@@ -75,6 +86,25 @@ export function scoutPlayer(specialty, player) {
   };
 }
 
+export function defaultReportFor(player) {
+  const sellerTeam = teamById(player.teamId);
+  return {
+    specialty: "public",
+    isPublic: true,
+    playerId: player.id,
+    ovrRange: [clamp(player.ovr - 1, 30, 99), clamp(player.ovr + 1, 30, 99)],
+    potentialEstimate: player.potential,
+    suggestedOffer: sellerTeam ? askingPrice(player, sellerTeam) : player.value,
+  };
+}
+
+// Informe efectivo de un jugador: el que pidió el DT o, si es una figura
+// mundial, el "de dominio público".
+export function reportFor(reports, player) {
+  if (!player) return null;
+  return (reports && reports[player.id]) || (isFamous(player) ? defaultReportFor(player) : null);
+}
+
 // Combina reportes previos con uno nuevo: el rango de OVR sólo se angosta,
 // el potencial se promedia hacia el nuevo dato.
 export function mergeReports(prev, next) {
@@ -95,14 +125,24 @@ export function formatRange([lo, hi]) {
 
 // Arma la misión de scouting: como el ojeador ya viaja hasta la liga del
 // jugador pedido, aprovecha para traer informes de varios compañeros de
-// liga más. El informe completo recién está listo 1-3 semanas después.
+// liga más. Vuelve pasados los días del viaje: en la próxima jornada, o en
+// dos si el viaje pasa de una semana.
+function missionDaysFor(target) {
+  if (isFamous(target)) return rnd(SCOUT_MISSION_MIN_DAYS, 5);
+  if (target.ovr >= 78) return rnd(4, 8);
+  if (target.ovr >= 70) return rnd(6, 11);
+  return rnd(9, SCOUT_MISSION_MAX_DAYS);
+}
+
 export function buildScoutMission(scout, targetPlayer, week, allPlayers) {
   const targetTeam = teamById(targetPlayer.teamId);
   const league = targetTeam?.league;
+  const days = missionDaysFor(targetPlayer);
+  const count = clamp(Math.round(3 + days * 0.8), 4, 14);
   const leaguemates = league
     ? sample(
-        allPlayers.filter((p) => p.teamId !== targetPlayer.teamId && teamById(p.teamId)?.league === league),
-        SCOUT_LEAGUEMATES_COUNT
+        allPlayers.filter((p) => p.id !== targetPlayer.id && teamById(p.teamId)?.league === league),
+        count
       )
     : [];
   return {
@@ -111,8 +151,10 @@ export function buildScoutMission(scout, targetPlayer, week, allPlayers) {
     scoutSpecialty: scout.specialty,
     targetPlayerId: targetPlayer.id,
     targetPlayerName: targetPlayer.name,
+    league,
+    days,
     playerIds: [targetPlayer.id, ...leaguemates.map((p) => p.id)],
     requestedWeek: week,
-    resolveWeek: week + rnd(SCOUT_MISSION_MIN_WEEKS, SCOUT_MISSION_MAX_WEEKS),
+    resolveWeek: week + Math.ceil(days / DAYS_PER_WEEK),
   };
 }

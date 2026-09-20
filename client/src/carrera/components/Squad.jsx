@@ -3,6 +3,7 @@ import { useCareer } from "../context/CareerContext.jsx";
 import Formation from "./Formation.jsx";
 import { ALL_POSITIONS, trainingTier, trainingTierLabel } from "../engine/positions.js";
 import { getInjury } from "../engine/injuryEngine.js";
+import { reportFor } from "../engine/scouting.js";
 
 const GROUPS = [
   { id: "GK",  label: "Arqueros",    positions: ["GK"],             color: "amber"   },
@@ -141,7 +142,7 @@ export default function Squad() {
                         key={p.id}
                         player={p}
                         level={levelOf(p.id)}
-                        report={state.scoutReports[p.id]}
+                        report={reportFor(state.scoutReports, p)}
                         week={state.week}
                         injury={getInjury(state.injuries || [], p.id)}
                         morale={(state.morale || {})[p.id] ?? 70}
