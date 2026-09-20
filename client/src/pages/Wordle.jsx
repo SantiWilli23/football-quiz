@@ -310,7 +310,7 @@ export default function Wordle() {
                 <p className="text-sm text-gray-400 mt-2">
                   {game.status === "won"
                     ? `Lo adivinaste en ${game.attemptsUsed} de ${game.maxAttempts} intentos.`
-                    : "Se acabaron los intentos."}
+                    : game.attemptsUsed < game.maxAttempts ? "Te rendiste." : "Se acabaron los intentos."}
                   {" "}{game.points > 0 ? `+${game.points} pts` : "Sin puntos esta vez."}
                 </p>
                 {groupId && groupSave && (

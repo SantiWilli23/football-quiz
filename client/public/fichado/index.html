@@ -1,32 +1,3 @@
 <!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <title>Fichado</title>
-
-    <!-- Fichado se sirve desde el mismo origen que el resto de Futotal y
-         comparte localStorage (ver weeklyChallenge.ts) — el tema elegido en
-         Configuración también aplica acá. Se lee ANTES del primer paint
-         para no arrancar en Nocturno y saltar al tema elegido después,
-         mismo patrón que client/index.html. -->
-    <script>
-      (function () {
-        try {
-          var t = localStorage.getItem("fq_theme");
-          if (t === "azul" || t === "bengala") document.documentElement.setAttribute("data-theme", t);
-          var s = localStorage.getItem("fq_shape");
-          if (s === "cancha") document.documentElement.setAttribute("data-shape", s);
-        } catch (e) {}
-      })();
-    </script>
-    <script type="module" crossorigin src="/fichado/assets/index-DkS-EUwR.js"></script>
-    <link rel="stylesheet" crossorigin href="/fichado/assets/index-_Yj0b593.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
-</html>
+<html lang="es"><head><meta charset="UTF-8" /><meta http-equiv="refresh" content="0; url=/fulbodle" /><title>Fichado</title>
+<script>location.replace("/fulbodle");</script></head><body></body></html>

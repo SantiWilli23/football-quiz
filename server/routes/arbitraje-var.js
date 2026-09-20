@@ -14,9 +14,9 @@ router.use(requireAuth);
 // generan debate en cualquier transmisión, así que cada una trae un
 // "why" que explica el criterio exacto que la resuelve (se muestra recién
 // después de responder, junto con la decisión correcta). "diagram" clasifica
-// el tipo de jugada para el dibujo esquemático de la cancha — no hay fotos
-// reales de partidos disponibles, así que se ilustra la posición/acción con
-// un diagrama genérico por categoría en vez de texto solo.
+// el tipo de jugada para el dibujo esquemático de la cancha — el cliente
+// muestra una foto real de esa categoría (ver PHOTOS más abajo) y, si no carga,
+// un diagrama genérico.
 const DECISIONS = ["Sigue el juego", "Amarilla", "Roja", "Penal", "Fuera de juego", "Gol anulado"];
 
 const SITUATIONS = [
@@ -42,8 +42,29 @@ const SITUATIONS = [
   { id: 20, text: "El defensor, último hombre, jala de la camiseta al delantero que se le escapa mano a mano con el arquero ya batido — el delantero no cae, sigue corriendo y remata desviado.", correct: 2, diagram: "violent", why: "Cortar una ocasión manifiesta de gol como último hombre es roja directa (DOGSO) aunque el delantero no haya caído ni la jugada terminara en gol — se sanciona la infracción a la ocasión, no el resultado final del remate." },
 ];
 
+// Fotos reales de Wikimedia Commons (licencias libres, se sirven directo desde
+// commons.wikimedia.org con Special:FilePath, sin copiarlas al repo). Cada
+// categoría de jugada tiene un par de fotos de esa situación real; la
+// situación elige una según su id. Si una foto no carga, el cliente cae al
+// diagrama esquemático.
+const PHOTOS = {
+  area_foul: ["Penalty_save_on_the_match_of_UEFA_league.jpg", "Gianluigi_Buffon_Euro_2012_vs_England_penalty.JPG"],
+  protest: ["Martin_Atkinson_yellow_card_Carr_Rosicky.jpg", "Yellow_card_at_Galaxy_at_Earthquakes_2010-08-21_1.JPG"],
+  tackle: ["Slidetackle.JPG", "Soccer_player_pushes_opponent.jpg"],
+  offside: ["Offside_(7080859329).jpg", "Assistant_referee_15abr2007.jpg"],
+  handball: ["Clemens_Schüttengruber,_Fußballschiedsrichter_(02).jpg"],
+  goal_review: ["VAR_decision.jpg", "Baldomero_Toledo_checks_VAR_-_Seattle_Sounders_vs._Sporting_Kansas_City.jpg"],
+  violent: ["2009-3-14_ManUtd_vs_LFC_Red_Card_Vidic.JPG", "Cardiff-Millwall_redcard.jpg"],
+};
+
+function photoFor(s) {
+  const list = PHOTOS[s.diagram] || [];
+  if (!list.length) return null;
+  return list[s.id % list.length];
+}
+
 function publicSituation(s) {
-  return { id: s.id, text: s.text, options: DECISIONS, diagram: s.diagram };
+  return { id: s.id, text: s.text, options: DECISIONS, diagram: s.diagram, photo: photoFor(s) };
 }
 
 router.get("/situation", (req, res) => {

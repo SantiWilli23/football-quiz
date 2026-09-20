@@ -7,7 +7,11 @@ import ResultScreen from "../components/ResultScreen.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 
-const ROUND_SECONDS = 60;
+// Arrancás con 20 segundos: cada acierto suma y cada error resta.
+const ROUND_SECONDS = 20;
+const BONUS_SECONDS = 3;
+const PENALTY_SECONDS = 3;
+const MAX_SECONDS = 60;
 
 export default function UnMinuto() {
   const { activeGroupId: groupId } = useGroups();
@@ -17,6 +21,7 @@ export default function UnMinuto() {
   const [correctCount, setCorrectCount] = useState(0);
   const [answeredCount, setAnsweredCount] = useState(0);
   const [feedback, setFeedback] = useState(null); // "correct" | "wrong"
+  const [delta, setDelta] = useState(null); // {n, key}: último ajuste de segundos
   const [secondsLeft, setSecondsLeft] = useState(ROUND_SECONDS);
   const [loadingQuestion, setLoadingQuestion] = useState(false);
   const [saveState, setSaveState] = useState(null); // null | "saving" | {improved}
@@ -62,6 +67,7 @@ export default function UnMinuto() {
     setAnsweredCount(0);
     setSeenIds([]);
     setSecondsLeft(ROUND_SECONDS);
+    setDelta(null);
     setSaveState(null);
     fetchQuestion([]);
     timerRef.current = setInterval(() => {
@@ -76,7 +82,7 @@ export default function UnMinuto() {
   }
 
   useEffect(() => {
-    if (phase === "playing" && secondsLeft === 0) finish();
+    if (phase === "playing" && secondsLeft <= 0) finish();
   }, [phase, secondsLeft, finish]);
 
   useEffect(() => () => clearInterval(timerRef.current), []);
@@ -88,6 +94,9 @@ export default function UnMinuto() {
       setFeedback(data.correct ? "correct" : "wrong");
       setAnsweredCount((c) => c + 1);
       if (data.correct) setCorrectCount((c) => c + 1);
+      const change = data.correct ? BONUS_SECONDS : -PENALTY_SECONDS;
+      setDelta({ n: change, key: Date.now() });
+      setSecondsLeft((s) => Math.max(0, Math.min(MAX_SECONDS, s + change)));
       const nextSeen = [...seenIds, question.id];
       setSeenIds(nextSeen);
       setTimeout(() => {
@@ -102,7 +111,7 @@ export default function UnMinuto() {
     <Layout>
       <h1 className="text-xl sm:text-2xl font-bold mb-1">Un Minuto</h1>
       <p className="text-gray-400 text-sm mb-4">
-        60 segundos, la mayor cantidad de aciertos posible. Cada semana se guarda tu mejor marca para el ranking de retos del grupo.
+        Arrancás con {ROUND_SECONDS} segundos: cada acierto suma {BONUS_SECONDS}s y cada error resta {PENALTY_SECONDS}s. Cuando el reloj llega a cero, se acabó. Tu mejor marca de la semana suma al ranking de retos del grupo.
       </p>
 
       <GroupSelector />
@@ -125,6 +134,11 @@ export default function UnMinuto() {
           <div className="flex items-center justify-between">
             <span className={`text-2xl font-bold tabular-nums ${secondsLeft <= 10 ? "text-red-400" : ""}`}>
               {secondsLeft}s
+              {delta && (
+                <span key={delta.key} className={`ml-2 text-sm font-semibold animate-result-pop ${delta.n > 0 ? "text-emerald" : "text-red-400"}`}>
+                  {delta.n > 0 ? "+" : ""}{delta.n}s
+                </span>
+              )}
             </span>
             <span className="text-sm text-gray-400">
               {correctCount} / {answeredCount} correctas

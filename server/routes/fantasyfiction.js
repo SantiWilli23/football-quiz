@@ -21,13 +21,63 @@ function ratingForPlayer(id) {
 // ~83) cuesta ~104, así que con 100 de presupuesto no entra cualquier
 // combinación: hay que elegir entre algunas figuras caras o completar con
 // más jugadores baratos, como cualquier fantasy real.
-function priceForPlayer(id) {
+function priceForPlayer(id, modern = false) {
   const rating = ratingForPlayer(id);
-  return Math.round(4 + ((rating - 74) / 18) * 8);
+  if (!modern) return Math.round(4 + ((rating - 74) / 18) * 8);
+  // Ligas nuevas: precios en millones de euros, curva convexa (las figuras
+  // valen mucho más que los del medio). Un plantel de 13 al azar sale ~200M.
+  const t = (rating - 74) / 18;
+  return Math.round(2 + 45 * Math.pow(t, 2.2));
 }
 
-function squadCost(playerIds) {
-  return playerIds.reduce((sum, id) => sum + priceForPlayer(id), 0);
+// Las ligas viejas (presupuesto 100) siguen con la escala vieja para no
+// romper lo que ya se armó; las nuevas arrancan con 200M.
+const isModern = (league) => league.budget_total > 100;
+const NEW_LEAGUE_BUDGET = 200;
+const STARTER_SHAPE = { Portero: 2, Defensa: 4, Mediocampista: 4, Delantero: 3 };
+
+function squadCost(playerIds, modern = false) {
+  return playerIds.reduce((sum, id) => sum + priceForPlayer(id, modern), 0);
+}
+
+let playersByPosition = null;
+async function loadPlayersByPosition() {
+  if (playersByPosition) return playersByPosition;
+  const rows = (await db.execute("SELECT id, name, position FROM ej_players")).rows;
+  const map = {};
+  const CATEGORY = { Portero: "Portero", Arquero: "Portero", Defensa: "Defensa", Mediocampista: "Mediocampista", Delantero: "Delantero", Extremo: "Delantero" };
+  for (const r of rows) {
+    const cat = CATEGORY[r.position];
+    if (cat) (map[cat] ||= []).push({ id: r.id, name: r.name, position: r.position, category: cat });
+  }
+  playersByPosition = map;
+  return map;
+}
+
+// Plantel inicial "regalado": 2 arqueros, 4 defensas, 4 medios y 3 delanteros
+// al azar cuyo valor total ronda el presupuesto (~200M) sin pasarse. Cada
+// llamada sortea uno nuevo, así que sirve también para "sortear otro".
+async function buildStarterSquad(budget, modern) {
+  const pool = await loadPlayersByPosition();
+  let best = null;
+  for (let attempt = 0; attempt < 600; attempt++) {
+    const picked = [];
+    const used = new Set();
+    for (const [pos, n] of Object.entries(STARTER_SHAPE)) {
+      const list = pool[pos] || [];
+      for (let i = 0; i < n && list.length; i++) {
+        let p;
+        do { p = list[Math.floor(Math.random() * list.length)]; } while (used.has(p.id));
+        used.add(p.id);
+        picked.push(p);
+      }
+    }
+    const cost = squadCost(picked.map((p) => p.id), modern);
+    if (cost <= budget && (!best || cost > best.cost)) best = { picked, cost };
+    if (best && best.cost >= budget * 0.94) break;
+  }
+  const squad = best.picked.map((p) => ({ ...p, price: priceForPlayer(p.id, modern) }));
+  return { squad, cost: best.cost };
 }
 
 // El mercado (vender/comprar) sólo abre miércoles y domingo.
@@ -161,8 +211,8 @@ async function serializeLeague(league, userId) {
     id: o.id,
     fromUsername: o.from_username,
     toUsername: o.to_username,
-    offerPlayer: { id: o.offer_player_id, name: namesById[o.offer_player_id] || "?", price: priceForPlayer(o.offer_player_id) },
-    wantPlayer: { id: o.want_player_id, name: namesById[o.want_player_id] || "?", price: priceForPlayer(o.want_player_id) },
+    offerPlayer: { id: o.offer_player_id, name: namesById[o.offer_player_id] || "?", price: priceForPlayer(o.offer_player_id, isModern(league)) },
+    wantPlayer: { id: o.want_player_id, name: namesById[o.want_player_id] || "?", price: priceForPlayer(o.want_player_id, isModern(league)) },
   });
 
   return {
@@ -170,6 +220,7 @@ async function serializeLeague(league, userId) {
     groupId: league.group_id,
     status: league.status,
     budgetTotal: league.budget_total,
+    unit: isModern(league) ? "M€" : "",
     squadSize: league.squad_size,
     jornada: league.jornada,
     marketOpen: isMarketOpen(),
@@ -178,7 +229,7 @@ async function serializeLeague(league, userId) {
     iJoined: !!myParticipant,
     myBudgetRemaining: myParticipant?.budget_remaining ?? null,
     mySquad: myParticipant
-      ? myParticipant.squad.map((id) => ({ id, name: namesById[id] || "?", price: priceForPlayer(id) }))
+      ? myParticipant.squad.map((id) => ({ id, name: namesById[id] || "?", price: priceForPlayer(id, isModern(league)) }))
       : null,
     standings: participants.map((p, i) => ({
       position: i + 1,
@@ -192,7 +243,7 @@ async function serializeLeague(league, userId) {
       .map((p) => ({
         userId: p.user_id,
         username: p.username,
-        squad: p.squad.map((id) => ({ id, name: namesById[id] || "?", price: priceForPlayer(id) })),
+        squad: p.squad.map((id) => ({ id, name: namesById[id] || "?", price: priceForPlayer(id, isModern(league)) })),
       })),
     tradeOffersReceived: myParticipant ? offers.filter((o) => o.to_user_id === userId).map(asOffer) : [],
     tradeOffersSent: myParticipant ? offers.filter((o) => o.from_user_id === userId).map(asOffer) : [],
@@ -234,8 +285,8 @@ router.post("/", async (req, res) => {
   if (existing.rows.length) return res.status(400).json({ error: "Ya hay una FantasyFiction en curso en este grupo" });
 
   const result = await db.execute({
-    sql: "INSERT INTO fantasy_leagues (group_id, created_by, budget_total, squad_size) VALUES (?, ?, 100, 13)",
-    args: [groupId, req.userId],
+    sql: "INSERT INTO fantasy_leagues (group_id, created_by, budget_total, squad_size) VALUES (?, ?, ?, 13)",
+    args: [groupId, req.userId, NEW_LEAGUE_BUDGET],
   });
   const league = await loadLeagueById(Number(result.lastInsertRowid));
   res.status(201).json({ league: await serializeLeague(league, req.userId) });
@@ -254,7 +305,16 @@ router.get("/:leagueId/players", async (req, res) => {
           WHERE normalized_name LIKE ? ORDER BY LENGTH(name) ASC LIMIT 8`,
     args: [`%${q}%`],
   });
-  res.json({ players: result.rows.map((p) => ({ ...p, price: priceForPlayer(p.id) })) });
+  res.json({ players: result.rows.map((p) => ({ ...p, price: priceForPlayer(p.id, isModern(league)) })) });
+});
+
+// Plantel inicial sorteado (~el presupuesto entero). Cada llamada, uno nuevo.
+router.get("/:leagueId/starter", async (req, res) => {
+  const league = await loadLeagueById(Number(req.params.leagueId));
+  if (!league) return res.status(404).json({ error: "Liga no encontrada" });
+  if (!(await assertMember(req.userId, league.group_id))) return res.status(403).json({ error: "No pertenecés a ese grupo" });
+  const { squad, cost } = await buildStarterSquad(league.budget_total, isModern(league));
+  res.json({ squad, cost, budgetTotal: league.budget_total });
 });
 
 // Arma el plantel inicial. En cuanto se suman TODOS los miembros del grupo
@@ -282,7 +342,7 @@ router.post("/:leagueId/join", async (req, res) => {
   });
   if (validPlayers.rows.length !== squad.length) return res.status(400).json({ error: "Algún jugador no existe" });
 
-  const cost = squadCost(squad);
+  const cost = squadCost(squad, isModern(league));
   if (cost > league.budget_total) {
     return res.status(400).json({ error: `Ese plantel cuesta ${cost} y tu presupuesto es ${league.budget_total}` });
   }
@@ -342,7 +402,7 @@ router.post("/:leagueId/transfer", async (req, res) => {
   const buyExists = await db.execute({ sql: "SELECT 1 FROM ej_players WHERE id = ?", args: [buyId] });
   if (!buyExists.rows.length) return res.status(400).json({ error: "Ese jugador no existe" });
 
-  const newBudget = participant.budget_remaining + priceForPlayer(sellId) - priceForPlayer(buyId);
+  const newBudget = participant.budget_remaining + priceForPlayer(sellId, isModern(league)) - priceForPlayer(buyId, isModern(league));
   if (newBudget < 0) return res.status(400).json({ error: "No te alcanza el presupuesto para ese fichaje" });
 
   const newSquad = squad.map((id) => (id === sellId ? buyId : id));

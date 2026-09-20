@@ -22,10 +22,13 @@ export default function ArbitrajeVar() {
   const [secondsLeft, setSecondsLeft] = useState(SECONDS_PER_SITUATION);
   const [loading, setLoading] = useState(false);
   const [saveState, setSaveState] = useState(null);
+  const [timed, setTimed] = useState(true); // con reloj suma al ranking semanal
+  const [photoFailed, setPhotoFailed] = useState(false);
   const timerRef = useRef(null);
   const situationRef = useRef(null);
   const seenRef = useRef([]);
   const decideRef = useRef(null);
+  const timedRef = useRef(true);
 
   const fetchSituation = useCallback(async (exclude) => {
     setLoading(true);
@@ -34,6 +37,7 @@ export default function ArbitrajeVar() {
       const { data } = await api.get("/arbitraje-var/situation", { params: { exclude: exclude.join(",") } });
       setSituation(data.situation);
       situationRef.current = data.situation;
+      setPhotoFailed(false);
       setSecondsLeft(SECONDS_PER_SITUATION);
     } catch {
       setSituation(null);
@@ -45,7 +49,7 @@ export default function ArbitrajeVar() {
   const finish = useCallback(async (finalCorrect) => {
     clearInterval(timerRef.current);
     setPhase("done");
-    if (!groupId) return;
+    if (!groupId || !timedRef.current) return;
     setSaveState("saving");
     try {
       const { data } = await api.post("/challenges/submit", {
@@ -59,7 +63,9 @@ export default function ArbitrajeVar() {
     }
   }, [groupId]);
 
-  function start() {
+  function start(withTimer) {
+    setTimed(withTimer);
+    timedRef.current = withTimer;
     setPhase("playing");
     setCorrectCount(0);
     setRound(0);
@@ -99,7 +105,7 @@ export default function ArbitrajeVar() {
   useEffect(() => { decideRef.current = decide; }, [decide]);
 
   useEffect(() => {
-    if (phase !== "playing" || !situation || feedback) return;
+    if (phase !== "playing" || !situation || feedback || !timed) return;
     timerRef.current = setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
@@ -112,7 +118,7 @@ export default function ArbitrajeVar() {
     }, 1000);
     return () => clearInterval(timerRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [situation, phase]);
+  }, [situation, phase, timed]);
 
   useEffect(() => () => clearInterval(timerRef.current), []);
 
@@ -123,7 +129,7 @@ export default function ArbitrajeVar() {
         Arbitraje / VAR
       </h1>
       <p className="text-gray-400 text-sm mb-4">
-        {TOTAL_SITUATIONS} jugadas, {SECONDS_PER_SITUATION} segundos cada una. Tu decisión contra la del VAR.
+        {TOTAL_SITUATIONS} jugadas. Tu decisión contra la del VAR, con reloj de {SECONDS_PER_SITUATION} segundos por jugada (que suma al ranking semanal) o sin tiempo, para practicar tranquilo.
       </p>
 
       <GroupSelector />
@@ -134,20 +140,28 @@ export default function ArbitrajeVar() {
           <p className="text-sm text-gray-400 mb-5">
             Se te describe la jugada. Elegí la decisión correcta antes de que se acabe el reloj.
           </p>
-          <button
-            onClick={start}
-            className="px-6 py-2.5 rounded-card bg-accent text-onaccent font-semibold text-sm hover:opacity-90 transition-opacity"
-          >
-            Arrancar
-          </button>
+          <div className="flex flex-wrap gap-3 justify-center">
+            <button
+              onClick={() => start(true)}
+              className="px-6 py-2.5 rounded-card bg-accent text-onaccent font-semibold text-sm hover:opacity-90 transition-opacity"
+            >
+              Con tiempo ({SECONDS_PER_SITUATION}s)
+            </button>
+            <button
+              onClick={() => start(false)}
+              className="px-6 py-2.5 rounded-card border border-border text-sm text-gray-300 hover:text-white hover:border-white/30 transition-colors"
+            >
+              Sin tiempo (práctica)
+            </button>
+          </div>
         </Card>
       )}
 
       {phase === "playing" && (
         <div className="mt-4 space-y-4">
           <div className="flex items-center justify-between">
-            <span className={`text-2xl font-bold tabular-nums ${secondsLeft <= 3 ? "text-red-400" : ""}`}>
-              {secondsLeft}s
+            <span className={`text-2xl font-bold tabular-nums ${timed && secondsLeft <= 3 ? "text-red-400" : ""}`}>
+              {timed ? `${secondsLeft}s` : "Sin tiempo"}
             </span>
             <span className="text-sm text-gray-400">
               Jugada {Math.min(round + 1, TOTAL_SITUATIONS)}/{TOTAL_SITUATIONS} · {correctCount} correctas
@@ -158,7 +172,21 @@ export default function ArbitrajeVar() {
 
           {situation && (
             <Card>
-              <PlayDiagram type={situation.diagram} />
+              {situation.photo && !photoFailed ? (
+                <figure className="mb-4">
+                  <img
+                    src={`https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(situation.photo)}?width=800`}
+                    alt="Foto real de una jugada parecida"
+                    loading="eager"
+                    referrerPolicy="no-referrer"
+                    onError={() => setPhotoFailed(true)}
+                    className="w-full max-h-64 object-cover rounded-card border border-border"
+                  />
+                  <figcaption className="text-[10px] text-gray-600 mt-1">Foto de referencia: Wikimedia Commons</figcaption>
+                </figure>
+              ) : (
+                <PlayDiagram type={situation.diagram} />
+              )}
               <p className="font-medium mb-4">{situation.text}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {situation.options.map((opt, idx) => {
@@ -200,9 +228,10 @@ export default function ArbitrajeVar() {
         <ResultScreen
           score={`${correctCount}/${TOTAL_SITUATIONS}`}
           unit="decisiones correctas"
-          groupId={groupId}
+          groupId={timed ? groupId : null}
           saveState={saveState}
-          onAgain={start}
+          highlight={timed ? undefined : "Sin reloj es práctica: no cuenta para el ranking semanal."}
+          onAgain={() => setPhase("idle")}
           shareText={`⚽ Futotal · Arbitraje / VAR: ${correctCount}/${TOTAL_SITUATIONS} — ¿me ganás?`}
         />
       )}

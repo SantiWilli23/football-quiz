@@ -81,6 +81,11 @@
       root.setProperty("--bg", p.bg);
       root.setProperty("--panel", p.panel);
       root.setProperty("--border", hexToRgba(p.text, 0.12));
+      root.setProperty("--panel-border", hexToRgba(p.text, 0.12));
+      root.setProperty("--text-faint", p.textDim);
+      // Superposiciones translúcidas (fondos de tarjetas, líneas de la cancha):
+      // blanco sobre fondo oscuro, negro sobre el tema claro.
+      root.setProperty("--ov", readTheme() === "bengala" ? "15,17,21" : "255,255,255");
       root.setProperty("--accent", p.accent);
       root.setProperty("--accent2", p.accentLight);
       root.setProperty("--accent-dark", p.accentDark);

@@ -2021,6 +2021,8 @@ function renderMenu() {
         <button class="btn btn-outline" data-action="weekly_challenge">🗓 Reto semanal · ranking de grupo</button>
         <button class="btn btn-outline" data-action="view_hof">🏛 Salón de la fama</button>
         ${saveExists ? `<button class="btn btn-ghost" data-action="delete_save">Borrar partida</button>` : ""}
+        <a class="btn btn-ghost" href="/cotrero.html" style="text-align:center;text-decoration:none">← Cambiar de modo</a>
+        <a class="btn btn-ghost" href="/" style="text-align:center;text-decoration:none">🏠 Menú principal de Futotal</a>
       </div>
     </div>
   `;

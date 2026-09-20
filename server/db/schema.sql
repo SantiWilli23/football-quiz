@@ -736,3 +736,33 @@ CREATE INDEX IF NOT EXISTS idx_fantasy_trade_offers_league ON fantasy_trade_offe
 CREATE INDEX IF NOT EXISTS idx_fantasy_trade_offers_to ON fantasy_trade_offers(to_participant_id, status);
 
 CREATE INDEX IF NOT EXISTS idx_duel_bets_group ON duel_bets(group_id, settled);
+
+-- Fichado (fusión de Fichado + Fulbodle): cada partida es una fila. Diaria
+-- (una por usuario, día y liga, mismo secreto para todos) o aleatoria (el
+-- secreto se sortea al crearla y solo lo sabe el servidor). Los intentos van
+-- en fichado_guesses, las pistas gastadas en hints_used.
+CREATE TABLE IF NOT EXISTS fichado_games (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  mode TEXT NOT NULL,
+  league TEXT NOT NULL DEFAULT 'global',
+  difficulty TEXT NOT NULL DEFAULT 'normal',
+  date TEXT NOT NULL,
+  secret_name TEXT NOT NULL,
+  max_attempts INTEGER NOT NULL DEFAULT 8,
+  hints_used INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'playing',
+  points INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS fichado_guesses (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  game_id INTEGER NOT NULL REFERENCES fichado_games(id),
+  attempt_number INTEGER NOT NULL,
+  guess_name TEXT NOT NULL,
+  UNIQUE(game_id, attempt_number)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_fichado_daily ON fichado_games(user_id, date, league) WHERE mode = 'daily';
+CREATE INDEX IF NOT EXISTS idx_fichado_games_user ON fichado_games(user_id, status)

@@ -37,6 +37,7 @@ function buildRounds() {
 export default function CrestQuiz() {
   const { activeGroupId: groupId } = useGroups();
   const [phase, setPhase] = useState("idle"); // idle | playing | done
+  const [weekly, setWeekly] = useState(true); // reto semanal: sin pistas, suma al grupo
   const [rounds, setRounds] = useState([]);
   const [index, setIndex] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
@@ -47,7 +48,8 @@ export default function CrestQuiz() {
   const current = rounds[index];
   const blur = BLUR_STEPS[Math.min(blurLevel, BLUR_STEPS.length - 1)];
 
-  function start() {
+  function start(isWeekly) {
+    setWeekly(isWeekly);
     setRounds(buildRounds());
     setIndex(0);
     setCorrectCount(0);
@@ -74,7 +76,7 @@ export default function CrestQuiz() {
         setFeedback(null);
       } else {
         setPhase("done");
-        if (groupId) {
+        if (groupId && weekly) {
           setSaveState("saving");
           try {
             const finalCorrect = correct ? correctCount + 1 : correctCount;
@@ -90,9 +92,9 @@ export default function CrestQuiz() {
 
   return (
     <Layout>
-      <h1 className="text-xl sm:text-2xl font-bold mb-1">Escudos borrosos</h1>
+      <h1 className="text-xl sm:text-2xl font-bold mb-1">Escudos a ciegas</h1>
       <p className="text-gray-400 text-sm mb-4">
-        {ROUNDS} escudos reales, cada vez más nítidos si pedís una pista. Tu mejor marca de la semana suma al ranking de retos del grupo.
+        {ROUNDS} escudos reales, muy borrosos. En práctica podés pedir pistas para verlos más nítidos; el reto semanal es a ciegas, sin pistas, y tu mejor marca suma al ranking del grupo.
       </p>
 
       <GroupSelector />
@@ -101,19 +103,27 @@ export default function CrestQuiz() {
         <Card className="mt-4 text-center py-10">
           <Trophy size={32} className="mx-auto text-accent mb-3" />
           <p className="text-sm text-gray-400 mb-5">¿Cuántos clubes reconocés solo por el escudo, bien borroso?</p>
-          <button
-            onClick={start}
-            className="px-6 py-2.5 rounded-card bg-accent text-bg font-semibold text-sm hover:opacity-90 transition-opacity"
-          >
-            Arrancar
-          </button>
+          <div className="flex flex-wrap gap-3 justify-center">
+            <button
+              onClick={() => start(true)}
+              className="px-6 py-2.5 rounded-card bg-accent text-bg font-semibold text-sm hover:opacity-90 transition-opacity"
+            >
+              Reto semanal (sin pistas)
+            </button>
+            <button
+              onClick={() => start(false)}
+              className="px-6 py-2.5 rounded-card border border-border text-sm text-gray-300 hover:text-white hover:border-white/30 transition-colors"
+            >
+              Práctica (con pistas)
+            </button>
+          </div>
         </Card>
       )}
 
       {phase === "playing" && current && (
         <div className="mt-4 space-y-4">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-400">Escudo {index + 1} / {rounds.length}</span>
+            <span className="text-gray-400">Escudo {index + 1} / {rounds.length}{weekly ? " · sin pistas" : " · práctica"}</span>
             <span className="text-gray-400">{correctCount} correctas</span>
           </div>
 
@@ -126,7 +136,7 @@ export default function CrestQuiz() {
                 style={{ filter: `blur(${blur}px)` }}
               />
 
-              {!feedback && blurLevel < BLUR_STEPS.length - 1 && (
+              {!weekly && !feedback && blurLevel < BLUR_STEPS.length - 1 && (
                 <button
                   onClick={revealMore}
                   className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors"
@@ -170,10 +180,11 @@ export default function CrestQuiz() {
         <ResultScreen
           score={`${correctCount} / ${ROUNDS}`}
           unit="escudos acertados"
-          groupId={groupId}
+          groupId={weekly ? groupId : null}
           saveState={saveState}
-          onAgain={start}
-          shareText={`⚽ Futotal · Escudos borrosos: ${correctCount}/${ROUNDS} — ¿me ganás?`}
+          highlight={weekly ? undefined : "Fue práctica: no cuenta para el ranking. Jugá el reto semanal (sin pistas) para sumar."}
+          onAgain={() => setPhase("idle")}
+          shareText={`⚽ Futotal · Escudos a ciegas: ${correctCount}/${ROUNDS} — ¿me ganás?`}
         />
       )}
     </Layout>

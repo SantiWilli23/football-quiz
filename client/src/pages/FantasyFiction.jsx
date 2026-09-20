@@ -63,6 +63,90 @@ function PlayerSearch({ leagueId, budgetLeft, exclude, onPick }) {
   );
 }
 
+// Plantel inicial sorteado por el servidor (~200M): el jugador puede pedir
+// otro sorteo o quedarse con este. Si prefiere armarlo a mano, cae en SquadDraft.
+function StarterSquad({ league, onJoined, onManual }) {
+  const unit = league.unit ? ` ${league.unit}` : "";
+  const [starter, setStarter] = useState(null);
+  const [rolls, setRolls] = useState(1);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const roll = async () => {
+    setError("");
+    try {
+      const { data } = await api.get(`/fantasyfiction/${league.id}/starter`);
+      setStarter(data);
+    } catch {
+      setError("No se pudo sortear el plantel");
+    }
+  };
+  useEffect(() => { roll(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const confirm = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const { data } = await api.post(`/fantasyfiction/${league.id}/join`, { squad: starter.squad.map((p) => p.id) });
+      onJoined(data.league);
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo confirmar el plantel");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!starter) return <p className="text-sm text-gray-500">{error || "Sorteando tu plantel..."}</p>;
+
+  const groups = ["Portero", "Defensa", "Mediocampista", "Delantero"].map((pos) => [pos, starter.squad.filter((p) => p.category === pos)]);
+
+  return (
+    <div className="rounded-card border border-border bg-bg p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium">Tu plantel inicial</p>
+        <p className="text-sm font-semibold text-accent">Valor: {starter.cost}{unit} de {league.budgetTotal}{unit}</p>
+      </div>
+      <p className="text-xs text-gray-500">
+        Te toca un plantel de unos {league.budgetTotal}{unit}. Podés pedir otro sorteo o quedarte con este y mejorarlo en el mercado (miércoles y domingos).
+      </p>
+      <div className="space-y-2">
+        {groups.map(([pos, list]) => (
+          <div key={pos}>
+            <p className="text-[10px] uppercase tracking-wide text-gray-600 mb-1">{pos}s</p>
+            <div className="flex flex-wrap gap-2">
+              {list.map((p) => (
+                <span key={p.id} className="text-xs px-3 py-1.5 rounded-full border border-border bg-panel">
+                  {p.name} · {p.price}{unit}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      {error && <p className="text-sm text-red-400">{error}</p>}
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={confirm}
+          disabled={busy}
+          className="flex-1 min-w-[160px] bg-accent hover:bg-accent-dark disabled:opacity-40 text-onaccent font-semibold rounded-card py-2.5 text-sm transition-colors"
+        >
+          {busy ? "Confirmando..." : "Quedarme con este plantel"}
+        </button>
+        <button
+          onClick={() => { setRolls((r) => r + 1); roll(); }}
+          disabled={busy}
+          className="px-4 py-2.5 rounded-card border border-border text-sm text-gray-300 hover:text-white hover:border-white/30"
+        >
+          Sortear otro ({rolls})
+        </button>
+        <button onClick={onManual} className="px-4 py-2.5 rounded-card text-sm text-gray-500 hover:text-gray-300">
+          Armarlo a mano
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function SquadDraft({ league, onJoined }) {
   const [squad, setSquad] = useState([]); // [{id, name, price}]
   const [error, setError] = useState("");
@@ -394,6 +478,7 @@ export default function FantasyFiction() {
   const { user } = useAuth();
   const { activeGroupId: groupId, groups } = useGroups();
   const [league, setLeague] = useState(undefined); // undefined = cargando, null = no hay
+  const [manualDraft, setManualDraft] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -451,7 +536,7 @@ export default function FantasyFiction() {
             FantasyFiction
           </h1>
           <p className="text-gray-400 text-sm">
-            Armá un plantel real con presupuesto limitado. La liga arranca cuando se suma todo el grupo: una
+            Arrancás con un plantel de unos 200M€ que te sorteamos (o lo armás a mano) y lo mejorás en el mercado. La liga arranca cuando se suma todo el grupo: una
             jornada por semana, mercado de pases los miércoles y domingos.
           </p>
         </div>
@@ -485,7 +570,9 @@ export default function FantasyFiction() {
           {league.iJoined ? (
             <p className="text-sm text-accent">Ya armaste tu plantel. Esperando al resto del grupo...</p>
           ) : (
-            <SquadDraft league={league} onJoined={setLeague} />
+            manualDraft
+              ? <SquadDraft league={league} onJoined={setLeague} />
+              : <StarterSquad league={league} onJoined={setLeague} onManual={() => setManualDraft(true)} />
           )}
         </Card>
       )}
@@ -520,11 +607,11 @@ export default function FantasyFiction() {
               <div className="flex flex-wrap gap-2 mb-4">
                 {league.mySquad.map((p) => (
                   <span key={p.id} className="text-xs px-3 py-1.5 rounded-full border border-border bg-bg">
-                    {p.name} · {p.price}
+                    {p.name} · {p.price}{league.unit ? ` ${league.unit}` : ""}
                   </span>
                 ))}
               </div>
-              <p className="text-xs text-gray-500 mb-4">Presupuesto disponible: {league.myBudgetRemaining}</p>
+              <p className="text-xs text-gray-500 mb-4">Presupuesto disponible: {league.myBudgetRemaining}{league.unit ? ` ${league.unit}` : ""}</p>
               <TransferMarket league={league} onChanged={setLeague} />
             </Card>
           )}
