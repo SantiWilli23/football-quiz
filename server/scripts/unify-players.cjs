@@ -24,6 +24,19 @@ const MASTER = path.join(ROOT, "server/data/equipo-jugador-players.json");
 const ALIASES = path.join(ROOT, "server/data/club-aliases.json");
 const LEGACY = path.join(ROOT, "server/data/mentiroso-legacy.json");
 const ADDITIONS = path.join(ROOT, "server/data/players-additions.txt");
+// Además de players-additions.txt se leen, en este orden: players-additions-*.txt
+// (más jugadores, por tandas) y players-transfers-*.txt (traspasos, siempre al final
+// para que ya existan los jugadores).
+function additionLines() {
+  const dir = path.dirname(ADDITIONS);
+  const names = fs.readdirSync(dir);
+  const files = [
+    ADDITIONS,
+    ...names.filter((n) => /^players-additions-.+\.txt$/.test(n)).sort().map((n) => path.join(dir, n)),
+    ...names.filter((n) => /^players-transfers-.+\.txt$/.test(n)).sort().map((n) => path.join(dir, n)),
+  ].filter((p) => fs.existsSync(p));
+  return files.flatMap((p) => fs.readFileSync(p, "utf8").split(/\r?\n/));
+}
 const MENTIROSO_OUT = path.join(ROOT, "client/public/js/mentiroso-players.js");
 const DRY = process.argv.includes("--dry");
 
@@ -95,6 +108,22 @@ function mergeStints(a, b) {
   return out.sort((x, y) => (x.inicio || 0) - (y.inicio || 0));
 }
 
+// Une pasos repetidos o solapados del MISMO club (por ejemplo "Club:2016-2019;Club:2016-2023")
+// en un solo paso. Los regresos reales (mismo club, separado por otro club) se respetan.
+function tidyStints(list) {
+  const sorted = [...list].sort((x, y) => (x.inicio || 0) - (y.inicio || 0));
+  const out = [];
+  for (const c of sorted) {
+    const prev = out[out.length - 1];
+    const same = prev && key(splitSuffix(prev.club).base) === key(splitSuffix(c.club).base);
+    const overlaps = same && (prev.fin === null || (c.inicio || 0) <= prev.fin + 0);
+    if (overlaps) {
+      prev.fin = prev.fin === null || c.fin === null ? null : Math.max(prev.fin, c.fin);
+    } else out.push({ ...c });
+  }
+  return out;
+}
+
 function richerName(a, b) {
   const accents = (s) => (s.match(/[À-ſ]/g) || []).length;
   return accents(b) > accents(a) ? b : a;
@@ -149,8 +178,8 @@ function findPlayer(name, nat, clubs) {
 const nicknames = {}; // key(nombre) -> [apodos]
 const legacyPending = [];
 const NAME_MAP = new Map(); // "@Nombre en Mentiroso|Nombre en el maestro"
-if (fs.existsSync(ADDITIONS)) {
-  for (const line of fs.readFileSync(ADDITIONS, "utf8").split(/\r?\n/)) {
+{
+  for (const line of additionLines()) {
     if (line.startsWith("@")) {
       const [a, b] = line.slice(1).split("|").map((x) => x.trim());
       NAME_MAP.set(key(a), b);
@@ -194,8 +223,8 @@ function parseStints(s) {
 const legacyByKey = new Map();
 for (const l of legacy) legacyByKey.set(key(l.n), l);
 
-if (fs.existsSync(ADDITIONS)) {
-  for (const [i, line] of fs.readFileSync(ADDITIONS, "utf8").split(/\r?\n/).entries()) {
+{
+  for (const [i, line] of additionLines().entries()) {
     const t = line.trim();
     if (!t || t.startsWith("#") || t.startsWith("@")) continue;
     const op = t[0];
@@ -206,11 +235,13 @@ if (fs.existsSync(ADDITIONS)) {
         const carrera = parseStints(stints);
         const ex = byKey.get(key(nombre));
         if (ex) {
-          ex.carrera = mergeStints(ex.carrera, carrera);
+          // Sólo se suman clubes que el jugador todavía no tiene: no se pisan datos ya cargados.
+          const have = new Set(ex.carrera.map((c) => key(splitSuffix(c.club).base)));
+          ex.carrera = mergeStints(ex.carrera, carrera.filter((c) => !have.has(key(splitSuffix(c.club).base))));
           ex.nacionalidad = ex.nacionalidad || canonNat(nat);
           report.skipped.push(`= ${nombre} (ya existía, se completó)`);
         } else {
-          const p = { nombre, nacionalidad: canonNat(nat), posicion: canonPos(pos), nacimiento: Number(nac), carrera };
+          const p = { nombre, nacionalidad: canonNat(nat), posicion: canonPos(pos), nacimiento: Number(nac), carrera: tidyStints(carrera) };
           byKey.set(key(nombre), p);
           players.push(p);
           report.additionsNew.push(nombre);
@@ -242,7 +273,7 @@ if (fs.existsSync(ADDITIONS)) {
       } else if (op === ">") {
         const [nombre, club, ini, fin] = f;
         const p = byKey.get(key(nombre)) || findPlayer(nombre, null, []);
-        if (!p) throw new Error("jugador no encontrado");
+        if (!p) { (report.notFound ??= []).push(nombre); continue; }
         const year = Number(ini);
         const cn = canonClub(club);
         const open = p.carrera.filter((c) => c.fin === null && key(splitSuffix(c.club).base) !== key(splitSuffix(cn).base));
@@ -291,6 +322,7 @@ console.log(`Nuevos por adiciones: ${report.additionsNew.length}`);
 console.log(`Traspasos aplicados: ${report.transfers.length}`);
 console.log(`Mentiroso: ${legacy.length} entradas; ${report.legacyPending.length} pendientes de sumar; ${report.legacyClubsMissing.length} con clubes que el maestro no tiene`);
 console.log(`Problemas de validación: ${problems.length}`);
+if (report.notFound?.length) console.log(`Traspasos sin jugador en la base (${report.notFound.length}): ${report.notFound.join(", ")}`);
 fs.mkdirSync(path.join(ROOT, ".tmp"), { recursive: true });
 fs.writeFileSync(path.join(ROOT, ".tmp/unify-report.json"), JSON.stringify({ ...report, problems }, null, 2));
 

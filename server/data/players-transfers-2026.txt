@@ -1,0 +1,197 @@
+# Traspasos del mercado de verano 2026 (fuentes: ESPN, Goal, Football365, TeamTalk y
+# las listas de Wikipedia por país, consultadas en septiembre de 2026).
+# Los jugadores que no están en la base se ignoran (el script avisa cuáles).
+# Formato: >Nombre|Club nuevo|Año   — "Club (cedido)" para préstamos.
+
+# ---------- Premier League ----------
+>Anthony Gordon|Barcelona|2026
+>Bruno Guimaraes|Arsenal|2026
+>Piero Hincapie|Arsenal|2026
+>Illan Meslier|Arsenal|2026
+>Christos Tzolis|Arsenal|2026
+>Ezri Konsa|Arsenal|2026
+>Gabriel Martinelli|Al Hilal|2026
+>Gabriel Jesus|Barcelona|2026
+>Ethan Nwaneri|Borussia Dortmund (cedido)|2026
+>Christian Norgaard|Everton|2026
+>Alejandro Garnacho|Aston Villa (cedido)|2026
+>Joao Gomes|Aston Villa|2026
+>Johan Manzambi|Aston Villa|2026
+>Matteo Ruggeri|Aston Villa|2026
+>Zion Suzuki|Aston Villa|2026
+>Aaron Wan-Bissaka|Aston Villa (cedido)|2026
+>Nicolas Jackson|Aston Villa|2026
+>Leon Goretzka|Aston Villa|2026
+>Ibrahim Mbaye|Aston Villa|2026
+>Taylor Harwood-Bellis|Aston Villa|2026
+>Ollie Watkins|Al Hilal|2026
+>Morgan Rogers|Chelsea|2026
+>Emiliano Martinez|Chelsea|2026
+>Lucas Digne|Paris Saint-Germain|2026
+>Youri Tielemans|Manchester United|2026
+>Donyell Malen|Roma|2026
+>Evann Guessand|Crystal Palace (cedido)|2026
+>Andres Garcia|Getafe (cedido)|2026
+>Enzo Barrenechea|Benfica|2026
+>Alvaro Rodriguez|Bournemouth|2026
+>Antonio Silva|Bournemouth|2026
+>Juanlu Sanchez|Bournemouth|2026
+>Marcos Senesi|Tottenham Hotspur|2026
+>Callum Wilson|Brentford|2026
+>Jaidon Anthony|Brentford|2026
+>Mamadou Sangare|Brentford|2026
+>El Hadji Malick Diouf|Brentford|2026
+>Frank Onyeka|Coventry City|2026
+>Jordan Henderson|Chelsea|2026
+>Ethan Pinnock|Coventry City|2026
+>Danny Welbeck|Chelsea|2026
+>Pascal Struijk|Brighton|2026
+>Carlos Baleba|Manchester United|2026
+>Jan Paul van Hecke|Tottenham Hotspur|2026
+>Luka Vuskovic|Brighton|2026
+>Geovany Quenda|Chelsea|2026
+>Emmanuel Emegha|Chelsea|2026
+>Marco Palestra|Chelsea|2026
+>Maxence Lacroix|Chelsea|2026
+>Pep Chavarria|Chelsea|2026
+>Trevoh Chalobah|Como|2026
+>Tosin Adarabioyo|Tottenham Hotspur|2026
+>Mykhailo Mudryk|Tottenham Hotspur (cedido)|2026
+>Liam Delap|Nottingham Forest|2026
+>Marc Cucurella|Real Madrid|2026
+>Enzo Fernandez|Manchester City|2026
+>Andrey Santos|Manchester United|2026
+>Axel Disasi|Crystal Palace (cedido)|2026
+>Tyrique George|Everton|2026
+>Oscar Mingueza|Crystal Palace|2026
+>Takehiro Tomiyasu|Crystal Palace|2026
+>Dwight McNeil|Crystal Palace|2026
+>Ben Chilwell|Crystal Palace|2026
+>Quinten Timber|Crystal Palace|2026
+>Brennan Johnson|Everton|2026
+>Merlin Rohl|Everton|2026
+>Hayden Hackney|Everton|2026
+>Iliman Ndiaye|Manchester City|2026
+>Ainsley Maitland-Niles|Everton|2026
+>Gonzalo Garcia|Fulham|2026
+>Shea Charles|Fulham|2026
+>Hugo Larsson|Fulham (cedido)|2026
+>Raul Jimenez|Wolverhampton|2026
+>Harry Wilson|Leeds United|2026
+>Issa Diop|Ipswich Town|2026
+>Sasa Lukic|Ipswich Town|2026
+>Chuba Akpom|Ipswich Town|2026
+>Abdul Fatawu|Ipswich Town|2026
+>Daizen Maeda|Ipswich Town|2026
+>Florentino Luis|Ipswich Town|2026
+>Zian Flemming|Ipswich Town|2026
+>Julio Enciso|Ipswich Town|2026
+>Exequiel Palacios|Ipswich Town|2026
+>Tarik Muharemovic|Leeds United|2026
+>James Trafford|Leeds United|2026
+>Nico Elvedi|Leeds United|2026
+>Karl Darlow|Manchester United|2026
+>Bradley Barcola|Liverpool|2026
+>Jeremy Jacquet|Liverpool|2026
+>Victor Munoz|Liverpool|2026
+>Ronald Araujo|Liverpool (cedido)|2026
+>Ibrahima Konate|Real Madrid|2026
+>Andy Robertson|Tottenham Hotspur|2026
+>Curtis Jones|Inter Milan|2026
+>Mohamed Salah|Trabzonspor|2026
+>Elliot Anderson|Manchester City|2026
+>Gerónimo Rulli|Manchester City|2026
+>Ayyoub Bouaddi|Manchester City|2026
+>Rodri|Barcelona|2026
+>Bernardo Silva|Real Madrid|2026
+>John Stones|Inter Milan|2026
+>Tijjani Reijnders|Al Qadsiah|2026
+>Savinho|Tottenham Hotspur|2026
+>Omar Marmoush|Tottenham Hotspur (cedido)|2026
+>Nico Gonzalez|Newcastle United|2026
+>Casemiro|Inter Miami|2026
+>Marcus Rashford|Manchester United|2026
+>Rasmus Hojlund|Napoli|2026
+>Sandro Tonali|Tottenham Hotspur|2026
+>Nick Woltemade|Juventus (cedido)|2026
+>Matt Targett|Hull City|2026
+>Amar Dedic|Newcastle United|2026
+>Bazoumana Toure|Newcastle United|2026
+>Xaver Schlager|Nottingham Forest|2026
+>Ousmane Diomande|Nottingham Forest|2026
+>Daniel Munoz|Nottingham Forest|2026
+>Taiwo Awoniyi|Coventry City|2026
+>Thomas Meunier|Sunderland|2026
+>Kevin Danso|Sunderland (cedido)|2026
+>Malick Fofana|Sunderland|2026
+>Eliezer Mayenda|Rennes|2026
+>Martin Dubravka|Tottenham Hotspur|2026
+>Mateus Fernandes|Tottenham Hotspur|2026
+>Cristian Romero|Atletico Madrid|2026
+>Djed Spence|Inter Milan|2026
+>Radu Dragusin|Fiorentina (cedido)|2026
+>Randal Kolo Muani|Juventus|2026
+>Crysencio Summerville|Al Hilal|2026
+>Dan Bentley|Coventry City|2026
+
+# ---------- La Liga y otros ----------
+>Alejandro Grimaldo|Atletico Madrid|2026
+>Morten Hjulmand|Atletico Madrid|2026
+>Lee Kang-in|Atletico Madrid|2026
+>Antoine Griezmann|Orlando City|2026
+>Clement Lenglet|Benfica|2026
+>Karim Adeyemi|Barcelona|2026
+>Robert Lewandowski|Chicago Fire|2026
+>Joao Cancelo|Barcelona|2026
+>Fran Garcia|Real Betis|2026
+>Dani Ceballos|Real Betis|2026
+>Denzel Dumfries|Real Madrid|2026
+>Yan Diomande|Real Madrid|2026
+>Endrick|Real Madrid|2026
+>Carlos Espi|Real Madrid|2026
+>Sergio Canales|Racing Santander|2026
+>Pierre-Emerick Aubameyang|Deportivo La Coruna|2026
+>Mauro Arambarri|River Plate|2026
+>Luis Milla|Como|2026
+>Aissa Mandi|Levante|2026
+>Inaki Pena|Panathinaikos|2026
+>Jonathan David|Atletico Madrid (cedido)|2026
+>Santiago Gimenez|Porto (cedido)|2026
+>Rafael Leao|Galatasaray|2026
+>Dusan Vlahovic|Besiktas|2026
+>Gonçalo Ramos|AC Milan|2026
+>Goncalo Ramos|AC Milan|2026
+>Mario Gila|AC Milan|2026
+>Diego Moreira|AC Milan|2026
+>Nicolo Zaniolo|Udinese (cedido)|2026
+>Jeremie Boga|Juventus|2026
+>Jeff Ekhator|Juventus|2026
+>Lois Openda|Lyon (cedido)|2026
+>Ivan Provedel|Inter Milan|2026
+>Lorenzo Insigne|Sampdoria|2026
+>Alfonso Pedraza|Lazio|2026
+>Danilho Doekhi|Lazio|2026
+>Harry Winks|Cagliari|2026
+>Lucas Beltran|River Plate (cedido)|2026
+>Alisson Santos|Napoli (cedido)|2026
+>Alexander Nubel|Besiktas|2026
+>Joao Palhinha|Benfica|2026
+>Nathaniel Brown|Bayern Munich|2026
+>Julian Brandt|Ajax|2026
+>Peter Gulacsi|Villarreal|2026
+>Bilal El Khannouss|VfB Stuttgart|2026
+>Julien Duranville|Lyon|2026
+>Afonso Moreira|Bayer Leverkusen|2026
+>Facundo Medina|Bayer Leverkusen|2026
+>Grischa Promel|VfB Stuttgart|2026
+>Giovanni Reyna|Strasbourg|2026
+>Ferran Torres|Paris Saint-Germain|2026
+>Maghnes Akliouche|Paris Saint-Germain|2026
+>Mika Godts|Paris Saint-Germain|2026
+>Mason Greenwood|Fenerbahce|2026
+>Allan Saint-Maximin|Charlotte FC|2026
+>Thorgan Hazard|Lens|2026
+>Ayase Ueda|Lille|2026
+>Tanguy Nianzou|Lille|2026
+>Nestory Irankunda|Watford|2026
+>Alessandro Circati|Benfica|2026
