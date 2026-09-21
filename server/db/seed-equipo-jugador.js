@@ -76,61 +76,76 @@ export async function seedEquipoJugador() {
   const raw = JSON.parse(fs.readFileSync(DATA_PATH, "utf-8"));
   const jugadores = raw.jugadores || [];
 
-  const clubIds = new Map(); // normalized_name -> id
-  let playersInserted = 0;
-  let stintsInserted = 0;
+  // Por lotes: antes cada jugador/club/paso era 2-3 consultas sueltas contra la base
+  // remota (Turso), y con ~2000 jugadores el seed tardaba más de 15 minutos y Render
+  // cortaba el deploy antes de abrir el puerto. Ahora se leen los ids existentes UNA
+  // vez y sólo se insertan (en lotes) las filas que faltan.
+  const BATCH = 300;
+  const runBatched = async (stmts) => {
+    for (let i = 0; i < stmts.length; i += BATCH) await db.batch(stmts.slice(i, i + BATCH), "write");
+  };
 
+  const existingPlayers = new Set((await db.execute("SELECT normalized_name FROM ej_players")).rows.map((r) => r.normalized_name));
+  const existingClubs = new Set((await db.execute("SELECT normalized_name FROM ej_clubs")).rows.map((r) => r.normalized_name));
+
+  const playerStmts = [];
+  const clubStmts = [];
+  const seenPlayers = new Set();
+  const seenClubs = new Set();
   for (const j of jugadores) {
     const normalizedName = normalize(j.nombre);
     if (!normalizedName || !Array.isArray(j.carrera) || j.carrera.length === 0) continue;
-
-    const position = POSITION_MAP[j.posicion] || j.posicion || null;
-
-    const playerRes = await db.execute({
-      sql: `INSERT INTO ej_players (name, normalized_name, nationality, position, birth_year)
-            VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT(normalized_name) DO NOTHING`,
-      args: [j.nombre, normalizedName, j.nacionalidad || null, position, j.nacimiento || null],
-    });
-    if (playerRes.rowsAffected > 0) playersInserted++;
-
-    const playerIdRes = await db.execute({
-      sql: "SELECT id FROM ej_players WHERE normalized_name = ?",
-      args: [normalizedName],
-    });
-    const playerId = playerIdRes.rows[0]?.id;
-    if (!playerId) continue;
-
+    if (!existingPlayers.has(normalizedName) && !seenPlayers.has(normalizedName)) {
+      seenPlayers.add(normalizedName);
+      playerStmts.push({
+        sql: `INSERT INTO ej_players (name, normalized_name, nationality, position, birth_year)
+              VALUES (?, ?, ?, ?, ?) ON CONFLICT(normalized_name) DO NOTHING`,
+        args: [j.nombre, normalizedName, j.nacionalidad || null, POSITION_MAP[j.posicion] || j.posicion || null, j.nacimiento || null],
+      });
+    }
     for (const stint of j.carrera) {
       if (!stint.club) continue;
       const clubName = canonicalClubName(stint.club);
       const normalizedClub = normalize(clubName);
-
-      let clubId = clubIds.get(normalizedClub);
-      if (!clubId) {
-        await db.execute({
-          sql: `INSERT INTO ej_clubs (name, normalized_name) VALUES (?, ?)
-                ON CONFLICT(normalized_name) DO NOTHING`,
+      if (!existingClubs.has(normalizedClub) && !seenClubs.has(normalizedClub)) {
+        seenClubs.add(normalizedClub);
+        clubStmts.push({
+          sql: "INSERT INTO ej_clubs (name, normalized_name) VALUES (?, ?) ON CONFLICT(normalized_name) DO NOTHING",
           args: [clubName, normalizedClub],
         });
-        const clubIdRes = await db.execute({
-          sql: "SELECT id FROM ej_clubs WHERE normalized_name = ?",
-          args: [normalizedClub],
-        });
-        clubId = clubIdRes.rows[0]?.id;
-        if (!clubId) continue;
-        clubIds.set(normalizedClub, clubId);
       }
-
-      const stintRes = await db.execute({
-        sql: `INSERT INTO ej_player_clubs (player_id, club_id, start_year, end_year)
-              VALUES (?, ?, ?, ?)
-              ON CONFLICT(player_id, club_id, start_year) DO NOTHING`,
-        args: [playerId, clubId, stint.inicio || null, stint.fin || null],
-      });
-      if (stintRes.rowsAffected > 0) stintsInserted++;
     }
   }
+  await runBatched(clubStmts);
+  await runBatched(playerStmts);
+
+  const playerIds = new Map((await db.execute("SELECT id, normalized_name FROM ej_players")).rows.map((r) => [r.normalized_name, r.id]));
+  const clubIds = new Map((await db.execute("SELECT id, normalized_name FROM ej_clubs")).rows.map((r) => [r.normalized_name, r.id]));
+  const haveStints = new Set(
+    (await db.execute("SELECT player_id, club_id, start_year FROM ej_player_clubs")).rows.map((r) => `${r.player_id}|${r.club_id}|${r.start_year ?? ""}`)
+  );
+
+  const stintStmts = [];
+  for (const j of jugadores) {
+    const playerId = playerIds.get(normalize(j.nombre));
+    if (!playerId || !Array.isArray(j.carrera)) continue;
+    for (const stint of j.carrera) {
+      if (!stint.club) continue;
+      const clubId = clubIds.get(normalize(canonicalClubName(stint.club)));
+      if (!clubId) continue;
+      const key = `${playerId}|${clubId}|${stint.inicio || ""}`;
+      if (haveStints.has(key)) continue;
+      haveStints.add(key);
+      stintStmts.push({
+        sql: `INSERT INTO ej_player_clubs (player_id, club_id, start_year, end_year)
+              VALUES (?, ?, ?, ?) ON CONFLICT(player_id, club_id, start_year) DO NOTHING`,
+        args: [playerId, clubId, stint.inicio || null, stint.fin || null],
+      });
+    }
+  }
+  await runBatched(stintStmts);
+  const playersInserted = playerStmts.length;
+  const stintsInserted = stintStmts.length;
 
   const mergedClubs = await mergeAliasClubs();
   if (mergedClubs > 0) console.log(`Equipo-Jugador: ${mergedClubs} clubes duplicados unificados.`);
