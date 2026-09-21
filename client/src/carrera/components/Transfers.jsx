@@ -108,7 +108,7 @@ export default function Transfers() {
           </p>
         </div>
         <div className="bg-panel border border-border rounded-2xl px-4 py-2.5 text-right shrink-0">
-          <p className="text-[10px] uppercase tracking-wide text-gray-500">Presupuesto</p>
+          <p className="text-xs uppercase tracking-wide text-gray-500">Presupuesto</p>
           <p className="text-lg font-bold text-accent leading-none">€{state.budget}M</p>
         </div>
       </div>
@@ -172,10 +172,10 @@ export default function Transfers() {
                 <option value="scouted">Solo scouteados</option>
               </select>
             </div>
-            <p className="text-[11px] text-gray-600">{totalMatches} jugador{totalMatches === 1 ? "" : "es"} — mostrando los {filtered.length} de mayor OVR.</p>
+            <p className="text-xs text-gray-600">{totalMatches} jugador{totalMatches === 1 ? "" : "es"} — mostrando los {filtered.length} de mayor OVR.</p>
           </div>
 
-          <div className="hidden md:flex items-center gap-3 px-4 text-[10px] uppercase tracking-wide text-gray-600">
+          <div className="hidden md:flex items-center gap-3 px-4 text-xs uppercase tracking-wide text-gray-600">
             <span className="w-5" />
             <span className="w-9" />
             <span className="flex-1">Jugador</span>
@@ -202,12 +202,12 @@ export default function Transfers() {
                     {watched ? "★" : "☆"}
                   </button>
 
-                  <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-[11px] font-bold text-gray-400">
+                  <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-xs font-bold text-gray-400">
                     {p.position}
                   </div>
 
                   <div className="min-w-0 flex-1 basis-full sm:basis-auto">
-                    <p className="text-sm font-semibold truncate">{p.name}{report?.isPublic && <span className="ml-1.5 text-[10px] text-accent" title="Figura mundial: ya viene scouteado">● conocido</span>}</p>
+                    <p className="text-sm font-semibold truncate">{p.name}{report?.isPublic && <span className="ml-1.5 text-xs text-accent" title="Figura mundial: ya viene scouteado">● conocido</span>}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
                       {teamById(p.teamId)?.name} · {p.age} años
                       {clause != null && <span className="text-amber ml-1.5">· cláusula €{clause}M</span>}
@@ -216,17 +216,17 @@ export default function Transfers() {
                   </div>
 
                   <div className="flex flex-col items-center w-16 shrink-0">
-                    <span className="md:hidden text-[10px] uppercase tracking-wide text-gray-600">OVR act.</span>
+                    <span className="md:hidden text-xs uppercase tracking-wide text-gray-600">OVR act.</span>
                     <span className="text-sm font-semibold">{report ? formatRange(report.ovrRange) : <span className="text-gray-600">—</span>}</span>
                   </div>
 
                   <div className="flex flex-col items-center w-16 shrink-0">
-                    <span className="md:hidden text-[10px] uppercase tracking-wide text-gray-600">OVR pot.</span>
+                    <span className="md:hidden text-xs uppercase tracking-wide text-gray-600">OVR pot.</span>
                     <span className="text-sm text-gray-300">{report?.potentialEstimate != null ? `~${report.potentialEstimate}` : <span className="text-gray-600">—</span>}</span>
                   </div>
 
                   <div className="flex flex-col items-center w-20 shrink-0">
-                    <span className="md:hidden text-[10px] uppercase tracking-wide text-gray-600">Valor</span>
+                    <span className="md:hidden text-xs uppercase tracking-wide text-gray-600">Valor</span>
                     <span className="text-sm font-semibold">€{p.value}M</span>
                   </div>
 
@@ -401,7 +401,7 @@ function StepIndicator({ stage }) {
     <div className="flex items-center gap-2 mb-1">
       {[1, 2].map((n) => (
         <div key={n} className="flex items-center gap-2 flex-1">
-          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
             step >= n ? "bg-accent text-onaccent" : "bg-bg border border-border text-gray-500"
           }`}>
             {n}

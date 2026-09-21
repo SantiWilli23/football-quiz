@@ -484,7 +484,7 @@ export default function Group() {
                     </div>
                     <div className="shrink-0 text-right">
                       <p className="font-semibold text-sm">{r.points} pts</p>
-                      <p className="text-[11px] text-gray-600">
+                      <p className="text-xs text-gray-600">
                         {r.trivia_points} trivia · {r.mode_b_points} especial{r.duel_points ? ` · ${r.duel_points} duelos` : ""}{r.wordle_points ? ` · ${r.wordle_points} fulbodle` : ""}{r.quiniela_points ? ` · ${r.quiniela_points} quiniela` : ""}{r.bet_points ? ` · ${r.bet_points > 0 ? "+" : ""}${r.bet_points} apuestas` : ""}{r.season_prediction_points ? ` · ${r.season_prediction_points} pronósticos` : ""}
                       </p>
                     </div>

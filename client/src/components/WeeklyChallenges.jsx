@@ -96,7 +96,7 @@ export default function WeeklyChallenges({ groupId }) {
               <p className="text-sm font-medium flex-1 min-w-0 truncate">{e.username}</p>
               <div className="text-right shrink-0">
                 <p className="text-sm font-semibold">{e.score}</p>
-                {e.points > 0 && <p className="text-[11px] text-accent">+{e.points} pts</p>}
+                {e.points > 0 && <p className="text-xs text-accent">+{e.points} pts</p>}
               </div>
             </div>
           ))}

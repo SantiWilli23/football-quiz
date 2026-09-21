@@ -51,7 +51,7 @@ export default function InvitePreview() {
 
         {preview && (
           <>
-            <p className="text-[11px] uppercase tracking-wide text-gray-500 mb-1">Te invitaron a</p>
+            <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Te invitaron a</p>
             <h1 className="text-xl font-bold mb-1">{preview.name}</h1>
             {preview.description && <p className="text-sm text-gray-400 mb-3">{preview.description}</p>}
             <p className="text-xs text-gray-500 mb-6">{preview.member_count} miembro{preview.member_count === 1 ? "" : "s"}</p>

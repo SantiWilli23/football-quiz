@@ -191,7 +191,7 @@ export default function Trivia() {
               {new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}
             </p>
             {mode === "b" && modeBData && (
-              <span className="text-[11px] text-gray-500 flex items-center gap-1.5">
+              <span className="text-xs text-gray-500 flex items-center gap-1.5">
                 <Radio size={11} className="text-purple-400 animate-pulse" />
                 en vivo
               </span>
@@ -273,11 +273,11 @@ export default function Trivia() {
             <p className="text-xs text-gray-500 mb-2">Mis puntos</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="text-[11px] text-gray-600">Trivia</p>
+                <p className="text-xs text-gray-600">Trivia</p>
                 <p className="font-semibold">{stats?.trivia_points ?? 0}</p>
               </div>
               <div>
-                <p className="text-[11px] text-gray-600">Especial</p>
+                <p className="text-xs text-gray-600">Especial</p>
                 <p className="font-semibold text-purple-400">{stats?.mode_b_points ?? 0}</p>
               </div>
             </div>

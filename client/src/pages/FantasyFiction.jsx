@@ -112,7 +112,7 @@ function StarterSquad({ league, onJoined }) {
       <div className="space-y-2">
         {groups.map(([pos, list]) => (
           <div key={pos}>
-            <p className="text-[10px] uppercase tracking-wide text-gray-600 mb-1">{pos}s</p>
+            <p className="text-xs uppercase tracking-wide text-gray-600 mb-1">{pos}s</p>
             <div className="flex flex-wrap gap-2">
               {list.map((p) => (
                 <span key={p.id} className="text-xs px-3 py-1.5 rounded-full border border-border bg-panel">
@@ -422,7 +422,7 @@ function TradeOffers({ league, onChanged }) {
           {other && (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="text-[11px] text-gray-500 mb-1.5">Vos das</p>
+                <p className="text-xs text-gray-500 mb-1.5">Vos das</p>
                 <div className="flex flex-wrap gap-1.5">
                   {league.mySquad.map((p) => (
                     <button
@@ -438,7 +438,7 @@ function TradeOffers({ league, onChanged }) {
                 </div>
               </div>
               <div>
-                <p className="text-[11px] text-gray-500 mb-1.5">Vos pedís</p>
+                <p className="text-xs text-gray-500 mb-1.5">Vos pedís</p>
                 <div className="flex flex-wrap gap-1.5">
                   {other.squad.map((p) => (
                     <button

@@ -11,6 +11,7 @@ import GroupSelector from "../components/GroupSelector.jsx";
 import TutorialModal from "../components/TutorialModal.jsx";
 import ContinuePlaying, { findSavedGames } from "../components/ContinuePlaying.jsx";
 import api from "../api.js";
+import useAlerts from "../hooks/useAlerts.js";
 
 const FAVORITES_KEY = "fq_favorite_sections";
 const tutorialSeenKey = (userId) => `fq_tutorial_seen_${userId}`;
@@ -24,7 +25,7 @@ const SECTIONS = [
     label: "Trivia",
     icon: HelpCircle,
     description: "Trivia diaria, preguntas especiales del grupo, duelos 1v1 y supervivencia en vivo.",
-    color: "#f0907e",
+    color: "rgb(var(--c-red))",
   },
   {
     to: "/juegos",
@@ -45,14 +46,14 @@ const SECTIONS = [
     label: "Grupos",
     icon: Users,
     description: "Competí con tus amigos, mirá el ranking del grupo y los campeones mensuales.",
-    color: "#d9a441",
+    color: "rgb(var(--c-amber))",
   },
   {
     to: "/estadisticas",
     label: "Estadísticas",
     icon: BarChart3,
     description: "Resumen semanal, compatibilidad con el grupo y logros desbloqueados.",
-    color: "#3fae9a",
+    color: "rgb(var(--c-emerald))",
   },
   {
     to: "/ranking-global",
@@ -78,8 +79,7 @@ export default function Dashboard() {
     try { return JSON.parse(localStorage.getItem(FAVORITES_KEY)) || []; } catch { return []; }
   });
   const [showTutorial, setShowTutorial] = useState(false);
-  const [pendingTrivia, setPendingTrivia] = useState(0);
-  const [pendingDuels, setPendingDuels] = useState(0);
+  const alerts = useAlerts();
   const [savedGames] = useState(findSavedGames);
 
   useEffect(() => {
@@ -87,25 +87,6 @@ export default function Dashboard() {
     api.get(`/groups/${groupId}`)
       .then(({ data }) => setGroupDetail(data.group))
       .catch(() => setGroupDetail(null));
-  }, [groupId]);
-
-  // "Qué te falta hoy" — antes el inicio repetía en tarjetas lo que ya está
-  // en el menú; esto contesta una pregunta distinta, que no está en ningún
-  // otro lado: trivia sin responder hoy y duelos esperando tu turno.
-  useEffect(() => {
-    api.get("/questions/today")
-      .then(({ data }) => setPendingTrivia((data.questions || []).filter((q) => !q.answered).length))
-      .catch(() => setPendingTrivia(0));
-  }, []);
-
-  useEffect(() => {
-    if (!groupId) { setPendingDuels(0); return; }
-    api.get("/duels", { params: { groupId } })
-      .then(({ data }) => {
-        const waiting = (data.duels || []).filter((d) => d.status === "esperando" && d.my_turn).length;
-        setPendingDuels(waiting);
-      })
-      .catch(() => setPendingDuels(0));
   }, [groupId]);
 
   useEffect(() => {
@@ -134,29 +115,12 @@ export default function Dashboard() {
   const best = stats?.best_streak ?? 0;
   const streakPct = best > 0 ? Math.min(100, Math.round((current / best) * 100)) : current > 0 ? 100 : 0;
 
-  const pending = [
-    pendingTrivia > 0 && {
-      key: "trivia",
-      to: "/trivia",
-      label: `Trivia del día · ${pendingTrivia} pregunta${pendingTrivia === 1 ? "" : "s"} sin responder`,
-      icon: HelpCircle,
-      tw: "red",
-    },
-    pendingDuels > 0 && {
-      key: "duelos",
-      to: "/duelos",
-      label: `${pendingDuels} duelo${pendingDuels === 1 ? "" : "s"} esperando tu turno`,
-      icon: Swords,
-      tw: "amber",
-    },
-  ].filter(Boolean);
-
   return (
     <Layout>
       {/* Header */}
       <div className="mb-10 flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <p className="text-[11px] font-medium text-accent/90 uppercase tracking-[0.2em] mb-3">Panel</p>
+          <p className="text-xs font-medium text-accent/90 uppercase tracking-[0.2em] mb-3">Panel</p>
           <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight mb-3">
             Hola{user?.username ? `, ${user.username}` : ""}
           </h1>
@@ -168,57 +132,46 @@ export default function Dashboard() {
         <GroupSelector />
       </div>
 
-      {/* Racha + pendientes del día — lo único que se pierde si no entrás,
-          antes relegado a una columna lateral chica. */}
+      {/* Una sola franja: lo que te falta hoy, con un botón por cada cosa, y la
+          racha al costado. Antes eran tarjetas sueltas de racha, trivia y duelos. */}
       <Card variant="feature" className="mb-10">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div>
+        <div className="flex items-start justify-between gap-6 flex-wrap">
+          <div className="flex-1 min-w-[220px]">
+            <p className="t-eyebrow mb-3">Te falta hoy</p>
+            {alerts.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {alerts.map((a) => (
+                  <Link key={a.key} to={a.to} className="btn btn-primary btn-sm">
+                    <a.icon size={14} /> {a.short} ›
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400">No te falta nada por hoy: ya respondiste la trivia y no hay duelos esperándote.</p>
+            )}
+          </div>
+          <div className="min-w-[150px]">
             <div className="flex items-center gap-2 mb-1.5">
               <Flame size={14} className={current > 0 ? "text-orange-400" : "text-gray-500"} />
-              <span className="text-[11px] font-medium text-gray-400 uppercase tracking-[0.2em]">Racha</span>
+              <span className="t-eyebrow">Racha</span>
             </div>
-            <p className="text-4xl font-semibold tracking-tight tabular-nums">
+            <p className="text-3xl font-semibold tracking-tight tabular-nums">
               {current}
               <span className="text-sm font-normal text-gray-500 ml-2">días</span>
             </p>
-          </div>
-          <div className="flex-1 min-w-[160px] max-w-xs">
-            <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mt-2">
               <div className="h-full bg-orange-400/70 transition-[width]" style={{ width: `${streakPct}%` }} />
             </div>
-            <p className="text-xs text-gray-500 mt-2">Mejor racha: {best} días</p>
+            <p className="text-xs text-gray-500 mt-1.5">Mejor racha: {best} días</p>
           </div>
         </div>
-
-        {pending.length > 0 && (
-          <div className="mt-5 pt-5 border-t border-white/10 space-y-0">
-            {pending.map((item) => (
-              <Card key={item.key} variant="row">
-                <Link to={item.to} className="flex items-center gap-3 group">
-                  <span className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-${item.tw}-500/15 text-${item.tw}-500`}>
-                    <item.icon size={14} />
-                  </span>
-                  <span className="text-sm text-gray-300 group-hover:text-white transition-colors flex-1">
-                    {item.label}
-                  </span>
-                </Link>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {pending.length === 0 && (
-          <p className="text-xs text-gray-500 mt-5 pt-5 border-t border-white/10">
-            No te falta nada por hoy — ya respondiste la trivia y no hay duelos esperándote.
-          </p>
-        )}
       </Card>
 
       <ContinuePlaying items={savedGames} />
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-x-14 gap-y-12">
         <div>
-          <h2 className="text-[11px] font-medium text-gray-600 uppercase tracking-[0.2em] mb-4">
+          <h2 className="text-xs font-medium text-gray-600 uppercase tracking-[0.2em] mb-4">
             Secciones
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/5 rounded-2xl overflow-hidden">
@@ -249,7 +202,7 @@ export default function Dashboard() {
         {/* Panel lateral */}
         <div className="space-y-8">
           <div>
-            <p className="text-[11px] font-medium text-gray-500 uppercase tracking-[0.2em] mb-4">Mis stats</p>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-[0.2em] mb-4">Mis stats</p>
             <div className="divide-y divide-white/5">
               <StatRow label="Puntos" value={stats?.total_points ?? 0} />
               <StatRow label="Aciertos" value={`${stats?.accuracy ?? 0}%`} accent />
@@ -260,7 +213,7 @@ export default function Dashboard() {
 
           {groups.length > 0 && (
             <div className="pt-8 border-t border-white/5">
-              <p className="text-[11px] font-medium text-gray-500 uppercase tracking-[0.2em] mb-4">Mi grupo</p>
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-[0.2em] mb-4">Mi grupo</p>
               {groupDetail ? (
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-accent/15 text-accent font-semibold text-sm">
@@ -288,7 +241,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {showTutorial && <TutorialModal sections={SECTIONS} onDone={finishTutorial} />}
+      {showTutorial && <TutorialModal onDone={finishTutorial} />}
     </Layout>
   );
 }

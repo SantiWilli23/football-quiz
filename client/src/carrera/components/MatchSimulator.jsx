@@ -57,7 +57,7 @@ function LivePitch({ myColor, starters, byId, lastEvent }) {
             style={{ left: `${pos.x}%`, top: `${clampY(pos.y + shift)}%`, transition: "left 0.4s ease, top 0.5s ease" }}
           >
             <div
-              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[11px] sm:text-xs font-bold text-white shadow-md border ${isInvolved ? "border-amber ring-2 ring-amber/70" : "border-black/20"}`}
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-xs font-bold text-white shadow-md border ${isInvolved ? "border-amber ring-2 ring-amber/70" : "border-black/20"}`}
               style={{ background: myColor }}
             >
               {p?.number ?? "?"}
@@ -69,7 +69,7 @@ function LivePitch({ myColor, starters, byId, lastEvent }) {
       {rivalCoords.map((pos, i) => (
         <div
           key={`riv-${i}`}
-          className="absolute -translate-x-1/2 -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-[10px] sm:text-[11px] font-bold bg-gray-700 text-gray-200 border border-gray-500"
+          className="absolute -translate-x-1/2 -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-xs sm:text-xs font-bold bg-gray-700 text-gray-200 border border-gray-500"
           style={{ left: `${pos.x}%`, top: `${clampY(pos.y + shift)}%`, transition: "left 0.4s ease, top 0.5s ease" }}
         >
           {i + 1}
@@ -245,7 +245,7 @@ export default function MatchSimulator({ matchResult, onFinish }) {
                         {formations.map((f) => <option key={f} value={f}>{f}</option>)}
                       </select>
                       {htFormation !== state.formation && (
-                        <p className="text-[11px] text-amber mt-1">Reordena a los mismos titulares (post-cambios) en la nueva forma.</p>
+                        <p className="text-xs text-amber mt-1">Reordena a los mismos titulares (post-cambios) en la nueva forma.</p>
                       )}
                     </div>
 
@@ -272,7 +272,7 @@ export default function MatchSimulator({ matchResult, onFinish }) {
                             onChange={(e) => setHtSliders((s) => ({ ...s, [key]: Number(e.target.value) }))}
                             className="w-full accent-accent"
                           />
-                          <div className="flex justify-between text-[10px] text-gray-500">
+                          <div className="flex justify-between text-xs text-gray-500">
                             <span>{lo}</span><span>{hi}</span>
                           </div>
                         </div>

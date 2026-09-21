@@ -37,7 +37,7 @@ export default function Splash() {
           </Link>
         </div>
 
-        <p className="text-[11px] text-gray-600 tracking-wide mt-8">
+        <p className="text-xs text-gray-600 tracking-wide mt-8">
           COTRERO · DRAFT EUROPEO 8A2 · TRIVIA
         </p>
       </div>

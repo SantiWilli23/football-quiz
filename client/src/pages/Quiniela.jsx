@@ -214,7 +214,7 @@ export default function Quiniela() {
             const draft = drafts[fx.id] || { home: existing?.predicted_home ?? 0, away: existing?.predicted_away ?? 0 };
             return (
               <Card key={fx.id}>
-                <p className="text-[11px] text-gray-500 mb-2">{formatKickoff(fx.date)}</p>
+                <p className="text-xs text-gray-500 mb-2">{formatKickoff(fx.date)}</p>
                 <div className="flex items-center gap-3">
                   <span className="flex-1 text-sm text-right truncate">{fx.home.name}</span>
                   <div className="flex items-center gap-1.5 shrink-0">

@@ -236,7 +236,7 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
       )}
 
       <div className="flex items-center gap-4">
-        <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-[11px] font-bold text-gray-400">
+        <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-xs font-bold text-gray-400">
           {p.position}
         </div>
 
@@ -250,39 +250,39 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
 
         {/* Moral */}
         <div className="hidden sm:flex flex-col items-center w-14 shrink-0">
-          <span className="text-[10px] uppercase tracking-wide text-gray-600">Moral</span>
+          <span className="text-xs uppercase tracking-wide text-gray-600">Moral</span>
           <span className={`text-sm font-semibold ${moraleColor(morale)}`}>{morale}</span>
         </div>
 
         {/* Físico */}
         <div className="hidden sm:flex flex-col items-center w-14 shrink-0">
-          <span className="text-[10px] uppercase tracking-wide text-gray-600">Físico</span>
+          <span className="text-xs uppercase tracking-wide text-gray-600">Físico</span>
           <span className={`text-sm font-semibold ${fatigueColor(fatigue)}`}>{fatigue}</span>
         </div>
 
         <div className="hidden sm:flex flex-col items-center w-16 shrink-0">
-          <span className="text-[10px] uppercase tracking-wide text-gray-600">Valor</span>
+          <span className="text-xs uppercase tracking-wide text-gray-600">Valor</span>
           <span className="text-sm text-gray-300 font-medium">€{p.value}M</span>
           {p.prevValue != null && p.value !== p.prevValue && (
-            <span className={`text-[9px] ${p.value > p.prevValue ? "text-emerald" : "text-red-400"}`}>
+            <span className={`text-xs ${p.value > p.prevValue ? "text-emerald" : "text-red-400"}`}>
               {p.value > p.prevValue ? "▲" : "▼"} antes €{p.prevValue}M
             </span>
           )}
         </div>
 
         <div className="hidden sm:flex flex-col items-center w-16 shrink-0">
-          <span className="text-[10px] uppercase tracking-wide text-gray-600">Pot.</span>
+          <span className="text-xs uppercase tracking-wide text-gray-600">Pot.</span>
           <span className="text-sm text-gray-300 font-medium" title={report ? `Reportado por ${report.scoutName}` : "Sin reclutar"}>
             {report?.potentialEstimate != null ? `~${report.potentialEstimate}` : <span className="text-gray-600">?</span>}
           </span>
         </div>
 
         <div className="flex flex-col items-center w-11 shrink-0">
-          <span className="text-[10px] uppercase tracking-wide text-gray-600">OVR</span>
+          <span className="text-xs uppercase tracking-wide text-gray-600">OVR</span>
           <span className="text-base font-bold">{p.ovr}</span>
         </div>
 
-        <span className={`hidden md:inline-flex shrink-0 text-[11px] font-medium px-2.5 py-1 rounded-full border ${LEVEL_STYLE[level]}`}>
+        <span className={`hidden md:inline-flex shrink-0 text-xs font-medium px-2.5 py-1 rounded-full border ${LEVEL_STYLE[level]}`}>
           {level}
         </span>
 
@@ -299,10 +299,10 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
       {/* Estadísticas de temporada */}
       {seasonStats && (
         <div className="flex items-center gap-3 pl-[52px] flex-wrap">
-          <span className="text-[11px] text-gray-500">⚽ {seasonStats.goals ?? 0}</span>
-          <span className="text-[11px] text-gray-500">🅰️ {seasonStats.assists ?? 0}</span>
-          <span className="text-[11px] text-gray-500">🟨 {seasonStats.yellowCards ?? 0}</span>
-          <span className="text-[11px] text-gray-500">▶ {seasonStats.appearances ?? 0} partidos</span>
+          <span className="text-xs text-gray-500">⚽ {seasonStats.goals ?? 0}</span>
+          <span className="text-xs text-gray-500">🅰️ {seasonStats.assists ?? 0}</span>
+          <span className="text-xs text-gray-500">🟨 {seasonStats.yellowCards ?? 0}</span>
+          <span className="text-xs text-gray-500">▶ {seasonStats.appearances ?? 0} partidos</span>
         </div>
       )}
 
@@ -311,7 +311,7 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
         <button
           onClick={onSetCaptain}
           disabled={isCaptain}
-          className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+          className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
             isCaptain ? "bg-amber/15 text-amber border-amber/40 cursor-default" : "text-gray-500 border-border hover:text-white hover:border-gray-500"
           }`}
         >
@@ -321,7 +321,7 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
           value={instruction}
           onChange={(e) => onSetInstruction(e.target.value)}
           title="Instrucción individual para partidos"
-          className="bg-bg border border-border rounded-full px-2.5 py-1 text-[11px] text-gray-300"
+          className="bg-bg border border-border rounded-full px-2.5 py-1 text-xs text-gray-300"
         >
           {INSTRUCTION_OPTIONS.map((opt) => (
             <option key={opt.id} value={opt.id}>{opt.label}</option>
@@ -329,7 +329,7 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
         </select>
         <button
           onClick={onToggleTransferListed}
-          className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+          className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
             p.transferListed ? "bg-red-500/15 text-red-400 border-red-500/40" : "text-gray-500 border-border hover:text-white hover:border-gray-500"
           }`}
         >
@@ -337,7 +337,7 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
         </button>
         <button
           onClick={onToggleLoanListed}
-          className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+          className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
             p.loanListed ? "bg-blue/15 text-blue border-blue/40" : "text-gray-500 border-border hover:text-white hover:border-gray-500"
           }`}
         >
@@ -355,7 +355,7 @@ function PositionTraining({ player: p, week, onStart }) {
   if (p.training) {
     const weeksLeft = Math.max(0, p.training.endWeek - week);
     return (
-      <span className="text-[11px] px-2.5 py-1 rounded-full border border-amber/30 bg-amber/10 text-amber">
+      <span className="text-xs px-2.5 py-1 rounded-full border border-amber/30 bg-amber/10 text-amber">
         🎓 Entrenando → {p.training.targetPos} ({weeksLeft} sem.)
       </span>
     );
@@ -369,7 +369,7 @@ function PositionTraining({ player: p, week, onStart }) {
       <select
         value={target}
         onChange={(e) => setTarget(e.target.value)}
-        className="bg-bg border border-border rounded-full px-2.5 py-1 text-[11px] text-gray-300"
+        className="bg-bg border border-border rounded-full px-2.5 py-1 text-xs text-gray-300"
       >
         <option value="">Reconvertir a…</option>
         {ALL_POSITIONS.filter((pos) => pos !== p.position).map((pos) => (
@@ -379,12 +379,12 @@ function PositionTraining({ player: p, week, onStart }) {
       {target && (
         <button
           onClick={() => { onStart(target); setTarget(""); }}
-          className="text-[11px] px-2.5 py-1 rounded-full border border-accent/40 bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
+          className="text-xs px-2.5 py-1 rounded-full border border-accent/40 bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
         >
           Entrenar
         </button>
       )}
-      {hint && <span className={`text-[10px] ${hint.tone === "good" ? "text-emerald" : hint.tone === "warn" ? "text-amber" : "text-red-400"}`}>{hint.text}</span>}
+      {hint && <span className={`text-xs ${hint.tone === "good" ? "text-emerald" : hint.tone === "warn" ? "text-amber" : "text-red-400"}`}>{hint.text}</span>}
     </div>
   );
 }

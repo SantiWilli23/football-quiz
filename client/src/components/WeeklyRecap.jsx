@@ -59,15 +59,15 @@ export default function WeeklyRecap({ groupId }) {
       <div className="grid grid-cols-3 gap-3 mb-3">
         <div>
           <p className="text-2xl font-bold">{recap.me.points}</p>
-          <p className="text-[11px] text-gray-500">puntos</p>
+          <p className="text-xs text-gray-500">puntos</p>
         </div>
         <div>
           <p className="text-2xl font-bold">#{recap.myPosition}</p>
-          <p className="text-[11px] text-gray-500">en el grupo</p>
+          <p className="text-xs text-gray-500">en el grupo</p>
         </div>
         <div>
           <p className="text-2xl font-bold">{recap.me.accuracy}%</p>
-          <p className="text-[11px] text-gray-500">de aciertos</p>
+          <p className="text-xs text-gray-500">de aciertos</p>
         </div>
       </div>
       <p className="text-xs text-gray-500">

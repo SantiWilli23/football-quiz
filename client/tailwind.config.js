@@ -71,6 +71,12 @@ export default {
         // También por variable: el tema Bengala pide esquinas bien redondeadas,
         // los otros dos casi sin redondeo.
         card: "var(--radius-card)",
+        // Tres radios: 6px (chico), 10px (mediano) y píldora (rounded-full).
+        md: "6px",
+        lg: "6px",
+        xl: "10px",
+        "2xl": "10px",
+        "3xl": "10px",
       },
       fontFamily: {
         sans: ["Archivo", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],

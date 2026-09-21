@@ -41,6 +41,7 @@ export default function CrestQuiz() {
   const [rounds, setRounds] = useState([]);
   const [index, setIndex] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
+  const [results, setResults] = useState([]); // true/false por escudo, para los puntitos
   const [blurLevel, setBlurLevel] = useState(0);
   const [feedback, setFeedback] = useState(null); // "correct" | "wrong"
   const [saveState, setSaveState] = useState(null);
@@ -53,6 +54,7 @@ export default function CrestQuiz() {
     setRounds(buildRounds());
     setIndex(0);
     setCorrectCount(0);
+    setResults([]);
     setBlurLevel(0);
     setFeedback(null);
     setSaveState(null);
@@ -68,6 +70,7 @@ export default function CrestQuiz() {
     const correct = teamId === current.team.id;
     setFeedback(correct ? "correct" : "wrong");
     if (correct) setCorrectCount((c) => c + 1);
+    setResults((r) => [...r, correct]);
 
     setTimeout(async () => {
       if (index + 1 < rounds.length) {
@@ -91,7 +94,7 @@ export default function CrestQuiz() {
   }
 
   return (
-    <Layout>
+    <Layout focus={phase === "playing"}>
       <h1 className="text-xl sm:text-2xl font-bold mb-1">Escudos a ciegas</h1>
       <p className="text-gray-400 text-sm mb-4">
         {ROUNDS} escudos reales, muy borrosos. En práctica podés pedir pistas para verlos más nítidos; el reto semanal es a ciegas, sin pistas, y tu mejor marca suma al ranking del grupo.
@@ -122,9 +125,24 @@ export default function CrestQuiz() {
 
       {phase === "playing" && current && (
         <div className="mt-4 space-y-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-400">Escudo {index + 1} / {rounds.length}{weekly ? " · sin pistas" : " · práctica"}</span>
-            <span className="text-gray-400">{correctCount} correctas</span>
+          <div>
+            <div className="flex gap-1.5 mb-2" role="img" aria-label={`Escudo ${index + 1} de ${rounds.length}, ${correctCount} correctas`}>
+              {rounds.map((_, i) => (
+                <span
+                  key={i}
+                  className={`flex-1 h-1.5 rounded-full ${
+                    i < results.length ? (results[i] ? "bg-good" : "bg-bad") : i === index ? "bg-white" : "bg-white/10"
+                  }`}
+                />
+              ))}
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-400">Escudo {index + 1} / {rounds.length}{weekly ? " · sin pistas" : " · práctica"}</span>
+              <span className="text-gray-400">
+                {correctCount} correctas
+                {(() => { let n = 0; for (let i = results.length - 1; i >= 0 && results[i]; i--) n++; return n >= 2 ? ` · racha de ${n}` : ""; })()}
+              </span>
+            </div>
           </div>
 
           <Card>

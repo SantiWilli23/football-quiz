@@ -41,9 +41,9 @@ function LineupSide({ side }) {
       <div className="flex items-center gap-2 mb-2">
         {side.team.logo && <img src={side.team.logo} alt="" className="w-4 h-4" loading="lazy" />}
         <span className="text-xs font-semibold truncate">{side.team.name}</span>
-        {side.formation && <span className="text-[11px] text-gray-500 ml-auto shrink-0">{side.formation}</span>}
+        {side.formation && <span className="text-xs text-gray-500 ml-auto shrink-0">{side.formation}</span>}
       </div>
-      {side.coach && <p className="text-[11px] text-gray-500 mb-2">DT: {side.coach}</p>}
+      {side.coach && <p className="text-xs text-gray-500 mb-2">DT: {side.coach}</p>}
       <ul className="space-y-1">
         {side.starters.map((p, i) => (
           <li key={i} className="text-xs text-gray-300 flex gap-2">
@@ -105,7 +105,7 @@ export default function FixtureCard({ fixture }) {
         </div>
         <div className="shrink-0 text-right">
           <span
-            className="text-[11px] font-semibold px-2 py-1 rounded-full border inline-block"
+            className="text-xs font-semibold px-2 py-1 rounded-full border inline-block"
             style={
               isLive
                 ? { color: CHALK.red, borderColor: `${CHALK.red}66`, background: `${CHALK.red}1a` }

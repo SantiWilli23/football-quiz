@@ -123,7 +123,7 @@ export default function ArbitrajeVar() {
   useEffect(() => () => clearInterval(timerRef.current), []);
 
   return (
-    <Layout>
+    <Layout focus={phase === "playing"}>
       <h1 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2">
         <Gavel size={22} className="text-accent" />
         Arbitraje / VAR
@@ -173,22 +173,22 @@ export default function ArbitrajeVar() {
           {situation && (
             <Card>
               {situation.photo && !photoFailed ? (
-                <figure className="mb-4">
+                <figure className="mb-4 -mx-6 -mt-6 card-bleed">
                   <img
                     src={`https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(situation.photo)}?width=800`}
                     alt="Foto real de una jugada parecida"
                     loading="eager"
                     referrerPolicy="no-referrer"
                     onError={() => setPhotoFailed(true)}
-                    className="w-full max-h-64 object-cover rounded-card border border-border"
+                    className="w-full h-48 sm:h-64 object-cover rounded-t-2xl"
                   />
-                  <figcaption className="text-[10px] text-gray-600 mt-1">Foto de referencia: Wikimedia Commons</figcaption>
+                  <figcaption className="text-xs text-gray-600 mt-1 px-6">Foto de referencia: Wikimedia Commons</figcaption>
                 </figure>
               ) : (
                 <PlayDiagram type={situation.diagram} />
               )}
               <p className="font-medium mb-4">{situation.text}</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {situation.options.map((opt, idx) => {
                   const isPicked = feedback?.pickedIdx === idx;
                   const isCorrectOpt = feedback && feedback.correctIdx === idx;

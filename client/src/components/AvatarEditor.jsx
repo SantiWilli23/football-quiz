@@ -268,7 +268,7 @@ export default function AvatarEditor({ user, onSaved }) {
                   >
                     {!available && <Lock size={11} />}
                     {FRAME_LABELS[frame]}
-                    {!available && <span className="text-[10px]">({need})</span>}
+                    {!available && <span className="text-xs">({need})</span>}
                   </button>
                 );
               })}

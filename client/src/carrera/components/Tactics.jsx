@@ -124,10 +124,10 @@ export default function Tactics() {
                   <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{preset.desc}</p>
                   <div className="flex flex-wrap gap-1 mt-1.5">
                     {preset.examples.map((ex) => (
-                      <span key={ex} className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-border text-gray-400">{ex}</span>
+                      <span key={ex} className="text-xs px-2 py-0.5 rounded-full bg-white/5 border border-border text-gray-400">{ex}</span>
                     ))}
                   </div>
-                  <p className="text-[10px] text-gray-600 mt-1.5">
+                  <p className="text-xs text-gray-600 mt-1.5">
                     {preset.formation} · {MENTALITY_LABELS[preset.mentality - 1]} · Pressing {preset.sliders.pressing}
                   </p>
                 </div>
@@ -162,7 +162,7 @@ export default function Tactics() {
           onChange={(e) => setMentality(Number(e.target.value))}
           className="w-full accent-accent"
         />
-        <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+        <div className="flex justify-between text-xs text-gray-500 mt-1">
           <span>Park the bus</span><span>Todos arriba</span>
         </div>
       </div>
@@ -185,7 +185,7 @@ export default function Tactics() {
               <span className="text-xl leading-none mt-0.5">{opt.emoji}</span>
               <div>
                 <p className="text-sm font-semibold">{opt.label}</p>
-                <p className="text-[11px] opacity-70">{opt.desc}</p>
+                <p className="text-xs opacity-70">{opt.desc}</p>
               </div>
             </button>
           ))}
@@ -206,7 +206,7 @@ export default function Tactics() {
                 onChange={(e) => setSlider(key, Number(e.target.value))}
                 className="w-full accent-accent"
               />
-              <div className="flex justify-between text-[10px] text-gray-500">
+              <div className="flex justify-between text-xs text-gray-500">
                 <span>{lo}</span><span>{hi}</span>
               </div>
             </div>

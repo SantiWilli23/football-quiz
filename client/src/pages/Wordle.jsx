@@ -18,8 +18,12 @@ function Cell({ label, children, tone }) {
     : "bg-panel border-border text-gray-300";
   return (
     <div className={`rounded-card border px-2 py-2 text-center ${toneClass}`}>
-      <p className="text-[9px] uppercase tracking-wide opacity-70 mb-0.5">{label}</p>
-      <p className="text-xs font-semibold flex items-center justify-center gap-1 truncate">{children}</p>
+      <p className="text-xs uppercase tracking-wide opacity-70 mb-0.5">{label}</p>
+      <p className="text-xs font-semibold flex items-center justify-center gap-1 truncate">
+        {tone === "good" && <span aria-label="coincide">✓</span>}
+        {tone === "bad" && <span aria-label="no coincide">✗</span>}
+        {children}
+      </p>
     </div>
   );
 }
@@ -60,10 +64,16 @@ function GuessRow({ g }) {
   );
 }
 
+// Una fila de cuadritos por intento (del primero al último): verde si
+// coincide, rojo si no — nacionalidad, posición, club, liga y año.
 function shareText(game) {
   const title = game.mode === "daily" ? "Fichado diario" : "Fichado";
   const result = game.status === "won" ? `${game.attemptsUsed}/${game.maxAttempts}` : `X/${game.maxAttempts}`;
-  return `${title} - ${result} · ${game.points} pts`;
+  const sq = (ok) => (ok ? "🟩" : "🟥");
+  const rows = [...game.guesses].reverse().map((g) =>
+    [g.nationality.match, g.position.match, g.club.match, g.league.match, g.birth_year.direction === "match"].map(sq).join("")
+  );
+  return `${title} · ${result} · ${game.points} pts\n${rows.join("\n")}`;
 }
 
 export default function Wordle() {
@@ -191,7 +201,15 @@ export default function Wordle() {
         <span className="text-xs text-gray-500 self-center ml-2">{MODES.find((m) => m.key === mode).hint}</span>
       </div>
 
-      <div className="flex gap-1.5 flex-wrap mb-6">
+      <select
+        value={league}
+        onChange={(e) => setLeague(e.target.value)}
+        aria-label="Liga"
+        className="sm:hidden w-full mb-6 bg-panel border border-border rounded-card px-3 py-2.5 text-sm"
+      >
+        {tabs.map((l) => <option key={l.key} value={l.key}>Liga: {l.label}</option>)}
+      </select>
+      <div className="hidden sm:flex gap-1.5 flex-wrap mb-6">
         {tabs.map((l) => (
           <button
             key={l.key}
@@ -222,7 +240,7 @@ export default function Wordle() {
                 }`}
               >
                 <p className={`text-sm font-semibold ${difficulty === d.id ? "text-accent" : ""}`}>{d.label}</p>
-                <p className="text-[11px] text-gray-500">
+                <p className="text-xs text-gray-500">
                   {d.id === "facil" ? "Solo cracks conocidos" : d.id === "normal" ? "Figuras y buen nivel" : "Cualquiera, hasta suplentes"} · ×{d.multiplier}
                 </p>
               </button>
@@ -235,8 +253,8 @@ export default function Wordle() {
       )}
 
       {!loading && game && (
-        <>
-          <Card className="mb-6">
+        <div className="flex flex-col">
+          <Card className="mb-6 order-2 lg:order-1 sticky bottom-20 lg:static z-10">
             <div className="flex items-center justify-between mb-3 text-xs text-gray-500">
               <span className="uppercase tracking-wide">
                 {game.mode === "daily" ? "Diario" : `Aleatorio · ${meta.difficulties.find((d) => d.id === game.difficulty)?.label || ""}`}
@@ -261,7 +279,7 @@ export default function Wordle() {
                     />
                   </div>
                   {suggestions.length > 0 && (
-                    <div className="absolute z-10 mt-1 w-full bg-panel border border-border rounded-card overflow-hidden shadow-lg">
+                    <div className="absolute z-10 bottom-full mb-1 lg:bottom-auto lg:top-full lg:mt-1 w-full bg-panel border border-border rounded-card overflow-hidden shadow-lg">
                       {suggestions.map((name) => (
                         <button
                           key={name}
@@ -337,11 +355,11 @@ export default function Wordle() {
           </Card>
 
           {game.guesses.length > 0 && (
-            <div className="space-y-3">
+            <div className="space-y-3 order-1 lg:order-2 mb-4 lg:mb-0">
               {game.guesses.map((g) => <GuessRow key={g.name} g={g} />)}
             </div>
           )}
-        </>
+        </div>
       )}
     </Layout>
   );

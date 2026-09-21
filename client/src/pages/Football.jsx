@@ -201,7 +201,7 @@ export default function Football() {
             <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
               <h2 className="font-semibold">{activeLeague?.name ?? "Cargando..."}</h2>
               {liveTab === "vivo" && (
-                <span className="text-[11px] text-gray-500 flex items-center gap-1.5">
+                <span className="text-xs text-gray-500 flex items-center gap-1.5">
                   <Radio size={11} style={{ color: CHALK.red }} className="animate-pulse" />
                   se actualiza solo
                 </span>

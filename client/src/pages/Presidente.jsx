@@ -35,7 +35,7 @@ const money = (n) => `€${Math.abs(n) >= 100 ? Math.round(n) : Math.round(n * 1
 const perWeek = (n) => `€${(Math.round(n * 100) / 100).toFixed(2)}M/sem`;
 
 function color(v) {
-  return v >= 60 ? "#3fae9a" : v >= 30 ? "#d9a441" : "#e0664f";
+  return v >= 60 ? "rgb(var(--c-emerald))" : v >= 30 ? "rgb(var(--c-amber))" : "rgb(var(--c-red))";
 }
 
 function Bar({ label, value, hint }) {
@@ -256,7 +256,7 @@ function Finanzas({ state, act }) {
             </div>
           </div>
         </div>
-        <p className="text-[11px] text-gray-500 mt-3">Asistencia estimada: {inc.attendance.toLocaleString()} personas ({Math.round(inc.rate * 100)}% del estadio).</p>
+        <p className="text-xs text-gray-500 mt-3">Asistencia estimada: {inc.attendance.toLocaleString()} personas ({Math.round(inc.rate * 100)}% del estadio).</p>
       </Card>
 
       <Card>
@@ -266,7 +266,7 @@ function Finanzas({ state, act }) {
             <Btn key={p} tone={state.ticketPriceLevel === i + 1 ? "accent" : "default"} onClick={() => act(E.setTicketPrice, i + 1)}>€{p}</Btn>
           ))}
         </div>
-        <p className="text-[11px] text-gray-500 mt-2">Más caro: más plata por persona, pero menos asistencia y la hinchada lo siente.</p>
+        <p className="text-xs text-gray-500 mt-2">Más caro: más plata por persona, pero menos asistencia y la hinchada lo siente.</p>
       </Card>
 
       <Card>
@@ -319,7 +319,7 @@ function ClubInfra({ state, act }) {
         <Btn tone="accent" onClick={() => act(E.upgradeStadium)} disabled={!nextStadium || !E.canUpgradeStadium(state)}>
           {nextStadium ? `Ampliar a ${nextStadium.capacity.toLocaleString()} — ${money(nextStadium.upgradeCost)}` : "Estadio al máximo"}
         </Btn>
-        <p className="text-[11px] text-gray-500 mt-2">Un estadio más grande sube las entradas, la TV y habilita más sponsors (naming del estadio desde el nivel 2).</p>
+        <p className="text-xs text-gray-500 mt-2">Un estadio más grande sube las entradas, la TV y habilita más sponsors (naming del estadio desde el nivel 2).</p>
       </Card>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -375,7 +375,7 @@ function Comercial({ state, act }) {
                       <Btn key={o.id} onClick={() => act(E.signSponsor, o.id)}>
                         <p className="text-sm font-medium">{o.brand}</p>
                         <p className="text-xs text-gray-500">{perWeek(o.weekly)} · {o.seasons} temp. · bonus {money(o.bonus)}</p>
-                        {o.risky && <p className="text-[11px] text-red-300">Paga más, pero es polémica</p>}
+                        {o.risky && <p className="text-xs text-red-300">Paga más, pero es polémica</p>}
                       </Btn>
                     ))}
                   </div>
@@ -396,7 +396,7 @@ function Comercial({ state, act }) {
               <Btn key={o.id} onClick={() => act(E.negotiateTv, o.id)}>
                 <p className="text-sm font-medium">{o.label}</p>
                 <p className="text-xs text-gray-500">{perWeek(o.weekly)}{o.bonusWeekly ? ` + ${perWeek(o.bonusWeekly)} en el top 4` : ""} · {o.seasons} temp.</p>
-                <p className="text-[11px] text-gray-500 mt-1">{o.desc}</p>
+                <p className="text-xs text-gray-500 mt-1">{o.desc}</p>
               </Btn>
             ))}
           </div>
@@ -426,7 +426,7 @@ function Socios({ state, act }) {
             </Btn>
           ))}
         </div>
-        <p className="text-[11px] text-gray-500 mt-2">Una cuota alta rinde más por socio pero frena el crecimiento de la masa societaria.</p>
+        <p className="text-xs text-gray-500 mt-2">Una cuota alta rinde más por socio pero frena el crecimiento de la masa societaria.</p>
       </Card>
 
       <Card>
@@ -438,7 +438,7 @@ function Socios({ state, act }) {
               <Btn key={key} onClick={() => act(E.runCampaign, key)} disabled={state.budget < c.cost || wait > 0}>
                 <p className="text-sm font-medium">{c.label}</p>
                 <p className="text-xs text-gray-500">{money(c.cost)} · {c.desc}</p>
-                {wait > 0 && <p className="text-[11px] text-amber mt-1">Disponible en {wait} sem.</p>}
+                {wait > 0 && <p className="text-xs text-amber mt-1">Disponible en {wait} sem.</p>}
               </Btn>
             );
           })}
@@ -469,17 +469,17 @@ function Plantel({ state, act }) {
             </Btn>
           ))}
         </div>
-        <p className="text-[11px] text-gray-500">Cambiar de rumbo se puede una vez por temporada y cuesta confianza de la directiva.</p>
+        <p className="text-xs text-gray-500">Cambiar de rumbo se puede una vez por temporada y cuesta confianza de la directiva.</p>
 
         <p className="text-sm font-medium mt-4 mb-2">Política salarial</p>
         <div className="flex flex-wrap gap-2">
           {E.WAGE_LEVELS.map((w) => (
             <Btn key={w.level} tone={state.wageLevel === w.level ? "accent" : "default"} onClick={() => act(E.setWageLevel, w.level)}>
-              {w.label}<span className="block text-[11px] text-gray-500">sueldos ×{w.mult} · rendimiento {w.strength >= 0 ? "+" : ""}{w.strength}</span>
+              {w.label}<span className="block text-xs text-gray-500">sueldos ×{w.mult} · rendimiento {w.strength >= 0 ? "+" : ""}{w.strength}</span>
             </Btn>
           ))}
         </div>
-        <p className="text-[11px] text-gray-500 mt-2">Masa salarial actual: {perWeek(E.payroll(state))}.</p>
+        <p className="text-xs text-gray-500 mt-2">Masa salarial actual: {perWeek(E.payroll(state))}.</p>
       </Card>
 
       <Card>
@@ -543,7 +543,7 @@ function Plantel({ state, act }) {
             </tbody>
           </table>
         </div>
-        <p className="text-[11px] text-gray-500 mt-2">Renovar cuesta una prima (20 semanas de sueldo) y sube el sueldo 10%. Los contratos que vencen se van a fin de temporada: el DT repone con jugadores del nivel base del club.</p>
+        <p className="text-xs text-gray-500 mt-2">Renovar cuesta una prima (20 semanas de sueldo) y sube el sueldo 10%. Los contratos que vencen se van a fin de temporada: el DT repone con jugadores del nivel base del club.</p>
       </Card>
 
       <Card>
@@ -567,7 +567,7 @@ function Plantel({ state, act }) {
             ))}
           </div>
         )}
-        <p className="text-[11px] text-gray-500 mt-3">Al marcarlo como prioridad, el DT lo evalúa la semana siguiente: puede ficharlo, esperar por presupuesto o rechazarlo (y eso te cuesta confianza en él).</p>
+        <p className="text-xs text-gray-500 mt-3">Al marcarlo como prioridad, el DT lo evalúa la semana siguiente: puede ficharlo, esperar por presupuesto o rechazarlo (y eso te cuesta confianza en él).</p>
       </Card>
     </div>
   );
@@ -583,7 +583,7 @@ function Directiva({ state, act }) {
         <Title icon={Vote}>Elecciones</Title>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <p className="text-2xl font-bold tabular-nums" style={{ color: vote >= 50 ? "#3fae9a" : "#e0664f" }}>{vote}%</p>
+            <p className="text-2xl font-bold tabular-nums" style={{ color: vote >= 50 ? "rgb(var(--c-emerald))" : "rgb(var(--c-red))" }}>{vote}%</p>
             <p className="text-xs text-gray-500">apoyo proyectado (necesitás 50%)</p>
           </div>
           <div>
@@ -595,7 +595,7 @@ function Directiva({ state, act }) {
             <p className="text-xs text-gray-500">Candidato opositor · fuerza {state.opposition.strength}</p>
           </div>
         </div>
-        <p className="text-[11px] text-gray-500 mt-3">El voto sale de la confianza de la directiva, la hinchada, la prensa, los títulos, el objetivo cumplido y los favores que juntes. Reelecciones ganadas: {state.electionsWon}.</p>
+        <p className="text-xs text-gray-500 mt-3">El voto sale de la confianza de la directiva, la hinchada, la prensa, los títulos, el objetivo cumplido y los favores que juntes. Reelecciones ganadas: {state.electionsWon}.</p>
       </Card>
 
       <Card>
@@ -614,14 +614,14 @@ function Directiva({ state, act }) {
                   </div>
                   <div className="w-32"><Bar label="Lealtad" value={loyalty} /></div>
                   <Btn onClick={() => act(E.lobbyMember, m.id)} disabled={state.budget < 0.6 || wait > 0}>
-                    Cenar (€0.6M){wait > 0 && <span className="block text-[11px] text-gray-500">en {wait} sem.</span>}
+                    Cenar (€0.6M){wait > 0 && <span className="block text-xs text-gray-500">en {wait} sem.</span>}
                   </Btn>
                 </div>
               </div>
             );
           })}
         </div>
-        <p className="text-[11px] text-gray-500 mt-3">Si tres miembros pierden la confianza del todo (lealtad menor a 20), presentan una moción de censura y te destituyen.</p>
+        <p className="text-xs text-gray-500 mt-3">Si tres miembros pierden la confianza del todo (lealtad menor a 20), presentan una moción de censura y te destituyen.</p>
       </Card>
     </div>
   );
@@ -697,7 +697,7 @@ function Legado({ state, onRetire }) {
               </div>
               <div className="text-right shrink-0">
                 <p className="text-sm font-bold">{h.position}°{h.champion && " 🏆"}</p>
-                <p className="text-[11px] text-gray-500">de {h.leagueSize}</p>
+                <p className="text-xs text-gray-500">de {h.leagueSize}</p>
               </div>
             </div>
           ))}

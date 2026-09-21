@@ -52,19 +52,19 @@ export default function NationalTeamCard() {
           <div className="grid grid-cols-4 gap-2 mb-3 text-center">
             <div>
               <p className="text-lg font-bold">{nt.caps}</p>
-              <p className="text-[10px] text-gray-500 uppercase">PJ</p>
+              <p className="text-xs text-gray-500 uppercase">PJ</p>
             </div>
             <div>
               <p className="text-lg font-bold text-emerald-400">{nt.wins}</p>
-              <p className="text-[10px] text-gray-500 uppercase">PG</p>
+              <p className="text-xs text-gray-500 uppercase">PG</p>
             </div>
             <div>
               <p className="text-lg font-bold text-gray-400">{nt.draws}</p>
-              <p className="text-[10px] text-gray-500 uppercase">PE</p>
+              <p className="text-xs text-gray-500 uppercase">PE</p>
             </div>
             <div>
               <p className="text-lg font-bold text-red-400">{nt.losses}</p>
-              <p className="text-[10px] text-gray-500 uppercase">PP</p>
+              <p className="text-xs text-gray-500 uppercase">PP</p>
             </div>
           </div>
 

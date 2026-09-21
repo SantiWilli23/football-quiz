@@ -19,7 +19,7 @@ function Step({ n, label, active, done, color }) {
   return (
     <div className="flex items-center gap-1.5">
       <span
-        className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold"
+        className="w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold"
         style={{
           background: done || active ? color : "transparent",
           color: done || active ? CHALK.board : CHALK.faint,
@@ -28,7 +28,7 @@ function Step({ n, label, active, done, color }) {
       >
         {done ? "✓" : n}
       </span>
-      <span className="text-[11px] hidden sm:inline" style={{ color: active ? color : CHALK.faint }}>
+      <span className="text-xs hidden sm:inline" style={{ color: active ? color : CHALK.faint }}>
         {label}
       </span>
     </div>
@@ -189,14 +189,14 @@ export default function ModeBCard({ data, groupId, onChanged }) {
                 <span className="flex items-center gap-1.5 shrink-0 relative">
                   {isMyAnswer && (
                     <span
-                      className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                      className="text-xs font-semibold px-1.5 py-0.5 rounded"
                       style={{ background: `${kind.color}26`, color: kind.color }}
                     >
                       tu voto
                     </span>
                   )}
                   {isMyPrediction && (
-                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-white/10 text-gray-300 flex items-center gap-1">
+                    <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-white/10 text-gray-300 flex items-center gap-1">
                       <Target size={9} />
                       predicción
                     </span>
@@ -246,7 +246,7 @@ export default function ModeBCard({ data, groupId, onChanged }) {
                   {r.count > 0 && <span className="text-xs text-gray-400 font-medium">{r.count}</span>}
                 </button>
               ))}
-              <span className="text-[11px] text-gray-600 flex items-center gap-1 ml-1">
+              <span className="text-xs text-gray-600 flex items-center gap-1 ml-1">
                 <Sparkles size={10} />
                 Reaccioná al resultado
               </span>

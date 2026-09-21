@@ -31,8 +31,8 @@
   --c-gray-200: 40 51 60;
   --c-gray-300: 195 205 211;
   --c-gray-400: 168 180 187;
-  --c-gray-500: 143 160 170;
-  --c-gray-600: 97 114 125;
+  --c-gray-500: 160 176 186;
+  --c-gray-600: 128 145 156;
   --c-gray-700: 74 89 96;
   --c-gray-800: 40 51 60;
   --c-gray-900: 11 15 18;
@@ -83,6 +83,39 @@
 
   --radius-card: 4px;
   --theme-color: #262b35;
+}
+
+[data-theme="cancha-noche"] {
+  --c-bg: 9 28 19;
+  --c-panel: 15 40 27;
+  --c-panel-hi: 20 50 34;
+  --c-border: 44 84 60;
+
+  --c-white: 238 245 236;
+  --c-onaccent: 9 28 19;
+
+  --c-gray-200: 44 84 60;
+  --c-gray-300: 196 216 202;
+  --c-gray-400: 168 196 178;
+  --c-gray-500: 148 178 160;
+  --c-gray-600: 118 150 130;
+  --c-gray-700: 84 116 96;
+  --c-gray-800: 44 84 60;
+  --c-gray-900: 6 20 13;
+
+  --c-accent: 232 221 138;
+  --c-accent-dark: 186 174 92;
+  --c-accent-light: 244 236 176;
+
+  --c-blue: 110 190 230;
+  --c-purple: 196 170 230;
+  --c-emerald: 74 200 128;
+  --c-amber: 240 180 70;
+  --c-orange: 210 130 60;
+  --c-red: 232 108 86;
+
+  --radius-card: 8px;
+  --theme-color: #091c13;
 }
 
 [data-theme="bengala"] {
@@ -223,11 +256,11 @@ body {
   .skeleton, .animate-result-pop { animation: none; }
 }
 
-/* Cuatro estilos de texto fijos, en vez de tamaños sueltos (text-[11px]...).
+/* Cuatro estilos de texto fijos, en vez de tamaños sueltos (text-xs...).
    .t-eyebrow: rótulo en mayúsculas · .t-title: título de página ·
    .t-heading: título de sección · .t-meta: dato secundario. */
 @layer components {
-  .t-eyebrow { @apply text-[11px] font-medium uppercase tracking-[0.2em] text-gray-500; }
+  .t-eyebrow { @apply text-xs font-medium uppercase tracking-[0.2em] text-gray-500; }
   .t-title { @apply text-xl sm:text-2xl font-bold; }
   .t-heading { @apply text-base font-semibold; }
   .t-meta { @apply text-xs text-gray-500 leading-relaxed; }
@@ -239,3 +272,35 @@ body {
 @keyframes toast-in { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
 .toast-in { animation: toast-in 0.35s ease both; }
 @media (prefers-reduced-motion: reduce) { .toast-in { animation: none; } }
+
+/* Cancha de noche: líneas de cancha (medio campo y círculo) al 8% sobre el fondo. */
+[data-theme="cancha-noche"] body {
+  background-image:
+    linear-gradient(90deg, transparent calc(50% - 0.5px), rgb(255 255 255 / 0.05) calc(50% - 0.5px), rgb(255 255 255 / 0.05) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    radial-gradient(circle at 50% 50%, transparent 118px, rgb(255 255 255 / 0.05) 118px, rgb(255 255 255 / 0.05) 119px, transparent 119px);
+}
+
+/* Bengala: el naranja se reserva para lo que se toca. Los títulos van en tinta. */
+[data-theme="bengala"] :is(h1, h2, h3, h4).text-accent,
+[data-theme="bengala"] :is(h1, h2, h3, h4) .text-accent {
+  color: rgb(var(--c-white));
+}
+
+/* Semánticos compartidos: un solo verde y un solo rojo para acierto y error. */
+.text-good { color: rgb(var(--c-emerald)); }
+.text-bad { color: rgb(var(--c-red)); }
+.bg-good { background-color: rgb(var(--c-emerald)); }
+.bg-bad { background-color: rgb(var(--c-red)); }
+
+/* Botones: un solo alto y un solo radio para el primario y el secundario. */
+@layer components {
+  .btn { @apply inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed; }
+  .btn-sm { @apply h-8 px-3 text-xs; }
+  .btn-primary { @apply bg-accent text-onaccent hover:bg-accent-dark; }
+  .btn-secondary { @apply border border-border text-gray-300 hover:text-white hover:border-gray-500; }
+}
+
+/* Transición de 150 ms al entrar a cada pantalla. */
+@keyframes page-in { from { opacity: 0; } to { opacity: 1; } }
+.page-fade { animation: page-in 0.15s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .page-fade { animation: none; } }

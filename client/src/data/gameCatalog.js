@@ -41,7 +41,6 @@ export const GAMES = [
   // ---- Pronóstico ----
   { to: "/quiniela", label: "Quiniela semanal", icon: CalendarDays, description: "Predecí el resultado exacto de los próximos partidos reales antes de que arranquen.", family: "pronostico", available: true },
   { to: "/pronosticos", label: "Campeón y descenso", icon: Trophy, description: "Predecí quién sale campeón y qué 3 equipos bajan esta temporada real.", family: "pronostico", available: true },
-  { label: "Fantasy Liga Real", icon: TrendingUp, description: "Armá tu 11 con jugadores reales y sumá puntos según cómo rindan en cada jornada real de su liga.", family: "pronostico", available: false },
 
   // ---- Carrera larga ----
   { href: "/cotrero.html", label: "Cotrero", icon: Crown, description: "De potrero a leyenda: simulá toda la carrera de un jugador, temporada a temporada.", family: "carrera", available: true },

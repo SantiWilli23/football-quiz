@@ -158,7 +158,7 @@ export default function Stats() {
               <div key={i.key} className="flex items-center gap-3 px-4 py-3 rounded-card border border-border bg-bg/40">
                 <Avatar user={i} size={36} />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[11px] text-gray-500 uppercase tracking-wide truncate">{i.title}</p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide truncate">{i.title}</p>
                   <p className="text-sm font-semibold truncate">{i.username}</p>
                   <p className="text-xs text-accent">{i.value}</p>
                 </div>
@@ -316,7 +316,7 @@ export default function Stats() {
                             style={{ width: `${c.agreement ?? 0}%` }}
                           />
                         </div>
-                        <p className="text-[11px] text-gray-600 mt-1">
+                        <p className="text-xs text-gray-600 mt-1">
                           {c.shared === 0
                             ? "Todavía no respondieron las mismas preguntas"
                             : `${c.same} de ${c.shared} respuestas iguales`}
@@ -344,7 +344,7 @@ export default function Stats() {
                       <Avatar user={c.leader} size={28} />
                       <div className="min-w-0">
                         <p className="text-sm font-semibold truncate">{c.leader.username}</p>
-                        <p className="text-[11px] text-gray-600">{c.leader.correct}/{c.leader.total} correctas</p>
+                        <p className="text-xs text-gray-600">{c.leader.correct}/{c.leader.total} correctas</p>
                       </div>
                       <span className="ml-auto text-lg font-bold text-accent shrink-0">{c.leader.accuracy}%</span>
                     </div>
@@ -388,14 +388,14 @@ export default function Stats() {
                     </span>
                     {a.unlocked && <Sparkles size={12} className="text-accent ml-auto" />}
                   </div>
-                  <p className="text-[11px] text-gray-500 mb-2 leading-snug">{a.description}</p>
+                  <p className="text-xs text-gray-500 mb-2 leading-snug">{a.description}</p>
                   <div className="h-1.5 rounded-full bg-white/5 overflow-hidden mb-1">
                     <div
                       className={`h-full rounded-full ${a.unlocked ? "bg-accent" : "bg-gray-600"}`}
                       style={{ width: `${a.progress}%` }}
                     />
                   </div>
-                  <p className="text-[11px] text-gray-600">
+                  <p className="text-xs text-gray-600">
                     {Math.min(a.current, a.target)} / {a.target}
                   </p>
                 </div>

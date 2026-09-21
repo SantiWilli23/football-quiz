@@ -82,7 +82,7 @@ export default function CommandPalette() {
             placeholder="Ir a un juego o pantalla…"
             className="flex-1 bg-transparent py-3.5 text-sm focus:outline-none"
           />
-          <kbd className="text-[10px] text-gray-500 border border-border rounded px-1.5">Esc</kbd>
+          <kbd className="text-xs text-gray-500 border border-border rounded px-1.5">Esc</kbd>
         </div>
         <ul className="p-2 max-h-72 overflow-y-auto">
           {results.length === 0 && <li className="px-3 py-3 text-sm text-gray-500">Sin resultados</li>}
@@ -96,7 +96,7 @@ export default function CommandPalette() {
                 }`}
               >
                 {r.label}
-                <span className="text-[11px] text-gray-500">{r.kind}</span>
+                <span className="text-xs text-gray-500">{r.kind}</span>
               </button>
             </li>
           ))}

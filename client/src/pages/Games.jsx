@@ -4,6 +4,11 @@ import { Gamepad2, Search } from "lucide-react";
 import EmptyState from "../components/EmptyState.jsx";
 import Layout from "../components/Layout.jsx";
 import { FAMILIES, FAMILY_ORDER, TIME_FILTERS, gamesByFamily, minutesOf } from "../data/gameCatalog.js";
+import { daysSince, playedToday, readVisits } from "../utils/visits.js";
+
+function durationLabel(min) {
+  return min <= 5 ? `${min} min` : min <= 30 ? `${min} min` : "larga";
+}
 
 // Clases de Tailwind escritas literales a propósito (no armadas con string
 // interpolation) — el color de cada familia ya sale de --c-blue/--c-purple/
@@ -17,7 +22,9 @@ const FAMILY_STYLE = {
   purple: { badge: "bg-purple-500/15 text-purple-500 border-purple-500/30", dot: "bg-purple-500", text: "text-purple-500" },
 };
 
-function GameTile({ href, to, label, icon: Icon, description, available, style }) {
+function GameTile({ href, to, label, icon: Icon, description, available, style, minutes, visits }) {
+  const today = to ? playedToday(to, visits) : false;
+  const days = to ? daysSince(to, visits) : Infinity;
   const inner = (
     <>
       <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${style.badge}`}>
@@ -26,13 +33,15 @@ function GameTile({ href, to, label, icon: Icon, description, available, style }
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
           <p className="font-semibold text-sm">{label}</p>
-          {!available && (
-            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-600/50 text-gray-400 border border-gray-600/50">
-              Próximamente
-            </span>
-          )}
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full border border-border text-gray-400">{durationLabel(minutes)}</span>
         </div>
         <p className="text-xs text-gray-500 leading-snug">{description}</p>
+        {to && (
+          <p className={`text-xs mt-1.5 flex items-center gap-1.5 ${today ? "text-good" : "text-gray-500"}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${today ? "bg-good" : "bg-gray-600"}`} />
+            {today ? "Jugado hoy" : days === Infinity ? "Todavía no lo jugaste" : `Última vez hace ${days} día${days === 1 ? "" : "s"}`}
+          </p>
+        )}
       </div>
     </>
   );
@@ -50,6 +59,7 @@ export default function Games() {
   const [time, setTime] = useState("todos");
   const timeTest = TIME_FILTERS.find((t) => t.key === time).test;
   const q = query.trim().toLowerCase();
+  const visits = readVisits();
   const matches = (g) => timeTest(minutesOf(g)) && (!q || `${g.label} ${g.description}`.toLowerCase().includes(q));
   const visibleKeys = FAMILY_ORDER.filter((k) => (only === "todos" || only === k) && gamesByFamily(k).some(matches));
 
@@ -129,7 +139,7 @@ export default function Games() {
               <p className="text-xs text-gray-500 mb-3">{family.subtitle}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {games.map((game) => (
-                  <GameTile key={game.to || game.href || game.label} {...game} style={style} />
+                  <GameTile key={game.to || game.href || game.label} {...game} style={style} minutes={minutesOf(game)} visits={visits} />
                 ))}
               </div>
             </div>

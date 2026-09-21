@@ -165,11 +165,11 @@ export default function Formation() {
               >
                 {p ? effectiveOvr(p, slot.slot) : slot.slot}
               </div>
-              <span className="text-[11px] px-1.5 py-0.5 rounded bg-black/70 text-white whitespace-nowrap max-w-[100px] truncate pointer-events-none">
+              <span className="text-xs px-1.5 py-0.5 rounded bg-black/70 text-white whitespace-nowrap max-w-[100px] truncate pointer-events-none">
                 {p ? p.name.split(" ").slice(-1)[0] : slot.slot}
               </span>
               {label && (
-                <span className={`text-[9px] px-1 rounded pointer-events-none ${label.tone === "critical" ? "bg-red-500/80" : label.tone === "bad" ? "bg-orange-500/80" : "bg-amber/80 text-onaccent"} text-white`}>
+                <span className={`text-xs px-1 rounded pointer-events-none ${label.tone === "critical" ? "bg-red-500/80" : label.tone === "bad" ? "bg-orange-500/80" : "bg-amber/80 text-onaccent"} text-white`}>
                   {label.text}
                 </span>
               )}
@@ -223,9 +223,9 @@ function BenchList({ title, ids, byId, selecting, selectedSlotPos, onPick, onMov
                 selecting ? "border-accent/50 bg-accent/5 hover:bg-accent/15 animate-pulse" : "border-border bg-panel hover:border-accent/40 hover:bg-bg"
               }`}
             >
-              <span className="text-[10px] font-semibold text-gray-500">{p.position}</span>
+              <span className="text-xs font-semibold text-gray-500">{p.position}</span>
               <span className="text-xl font-bold leading-none">{selecting ? effectiveOvr(p, selectedSlotPos) : p.ovr}</span>
-              <span className="text-[11px] text-gray-400 truncate max-w-full">{lastName(p.name)}</span>
+              <span className="text-xs text-gray-400 truncate max-w-full">{lastName(p.name)}</span>
               {label && <span className="text-[8px] text-amber leading-tight">{label.text}</span>}
             </button>
           );
@@ -233,7 +233,7 @@ function BenchList({ title, ids, byId, selecting, selectedSlotPos, onPick, onMov
         {!ids.length && <p className="text-xs text-gray-600 col-span-full py-2">Vacío.</p>}
       </div>
       {!selecting && !!ids.length && (
-        <p className="text-[11px] text-gray-600 mt-1.5">Tocá un titular en la cancha para intercambiarlo con uno de estos.</p>
+        <p className="text-xs text-gray-600 mt-1.5">Tocá un titular en la cancha para intercambiarlo con uno de estos.</p>
       )}
     </div>
   );

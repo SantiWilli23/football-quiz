@@ -103,7 +103,7 @@ export default function LiveMatch() {
           <h1 className="text-xl font-bold flex items-center gap-2">
             Partido en vivo
             {you === "spectator" && (
-              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-panel border border-border text-gray-400">👀 mirando</span>
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-panel border border-border text-gray-400">👀 mirando</span>
             )}
           </h1>
           <Link to={`/dt-liga/${code}`} className="text-xs text-gray-500 hover:text-white">← Volver a la liga</Link>

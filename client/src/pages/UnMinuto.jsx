@@ -108,7 +108,7 @@ export default function UnMinuto() {
   }
 
   return (
-    <Layout>
+    <Layout focus={phase === "playing"}>
       <h1 className="text-xl sm:text-2xl font-bold mb-1">Un Minuto</h1>
       <p className="text-gray-400 text-sm mb-4">
         Arrancás con {ROUND_SECONDS} segundos: cada acierto suma {BONUS_SECONDS}s y cada error resta {PENALTY_SECONDS}s. Cuando el reloj llega a cero, se acabó. Tu mejor marca de la semana suma al ranking de retos del grupo.
@@ -143,6 +143,13 @@ export default function UnMinuto() {
             <span className="text-sm text-gray-400">
               {correctCount} / {answeredCount} correctas
             </span>
+          </div>
+
+          <div className="h-3 rounded-full bg-white/10 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={MAX_SECONDS} aria-valuenow={secondsLeft} aria-label="Tiempo restante">
+            <div
+              className={`h-full rounded-full transition-[width] duration-300 ease-out ${secondsLeft <= 5 ? "bg-bad" : "bg-accent"}`}
+              style={{ width: `${Math.min(100, (secondsLeft / 40) * 100)}%` }}
+            />
           </div>
 
           {loadingQuestion && !question && <p className="text-sm text-gray-500 py-8 text-center">Cargando...</p>}

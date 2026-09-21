@@ -49,7 +49,7 @@ export default function StandingsTable({ table }) {
           })}
         </tbody>
       </table>
-      <div className="flex items-center gap-4 mt-3 text-[11px] text-gray-500">
+      <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
         <span className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-accent/60 inline-block" /> Copas continentales
         </span>

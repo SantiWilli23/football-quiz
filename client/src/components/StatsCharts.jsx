@@ -56,7 +56,7 @@ export default function StatsCharts() {
             </div>
           ))}
         </div>
-        <div className="flex gap-2 mt-2 text-[11px] text-gray-500">
+        <div className="flex gap-2 mt-2 text-xs text-gray-500">
           {week.map((d) => (
             <span key={d.date} className="flex-1 text-center">{DAY_LETTERS[new Date(`${d.date}T12:00:00`).getDay()]}</span>
           ))}

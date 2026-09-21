@@ -7,6 +7,7 @@ export const THEMES = [
   { id: "nocturno", label: "Nocturno", swatch: ["#0E1317", "#2FB673", "#F0A93E"] },
   { id: "azul", label: "Azul clásico", swatch: ["#262b35", "#3b9dd6", "#d9a441"] },
   { id: "bengala", label: "Bengala", swatch: ["#F6F6F8", "#FF4D17", "#00B37A"] },
+  { id: "cancha-noche", label: "Cancha de noche", swatch: ["#091C13", "#E8DD8A", "#4AC880"] },
 ];
 const THEME_IDS = THEMES.map((t) => t.id);
 const DEFAULT_THEME = "nocturno";

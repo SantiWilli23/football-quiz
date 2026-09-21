@@ -76,7 +76,7 @@ export default function GroupQuestionComposer({ groupId, onCreated }) {
               placeholder="¿Quién del grupo la tiene más clara con el fútbol?"
               className="w-full bg-bg border border-border rounded-card px-4 py-2.5 text-sm mb-1 focus:outline-none focus:border-white/40"
             />
-            <p className="text-[11px] text-gray-600 mb-4">{prompt.length}/200</p>
+            <p className="text-xs text-gray-600 mb-4">{prompt.length}/200</p>
 
             <label className="block text-sm font-medium mb-2">Alternativas</label>
             <div className="space-y-2 mb-3">
@@ -138,7 +138,7 @@ export default function GroupQuestionComposer({ groupId, onCreated }) {
               >
                 Cancelar
               </button>
-              <span className="text-[11px] text-gray-600 w-full sm:w-auto">
+              <span className="text-xs text-gray-600 w-full sm:w-auto">
                 Una vez publicada no se puede editar.
               </span>
             </div>

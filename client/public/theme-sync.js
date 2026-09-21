@@ -30,6 +30,13 @@
       blue: "#3B9DD6", gold: "#D9A441", goldDark: "#8A6423",
       good: "#3FAE9A", bad: "#F0907E",
     },
+    "cancha-noche": {
+      bg: "#091C13", panel: "#0F281B", panelHi: "#143222",
+      text: "#EEF5EC", textMuted: "#A8C4B2", textDim: "#769682",
+      accent: "#E8DD8A", accentDark: "#BAAE5C", accentLight: "#F4ECB0",
+      blue: "#6EBEE6", gold: "#E8DD8A", goldDark: "#7d7433",
+      good: "#4AC880", bad: "#E86C56",
+    },
     bengala: {
       bg: "#F6F6F8", panel: "#FFFFFF", panelHi: "#FFFFFF",
       text: "#0F1115", textMuted: "#5A616E", textDim: "#ABB1BC",

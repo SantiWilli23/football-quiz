@@ -66,7 +66,7 @@ export default function Login() {
           </Link>
         </div>
 
-        <p className="text-[11px] text-gray-600 tracking-wide">COTRERO · DRAFT EUROPEO 8A2 · TRIVIA</p>
+        <p className="text-xs text-gray-600 tracking-wide">COTRERO · DRAFT EUROPEO 8A2 · TRIVIA</p>
       </div>
 
       <div className="flex-1 flex items-center justify-center px-6 py-12">

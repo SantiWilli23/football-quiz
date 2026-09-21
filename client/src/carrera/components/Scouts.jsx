@@ -42,7 +42,7 @@ function HireAgentCard({ title, description, onHire, cost, disabled, extraField 
           </button>
         ))}
       </div>
-      <p className="text-[11px] text-gray-500">{SCOUT_SPECIALTIES[specialty]?.desc}</p>
+      <p className="text-xs text-gray-500">{SCOUT_SPECIALTIES[specialty]?.desc}</p>
 
       <div className="flex flex-wrap gap-2 items-center">
         <select value={seasons} onChange={(e) => setSeasons(Number(e.target.value))} className="bg-bg border border-border rounded-xl px-3 py-2 text-xs">
@@ -203,7 +203,7 @@ export default function Scouts() {
                   <div key={p.id} className="bg-panel border border-border rounded-2xl overflow-hidden">
                     <div className="flex items-center gap-3 px-4 py-3">
                       {!isOwn && <WatchButton watched={watchlist.includes(p.id)} onToggle={() => toggleWatchlist(p.id)} />}
-                      <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-[11px] font-bold text-gray-400">
+                      <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-xs font-bold text-gray-400">
                         {p.position}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -211,11 +211,11 @@ export default function Scouts() {
                         <p className="text-xs text-gray-500 mt-0.5">{p.age} años</p>
                       </div>
                       <div className="hidden sm:flex flex-col items-center w-20 shrink-0">
-                        <span className="text-[10px] uppercase tracking-wide text-gray-600">OVR est.</span>
+                        <span className="text-xs uppercase tracking-wide text-gray-600">OVR est.</span>
                         <span className="text-sm font-semibold">{report ? formatRange(report.ovrRange) : "—"}</span>
                       </div>
                       <div className="hidden sm:flex flex-col items-center w-20 shrink-0">
-                        <span className="text-[10px] uppercase tracking-wide text-gray-600">Potencial</span>
+                        <span className="text-xs uppercase tracking-wide text-gray-600">Potencial</span>
                         <span className="text-sm text-gray-300">{report?.potentialEstimate != null ? `~${report.potentialEstimate}` : "—"}</span>
                       </div>
                       <div className="shrink-0">
@@ -257,7 +257,7 @@ export default function Scouts() {
               placeholder="Buscar entre los scouteados (jugador o club)…"
               className="bg-panel border border-border rounded-2xl px-4 py-2.5 text-sm flex-1 min-w-[200px]"
             />
-            <p className="text-[11px] text-gray-600">Incluye a las figuras mundiales, que ya vienen scouteadas.</p>
+            <p className="text-xs text-gray-600">Incluye a las figuras mundiales, que ya vienen scouteadas.</p>
           </div>
           {!scoutedPlayers.length && (
             <p className="px-4 py-6 text-center text-gray-600 text-sm bg-panel border border-border rounded-2xl">Todavía no scouteaste a nadie.</p>
@@ -270,30 +270,30 @@ export default function Scouts() {
             return (
               <div key={p.id} className="bg-panel border border-border rounded-2xl px-4 py-3 space-y-2.5">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-[11px] font-bold text-gray-400">
+                  <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-xs font-bold text-gray-400">
                     {p.position}
                   </div>
                   <div className="min-w-0 flex-1 basis-40">
                     <p className="text-sm font-semibold truncate">
                       {p.name}
-                      {report.isPublic && <span className="ml-1.5 text-[10px] text-accent">● conocido</span>}
+                      {report.isPublic && <span className="ml-1.5 text-xs text-accent">● conocido</span>}
                     </p>
                     <p className="text-xs text-gray-500 mt-0.5">{t?.name} · {LEAGUE_LABEL[t?.league] || ""} · {p.age} años · {p.nationality}</p>
                   </div>
                   <div className="flex flex-col items-center w-16 shrink-0">
-                    <span className="text-[10px] uppercase tracking-wide text-gray-600">OVR act.</span>
+                    <span className="text-xs uppercase tracking-wide text-gray-600">OVR act.</span>
                     <span className="text-sm font-semibold">{formatRange(report.ovrRange)}</span>
                   </div>
                   <div className="flex flex-col items-center w-16 shrink-0">
-                    <span className="text-[10px] uppercase tracking-wide text-gray-600">OVR pot.</span>
+                    <span className="text-xs uppercase tracking-wide text-gray-600">OVR pot.</span>
                     <span className="text-sm text-gray-300">~{report.potentialEstimate}</span>
                   </div>
                   <div className="flex flex-col items-center w-20 shrink-0">
-                    <span className="text-[10px] uppercase tracking-wide text-gray-600">Valor</span>
+                    <span className="text-xs uppercase tracking-wide text-gray-600">Valor</span>
                     <span className="text-sm text-gray-300">€{p.value}M</span>
                   </div>
                   <div className="flex flex-col items-center w-24 shrink-0">
-                    <span className="text-[10px] uppercase tracking-wide text-gray-600">Oferta sugerida</span>
+                    <span className="text-xs uppercase tracking-wide text-gray-600">Oferta sugerida</span>
                     <span className="text-sm text-gray-300">€{report.suggestedOffer}M</span>
                   </div>
                   <button
@@ -310,7 +310,7 @@ export default function Scouts() {
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
                   {ATTR_LABELS.map(([key, label]) => (
                     <div key={key} className="bg-bg border border-border rounded-xl px-2 py-1.5 text-center">
-                      <p className="text-[9px] uppercase tracking-wide text-gray-600">{label}</p>
+                      <p className="text-xs uppercase tracking-wide text-gray-600">{label}</p>
                       <p className="text-sm font-semibold">{p.attributes?.[key] ?? "—"}</p>
                     </div>
                   ))}
@@ -350,7 +350,7 @@ export default function Scouts() {
             <div className="space-y-2">
               {academyPool.map((p) => (
                 <div key={p.id} className="bg-panel border border-border rounded-2xl px-4 py-3 flex items-center gap-3 flex-wrap">
-                  <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-[11px] font-bold text-gray-400">
+                  <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-xs font-bold text-gray-400">
                     {p.position}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -358,11 +358,11 @@ export default function Scouts() {
                     <p className="text-xs text-gray-500 mt-0.5">{p.age} años · {p.nationality} · desde {p.country}</p>
                   </div>
                   <div className="flex flex-col items-center w-16 shrink-0">
-                    <span className="text-[10px] uppercase tracking-wide text-gray-600">OVR</span>
+                    <span className="text-xs uppercase tracking-wide text-gray-600">OVR</span>
                     <span className="text-sm font-semibold">{p.ovr}</span>
                   </div>
                   <div className="flex flex-col items-center w-20 shrink-0">
-                    <span className="text-[10px] uppercase tracking-wide text-gray-600">Potencial</span>
+                    <span className="text-xs uppercase tracking-wide text-gray-600">Potencial</span>
                     <span className="text-sm text-gray-300">{p.potential}</span>
                   </div>
                   <button

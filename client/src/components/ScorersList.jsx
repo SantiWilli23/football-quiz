@@ -29,7 +29,7 @@ export default function ScorersList({ scorers }) {
           </div>
           <div className="text-right shrink-0">
             <p className="text-sm font-semibold tabular-nums">{entry.goals} goles</p>
-            <p className="text-[11px] text-gray-500">{entry.assists} asistencias</p>
+            <p className="text-xs text-gray-500">{entry.assists} asistencias</p>
           </div>
         </div>
       ))}

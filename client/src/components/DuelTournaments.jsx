@@ -28,12 +28,12 @@ function MatchBox({ match, myId, onPlay }) {
             <span className={`text-xs flex-1 truncate ${won ? "font-semibold text-accent" : p ? "text-gray-300" : "text-gray-600"}`}>
               {p?.username ?? "Por definir"}
             </span>
-            {match.score && <span className="text-[11px] text-gray-500 shrink-0">{i === 0 ? match.score.a : match.score.b}</span>}
+            {match.score && <span className="text-xs text-gray-500 shrink-0">{i === 0 ? match.score.a : match.score.b}</span>}
             {won && <Crown size={11} className="text-accent shrink-0" />}
           </div>
         );
       })}
-      {match.decided_by_coin && <p className="text-[10px] text-gray-600 mt-1">Empate — se definió a penales</p>}
+      {match.decided_by_coin && <p className="text-xs text-gray-600 mt-1">Empate — se definió a penales</p>}
       {myTurn && (
         <button
           onClick={() => onPlay(match.duel_id)}
@@ -290,7 +290,7 @@ export default function DuelTournaments({ groupId, onPlay }) {
                 </button>
               )}
               {t.status === "abierto" && t.joined && (
-                <span className="text-[10px] font-medium px-2 py-1 rounded-full bg-accent/15 text-accent border border-accent/30 shrink-0">
+                <span className="text-xs font-medium px-2 py-1 rounded-full bg-accent/15 text-accent border border-accent/30 shrink-0">
                   Anotado
                 </span>
               )}

@@ -49,7 +49,7 @@ export default function Finances() {
         <div className="w-full h-2.5 rounded-full bg-white/10 overflow-hidden">
           <div
             className="h-full rounded-full transition-[width]"
-            style={{ width: `${wageShareOfBudget}%`, background: wageShareOfBudget >= 65 ? "#d9534f" : wageShareOfBudget >= 40 ? "#d9a441" : "#3fae9a" }}
+            style={{ width: `${wageShareOfBudget}%`, background: wageShareOfBudget >= 65 ? "rgb(var(--c-red))" : wageShareOfBudget >= 40 ? "rgb(var(--c-amber))" : "rgb(var(--c-emerald))" }}
           />
         </div>
         <p className="text-xs text-gray-500 mt-2">
@@ -64,15 +64,15 @@ export default function Finances() {
           <div className="grid grid-cols-3 gap-3 text-center">
             <div>
               <p className="text-lg font-bold">€{income.tvMoney}M</p>
-              <p className="text-[11px] text-gray-500 mt-0.5">Derechos de TV</p>
+              <p className="text-xs text-gray-500 mt-0.5">Derechos de TV</p>
             </div>
             <div>
               <p className="text-lg font-bold">€{income.taquilla}M</p>
-              <p className="text-[11px] text-gray-500 mt-0.5">Taquilla</p>
+              <p className="text-xs text-gray-500 mt-0.5">Taquilla</p>
             </div>
             <div>
               <p className="text-lg font-bold">€{income.premio}M</p>
-              <p className="text-[11px] text-gray-500 mt-0.5">Premios</p>
+              <p className="text-xs text-gray-500 mt-0.5">Premios</p>
             </div>
           </div>
         ) : (

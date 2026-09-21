@@ -96,7 +96,7 @@ export default function DtLeagueHome() {
                       {l.myTeamId ? ` · tu equipo: ${l.myTeamId}` : " · sin equipo elegido"}
                     </p>
                   </div>
-                  <span className={`text-[10px] font-medium px-2 py-1 rounded-full border shrink-0 ${
+                  <span className={`text-xs font-medium px-2 py-1 rounded-full border shrink-0 ${
                     l.status === "lobby" ? "border-amber/40 text-amber" : "border-emerald/40 text-emerald"
                   }`}>
                     {l.status === "lobby" ? "Esperando" : l.status === "in_progress" ? "En curso" : "Terminada"}

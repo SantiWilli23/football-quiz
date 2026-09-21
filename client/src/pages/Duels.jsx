@@ -346,12 +346,12 @@ export default function Duels() {
                   {label}
                 </span>
                 {!available && (
-                  <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-gray-700/60 text-gray-500 border border-gray-600/40">
+                  <span className="ml-auto text-xs px-1.5 py-0.5 rounded-full bg-gray-700/60 text-gray-500 border border-gray-600/40">
                     Pronto
                   </span>
                 )}
                 {available && embeddable && (
-                  <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-accent/20 text-accent border border-accent/30">
+                  <span className="ml-auto text-xs px-1.5 py-0.5 rounded-full bg-accent/20 text-accent border border-accent/30">
                     Jugar
                   </span>
                 )}
@@ -458,7 +458,7 @@ export default function Duels() {
               <p className="text-2xl font-bold">{record.points}</p>
             </div>
           </div>
-          <p className="text-[11px] text-gray-600 mt-3">
+          <p className="text-xs text-gray-600 mt-3">
             Los puntos dependen del nivel del duelo y cuentan para la temporada del grupo.
           </p>
         </Card>
@@ -581,7 +581,7 @@ export default function Duels() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="text-sm truncate block">{m.username}</span>
-                  <span className="text-[10px] text-gray-600">Sin actividad reciente</span>
+                  <span className="text-xs text-gray-600">Sin actividad reciente</span>
                 </div>
                 <button
                   onClick={() => challenge(m.id)}
@@ -642,7 +642,7 @@ export default function Duels() {
                   </div>
                   <div className="text-right shrink-0">
                     <p className={`text-sm font-semibold ${style.className}`}>{style.label}</p>
-                    <p className={`text-[11px] ${d.my_wildcard ? "text-amber font-medium" : "text-gray-600"}`}>
+                    <p className={`text-xs ${d.my_wildcard ? "text-amber font-medium" : "text-gray-600"}`}>
                       {d.my_wildcard ? `${d.points > 0 ? "×2 · " : "sin puntos · "}` : ""}+{d.points} pts
                     </p>
                   </div>

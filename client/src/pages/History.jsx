@@ -194,7 +194,7 @@ function ModeBHistory({ groupId }) {
                 const kind = KIND_LABELS[q.kind];
                 return (
                   <div key={i} className="pl-3" style={{ borderLeft: `2px solid ${kind.color}66` }}>
-                    <p className="text-[11px] mb-1" style={{ color: kind.color }}>
+                    <p className="text-xs mb-1" style={{ color: kind.color }}>
                       {kind.label}
                     </p>
                     <p className="text-sm mb-1.5">{q.prompt}</p>

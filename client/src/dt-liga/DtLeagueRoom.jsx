@@ -214,7 +214,7 @@ export default function DtLeagueRoom() {
                       }`}
                     >
                       {t.name}
-                      {isTakenByOther && <span className="block text-[10px] text-gray-600 mt-0.5">{owner.username}</span>}
+                      {isTakenByOther && <span className="block text-xs text-gray-600 mt-0.5">{owner.username}</span>}
                     </button>
                   );
                 })}
@@ -345,7 +345,7 @@ function FixturesTab({ code, league, myTeamId, onAdvanced }) {
 
       {Object.entries(byWeek).map(([week, fixtures]) => (
         <div key={week} className="space-y-1.5">
-          <p className="text-[11px] text-gray-600 uppercase tracking-wide">Jornada {week}</p>
+          <p className="text-xs text-gray-600 uppercase tracking-wide">Jornada {week}</p>
           {fixtures.map((f) => (
             <div
               key={f.id}
@@ -362,7 +362,7 @@ function FixturesTab({ code, league, myTeamId, onAdvanced }) {
 
               <span className="shrink-0 w-32 text-right">
                 {f.played && f.walkover && (
-                  <span className="text-[10px] text-amber">walkover</span>
+                  <span className="text-xs text-amber">walkover</span>
                 )}
                 {!f.played && f.canPlaySolo && (
                   <button
@@ -443,7 +443,7 @@ function StandingsTab({ code, myTeamId }) {
               <td className="px-3 py-2 text-gray-500">{s.position}</td>
               <td className="px-3 py-2">
                 <span className={s.teamId === myTeamId ? "font-semibold text-accent" : ""}>{s.teamName}</span>
-                {s.manager && <span className="text-[10px] text-gray-500 ml-1.5">({s.manager})</span>}
+                {s.manager && <span className="text-xs text-gray-500 ml-1.5">({s.manager})</span>}
               </td>
               <td className="px-2 py-2 text-center tabular-nums">{s.played}</td>
               <td className="px-2 py-2 text-center tabular-nums">{s.won}</td>

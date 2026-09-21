@@ -173,10 +173,10 @@ export default function VidaFut() {
                   <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden mb-1.5">
                     <div
                       className="h-full rounded-full transition-[width]"
-                      style={{ width: `${pct}%`, background: done ? "#3fae9a" : "#3b9dd6" }}
+                      style={{ width: `${pct}%`, background: done ? "rgb(var(--c-emerald))" : "#3b9dd6" }}
                     />
                   </div>
-                  <p className="text-[11px] text-gray-500">{stage.label(progress[stage.id] || 0)}</p>
+                  <p className="text-xs text-gray-500">{stage.label(progress[stage.id] || 0)}</p>
 
                   {!locked && !done && (
                     stage.external ? (

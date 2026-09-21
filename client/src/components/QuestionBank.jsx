@@ -89,7 +89,7 @@ export default function QuestionBank({ groupId }) {
             placeholder="¿Quién del grupo desaparece cuando hay que organizar algo?"
             className="w-full bg-bg border border-border rounded-card px-4 py-2.5 text-sm mb-1 focus:outline-none focus:border-white/40"
           />
-          <p className="text-[11px] text-gray-600 mb-3">{prompt.length}/200</p>
+          <p className="text-xs text-gray-600 mb-3">{prompt.length}/200</p>
 
           <div className="space-y-2 mb-3">
             {options.map((option, i) => (

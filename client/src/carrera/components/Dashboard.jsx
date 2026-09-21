@@ -10,9 +10,9 @@ import TeamCrest from "./TeamCrest.jsx";
 import NationalTeamCard from "./NationalTeamCard.jsx";
 
 const CONFIDENCE_GRADIENT = {
-  good: "linear-gradient(90deg, #3fae9a, #3b9dd6)",
-  mid:  "linear-gradient(90deg, #d9a441, #f0c674)",
-  bad:  "linear-gradient(90deg, #d9534f, #f0907e)",
+  good: "linear-gradient(90deg, rgb(var(--c-emerald)), #3b9dd6)",
+  mid:  "linear-gradient(90deg, rgb(var(--c-amber)), rgb(var(--c-amber)))",
+  bad:  "linear-gradient(90deg, rgb(var(--c-red)), rgb(var(--c-red)))",
 };
 
 const COPA_ROUNDS = ["Dieciseisavos", "Cuartos de final", "Semifinal", "Final"];
@@ -187,7 +187,7 @@ function CustomObjectiveCard({ objective, onSet, onToggleDone, onClear }) {
           <Target size={13} />
           <span>Tu objetivo personal</span>
         </div>
-        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
+        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
           objective.done ? "text-emerald border-emerald/30 bg-emerald/10" : "text-gray-400 border-border"
         }`}>
           {objective.done ? "Cumplido" : "En progreso"}
@@ -313,17 +313,17 @@ export default function Dashboard({ onPlayMatch }) {
         <SeasonNameEditor value={state.seasonName} onSave={setSeasonName} />
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mt-4 pt-4 border-t border-border">
           <div className="min-w-[140px]">
-            <p className="text-[11px] text-gray-500 mb-1.5 uppercase tracking-wide">Confianza directiva</p>
+            <p className="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Confianza directiva</p>
             <div className="w-full max-w-[160px] h-1.5 rounded-full bg-white/10 overflow-hidden">
               <div className="h-full rounded-full transition-[width]" style={{ width: `${state.boardConfidence}%`, background: CONFIDENCE_GRADIENT[confTier] }} />
             </div>
           </div>
           <div>
-            <p className="text-[11px] text-gray-500 mb-0.5 uppercase tracking-wide">Reputación DT</p>
+            <p className="text-xs text-gray-500 mb-0.5 uppercase tracking-wide">Reputación DT</p>
             <span className={`text-sm font-semibold ${pLabel.color}`}>{pLabel.text} <span className="text-gray-600 font-normal">({prestige})</span></span>
           </div>
           <div>
-            <p className="text-[11px] text-gray-500 mb-0.5 uppercase tracking-wide">Vínculo al club</p>
+            <p className="text-xs text-gray-500 mb-0.5 uppercase tracking-wide">Vínculo al club</p>
             <span className={`text-sm font-semibold ${cLabel.color}`}>{cLabel.text} <span className="text-gray-600 font-normal">({clubRep})</span></span>
           </div>
         </div>
@@ -363,17 +363,17 @@ export default function Dashboard({ onPlayMatch }) {
         <div className="bg-panel border border-border rounded-2xl p-4">
           <TrendingUp size={16} className="text-gray-500 mb-2" />
           <p className="text-2xl font-bold leading-none">{myPos}°</p>
-          <p className="text-[11px] text-gray-500 mt-1.5">de {standingsSorted.length} equipos</p>
+          <p className="text-xs text-gray-500 mt-1.5">de {standingsSorted.length} equipos</p>
         </div>
         <div className="bg-panel border border-border rounded-2xl p-4">
           <Wallet size={16} className="text-gray-500 mb-2" />
           <p className="text-2xl font-bold leading-none">€{state.budget}M</p>
-          <p className="text-[11px] text-gray-500 mt-1.5">presupuesto</p>
+          <p className="text-xs text-gray-500 mt-1.5">presupuesto</p>
         </div>
         <div className="bg-panel border border-border rounded-2xl p-4">
           <MoraleIcon size={16} className={`mb-2 ${avgMorale >= 70 ? "text-emerald" : avgMorale >= 45 ? "text-amber" : "text-red-400"}`} />
           <p className="text-2xl font-bold leading-none">{avgMorale}</p>
-          <p className="text-[11px] text-gray-500 mt-1.5">moral del plantel</p>
+          <p className="text-xs text-gray-500 mt-1.5">moral del plantel</p>
         </div>
       </div>
 
@@ -384,7 +384,7 @@ export default function Dashboard({ onPlayMatch }) {
             <Target size={13} />
             <span>Objetivo de la directiva</span>
           </div>
-          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
             objective.onTrack ? "text-emerald border-emerald/30 bg-emerald/10" : "text-amber border-amber/30 bg-amber/10"
           }`}>
             {objective.onTrack ? "En camino" : "Afuera por ahora"}
@@ -394,10 +394,10 @@ export default function Dashboard({ onPlayMatch }) {
         <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
           <div
             className="h-full rounded-full transition-[width]"
-            style={{ width: `${objective.pct}%`, background: objective.onTrack ? "#3fae9a" : "#d9a441" }}
+            style={{ width: `${objective.pct}%`, background: objective.onTrack ? "rgb(var(--c-emerald))" : "rgb(var(--c-amber))" }}
           />
         </div>
-        <p className="text-[11px] text-gray-500 mt-1.5">
+        <p className="text-xs text-gray-500 mt-1.5">
           Vas {myPos}° — hace falta {objective.threshold === 1 ? "terminar 1°" : `terminar entre los primeros ${objective.threshold}`}.
         </p>
       </div>

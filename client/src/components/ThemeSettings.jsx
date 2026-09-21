@@ -13,7 +13,7 @@ export default function ThemeSettings() {
       <p className="text-xs text-gray-500 mb-5">Nocturno + Redondeada es lo que ves por default. Cada elección se guarda en este dispositivo.</p>
 
       <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2.5">Color</p>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {themes.map((t) => {
           const active = theme === t.id;
           return (
@@ -31,7 +31,7 @@ export default function ThemeSettings() {
               </div>
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm font-medium">{t.label}</span>
-                {active && <span className="text-[10px] font-semibold text-accent uppercase tracking-wide">Activo</span>}
+                {active && <span className="text-xs font-semibold text-accent uppercase tracking-wide">Activo</span>}
               </div>
             </button>
           );
@@ -61,7 +61,7 @@ export default function ThemeSettings() {
               />
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm font-medium">{s.label}</span>
-                {active && <span className="text-[10px] font-semibold text-accent uppercase tracking-wide">Activo</span>}
+                {active && <span className="text-xs font-semibold text-accent uppercase tracking-wide">Activo</span>}
               </div>
             </button>
           );

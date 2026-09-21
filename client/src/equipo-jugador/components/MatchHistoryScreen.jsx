@@ -45,10 +45,10 @@ export default function MatchHistoryScreen({ onBack }) {
               </div>
               <div className="text-right shrink-0">
                 <p className="text-xs text-gray-500">{m.mode === "online" ? "Online" : m.mode === "bot" ? "Vs. Bot" : "Local"}</p>
-                <p className="text-[11px] text-gray-600">{formatDate(m.date)}</p>
+                <p className="text-xs text-gray-600">{formatDate(m.date)}</p>
               </div>
             </div>
-            <p className="text-[11px] text-gray-600 mt-1.5">Cadena de {m.chainLength} eslabones</p>
+            <p className="text-xs text-gray-600 mt-1.5">Cadena de {m.chainLength} eslabones</p>
           </div>
         ))}
       </div>
