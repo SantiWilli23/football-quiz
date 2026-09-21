@@ -21,6 +21,7 @@ const Duels = lazy(() => import("./pages/Duels.jsx"));
 const Football = lazy(() => import("./pages/Football.jsx"));
 const Games = lazy(() => import("./pages/Games.jsx"));
 const QuienEs = lazy(() => import("./pages/QuienEs.jsx"));
+const Cartas = lazy(() => import("./pages/Cartas.jsx"));
 const Survival = lazy(() => import("./pages/Survival.jsx"));
 const Wordle = lazy(() => import("./pages/Wordle.jsx"));
 const Quiniela = lazy(() => import("./pages/Quiniela.jsx"));
@@ -142,6 +143,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <Games />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/cartas"
+        element={
+          <PrivateRoute>
+            <Cartas />
           </PrivateRoute>
         }
       />

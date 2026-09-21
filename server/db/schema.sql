@@ -765,4 +765,28 @@ CREATE TABLE IF NOT EXISTS fichado_guesses (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_fichado_daily ON fichado_games(user_id, date, league) WHERE mode = 'daily';
-CREATE INDEX IF NOT EXISTS idx_fichado_games_user ON fichado_games(user_id, status)
+CREATE INDEX IF NOT EXISTS idx_fichado_games_user ON fichado_games(user_id, status);
+
+-- Álbum de cartas (server/routes/cards.js): sobres, colección y equipo guardado.
+CREATE TABLE IF NOT EXISTS card_packs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  date TEXT NOT NULL,
+  source TEXT NOT NULL,
+  opened_at TEXT,
+  UNIQUE(user_id, date, source)
+);
+
+CREATE TABLE IF NOT EXISTS user_cards (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  player_name TEXT NOT NULL,
+  count INTEGER NOT NULL DEFAULT 1,
+  PRIMARY KEY (user_id, player_name)
+);
+
+CREATE TABLE IF NOT EXISTS card_lineups (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id),
+  players TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+

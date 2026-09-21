@@ -1,6 +1,6 @@
 import {
   Building2, CalendarDays, Crown, Gavel, Link2, Shield, ShieldCheck, Skull, Sparkles,
-  Star, Swords, Target, Timer, Trophy, TrendingUp, Tv, Users, Zap,
+  Layers, Star, Swords, Target, Timer, Trophy, TrendingUp, Tv, Users, Zap,
 } from "lucide-react";
 
 // Familias de color secundario: reemplazan los ~14 hex sueltos que tenía
@@ -22,6 +22,7 @@ export const FAMILY_ORDER = ["solo", "grupo", "reloj", "pronostico", "carrera"];
 export const GAMES = [
   // ---- Solo ----
   { to: "/fulbodle", label: "Fichado", icon: Target, description: "Adiviná al futbolista secreto con colores, número de parecido, ligas y dificultades. Diario o aleatorio; la partida suma al reto semanal del grupo.", family: "solo", available: true },
+  { to: "/cartas", label: "Cartas", icon: Layers, description: "Abrí sobres con los 2000 jugadores, armá tu once y jugá partidos: la química sale de los clubes que compartieron.", family: "grupo", available: true },
   { to: "/quien-es", label: "¿Quién es?", icon: Tv, description: "Te mostramos su carrera club por club, con años. Adiviná quién es con la menor cantidad de pistas.", family: "solo", available: true },
   { to: "/escudos", label: "Escudos a ciegas", icon: ShieldCheck, description: "Práctica con pistas o reto semanal sin pistas: adiviná el club solo por el escudo borroso.", family: "solo", available: true },
   { to: "/supervivencia", label: "Supervivencia", icon: Skull, description: "Trivia sin margen de error: una vida, a ver hasta dónde llegás.", family: "solo", available: true },
@@ -52,7 +53,7 @@ export const GAMES = [
 
 // Duración aproximada de una partida, en minutos. Sirve para filtrar en /juegos.
 const MINUTES = {
-  Fichado: 5, Fulbodle: 5, "¿Quién es?": 3, "Escudos a ciegas": 5, Supervivencia: 10, "8a2": 15,
+  Fichado: 5, Fulbodle: 5, "¿Quién es?": 3, Cartas: 10, "Escudos a ciegas": 5, Supervivencia: 10, "8a2": 15,
   Duelos: 10, Mentiroso: 10, "Copa 8a2": 30, "Equipo-Jugador": 15, FantasyFiction: 10, "Modo DT Online": 60,
   "Un Minuto": 1, "Arbitraje / VAR": 3, "Quiniela semanal": 5, "Campeón y descenso": 5,
   Cotrero: 60, "Modo DT": 120, "Modo Presidente": 120, "Vida FUT": 240,
