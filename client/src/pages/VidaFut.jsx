@@ -4,6 +4,8 @@ import { Award, Check, Lock, Sparkles, Trophy } from "lucide-react";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import { listSaveSlots, loadCareer } from "../carrera/hooks/useCareerSave.js";
+import api from "../api.js";
+import { useToast } from "../context/ToastContext.jsx";
 
 const SAVE_KEY = "vidafut_v1";
 
@@ -100,6 +102,7 @@ const STAGES = [
 export default function VidaFut() {
   const [campaign, setCampaign] = useState(load);
   const [progress, setProgress] = useState({ 1: 0, 2: 0, 3: 0 });
+  const { toast } = useToast();
 
   const refresh = () => {
     setProgress({ 1: cotreroCareersDone(), 2: bestDtSeasons(), 3: presidenteSeasons() });
@@ -120,6 +123,17 @@ export default function VidaFut() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress]);
+
+  // Cada etapa completada regala un sobre de cartas (una sola vez; el servidor lo evita repetir).
+  useEffect(() => {
+    STAGES.forEach((s) => {
+      if (progress[s.id] >= s.target) {
+        api.post("/cards/grant-stage", { stage: s.id })
+          .then(({ data }) => { if (data.newly) toast(`Etapa «${s.title}» completa · +1 sobre de cartas`); })
+          .catch(() => {});
+      }
+    });
+  }, [progress, toast]);
 
   const allDone = campaign.stage > 3;
 

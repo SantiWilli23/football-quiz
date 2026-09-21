@@ -123,6 +123,20 @@ router.post("/open", async (req, res) => {
   }
 });
 
+// Vida FUT: un sobre por cada etapa completada (el avance vive en el navegador, así que
+// esto confía en el cliente; es un premio chico y una sola vez por etapa).
+router.post("/grant-stage", async (req, res) => {
+  try {
+    const stage = Number(req.body?.stage);
+    if (![1, 2, 3].includes(stage)) return res.status(400).json({ error: "Etapa inválida" });
+    const ins = await db.execute({ sql: "INSERT OR IGNORE INTO card_packs (user_id, date, source) VALUES (?, ?, ?)", args: [req.userId, "vida-fut", `vidafut${stage}`] });
+    res.json({ newly: ins.rowsAffected > 0 });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 router.get("/collection", async (req, res) => {
   try {
     const rows = (await db.execute({ sql: "SELECT player_name, count FROM user_cards WHERE user_id = ?", args: [req.userId] })).rows;

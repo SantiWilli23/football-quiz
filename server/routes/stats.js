@@ -319,7 +319,7 @@ async function betPointsByUser(groupId, from, to) {
 // Ranking del grupo acotado a un rango de fechas. Los puntos de trivia son del
 // usuario (no del grupo), igual que en el ranking histórico; los de Modo B,
 // duelos y Liga DT sí son por grupo.
-async function rankingBetween(groupId, from, to) {
+export async function rankingBetween(groupId, from, to) {
   const members = await groupMembers(groupId);
   if (members.length === 0) return [];
 

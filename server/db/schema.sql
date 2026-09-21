@@ -790,3 +790,54 @@ CREATE TABLE IF NOT EXISTS card_lineups (
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Mercado (server/routes/transfers.js), pase de temporada (season-pass.js) y copa semanal (weekly-cup.js).
+CREATE TABLE IF NOT EXISTS transfer_rumors (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  window TEXT NOT NULL,
+  player_name TEXT NOT NULL,
+  options TEXT NOT NULL,
+  answer TEXT
+);
+
+CREATE TABLE IF NOT EXISTS transfer_predictions (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  rumor_id INTEGER NOT NULL REFERENCES transfer_rumors(id),
+  pick TEXT NOT NULL,
+  PRIMARY KEY (user_id, rumor_id)
+);
+
+CREATE TABLE IF NOT EXISTS season_claims (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  season TEXT NOT NULL,
+  tier INTEGER NOT NULL,
+  PRIMARY KEY (user_id, season, tier)
+);
+
+CREATE TABLE IF NOT EXISTS user_titles (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  title TEXT NOT NULL,
+  season TEXT NOT NULL,
+  PRIMARY KEY (user_id, title, season)
+);
+
+CREATE TABLE IF NOT EXISTS cup_signups (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  week TEXT NOT NULL,
+  group_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  UNIQUE(week, group_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS cup_matches (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  week TEXT NOT NULL,
+  group_id INTEGER NOT NULL,
+  round INTEGER NOT NULL,
+  slot INTEGER NOT NULL,
+  a INTEGER NOT NULL,
+  b INTEGER,
+  winner INTEGER,
+  a_pts INTEGER,
+  b_pts INTEGER,
+  UNIQUE(week, group_id, round, slot)
+);

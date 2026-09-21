@@ -22,6 +22,11 @@ const Football = lazy(() => import("./pages/Football.jsx"));
 const Games = lazy(() => import("./pages/Games.jsx"));
 const QuienEs = lazy(() => import("./pages/QuienEs.jsx"));
 const Cartas = lazy(() => import("./pages/Cartas.jsx"));
+const LigaGrupo = lazy(() => import("./pages/LigaGrupo.jsx"));
+const CopaSemanal = lazy(() => import("./pages/CopaSemanal.jsx"));
+const Mercado = lazy(() => import("./pages/Mercado.jsx"));
+const PaseTemporada = lazy(() => import("./pages/PaseTemporada.jsx"));
+const QuienEsVivo = lazy(() => import("./pages/QuienEsVivo.jsx"));
 const Survival = lazy(() => import("./pages/Survival.jsx"));
 const Wordle = lazy(() => import("./pages/Wordle.jsx"));
 const Quiniela = lazy(() => import("./pages/Quiniela.jsx"));
@@ -143,6 +148,46 @@ export default function App() {
         element={
           <PrivateRoute>
             <Games />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/liga-grupo"
+        element={
+          <PrivateRoute>
+            <LigaGrupo />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/copa-semanal"
+        element={
+          <PrivateRoute>
+            <CopaSemanal />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/mercado"
+        element={
+          <PrivateRoute>
+            <Mercado />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/pase"
+        element={
+          <PrivateRoute>
+            <PaseTemporada />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/quien-es-vivo"
+        element={
+          <PrivateRoute>
+            <QuienEsVivo />
           </PrivateRoute>
         }
       />
