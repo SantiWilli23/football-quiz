@@ -2,10 +2,12 @@ import { useTheme } from "../context/ThemeContext.jsx";
 import { useState } from "react";
 import Card from "./Card.jsx";
 import { DENSITIES, readDensity, setDensity } from "../utils/density.js";
+import { isSfxOn, playSfx, setSfxOn } from "../utils/sfx.js";
 
 export default function ThemeSettings() {
   const { theme, setTheme, themes, shape, setShape, shapes } = useTheme();
   const [density, setDensityState] = useState(readDensity);
+  const [sfx, setSfxState] = useState(isSfxOn);
 
   return (
     <Card>
@@ -83,6 +85,17 @@ export default function ThemeSettings() {
           </button>
         ))}
       </div>
+
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mt-6 mb-2.5">Sonido y vibración</p>
+      <button
+        onClick={() => { const next = !sfx; setSfxOn(next); setSfxState(next); if (next) playSfx("ok"); }}
+        role="switch"
+        aria-checked={sfx}
+        className={`w-full text-left p-3.5 rounded-card border transition-colors ${sfx ? "border-accent bg-accent/10" : "border-border hover:border-gray-500"}`}
+      >
+        <span className="text-sm font-medium">{sfx ? "Activados" : "Apagados"}</span>
+        <p className="text-xs text-gray-500 mt-0.5">Un toque corto al acertar, fallar o ganar. Se guarda en este dispositivo.</p>
+      </button>
     </Card>
   );
 }

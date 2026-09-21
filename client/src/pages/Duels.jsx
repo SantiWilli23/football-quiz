@@ -226,12 +226,12 @@ export default function Duels() {
     load();
   }, [load]);
 
-  const challenge = async (opponentId) => {
+  const challenge = async (opponentId, forcedDifficulty) => {
     setChallenging(true);
     setError("");
     try {
       const { data: created } = await api.post("/duels", {
-        group_id: groupId, opponent_id: opponentId, difficulty, use_wildcard: useWildcard,
+        group_id: groupId, opponent_id: opponentId, difficulty: forcedDifficulty || difficulty, use_wildcard: useWildcard,
       });
       setUseWildcard(false);
       await load();
@@ -640,6 +640,14 @@ export default function Duels() {
                       {d.total_questions}
                     </p>
                   </div>
+                  <button
+                    onClick={() => challenge(d.rival.id, d.difficulty)}
+                    disabled={challenging}
+                    className="shrink-0 px-3 py-1.5 rounded-card border border-border text-xs font-medium text-gray-300 hover:text-white hover:border-white/30 disabled:opacity-50 transition-colors"
+                    title="Desafiar de nuevo con la misma dificultad"
+                  >
+                    Revancha
+                  </button>
                   <div className="text-right shrink-0">
                     <p className={`text-sm font-semibold ${style.className}`}>{style.label}</p>
                     <p className={`text-xs ${d.my_wildcard ? "text-amber font-medium" : "text-gray-600"}`}>

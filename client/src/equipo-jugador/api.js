@@ -16,9 +16,27 @@ export async function searchClubs(query, excludeIds = []) {
   return data.clubs || [];
 }
 
+// Dificultad elegida en el menú de Equipo-Jugador (se guarda en este dispositivo).
+export const DIFFICULTIES = [
+  { id: "facil", label: "Fácil", hint: "Arrancás con jugadores de muchos clubes: hay más caminos." },
+  { id: "normal", label: "Normal", hint: "Como siempre." },
+  { id: "dificil", label: "Difícil", hint: "Arrancás con jugadores de pocos clubes: la cadena se corta antes." },
+];
+export function getDifficulty() {
+  try {
+    const v = localStorage.getItem("ej_difficulty");
+    return DIFFICULTIES.some((d) => d.id === v) ? v : "normal";
+  } catch {
+    return "normal";
+  }
+}
+export function setDifficulty(id) {
+  try { localStorage.setItem("ej_difficulty", id); } catch { /* sin storage */ }
+}
+
 export async function randomStartingPlayer(excludeIds = []) {
   const { data } = await api.get("/equipo-jugador/players/random", {
-    params: { exclude: excludeIds.join(",") },
+    params: { exclude: excludeIds.join(","), difficulty: getDifficulty() },
   });
   return data.player;
 }

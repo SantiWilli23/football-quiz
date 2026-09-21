@@ -4,6 +4,7 @@ import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
+import { playSfx } from "../utils/sfx.js";
 
 const GLOBAL_TAB = { key: "global", label: "Todos" };
 const MODES = [
@@ -91,6 +92,22 @@ export default function Wordle() {
   const [groupSave, setGroupSave] = useState(null);
   const [copied, setCopied] = useState(false);
   const submittedRef = useRef(new Set());
+  // Modo contra reloj (opcional): el servidor mide el tiempo desde que se creó la
+  // partida y da +20/+10/+5 pts si se gana en 1/2/3 minutos.
+  const [timed, setTimed] = useState(() => {
+    try { return localStorage.getItem("fq_fichado_timed") === "on"; } catch { return false; }
+  });
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!timed) return undefined;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [timed]);
+  function toggleTimed() {
+    const next = !timed;
+    setTimed(next);
+    try { localStorage.setItem("fq_fichado_timed", next ? "on" : "off"); } catch { /* sin storage */ }
+  }
 
   useEffect(() => {
     api.get("/wordle/leagues").then((r) => setMeta(r.data)).catch(() => {});
@@ -148,8 +165,9 @@ export default function Wordle() {
   }
 
   const guess = (name) => name && act(async () => {
-    const { data } = await api.post("/wordle/guess", { gameId: game.id, name });
+    const { data } = await api.post("/wordle/guess", { gameId: game.id, name, timed });
     applyGame(data.game, true);
+    playSfx(data.game.status === "won" ? "win" : data.game.status === "lost" ? "bad" : "tick");
     setQuery("");
   });
   const useHint = () => act(async () => {
@@ -223,6 +241,26 @@ export default function Wordle() {
             {l.label}
           </button>
         ))}
+      </div>
+
+      <div className="flex items-center gap-3 mb-4 text-xs text-gray-400 flex-wrap">
+        <button
+          onClick={toggleTimed}
+          role="switch"
+          aria-checked={timed}
+          className={`px-3 py-1.5 rounded-card border transition-colors ${timed ? "border-accent/40 bg-accent/10 text-accent" : "border-border hover:text-white"}`}
+        >
+          {timed ? "Contra reloj: sí" : "Contra reloj: no"}
+        </button>
+        {timed && game?.status === "playing" && game.startedAt && (
+          <span className="tabular-nums font-medium text-white">
+            {(() => {
+              const s = Math.max(0, Math.floor((now - Date.parse(String(game.startedAt).replace(" ", "T") + "Z")) / 1000));
+              return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+            })()}
+          </span>
+        )}
+        <span>{timed ? "Ganando en 1, 2 o 3 minutos sumás +20, +10 o +5." : "Activalo para sumar puntos extra por rapidez."}</span>
       </div>
 
       {loading && <p className="text-sm text-gray-500">Cargando...</p>}

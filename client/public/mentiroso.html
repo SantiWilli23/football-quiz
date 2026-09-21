@@ -1112,6 +1112,16 @@
     for (var i = 0; i < game.topic.players.length; i++) {
       var p = game.topic.players[i];
       // Already named?
+  // ¿Este texto se refiere a ese jugador? (nombre completo, apodo, apellido o nombre único)
+  function playerMatchesInput(p, n) {
+    if (norm(p.n) === n) return true;
+    if (p.a) for (var j = 0; j < p.a.length; j++) if (norm(p.a[j]) === n) return true;
+    var parts = norm(p.n).split(" ");
+    if (parts.length >= 2 && parts[parts.length - 1] === n && n.length >= 3) return true;
+    if (parts.length <= 2 && parts[0] === n && n.length >= 4) return true;
+    return false;
+  }
+
       var alreadyNamed = game.namedPlayers.some(function(np) { return np.correct && norm(np.player.n) === norm(p.n); });
       if (alreadyNamed) continue;
 

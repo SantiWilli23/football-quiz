@@ -10,6 +10,7 @@ import Card from "../components/Card.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 import TutorialModal from "../components/TutorialModal.jsx";
 import ContinuePlaying, { findSavedGames } from "../components/ContinuePlaying.jsx";
+import DailyChallenge from "../components/DailyChallenge.jsx";
 import api from "../api.js";
 import useAlerts from "../hooks/useAlerts.js";
 
@@ -166,6 +167,8 @@ export default function Dashboard() {
           </div>
         </div>
       </Card>
+
+      <DailyChallenge standalone />
 
       <ContinuePlaying items={savedGames} />
 

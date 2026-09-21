@@ -4,9 +4,11 @@ import LocalGame from "./components/LocalGame.jsx";
 import OnlineGame from "./components/OnlineGame.jsx";
 import BotGame from "./components/BotGame.jsx";
 import MatchHistoryScreen from "./components/MatchHistoryScreen.jsx";
+import { DIFFICULTIES, getDifficulty, setDifficulty } from "./api.js";
 
 export default function EquipoJugador() {
   const [mode, setMode] = useState(null); // null | "local" | "online" | "bot" | "history"
+  const [difficulty, setDifficultyState] = useState(getDifficulty);
 
   return (
     <div className="min-h-screen bg-bg text-white p-4">
@@ -25,6 +27,24 @@ export default function EquipoJugador() {
               Un jugador dice un futbolista. El siguiente tiene que decir un equipo en el que jugó.
               El siguiente, otro jugador de ese equipo (de cualquier época). Y así, sin repetir a nadie.
               El que no responde a tiempo o se equivoca, queda eliminado directo.
+            </div>
+
+            <div className="bg-panel border border-border rounded-2xl p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Dificultad</p>
+              <div className="flex gap-2 flex-wrap">
+                {DIFFICULTIES.map((d) => (
+                  <button
+                    key={d.id}
+                    onClick={() => { setDifficulty(d.id); setDifficultyState(d.id); }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                      difficulty === d.id ? "border-accent/40 bg-accent/10 text-accent" : "border-border text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">{DIFFICULTIES.find((d) => d.id === difficulty).hint}</p>
             </div>
 
             <button

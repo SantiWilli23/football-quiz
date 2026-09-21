@@ -49,13 +49,17 @@ router.get("/clubs", async (req, res) => {
 // jugadores con 2+ clubes para que la partida tenga margen para desarrollarse.
 router.get("/players/random", async (req, res) => {
   const exclude = parseExclude(req.query.exclude);
+  // Dificultad: fácil = jugadores con muchos clubes (más caminos posibles);
+  // difícil = pocos clubes (la cadena se corta antes). Sin valor = como siempre.
+  const difficulty = String(req.query.difficulty || "normal");
+  const having = difficulty === "facil" ? "club_count >= 5" : difficulty === "dificil" ? "club_count BETWEEN 2 AND 3" : "club_count >= 2";
   const excludeClause = exclude.length ? `AND p.id NOT IN (${exclude.map(() => "?").join(",")})` : "";
   const result = await db.execute({
     sql: `SELECT p.id, p.name, p.nationality, p.position, p.birth_year, COUNT(pc.id) as club_count
           FROM ej_players p JOIN ej_player_clubs pc ON pc.player_id = p.id
           WHERE 1=1 ${excludeClause}
           GROUP BY p.id
-          HAVING club_count >= 2
+          HAVING ${having}
           ORDER BY RANDOM() LIMIT 1`,
     args: exclude,
   });

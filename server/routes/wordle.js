@@ -171,6 +171,16 @@ function hintText(secret, kind) {
 // Puntos de la partida (los que van al ranking semanal del grupo). Ganada:
 // 40-100 según eficiencia, multiplicado por dificultad. Perdida: consuelo
 // según lo cerca que llegaste.
+// Bonus opcional del modo "contra reloj": el cliente avisa que jugó con reloj y el
+// tiempo lo mide el SERVIDOR (created_at de la partida), no el cliente.
+function speedBonus(game, timed) {
+  if (!timed) return 0;
+  const started = Date.parse(String(game.created_at).replace(" ", "T") + "Z");
+  if (!Number.isFinite(started)) return 0;
+  const secs = (Date.now() - started) / 1000;
+  return secs <= 60 ? 20 : secs <= 120 ? 10 : secs <= 180 ? 5 : 0;
+}
+
 function finalPoints({ won, guessesUsed, hintsUsed, difficulty, bestSimilarity }) {
   const mult = (DIFFICULTIES[difficulty] || DIFFICULTIES.normal).multiplier;
   if (won) {
@@ -216,6 +226,7 @@ function serialize({ game, guessNames }) {
     hints,
     attemptsUsed: guesses.length + game.hints_used * HINT_COST,
     status: game.status,
+    startedAt: game.created_at,
     points: game.points,
     guesses: guesses.reverse(), // el más reciente arriba
     // El secreto solo se revela al terminar — ganando O perdiendo.
@@ -232,7 +243,7 @@ function serialize({ game, guessNames }) {
   };
 }
 
-async function closeGame(loaded, won) {
+async function closeGame(loaded, won, opts = {}) {
   const { game, guessNames } = loaded;
   const points = finalPoints({
     won,
@@ -241,7 +252,8 @@ async function closeGame(loaded, won) {
     difficulty: game.difficulty,
     bestSimilarity: won ? 0 : bestSimilarityOf(guessNames, byName(game.secret_name)),
   });
-  await db.execute({ sql: "UPDATE fichado_games SET status = ?, points = ? WHERE id = ?", args: [won ? "won" : "lost", points, game.id] });
+  const total = points + (won ? speedBonus(game, opts.timed) : 0);
+  await db.execute({ sql: "UPDATE fichado_games SET status = ?, points = ? WHERE id = ?", args: [won ? "won" : "lost", total, game.id] });
   // La diaria ganada sigue sumando al ranking global de puntos (10 menos un
   // punto por cada intento extra, mínimo 1), como el viejo Fulbodle.
   if (won && game.mode === "daily") {
@@ -253,13 +265,13 @@ async function closeGame(loaded, won) {
 }
 
 // Cierra la partida si ya ganó o se quedó sin intentos, y devuelve el estado fresco.
-async function settle(gameId, userId) {
+async function settle(gameId, userId, opts = {}) {
   const loaded = await loadGame(gameId, userId);
   const { game, guessNames } = loaded;
   const won = guessNames.includes(game.secret_name);
   const used = guessNames.length + game.hints_used * HINT_COST;
   if (won || used >= game.max_attempts) {
-    await closeGame(loaded, won);
+    await closeGame(loaded, won, opts);
     return loadGame(gameId, userId);
   }
   return loaded;
@@ -354,7 +366,7 @@ router.post("/guess", async (req, res) => {
       sql: "INSERT INTO fichado_guesses (game_id, attempt_number, guess_name) VALUES (?, ?, ?)",
       args: [game.id, guessNames.length + 1, guess.nombre],
     });
-    res.status(201).json({ game: serialize(await settle(game.id, req.userId)) });
+    res.status(201).json({ game: serialize(await settle(game.id, req.userId, { timed: !!req.body?.timed })) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

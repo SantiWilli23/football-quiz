@@ -6,12 +6,15 @@ import Card from "../components/Card.jsx";
 import ResultScreen from "../components/ResultScreen.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
+import { playSfx } from "../utils/sfx.js";
 
 // Arrancás con 20 segundos: cada acierto suma y cada error resta.
 const ROUND_SECONDS = 20;
 const BONUS_SECONDS = 3;
 const PENALTY_SECONDS = 3;
 const MAX_SECONDS = 60;
+// Cada 5 aciertos seguidos, el 5.º, 10.º, 15.º... vale un punto extra.
+const STREAK_STEP = 5;
 
 export default function UnMinuto() {
   const { activeGroupId: groupId } = useGroups();
@@ -19,6 +22,8 @@ export default function UnMinuto() {
   const [question, setQuestion] = useState(null);
   const [seenIds, setSeenIds] = useState([]);
   const [correctCount, setCorrectCount] = useState(0);
+  const [points, setPoints] = useState(0);
+  const [streak, setStreak] = useState(0);
   const [answeredCount, setAnsweredCount] = useState(0);
   const [feedback, setFeedback] = useState(null); // "correct" | "wrong"
   const [delta, setDelta] = useState(null); // {n, key}: último ajuste de segundos
@@ -52,18 +57,20 @@ export default function UnMinuto() {
       const { data } = await api.post("/challenges/submit", {
         gameKey: "un_minuto",
         groupId,
-        score: correctCount,
+        score: points,
       });
       setSaveState({ improved: data.improved });
     } catch {
       setSaveState(null);
     }
-  }, [groupId, correctCount]);
+  }, [groupId, points]);
 
   function start() {
     endedRef.current = false;
     setPhase("playing");
     setCorrectCount(0);
+    setPoints(0);
+    setStreak(0);
     setAnsweredCount(0);
     setSeenIds([]);
     setSecondsLeft(ROUND_SECONDS);
@@ -93,7 +100,17 @@ export default function UnMinuto() {
       const { data } = await api.post("/un-minuto/answer", { questionId: question.id, answer: letter });
       setFeedback(data.correct ? "correct" : "wrong");
       setAnsweredCount((c) => c + 1);
-      if (data.correct) setCorrectCount((c) => c + 1);
+      if (data.correct) {
+        const nextStreak = streak + 1;
+        const bonus = nextStreak % STREAK_STEP === 0;
+        setStreak(nextStreak);
+        setCorrectCount((c) => c + 1);
+        setPoints((p) => p + 1 + (bonus ? 1 : 0));
+        playSfx(bonus ? "win" : "ok");
+      } else {
+        setStreak(0);
+        playSfx("bad");
+      }
       const change = data.correct ? BONUS_SECONDS : -PENALTY_SECONDS;
       setDelta({ n: change, key: Date.now() });
       setSecondsLeft((s) => Math.max(0, Math.min(MAX_SECONDS, s + change)));
@@ -111,7 +128,7 @@ export default function UnMinuto() {
     <Layout focus={phase === "playing"}>
       <h1 className="text-xl sm:text-2xl font-bold mb-1">Un Minuto</h1>
       <p className="text-gray-400 text-sm mb-4">
-        Arrancás con {ROUND_SECONDS} segundos: cada acierto suma {BONUS_SECONDS}s y cada error resta {PENALTY_SECONDS}s. Cuando el reloj llega a cero, se acabó. Tu mejor marca de la semana suma al ranking de retos del grupo.
+        Arrancás con {ROUND_SECONDS} segundos: cada acierto suma {BONUS_SECONDS}s y cada error resta {PENALTY_SECONDS}s. Cada {STREAK_STEP} aciertos seguidos ganás un punto extra. Cuando el reloj llega a cero, se acabó. Tu mejor marca de la semana suma al ranking de retos del grupo.
       </p>
 
       <GroupSelector />
@@ -141,7 +158,8 @@ export default function UnMinuto() {
               )}
             </span>
             <span className="text-sm text-gray-400">
-              {correctCount} / {answeredCount} correctas
+              {streak >= 2 && <span className="text-amber-500 font-medium mr-3">Racha {streak}</span>}
+              {points} pts · {correctCount} / {answeredCount} correctas
             </span>
           </div>
 
@@ -182,12 +200,12 @@ export default function UnMinuto() {
 
       {phase === "done" && (
         <ResultScreen
-          score={correctCount}
-          unit={`aciertos en ${ROUND_SECONDS} segundos`}
+          score={points}
+          unit={`puntos (${correctCount} aciertos)`}
           groupId={groupId}
           saveState={saveState}
           onAgain={start}
-          shareText={`⚽ Futotal · Un Minuto: ${correctCount} aciertos en ${ROUND_SECONDS}s — ¿me ganás?`}
+          shareText={`⚽ Futotal · Un Minuto: ${points} puntos (${correctCount} aciertos) — ¿me ganás?`}
         />
       )}
     </Layout>
