@@ -177,7 +177,7 @@ export default function DtLeagueHome() {
               <button
                 onClick={handleCreate}
                 disabled={!name.trim() || !groupId || creating}
-                className="w-full bg-accent text-onaccent font-semibold py-2.5 rounded-2xl hover:brightness-110 disabled:opacity-40 transition"
+                className="btn btn-primary w-full transition"
               >
                 {creating ? "Creando…" : "Crear liga"}
               </button>

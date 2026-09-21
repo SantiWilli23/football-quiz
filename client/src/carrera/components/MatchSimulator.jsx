@@ -3,6 +3,7 @@ import { useCareer } from "../context/CareerContext.jsx";
 import { getInjury } from "../engine/injuryEngine.js";
 import { layoutSlots } from "../engine/pitchLayout.js";
 import { getPressQuestion } from "../engine/pressEngine.js";
+import { ArrowRight, Brain, FastForward, Mic, Pause, X } from "lucide-react";
 import TeamCrest from "./TeamCrest.jsx";
 import { MENTALITY_LABELS, SLIDER_DEFS } from "./Tactics.jsx";
 
@@ -184,17 +185,20 @@ export default function MatchSimulator({ matchResult, onFinish }) {
           {!eventsDone && <p className="text-xs text-gray-500 mt-2">Min {shown.length ? shown[shown.length - 1].min : 0}'</p>}
         </div>
 
-        <LivePitch myColor={team.colors?.primary || "#3fae9a"} starters={activeStarters} byId={byId} lastEvent={lastEvent} />
+        {/* En móvil la cancha ocupa todo el ancho de la pantalla. */}
+        <div className="-mx-4 sm:mx-0">
+          <LivePitch myColor={team.colors?.primary || "rgb(var(--c-emerald))"} starters={activeStarters} byId={byId} lastEvent={lastEvent} />
+        </div>
 
         {!eventsDone && (
           <div className="flex gap-2 mb-4">
             <button onClick={simulateFast} className="flex-1 bg-panel border border-border rounded-card py-2 text-sm hover:border-white/20">
-              ⏩ Simular rápido
+              <span className="inline-flex items-center justify-center gap-1.5"><FastForward size={14} /> Simular rápido</span>
             </button>
           </div>
         )}
 
-        <div className="bg-panel border border-border rounded-card p-4 mb-4 max-h-72 overflow-y-auto space-y-2">
+        <div className="bg-panel border border-border p-4 mb-4 overflow-y-auto space-y-2 rounded-card max-h-72 max-sm:sticky max-sm:bottom-0 max-sm:z-10 max-sm:-mx-4 max-sm:rounded-none max-sm:rounded-t-xl max-sm:max-h-40 max-sm:shadow-[0_-8px_20px_rgba(0,0,0,0.35)]">
           {shown.length === 0 && <p className="text-sm text-gray-500">El partido está por comenzar...</p>}
           {shown.map((e, i) => (
             <p key={i} className="text-sm">
@@ -206,15 +210,15 @@ export default function MatchSimulator({ matchResult, onFinish }) {
         {showHalftimePanel && (
           <div className="space-y-4">
             <div className="bg-amber/5 border border-amber/30 rounded-card p-4">
-              <p className="text-sm font-semibold text-amber mb-1">⏸ Entretiempo — hacé tus cambios</p>
+              <p className="text-sm font-semibold text-amber mb-1 flex items-center gap-1.5"><Pause size={14} /> Entretiempo: hacé tus cambios</p>
               <p className="text-xs text-gray-400 mb-4">Podés hacer hasta {MAX_SUBS} sustituciones antes del segundo tiempo. También podés continuar sin cambios.</p>
 
               {subs.length > 0 && (
                 <div className="space-y-1.5 mb-3">
                   {subs.map((s, i) => (
                     <div key={i} className="flex items-center justify-between text-xs bg-bg border border-border rounded-full px-3 py-1.5">
-                      <span>🔴 {playerById(s.outId)?.name} → 🟢 {playerById(s.inId)?.name}</span>
-                      <button onClick={() => removeSub(i)} className="text-gray-500 hover:text-white">✕</button>
+                      <span className="flex items-center gap-1.5"><span className="text-bad">Sale</span> {playerById(s.outId)?.name} <ArrowRight size={12} /> <span className="text-good">Entra</span> {playerById(s.inId)?.name}</span>
+                      <button onClick={() => removeSub(i)} aria-label="Quitar cambio" className="text-gray-500 hover:text-white"><X size={13} /></button>
                     </div>
                   ))}
                 </div>
@@ -229,7 +233,7 @@ export default function MatchSimulator({ matchResult, onFinish }) {
                   onClick={() => setShowTactics((v) => !v)}
                   className="w-full flex items-center justify-between text-left"
                 >
-                  <span className="text-sm font-semibold">🧠 Cambiar planteo para el segundo tiempo</span>
+                  <span className="text-sm font-semibold flex items-center gap-1.5"><Brain size={14} /> Cambiar planteo para el segundo tiempo</span>
                   <span className="text-xs text-gray-500">{showTactics ? "Ocultar" : "Ajustar"}</span>
                 </button>
 
@@ -284,7 +288,7 @@ export default function MatchSimulator({ matchResult, onFinish }) {
 
               <button
                 onClick={confirmSubstitutions}
-                className="w-full mt-4 bg-accent text-onaccent font-semibold py-2.5 rounded-card hover:brightness-110"
+                className="btn btn-primary w-full mt-4"
               >
                 {subs.length ? `Continuar con ${subs.length} cambio${subs.length === 1 ? "" : "s"}` : "Continuar sin cambios"}
               </button>
@@ -306,7 +310,7 @@ export default function MatchSimulator({ matchResult, onFinish }) {
 
             {pressQuestion && !pressChoice && (
               <div className="bg-panel border border-accent/30 rounded-card p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-accent mb-1">🎙️ Conferencia de prensa</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-accent mb-1 flex items-center gap-1.5"><Mic size={13} /> Conferencia de prensa</p>
                 <p className="text-sm font-medium mb-3">{pressQuestion.question}</p>
                 <div className="space-y-2">
                   {pressQuestion.options.map((opt) => (
@@ -324,14 +328,14 @@ export default function MatchSimulator({ matchResult, onFinish }) {
 
             {pressQuestion && pressChoice && (
               <div className="bg-panel border border-border rounded-card p-4">
-                <p className="text-xs text-gray-500">🎙️ Declaraste tu postura en la conferencia de prensa.</p>
+                <p className="text-xs text-gray-500 flex items-center gap-1.5"><Mic size={13} /> Declaraste tu postura en la conferencia de prensa.</p>
               </div>
             )}
 
             <button
               onClick={onFinish}
               disabled={!!pressQuestion && !pressChoice}
-              className="w-full bg-accent text-onaccent font-semibold py-2.5 rounded-card hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="btn btn-primary w-full"
             >
               Continuar
             </button>

@@ -176,7 +176,7 @@ export default function LiveMatch() {
             </div>
             <button
               onClick={() => navigate(`/dt-liga/${code}`)}
-              className="w-full bg-accent text-onaccent font-semibold py-3 rounded-2xl hover:brightness-110 transition"
+              className="btn btn-primary w-full transition"
             >
               Volver a la liga
             </button>

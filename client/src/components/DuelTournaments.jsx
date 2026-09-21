@@ -103,7 +103,7 @@ function TournamentDetail({ id, onPlay, onBack }) {
           <button
             onClick={start}
             disabled={busy}
-            className="px-4 py-2 rounded-card text-sm font-semibold bg-accent text-onaccent hover:brightness-110 disabled:opacity-40 transition"
+            className="btn btn-primary transition"
           >
             {busy ? "Armando..." : "Arrancar torneo"}
           </button>
@@ -257,7 +257,7 @@ export default function DuelTournaments({ groupId, onPlay }) {
           <button
             onClick={create}
             disabled={busy || !name.trim()}
-            className="px-4 py-2 rounded-card text-sm font-semibold bg-accent text-onaccent hover:brightness-110 disabled:opacity-40 transition"
+            className="btn btn-primary transition"
           >
             {busy ? "Creando..." : "Crear"}
           </button>

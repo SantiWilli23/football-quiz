@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Home, Shuffle, LayoutDashboard, Users, ArrowLeftRight, SlidersHorizontal,
+  Home, Shuffle, LayoutDashboard, Users, ArrowLeftRight,
   Wallet, CalendarDays, History,
 } from "lucide-react";
 import { CareerProvider, useCareer } from "./context/CareerContext.jsx";
@@ -9,7 +9,6 @@ import TeamSelector from "./components/TeamSelector.jsx";
 import SaveManager from "./components/SaveManager.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import Squad from "./components/Squad.jsx";
-import Tactics from "./components/Tactics.jsx";
 import MatchSimulator from "./components/MatchSimulator.jsx";
 import SeasonCalendar from "./components/SeasonCalendar.jsx";
 import Transfers from "./components/Transfers.jsx";
@@ -22,7 +21,6 @@ const TABS = [
   ["dashboard", "Panel", LayoutDashboard],
   ["squad", "Plantilla", Users],
   ["transfers", "Fichajes", ArrowLeftRight],
-  ["tactics", "Tácticas", SlidersHorizontal],
   ["finances", "Finanzas", Wallet],
   ["calendar", "Calendario", CalendarDays],
   ["history", "Historial", History],
@@ -97,7 +95,6 @@ function CareerApp() {
         )}
         {screen === "squad" && <Squad />}
         {screen === "transfers" && <Transfers />}
-        {screen === "tactics" && <Tactics />}
         {screen === "finances" && <Finances />}
         {screen === "calendar" && <SeasonCalendar />}
         {screen === "history" && <CareerHistory />}

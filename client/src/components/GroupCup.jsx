@@ -103,7 +103,7 @@ function SquadDraft({ cup, onJoined }) {
       <button
         onClick={confirm}
         disabled={squad.length !== cup.squadSize || loading}
-        className="w-full bg-accent hover:bg-accent-dark disabled:opacity-40 text-onaccent font-semibold rounded-card py-2.5 text-sm transition-colors"
+        className="btn btn-primary w-full"
       >
         {loading ? "Confirmando..." : "Confirmar equipo"}
       </button>
@@ -274,7 +274,7 @@ export default function GroupCup({ groupId }) {
           <button
             type="submit"
             disabled={busy}
-            className="bg-accent hover:bg-accent-dark disabled:opacity-50 text-onaccent font-semibold rounded-card px-5 py-2.5 text-sm transition-colors"
+            className="btn btn-primary"
           >
             {busy ? "Creando..." : "Crear copa"}
           </button>
@@ -304,7 +304,7 @@ export default function GroupCup({ groupId }) {
             <button
               onClick={start}
               disabled={busy}
-              className="w-full sm:w-auto bg-accent hover:bg-accent-dark disabled:opacity-40 text-onaccent font-semibold rounded-card px-5 py-2.5 text-sm transition-colors"
+              className="btn btn-primary w-full sm:w-auto"
             >
               {busy ? "Iniciando..." : "Iniciar copa"}
             </button>
@@ -329,7 +329,7 @@ export default function GroupCup({ groupId }) {
             <button
               onClick={advance}
               disabled={busy}
-              className="bg-accent hover:bg-accent-dark disabled:opacity-40 text-onaccent font-semibold rounded-card px-5 py-2.5 text-sm transition-colors"
+              className="btn btn-primary"
             >
               {busy ? "Resolviendo..." : "Avanzar ronda"}
             </button>

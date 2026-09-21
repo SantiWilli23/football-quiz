@@ -74,7 +74,7 @@ export default function AccountSettings({ user, onUpdated }) {
           <button
             type="submit"
             disabled={nameBusy || username.trim() === user?.username}
-            className="bg-accent hover:bg-accent-dark disabled:opacity-40 text-onaccent font-semibold rounded-card px-5 py-2.5 text-sm transition-colors shrink-0"
+            className="btn btn-primary shrink-0"
           >
             {nameBusy ? "Guardando..." : "Cambiar"}
           </button>
@@ -116,7 +116,7 @@ export default function AccountSettings({ user, onUpdated }) {
         <button
           type="submit"
           disabled={passBusy || !current || !next || !repeat}
-          className="mt-3 bg-accent hover:bg-accent-dark disabled:opacity-40 text-onaccent font-semibold rounded-card px-5 py-2.5 text-sm transition-colors"
+          className="btn btn-primary mt-3"
         >
           {passBusy ? "Guardando..." : "Cambiar contraseña"}
         </button>

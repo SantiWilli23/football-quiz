@@ -236,7 +236,7 @@ export default function Survival() {
             </div>
             <button
               onClick={handleCreate}
-              className="w-full bg-accent hover:bg-accent-dark transition-colors text-onaccent font-semibold rounded-card py-2.5 text-sm"
+              className="btn btn-primary w-full"
             >
               Crear sala
             </button>
@@ -256,7 +256,7 @@ export default function Survival() {
               <button
                 onClick={handleJoin}
                 disabled={joinCode.trim().length < 4}
-                className="px-5 bg-accent hover:bg-accent-dark disabled:opacity-40 transition-colors text-onaccent font-semibold rounded-card text-sm"
+                className="btn btn-primary"
               >
                 Unirse
               </button>
@@ -300,7 +300,7 @@ export default function Survival() {
             <button
               onClick={handleStart}
               disabled={players.length < 2}
-              className="w-full bg-accent hover:bg-accent-dark disabled:opacity-40 transition-colors text-onaccent font-semibold rounded-card py-3 text-sm"
+              className="btn btn-primary w-full"
             >
               {players.length < 2 ? "Esperando a más jugadores…" : "Empezar"}
             </button>
@@ -379,7 +379,7 @@ export default function Survival() {
             </p>
             <button
               onClick={handleLeave}
-              className="bg-accent hover:bg-accent-dark transition-colors text-onaccent font-semibold rounded-card px-6 py-2.5 text-sm"
+              className="btn btn-primary"
             >
               Volver al lobby
             </button>

@@ -68,11 +68,12 @@
     var root = document.documentElement.style;
 
     if (scheme === "especialista") {
-      root.setProperty("--gold", p.gold);
+      // El acento de Cotrero sigue el tema elegido (antes era un dorado propio).
+      root.setProperty("--gold", p.accent);
       root.setProperty("--gold-light", p.accentLight);
-      root.setProperty("--gold-dim", p.goldDark);
-      root.setProperty("--gold-subtle", hexToRgba(p.gold, 0.12));
-      root.setProperty("--gold-border", hexToRgba(p.gold, 0.28));
+      root.setProperty("--gold-dim", p.accentDark);
+      root.setProperty("--gold-subtle", hexToRgba(p.accent, 0.12));
+      root.setProperty("--gold-border", hexToRgba(p.accent, 0.28));
       root.setProperty("--black", p.bg);
       root.setProperty("--surface", p.panel);
       root.setProperty("--surface-2", p.panelHi);

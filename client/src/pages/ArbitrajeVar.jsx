@@ -143,7 +143,7 @@ export default function ArbitrajeVar() {
           <div className="flex flex-wrap gap-3 justify-center">
             <button
               onClick={() => start(true)}
-              className="px-6 py-2.5 rounded-card bg-accent text-onaccent font-semibold text-sm hover:opacity-90 transition-opacity"
+              className="btn btn-primary"
             >
               Con tiempo ({SECONDS_PER_SITUATION}s)
             </button>

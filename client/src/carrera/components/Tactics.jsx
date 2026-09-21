@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Crosshair, Dumbbell, Flame, Scale, Shield, Swords, Zap, Castle, Target, Users } from "lucide-react";
 import { useCareer } from "../context/CareerContext.jsx";
 
 export const MENTALITY_LABELS = ["Muy defensivo", "Defensivo", "Equilibrado", "Ofensivo", "Muy ofensivo"];
@@ -14,18 +15,18 @@ export const SLIDER_DEFS = [
 ];
 
 const FOCUS_OPTIONS = [
-  { id: "balanced", label: "Equilibrado", emoji: "⚖️", desc: "Sin modificadores especiales" },
-  { id: "defense",  label: "Defensa",     emoji: "🛡️", desc: "+Solidez defensiva, leve baja ofensiva" },
-  { id: "attack",   label: "Ataque",      emoji: "⚔️", desc: "+Poder ofensivo, leve baja defensiva" },
-  { id: "pressing", label: "Pressing",    emoji: "🔥", desc: "+Pressing efectivo durante todo el partido" },
-  { id: "fitness",  label: "Físico",      emoji: "💪", desc: "Reduce el desgaste en el segundo tiempo" },
+  { id: "balanced", label: "Equilibrado", icon: Scale, desc: "Sin modificadores especiales" },
+  { id: "defense",  label: "Defensa",     icon: Shield, desc: "+Solidez defensiva, leve baja ofensiva" },
+  { id: "attack",   label: "Ataque",      icon: Swords, desc: "+Poder ofensivo, leve baja defensiva" },
+  { id: "pressing", label: "Pressing",    icon: Flame, desc: "+Pressing efectivo durante todo el partido" },
+  { id: "fitness",  label: "Físico",      icon: Dumbbell, desc: "Reduce el desgaste en el segundo tiempo" },
 ];
 
 const PRESETS = [
   {
     id: "flick_barca",
     name: "Barça de Flick",
-    badge: "🔵🔴",
+    badge: Users,
     desc: "Presión ultra-alta tras pérdida, línea muy elevada, extremos que atacan el espacio por dentro. Verticalidad y velocidad de circulación.",
     examples: ["FC Barcelona (Flick, 2024-25)"],
     formation: "4-3-3",
@@ -35,7 +36,7 @@ const PRESETS = [
   {
     id: "gegenpressing",
     name: "Gegenpressing",
-    badge: "⚡",
+    badge: Zap,
     desc: "Presión intensa e inmediata tras perder el balón. Bloque alto, recuperaciones rápidas en campo rival.",
     examples: ["Liverpool (Klopp)", "Bayer Leverkusen (Xabi Alonso)", "B. Dortmund (Klopp)"],
     formation: "4-3-3",
@@ -45,7 +46,7 @@ const PRESETS = [
   {
     id: "posesion",
     name: "Posesión total",
-    badge: "🎯",
+    badge: Target,
     desc: "Control absoluto del balón, salida desde atrás, movimiento constante entre líneas. El rival se cansa de correr.",
     examples: ["Man City (Guardiola)", "Barça (Xavi, 2022-24)"],
     formation: "4-3-3",
@@ -55,7 +56,7 @@ const PRESETS = [
   {
     id: "contragolpe",
     name: "Contragolpe",
-    badge: "🗡️",
+    badge: Crosshair,
     desc: "Bloque medio-bajo, esperar el error rival y salir en tromba al espacio. Velocistas en punta imprescindibles.",
     examples: ["Real Madrid (Ancelotti)", "Inter (Mourinho)", "Atlético Champions (Simeone)"],
     formation: "4-2-3-1",
@@ -65,7 +66,7 @@ const PRESETS = [
   {
     id: "bloque_bajo",
     name: "Bloque bajo",
-    badge: "🏰",
+    badge: Castle,
     desc: "Equipo muy compacto en campo propio, líneas juntas, orden defensivo y salida al golpe. Efectivo ante rivales superiores.",
     examples: ["Atlético de Madrid (Simeone)", "Getafe (Bordalás)", "Burnley"],
     formation: "4-4-2",
@@ -75,7 +76,7 @@ const PRESETS = [
   {
     id: "juego_directo",
     name: "Juego directo",
-    badge: "🪓",
+    badge: Swords,
     desc: "Pelota larga al delantero, segunda jugada, intensidad física. Sin florituras pero muy efectivo.",
     examples: ["Leeds (Bielsa)", "Brentford (Thomas Frank)", "Sheffield United"],
     formation: "4-4-2",
@@ -85,7 +86,7 @@ const PRESETS = [
   {
     id: "tres_defensores",
     name: "Back 3 + carrileros",
-    badge: "🔷",
+    badge: Shield,
     desc: "Tres centrales, carrileros de alto voltaje, doble pivote y mucho ancho. Versátil entre posesión y presión.",
     examples: ["Chelsea (Tuchel)", "Inter (Conte)", "Atalanta (Gasperini)"],
     formation: "3-5-2",
@@ -118,7 +119,7 @@ export default function Tactics() {
           <div className="border-t border-border divide-y divide-border">
             {PRESETS.map((preset) => (
               <div key={preset.id} className="flex items-start gap-3 px-4 py-3 hover:bg-white/[0.02]">
-                <span className="text-2xl leading-none mt-0.5 shrink-0">{preset.badge}</span>
+                <preset.badge size={22} className="mt-0.5 shrink-0 text-accent" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold">{preset.name}</p>
                   <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{preset.desc}</p>
@@ -182,7 +183,7 @@ export default function Tactics() {
                   : "border-border text-gray-400 hover:border-gray-500 hover:text-white"
               }`}
             >
-              <span className="text-xl leading-none mt-0.5">{opt.emoji}</span>
+              <opt.icon size={18} className="mt-0.5 shrink-0" />
               <div>
                 <p className="text-sm font-semibold">{opt.label}</p>
                 <p className="text-xs opacity-70">{opt.desc}</p>

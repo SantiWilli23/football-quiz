@@ -168,7 +168,7 @@ export default function SeasonPredictions() {
           <button
             onClick={submit}
             disabled={!championId || relegatedIds.length !== 3 || saving}
-            className="mt-5 w-full bg-accent text-onaccent font-semibold py-2.5 rounded-card hover:brightness-110 disabled:opacity-40 transition"
+            className="btn btn-primary mt-5 w-full transition"
           >
             {saving ? "Guardando..." : existing ? "Actualizar predicción" : "Guardar predicción"}
           </button>

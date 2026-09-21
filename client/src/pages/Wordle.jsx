@@ -284,7 +284,7 @@ export default function Wordle() {
               </button>
             ))}
           </div>
-          <button onClick={newGame} disabled={busy} className="w-full py-2.5 rounded-card bg-accent text-bg font-semibold text-sm hover:opacity-90 disabled:opacity-50">
+          <button onClick={newGame} disabled={busy} className="btn btn-primary w-full">
             Empezar partida
           </button>
         </Card>
@@ -380,7 +380,7 @@ export default function Wordle() {
                     {copied ? "Copiado" : "Compartir"}
                   </button>
                   {game.mode === "random" ? (
-                    <button onClick={newGame} disabled={busy} className="px-4 py-2 rounded-card bg-accent text-bg text-sm font-semibold hover:opacity-90">
+                    <button onClick={newGame} disabled={busy} className="btn btn-primary">
                       Jugar de nuevo
                     </button>
                   ) : (

@@ -51,7 +51,7 @@ export const GAMES = [
 
 // Duración aproximada de una partida, en minutos. Sirve para filtrar en /juegos.
 const MINUTES = {
-  Fichado: 5, Fulbodle: 5, "Escudos borrosos": 5, Supervivencia: 10, "8a2": 15,
+  Fichado: 5, Fulbodle: 5, "Escudos a ciegas": 5, Supervivencia: 10, "8a2": 15,
   Duelos: 10, Mentiroso: 10, "Copa 8a2": 30, "Equipo-Jugador": 15, FantasyFiction: 10, "Modo DT Online": 60,
   "Un Minuto": 1, "Arbitraje / VAR": 3, "Quiniela semanal": 5, "Campeón y descenso": 5,
   Cotrero: 60, "Modo DT": 120, "Modo Presidente": 120, "Vida FUT": 240,

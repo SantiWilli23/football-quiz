@@ -11,7 +11,7 @@ export default function SaveManager({ onNewCareer }) {
   return (
     <div className="min-h-screen bg-bg text-white p-4">
       <div className="max-w-2xl mx-auto">
-        <Link to="/panel" className="inline-block text-xs text-gray-500 hover:text-white mb-3">🏠 Volver al menú principal</Link>
+        <Link to="/panel" className="inline-block text-xs text-gray-500 hover:text-white mb-3">Volver al menú principal</Link>
         <h1 className="text-2xl font-bold mb-1">Modo Carrera · DT</h1>
         <p className="text-gray-400 text-sm mb-5">
           {saveSlots.length ? "Retomá una carrera guardada o empezá una nueva." : "Elegí el equipo que vas a dirigir."}
@@ -60,7 +60,7 @@ export default function SaveManager({ onNewCareer }) {
                         title="Borrar esta carrera"
                         className="text-sm px-3 py-2.5 rounded-2xl border border-border text-gray-500 hover:text-red-400 hover:border-red-500/40 transition-colors"
                       >
-                        🗑
+                        
                       </button>
                     </div>
                   )}
@@ -72,7 +72,7 @@ export default function SaveManager({ onNewCareer }) {
 
         <button
           onClick={onNewCareer}
-          className="w-full bg-accent text-onaccent font-semibold py-3 rounded-2xl hover:brightness-110 transition"
+          className="btn btn-primary w-full transition"
         >
           + Nueva carrera
         </button>

@@ -64,7 +64,7 @@ export default function InvitePreview() {
               <button
                 onClick={joinNow}
                 disabled={joining}
-                className="w-full px-5 py-3 rounded-card bg-accent text-bg font-semibold text-sm hover:opacity-90 disabled:opacity-50 transition-opacity"
+                className="btn btn-primary w-full"
               >
                 {joining ? "Uniéndote..." : `Unirme como ${user.username}`}
               </button>
@@ -72,7 +72,7 @@ export default function InvitePreview() {
             {!loading && !user && (
               <button
                 onClick={goRegister}
-                className="w-full px-5 py-3 rounded-card bg-accent text-bg font-semibold text-sm hover:opacity-90 transition-opacity"
+                className="btn btn-primary w-full"
               >
                 Crear cuenta y unirme
               </button>

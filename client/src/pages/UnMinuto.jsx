@@ -139,7 +139,7 @@ export default function UnMinuto() {
           <p className="text-sm text-gray-400 mb-5">Arrancás ya, sin vueltas: preguntas de a una hasta que se acabe el reloj.</p>
           <button
             onClick={start}
-            className="px-6 py-2.5 rounded-card bg-accent text-bg font-semibold text-sm hover:opacity-90 transition-opacity"
+            className="btn btn-primary"
           >
             Arrancar
           </button>

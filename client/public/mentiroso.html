@@ -4,31 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Mentiroso</title>
+<link rel="stylesheet" href="/futotal-base.css">
 <style>
-  :root {
-    --bg: #262b35;
-    --panel: #34363b;
-    --border: rgba(255,255,255,0.12);
-    --accent: #3b9dd6;
-    --accent2: #7cc4ea;
-    --accent-dark: #215e82;
-    --accent-bg: rgba(59,157,214,0.16);
-    --teal: #3fae9a;
-    --teal2: #82d3c3;
-    --teal-dark: #1f5f52;
-    --teal-bg: rgba(63,174,154,0.16);
-    --gold: #d9a441;
-    --gold2: #f0c674;
-    --gold-dark: #8a6423;
-    --gold-bg: rgba(217,164,65,0.16);
-    --text: #f2f2f0;
-    --text-dim: #a8a9ac;
-    --text-dim2: #7c7d80;
-    --good: #4caf6e;
-    --bad: #f0907e;
-    --red: #e05252;
-    --red-bg: rgba(224,82,82,0.16);
-  }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
   body {
@@ -1112,16 +1089,6 @@
     for (var i = 0; i < game.topic.players.length; i++) {
       var p = game.topic.players[i];
       // Already named?
-  // ¿Este texto se refiere a ese jugador? (nombre completo, apodo, apellido o nombre único)
-  function playerMatchesInput(p, n) {
-    if (norm(p.n) === n) return true;
-    if (p.a) for (var j = 0; j < p.a.length; j++) if (norm(p.a[j]) === n) return true;
-    var parts = norm(p.n).split(" ");
-    if (parts.length >= 2 && parts[parts.length - 1] === n && n.length >= 3) return true;
-    if (parts.length <= 2 && parts[0] === n && n.length >= 4) return true;
-    return false;
-  }
-
       var alreadyNamed = game.namedPlayers.some(function(np) { return np.correct && norm(np.player.n) === norm(p.n); });
       if (alreadyNamed) continue;
 
@@ -1145,11 +1112,33 @@
     return null;
   }
 
+  // ¿Este texto se refiere a ese jugador? (nombre completo, apodo, apellido o nombre único)
+  function playerMatchesInput(p, n) {
+    if (norm(p.n) === n) return true;
+    if (p.a) for (var j = 0; j < p.a.length; j++) if (norm(p.a[j]) === n) return true;
+    var parts = norm(p.n).split(" ");
+    if (parts.length >= 2 && parts[parts.length - 1] === n && n.length >= 3) return true;
+    if (parts.length <= 2 && parts[0] === n && n.length >= 4) return true;
+    return false;
+  }
+
   function submitPlayerName() {
     var input = document.getElementById("naming-input");
     var name = input.value.trim();
     if (!name) return;
     input.value = "";
+
+    // Sin repetir: un jugador que ya nombraste no cuenta dos veces ni se marca como error.
+    var repeated = null;
+    var nn = norm(name);
+    game.namedPlayers.forEach(function(np) {
+      if (!repeated && np.correct && playerMatchesInput(np.player, nn)) repeated = np.player;
+    });
+    if (repeated) {
+      document.getElementById("naming-feedback").innerHTML = '<span style="color:var(--gold, #e0b04a)">Ya nombraste a ' + esc(repeated.n) + ' — no cuenta dos veces</span>';
+      input.focus();
+      return;
+    }
 
     var matched = matchPlayerInput(name);
     var list = document.getElementById("named-list");

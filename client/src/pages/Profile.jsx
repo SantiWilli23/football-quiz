@@ -9,6 +9,7 @@ import AvatarEditor from "../components/AvatarEditor.jsx";
 import PushToggle from "../components/PushToggle.jsx";
 import AccountSettings from "../components/AccountSettings.jsx";
 import ThemeSettings from "../components/ThemeSettings.jsx";
+import Vitrina from "../components/Vitrina.jsx";
 import PlayerCard from "../components/PlayerCard.jsx";
 
 export default function Profile() {
@@ -86,6 +87,10 @@ export default function Profile() {
 
       <div className="mb-6">
         <AvatarEditor user={user} onSaved={refreshMe} />
+      </div>
+
+      <div className="mb-6">
+        <Vitrina />
       </div>
 
       <div className="mb-6">

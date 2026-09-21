@@ -128,7 +128,7 @@ function StarterSquad({ league, onJoined }) {
         <button
           onClick={confirm}
           disabled={busy}
-          className="flex-1 min-w-[160px] bg-accent hover:bg-accent-dark disabled:opacity-40 text-onaccent font-semibold rounded-card py-2.5 text-sm transition-colors"
+          className="btn btn-primary flex-1 min-w-[160px]"
         >
           {busy ? "Confirmando..." : "Quedarme con este plantel"}
         </button>
@@ -207,7 +207,7 @@ function SquadDraft({ league, onJoined }) {
       <button
         onClick={confirm}
         disabled={squad.length !== league.squadSize || loading}
-        className="w-full bg-accent hover:bg-accent-dark disabled:opacity-40 text-onaccent font-semibold rounded-card py-2.5 text-sm transition-colors"
+        className="btn btn-primary w-full"
       >
         {loading ? "Confirmando..." : "Confirmar plantel"}
       </button>
@@ -306,7 +306,7 @@ function TransferMarket({ league, onChanged }) {
         <button
           onClick={confirmTransfer}
           disabled={loading}
-          className="w-full bg-accent hover:bg-accent-dark disabled:opacity-40 text-onaccent font-semibold rounded-card py-2.5 text-sm transition-colors"
+          className="btn btn-primary w-full"
         >
           {loading ? "Confirmando..." : "Confirmar fichaje"}
         </button>
@@ -461,7 +461,7 @@ function TradeOffers({ league, onChanged }) {
           <button
             onClick={propose}
             disabled={!mineId || !theirsId || busy}
-            className="w-full bg-accent hover:bg-accent-dark disabled:opacity-40 text-onaccent font-semibold rounded-card py-2.5 text-sm transition-colors"
+            className="btn btn-primary w-full"
           >
             Mandar oferta
           </button>

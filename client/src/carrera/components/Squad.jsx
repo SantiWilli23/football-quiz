@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useCareer } from "../context/CareerContext.jsx";
 import Formation from "./Formation.jsx";
+import Tactics from "./Tactics.jsx";
 import { ALL_POSITIONS, trainingTier, trainingTierLabel } from "../engine/positions.js";
 import { getInjury } from "../engine/injuryEngine.js";
 import { reportFor } from "../engine/scouting.js";
@@ -35,9 +36,9 @@ function fatigueColor(f) {
 }
 
 const MEETING_OPTIONS = [
-  { id: "motivate", label: "Charla motivadora", emoji: "🗣️", desc: "+8 moral a todo el plantel" },
-  { id: "demand", label: "Exigir más nivel", emoji: "📢", desc: "+3 confianza directiva, -3 moral" },
-  { id: "rest", label: "Día libre", emoji: "🌴", desc: "+12 moral a todo el plantel" },
+  { id: "motivate", label: "Charla motivadora", emoji: "", desc: "+8 moral a todo el plantel" },
+  { id: "demand", label: "Exigir más nivel", emoji: "", desc: "+3 confianza directiva, -3 moral" },
+  { id: "rest", label: "Día libre", emoji: "", desc: "+12 moral a todo el plantel" },
 ];
 
 const INSTRUCTION_OPTIONS = [
@@ -72,7 +73,7 @@ export default function Squad() {
   return (
     <div className="space-y-4">
       <div className="flex gap-1">
-        {[["formacion", "Formación"], ["plantilla", "Plantilla"]].map(([id, label]) => (
+        {[["formacion", "Pizarra (formación y tácticas)"], ["plantilla", "Plantilla"]].map(([id, label]) => (
           <button
             key={id}
             onClick={() => setTab(id)}
@@ -83,7 +84,12 @@ export default function Squad() {
         ))}
       </div>
 
-      {tab === "formacion" && <Formation />}
+      {tab === "formacion" && (
+        <div className="grid lg:grid-cols-[minmax(0,1fr)_380px] gap-5 items-start">
+          <Formation />
+          <Tactics />
+        </div>
+      )}
 
       {tab === "plantilla" && (
         <div className="space-y-6">
@@ -230,7 +236,7 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
       {/* Baja por lesión */}
       {isInjured && (
         <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-1.5">
-          <span className="text-red-400 text-sm">🏥</span>
+          <span className="text-red-400 text-sm"></span>
           <p className="text-xs text-red-400">{injury.type} — vuelve en {weeksLeft} sem.</p>
         </div>
       )}
@@ -242,8 +248,8 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
 
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold truncate">
-            {isCaptain && <span className="text-amber align-middle mr-1" title="Capitán">🎖️</span>}
-            {p.name} {p.isYouth && <span className="text-amber text-xs align-middle" title="Promesa de la cantera">⭐</span>}
+            {isCaptain && <span className="text-amber align-middle mr-1 font-bold" title="Capitán">C</span>}
+            {p.name} {p.isYouth && <span className="text-amber text-xs align-middle" title="Promesa de la cantera"></span>}
           </p>
           <p className="text-xs text-gray-500 mt-0.5">{p.nationality} · {p.age} años</p>
         </div>
@@ -299,9 +305,9 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
       {/* Estadísticas de temporada */}
       {seasonStats && (
         <div className="flex items-center gap-3 pl-[52px] flex-wrap">
-          <span className="text-xs text-gray-500">⚽ {seasonStats.goals ?? 0}</span>
+          <span className="text-xs text-gray-500">{seasonStats.goals ?? 0}</span>
           <span className="text-xs text-gray-500">🅰️ {seasonStats.assists ?? 0}</span>
-          <span className="text-xs text-gray-500">🟨 {seasonStats.yellowCards ?? 0}</span>
+          <span className="text-xs text-gray-500">{seasonStats.yellowCards ?? 0}</span>
           <span className="text-xs text-gray-500">▶ {seasonStats.appearances ?? 0} partidos</span>
         </div>
       )}
@@ -315,7 +321,7 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
             isCaptain ? "bg-amber/15 text-amber border-amber/40 cursor-default" : "text-gray-500 border-border hover:text-white hover:border-gray-500"
           }`}
         >
-          {isCaptain ? "🎖️ Capitán" : "Nombrar capitán"}
+          {isCaptain ? "Capitán" : "Nombrar capitán"}
         </button>
         <select
           value={instruction}
@@ -356,7 +362,7 @@ function PositionTraining({ player: p, week, onStart }) {
     const weeksLeft = Math.max(0, p.training.endWeek - week);
     return (
       <span className="text-xs px-2.5 py-1 rounded-full border border-amber/30 bg-amber/10 text-amber">
-        🎓 Entrenando → {p.training.targetPos} ({weeksLeft} sem.)
+        Entrenando → {p.training.targetPos} ({weeksLeft} sem.)
       </span>
     );
   }

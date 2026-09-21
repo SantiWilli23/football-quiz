@@ -29,7 +29,7 @@ export default function CareerHistory() {
           if (h.note) {
             return (
               <div key={i} className="bg-panel border border-amber/30 rounded-2xl p-4 flex items-center gap-3">
-                <span className="text-2xl">🤝</span>
+                <span className="text-2xl"></span>
                 <div>
                   <p className="text-sm font-semibold text-amber">Cambio de club</p>
                   <p className="text-xs text-gray-400 mt-0.5">Temporada {h.season} · {h.note}</p>
@@ -58,10 +58,10 @@ export default function CareerHistory() {
               {(h.copaChampion || h.continentalChampion) && (
                 <div className="flex gap-2 mt-3">
                   {h.copaChampion && (
-                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber/15 text-amber border border-amber/30">🏆 Copa del Rey</span>
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber/15 text-amber border border-amber/30">Copa del Rey</span>
                   )}
                   {h.continentalChampion && (
-                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue/15 text-blue border border-blue/30">🏆 Título continental</span>
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue/15 text-blue border border-blue/30">Título continental</span>
                   )}
                 </div>
               )}
@@ -79,11 +79,11 @@ export default function CareerHistory() {
               onClick={openLegacy}
               className="text-sm text-gray-500 hover:text-amber transition-colors"
             >
-              🏛 Ver mi legado y retirarme
+              Ver mi legado y retirarme
             </button>
           ) : (
             <div className="bg-panel border border-amber/30 rounded-2xl p-5 space-y-4">
-              <h3 className="font-bold text-lg text-amber">🏛 Tu legado como DT</h3>
+              <h3 className="font-bold text-lg text-amber">Tu legado como DT</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div>
                   <p className="text-2xl font-bold">{legacy.seasonsCount}</p>

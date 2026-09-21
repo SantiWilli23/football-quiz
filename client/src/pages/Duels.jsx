@@ -89,7 +89,7 @@ function DuelPlay({ duelId, onFinished, onCancel }) {
         <p className="text-sm text-gray-400 mb-4">Ya respondiste todas tus preguntas de este duelo.</p>
         <button
           onClick={onFinished}
-          className="bg-accent hover:bg-accent-dark text-onaccent font-semibold rounded-card px-5 py-2.5 text-sm transition-colors"
+          className="btn btn-primary"
         >
           Volver
         </button>
@@ -157,7 +157,7 @@ function DuelPlay({ duelId, onFinished, onCancel }) {
             <button
               onClick={submit}
               disabled={!selected || busy}
-              className="bg-accent hover:bg-accent-dark disabled:opacity-40 text-onaccent font-semibold rounded-card px-5 py-2.5 text-sm transition-colors"
+              className="btn btn-primary"
             >
               {busy ? "Enviando..." : "Responder"}
             </button>
@@ -172,7 +172,7 @@ function DuelPlay({ duelId, onFinished, onCancel }) {
             </p>
             <button
               onClick={next}
-              className="bg-accent hover:bg-accent-dark text-onaccent font-semibold rounded-card px-5 py-2.5 text-sm transition-colors"
+              className="btn btn-primary"
             >
               {feedback.answered >= feedback.total_questions ? "Terminar" : "Siguiente"}
             </button>

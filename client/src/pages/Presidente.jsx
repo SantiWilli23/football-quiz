@@ -80,6 +80,74 @@ function Title({ icon: Icon, children, right }) {
   );
 }
 
+// Mini gráfico de la caja de las últimas semanas.
+function Sparkline({ values }) {
+  if (values.length < 2) return null;
+  const w = 64, h = 22;
+  const min = Math.min(...values), max = Math.max(...values);
+  const span = max - min || 1;
+  const pts = values.map((v, i) => `${(i / (values.length - 1)) * w},${h - 2 - ((v - min) / span) * (h - 4)}`).join(" ");
+  const up = values[values.length - 1] >= values[0];
+  const [lx, ly] = pts.split(" ").pop().split(",");
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-label="Caja de las últimas semanas" role="img" className={up ? "text-good" : "text-bad"}>
+      <polyline points={pts} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <circle cx={lx} cy={ly} r="2.2" fill="currentColor" />
+    </svg>
+  );
+}
+
+// Ingresos contra gastos de cada temporada cerrada (más la en curso).
+function SeasonBars({ state }) {
+  const rows = [...(state.history || [])].reverse().filter((h) => h.income != null).map((h) => ({ label: `T${h.season}`, income: h.income, expense: h.expense }));
+  if (!rows.length) return <p className="text-xs text-gray-500">Cuando cierres la primera temporada vas a ver acá los ingresos contra los gastos.</p>;
+  const max = Math.max(...rows.flatMap((r) => [r.income, r.expense]), 1);
+  const step = Math.ceil(max / 4 / 10) * 10 || 10;
+  const top = step * 4;
+  const W = 300, H = 130, padL = 30, padB = 18, colW = (W - padL) / rows.length;
+  return (
+    <div className="overflow-x-auto">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-md" role="img" aria-label="Ingresos y gastos por temporada">
+        {[0, 1, 2, 3, 4].map((i) => {
+          const y = 8 + (H - padB - 8) * (1 - i / 4);
+          return (
+            <g key={i}>
+              <line x1={padL} x2={W} y1={y} y2={y} stroke="currentColor" strokeOpacity="0.12" />
+              <text x={padL - 4} y={y + 3} textAnchor="end" fontSize="8" fill="currentColor" opacity="0.6">{i * step}</text>
+            </g>
+          );
+        })}
+        {rows.map((r, i) => {
+          const x = padL + i * colW + colW * 0.15;
+          const bw = colW * 0.33;
+          const hh = (v) => ((H - padB - 8) * v) / top;
+          return (
+            <g key={r.label}>
+              <rect x={x} y={H - padB - hh(r.income)} width={bw} height={hh(r.income)} fill="rgb(var(--c-emerald))" rx="2" />
+              <rect x={x + bw + 2} y={H - padB - hh(r.expense)} width={bw} height={hh(r.expense)} fill="rgb(var(--c-red))" rx="2" />
+              <text x={x + bw} y={H - 5} textAnchor="middle" fontSize="8" fill="currentColor" opacity="0.7">{r.label}</text>
+            </g>
+          );
+        })}
+      </svg>
+      <p className="text-xs text-gray-500 mt-1 flex items-center gap-3">
+        <span className="flex items-center gap-1"><i className="w-2 h-2 rounded-sm bg-good inline-block" />Ingresos (€M)</span>
+        <span className="flex items-center gap-1"><i className="w-2 h-2 rounded-sm bg-bad inline-block" />Gastos (€M)</span>
+      </p>
+    </div>
+  );
+}
+
+// Sección con título, para apilar varias en una misma pestaña.
+function Section({ title, children }) {
+  return (
+    <section className="space-y-5">
+      <h2 className="t-eyebrow border-b border-border pb-2">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
 // ------------------------------------------------------------ inicio de gestión
 function ClubPicker({ onStart }) {
   const [league, setLeague] = useState("premier");
@@ -111,7 +179,7 @@ function ClubPicker({ onStart }) {
           ))}
         </div>
         <div className="flex gap-2">
-          <button onClick={() => onStart(team, philosophy)} className="flex-1 bg-accent text-onaccent font-semibold rounded-2xl py-2.5 text-sm">Asumir la presidencia</button>
+          <button onClick={() => onStart(team, philosophy)} className="btn btn-primary flex-1">Asumir la presidencia</button>
           <button onClick={() => setTeam(null)} className="px-4 py-2.5 rounded-2xl border border-border text-sm text-gray-400">Volver</button>
         </div>
       </Card>
@@ -153,15 +221,15 @@ function Despacho({ state, act }) {
   const objective = E.objectiveFor(state.teamId);
   const pos = E.myLeaguePosition(state);
   const alerts = [];
-  if (!state.dtName) alerts.push("El banco está vacío: elegí un DT en la pestaña Plantel para poder avanzar.");
+  if (!state.dtName) alerts.push("El banco está vacío: elegí un DT en la pestaña Fútbol para poder avanzar.");
   if (state.debt > E.DEBT_CEILING) alerts.push("Límite salarial de emergencia: con esta deuda no podés invertir en nada nuevo hasta bajarla.");
-  if (state.tv && state.tv.seasonsLeft <= 0) alerts.push("Se venció el contrato de TV: negociá uno nuevo en Comercial.");
+  if (state.tv && state.tv.seasonsLeft <= 0) alerts.push("Se venció el contrato de TV: negociá uno nuevo en Dinero.");
   if (!state.tv) alerts.push("No tenés contrato de TV.");
   const expiring = state.squad.filter((p) => p.contract <= 1);
-  if (expiring.length) alerts.push(`${expiring.length} jugador${expiring.length > 1 ? "es" : ""} en su último año de contrato (Plantel).`);
+  if (expiring.length) alerts.push(`${expiring.length} jugador${expiring.length > 1 ? "es" : ""} en su último año de contrato (Fútbol).`);
   if (state.dtName && state.dtContract <= 1) alerts.push(`El contrato de ${state.dtName} vence a fin de temporada.`);
   const toElection = E.seasonsToElection(state);
-  if (toElection === 1) alerts.push("Este año hay elecciones al cierre de la temporada. Mirá la pestaña Directiva.");
+  if (toElection === 1) alerts.push("Este año hay elecciones al cierre de la temporada. Mirá la pestaña Gente.");
 
   return (
     <div className="space-y-5">
@@ -179,7 +247,7 @@ function Despacho({ state, act }) {
           <Title icon={Coins}>Oferta por {state.pendingSale.player} ({state.pendingSale.ovr})</Title>
           <p className="text-sm text-gray-300 mb-4">Te ofrecen {money(state.pendingSale.amount)}. Venderlo suma caja pero resiente al plantel y a la hinchada.</p>
           <div className="flex gap-2">
-            <button onClick={() => act(E.resolveSaleOffer, true)} className="flex-1 text-sm font-semibold px-4 py-2.5 rounded-2xl bg-accent text-onaccent">Vender</button>
+            <button onClick={() => act(E.resolveSaleOffer, true)} className="btn btn-primary flex-1">Vender</button>
             <button onClick={() => act(E.resolveSaleOffer, false)} className="flex-1 text-sm font-semibold px-4 py-2.5 rounded-2xl border border-border">Rechazar</button>
           </div>
         </Card>
@@ -210,6 +278,18 @@ function Despacho({ state, act }) {
           Vas {pos}° de {state.leagueTable.length} · fuerza del equipo {Math.round(E.teamStrength(state))} · nivel medio del plantel {Math.round(E.squadAverage(state))}
         </p>
       </Card>
+
+      <details className="group">
+        <summary className="cursor-pointer list-none">
+          <Card className="flex items-center gap-2 !py-3">
+            <ListOrdered size={15} className="text-accent shrink-0" />
+            <span className="font-semibold flex-1">Tabla de liga · vas {E.myLeaguePosition(state) || "—"}°</span>
+            <span className="text-xs text-gray-500 group-open:hidden">Ver ▾</span>
+            <span className="text-xs text-gray-500 hidden group-open:inline">Ocultar ▴</span>
+          </Card>
+        </summary>
+        <div className="mt-3"><Liga state={state} /></div>
+      </details>
 
       <Card>
         <Title icon={Users}>Novedades</Title>
@@ -282,6 +362,11 @@ function Finanzas({ state, act }) {
           <Btn tone="accent" onClick={() => act(E.repayDebt, 10)} disabled={state.debt <= 0 || state.budget < 1}>Pagar €10M</Btn>
           <Btn tone="accent" onClick={() => act(E.repayDebt, state.debt)} disabled={state.debt <= 0 || state.budget < 1}>Pagar todo lo que pueda</Btn>
         </div>
+      </Card>
+
+      <Card>
+        <Title icon={Wallet}>Ingresos contra gastos por temporada</Title>
+        <SeasonBars state={state} />
       </Card>
 
       <Card>
@@ -731,15 +816,10 @@ function Legado({ state, onRetire }) {
 
 // ------------------------------------------------------------------ contenedor
 const TABS = [
-  { key: "despacho", label: "Despacho", icon: Newspaper },
-  { key: "finanzas", label: "Finanzas", icon: Wallet },
   { key: "club", label: "Club", icon: Building2 },
-  { key: "comercial", label: "Comercial", icon: Handshake },
-  { key: "socios", label: "Socios", icon: Heart },
-  { key: "plantel", label: "Plantel", icon: Users },
-  { key: "directiva", label: "Directiva", icon: Gavel },
-  { key: "liga", label: "Liga", icon: ListOrdered },
-  { key: "legado", label: "Legado", icon: Trophy },
+  { key: "dinero", label: "Dinero", icon: Wallet },
+  { key: "gente", label: "Gente", icon: Users },
+  { key: "futbol", label: "Fútbol", icon: Crown },
 ];
 
 const GAME_OVER_TEXT = {
@@ -751,7 +831,7 @@ const GAME_OVER_TEXT = {
 function Dashboard({ state, setState, onExit }) {
   const team = teamById(state.teamId);
   const { activeGroupId: groupId } = useGroups();
-  const [tab, setTab] = useState("despacho");
+  const [tab, setTab] = useState("club");
 
   // Aplica una acción pura del motor sobre el estado más reciente.
   const act = (fn, ...args) => setState((s) => fn(s, ...args));
@@ -778,7 +858,7 @@ function Dashboard({ state, setState, onExit }) {
           <p className="text-sm text-gray-500 mb-6">
             {legacy.seasonsCount} temporadas · {legacy.titlesWon} títulos · {legacy.achievements} logros · puntaje de legado {legacy.legacyScore}
           </p>
-          <button onClick={() => retire(legacy)} className="bg-accent text-onaccent font-semibold px-5 py-2.5 rounded-2xl">Cerrar y empezar de nuevo</button>
+          <button onClick={() => retire(legacy)} className="btn btn-primary">Cerrar y empezar de nuevo</button>
         </div>
       </Card>
     );
@@ -789,27 +869,32 @@ function Dashboard({ state, setState, onExit }) {
 
   return (
     <div className="space-y-5">
-      <Card>
-        <div className="flex items-center gap-4 flex-wrap justify-between">
-          <div className="flex items-center gap-3">
-            <TeamCrest team={team} size={48} />
-            <div>
-              <p className="font-bold text-lg">{team.name}</p>
-              <p className="text-xs text-gray-500">Temporada {state.season} · Fecha {state.week}/{weeksPerSeason}{state.week > 0 ? ` · ${pos}°` : ""} · {E.PHILOSOPHIES[state.philosophy].icon} {E.PHILOSOPHIES[state.philosophy].label}</p>
+      <div className="sticky top-[57px] lg:top-2 z-20">
+        <Card className="!py-3 !px-4 shadow-lg">
+          <div className="flex items-center gap-3 flex-wrap justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              <TeamCrest team={team} size={36} />
+              <div className="min-w-0">
+                <p className="font-bold truncate">{team.name}</p>
+                <p className="text-xs text-gray-500">Temp. {state.season} · Fecha {state.week}/{weeksPerSeason}{state.week > 0 ? ` · ${pos}°` : ""} · {E.PHILOSOPHIES[state.philosophy].icon} {E.PHILOSOPHIES[state.philosophy].label}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Sparkline values={state.cashHistory || []} />
+              <div className="text-right">
+                <p className="flex items-center gap-1.5 text-sm font-semibold justify-end"><Coins size={15} className="text-accent" />{money(state.budget)}</p>
+                <p className={`text-xs ${state.debt > 0 ? "text-bad" : "text-gray-500"}`}>deuda {money(state.debt)}</p>
+              </div>
             </div>
           </div>
-          <div className="text-right">
-            <p className="flex items-center gap-2 text-sm font-semibold justify-end"><Coins size={16} className="text-accent" />{money(state.budget)}</p>
-            {state.debt > 0 && <p className="text-xs text-red-400">deuda {money(state.debt)}</p>}
+          <div className="grid grid-cols-4 gap-3 mt-3">
+            <Bar label="Directiva" value={state.boardTrust} hint="Confianza de la directiva" />
+            <Bar label="Hinchada" value={state.fanHappiness} />
+            <Bar label="Prensa" value={state.press ?? 50} />
+            <Bar label="Prestigio" value={state.prestige} hint="La marca del club" />
           </div>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 pt-4 border-t border-border">
-          <Bar label="Directiva" value={state.boardTrust} hint="Confianza de la directiva" />
-          <Bar label="Hinchada" value={state.fanHappiness} />
-          <Bar label="Prensa" value={state.press ?? 50} />
-          <Bar label="Prestigio" value={state.prestige} hint="La marca del club" />
-        </div>
-      </Card>
+        </Card>
+      </div>
 
       <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
         {TABS.map((t) => (
@@ -825,22 +910,33 @@ function Dashboard({ state, setState, onExit }) {
         ))}
       </div>
 
-      {tab === "despacho" && <Despacho state={state} act={act} />}
-      {tab === "finanzas" && <Finanzas state={state} act={act} />}
-      {tab === "club" && <ClubInfra state={state} act={act} />}
-      {tab === "comercial" && <Comercial state={state} act={act} />}
-      {tab === "socios" && <Socios state={state} act={act} />}
-      {tab === "plantel" && <Plantel state={state} act={act} />}
-      {tab === "directiva" && <Directiva state={state} act={act} />}
-      {tab === "liga" && <Liga state={state} />}
-      {tab === "legado" && <Legado state={state} onRetire={retire} />}
+      {tab === "club" && (
+        <div className="space-y-10">
+          <Section title="Despacho"><Despacho state={state} act={act} /></Section>
+          <Section title="Estadio e infraestructura"><ClubInfra state={state} act={act} /></Section>
+          <Section title="Legado y logros"><Legado state={state} onRetire={retire} /></Section>
+        </div>
+      )}
+      {tab === "dinero" && (
+        <div className="space-y-10">
+          <Section title="Finanzas"><Finanzas state={state} act={act} /></Section>
+          <Section title="Sponsors y TV"><Comercial state={state} act={act} /></Section>
+        </div>
+      )}
+      {tab === "gente" && (
+        <div className="space-y-10">
+          <Section title="Socios, hinchada y prensa"><Socios state={state} act={act} /></Section>
+          <Section title="Directiva y elecciones"><Directiva state={state} act={act} /></Section>
+        </div>
+      )}
+      {tab === "futbol" && <Plantel state={state} act={act} />}
 
       <button
         onClick={() => act(E.advanceWeek)}
         disabled={!state.dtName}
-        className="w-full bg-accent hover:bg-accent-dark text-onaccent font-semibold rounded-2xl py-3 text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed sticky bottom-3"
+        className="btn btn-primary w-full sticky bottom-3"
       >
-        {!state.dtName ? "Elegí un DT (Plantel) para seguir" : state.week >= weeksPerSeason - 1 ? "Cerrar temporada →" : "Avanzar semana →"}
+        {!state.dtName ? "Elegí un DT (Fútbol) para seguir" : state.week >= weeksPerSeason - 1 ? "Cerrar temporada →" : "Avanzar semana →"}
       </button>
     </div>
   );

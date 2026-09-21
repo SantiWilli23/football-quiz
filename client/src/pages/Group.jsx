@@ -1,3 +1,4 @@
+import Podium from "../components/Podium.jsx";
 import { useEffect, useState } from "react";
 import { BarChart3, CalendarDays, Copy, Crown, Flame, Link2, LogOut, MessageSquareText, Plus, Shield, Swords, Trophy, Users } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -232,7 +233,7 @@ export default function Group() {
             <button
               type="submit"
               disabled={createLoading}
-              className="bg-accent hover:bg-accent-dark disabled:opacity-50 text-onaccent font-semibold rounded-card px-5 py-2.5 text-sm transition-colors"
+              className="btn btn-primary"
             >
               {createLoading ? "Creando..." : "Crear grupo"}
             </button>
@@ -253,7 +254,7 @@ export default function Group() {
             <button
               type="submit"
               disabled={joinLoading}
-              className="bg-accent hover:bg-accent-dark disabled:opacity-50 text-onaccent font-semibold rounded-card px-5 py-2.5 text-sm transition-colors"
+              className="btn btn-primary"
             >
               {joinLoading ? "Uniendo..." : "Unirme"}
             </button>
@@ -413,7 +414,6 @@ export default function Group() {
                 {[
                   { key: "ranking", label: "Ranking", icon: BarChart3 },
                   { key: "jugar", label: "Jugar juntos", icon: Trophy },
-                  { key: "actividad", label: "Actividad", icon: MessageSquareText },
                 ].map(({ key, label, icon: Icon }) => (
                   <button
                     key={key}
@@ -456,7 +456,10 @@ export default function Group() {
                 </button>
               </div>
 
-              <div className="space-y-2">
+              {shownRanking.length >= 3 && (
+                <Podium entries={shownRanking.slice(0, 3).map((r) => ({ ...r, value: r.points }))} meId={user?.id} />
+              )}
+              <div>
                 {shownRanking.length === 0 && (
                   <EmptyState
                     icon={Trophy}
@@ -465,11 +468,11 @@ export default function Group() {
                     actions={[{ label: "Jugar trivia", to: "/trivia" }]}
                   />
                 )}
-                {shownRanking.map((r) => (
+                {shownRanking.slice(shownRanking.length >= 3 ? 3 : 0).map((r) => (
                   <div
                     key={r.id}
-                    className={`flex items-center gap-4 px-4 py-3 rounded-card border ${
-                      r.id === user?.id ? "border-accent/40 bg-accent/5" : "border-border"
+                    className={`flex items-center gap-4 px-2 py-3 border-b border-border last:border-0 ${
+                      r.id === user?.id ? "bg-accent/5" : ""
                     }`}
                   >
                     <div className="w-6 text-center text-sm font-semibold text-gray-400 flex items-center justify-center gap-1">
@@ -566,8 +569,9 @@ export default function Group() {
         </div>
       )}
 
-      {tab === "actividad" && activeGroupId && (
-        <div className="mt-6 space-y-5">
+      {tab === "ranking" && activeGroupId && (
+        <div className="mt-8 space-y-5">
+          <h2 className="t-eyebrow border-b border-border pb-2 flex items-center gap-1.5"><MessageSquareText size={13} /> Actividad del grupo</h2>
           <FlashPoll groupId={activeGroupId} />
           <QuestionBank groupId={activeGroupId} />
         </div>

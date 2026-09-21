@@ -51,7 +51,7 @@ export default function ResultScreen({
         {onAgain && (
           <button
             onClick={onAgain}
-            className="px-5 py-2.5 rounded-card bg-accent text-onaccent font-semibold text-sm hover:opacity-90 transition-opacity inline-flex items-center gap-1.5"
+            className="btn btn-primary inline-flex items-center gap-1.5"
           >
             <RotateCcw size={14} /> Jugar de nuevo
           </button>

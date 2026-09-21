@@ -90,7 +90,7 @@ export default function Transfers() {
       {/* Banner ventana cerrada */}
       {!windowOpen && (
         <div className="bg-amber/10 border border-amber/30 rounded-2xl px-4 py-3 flex items-start gap-3">
-          <span className="text-amber text-lg shrink-0">🔒</span>
+          <span className="text-amber text-lg shrink-0"></span>
           <div>
             <p className="text-sm font-semibold text-amber">Ventana de transferencias cerrada</p>
             <p className="text-xs text-gray-400 mt-0.5">
@@ -132,7 +132,7 @@ export default function Transfers() {
       {subTab === "mercado" && (
         <>
           <div className="bg-panel border border-border rounded-2xl p-4 space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">🔍 Buscar jugadores</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Buscar jugadores</p>
             <div className="flex flex-wrap gap-3 items-center">
               <input
                 value={query}
@@ -239,16 +239,16 @@ export default function Transfers() {
                           title="Mandar a un ojeador a la liga de este jugador"
                           className="text-sm font-medium px-3 py-2.5 rounded-2xl bg-panel border border-border text-gray-300 hover:border-gray-500 transition-colors"
                         >
-                          <option value="">🔎 Scoutear…</option>
+                          <option value="">Scoutear…</option>
                           {hiredScouts.map((sc) => (
                             <option key={sc.id} value={sc.id}>{sc.specialty === "ovr" ? "OVR" : sc.specialty === "potential" ? "Potencial" : "Generalista"}</option>
                           ))}
                         </select>
                       ) : (
-                        <span className="text-xs text-gray-600" title="Contratá un ojeador en la pestaña Scouting">🔎 sin ojeadores</span>
+                        <span className="text-xs text-gray-600" title="Contratá un ojeador en la pestaña Scouting">sin ojeadores</span>
                       )
                     )}
-                    {scouting && <span className="text-xs text-gray-600 px-2">🔎 en camino…</span>}
+                    {scouting && <span className="text-xs text-gray-600 px-2">en camino…</span>}
                     {cooling ? (
                       <span className="text-xs text-gray-600 px-3 py-2.5 inline-block" title="Te rechazaron hace poco">
                         Esperá {weeksUntilCanOffer(p.id)} sem.
@@ -316,7 +316,7 @@ function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, 
   return (
     <div className="space-y-6">
       <section>
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-2.5">📨 Ofertas recibidas por tus jugadores</h3>
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-2.5">Ofertas recibidas por tus jugadores</h3>
         {!pending.length && <p className="text-xs text-gray-600">Ninguna oferta pendiente por ahora.</p>}
         <div className="space-y-2">
           {pending.map((o) => (
@@ -378,7 +378,7 @@ function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, 
       </section>
 
       <section>
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-2.5">📤 Ofertas que mandaste</h3>
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-2.5">Ofertas que mandaste</h3>
         {!sentOffers.length && <p className="text-xs text-gray-600">Todavía no mandaste ninguna oferta.</p>}
         <div className="space-y-1.5">
           {sentOffers.map((o) => (
@@ -483,7 +483,7 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, isOnOffe
               {/* Cláusula de liberación */}
               {releaseClause != null && (
                 <div className="bg-amber/5 border border-amber/25 rounded-xl p-3 space-y-2">
-                  <p className="text-xs text-amber font-semibold">⚡ Cláusula de liberación: €{releaseClause}M</p>
+                  <p className="text-xs text-amber font-semibold">Cláusula de liberación: €{releaseClause}M</p>
                   <p className="text-xs text-gray-500">Pagando esta cifra el club está obligado a vender sin importar su decisión.</p>
                   <button
                     onClick={() => submitFee(releaseClause)}
@@ -507,7 +507,7 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, isOnOffe
               )}
 
               {feeCooling ? (
-                <p className="text-xs text-amber">😤 Le ofertaste algo muy bajo y el club no quiere hablar por {weeksUntilCanOffer(player.id)} semana{weeksUntilCanOffer(player.id) === 1 ? "" : "s"} más.</p>
+                <p className="text-xs text-amber">Le ofertaste algo muy bajo y el club no quiere hablar por {weeksUntilCanOffer(player.id)} semana{weeksUntilCanOffer(player.id) === 1 ? "" : "s"} más.</p>
               ) : (
                 <>
                   <label className="block text-xs text-gray-500 uppercase tracking-wide">Oferta por el pase (€M)</label>
@@ -516,7 +516,7 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, isOnOffe
                     onChange={(e) => setFeeInput(Number(e.target.value))}
                     className="w-full bg-bg border border-border rounded-2xl px-4 py-3 text-sm"
                   />
-                  <button onClick={() => submitFee()} className="w-full bg-accent text-onaccent font-semibold py-2.5 rounded-2xl hover:brightness-110 transition">
+                  <button onClick={() => submitFee()} className="btn btn-primary w-full transition">
                     {feeResult && !feeResult.accepted ? "Volver a ofertar" : "Enviar oferta al club"}
                   </button>
                 </>
@@ -528,7 +528,7 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, isOnOffe
             <>
               <p className="text-sm text-emerald font-medium">✅ El club aceptó €{feeAgreed}M por el pase.</p>
               <div className="bg-amber/10 border border-amber/30 rounded-xl p-3">
-                <p className="text-sm text-amber font-semibold">🔒 Ventana cerrada</p>
+                <p className="text-sm text-amber font-semibold">Ventana cerrada</p>
                 <p className="text-xs text-gray-400 mt-1">El pase está acordado pero no podés cerrar el fichaje hasta la ventana de invierno (jornada 20-24) o el próximo verano.</p>
               </div>
               <button onClick={onClose} className="w-full bg-panel border border-border text-gray-300 font-semibold py-2.5 rounded-2xl hover:border-gray-500 transition">
@@ -562,7 +562,7 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, isOnOffe
               <select value={years} onChange={(e) => setYears(Number(e.target.value))} className="w-full bg-bg border border-border rounded-2xl px-4 py-3 text-sm">
                 {[1, 2, 3, 4, 5].map((y) => <option key={y} value={y}>{y} año{y === 1 ? "" : "s"}</option>)}
               </select>
-              <button onClick={submitWage} className="w-full bg-accent text-onaccent font-semibold py-2.5 rounded-2xl hover:brightness-110 transition">
+              <button onClick={submitWage} className="btn btn-primary w-full transition">
                 {wageResult && !wageResult.accepted ? "Volver a ofrecer" : "Ofrecer contrato al jugador"}
               </button>
             </>
@@ -572,7 +572,7 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, isOnOffe
             <>
               <p className="text-sm text-emerald font-medium">✅ El jugador aceptó el contrato.</p>
               <div className="bg-amber/10 border border-amber/30 rounded-xl p-3">
-                <p className="text-sm text-amber font-semibold">🔒 Ventana cerrada</p>
+                <p className="text-sm text-amber font-semibold">Ventana cerrada</p>
                 <p className="text-xs text-gray-400 mt-1">Todo está acordado pero no podés formalizar el traspaso hasta que abra la ventana.</p>
               </div>
               <button onClick={onClose} className="w-full bg-panel border border-border text-gray-300 font-semibold py-2.5 rounded-2xl hover:border-gray-500 transition">
@@ -595,8 +595,8 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, isOnOffe
 
           {stage === "done" && (
             <>
-              <p className="text-sm text-emerald font-semibold">🎉 ¡Fichaje cerrado! {player.name} ya es tuyo.</p>
-              <button onClick={onClose} className="w-full bg-accent text-onaccent font-semibold py-2.5 rounded-2xl hover:brightness-110 transition">
+              <p className="text-sm text-emerald font-semibold">¡Fichaje cerrado! {player.name} ya es tuyo.</p>
+              <button onClick={onClose} className="btn btn-primary w-full transition">
                 Cerrar
               </button>
             </>

@@ -371,36 +371,10 @@ export default function Stats() {
             >
               Logros
             </SectionTitle>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {achievements?.achievements.map((a) => (
-                <div
-                  key={a.id}
-                  className={`rounded-xl border px-4 py-3.5 ${
-                    a.unlocked ? "border-accent/40 bg-accent/5" : "border-border bg-bg"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className={`text-xl ${a.unlocked ? "" : "grayscale opacity-40"}`}>{a.emoji}</span>
-                    <span
-                      className={`text-sm font-semibold ${a.unlocked ? "text-accent" : "text-gray-400"}`}
-                    >
-                      {a.title}
-                    </span>
-                    {a.unlocked && <Sparkles size={12} className="text-accent ml-auto" />}
-                  </div>
-                  <p className="text-xs text-gray-500 mb-2 leading-snug">{a.description}</p>
-                  <div className="h-1.5 rounded-full bg-white/5 overflow-hidden mb-1">
-                    <div
-                      className={`h-full rounded-full ${a.unlocked ? "bg-accent" : "bg-gray-600"}`}
-                      style={{ width: `${a.progress}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-600">
-                    {Math.min(a.current, a.target)} / {a.target}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <p className="text-sm text-gray-400">
+              Los logros y los marcos de avatar viven ahora en una sola vitrina, en{" "}
+              <Link to="/perfil" className="text-accent hover:underline">tu perfil</Link>.
+            </p>
           </Card>
         </div>
       )}

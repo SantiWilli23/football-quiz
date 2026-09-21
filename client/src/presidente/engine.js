@@ -859,6 +859,7 @@ export function advanceWeek(state) {
     expense: { ...led.expense, sueldos: led.expense.sueldos + expenses.sueldos, mantenimiento: led.expense.mantenimiento + expenses.mantenimiento, intereses: led.expense.intereses + expenses.intereses },
   };
   s.budget = r2(s.budget + income.total - expenses.total);
+  s.cashHistory = [...(state.cashHistory || []), s.budget].slice(-10);
   if (s.budget < 0) {
     s.debt += Math.abs(s.budget);
     s.budget = 0;

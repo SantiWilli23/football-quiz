@@ -29,7 +29,7 @@ export default function TeamSelector({ onBack }) {
     <div className="min-h-screen bg-bg text-white p-4">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-3 mb-3">
-          <Link to="/panel" className="text-xs text-gray-500 hover:text-white">🏠 Volver al menú principal</Link>
+          <Link to="/panel" className="text-xs text-gray-500 hover:text-white">Volver al menú principal</Link>
           {onBack && (
             <button onClick={onBack} className="text-xs text-gray-500 hover:text-white">← Mis carreras</button>
           )}
@@ -39,7 +39,7 @@ export default function TeamSelector({ onBack }) {
 
         {prefillTeam && (
           <div className="bg-amber/10 border border-amber/30 rounded-card px-4 py-3 mb-5 text-sm text-amber">
-            ⚽➡️🧢 Colgaste los botines en {prefillTeam.name}. Ya te lo dejamos preseleccionado — confirmá abajo para dirigirlo.
+            Colgaste los botines en {prefillTeam.name}. Ya te lo dejamos preseleccionado — confirmá abajo para dirigirlo.
           </div>
         )}
 
@@ -87,7 +87,7 @@ export default function TeamSelector({ onBack }) {
             </p>
             <button
               onClick={() => selectTeam(chosen.id)}
-              className="w-full bg-accent text-onaccent font-semibold py-2.5 rounded-card hover:brightness-110 transition"
+              className="btn btn-primary w-full transition"
             >
               Empezar Carrera
             </button>

@@ -1,0 +1,47 @@
+/* Hoja base compartida por las páginas sueltas (Draft 8a2, Mentiroso, Cotrero
+   y Cotrero medio). Antes cada una repetía su propio bloque :root con los mismos
+   colores y nombres distintos. Acá viven una sola vez: los valores son los del
+   tema Azul y /theme-sync.js los pisa con el tema elegido en Configuración.
+
+   Los alias (--border / --panel-border, --text-dim2 / --text-faint,
+   --gold-dark / --gold-dim) existen porque cada página nació con su nombre. */
+:root {
+  --ov: 255, 255, 255; /* color de las superposiciones translúcidas (blanco sobre oscuro) */
+
+  --bg: #262b35;
+  --panel: #34363b;
+  --border: rgba(var(--ov), 0.12);
+  --panel-border: var(--border);
+
+  --accent: #3b9dd6;
+  --accent2: #7cc4ea;
+  --accent-dark: #215e82;
+  --accent-bg: rgba(59, 157, 214, 0.16);
+
+  --teal: #3fae9a;
+  --teal2: #82d3c3;
+  --teal-dark: #1f5f52;
+  --teal-bg: rgba(63, 174, 154, 0.16);
+
+  --gold: #d9a441;
+  --gold2: #f0c674;
+  --gold-dark: #8a6423;
+  --gold-dim: var(--gold-dark);
+  --gold-bg: rgba(217, 164, 65, 0.16);
+
+  --text: #f2f2f0;
+  --text-dim: #a8a9ac;
+  --text-dim2: #7c7d80;
+  --text-faint: var(--text-dim2);
+
+  --good: #4caf6e;
+  --bad: #f0907e;
+  --ok: var(--good);
+  --rev: var(--bad);
+  --best: var(--teal2);
+  --idol: var(--accent2);
+  --red: #e05252;
+  --red-bg: rgba(224, 82, 82, 0.16);
+}
+
+* { box-sizing: border-box; }

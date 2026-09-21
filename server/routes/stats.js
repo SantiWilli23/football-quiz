@@ -64,10 +64,23 @@ router.get("/weekly-recap", async (req, res) => {
 // están precalculados: challenge_scores guarda el puntaje crudo, así que
 // hay que rankear cada (juego, período, grupo) igual que /challenges/leaderboard
 // y sumar los puntos 100/50/30/10 que le tocaron a cada uno en cada uno.
-async function challengePointsByUser() {
-  const result = await db.execute(
-    "SELECT game_key, period_key, group_id, user_id, score FROM challenge_scores"
-  );
+// Inicio del período pedido para el ranking global: semana (desde el lunes),
+// mes (desde el día 1) o histórico (sin límite → null).
+function periodStart(period) {
+  const now = new Date();
+  if (period === "month") return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().slice(0, 19).replace("T", " ");
+  if (period === "week") {
+    const day = (now.getUTCDay() + 6) % 7; // lunes = 0
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - day)).toISOString().slice(0, 19).replace("T", " ");
+  }
+  return null;
+}
+
+async function challengePointsByUser(since = null) {
+  const result = await db.execute({
+    sql: `SELECT game_key, period_key, group_id, user_id, score FROM challenge_scores${since ? " WHERE submitted_at >= ?" : ""}`,
+    args: since ? [since] : [],
+  });
 
   const buckets = new Map();
   for (const row of result.rows) {
@@ -93,21 +106,23 @@ async function challengePointsByUser() {
 // filtrada a uno solo.
 router.get("/global-ranking", async (req, res) => {
   try {
+    const period = ["week", "month"].includes(req.query.period) ? req.query.period : "all";
+    const since = periodStart(period);
     const [result, challengePoints] = await Promise.all([
-      db.execute(`
+      db.execute({ args: since ? [since, since] : [], sql: `
         SELECT
           u.id, u.username, u.avatar, u.avatar_config,
           COALESCE(a.trivia_points, 0) AS trivia_points,
           COALESCE(mb.mode_b_points, 0) AS mode_b_points
         FROM users u
         LEFT JOIN (
-          SELECT user_id, SUM(points) AS trivia_points FROM answers GROUP BY user_id
+          SELECT user_id, SUM(points) AS trivia_points FROM answers ${since ? "WHERE answered_at >= ?" : ""} GROUP BY user_id
         ) a ON a.user_id = u.id
         LEFT JOIN (
-          SELECT user_id, SUM(points) AS mode_b_points FROM mode_b_scores GROUP BY user_id
+          SELECT user_id, SUM(points) AS mode_b_points FROM mode_b_scores ${since ? "WHERE settled_at >= ?" : ""} GROUP BY user_id
         ) mb ON mb.user_id = u.id
-      `),
-      challengePointsByUser(),
+      ` }),
+      challengePointsByUser(since),
     ]);
 
     const ranking = result.rows

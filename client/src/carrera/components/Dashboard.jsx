@@ -278,9 +278,9 @@ export default function Dashboard({ onPlayMatch }) {
   if (state.gameOver) {
     return (
       <div className="text-center py-16">
-        <p className="text-2xl font-bold mb-2">Despedido 😔</p>
+        <p className="text-2xl font-bold mb-2">Despedido </p>
         <p className="text-gray-400 mb-6">La directiva perdió la confianza en tu proyecto en {team.name}.</p>
-        <button onClick={resetCareer} className="bg-accent text-onaccent font-semibold px-5 py-2.5 rounded-2xl">
+        <button onClick={resetCareer} className="btn btn-primary">
           Empezar nueva carrera
         </button>
       </div>
@@ -348,7 +348,7 @@ export default function Dashboard({ onPlayMatch }) {
             </div>
             <button
               onClick={handlePlay}
-              className="shrink-0 w-full sm:w-auto bg-accent text-onaccent font-semibold px-8 py-3 rounded-2xl hover:brightness-110 transition"
+              className="btn btn-primary shrink-0 w-full sm:w-auto transition"
             >
               Jugar partido
             </button>
