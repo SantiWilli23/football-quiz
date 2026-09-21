@@ -7,6 +7,7 @@ import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import api from "../api.js";
 import { useGroups } from "../context/GroupContext.jsx";
+import { useToast } from "../context/ToastContext.jsx";
 import { teamsByLeague, teamById } from "../carrera/data/teams.js";
 import TeamCrest from "../carrera/components/TeamCrest.jsx";
 import * as E from "../presidente/engine.js";
@@ -832,9 +833,19 @@ function Dashboard({ state, setState, onExit }) {
   const team = teamById(state.teamId);
   const { activeGroupId: groupId } = useGroups();
   const [tab, setTab] = useState("club");
+  const { toast } = useToast();
 
   // Aplica una acción pura del motor sobre el estado más reciente.
-  const act = (fn, ...args) => setState((s) => fn(s, ...args));
+  const act = (fn, ...args) => {
+    // Acciones que se pueden deshacer: se guarda el estado de antes.
+    const undoable = { [E.sellPlayer.name]: "Jugador vendido", [E.fireDt.name]: "DT despedido" }[fn.name];
+    if (undoable) {
+      const next = fn(state, ...args);
+      if (next !== state) { setState(next); toast(undoable, { undo: () => setState(state) }); }
+      return;
+    }
+    setState((s) => fn(s, ...args));
+  };
 
   const retire = async (legacy) => {
     if (groupId) {

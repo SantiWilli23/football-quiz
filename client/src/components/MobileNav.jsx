@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { BarChart3, Flame, Gamepad2, History, Home, HelpCircle, LogOut, MoreHorizontal, Radio, User, Users, X } from "lucide-react";
+import { Search, Volume2, VolumeX, BarChart3, Flame, Gamepad2, History, Home, HelpCircle, LogOut, MoreHorizontal, Radio, User, Users, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import Avatar from "./Avatar.jsx";
 import AlertsBell from "./AlertsBell.jsx";
+import { isSfxOn, setSfxOn } from "../utils/sfx.js";
 
 // Cuatro accesos fijos y «Más» con el resto — antes eran cinco pestañas de
 // 9 px con Trivia, En vivo, Estadísticas e Historial sin llegada directa.
@@ -25,6 +26,9 @@ export default function MobileNav() {
   const { user, stats, logout } = useAuth();
   const [moreOpen, setMoreOpen] = useState(false);
   const location = useLocation();
+  const [sound, setSound] = useState(isSfxOn);
+  const openSearch = () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }));
+  const toggleSound = () => { const n = !sound; setSfxOn(n); setSound(n); };
 
   // El cajón se cierra solo al cambiar de pantalla.
   useEffect(() => { setMoreOpen(false); }, [location.pathname]);
@@ -41,6 +45,10 @@ export default function MobileNav() {
           <Flame size={13} />
           {stats?.current_streak ?? 0}
         </span>
+        <button onClick={openSearch} aria-label="Buscar" className="p-1.5 text-gray-400"><Search size={17} /></button>
+        <button onClick={toggleSound} aria-label={sound ? "Silenciar sonidos" : "Activar sonidos"} aria-pressed={sound} className="p-1.5 text-gray-400">
+          {sound ? <Volume2 size={17} /> : <VolumeX size={17} />}
+        </button>
         <AlertsBell align="right" />
         <Avatar user={user} size={32} />
       </header>

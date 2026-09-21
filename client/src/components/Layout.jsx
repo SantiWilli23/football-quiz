@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { X } from "lucide-react";
 import Sidebar from "./Sidebar.jsx";
 import MobileNav from "./MobileNav.jsx";
+import TopBar from "./TopBar.jsx";
 import { markVisit } from "../utils/visits.js";
 
 // `focus` = modo enfoque: durante una partida se esconden el menú y la barra
@@ -31,6 +32,7 @@ export default function Layout({ children, focus = false, exitTo = "/juegos" }) 
       <Sidebar />
       <div className="flex-1 min-w-0 flex flex-col">
         <MobileNav />
+        <TopBar />
         {/* pb-24 deja lugar para la barra de navegación fija del teléfono. */}
         <main className="flex-1 px-4 py-5 pb-24 sm:px-6 lg:px-8 lg:py-8 lg:pb-8 max-w-[1400px] page-fade">
           {children}

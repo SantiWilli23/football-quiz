@@ -53,9 +53,9 @@
 }
 
 [data-theme="azul"] {
-  --c-bg: 38 43 53;
-  --c-panel: 43 52 68;
-  --c-panel-hi: 53 66 84;
+  --c-bg: 34 39 49;
+  --c-panel: 50 62 82;
+  --c-panel-hi: 61 76 99;
   --c-border: 69 71 76;
 
   --c-white: 242 242 240;
@@ -304,3 +304,14 @@ body {
 @keyframes page-in { from { opacity: 0; } to { opacity: 1; } }
 .page-fade { animation: page-in 0.15s ease-out both; }
 @media (prefers-reduced-motion: reduce) { .page-fade { animation: none; } }
+
+/* Foco visible en todos los controles al navegar con teclado. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid rgb(var(--c-accent));
+  outline-offset: 2px;
+}
+
+/* Respuesta táctil: el botón se hunde al presionar y se atenúa si está ocupado. */
+:where(button, .btn, a.btn):active:not(:disabled) { transform: scale(0.98); }
+:where(button, .btn) { transition: transform 0.1s ease-out, background-color 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s; }
+@media (prefers-reduced-motion: reduce) { :where(button, .btn):active:not(:disabled) { transform: none; } }

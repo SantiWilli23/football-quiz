@@ -33,14 +33,14 @@ const SECTIONS = [
     label: "Juegos",
     icon: Gamepad2,
     description: "Los 23 modos de Futotal, agrupados por cómo se juegan: solo, con amigos, contrarreloj...",
-    color: "#3b9dd6",
+    color: "rgb(var(--c-emerald))",
   },
   {
     to: "/futbol",
     label: "En vivo",
     icon: Radio,
     description: "Resultados, tabla de posiciones y goleadores reales de las principales ligas.",
-    color: "#4fb3e8",
+    color: "rgb(var(--c-blue))",
   },
   {
     to: "/grupo",
@@ -61,14 +61,14 @@ const SECTIONS = [
     label: "Ranking global",
     icon: Globe2,
     description: "Los 100 con más puntos de toda la app, sin importar el grupo.",
-    color: "#8b5cf6",
+    color: "rgb(var(--c-amber))",
   },
   {
     to: "/vida-fut",
     label: "Vida FUT",
     icon: Sparkles,
     description: "Jugador en Cotrero, después 3 temporadas de DT y 3 de presidente — una carrera larga en tres etapas.",
-    color: "#f0a93e",
+    color: "rgb(var(--c-purple))",
   },
 ];
 
@@ -118,18 +118,14 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      {/* Header */}
-      <div className="mb-10 flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <p className="text-xs font-medium text-accent/90 uppercase tracking-[0.2em] mb-3">Panel</p>
-          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight mb-3">
-            Hola{user?.username ? `, ${user.username}` : ""}
-          </h1>
-          <p className="text-gray-500 text-sm max-w-lg leading-relaxed">
-            Futotal es tu plataforma de fútbol con amigos: trivia diaria, duelos 1v1, estadísticas
-            del grupo y simuladores de carrera.
-          </p>
-        </div>
+      {/* Saludo de una línea: sin explicar qué es Futotal. */}
+      <div className="mb-8 flex items-center justify-between gap-4 flex-wrap">
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
+          Hola{user?.username ? `, ${user.username}` : ""}
+          <span className="ml-3 text-sm font-normal text-gray-500 capitalize">
+            {new Date().toLocaleDateString("es", { weekday: "short", day: "numeric", month: "short" })}
+          </span>
+        </h1>
         <GroupSelector />
       </div>
 
@@ -186,7 +182,7 @@ export default function Dashboard() {
               >
                 <div
                   className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
-                  style={{ background: `${color}22`, border: `1px solid ${color}44`, color }}
+                  style={{ background: `color-mix(in srgb, ${color} 15%, transparent)`, border: `1px solid color-mix(in srgb, ${color} 30%, transparent)`, color }}
                 >
                   <Icon size={19} />
                 </div>

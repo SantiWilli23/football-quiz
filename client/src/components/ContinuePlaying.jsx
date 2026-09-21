@@ -56,7 +56,7 @@ export default function ContinuePlaying({ items }) {
   return (
     <div className="mb-10">
       <h2 className="t-eyebrow mb-4">Continuar jugando</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-1 px-1">
         {items.map((it) => {
           const inner = (
             <>
@@ -74,7 +74,7 @@ export default function ContinuePlaying({ items }) {
               <span className="text-xs text-accent inline-flex items-center gap-1 shrink-0"><Play size={11} /> Seguir</span>
             </>
           );
-          const cls = "flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-border bg-panel hover:border-white/20 transition-colors";
+          const cls = "snap-start shrink-0 w-72 flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-border bg-panel hover:border-white/20 transition-colors";
           return it.to
             ? <Link key={it.key} to={it.to} className={cls}>{inner}</Link>
             : <a key={it.key} href={it.href} className={cls}>{inner}</a>;
