@@ -52,7 +52,7 @@ export const GAMES = [
   // ---- Carrera larga ----
   { href: "/cotrero.html", label: "Cotrero", icon: Crown, description: "De potrero a leyenda: simulá toda la carrera de un jugador, temporada a temporada.", family: "carrera", available: true },
   { to: "/carrera-dt", label: "Modo DT", icon: Shield, description: "Dirigí un equipo de Premier League o La Liga: tácticas, fichajes, selección nacional y partidos en vivo.", family: "carrera", available: true },
-  { to: "/presidente", label: "Modo Presidente", icon: Building2, description: "Un nivel arriba del DT: manejás la plata del club, el estadio, los sponsors y la hinchada.", family: "carrera", available: true },
+  { to: "/presidente", label: "Modo Presidente", icon: Building2, description: "Tu historia como presidente: decisiones, prensa y presión de la directiva. Solo, a tu ritmo, sin depender del grupo.", family: "carrera", available: true },
   { to: "/vida-fut", label: "Vida FUT", icon: Sparkles, description: "Jugador en Cotrero, después 3 temporadas de DT y 3 de presidente: una carrera larga en tres etapas.", family: "carrera", available: true },
 ];
 

@@ -1015,7 +1015,7 @@ export default function Presidente() {
             Modo Presidente
           </h1>
           <p className="text-gray-400 text-sm max-w-2xl">
-            No dirigís la cancha: manejás el club. Caja, estadio, sponsors, socios, prensa, contratos y una directiva que te puede echar (o reelegir cada cuatro años).
+            Tu historia, no un partido más: no dirigís la cancha, manejás el club. Caja, estadio, sponsors, socios, prensa, contratos y una directiva que te puede echar (o reelegir cada cuatro años) — solo, a tu ritmo, sin esperar a nadie del grupo.
           </p>
         </div>
         {state && !state.gameOver && (
