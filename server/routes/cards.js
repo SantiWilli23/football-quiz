@@ -4,8 +4,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
-import { todayStr } from "../utils/points.js";
+import { addDays, todayStr } from "../utils/points.js";
 import { simulateMatchEvents } from "../utils/match-engine.js";
+import { rankingBetween } from "./stats.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ALL = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/equipo-jugador-players.json"), "utf-8")).jugadores;
@@ -84,16 +85,37 @@ const BY_NAME = new Map(CARDS.map((c) => [c.name, c]));
 const BY_TIER = Object.fromEntries(TIERS.map((t) => [t.key, CARDS.filter((c) => c.tier === t.key)]));
 const pub = (c) => ({ name: c.name, tier: c.tier, tierLabel: c.tierLabel, ovr: c.ovr, pos: c.pos, nationality: c.nationality, club: c.club });
 
-function drawCard() {
-  let r = Math.random() * TIERS.reduce((s, t) => s + t.weight, 0);
+// Calidad de sobre: "weights" alternativos a los de TIERS, para que un sobre
+// ganado por buen rendimiento (o comprado más caro en la tienda) tenga mejor
+// probabilidad de tocar algo bueno, sin dejar de ser el mismo sistema de
+// sobres de 5 cartas de siempre.
+const PACK_QUALITY = {
+  normal: { estrella: 3, oro: 12, plata: 30, bronce: 55 }, // = los weights de TIERS
+  bueno: { estrella: 8, oro: 25, plata: 35, bronce: 32 },
+  top: { estrella: 20, oro: 35, plata: 30, bronce: 15 },
+};
+
+function drawCard(quality = "normal") {
+  const weights = PACK_QUALITY[quality] || PACK_QUALITY.normal;
+  let r = Math.random() * TIERS.reduce((s, t) => s + (weights[t.key] ?? t.weight), 0);
   for (const t of TIERS) {
-    r -= t.weight;
+    r -= weights[t.key] ?? t.weight;
     if (r <= 0) {
       const pool = BY_TIER[t.key];
       return pool[Math.floor(Math.random() * pool.length)];
     }
   }
   return CARDS[CARDS.length - 1];
+}
+
+// La calidad de un sobre queda codificada en su `source`: los que arrancan
+// con "top-" (victoria perfecta, campeón del ranking semanal, tienda-top)
+// usan la mejor probabilidad; "bueno-" es la franja intermedia; el resto
+// (diario, reto, vidafutN) sigue siendo el sobre normal de siempre.
+function qualityOf(source) {
+  if (source.startsWith("top-")) return "top";
+  if (source.startsWith("bueno-")) return "bueno";
+  return "normal";
 }
 
 // Sobre por reto del día cumplido (el bonus vive en wordle_results con league 'reto').
@@ -107,9 +129,43 @@ async function grantRetoPacks(userId) {
   }
 }
 
+function mondayOf(dateStr) {
+  const day = (new Date(`${dateStr}T12:00:00Z`).getUTCDay() + 6) % 7; // 0 = lunes
+  return addDays(dateStr, -day);
+}
+
+// Sobre "top" para quien salió 1° en el ranking semanal de un grupo con
+// Cartas activado — se otorga perezosamente (al visitar Cartas) por cada
+// semana YA TERMINADA que todavía no se premió. El date=lunes de esa semana
+// hace que sea idempotente vía el UNIQUE(user_id, date, source) de siempre.
+async function grantWeeklyRankingPack(userId) {
+  const today = todayStr();
+  const thisMonday = mondayOf(today);
+  const lastMonday = addDays(thisMonday, -7);
+  const lastSunday = addDays(lastMonday, 6);
+
+  const groups = (await db.execute({
+    sql: `SELECT gm.group_id FROM group_members gm JOIN groups_t g ON g.id = gm.group_id
+          WHERE gm.user_id = ? AND g.cards_enabled = 1`,
+    args: [userId],
+  })).rows;
+
+  for (const { group_id: groupId } of groups) {
+    const ranking = await rankingBetween(groupId, lastMonday, lastSunday);
+    const top = ranking[0];
+    if (top && top.id === userId && top.points > 0) {
+      await db.execute({
+        sql: "INSERT OR IGNORE INTO card_packs (user_id, date, source) VALUES (?, ?, ?)",
+        args: [userId, lastMonday, `top-ranking${groupId}`],
+      });
+    }
+  }
+}
+
 router.get("/state", async (req, res) => {
   try {
     await grantRetoPacks(req.userId);
+    await grantWeeklyRankingPack(req.userId);
     const today = todayStr();
     const packs = Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM card_packs WHERE user_id = ? AND opened_at IS NULL", args: [req.userId] })).rows[0].n);
     const dailyClaimed = !!(await db.execute({ sql: "SELECT 1 FROM card_packs WHERE user_id = ? AND date = ? AND source = 'diario'", args: [req.userId, today] })).rows[0];
@@ -133,19 +189,20 @@ router.post("/claim-daily", async (req, res) => {
 
 router.post("/open", async (req, res) => {
   try {
-    const pack = (await db.execute({ sql: "SELECT id FROM card_packs WHERE user_id = ? AND opened_at IS NULL ORDER BY id LIMIT 1", args: [req.userId] })).rows[0];
+    const pack = (await db.execute({ sql: "SELECT id, source FROM card_packs WHERE user_id = ? AND opened_at IS NULL ORDER BY id LIMIT 1", args: [req.userId] })).rows[0];
     if (!pack) return res.status(400).json({ error: "No tenés sobres para abrir" });
     const upd = await db.execute({ sql: "UPDATE card_packs SET opened_at = datetime('now') WHERE id = ? AND opened_at IS NULL", args: [pack.id] });
     if (upd.rowsAffected === 0) return res.status(409).json({ error: "Ese sobre ya se abrió" });
+    const quality = qualityOf(pack.source);
     const cards = [];
     for (let i = 0; i < 5; i++) {
-      const c = drawCard();
+      const c = drawCard(quality);
       const have = (await db.execute({ sql: "SELECT count FROM user_cards WHERE user_id = ? AND player_name = ?", args: [req.userId, c.name] })).rows[0];
       if (have) await db.execute({ sql: "UPDATE user_cards SET count = count + 1 WHERE user_id = ? AND player_name = ?", args: [req.userId, c.name] });
       else await db.execute({ sql: "INSERT INTO user_cards (user_id, player_name, count) VALUES (?, ?, 1)", args: [req.userId, c.name] });
       cards.push({ ...pub(c), isNew: !have });
     }
-    res.json({ cards });
+    res.json({ cards, quality });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });
@@ -228,6 +285,40 @@ router.post("/sell", async (req, res) => {
 
     const wallet = (await db.execute({ sql: "SELECT balance FROM card_wallets WHERE user_id = ?", args: [req.userId] })).rows[0];
     res.json({ ok: true, earned: value, balance: Number(wallet.balance) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Tienda de sobres: se paga con la moneda de vender cartas / SBCs, nunca con
+// dinero real. Un sobre "top" pensado para ser caro a propósito (no es la
+// forma normal de progresar, es un lujo ocasional).
+const SHOP_PRICE = { normal: 30, bueno: 90, top: 220 };
+
+router.get("/shop", (req, res) => {
+  res.json({ prices: SHOP_PRICE });
+});
+
+router.post("/shop/buy", async (req, res) => {
+  try {
+    const quality = String(req.body?.quality || "");
+    const price = SHOP_PRICE[quality];
+    if (!price) return res.status(400).json({ error: "Calidad de sobre inválida" });
+
+    const wallet = (await db.execute({ sql: "SELECT balance FROM card_wallets WHERE user_id = ?", args: [req.userId] })).rows[0];
+    const balance = wallet ? Number(wallet.balance) : 0;
+    if (balance < price) return res.status(400).json({ error: "No te alcanzan las monedas" });
+
+    const today = todayStr();
+    // "normal" no lleva prefijo (qualityOf lo trata como normal por default);
+    // "bueno"/"top" sí, para que qualityOf() les dé las mejores probabilidades.
+    const prefix = quality === "normal" ? "tienda" : `${quality}-tienda`;
+    const n = Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM card_packs WHERE user_id = ? AND date = ? AND source LIKE ?", args: [req.userId, today, `${prefix}%`] })).rows[0].n);
+    await db.execute({ sql: "INSERT INTO card_packs (user_id, date, source) VALUES (?, ?, ?)", args: [req.userId, today, `${prefix}${n + 1}`] });
+    await creditWallet(req.userId, -price);
+
+    res.json({ ok: true, balance: balance - price });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });
@@ -336,9 +427,13 @@ router.post("/match", async (req, res) => {
     let pack = false;
     if (won) {
       const today = todayStr();
-      const n = Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM card_packs WHERE user_id = ? AND date = ? AND source LIKE 'victoria%'", args: [req.userId, today] })).rows[0].n);
+      // El sobre por victoria mejora con lo contundente que fue: por 2+ de
+      // diferencia da un sobre "top", por la mínima uno "bueno".
+      const margin = myGoals - theirGoals;
+      const prefix = margin >= 2 ? "top-victoria" : "bueno-victoria";
+      const n = Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM card_packs WHERE user_id = ? AND date = ? AND source LIKE '%victoria%'", args: [req.userId, today] })).rows[0].n);
       if (n < 2) {
-        await db.execute({ sql: "INSERT INTO card_packs (user_id, date, source) VALUES (?, ?, ?)", args: [req.userId, today, `victoria${n + 1}`] });
+        await db.execute({ sql: "INSERT INTO card_packs (user_id, date, source) VALUES (?, ?, ?)", args: [req.userId, today, `${prefix}${n + 1}`] });
         pack = true;
       }
     }

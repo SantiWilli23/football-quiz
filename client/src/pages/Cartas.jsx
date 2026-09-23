@@ -18,6 +18,8 @@ const TIER_STYLE = {
 const POS_LABEL = { GK: "Arquero", DEF: "Defensas", MID: "Medios", FWD: "Delanteros" };
 const FORMATION = { GK: 1, DEF: 4, MID: 3, FWD: 3 };
 const SELL_VALUE = { estrella: 120, oro: 40, plata: 15, bronce: 5 };
+const SHOP_PRICE = { normal: 30, bueno: 90, top: 220 };
+const SHOP_LABEL = { normal: "Sobre normal", bueno: "Sobre bueno", top: "Sobre top" };
 
 function LockedCard({ c, small }) {
   return (
@@ -112,6 +114,20 @@ export default function Cartas() {
   const [query, setQuery] = useState("");
   const [wallet, setWallet] = useState(0);
   useEffect(() => { api.get("/cards/all").then((r) => setAllCards(r.data.cards)).catch(() => setAllCards([])); }, []);
+
+  async function buyPack(quality) {
+    setBusy(true);
+    try {
+      await api.post("/cards/shop/buy", { quality });
+      setWallet((w) => w - SHOP_PRICE[quality]);
+      toast("Sobre comprado");
+      load();
+    } catch (err) {
+      toast(err.response?.data?.error || "No se pudo comprar");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function sell(card) {
     try {
@@ -271,9 +287,27 @@ export default function Cartas() {
                 </button>
               )}
             </div>
-            <p className="t-meta mt-4">Ganás sobres con el diario, cumpliendo el reto del día y ganando partidos (máx. 2 por día).</p>
+            <p className="t-meta mt-4">Ganás sobres con el diario, cumpliendo el reto del día y ganando partidos (máx. 2 por día) — mejor calidad cuanto más contundente la victoria.</p>
           </Card>
           {opened && <PackOpening cards={opened} />}
+
+          <Card>
+            <p className="t-eyebrow mb-1">Tienda de sobres</p>
+            <p className="text-xs text-gray-500 mb-3">Comprá con la moneda de vender cartas — nunca con dinero real.</p>
+            <div className="grid sm:grid-cols-3 gap-2">
+              {Object.keys(SHOP_PRICE).map((q) => (
+                <button
+                  key={q}
+                  onClick={() => buyPack(q)}
+                  disabled={busy || wallet < SHOP_PRICE[q]}
+                  className="flex items-center justify-between px-3 py-2.5 rounded-card border border-border text-sm hover:border-white/30 disabled:opacity-40 disabled:hover:border-border"
+                >
+                  <span>{SHOP_LABEL[q]}</span>
+                  <span className="inline-flex items-center gap-1 text-amber-400 font-semibold"><Coins size={12} /> {SHOP_PRICE[q]}</span>
+                </button>
+              ))}
+            </div>
+          </Card>
         </div>
       )}
 
