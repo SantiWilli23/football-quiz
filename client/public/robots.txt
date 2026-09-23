@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://football-quiz-nod2.onrender.com/sitemap.xml
