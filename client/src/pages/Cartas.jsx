@@ -113,7 +113,30 @@ export default function Cartas() {
   const [tierFilter, setTierFilter] = useState("");
   const [query, setQuery] = useState("");
   const [wallet, setWallet] = useState(0);
+  const [sbcs, setSbcs] = useState([]);
+  const [sbcOpen, setSbcOpen] = useState(null);
+  const [sbcPicked, setSbcPicked] = useState([]);
   useEffect(() => { api.get("/cards/all").then((r) => setAllCards(r.data.cards)).catch(() => setAllCards([])); }, []);
+  useEffect(() => { api.get("/cards/sbc").then((r) => setSbcs(r.data.sbcs)).catch(() => setSbcs([])); }, []);
+
+  function toggleSbcPick(name) {
+    setSbcPicked((cur) => (cur.includes(name) ? cur.filter((n) => n !== name) : cur.length >= 11 ? cur : [...cur, name]));
+  }
+
+  async function submitSbc(id) {
+    setBusy(true);
+    try {
+      const { data } = await api.post(`/cards/sbc/${id}/submit`, { players: sbcPicked });
+      toast(`SBC completado — sobre ${data.reward.packQuality}${data.reward.coins ? ` + ${data.reward.coins} monedas` : ""}`);
+      setSbcOpen(null);
+      setSbcPicked([]);
+      load();
+    } catch (err) {
+      toast(err.response?.data?.error || "No se pudo completar el SBC");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function buyPack(quality) {
     setBusy(true);
@@ -305,6 +328,49 @@ export default function Cartas() {
                   <span>{SHOP_LABEL[q]}</span>
                   <span className="inline-flex items-center gap-1 text-amber-400 font-semibold"><Coins size={12} /> {SHOP_PRICE[q]}</span>
                 </button>
+              ))}
+            </div>
+          </Card>
+
+          <Card>
+            <p className="t-eyebrow mb-1">SBC — armá el equipo, ganá el sobre</p>
+            <p className="text-xs text-gray-500 mb-3">Entregás 11 cartas que cumplan el requisito (se pierden, como en el FIFA real) y te dan un sobre a cambio.</p>
+            <div className="space-y-2">
+              {sbcs.map((s) => (
+                <div key={s.id} className="rounded-card border border-border p-3">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div>
+                      <p className="text-sm font-semibold">{s.label}</p>
+                      <p className="text-xs text-gray-500">{s.desc}</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs text-amber-400 inline-flex items-center gap-1">Sobre {s.reward.packQuality}{s.reward.coins ? ` + ${s.reward.coins}` : ""}{s.reward.coins ? <Coins size={11} /> : null}</span>
+                      <button
+                        onClick={() => { setSbcOpen(sbcOpen === s.id ? null : s.id); setSbcPicked([]); }}
+                        className={`px-3 py-1.5 rounded-card text-xs font-medium border ${sbcOpen === s.id ? "border-accent/40 bg-accent/10 text-accent" : "border-border text-gray-300 hover:text-white"}`}
+                      >
+                        {sbcOpen === s.id ? "Cancelar" : "Elegir cartas"}
+                      </button>
+                    </div>
+                  </div>
+                  {sbcOpen === s.id && (
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <p className="text-xs text-gray-500 mb-2">{sbcPicked.length} / 11 elegidas</p>
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 max-h-64 overflow-y-auto">
+                        {collection.map((c) => (
+                          <PlayerCard key={c.name} c={c} small selected={sbcPicked.includes(c.name)} onClick={() => toggleSbcPick(c.name)} />
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => submitSbc(s.id)}
+                        disabled={busy || sbcPicked.length !== 11}
+                        className="mt-3 px-4 py-2 rounded-card bg-accent text-onaccent text-xs font-semibold disabled:opacity-40"
+                      >
+                        Entregar equipo
+                      </button>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </Card>
