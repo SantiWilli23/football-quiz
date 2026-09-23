@@ -325,6 +325,76 @@ router.post("/shop/buy", async (req, res) => {
   }
 });
 
+// SBC (Squad Building Challenges): armás un equipo de 11 que cumpla un
+// requisito puntual, lo "entregás" (se pierden esas cartas, como en el FIFA
+// real) y a cambio te dan un sobre. Le da un destino a las cartas de bajo
+// tier que si no solo servirían para vender.
+const SBC_DEFS = [
+  {
+    id: "bronce11",
+    label: "11 de Bronce",
+    desc: "Un equipo completo (11 cartas) todas de tier Bronce.",
+    check: (cards) => cards.every((c) => c.tier === "bronce"),
+    reward: { packQuality: "bueno" },
+  },
+  {
+    id: "multinacional",
+    label: "Multinacional",
+    desc: "11 cartas con 6 o más nacionalidades distintas entre ellas.",
+    check: (cards) => new Set(cards.map((c) => c.nationality)).size >= 6,
+    reward: { packQuality: "normal", coins: 20 },
+  },
+  {
+    id: "plata-peso",
+    label: "Plata de peso",
+    desc: "11 cartas de Plata o Bronce (nada de Oro/Estrella) sumando 750+ de rating total.",
+    check: (cards) => cards.every((c) => c.tier === "plata" || c.tier === "bronce") && cards.reduce((s, c) => s + c.ovr, 0) >= 750,
+    reward: { packQuality: "top" },
+  },
+];
+
+router.get("/sbc", (req, res) => {
+  res.json({ sbcs: SBC_DEFS.map(({ id, label, desc, reward }) => ({ id, label, desc, reward })) });
+});
+
+router.post("/sbc/:id/submit", async (req, res) => {
+  try {
+    const def = SBC_DEFS.find((s) => s.id === req.params.id);
+    if (!def) return res.status(404).json({ error: "SBC no encontrado" });
+
+    const names = Array.isArray(req.body?.players) ? [...new Set(req.body.players)] : [];
+    if (names.length !== 11) return res.status(400).json({ error: "El SBC necesita 11 cartas distintas" });
+
+    const owned = new Map((await db.execute({ sql: "SELECT player_name, count FROM user_cards WHERE user_id = ?", args: [req.userId] })).rows.map((r) => [r.player_name, Number(r.count)]));
+    const cards = names.map((n) => BY_NAME.get(n));
+    if (cards.some((c) => !c) || names.some((n) => !owned.get(n))) return res.status(400).json({ error: "Solo podés usar cartas que tenés" });
+
+    const lineup = await lineupOf(req.userId);
+    const inLineupAndLastCopy = names.some((n) => lineup.some((c) => c.name === n) && owned.get(n) === 1);
+    if (inLineupAndLastCopy) return res.status(400).json({ error: "No podés entregar la última copia de una carta que está en tu equipo" });
+
+    if (!def.check(cards)) return res.status(400).json({ error: "Ese equipo no cumple el requisito del SBC" });
+
+    // Se consumen las 11 cartas (una copia de cada una).
+    for (const n of names) {
+      const c = owned.get(n);
+      if (c === 1) await db.execute({ sql: "DELETE FROM user_cards WHERE user_id = ? AND player_name = ?", args: [req.userId, n] });
+      else await db.execute({ sql: "UPDATE user_cards SET count = count - 1 WHERE user_id = ? AND player_name = ?", args: [req.userId, n] });
+    }
+
+    const today = todayStr();
+    const prefix = def.reward.packQuality === "normal" ? `sbc-${def.id}` : `${def.reward.packQuality}-sbc-${def.id}`;
+    const n = Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM card_packs WHERE user_id = ? AND date = ? AND source LIKE ?", args: [req.userId, today, `${prefix}%`] })).rows[0].n);
+    await db.execute({ sql: "INSERT INTO card_packs (user_id, date, source) VALUES (?, ?, ?)", args: [req.userId, today, `${prefix}${n + 1}`] });
+    if (def.reward.coins) await creditWallet(req.userId, def.reward.coins);
+
+    res.json({ ok: true, reward: def.reward });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 // ---------- equipo y partidos ----------
 async function lineupOf(userId) {
   const row = (await db.execute({ sql: "SELECT players FROM card_lineups WHERE user_id = ?", args: [userId] })).rows[0];
