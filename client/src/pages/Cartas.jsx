@@ -4,6 +4,7 @@ import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import EmptyState from "../components/EmptyState.jsx";
+import MatchPitch from "../components/MatchPitch.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import { playSfx } from "../utils/sfx.js";
 
@@ -92,6 +93,7 @@ export default function Cartas() {
   const [rivals, setRivals] = useState([]);
   const [rival, setRival] = useState("cpu");
   const [match, setMatch] = useState(null);
+  const [matchDone, setMatchDone] = useState(false);
   const [busy, setBusy] = useState(false);
   const [allCards, setAllCards] = useState([]);
   const [showMissing, setShowMissing] = useState(false);
@@ -168,14 +170,20 @@ export default function Cartas() {
     try {
       const { data } = await api.post("/cards/match", { vs: rival });
       setMatch(data);
-      playSfx(data.result === "win" ? "win" : data.result === "loss" ? "bad" : "tick");
-      if (data.pack) toast("¡Ganaste un sobre!");
+      setMatchDone(false); // se revela el resultado recién cuando termina la animación de la cancha
       load();
     } catch (err) {
       toast(err.response?.data?.error || "No se pudo jugar");
     } finally {
       setBusy(false);
     }
+  }
+
+  function finishMatch() {
+    setMatchDone(true);
+    if (!match) return;
+    playSfx(match.result === "win" ? "win" : match.result === "loss" ? "bad" : "tick");
+    if (match.pack) toast("¡Ganaste un sobre!");
   }
 
   const TABS = [["sobres", "Sobres", Package], ["album", "Álbum", Layers], ["equipo", "Mi equipo", Shield]];
@@ -293,12 +301,22 @@ export default function Cartas() {
                 <Swords size={13} /> Jugar
               </button>
             </div>
-            {match && (
-              <p className="mt-4 text-sm">
-                <span className="text-2xl font-bold tabular-nums mr-2">{match.score[0]} – {match.score[1]}</span>
-                {match.result === "win" ? "¡Ganaste" : match.result === "draw" ? "Empate" : "Perdiste"} contra {match.opponent}
-                <span className="t-meta block mt-1">Tu fuerza {match.strength.mine} vs {match.strength.theirs} (química +{match.strength.chemistry}){match.pack ? " · +1 sobre" : ""}</span>
-              </p>
+            {match && match.events && (
+              <div className="mt-4">
+                <MatchPitch
+                  key={`${match.opponent}-${match.score.join("-")}-${match.events.length}`}
+                  events={match.events}
+                  homeLabel="Tu equipo"
+                  awayLabel={match.opponent}
+                  onDone={finishMatch}
+                />
+                {matchDone && (
+                  <p className="mt-3 text-sm">
+                    {match.result === "win" ? "¡Ganaste" : match.result === "draw" ? "Empate" : "Perdiste"} contra {match.opponent}
+                    <span className="t-meta block mt-1">Tu fuerza {match.strength.mine} vs {match.strength.theirs} (química +{match.strength.chemistry}){match.pack ? " · +1 sobre" : ""}</span>
+                  </p>
+                )}
+              </div>
             )}
           </Card>
 

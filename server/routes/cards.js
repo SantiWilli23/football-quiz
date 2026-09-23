@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { todayStr } from "../utils/points.js";
+import { simulateMatchEvents } from "../utils/match-engine.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ALL = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/equipo-jugador-players.json"), "utf-8")).jugadores;
@@ -223,14 +224,6 @@ router.get("/rivals", async (req, res) => {
   }
 });
 
-function goalsFor(mine, theirs) {
-  // Diferencia de fuerza (decenas o cientos de puntos) -> goles esperados, acotados.
-  const mean = Math.min(3.5, Math.max(0.3, 1.3 * Math.exp((mine - theirs) / 250)));
-  let g = 0, p = Math.exp(-mean), s = p, u = Math.random();
-  while (u > s && g < 8) { g++; p *= mean / g; s += p; }
-  return g;
-}
-
 router.post("/match", async (req, res) => {
   try {
     const mine = await lineupOf(req.userId);
@@ -254,7 +247,14 @@ router.post("/match", async (req, res) => {
       opp = Array.from({ length: 11 }, () => pool[Math.floor(Math.random() * pool.length)]);
     }
     const a = strengthOf(mine), b = strengthOf(opp);
-    const myGoals = goalsFor(a.total, b.total), theirGoals = goalsFor(b.total, a.total);
+    // total/11 = overall promedio del plantel — misma escala que un OVR
+    // individual (DT League usa el mismo rango, ~50-95), así que el motor
+    // compartido interpreta la diferencia de la misma manera en los dos juegos.
+    const { homeGoals: myGoals, awayGoals: theirGoals, events } = simulateMatchEvents({
+      ovrHome: a.total / 11,
+      ovrAway: b.total / 11,
+      homeAdvantage: 0, // acá no hay "local", los dos equipos son de cartas
+    });
     const won = myGoals > theirGoals;
     let pack = false;
     if (won) {
@@ -270,6 +270,7 @@ router.post("/match", async (req, res) => {
       score: [myGoals, theirGoals],
       result: won ? "win" : myGoals === theirGoals ? "draw" : "loss",
       strength: { mine: Math.round(a.total), theirs: Math.round(b.total), chemistry: Math.round(a.chem + a.nat) },
+      events, // línea de tiempo del partido (mismo formato que DT League) para la cancha animada
       pack,
     });
   } catch (err) {

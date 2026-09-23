@@ -1,13 +1,11 @@
 // Simulación liviana de partidos para la Liga Online DT: no hay planteles
 // individuales acá (eso es todo el modo Carrera single-player, que vive en
 // el cliente), así que cada club se resuelve por su "jerarquía" (tier) +
-// la táctica que haya elegido su DT humano. Mismo estilo estadístico
-// (Poisson + factor de forma del día) que usa matchEngine.js del lado
-// del cliente, para que los resultados se sientan parecidos en toda la app.
-
-function clamp(v, a, b) {
-  return Math.max(a, Math.min(b, v));
-}
+// la táctica que haya elegido su DT humano. El cálculo de goles en sí
+// (Poisson + factor de forma del día) vive en match-engine.js, compartido
+// con el resto de los juegos — acá solo se calcula el OVR efectivo de cada
+// lado a partir del tier y la táctica.
+import { clamp, simulateMatchScore, simulateMatchEvents } from "./match-engine.js";
 
 function tierToOvr(tier) {
   return tier === 1 ? 84 : tier === 2 ? 77 : 70;
@@ -39,17 +37,6 @@ export function dtOutcomeFor(myGoals, oppGoals) {
   return "draw";
 }
 
-function dayFormFactor() {
-  const noise = (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
-  return clamp(1 + noise * 0.22, 0.68, 1.32);
-}
-
-function poisson(lambda) {
-  let l = Math.exp(-lambda), k = 0, p = 1;
-  do { k++; p *= Math.random(); } while (p > l);
-  return k - 1;
-}
-
 // tactics: { mentality: 1-5, pressing: 0-100, tempo: 0-100 } o null (default).
 function effectiveRating(tier, tactics) {
   const base = tierToOvr(tier);
@@ -60,76 +47,21 @@ function effectiveRating(tier, tactics) {
   return base + mentalityMod + pressMod + tempoMod;
 }
 
-// Sortea `count` minutos distintos entre 1 y 90 (sin pisar el 45, que lo usa
-// el marcador de entretiempo).
-function pickMinutes(count) {
-  const minutes = new Set();
-  while (minutes.size < count) {
-    const m = 1 + Math.floor(Math.random() * 90);
-    if (m !== 45) minutes.add(m);
-  }
-  return [...minutes].sort((a, b) => a - b);
-}
-
 // Versión "en vivo" de simulateFixture: usa EXACTAMENTE la misma distribución
-// de goles (Poisson sobre el mismo nivel+táctica) para no desbalancear el
+// de goles (motor compartido, mismo nivel+táctica) para no desbalancear el
 // resultado — lo único que cambia es que a cada gol se le asigna un minuto
 // al azar, para poder reproducir el partido en tiempo real entre los dos DTs
 // conectados en vez de tirar el marcador final de una.
 export function simulateFixtureEvents({ homeTier, awayTier, homeTactics, awayTactics }) {
-  const homeOvr = effectiveRating(homeTier, homeTactics);
-  const awayOvr = effectiveRating(awayTier, awayTactics);
-  const homeDay = dayFormFactor();
-  const awayDay = dayFormFactor();
-  const homeAdvantage = 2.2;
-
-  const diff = (homeOvr + homeAdvantage) * homeDay - awayOvr * awayDay;
-  const baseHome = 1.35 + diff / 20;
-  const baseAway = 1.35 - diff / 24;
-
-  const homeGoals = poisson(clamp(baseHome, 0.15, 4.4));
-  const awayGoals = poisson(clamp(baseAway, 0.15, 4.4));
-
-  const timeline = [
-    ...pickMinutes(homeGoals).map((min) => ({ min, team: "home" })),
-    ...pickMinutes(awayGoals).map((min) => ({ min, team: "away" })),
-  ].sort((a, b) => a.min - b.min);
-
-  const events = [];
-  let runningHome = 0, runningAway = 0;
-  let halfInserted = false;
-  timeline.forEach(({ min, team }) => {
-    if (!halfInserted && min > 45) {
-      events.push({ min: 45, team: null, text: "⏸ Fin del primer tiempo" });
-      halfInserted = true;
-    }
-    if (team === "home") runningHome++; else runningAway++;
-    events.push({
-      min, team,
-      text: team === "home" ? `⚽ Gol de local. ${runningHome}-${runningAway}` : `⚽ Gol de visitante. ${runningHome}-${runningAway}`,
-    });
-  });
-  if (!halfInserted) events.push({ min: 45, team: null, text: "⏸ Fin del primer tiempo" });
-  events.push({ min: 90, team: null, text: `⏹ Final: ${homeGoals}-${awayGoals}` });
-
-  return { homeGoals, awayGoals, events };
+  const ovrHome = effectiveRating(homeTier, homeTactics);
+  const ovrAway = effectiveRating(awayTier, awayTactics);
+  return simulateMatchEvents({ ovrHome, ovrAway, homeAdvantage: 2.2 });
 }
 
 export function simulateFixture({ homeTier, awayTier, homeTactics, awayTactics }) {
-  const homeOvr = effectiveRating(homeTier, homeTactics);
-  const awayOvr = effectiveRating(awayTier, awayTactics);
-  const homeDay = dayFormFactor();
-  const awayDay = dayFormFactor();
-  const homeAdvantage = 2.2;
-
-  const diff = (homeOvr + homeAdvantage) * homeDay - awayOvr * awayDay;
-  const baseHome = 1.35 + diff / 20;
-  const baseAway = 1.35 - diff / 24;
-
-  return {
-    homeGoals: poisson(clamp(baseHome, 0.15, 4.4)),
-    awayGoals: poisson(clamp(baseAway, 0.15, 4.4)),
-  };
+  const ovrHome = effectiveRating(homeTier, homeTactics);
+  const ovrAway = effectiveRating(awayTier, awayTactics);
+  return simulateMatchScore({ ovrHome, ovrAway, homeAdvantage: 2.2 });
 }
 
 // Doble round-robin (ida y vuelta): cada entrada de la lista devuelta es una
