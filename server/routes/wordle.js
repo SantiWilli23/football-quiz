@@ -168,9 +168,11 @@ function hintText(secret, kind) {
   }
 }
 
-// Puntos de la partida (los que van al ranking semanal del grupo). Ganada:
-// 40-100 según eficiencia, multiplicado por dificultad. Perdida: consuelo
-// según lo cerca que llegaste.
+// Puntos de la partida — el mismo número que ve el jugador en pantalla es el
+// que suma al ranking del grupo (antes eran dos escalas distintas: acá se
+// unificaron). Ganada: 8-18 según eficiencia, multiplicado por dificultad
+// (igual franja de "sesión" que los duelos). Perdida: consuelo chico según
+// lo cerca que llegaste.
 // Bonus opcional del modo "contra reloj": el cliente avisa que jugó con reloj y el
 // tiempo lo mide el SERVIDOR (created_at de la partida), no el cliente.
 function speedBonus(game, timed) {
@@ -178,7 +180,7 @@ function speedBonus(game, timed) {
   const started = Date.parse(String(game.created_at).replace(" ", "T") + "Z");
   if (!Number.isFinite(started)) return 0;
   const secs = (Date.now() - started) / 1000;
-  return secs <= 60 ? 20 : secs <= 120 ? 10 : secs <= 180 ? 5 : 0;
+  return secs <= 60 ? 4 : secs <= 120 ? 2 : secs <= 180 ? 1 : 0;
 }
 
 function finalPoints({ won, guessesUsed, hintsUsed, difficulty, bestSimilarity }) {
@@ -186,9 +188,9 @@ function finalPoints({ won, guessesUsed, hintsUsed, difficulty, bestSimilarity }
   if (won) {
     const cost = guessesUsed + hintsUsed * HINT_COST;
     const efficiency = clamp(1 - (cost - 1) / (MAX_ATTEMPTS - 1), 0, 1);
-    return Math.round((40 + efficiency * 60) * mult);
+    return Math.round((8 + efficiency * 10) * mult);
   }
-  return Math.round(bestSimilarity * 0.15 * mult);
+  return Math.round(bestSimilarity * 0.03 * mult);
 }
 
 function byName(name) {
@@ -290,12 +292,13 @@ async function closeGame(loaded, won, opts = {}) {
   });
   const total = points + (won ? speedBonus(game, opts.timed) : 0);
   await db.execute({ sql: "UPDATE fichado_games SET status = ?, points = ? WHERE id = ?", args: [won ? "won" : "lost", total, game.id] });
-  // La diaria ganada sigue sumando al ranking global de puntos (10 menos un
-  // punto por cada intento extra, mínimo 1), como el viejo Fulbodle.
+  // La diaria ganada suma al ranking global el MISMO puntaje que ve el
+  // jugador en pantalla (antes era un número aparte, más chico y sin
+  // relación con la dificultad ni la velocidad — quedaba inconsistente).
   if (won && game.mode === "daily") {
     await db.execute({
       sql: "INSERT OR IGNORE INTO wordle_results (user_id, date, league, attempts, points) VALUES (?, ?, ?, ?, ?)",
-      args: [game.user_id, game.date, game.league, guessNames.length, Math.max(1, 10 - (guessNames.length - 1))],
+      args: [game.user_id, game.date, game.league, guessNames.length, total],
     });
     const streak = await dailyWinStreakEndingOn(game.user_id, game.date);
     await maybeAwardWildcard(game.user_id, streak);

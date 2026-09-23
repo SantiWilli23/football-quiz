@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { LEAGUES, FootballApiError, getStandings, currentSeason } from "../utils/football-api.js";
+import { SEASON_CHAMPION_POINTS, SEASON_RELEGATED_POINTS } from "../utils/points-config.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -93,8 +94,8 @@ router.post("/:league/predict", async (req, res) => {
   }
 });
 
-const CHAMPION_POINTS = 20;
-const RELEGATED_POINTS = 7; // por cada equipo que sí bajó, hasta 3 = 21
+const CHAMPION_POINTS = SEASON_CHAMPION_POINTS;
+const RELEGATED_POINTS = SEASON_RELEGATED_POINTS; // por cada equipo que sí bajó, hasta 3 = 21
 
 // Intenta resolver una predicción pendiente contra la tabla real. No hace
 // nada (devuelve la fila tal cual) si la tabla es de muestra (demo) o si

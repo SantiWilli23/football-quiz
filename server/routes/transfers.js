@@ -6,6 +6,7 @@ import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rateLimit.js";
 import { todayStr } from "../utils/points.js";
+import { TRANSFER_HIT_POINTS as HIT_POINTS } from "../utils/points-config.js";
 
 const predictLimiter = rateLimit({ windowMs: 60 * 1000, max: 30, message: "Muchos cambios seguidos, esperá un momento." });
 
@@ -20,7 +21,6 @@ const router = Router();
 // cada acierto suma 10 puntos. Los puntos se guardan en wordle_results con
 // league 'tp<id>' para que sumen al total del perfil y al ranking sin tocar
 // la suma de puntos de stats.js.
-const HIT_POINTS = 10;
 const RUMORS_PER_WINDOW = 12;
 const DESTINATIONS = ["Real Madrid", "Barcelona", "Manchester City", "Manchester United", "Liverpool", "Arsenal", "Chelsea", "Bayern Munich", "Paris Saint-Germain", "Inter Milan", "Juventus", "AC Milan", "Atletico Madrid", "Tottenham Hotspur", "Napoli", "Borussia Dortmund", "Al Hilal", "Al Nassr"];
 

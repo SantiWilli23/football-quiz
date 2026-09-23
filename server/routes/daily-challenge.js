@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { addDays, todayStr } from "../utils/points.js";
+import { DAILY_CHALLENGE_BONUS_POINTS as BONUS_POINTS } from "../utils/points-config.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -11,7 +12,6 @@ router.use(requireAuth);
 // wordle_results con league = 'reto' (UNIQUE user+fecha+league lo hace
 // idempotente), así que suma al total del perfil y al ranking sin tocar la
 // suma de puntos de stats.js.
-const BONUS_POINTS = 5;
 const CHALLENGE_LEAGUE = "reto";
 
 const CHALLENGES = [

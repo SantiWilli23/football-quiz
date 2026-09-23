@@ -3,9 +3,7 @@ import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { LEAGUES, getFixturesByDate, findDemoFixtureById } from "../utils/football-api.js";
 import { todayStr, addDays } from "../utils/points.js";
-
-const EXACT_POINTS = 5;
-const RESULT_POINTS = 2;
+import { QUINIELA_EXACT_POINTS as EXACT_POINTS, QUINIELA_RESULT_POINTS as RESULT_POINTS } from "../utils/points-config.js";
 
 function resultOf(home, away) {
   if (home > away) return "home";

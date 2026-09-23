@@ -1,4 +1,5 @@
 import { db } from "../db/client.js";
+import { TRIVIA_DAILY_RANK_POINTS } from "./points-config.js";
 
 export function todayStr() {
   return new Date().toISOString().slice(0, 10);
@@ -104,7 +105,7 @@ export async function getBestStreak(userId) {
 // Ya no se paga 10 puntos fijos por pregunta acertada: se paga por el
 // PORCENTAJE DE ACIERTO DEL DÍA respecto a todos los demás. 1° lugar = 10,
 // 2° = 5, 3° = 3, 4° = 2, el resto no suma (empates comparten puesto y premio).
-const RANK_TIER_POINTS = { 1: 10, 2: 5, 3: 3, 4: 2 };
+const RANK_TIER_POINTS = TRIVIA_DAILY_RANK_POINTS;
 
 async function dailyQuestionCount(dateStr) {
   const result = await db.execute({ sql: "SELECT COUNT(*) as c FROM questions WHERE scheduled_date = ?", args: [dateStr] });
