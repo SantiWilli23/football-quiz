@@ -137,6 +137,13 @@ router.post("/grant-stage", async (req, res) => {
   }
 });
 
+// Álbum completo: nombre/posición/rareza de las ~2000 cartas, sin las demás
+// stats — alcanza para dibujar las siluetas de lo que falta en el álbum, sin
+// filtrar nada del resto de la lógica del juego.
+router.get("/all", (req, res) => {
+  res.json({ cards: CARDS.map(pub) });
+});
+
 router.get("/collection", async (req, res) => {
   try {
     const rows = (await db.execute({ sql: "SELECT player_name, count FROM user_cards WHERE user_id = ?", args: [req.userId] })).rows;

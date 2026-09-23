@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Award, Building2, Coins, Crown, Gavel, Handshake, Heart, Landmark, ListOrdered, Megaphone,
-  Newspaper, Search, ShieldX, Trophy, Tv, UserPlus, Users, Vote, Wallet,
+  Newspaper, Search, ShieldX, Target, Trophy, Tv, UserPlus, Users, Vote, Wallet,
 } from "lucide-react";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
@@ -256,9 +256,25 @@ function Despacho({ state, act }) {
 
       <Card>
         <Title icon={Newspaper}>Decisión de la semana</Title>
+        {state.missions?.length > 0 && (
+          <div className="mb-4 pb-4 border-b border-border">
+            <p className="t-eyebrow mb-2 flex items-center gap-1.5"><Target size={12} /> Misiones de la semana</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {state.missions.map((m) => (
+                <div key={m.id} className="rounded-card border border-border bg-bg px-3 py-2.5">
+                  <p className="text-sm">{m.label}</p>
+                  <p className="text-xs text-accent mt-0.5">{m.rewardLabel}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {state.currentDecision && !state.decisionUsed ? (
           <div>
-            <p className="text-sm text-gray-300 mb-4">{state.currentDecision.context}</p>
+            <div className="rounded-card border-l-2 border-accent bg-white/5 px-3.5 py-3 mb-4">
+              <p className="text-sm font-semibold mb-0.5">Novedad de la semana</p>
+              <p className="text-sm text-gray-300">{state.currentDecision.context}</p>
+            </div>
             <div className="space-y-2">
               {state.currentDecision.options.map((opt, i) => (
                 <Btn key={i} className="w-full" onClick={() => act((s) => ({ ...E.applyDecisionEffects(s, s.currentDecision, i), decisionUsed: true }))}>
@@ -395,13 +411,34 @@ function Finanzas({ state, act }) {
 }
 
 // ---------------------------------------------------------------------- Club
+// Maqueta del estadio: una tribuna por nivel, dibujadas alrededor de la
+// cancha en vez de solo decir "nivel 3".
+function StadiumDrawing({ tier }) {
+  const stands = [
+    { d: "M14 22a54 26 0 0 1 92 0", opacity: tier >= 3 ? 1 : 0.15 },
+    { d: "M8 38a52 24 0 0 1 104 0", opacity: tier >= 1 ? 1 : 0.15 },
+    { d: "M8 38a52 24 0 0 0 104 0", opacity: tier >= 2 ? 1 : 0.15 },
+    { d: "M2 30a58 30 0 0 1 20 -14", opacity: tier >= 4 ? 1 : 0.15 },
+  ];
+  return (
+    <svg viewBox="0 0 120 70" className="w-full max-w-[220px] mx-auto" role="img" aria-label={"Estadio nivel " + tier}>
+      <ellipse cx="60" cy="38" rx="52" ry="24" fill="rgb(var(--c-emerald) / 0.15)" stroke="rgb(var(--c-emerald) / 0.4)" />
+      <rect x="36" y="26" width="48" height="24" fill="none" stroke="currentColor" strokeOpacity="0.3" />
+      {stands.map((st, i) => (
+        <path key={i} d={st.d} fill="none" stroke="rgb(var(--c-accent))" strokeWidth="5" strokeOpacity={st.opacity} />
+      ))}
+    </svg>
+  );
+}
+
 function ClubInfra({ state, act }) {
   const nextStadium = E.STADIUM_TIERS[state.stadiumTier];
   return (
     <div className="space-y-5">
       <Card>
         <Title icon={Building2}>Estadio</Title>
-        <p className="text-sm mb-3">Nivel {state.stadiumTier} · {E.STADIUM_TIERS[state.stadiumTier - 1].capacity.toLocaleString()} espectadores</p>
+        <StadiumDrawing tier={state.stadiumTier} />
+        <p className="text-sm mb-3 text-center">Nivel {state.stadiumTier} · {E.STADIUM_TIERS[state.stadiumTier - 1].capacity.toLocaleString()} espectadores</p>
         <Btn tone="accent" onClick={() => act(E.upgradeStadium)} disabled={!nextStadium || !E.canUpgradeStadium(state)}>
           {nextStadium ? `Ampliar a ${nextStadium.capacity.toLocaleString()} — ${money(nextStadium.upgradeCost)}` : "Estadio al máximo"}
         </Btn>

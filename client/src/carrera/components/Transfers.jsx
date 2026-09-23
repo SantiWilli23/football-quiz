@@ -5,6 +5,7 @@ import { players as allPlayers } from "../data/players.js";
 import { formatRange, reportFor } from "../engine/scouting.js";
 import { HINT_LABEL } from "../engine/transferMarket.js";
 import Scouts from "./Scouts.jsx";
+import ComparePlayers from "./ComparePlayers.jsx";
 
 function findAnyPlayer(state, playerId) {
   return state.squad.find((p) => p.id === playerId) || allPlayers.find((p) => p.id === playerId);
@@ -30,6 +31,7 @@ export default function Transfers() {
   const [ovrMax, setOvrMax] = useState("");
   const [availability, setAvailability] = useState(""); // "" | contract | scouted
   const [target, setTarget] = useState(null);
+  const [compareTarget, setCompareTarget] = useState(null);
 
   const windowOpen = isTransferWindowOpen();
   const ownedIds      = new Set([
@@ -255,6 +257,14 @@ export default function Transfers() {
                       </span>
                     ) : (
                       <button
+                        onClick={() => setCompareTarget(p)}
+                        className="text-sm font-medium px-3 py-2.5 rounded-2xl border border-border text-gray-300 hover:text-white hover:border-white/30 transition-colors whitespace-nowrap"
+                      >
+                        Comparar
+                      </button>
+                    )}
+                    {!cooling && (
+                      <button
                         onClick={() => setTarget(p)}
                         className="text-sm font-medium px-4 py-2.5 rounded-2xl bg-accent/10 text-accent border border-accent/40 hover:bg-accent/20 transition-colors whitespace-nowrap"
                       >
@@ -287,6 +297,14 @@ export default function Transfers() {
           onUnwatch={toggleWatchlist}
           onOffer={(p) => setTarget(p)}
           onRespond={respondToIncomingOffer}
+        />
+      )}
+
+      {compareTarget && (
+        <ComparePlayers
+          target={compareTarget}
+          mine={[...state.squad].filter((p) => p.position === compareTarget.position).sort((a, b) => b.ovr - a.ovr)[0] || null}
+          onClose={() => setCompareTarget(null)}
         />
       )}
 

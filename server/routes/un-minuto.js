@@ -5,13 +5,29 @@ import { requireAuth } from "../middleware/auth.js";
 const router = Router();
 router.use(requireAuth);
 
-// Modo "Un minuto": preguntas rápidas de a una, contra reloj (60s del lado del
+// Modo "Un minuto": preguntas rápidas de a una, contra reloj (del lado del
 // cliente). Reutiliza el pool grande de duel_questions (no está atado a fecha
-// como la trivia diaria) para no necesitar contenido propio. El puntaje final
-// (cantidad de aciertos) se manda al framework genérico de "retos"
-// (server/routes/challenges.js) como cualquier otro juego semanal.
+// como la trivia diaria) para no necesitar contenido propio — esa base no
+// tiene categoría por tema, solo dificultad (dificil/ultra/demonio), así que
+// la elección es por dificultad; a más difícil, más puntos por acierto. El
+// puntaje final (aciertos × multiplicador) se manda al framework genérico de
+// "retos" (server/routes/challenges.js) como cualquier otro juego semanal.
+const DIFFICULTIES = {
+  dificil: { label: "Difícil", multiplier: 1 },
+  ultra: { label: "Ultra difícil", multiplier: 1.5 },
+  demonio: { label: "Demonio", multiplier: 2 },
+};
+
+function difficultyOf(raw) {
+  return DIFFICULTIES[raw] ? raw : "dificil";
+}
+
+router.get("/difficulties", (req, res) => {
+  res.json({ difficulties: Object.entries(DIFFICULTIES).map(([id, d]) => ({ id, label: d.label, multiplier: d.multiplier })) });
+});
 
 router.get("/question", async (req, res) => {
+  const difficulty = difficultyOf(req.query.difficulty);
   const exclude = String(req.query.exclude || "")
     .split(",")
     .map((s) => Number(s))
@@ -19,12 +35,12 @@ router.get("/question", async (req, res) => {
 
   const placeholders = exclude.map(() => "?").join(",");
   const sql = exclude.length > 0
-    ? `SELECT id, question, option_a, option_b, option_c, option_d FROM duel_questions WHERE id NOT IN (${placeholders}) ORDER BY RANDOM() LIMIT 1`
-    : `SELECT id, question, option_a, option_b, option_c, option_d FROM duel_questions ORDER BY RANDOM() LIMIT 1`;
+    ? `SELECT id, question, option_a, option_b, option_c, option_d FROM duel_questions WHERE difficulty = ? AND id NOT IN (${placeholders}) ORDER BY RANDOM() LIMIT 1`
+    : `SELECT id, question, option_a, option_b, option_c, option_d FROM duel_questions WHERE difficulty = ? ORDER BY RANDOM() LIMIT 1`;
 
-  const result = await db.execute({ sql, args: exclude });
+  const result = await db.execute({ sql, args: [difficulty, ...exclude] });
   const row = result.rows[0];
-  if (!row) return res.status(404).json({ error: "No hay más preguntas disponibles" });
+  if (!row) return res.status(404).json({ error: "No hay más preguntas disponibles en esta dificultad" });
   res.json({ question: row });
 });
 

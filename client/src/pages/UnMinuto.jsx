@@ -18,6 +18,10 @@ const STREAK_STEP = 5;
 
 export default function UnMinuto() {
   const { activeGroupId: groupId } = useGroups();
+  const [difficulties, setDifficulties] = useState([]);
+  const [difficulty, setDifficulty] = useState("dificil");
+  useEffect(() => { api.get("/un-minuto/difficulties").then((r) => setDifficulties(r.data.difficulties)).catch(() => {}); }, []);
+  const multiplier = difficulties.find((d) => d.id === difficulty)?.multiplier ?? 1;
   const [phase, setPhase] = useState("idle"); // idle | playing | done
   const [question, setQuestion] = useState(null);
   const [seenIds, setSeenIds] = useState([]);
@@ -37,14 +41,14 @@ export default function UnMinuto() {
     setLoadingQuestion(true);
     setFeedback(null);
     try {
-      const { data } = await api.get("/un-minuto/question", { params: { exclude: exclude.join(",") } });
+      const { data } = await api.get("/un-minuto/question", { params: { exclude: exclude.join(","), difficulty } });
       setQuestion(data.question);
     } catch {
       setQuestion(null);
     } finally {
       setLoadingQuestion(false);
     }
-  }, []);
+  }, [difficulty]);
 
   const finish = useCallback(async () => {
     if (endedRef.current) return;
@@ -57,13 +61,13 @@ export default function UnMinuto() {
       const { data } = await api.post("/challenges/submit", {
         gameKey: "un_minuto",
         groupId,
-        score: points,
+        score: Math.round(points * multiplier),
       });
       setSaveState({ improved: data.improved });
     } catch {
       setSaveState(null);
     }
-  }, [groupId, points]);
+  }, [groupId, points, multiplier]);
 
   function start() {
     endedRef.current = false;
@@ -105,7 +109,7 @@ export default function UnMinuto() {
         const bonus = nextStreak % STREAK_STEP === 0;
         setStreak(nextStreak);
         setCorrectCount((c) => c + 1);
-        setPoints((p) => p + 1 + (bonus ? 1 : 0));
+        setPoints((p) => p + (1 + (bonus ? 1 : 0)));
         playSfx(bonus ? "win" : "ok");
       } else {
         setStreak(0);
@@ -137,6 +141,22 @@ export default function UnMinuto() {
         <Card className="mt-4 text-center py-10">
           <Timer size={32} className="mx-auto text-accent mb-3" />
           <p className="text-sm text-gray-400 mb-5">Arrancás ya, sin vueltas: preguntas de a una hasta que se acabe el reloj.</p>
+          {difficulties.length > 0 && (
+            <div className="flex gap-2 justify-center mb-6 flex-wrap">
+              {difficulties.map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => setDifficulty(d.id)}
+                  aria-pressed={difficulty === d.id}
+                  className={`px-3 py-2 rounded-card text-sm font-medium border transition-colors ${
+                    difficulty === d.id ? "border-accent/40 bg-accent/10 text-accent" : "border-border text-gray-400 hover:text-white"
+                  }`}
+                >
+                  {d.label} <span className="text-gray-500">×{d.multiplier}</span>
+                </button>
+              ))}
+            </div>
+          )}
           <button
             onClick={start}
             className="btn btn-primary"
@@ -159,7 +179,7 @@ export default function UnMinuto() {
             </span>
             <span className="text-sm text-gray-400">
               {streak >= 2 && <span className="text-amber-500 font-medium mr-3">Racha {streak}</span>}
-              {points} pts · {correctCount} / {answeredCount} correctas
+              {points} pts{multiplier !== 1 ? ` ×${multiplier}` : ""} · {correctCount} / {answeredCount} correctas
             </span>
           </div>
 
@@ -200,8 +220,8 @@ export default function UnMinuto() {
 
       {phase === "done" && (
         <ResultScreen
-          score={points}
-          unit={`puntos (${correctCount} aciertos)`}
+          score={Math.round(points * multiplier)}
+          unit={`puntos (${correctCount} aciertos${multiplier !== 1 ? `, ×${multiplier}` : ""})`}
           groupId={groupId}
           saveState={saveState}
           onAgain={start}

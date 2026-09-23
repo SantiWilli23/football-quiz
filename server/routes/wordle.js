@@ -214,7 +214,7 @@ function bestSimilarityOf(guessNames, secret) {
 function serialize({ game, guessNames }) {
   const secret = byName(game.secret_name);
   const guesses = guessNames.map((n) => feedbackFor(byName(n), secret));
-  const hints = HINT_ORDER.slice(0, game.hints_used).map((k) => hintText(secret, k));
+  const hints = HINT_ORDER.slice(0, game.hints_used + (game.bonus_hints || 0)).map((k) => hintText(secret, k));
   const ended = game.status !== "playing";
   return {
     id: game.id,
@@ -223,6 +223,7 @@ function serialize({ game, guessNames }) {
     difficulty: game.difficulty,
     maxAttempts: game.max_attempts,
     hintsUsed: game.hints_used,
+    bonusHintsUsed: game.bonus_hints || 0,
     hints,
     attemptsUsed: guesses.length + game.hints_used * HINT_COST,
     status: game.status,
@@ -243,6 +244,41 @@ function serialize({ game, guessNames }) {
   };
 }
 
+// Racha de días consecutivos ganando la diaria de Fichado (mirando hacia
+// atrás desde la fecha de esta partida) — se recalcula sola, sin guardar
+// nada aparte de la propia tabla de partidas.
+async function dailyWinStreakEndingOn(userId, dateStr) {
+  const rows = (await db.execute({
+    sql: "SELECT date FROM fichado_games WHERE user_id = ? AND mode = 'daily' AND status = 'won' ORDER BY date DESC LIMIT 60",
+    args: [userId],
+  })).rows.map((r) => r.date);
+  const set = new Set(rows);
+  let streak = 0;
+  let d = dateStr;
+  while (set.has(d)) {
+    streak++;
+    const [y, m, day] = d.split("-").map(Number);
+    d = new Date(Date.UTC(y, m - 1, day - 1)).toISOString().slice(0, 10);
+  }
+  return streak;
+}
+
+const WILDCARD_STEP = 5;
+
+// Cada WILDCARD_STEP días seguidos ganando la diaria, se suma un comodín (una
+// pista gratis que no cuenta como intento). Idempotente: solo otorga una vez
+// por hito de racha alcanzado.
+async function maybeAwardWildcard(userId, streak) {
+  if (streak < WILDCARD_STEP || streak % WILDCARD_STEP !== 0) return;
+  const row = (await db.execute({ sql: "SELECT last_award_streak FROM fichado_wildcards WHERE user_id = ?", args: [userId] })).rows[0];
+  if (row && row.last_award_streak >= streak) return;
+  await db.execute({
+    sql: `INSERT INTO fichado_wildcards (user_id, streak, last_award_streak, available) VALUES (?, ?, ?, 1)
+          ON CONFLICT(user_id) DO UPDATE SET streak = excluded.streak, last_award_streak = excluded.streak, available = available + 1`,
+    args: [userId, streak, streak],
+  });
+}
+
 async function closeGame(loaded, won, opts = {}) {
   const { game, guessNames } = loaded;
   const points = finalPoints({
@@ -261,6 +297,8 @@ async function closeGame(loaded, won, opts = {}) {
       sql: "INSERT OR IGNORE INTO wordle_results (user_id, date, league, attempts, points) VALUES (?, ?, ?, ?, ?)",
       args: [game.user_id, game.date, game.league, guessNames.length, Math.max(1, 10 - (guessNames.length - 1))],
     });
+    const streak = await dailyWinStreakEndingOn(game.user_id, game.date);
+    await maybeAwardWildcard(game.user_id, streak);
   }
 }
 
@@ -279,6 +317,11 @@ async function settle(gameId, userId, opts = {}) {
 
 const router = Router();
 router.use(requireAuth);
+
+router.get("/wildcards", async (req, res) => {
+  const row = (await db.execute({ sql: "SELECT streak, available FROM fichado_wildcards WHERE user_id = ?", args: [req.userId] })).rows[0];
+  res.json({ streak: row?.streak || 0, available: row?.available || 0, step: WILDCARD_STEP });
+});
 
 router.get("/leagues", (req, res) => {
   res.json({
@@ -375,17 +418,27 @@ router.post("/guess", async (req, res) => {
 
 router.post("/hint", async (req, res) => {
   const gameId = Number(req.body?.gameId);
+  const wantFree = !!req.body?.free;
   if (!Number.isInteger(gameId)) return res.status(400).json({ error: "Falta la partida" });
   try {
     const loaded = await loadGame(gameId, req.userId);
     if (!loaded) return res.status(404).json({ error: "Partida no encontrada" });
     const { game, guessNames } = loaded;
     if (game.status !== "playing") return res.status(400).json({ error: "Esta partida ya terminó" });
-    if (game.hints_used >= HINT_ORDER.length) return res.status(400).json({ error: "Ya usaste todas las pistas" });
-    if (guessNames.length + (game.hints_used + 1) * HINT_COST > game.max_attempts) {
-      return res.status(400).json({ error: "No te alcanzan los intentos para otra pista" });
+    const revealed = game.hints_used + (game.bonus_hints || 0);
+    if (revealed >= HINT_ORDER.length) return res.status(400).json({ error: "Ya usaste todas las pistas" });
+
+    if (wantFree) {
+      const row = (await db.execute({ sql: "SELECT available FROM fichado_wildcards WHERE user_id = ?", args: [req.userId] })).rows[0];
+      if (!row || row.available <= 0) return res.status(400).json({ error: "No tenés comodines disponibles" });
+      await db.execute({ sql: "UPDATE fichado_wildcards SET available = available - 1 WHERE user_id = ?", args: [req.userId] });
+      await db.execute({ sql: "UPDATE fichado_games SET bonus_hints = bonus_hints + 1 WHERE id = ?", args: [game.id] });
+    } else {
+      if (guessNames.length + (game.hints_used + 1) * HINT_COST > game.max_attempts) {
+        return res.status(400).json({ error: "No te alcanzan los intentos para otra pista" });
+      }
+      await db.execute({ sql: "UPDATE fichado_games SET hints_used = hints_used + 1 WHERE id = ?", args: [game.id] });
     }
-    await db.execute({ sql: "UPDATE fichado_games SET hints_used = hints_used + 1 WHERE id = ?", args: [game.id] });
     res.json({ game: serialize(await settle(game.id, req.userId)) });
   } catch (err) {
     console.error(err);
@@ -401,6 +454,29 @@ router.post("/giveup", async (req, res) => {
     if (!loaded) return res.status(404).json({ error: "Partida no encontrada" });
     if (loaded.game.status === "playing") await closeGame(loaded, false);
     res.json({ game: serialize(await loadGame(gameId, req.userId)) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Historial y estadísticas del usuario: cuántas ganó/perdió, en cuántos
+// intentos en promedio y la distribución de intentos de las últimas
+// ganadas — para el panel de "Historial" de Fichado.
+router.get("/stats", async (req, res) => {
+  try {
+    const games = (await db.execute({
+      sql: `SELECT g.id, g.status, g.points, g.mode,
+                   (SELECT COUNT(*) FROM fichado_guesses WHERE game_id = g.id) AS attempts
+            FROM fichado_games g WHERE g.user_id = ? AND g.status != 'playing'
+            ORDER BY g.id DESC LIMIT 200`,
+      args: [req.userId],
+    })).rows;
+    const won = games.filter((g) => g.status === "won");
+    const winRate = games.length ? Math.round((won.length / games.length) * 100) : 0;
+    const avgAttempts = won.length ? Math.round((won.reduce((s, g) => s + g.attempts, 0) / won.length) * 10) / 10 : 0;
+    const distribution = Array.from({ length: MAX_ATTEMPTS }, (_, i) => won.filter((g) => g.attempts === i + 1).length);
+    res.json({ played: games.length, won: won.length, winRate, avgAttempts, distribution });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

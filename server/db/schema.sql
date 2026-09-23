@@ -741,6 +741,8 @@ CREATE INDEX IF NOT EXISTS idx_duel_bets_group ON duel_bets(group_id, settled);
 -- (una por usuario, día y liga, mismo secreto para todos) o aleatoria (el
 -- secreto se sortea al crearla y solo lo sabe el servidor). Los intentos van
 -- en fichado_guesses, las pistas gastadas en hints_used.
+-- bonus_hints: pistas reveladas con el comodín de racha (ver fichado_wildcards
+-- más abajo) — no cuentan como intentos gastados, a diferencia de hints_used.
 CREATE TABLE IF NOT EXISTS fichado_games (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES users(id),
@@ -751,9 +753,34 @@ CREATE TABLE IF NOT EXISTS fichado_games (
   secret_name TEXT NOT NULL,
   max_attempts INTEGER NOT NULL DEFAULT 8,
   hints_used INTEGER NOT NULL DEFAULT 0,
+  bonus_hints INTEGER NOT NULL DEFAULT 0,
   status TEXT NOT NULL DEFAULT 'playing',
   points INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Comodín de racha: cada 5 días seguidos ganando la diaria de Fichado se suma
+-- un comodín (pista gratis, no resta intentos). "streak" es la racha de días
+-- consecutivos con la diaria ganada, y "last_award_streak" evita otorgar el
+-- mismo hito dos veces si se recalcula.
+-- Liga mensual del grupo: cada mes, cada miembro cae en una división. Al
+-- cerrar un mes, los primeros de cada división suben y los últimos bajan —
+-- se recalcula sola al leer (mismo patrón "perezoso" que el resto del
+-- ranking mensual), sin cron. Solo se activa con al menos DIV_MIN_SIZE
+-- miembros en el grupo (ver server/routes/stats.js).
+CREATE TABLE IF NOT EXISTS group_divisions (
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  month TEXT NOT NULL,
+  division INTEGER NOT NULL DEFAULT 1,
+  PRIMARY KEY (group_id, user_id, month)
+);
+
+CREATE TABLE IF NOT EXISTS fichado_wildcards (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id),
+  streak INTEGER NOT NULL DEFAULT 0,
+  last_award_streak INTEGER NOT NULL DEFAULT 0,
+  available INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS fichado_guesses (

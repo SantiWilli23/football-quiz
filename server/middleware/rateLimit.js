@@ -20,7 +20,14 @@ setInterval(() => {
 // pedidos a esta ruta dentro de `windowMs`.
 export function rateLimit({ windowMs, max, message }) {
   return (req, res, next) => {
-    const key = `${req.baseUrl}${req.path}:${req.ip}`;
+    // Render sirve detrás de Cloudflare, así que hay dos proxies delante del
+    // servidor. `req.ip` (con trust proxy) termina devolviendo la IP del
+    // borde de Cloudflare, que rota por su red global y nunca es la misma
+    // dos veces — con eso el límite no se cumple jamás. Cloudflare siempre
+    // manda la IP real del visitante en cf-connecting-ip (y la pisa si
+    // alguien intenta falsificarla), así que es la fuente confiable acá.
+    const ip = req.headers["cf-connecting-ip"] || req.ip;
+    const key = `${req.baseUrl}${req.path}:${ip}`;
     const now = Date.now();
     const hits = (buckets.get(key) || []).filter((t) => now - t < windowMs);
     if (hits.length >= max) {

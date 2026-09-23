@@ -4,6 +4,32 @@
 
 // ── DATA ─────────────────────────────────────────────────────────
 
+// Radar de atributos: un polígono por jugador, tantas puntas como stats
+// tenga su posición (5). Mismo dato que ya mostraban las barras de
+// stats-grid, solo que de un vistazo en vez de leer fila por fila.
+function statRadar(p, pos) {
+  const n = pos.stats.length;
+  const R = 34;
+  const cx = 40, cy = 40;
+  const pt = (i, r) => {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  };
+  const outline = pos.stats.map((_, i) => pt(i, R).join(",")).join(" ");
+  const filled = pos.stats.map((s, i) => pt(i, (R * Math.min(99, p.stats[s] || 60)) / 99).join(",")).join(" ");
+  const labels = pos.stats.map((s, i) => {
+    const [x, y] = pt(i, R + 11);
+    return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-size="7" fill="var(--text-muted)">${pos.labels[s].slice(0, 3)}</text>`;
+  }).join("");
+  return `
+    <svg viewBox="0 0 80 80" width="84" height="84" style="flex-shrink:0">
+      <polygon points="${outline}" fill="none" stroke="var(--border)" stroke-width="1" />
+      <polygon points="${filled}" fill="var(--gold)" fill-opacity="0.28" stroke="var(--gold)" stroke-width="1.5" />
+      ${labels}
+    </svg>
+  `;
+}
+
 const POSITIONS = {
   delantero: {
     label: "Delantero", icon: "⚡",
@@ -2232,17 +2258,20 @@ function renderHub() {
               </div>
             </div>
 
-            <div class="stats-grid">
-              ${pos.stats.map(s => {
-                const val = p.stats[s] || 60;
-                return `
-                  <div class="stat-row">
-                    <div class="stat-name">${pos.labels[s]}</div>
-                    <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${val}%"></div></div>
-                    <div class="stat-value">${val}</div>
-                  </div>
-                `;
-              }).join("")}
+            <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+              ${statRadar(p, pos)}
+              <div class="stats-grid" style="flex:1;min-width:180px">
+                ${pos.stats.map(s => {
+                  const val = p.stats[s] || 60;
+                  return `
+                    <div class="stat-row">
+                      <div class="stat-name">${pos.labels[s]}</div>
+                      <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${val}%"></div></div>
+                      <div class="stat-value">${val}</div>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
             </div>
 
             <div class="forma-row">

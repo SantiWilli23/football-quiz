@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import FloatField from "../components/FloatField.jsx";
 
 export default function Register() {
   const { register } = useAuth();
@@ -68,36 +69,9 @@ export default function Register() {
           <p className="text-gray-400 text-sm mb-8">Empezá a jugar en un minuto</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Usuario</label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full bg-bg border border-border rounded-card px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
-                placeholder="tu_usuario"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-bg border border-border rounded-card px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
-                placeholder="tu@email.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Contraseña</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-bg border border-border rounded-card px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
-                placeholder="Mínimo 6 caracteres"
-              />
-            </div>
+            <FloatField label="Usuario" type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
+            <FloatField label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <FloatField label="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
 
             {error && <p className="text-sm text-red-400">{error}</p>}
 

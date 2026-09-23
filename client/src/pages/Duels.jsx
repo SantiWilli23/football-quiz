@@ -625,34 +625,40 @@ export default function Duels() {
             {finished.map((d) => {
               const style = RESULT_STYLE[d.result];
               return (
-                <div
-                  key={d.id}
-                  className="flex items-center gap-3 px-4 py-3 rounded-card border border-border"
-                >
-                  <Avatar user={d.rival} size={32} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm truncate flex items-center gap-1.5">
-                      contra {d.rival.username}
-                      {d.my_wildcard && <Dices size={13} className="text-amber shrink-0" title="Jugaste este duelo doble o nada" />}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {DIFFICULTY_STYLE[d.difficulty]?.emoji} {d.my_correct}–{d.rival_correct} de{" "}
-                      {d.total_questions}
-                    </p>
+                <div key={d.id} className="rounded-card border border-border px-4 py-3.5">
+                  <div className="flex items-center justify-center gap-4">
+                    <div className="flex flex-col items-center gap-1.5 w-20 min-w-0">
+                      <Avatar user={user} size={36} />
+                      <span className="text-xs truncate max-w-full">Vos</span>
+                    </div>
+                    <div className="text-center shrink-0">
+                      <p className="text-lg font-bold tabular-nums">{d.my_correct} – {d.rival_correct}</p>
+                      <p className={`text-xs font-semibold ${style.className}`}>{style.label}</p>
+                    </div>
+                    <div className="flex flex-col items-center gap-1.5 w-20 min-w-0">
+                      <Avatar user={d.rival} size={36} />
+                      <span className="text-xs truncate max-w-full flex items-center gap-1">
+                        {d.rival.username}
+                        {d.my_wildcard && <Dices size={11} className="text-amber shrink-0" title="Jugaste este duelo doble o nada" />}
+                      </span>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => challenge(d.rival.id, d.difficulty)}
-                    disabled={challenging}
-                    className="shrink-0 px-3 py-1.5 rounded-card border border-border text-xs font-medium text-gray-300 hover:text-white hover:border-white/30 disabled:opacity-50 transition-colors"
-                    title="Desafiar de nuevo con la misma dificultad"
-                  >
-                    Revancha
-                  </button>
-                  <div className="text-right shrink-0">
-                    <p className={`text-sm font-semibold ${style.className}`}>{style.label}</p>
-                    <p className={`text-xs ${d.my_wildcard ? "text-amber font-medium" : "text-gray-600"}`}>
-                      {d.my_wildcard ? `${d.points > 0 ? "×2 · " : "sin puntos · "}` : ""}+{d.points} pts
+                  <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-border">
+                    <p className="text-xs text-gray-500">
+                      {DIFFICULTY_STYLE[d.difficulty]?.emoji} {d.difficulty_label} · de {d.total_questions}
+                      {" · "}
+                      <span className={d.my_wildcard ? "text-amber font-medium" : ""}>
+                        {d.my_wildcard ? `${d.points > 0 ? "×2 · " : "sin puntos · "}` : ""}+{d.points} pts
+                      </span>
                     </p>
+                    <button
+                      onClick={() => challenge(d.rival.id, d.difficulty)}
+                      disabled={challenging}
+                      className="shrink-0 px-3 py-1.5 rounded-card border border-border text-xs font-medium text-gray-300 hover:text-white hover:border-white/30 disabled:opacity-50 transition-colors"
+                      title="Desafiar de nuevo con la misma dificultad"
+                    >
+                      Revancha
+                    </button>
                   </div>
                 </div>
               );

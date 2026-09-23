@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import FloatField from "../components/FloatField.jsx";
 
 export default function Login() {
   const { login } = useAuth();
@@ -32,7 +33,14 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex bg-bg text-white">
-      <div className="hidden lg:flex flex-1 flex-col items-center justify-center gap-10 p-12 bg-panel border-r border-border text-center">
+      <div className="hidden lg:flex flex-1 flex-col items-center justify-center gap-10 p-12 bg-panel border-r border-border text-center relative overflow-hidden">
+        <svg aria-hidden="true" className="absolute inset-0 w-full h-full text-white opacity-[0.06] pointer-events-none" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="30" y="30" width="340" height="540" rx="4" />
+          <line x1="30" y1="300" x2="370" y2="300" />
+          <circle cx="200" cy="300" r="60" />
+          <rect x="110" y="30" width="180" height="90" />
+          <rect x="110" y="480" width="180" height="90" />
+        </svg>
         <div className="flex flex-col items-center gap-4">
           <div className="w-14 h-14 rounded-card bg-gradient-to-br from-accent-light to-emerald-500 flex items-center justify-center text-onaccent font-extrabold text-xl">
             FT
@@ -75,26 +83,8 @@ export default function Login() {
           <p className="text-gray-400 text-sm mb-8">Ingresá a tu cuenta para continuar</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-bg border border-border rounded-card px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
-                placeholder="tu@email.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Contraseña</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-bg border border-border rounded-card px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
-                placeholder="••••••••"
-              />
-            </div>
+            <FloatField label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <FloatField label="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
 
             {error && <p className="text-sm text-red-400">{error}</p>}
 

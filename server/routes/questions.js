@@ -120,21 +120,36 @@ router.post("/:id/answer", async (req, res) => {
     const onTime = isWithinTimeBudget(req.userId, today);
     const is_correct = onTime && answer === question.correct_answer;
 
+    // Multiplicador de racha: contando esta respuesta, cuántas seguidas
+    // acertó hoy (se corta apenas falla una). Un pequeño bonus de puntos
+    // aparte del puesto del día — 2.ª seguida +1, 3.ª o más +2.
+    let answerStreak = 0;
+    if (is_correct) {
+      const prior = await db.execute({
+        sql: "SELECT is_correct FROM answers WHERE user_id = ? AND question_id IN (SELECT id FROM questions WHERE scheduled_date = ?) ORDER BY answered_at",
+        args: [req.userId, today],
+      });
+      answerStreak = 1;
+      for (const row of prior.rows) { if (row.is_correct) answerStreak++; else break; }
+    }
+    const streakBonus = is_correct ? Math.min(answerStreak - 1, 2) : 0;
+
     await db.execute({
       sql: `INSERT INTO answers (user_id, question_id, answer, is_correct, points)
-            VALUES (?, ?, ?, ?, 0)`,
-      args: [req.userId, questionId, answer, is_correct ? 1 : 0],
+            VALUES (?, ?, ?, ?, ?)`,
+      args: [req.userId, questionId, answer, is_correct ? 1 : 0, streakBonus],
     });
 
     // Recién cuando completa las 3 preguntas de hoy se sabe su % de acierto
     // final, así que ahí se calcula el puesto del día y se le suman los
-    // puntos correspondientes a ESA respuesta (la que cerró el día).
+    // puntos correspondientes a ESA respuesta (la que cerró el día) — se
+    // SUMAN al bonus de racha ya guardado, no lo pisan.
     const settlement = await settleDailyScoreIfComplete(req.userId, today);
-    const points = settlement?.points ?? 0;
+    const points = streakBonus + (settlement?.points ?? 0);
     if (settlement) {
       await db.execute({
-        sql: "UPDATE answers SET points = ? WHERE user_id = ? AND question_id = ?",
-        args: [points, req.userId, questionId],
+        sql: "UPDATE answers SET points = points + ? WHERE user_id = ? AND question_id = ?",
+        args: [settlement.points, req.userId, questionId],
       });
     }
 
@@ -154,6 +169,8 @@ router.post("/:id/answer", async (req, res) => {
     res.status(201).json({
       is_correct,
       points,
+      answerStreak,
+      streakBonus,
       correct_answer: question.correct_answer,
       current_streak,
       timedOut: !onTime,

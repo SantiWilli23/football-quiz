@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, Check, Lightbulb, Lock, User, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Lightbulb, Lock, Sparkles, User, X } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
@@ -7,6 +7,7 @@ import { useGroups } from "../context/GroupContext.jsx";
 import { playSfx } from "../utils/sfx.js";
 
 const GLOBAL_TAB = { key: "global", label: "Todos" };
+const HINT_ORDER_LABELS = ["Posición", "Liga", "Nacionalidad", "Nacimiento", "Club"];
 const MODES = [
   { key: "daily", label: "Diario", hint: "El mismo jugador secreto para todos hoy." },
   { key: "random", label: "Aleatorio", hint: "Un secreto nuevo cada partida, con dificultad a elección." },
@@ -170,9 +171,10 @@ export default function Wordle() {
     playSfx(data.game.status === "won" ? "win" : data.game.status === "lost" ? "bad" : "tick");
     setQuery("");
   });
-  const useHint = () => act(async () => {
-    const { data } = await api.post("/wordle/hint", { gameId: game.id });
+  const useHint = (free) => act(async () => {
+    const { data } = await api.post("/wordle/hint", { gameId: game.id, free });
     applyGame(data.game, true);
+    if (free) refreshWildcards();
   });
   const giveUp = () => act(async () => {
     const { data } = await api.post("/wordle/giveup", { gameId: game.id });
@@ -192,16 +194,34 @@ export default function Wordle() {
     } catch { /* sin portapapeles */ }
   }
 
+  const [stats, setStats] = useState(null);
+  const [statsOpen, setStatsOpen] = useState(false);
+  useEffect(() => {
+    if (!statsOpen || stats) return;
+    api.get("/wordle/stats").then((r) => setStats(r.data)).catch(() => setStats({ played: 0 }));
+  }, [statsOpen, stats]);
+
   const tabs = [GLOBAL_TAB, ...meta.leagues];
   const playing = game?.status === "playing";
   const attemptsLeft = game ? Math.max(0, game.maxAttempts - game.attemptsUsed) : 0;
   const canHint = playing && game.hintsUsed < 5 && attemptsLeft >= meta.hintCost;
+  const [wildcards, setWildcards] = useState({ available: 0, streak: 0, step: 5 });
+  const refreshWildcards = useCallback(() => {
+    api.get("/wordle/wildcards").then((r) => setWildcards(r.data)).catch(() => {});
+  }, []);
+  useEffect(() => { refreshWildcards(); }, [refreshWildcards]);
+  const revealed = (game?.hintsUsed || 0) + (game?.bonusHintsUsed || 0);
+  const canFreeHint = playing && revealed < HINT_ORDER_LABELS.length && wildcards.available > 0;
 
   return (
     <Layout>
       <h1 className="text-xl sm:text-2xl font-bold mb-1">Fichado</h1>
-      <p className="text-gray-400 text-sm mb-4">
+      <p className="text-gray-400 text-sm mb-1">
         Adiviná al futbolista secreto en {meta.maxAttempts} intentos. Cada intento te marca en verde lo que coincide y te da un número de parecido de 0 a 100.
+      </p>
+      <p className="text-xs text-gray-500 mb-4">
+        Cada {wildcards.step} días seguidos ganando la diaria ganás un comodín: una pista gratis que no gasta intentos.
+        {wildcards.streak > 0 && <span className="text-amber ml-1">Racha actual: {wildcards.streak} día{wildcards.streak === 1 ? "" : "s"}.</span>}
       </p>
 
       <div className="flex gap-1.5 mb-3">
@@ -335,13 +355,29 @@ export default function Wordle() {
                   <p className="text-xs text-gray-500 leading-snug">
                     {game.hints.length ? game.hints.join(" · ") : "Sin pistas usadas."}
                   </p>
-                  <div className="flex gap-2 shrink-0">
+                  <div className="flex gap-2 shrink-0 items-center">
+                    <span className="flex gap-1" aria-hidden="true">
+                      {HINT_ORDER_LABELS.map((_, i) => (
+                        <span key={i} className={`w-1.5 h-1.5 rounded-full ${i < revealed ? "bg-good" : "bg-white/15"}`} />
+                      ))}
+                    </span>
+                    {wildcards.available > 0 && (
+                      <button
+                        onClick={() => useHint(true)}
+                        disabled={!canFreeHint || busy}
+                        title="Comodín de racha: pista gratis, no gasta intentos"
+                        className="flex items-center gap-1 text-xs font-semibold border border-amber/40 text-amber rounded-full px-3 py-1.5 hover:bg-amber/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <Sparkles size={12} /> Gratis ({wildcards.available})
+                      </button>
+                    )}
                     <button
-                      onClick={useHint}
+                      onClick={() => useHint(false)}
                       disabled={!canHint || busy}
+                      title={revealed < HINT_ORDER_LABELS.length ? `Revela: ${HINT_ORDER_LABELS[revealed]}` : undefined}
                       className="flex items-center gap-1 text-xs font-medium border border-border rounded-full px-3 py-1.5 hover:border-accent hover:text-accent disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
-                      <Lightbulb size={12} /> Pista (−{meta.hintCost})
+                      <Lightbulb size={12} /> Pista{revealed < HINT_ORDER_LABELS.length ? `: ${HINT_ORDER_LABELS[revealed]}` : ""} (−{meta.hintCost})
                     </button>
                     <button
                       onClick={giveUp}
@@ -399,6 +435,51 @@ export default function Wordle() {
           )}
         </div>
       )}
+
+      <details className="mt-6 group" onToggle={(e) => setStatsOpen(e.target.open)}>
+        <summary className="cursor-pointer list-none flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+          <BarChart3 size={14} />
+          Historial y estadísticas
+          <span className="text-xs text-gray-600 group-open:hidden">Ver ▾</span>
+          <span className="text-xs text-gray-600 hidden group-open:inline">Ocultar ▴</span>
+        </summary>
+        {!stats ? (
+          <p className="text-xs text-gray-500 mt-3">Cargando...</p>
+        ) : stats.played === 0 ? (
+          <p className="text-xs text-gray-500 mt-3">Todavía no terminaste ninguna partida.</p>
+        ) : (
+          <div className="mt-3 space-y-4">
+            <div className="grid grid-cols-3 gap-3">
+              <Card className="text-center !py-3">
+                <p className="text-xl font-bold">{stats.played}</p>
+                <p className="text-xs text-gray-500">jugadas</p>
+              </Card>
+              <Card className="text-center !py-3">
+                <p className="text-xl font-bold text-good">{stats.winRate}%</p>
+                <p className="text-xs text-gray-500">ganadas</p>
+              </Card>
+              <Card className="text-center !py-3">
+                <p className="text-xl font-bold">{stats.avgAttempts || "—"}</p>
+                <p className="text-xs text-gray-500">intentos prom.</p>
+              </Card>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-2">Distribución de intentos (partidas ganadas)</p>
+              <div className="flex items-end gap-1.5 h-16">
+                {stats.distribution.map((n, i) => {
+                  const max = Math.max(...stats.distribution, 1);
+                  return (
+                    <div key={i} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                      <div className="w-full bg-accent/70 rounded-t" style={{ height: `${(n / max) * 100}%`, minHeight: n ? 3 : 0 }} />
+                      <span className="text-xs text-gray-600">{i + 1}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </details>
     </Layout>
   );
 }

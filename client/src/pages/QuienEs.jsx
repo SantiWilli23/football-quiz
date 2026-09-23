@@ -119,6 +119,30 @@ export default function QuienEs() {
         <div className="space-y-4">
           <Card>
             <p className="t-eyebrow mb-3">Su carrera</p>
+            {/* Línea de "escudos" (iniciales sobre un color derivado del nombre del
+                club, no hay logos reales para esta base) que se destapa a medida
+                que se piden pistas de club. */}
+            <div className="flex items-center gap-1.5 mb-4 overflow-x-auto pb-1" role="img" aria-label="Carrera del jugador, club por club">
+              {game.clues.filter((c) => c.kind === "club").map((c, i) => {
+                const name = c.text.split(" · ")[0];
+                const hue = [...name].reduce((h, ch) => h + ch.charCodeAt(0), 0) % 360;
+                return (
+                  <div key={i} className="flex flex-col items-center gap-1 shrink-0">
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold text-white"
+                      style={{ background: `hsl(${hue} 45% 32%)` }}
+                      title={c.text}
+                    >
+                      {name.split(" ").map((w) => w[0]).join("").slice(0, 3).toUpperCase()}
+                    </div>
+                    <span className="text-xs text-gray-600">{c.text.split(" · ")[1] || ""}</span>
+                  </div>
+                );
+              })}
+              {game.clues[game.clues.length - 1]?.kind === "club" && game.clues.length < game.total && (
+                <div className="w-10 h-10 rounded-lg border border-dashed border-border flex items-center justify-center text-gray-600 shrink-0">?</div>
+              )}
+            </div>
             <ol className="space-y-2">
               {game.clues.map((c, i) => (
                 <li key={i} className="flex items-center gap-3 text-sm">

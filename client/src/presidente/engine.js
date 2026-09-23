@@ -415,6 +415,89 @@ export function tvOptions(state) {
   ];
 }
 
+// Misiones semanales: metas cortas que se renuevan cada semana, aparte de la
+// gestión de fondo. `test` compara el estado ANTES de la semana con el de
+// DESPUÉS (ya con caja, partido y derivas resueltos) para decidir si se
+// cumplió; se evalúan una sola vez, al cierre de la semana en que se dieron.
+export const MISSION_TEMPLATES = [
+  {
+    id: "gasto_bajo",
+    label: (s) => `Gastar menos de €${s.budgetCap}M esta semana`,
+    build: () => ({ budgetCap: 5 }),
+    test: (before, after, ctx) => weeklyExpenses(before).total <= ctx.budgetCap,
+    reward: { boardTrust: 3 },
+    rewardLabel: "+3 confianza de la directiva",
+  },
+  {
+    id: "ganar_clasico",
+    label: () => "Ganar el clásico si te toca esta semana",
+    build: () => ({}),
+    test: (before, after, ctx, myResult) => !myResult?.isClasico || myResult.myGoals > myResult.rivalGoals,
+    reward: { fanHappiness: 6 },
+    rewardLabel: "+6 hinchada",
+  },
+  {
+    id: "ganar_partido",
+    label: () => "Ganar el partido de la semana",
+    build: () => ({}),
+    test: (before, after, ctx, myResult) => !myResult || myResult.myGoals > myResult.rivalGoals,
+    reward: { budget: 1.5 },
+    rewardLabel: "+€1.5M",
+  },
+  {
+    id: "subir_hinchada",
+    label: (s) => `Subir la hinchada ${s.target} puntos`,
+    build: () => ({ target: 3 }),
+    test: (before, after, ctx) => after.fanHappiness - before.fanHappiness >= ctx.target,
+    reward: { prestige: 2 },
+    rewardLabel: "+2 prestigio",
+  },
+  {
+    id: "sin_lesiones",
+    label: () => "Terminar la semana sin lesionados nuevos",
+    build: () => ({}),
+    test: (before, after) => after.squad.filter((p) => p.injured > 0).length <= before.squad.filter((p) => p.injured > 0).length,
+    reward: { dtConfidence: 4 },
+    rewardLabel: "+4 confianza en el DT",
+  },
+  {
+    id: "no_perder",
+    label: () => "No perder el partido de la semana",
+    build: () => ({}),
+    test: (before, after, ctx, myResult) => !myResult || myResult.myGoals >= myResult.rivalGoals,
+    reward: { press: 4 },
+    rewardLabel: "+4 prensa",
+  },
+];
+
+function pickMissions(state, n = 3) {
+  const pool = [...MISSION_TEMPLATES];
+  const chosen = [];
+  while (chosen.length < n && pool.length) {
+    const i = Math.floor(Math.random() * pool.length);
+    const t = pool.splice(i, 1)[0];
+    const ctx = t.build(state);
+    chosen.push({ id: t.id, label: t.label({ ...state, ...ctx }), rewardLabel: t.rewardLabel, ctx });
+  }
+  return chosen;
+}
+
+function evaluateMissions(before, after, myResult) {
+  const missions = before.missions || [];
+  if (!missions.length) return { state: after, completed: [] };
+  let s = after;
+  const completed = [];
+  for (const m of missions) {
+    const template = MISSION_TEMPLATES.find((t) => t.id === m.id);
+    if (!template) continue;
+    if (template.test(before, after, m.ctx, myResult)) {
+      s = applyDecisionEffects(s, { effects: [template.reward] }, 0);
+      completed.push(m);
+    }
+  }
+  return { state: s, completed };
+}
+
 export function initialPresidentState(teamId, teamName, league, teamPrestige, philosophy = "equilibrado") {
   const fixtures = buildFixtures(league);
   const rivals = teamsByLeague(league).filter((t) => t.id !== teamId);
@@ -459,6 +542,7 @@ export function initialPresidentState(teamId, teamName, league, teamPrestige, ph
   }
   base.sponsorOffers = generateSponsorOffers(base);
   base.currentDecision = pickDecision(base, []);
+  base.missions = pickMissions(base);
   return base;
 }
 
@@ -466,7 +550,7 @@ export function initialPresidentState(teamId, teamName, league, teamPrestige, ph
 // sin perder la plata, la tabla ni el historial.
 export function migrateState(old) {
   if (!old) return old;
-  if (old.version >= 3) return old;
+  if (old.version >= 3) return old.missions ? old : { ...old, missions: pickMissions(old) };
   const fresh = initialPresidentState(old.teamId, old.teamName, old.league, teamById(old.teamId)?.prestige || 5);
   const sponsors = { shirt: null, stadium: null, kit: null };
   if (old.sponsorTier > 0) {
@@ -902,12 +986,18 @@ export function advanceWeek(state) {
   s.fanHappiness = Math.round(clamp(s.fanHappiness + (2 - s.ticketPriceLevel) * 0.15 + PHILOSOPHIES[s.philosophy || "equilibrado"].fan * 0.1, 0, 100) * 10) / 10;
   s.press = Math.round(s.press * 10) / 10;
 
-  // 5) Semana siguiente, decisión, fichajes, ofertas.
+  // 4.5) Misiones de la semana que se cierra: se evalúan una sola vez acá.
+  const { state: afterMissions, completed } = evaluateMissions(state, s, myResult);
+  s = afterMissions;
+  for (const m of completed) s = addNews(s, `✅ Misión cumplida: ${m.label} (${m.rewardLabel}).`);
+
+  // 5) Semana siguiente, decisión, fichajes, ofertas, misiones nuevas.
   const week = s.week + 1;
   const used = (s._usedDecisions || []).slice();
   s = { ...s, week, turn: (s.turn || 0) + 1, decisionUsed: false };
   s.currentDecision = pickDecision(s, used);
   s._usedDecisions = [...used, s.currentDecision.id].slice(-12);
+  s.missions = pickMissions(s);
   s = resolveTransferWeek(s);
   s = maybeTriggerSaleOffer(s);
 

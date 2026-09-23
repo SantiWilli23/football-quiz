@@ -198,6 +198,19 @@ export default function Trivia() {
             )}
           </div>
 
+          {mode === "a" && questions && questions.length > 0 && (
+            <div className="flex gap-1.5 mb-5" role="img" aria-label={`${questions.filter((q) => q.answered).length} de ${questions.length} respondidas`}>
+              {questions.map((q, i) => (
+                <span
+                  key={q.question.id}
+                  className={`flex-1 h-1.5 rounded-full ${
+                    !q.answered ? "bg-white/10" : q.result?.is_correct ? "bg-good" : "bg-bad"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+
           {mode === "a" && questions && questions.length === 0 && (
             <Card>
               <p className="text-gray-400">No hay preguntas disponibles por ahora. Volvé más tarde.</p>

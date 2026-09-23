@@ -103,6 +103,7 @@ export default function Football() {
   const [date, setDate] = useState(todayStr());
 
   const [live, setLive] = useState(null);
+  const [liveAll, setLiveAll] = useState(null); // { [leagueKey]: fixtures[] } cuando league === "__all"
   const [fixtures, setFixtures] = useState(null);
   const [fixturesBlocked, setFixturesBlocked] = useState(false);
   const [standings, setStandings] = useState(null);
@@ -128,7 +129,12 @@ export default function Football() {
     setLoading(true);
     setError("");
     try {
-      if (liveTab === "vivo") {
+      if (liveTab === "vivo" && league === "__all") {
+        const results = await Promise.all(
+          leagues.map((l) => api.get(`/football/${l.key}/live`).then((r) => [l.key, r.data.fixtures]).catch(() => [l.key, []]))
+        );
+        setLiveAll(Object.fromEntries(results));
+      } else if (liveTab === "vivo") {
         const { data } = await api.get(`/football/${league}/live`);
         setLive(data.fixtures);
       } else if (liveTab === "hoy") {
@@ -149,7 +155,7 @@ export default function Football() {
     } finally {
       setLoading(false);
     }
-  }, [ready, configured, league, liveTab, date]);
+  }, [ready, configured, league, liveTab, date, leagues]);
 
   useEffect(() => {
     load();
@@ -178,7 +184,7 @@ export default function Football() {
         <NotConfigured />
       ) : (
         <>
-          <LeagueTabs leagues={leagues} active={league} onChange={setLeague} />
+          <LeagueTabs leagues={leagues} active={league} onChange={setLeague} showAll={liveTab === "vivo"} />
 
           <div className="flex items-center gap-2 mb-6 flex-wrap">
             {LIVE_TABS.map(({ key, label, icon: Icon }) => (
@@ -199,7 +205,7 @@ export default function Football() {
 
           <Card>
             <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-              <h2 className="font-semibold">{activeLeague?.name ?? "Cargando..."}</h2>
+              <h2 className="font-semibold">{league === "__all" ? "Todas las ligas" : activeLeague?.name ?? "Cargando..."}</h2>
               {liveTab === "vivo" && (
                 <span className="text-xs text-gray-500 flex items-center gap-1.5">
                   <Radio size={11} style={{ color: CHALK.red }} className="animate-pulse" />
@@ -232,7 +238,24 @@ export default function Football() {
             {loading && <p className="text-sm text-gray-500">Cargando...</p>}
             {error && !loading && <p className="text-sm text-red-400">{error}</p>}
 
-            {!loading && !error && liveTab === "vivo" && (
+            {!loading && !error && liveTab === "vivo" && league === "__all" && (
+              liveAll && Object.values(liveAll).some((f) => f.length > 0) ? (
+                <div className="space-y-5">
+                  {leagues.filter((l) => (liveAll[l.key] || []).length > 0).map((l) => (
+                    <div key={l.key}>
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{l.name}</h3>
+                      <div className="space-y-2">
+                        {liveAll[l.key].map((f) => <FixtureCard key={f.id} fixture={f} />)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">No hay partidos en vivo en ninguna liga ahora mismo.</p>
+              )
+            )}
+
+            {!loading && !error && liveTab === "vivo" && league !== "__all" && (
               live && live.length > 0 ? (
                 <div className="space-y-2">
                   {live.map((f) => (

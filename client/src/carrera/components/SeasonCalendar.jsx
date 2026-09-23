@@ -51,6 +51,17 @@ export default function SeasonCalendar() {
 
       <div>
         <h2 className="text-lg font-bold mb-3">Calendario</h2>
+        {/* Línea de tiempo: un punto por fecha, coloreado según resultado; la
+            próxima fecha se destaca. La lista de abajo sigue con el detalle. */}
+        <div className="flex items-center gap-1 overflow-x-auto pb-2 mb-3" role="img" aria-label="Línea de tiempo de la temporada">
+          {state.calendar.map((c) => {
+            const isNext = !c.played && state.calendar.find((x) => !x.played)?.week === c.week;
+            const color = !c.played
+              ? isNext ? "bg-accent ring-2 ring-accent/40" : "bg-white/10"
+              : c.result.myGoals > c.result.rivalGoals ? "bg-good" : c.result.myGoals === c.result.rivalGoals ? "bg-amber" : "bg-bad";
+            return <span key={c.week} title={`J${c.week}`} className={`shrink-0 w-2.5 h-2.5 rounded-full ${color}`} />;
+          })}
+        </div>
         <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
           {state.calendar.map((c) => {
             const rival = teamById(c.opponentTeamId);

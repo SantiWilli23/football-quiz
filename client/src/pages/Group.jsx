@@ -15,6 +15,7 @@ import FlashPoll from "../components/FlashPoll.jsx";
 import AnniversaryBanner from "../components/AnniversaryBanner.jsx";
 import WeeklyRecap from "../components/WeeklyRecap.jsx";
 import GroupCup from "../components/GroupCup.jsx";
+import GroupDivision from "../components/GroupDivision.jsx";
 import DuelBets from "../components/DuelBets.jsx";
 
 const currentMonth = new Date().toISOString().slice(0, 7);
@@ -430,6 +431,9 @@ export default function Group() {
 
               {tab === "ranking" && (
               <>
+              <div className="mb-6">
+                <GroupDivision groupId={activeGroupId} />
+              </div>
               {/* La temporada del mes es la que se mira día a día: el histórico
                   lo gana siempre el que arrancó primero. */}
               <div className="flex items-center gap-2 mb-4 flex-wrap">

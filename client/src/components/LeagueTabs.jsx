@@ -1,9 +1,22 @@
 // Selector de liga: las cinco grandes europeas más la Primera de Chile. Se
 // muestra como una fila de pestañas en vez de un <select> porque son pocas
 // y cambiar de liga es la acción más frecuente de toda la pantalla.
-export default function LeagueTabs({ leagues, active, onChange }) {
+export default function LeagueTabs({ leagues, active, onChange, showAll }) {
   return (
     <div className="flex gap-2 flex-wrap mb-6">
+      {showAll && (
+        <button
+          onClick={() => onChange("__all")}
+          aria-pressed={active === "__all"}
+          className={`px-3.5 py-2 rounded-card text-sm font-medium border transition-colors ${
+            active === "__all"
+              ? "border-accent/60 bg-accent/10 text-accent"
+              : "border-border text-gray-400 hover:text-white hover:border-white/30"
+          }`}
+        >
+          Todas
+        </button>
+      )}
       {leagues.map((league) => (
         <button
           key={league.key}

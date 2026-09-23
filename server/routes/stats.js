@@ -454,6 +454,126 @@ router.get("/group-streak", async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------- divisiones
+// Liga mensual con ascensos y descensos. Solo tiene sentido con el grupo
+// suficientemente grande como para armar más de una división.
+const DIV_MIN_SIZE = 6; // menos que esto, una sola división sin ascensos/descensos
+const DIV_SIZE = 5; // miembros por división al armarlas por primera vez
+const MOVE_N = 2; // cuántos suben/bajan por división al cerrar el mes
+
+function prevMonthOf(month) {
+  const [y, m] = month.split("-").map(Number);
+  const d = new Date(Date.UTC(y, m - 1, 1));
+  d.setUTCMonth(d.getUTCMonth() - 1);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+// Arma (o recupera) las divisiones del mes pedido, ascendiendo/descendiendo
+// según el cierre del mes anterior. Perezoso: se calcula la primera vez que
+// alguien lo pide para ese mes, y después queda escrito en group_divisions.
+async function divisionsFor(groupId, month, members) {
+  const existing = await db.execute({
+    sql: "SELECT user_id, division FROM group_divisions WHERE group_id = ? AND month = ?",
+    args: [groupId, month],
+  });
+  if (existing.rows.length > 0) {
+    const byUser = new Map(existing.rows.map((r) => [r.user_id, r.division]));
+    // Alguien nuevo que se sumó al grupo este mes: entra a la división más baja.
+    const maxDiv = Math.max(1, ...existing.rows.map((r) => r.division));
+    const missing = members.filter((m) => !byUser.has(m.id));
+    for (const m of missing) {
+      byUser.set(m.id, maxDiv);
+      await db.execute({ sql: "INSERT OR IGNORE INTO group_divisions (group_id, user_id, month, division) VALUES (?, ?, ?, ?)", args: [groupId, m.id, month, maxDiv] });
+    }
+    return byUser;
+  }
+
+  const prevMonth = prevMonthOf(month);
+  const prevRows = (await db.execute({
+    sql: "SELECT user_id, division FROM group_divisions WHERE group_id = ? AND month = ?",
+    args: [groupId, prevMonth],
+  })).rows;
+
+  const assignment = new Map();
+  if (prevRows.length === 0) {
+    // Primera vez: se arman las divisiones por el ranking histórico del grupo.
+    const { from, to } = monthBounds(month);
+    void from; void to; // solo para reusar rankingBetween con "desde siempre"
+    const allTime = await rankingBetween(groupId, "0000-01-01", "9999-12-31");
+    const ordered = allTime.length ? allTime.map((r) => r.id) : members.map((m) => m.id);
+    for (const m of members) if (!ordered.includes(m.id)) ordered.push(m.id);
+    ordered.forEach((userId, i) => assignment.set(userId, Math.floor(i / DIV_SIZE) + 1));
+  } else {
+    const prevByUser = new Map(prevRows.map((r) => [r.user_id, r.division]));
+    const divisions = [...new Set(prevRows.map((r) => r.division))].sort((a, b) => a - b);
+    const { from, to } = monthBounds(prevMonth);
+    const prevRanking = await rankingBetween(groupId, from, to);
+    const prevRankById = new Map(prevRanking.map((r, i) => [r.id, i]));
+
+    for (const div of divisions) {
+      const inDiv = prevRows.filter((r) => r.division === div).map((r) => r.user_id)
+        .sort((a, b) => (prevRankById.get(a) ?? 999) - (prevRankById.get(b) ?? 999));
+      inDiv.forEach((userId, i) => {
+        let next = div;
+        if (div > 1 && i < MOVE_N) next = div - 1; // suben
+        else if (i >= inDiv.length - MOVE_N && div < divisions.length) next = div + 1; // bajan
+        assignment.set(userId, next);
+      });
+    }
+    const maxDiv = Math.max(...divisions);
+    for (const m of members) if (!assignment.has(m.id)) assignment.set(m.id, maxDiv);
+  }
+
+  for (const [userId, division] of assignment) {
+    await db.execute({ sql: "INSERT OR IGNORE INTO group_divisions (group_id, user_id, month, division) VALUES (?, ?, ?, ?)", args: [groupId, userId, month, division] });
+  }
+  return assignment;
+}
+
+router.get("/division", async (req, res) => {
+  const groupId = Number(req.query.groupId);
+  if (!groupId) return res.status(400).json({ error: "Falta groupId" });
+  try {
+    if (!(await requireMembership(groupId, req.userId))) {
+      return res.status(403).json({ error: "No perteneces a este grupo" });
+    }
+    await settleGroup(groupId);
+    const members = await groupMembers(groupId);
+    if (members.length < DIV_MIN_SIZE) {
+      return res.json({ enabled: false, memberCount: members.length, minSize: DIV_MIN_SIZE });
+    }
+
+    const month = monthOf(todayStr());
+    const assignment = await divisionsFor(groupId, month, members);
+    const myDivision = assignment.get(req.userId) ?? 1;
+    const divisionCount = new Set(assignment.values()).size;
+
+    const { from, to } = monthBounds(month);
+    const fullRanking = await rankingBetween(groupId, from, to);
+    const mates = [...assignment.entries()].filter(([, d]) => d === myDivision).map(([userId]) => userId);
+    const ranking = fullRanking
+      .filter((r) => mates.includes(r.id))
+      .map((r, i, arr) => ({
+        ...r,
+        position: i + 1,
+        promotes: myDivision > 1 && i < MOVE_N,
+        relegates: myDivision < divisionCount && i >= arr.length - MOVE_N,
+      }));
+    // Alguien del grupo sin puntos este mes no sale en rankingBetween: se agrega al final en cero.
+    for (const userId of mates) {
+      if (!ranking.some((r) => r.id === userId)) {
+        const m = members.find((mm) => mm.id === userId);
+        if (m) ranking.push({ id: m.id, username: m.username, avatar: m.avatar, avatar_config: m.avatar_config, points: 0, position: ranking.length + 1, promotes: false, relegates: false });
+      }
+    }
+
+    res.json({ enabled: true, month, division: myDivision, divisionCount, ranking });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 // Temporada: el ranking del mes. Es el que importa día a día, porque el
 // histórico lo gana siempre el que arrancó primero.
 router.get("/season", async (req, res) => {

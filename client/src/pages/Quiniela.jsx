@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, Check, FlaskConical, Minus, Trophy, X } from "lucide-react";
+import { AlertTriangle, Check, FlaskConical, Minus, Plus, Trophy, X } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
@@ -16,16 +16,30 @@ function formatKickoff(iso) {
   return d.toLocaleString("es-ES", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
-function ScoreInput({ value, onChange }) {
+function ScoreInput({ value, onChange, label }) {
+  const set = (v) => onChange(Math.max(0, Math.min(20, v)));
   return (
-    <input
-      type="number"
-      min={0}
-      max={20}
-      value={value}
-      onChange={(e) => onChange(Math.max(0, Math.min(20, Number(e.target.value))))}
-      className="w-12 bg-bg border border-border rounded-card text-center py-1.5 text-sm focus:outline-none focus:border-accent"
-    />
+    <div className="flex flex-col items-center gap-1">
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => set(value - 1)}
+          aria-label={`Restar gol a ${label}`}
+          className="w-7 h-7 rounded-full border border-border text-gray-400 hover:text-white hover:border-white/30 flex items-center justify-center transition-colors"
+        >
+          <Minus size={13} />
+        </button>
+        <span className="w-6 text-center text-lg font-bold tabular-nums">{value}</span>
+        <button
+          type="button"
+          onClick={() => set(value + 1)}
+          aria-label={`Sumar gol a ${label}`}
+          className="w-7 h-7 rounded-full border border-border text-gray-400 hover:text-white hover:border-white/30 flex items-center justify-center transition-colors"
+        >
+          <Plus size={13} />
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -214,15 +228,21 @@ export default function Quiniela() {
             const draft = drafts[fx.id] || { home: existing?.predicted_home ?? 0, away: existing?.predicted_away ?? 0 };
             return (
               <Card key={fx.id}>
-                <p className="text-xs text-gray-500 mb-2">{formatKickoff(fx.date)}</p>
-                <div className="flex items-center gap-3">
-                  <span className="flex-1 text-sm text-right truncate">{fx.home.name}</span>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <ScoreInput value={draft.home} onChange={(v) => setDraft(fx.id, "home", v)} />
-                    <span className="text-gray-600">-</span>
-                    <ScoreInput value={draft.away} onChange={(v) => setDraft(fx.id, "away", v)} />
+                <p className="text-xs text-gray-500 mb-3 text-center">{formatKickoff(fx.date)}</p>
+                <div className="flex items-center justify-center gap-3 sm:gap-5">
+                  <div className="flex flex-col items-center gap-1.5 flex-1 min-w-0">
+                    {fx.home.logo && <img src={fx.home.logo} alt="" className="w-10 h-10 object-contain" loading="lazy" />}
+                    <span className="text-xs text-center truncate max-w-full">{fx.home.name}</span>
                   </div>
-                  <span className="flex-1 text-sm truncate">{fx.away.name}</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <ScoreInput value={draft.home} onChange={(v) => setDraft(fx.id, "home", v)} label={fx.home.name} />
+                    <span className="text-gray-600 self-start mt-1.5">:</span>
+                    <ScoreInput value={draft.away} onChange={(v) => setDraft(fx.id, "away", v)} label={fx.away.name} />
+                  </div>
+                  <div className="flex flex-col items-center gap-1.5 flex-1 min-w-0">
+                    {fx.away.logo && <img src={fx.away.logo} alt="" className="w-10 h-10 object-contain" loading="lazy" />}
+                    <span className="text-xs text-center truncate max-w-full">{fx.away.name}</span>
+                  </div>
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   {existing && (

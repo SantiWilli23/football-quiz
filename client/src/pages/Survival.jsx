@@ -314,9 +314,11 @@ export default function Survival() {
       {(phase === "question" || phase === "reveal") && currentQuestion && (
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-medium text-gray-400">
-              Ronda {roundIndex + 1} · {players.filter((p) => p.alive).length} en pie
-            </span>
+            <div className="flex items-center gap-2">
+              <Skull size={16} className="text-accent" />
+              <span className="text-lg font-bold tabular-nums">{players.filter((p) => p.alive).length}</span>
+              <span className="text-xs text-gray-500">en pie · ronda {roundIndex + 1}</span>
+            </div>
             {phase === "question" && (
               <span className={`text-sm font-semibold tabular-nums ${timeLeft <= 4 ? "text-red-400" : "text-gray-400"}`}>{timeLeft}s</span>
             )}

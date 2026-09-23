@@ -3,6 +3,7 @@ import { CheckCircle2, Clock, Scissors, SkipForward, XCircle } from "lucide-reac
 import api from "../api.js";
 import Card from "./Card.jsx";
 import { SLOT_CHALK, chalkFill } from "../theme.js";
+import { categoryColor } from "../utils/categoryColor.js";
 
 const OPTION_LABELS = { a: "A", b: "B", c: "C", d: "D" };
 const SLOT_COLORS = Object.fromEntries(
@@ -109,7 +110,15 @@ export default function QuestionCard({ item, index, total, onAnswered, timedMode
           >
             {slotColor.label}
           </span>
-          <span className="text-xs font-medium text-gray-400">
+          {question.category && (
+            <span
+              className="text-xs font-medium px-2.5 py-1 rounded-full border"
+              style={{ color: categoryColor(question.category), borderColor: categoryColor(question.category), background: "color-mix(in srgb, currentColor 12%, transparent)" }}
+            >
+              {question.category}
+            </span>
+          )}
+          <span className="text-xs font-medium text-gray-400 ml-auto">
             {index + 1} de {total}
           </span>
         </div>
@@ -217,15 +226,24 @@ export default function QuestionCard({ item, index, total, onAnswered, timedMode
               : "border-red-500/40 bg-red-500/10 text-red-400"
           }`}
         >
-          <span className="text-sm font-medium">
+          <span className="text-sm font-medium flex items-center gap-2">
             {result.timedOut ? "⏱️ Se acabó el tiempo" : result.is_correct ? "¡Correcto!" : "Incorrecto"}
+            {result.answerStreak >= 2 && (
+              <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400">
+                Racha ×{Math.min(result.answerStreak, 3)}
+              </span>
+            )}
           </span>
           <span className="text-sm font-semibold text-right">
             {result.dailyRank != null
               ? result.points > 0
                 ? `#${result.dailyRank} del día · +${result.points} pts`
-                : "Fuera del podio de hoy"
-              : "Se define al terminar las 3 de hoy"}
+                : result.streakBonus > 0
+                  ? `Fuera del podio de hoy · +${result.streakBonus} de racha`
+                  : "Fuera del podio de hoy"
+              : result.streakBonus > 0
+                ? `+${result.streakBonus} de racha · el resto se define al terminar las 3 de hoy`
+                : "Se define al terminar las 3 de hoy"}
           </span>
         </div>
       )}

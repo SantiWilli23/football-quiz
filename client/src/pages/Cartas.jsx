@@ -17,6 +17,19 @@ const TIER_STYLE = {
 const POS_LABEL = { GK: "Arquero", DEF: "Defensas", MID: "Medios", FWD: "Delanteros" };
 const FORMATION = { GK: 1, DEF: 4, MID: 3, FWD: 3 };
 
+function LockedCard({ c, small }) {
+  return (
+    <div className={`text-left rounded-xl border border-dashed border-border/70 opacity-45 ${small ? "p-2" : "p-3"}`}>
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-lg font-bold tabular-nums leading-none text-gray-600">?</span>
+        <span className="text-xs uppercase tracking-wide opacity-70">{c.pos}</span>
+      </div>
+      <p className="text-sm font-semibold mt-2 leading-tight text-gray-500">{c.name}</p>
+      <p className="text-xs opacity-60 mt-1">{c.tierLabel}</p>
+    </div>
+  );
+}
+
 function PlayerCard({ c, selected, onClick, small }) {
   const Tag = onClick ? "button" : "div";
   return (
@@ -35,6 +48,39 @@ function PlayerCard({ c, selected, onClick, small }) {
   );
 }
 
+// Sobre animado: se "abre" 900ms y cada carta gira al revelarse, en vez de
+// aparecer todas de golpe.
+function PackOpening({ cards, onDone }) {
+  const [phase, setPhase] = useState("closed"); // closed | tearing | revealed
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase("tearing"), 120);
+    const t2 = setTimeout(() => setPhase("revealed"), 700);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  if (phase !== "revealed") {
+    return (
+      <div className="flex justify-center py-10">
+        <div
+          className={`w-28 h-40 rounded-xl bg-gradient-to-br from-accent to-accent-dark shadow-lg transition-all duration-500 ${
+            phase === "tearing" ? "scale-110 opacity-0 -rotate-6" : "scale-100 opacity-100"
+          }`}
+          style={{ clipPath: "polygon(0 12%, 50% 0, 100% 12%, 100% 100%, 0 100%)" }}
+        />
+      </div>
+    );
+  }
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+      {cards.map((c, i) => (
+        <div key={i} className="animate-result-pop" style={{ animationDelay: `${i * 80}ms` }}>
+          <PlayerCard c={c} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Cartas() {
   const { toast } = useToast();
   const [tab, setTab] = useState("sobres");
@@ -47,6 +93,12 @@ export default function Cartas() {
   const [rival, setRival] = useState("cpu");
   const [match, setMatch] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [allCards, setAllCards] = useState([]);
+  const [showMissing, setShowMissing] = useState(false);
+  const [posFilter, setPosFilter] = useState("");
+  const [tierFilter, setTierFilter] = useState("");
+  const [query, setQuery] = useState("");
+  useEffect(() => { api.get("/cards/all").then((r) => setAllCards(r.data.cards)).catch(() => setAllCards([])); }, []);
 
   const load = useCallback(async () => {
     const [s, c, l, r] = await Promise.all([
@@ -167,11 +219,7 @@ export default function Cartas() {
             </div>
             <p className="t-meta mt-4">Ganás sobres con el diario, cumpliendo el reto del día y ganando partidos (máx. 2 por día).</p>
           </Card>
-          {opened && (
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-              {opened.map((c, i) => <PlayerCard key={i} c={c} />)}
-            </div>
-          )}
+          {opened && <PackOpening cards={opened} />}
         </div>
       )}
 
@@ -179,8 +227,42 @@ export default function Cartas() {
         collection.length === 0 ? (
           <Card><EmptyState icon={Package} title="Todavía no tenés cartas" hint="Reclamá tu sobre diario y abrilo para empezar el álbum." actions={[{ label: "Ir a Sobres", onClick: () => setTab("sobres") }]} /></Card>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {collection.map((c) => <PlayerCard key={c.name} c={c} small />)}
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2 items-center">
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar jugador…"
+                className="bg-bg border border-border rounded-card px-3 py-2 text-sm flex-1 min-w-[140px]"
+              />
+              <select value={posFilter} onChange={(e) => setPosFilter(e.target.value)} className="bg-bg border border-border rounded-card px-3 py-2 text-sm">
+                <option value="">Toda posición</option>
+                {Object.entries(POS_LABEL).map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+              </select>
+              <select value={tierFilter} onChange={(e) => setTierFilter(e.target.value)} className="bg-bg border border-border rounded-card px-3 py-2 text-sm">
+                <option value="">Toda rareza</option>
+                {Object.keys(TIER_STYLE).map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+              <button
+                onClick={() => setShowMissing((v) => !v)}
+                className={`px-3 py-2 rounded-card text-sm font-medium border transition-colors ${showMissing ? "border-accent/40 bg-accent/10 text-accent" : "border-border text-gray-400 hover:text-white"}`}
+              >
+                {showMissing ? "Viendo faltantes" : "Ver faltantes"}
+              </button>
+            </div>
+
+            {(() => {
+              const ownedNames = new Set(collection.map((c) => c.name));
+              const q = query.trim().toLowerCase();
+              const base = showMissing ? allCards.filter((c) => !ownedNames.has(c.name)) : collection;
+              const list = base.filter((c) => (!posFilter || c.pos === posFilter) && (!tierFilter || c.tier === tierFilter) && (!q || c.name.toLowerCase().includes(q)));
+              if (!list.length) return <p className="text-sm text-gray-500 text-center py-8">Sin resultados con esos filtros.</p>;
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {list.map((c) => showMissing ? <LockedCard key={c.name} c={c} small /> : <PlayerCard key={c.name} c={c} small />)}
+                </div>
+              );
+            })()}
           </div>
         )
       )}
