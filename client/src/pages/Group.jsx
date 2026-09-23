@@ -17,6 +17,49 @@ import WeeklyRecap from "../components/WeeklyRecap.jsx";
 import GroupCup from "../components/GroupCup.jsx";
 import GroupDivision from "../components/GroupDivision.jsx";
 import DuelBets from "../components/DuelBets.jsx";
+import { useToast } from "../context/ToastContext.jsx";
+
+// Cartas es opt-in por grupo: solo lo activa quien creó el grupo, y solo con
+// 3+ miembros. Una vez activado, este botón desaparece (queda prendido para
+// siempre, no hace falta seguir mostrando el toggle).
+function CardsToggle({ group, memberCount, onToggled }) {
+  const { toast } = useToast();
+  const [busy, setBusy] = useState(false);
+  if (!group || group.cards_enabled) return null;
+
+  async function activate() {
+    setBusy(true);
+    try {
+      await api.post(`/groups/${group.id}/cards/toggle`, { enable: true });
+      toast("¡Cartas activado para el grupo!");
+      onToggled?.();
+    } catch (err) {
+      toast(err.response?.data?.error || "No se pudo activar");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="mb-6 flex items-center justify-between gap-3 flex-wrap">
+      <div>
+        <p className="font-semibold text-sm mb-0.5">Activar Cartas para este grupo</p>
+        <p className="text-xs text-gray-500">
+          {memberCount >= 3
+            ? "Álbum, equipo y partidos con cartas — se activa una vez, para siempre."
+            : `Hacen falta al menos 3 miembros (hoy tenés ${memberCount}).`}
+        </p>
+      </div>
+      <button
+        onClick={activate}
+        disabled={busy || memberCount < 3}
+        className="px-4 py-2 rounded-card bg-accent text-onaccent text-xs font-semibold disabled:opacity-40 shrink-0"
+      >
+        Activar
+      </button>
+    </Card>
+  );
+}
 
 const currentMonth = new Date().toISOString().slice(0, 7);
 
@@ -192,6 +235,9 @@ export default function Group() {
     <Layout>
       {activeGroupId && <AnniversaryBanner groupId={activeGroupId} />}
       {activeGroupId && <WeeklyRecap groupId={activeGroupId} />}
+      {detail?.created_by === user?.id && (
+        <CardsToggle group={detail} memberCount={ranking.length} onToggled={() => api.get(`/groups/${activeGroupId}`).then(({ data }) => setDetail(data.group))} />
+      )}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold mb-1">Mi grupo</h1>

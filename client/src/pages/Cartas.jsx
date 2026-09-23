@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Layers, Package, Shield, Swords } from "lucide-react";
+import { Coins, Layers, Package, Shield, Swords } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
@@ -17,6 +17,7 @@ const TIER_STYLE = {
 };
 const POS_LABEL = { GK: "Arquero", DEF: "Defensas", MID: "Medios", FWD: "Delanteros" };
 const FORMATION = { GK: 1, DEF: 4, MID: 3, FWD: 3 };
+const SELL_VALUE = { estrella: 120, oro: 40, plata: 15, bronce: 5 };
 
 function LockedCard({ c, small }) {
   return (
@@ -31,12 +32,12 @@ function LockedCard({ c, small }) {
   );
 }
 
-function PlayerCard({ c, selected, onClick, small }) {
+function PlayerCard({ c, selected, onClick, small, onSell }) {
   const Tag = onClick ? "button" : "div";
   return (
     <Tag
       onClick={onClick}
-      className={`text-left rounded-xl border ${TIER_STYLE[c.tier]} ${small ? "p-2" : "p-3"} ${selected ? "ring-2 ring-accent" : ""} ${onClick ? "hover:brightness-125 transition" : ""}`}
+      className={`relative text-left rounded-xl border ${TIER_STYLE[c.tier]} ${small ? "p-2" : "p-3"} ${selected ? "ring-2 ring-accent" : ""} ${onClick ? "hover:brightness-125 transition" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
         <span className="text-lg font-bold tabular-nums leading-none">{c.ovr}</span>
@@ -45,6 +46,15 @@ function PlayerCard({ c, selected, onClick, small }) {
       <p className="text-sm font-semibold text-white mt-2 leading-tight">{c.name}</p>
       <p className="text-[11px] text-gray-400 truncate">{c.club}</p>
       <p className="text-[10px] opacity-70 mt-1">{c.tierLabel}{c.count > 1 ? ` · x${c.count}` : ""}{c.isNew ? " · ¡NUEVA!" : ""}</p>
+      {onSell && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onSell(c); }}
+          title={`Vender por ${SELL_VALUE[c.tier]} monedas`}
+          className="absolute bottom-1.5 right-1.5 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/40 text-[10px] text-amber-400 hover:bg-black/60"
+        >
+          <Coins size={10} /> {SELL_VALUE[c.tier]}
+        </button>
+      )}
     </Tag>
   );
 }
@@ -100,20 +110,36 @@ export default function Cartas() {
   const [posFilter, setPosFilter] = useState("");
   const [tierFilter, setTierFilter] = useState("");
   const [query, setQuery] = useState("");
+  const [wallet, setWallet] = useState(0);
   useEffect(() => { api.get("/cards/all").then((r) => setAllCards(r.data.cards)).catch(() => setAllCards([])); }, []);
 
+  async function sell(card) {
+    try {
+      const { data } = await api.post("/cards/sell", { name: card.name, count: 1 });
+      setWallet(data.balance);
+      toast(`Vendida por ${data.earned} monedas`);
+      load();
+    } catch (err) {
+      toast(err.response?.data?.error || "No se pudo vender");
+    }
+  }
+
   const load = useCallback(async () => {
-    const [s, c, l, r] = await Promise.all([
-      api.get("/cards/state"), api.get("/cards/collection"), api.get("/cards/lineup"), api.get("/cards/rivals"),
+    const [s, c, l, r, w] = await Promise.all([
+      api.get("/cards/state"), api.get("/cards/collection"), api.get("/cards/lineup"), api.get("/cards/rivals"), api.get("/cards/wallet"),
     ]);
     setState(s.data);
     setCollection(c.data.cards);
     setSelected(l.data.players.map((p) => p.name));
     setStrength(l.data.strength);
     setRivals(r.data.rivals);
+    setWallet(w.data.balance);
   }, []);
 
-  useEffect(() => { load().catch(() => {}); }, [load]);
+  const [accessError, setAccessError] = useState(null);
+  useEffect(() => {
+    load().catch((err) => setAccessError(err.response?.data?.error || "No se pudo cargar Cartas"));
+  }, [load]);
 
   async function claimDaily() {
     await api.post("/cards/claim-daily");
@@ -188,6 +214,21 @@ export default function Cartas() {
 
   const TABS = [["sobres", "Sobres", Package], ["album", "Álbum", Layers], ["equipo", "Mi equipo", Shield]];
 
+  if (accessError) {
+    return (
+      <Layout>
+        <Card>
+          <EmptyState
+            icon={Package}
+            title="Cartas no está activado en tu grupo"
+            hint="Un admin de alguno de tus grupos tiene que activarlo (hacen falta 3+ miembros)."
+            actions={[{ label: "Ir a Mi grupo", to: "/grupo" }]}
+          />
+        </Card>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="mb-6">
@@ -207,7 +248,12 @@ export default function Cartas() {
             <Icon size={13} /> {label}
           </button>
         ))}
-        {state && <span className="ml-auto text-xs text-gray-500 self-center">{state.owned} / {state.total} cartas</span>}
+        {state && (
+          <span className="ml-auto flex items-center gap-3 text-xs text-gray-500 self-center">
+            <span className="inline-flex items-center gap-1 text-amber-400"><Coins size={12} /> {wallet}</span>
+            {state.owned} / {state.total} cartas
+          </span>
+        )}
       </div>
 
       {tab === "sobres" && state && (
@@ -267,7 +313,7 @@ export default function Cartas() {
               if (!list.length) return <p className="text-sm text-gray-500 text-center py-8">Sin resultados con esos filtros.</p>;
               return (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {list.map((c) => showMissing ? <LockedCard key={c.name} c={c} small /> : <PlayerCard key={c.name} c={c} small />)}
+                  {list.map((c) => showMissing ? <LockedCard key={c.name} c={c} small /> : <PlayerCard key={c.name} c={c} small onSell={sell} />)}
                 </div>
               );
             })()}

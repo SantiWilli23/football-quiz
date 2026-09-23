@@ -811,6 +811,15 @@ CREATE TABLE IF NOT EXISTS user_cards (
   PRIMARY KEY (user_id, player_name)
 );
 
+-- Moneda virtual de Cartas: nace de vender cartas y de completar SBCs, y se
+-- gasta en la tienda de sobres o en duelos con apuesta. Nunca se compra con
+-- dinero real — es un circuito cerrado, adentro del juego solamente.
+CREATE TABLE IF NOT EXISTS card_wallets (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id),
+  balance INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS card_lineups (
   user_id INTEGER PRIMARY KEY REFERENCES users(id),
   players TEXT NOT NULL,

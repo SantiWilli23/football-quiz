@@ -13,6 +13,29 @@ const ALL = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/equipo-juga
 const router = Router();
 router.use(requireAuth);
 
+// Cartas es un módulo opt-in por grupo (server/routes/groups.js tiene el
+// toggle): solo existe para quien pertenece a un grupo donde un admin lo
+// activó. Sin eso, TODA la sección de Cartas devuelve 404 — no aparece
+// "deshabilitada", directamente no existe, tal como se decidió.
+async function hasCardsAccess(userId) {
+  const row = (await db.execute({
+    sql: `SELECT 1 FROM group_members gm JOIN groups_t g ON g.id = gm.group_id
+          WHERE gm.user_id = ? AND g.cards_enabled = 1 LIMIT 1`,
+    args: [userId],
+  })).rows[0];
+  return !!row;
+}
+
+router.use(async (req, res, next) => {
+  try {
+    if (!(await hasCardsAccess(req.userId))) return res.status(404).json({ error: "Cartas no está activado en ninguno de tus grupos" });
+    next();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 // Álbum de cartas: cada jugador de la base única es una carta. La rareza sale de
 // qué tan conocido es (la base viene ordenada de más a menos famoso). Se ganan
 // sobres de 5 cartas: uno gratis por día, uno por cumplir el reto del día y
@@ -20,6 +43,11 @@ router.use(requireAuth);
 // arma un XI (1-4-3-3) que juega partidos automáticos contra la CPU o contra
 // el equipo guardado de alguien de tu grupo; la química sale de los clubes y
 // nacionalidades que comparten en sus carreras reales.
+//
+// Moneda propia (server: card_wallets): nace de vender cartas o de un SBC
+// completado, y se gasta en la tienda de sobres o en un duelo con apuesta.
+// Nunca se compra con dinero real.
+const SELL_VALUE = { estrella: 120, oro: 40, plata: 15, bronce: 5 };
 
 const TIERS = [
   { key: "estrella", label: "Estrella", base: 88, upTo: 150, weight: 3 },
@@ -151,6 +179,55 @@ router.get("/collection", async (req, res) => {
     const cards = rows.map((r) => BY_NAME.get(r.player_name) && { ...pub(BY_NAME.get(r.player_name)), count: Number(r.count) }).filter(Boolean)
       .sort((a, b) => b.ovr - a.ovr);
     res.json({ cards, total: CARDS.length });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+router.get("/wallet", async (req, res) => {
+  try {
+    const row = (await db.execute({ sql: "SELECT balance FROM card_wallets WHERE user_id = ?", args: [req.userId] })).rows[0];
+    res.json({ balance: row ? Number(row.balance) : 0 });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+async function creditWallet(userId, amount) {
+  await db.execute({
+    sql: `INSERT INTO card_wallets (user_id, balance, updated_at) VALUES (?, ?, datetime('now'))
+          ON CONFLICT(user_id) DO UPDATE SET balance = balance + excluded.balance, updated_at = excluded.updated_at`,
+    args: [userId, amount],
+  });
+}
+
+// Vender cartas de a una o varias del mismo jugador. No se puede vender la
+// última copia de una carta que esté puesta en el equipo (para no romper el
+// once guardado sin darte cuenta).
+router.post("/sell", async (req, res) => {
+  try {
+    const name = String(req.body?.name || "");
+    const count = Math.max(1, Number(req.body?.count) || 1);
+    const card = BY_NAME.get(name);
+    if (!card) return res.status(400).json({ error: "Esa carta no existe" });
+
+    const owned = (await db.execute({ sql: "SELECT count FROM user_cards WHERE user_id = ? AND player_name = ?", args: [req.userId, name] })).rows[0];
+    const have = owned ? Number(owned.count) : 0;
+    if (have < count) return res.status(400).json({ error: "No tenés esa cantidad de esa carta" });
+
+    const lineup = await lineupOf(req.userId);
+    const inLineup = lineup.some((c) => c.name === name);
+    if (inLineup && have - count < 1) return res.status(400).json({ error: "No podés vender la última copia de una carta que está en tu equipo" });
+
+    const value = (SELL_VALUE[card.tier] || 0) * count;
+    if (have === count) await db.execute({ sql: "DELETE FROM user_cards WHERE user_id = ? AND player_name = ?", args: [req.userId, name] });
+    else await db.execute({ sql: "UPDATE user_cards SET count = count - ? WHERE user_id = ? AND player_name = ?", args: [count, req.userId, name] });
+    await creditWallet(req.userId, value);
+
+    const wallet = (await db.execute({ sql: "SELECT balance FROM card_wallets WHERE user_id = ?", args: [req.userId] })).rows[0];
+    res.json({ ok: true, earned: value, balance: Number(wallet.balance) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

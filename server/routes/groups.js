@@ -417,4 +417,30 @@ router.put("/:id/rival", async (req, res) => {
   }
 });
 
+// Cartas es opt-in por grupo: solo lo puede activar quien creó el grupo, y
+// solo si ya hay 3+ miembros. Una vez activado queda así aunque el grupo
+// baje de 3 después — el mínimo es un requisito para PRENDERLO, no para
+// mantenerlo prendido.
+router.post("/:id/cards/toggle", async (req, res) => {
+  const groupId = Number(req.params.id);
+  const enable = !!req.body?.enable;
+
+  try {
+    const group = (await db.execute({ sql: "SELECT created_by, cards_enabled FROM groups_t WHERE id = ?", args: [groupId] })).rows[0];
+    if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+    if (group.created_by !== req.userId) return res.status(403).json({ error: "Solo quien creó el grupo puede activar Cartas" });
+
+    if (enable) {
+      const memberCount = Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM group_members WHERE group_id = ?", args: [groupId] })).rows[0].n);
+      if (memberCount < 3) return res.status(400).json({ error: "Hacen falta al menos 3 miembros en el grupo para activar Cartas" });
+    }
+
+    await db.execute({ sql: "UPDATE groups_t SET cards_enabled = ? WHERE id = ?", args: [enable ? 1 : 0, groupId] });
+    res.json({ cards_enabled: enable });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 export default router;

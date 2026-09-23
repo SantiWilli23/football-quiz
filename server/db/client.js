@@ -37,6 +37,7 @@ export async function initSchema() {
   await migrateDuelWildcard();
   await migrateDuelTournamentMatch();
   await migrateGroupMemberRival();
+  await migrateGroupCards();
   await migrateDtLeagueColumns();
   await migrateDtLeagueDraft();
   await migrateWordleLeague();
@@ -182,6 +183,16 @@ async function migrateGroupMemberRival() {
   if (info.rows.length === 0) return;
   if (info.rows.some((r) => r.name === "rival_id")) return;
   await db.execute("ALTER TABLE group_members ADD COLUMN rival_id INTEGER REFERENCES users(id)");
+}
+
+// Cartas es un módulo opt-in por grupo: solo existe si un admin lo activó
+// (y el grupo tenía 3+ miembros al momento de activarlo). Una vez activado
+// queda así aunque el grupo baje de 3 después.
+async function migrateGroupCards() {
+  const info = await db.execute("PRAGMA table_info(groups_t)");
+  if (info.rows.length === 0) return;
+  if (info.rows.some((r) => r.name === "cards_enabled")) return;
+  await db.execute("ALTER TABLE groups_t ADD COLUMN cards_enabled INTEGER NOT NULL DEFAULT 0");
 }
 
 // Instalaciones anteriores tienen `users` sin la columna del avatar dibujado.
