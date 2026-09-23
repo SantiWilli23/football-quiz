@@ -11,6 +11,7 @@ import GroupSelector from "../components/GroupSelector.jsx";
 import TutorialModal from "../components/TutorialModal.jsx";
 import ContinuePlaying, { findSavedGames } from "../components/ContinuePlaying.jsx";
 import DailyChallenge from "../components/DailyChallenge.jsx";
+import WeeklyRankingHero from "../components/WeeklyRankingHero.jsx";
 import api from "../api.js";
 import useAlerts from "../hooks/useAlerts.js";
 
@@ -129,9 +130,14 @@ export default function Dashboard() {
         <GroupSelector />
       </div>
 
+      {/* El centro de la app: el ranking semanal del grupo, primero que
+          nada — es lo que genera la competitividad constante entre amigos. */}
+      <WeeklyRankingHero groupId={groupId} />
+
       {/* Una sola franja: lo que te falta hoy, con un botón por cada cosa, y la
-          racha al costado. Antes eran tarjetas sueltas de racha, trivia y duelos. */}
-      <Card variant="feature" className="mb-10">
+          racha al costado. Antes eran tarjetas sueltas de racha, trivia y duelos.
+          Panel, no feature: el feature de esta pantalla ya es el ranking de arriba. */}
+      <Card variant="panel" className="mb-10">
         <div className="flex items-start justify-between gap-6 flex-wrap">
           <div className="flex-1 min-w-[220px]">
             <p className="t-eyebrow mb-3">Te falta hoy</p>
