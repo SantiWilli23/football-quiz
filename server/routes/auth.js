@@ -3,8 +3,12 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
+import { rateLimit } from "../middleware/rateLimit.js";
 import { getCurrentStreak, getBestStreak } from "../utils/points.js";
 import { computeAchievements } from "./stats.js";
+
+// Frena la fuerza bruta de contraseñas: 10 intentos cada 15 minutos por IP.
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: "Demasiados intentos. Esperá unos minutos y volvé a probar." });
 
 // Espejo de FRAME_REQUIREMENTS en client/src/components/Avatar.jsx — los
 // marcos son cosméticos desbloqueables por logros, no elegibles libremente,
@@ -90,7 +94,7 @@ router.put("/avatar", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/register", async (req, res) => {
+router.post("/register", authLimiter, async (req, res) => {
   const { username, email, password } = req.body || {};
 
   if (!username || !email || !password) {
@@ -128,7 +132,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-router.post("/login", async (req, res) => {
+router.post("/login", authLimiter, async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) {
     return res.status(400).json({ error: "Faltan campos requeridos" });

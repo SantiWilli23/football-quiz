@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
-import { addDays, todayStr } from "../utils/points.js";
+import { addDays, todayStr, mondayOf, quarterStart } from "../utils/points.js";
 import { rankingBetween } from "./stats.js";
 
 const router = Router();
@@ -14,15 +14,6 @@ router.use(requireAuth);
 // división (menos la primera) se sube y abajo (menos la última) se baja.
 const DIVISION_SIZE = 6;
 const DIVISION_NAMES = ["Primera", "Segunda", "Tercera", "Cuarta", "Quinta"];
-
-const dow = (d) => new Date(`${d}T12:00:00Z`).getUTCDay();
-const mondayOf = (d) => addDays(d, -((dow(d) + 6) % 7));
-
-function quarterStart(d) {
-  const [y, m] = d.split("-").map(Number);
-  const qm = Math.floor((m - 1) / 3) * 3 + 1;
-  return `${y}-${String(qm).padStart(2, "0")}-01`;
-}
 
 router.get("/:groupId", async (req, res) => {
   try {

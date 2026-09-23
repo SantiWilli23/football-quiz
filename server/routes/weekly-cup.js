@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
-import { addDays, todayStr } from "../utils/points.js";
+import { addDays, todayStr, mondayOf, dayIndex } from "../utils/points.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -13,9 +13,6 @@ router.use(requireAuth);
 // + reto del día); el empate lo define un sorteo fijo. Todo se resuelve "perezoso":
 // al consultar, las rondas cuyo día ya pasó se calculan y se guardan.
 const MAX_PLAYERS = 8;
-const dow = (d) => new Date(`${d}T12:00:00Z`).getUTCDay();
-const mondayOf = (d) => addDays(d, -((dow(d) + 6) % 7));
-const dayIndex = (d) => (dow(d) + 6) % 7; // lunes = 0 ... domingo = 6
 
 async function pointsOnDay(userId, day) {
   const t = Number((await db.execute({
@@ -133,6 +130,3 @@ router.post("/:groupId/join", async (req, res) => {
 });
 
 export default router;
-
-// Solo para pruebas: resolver la copa "como si hoy fuera" otro día.
-export const __test = { sync };

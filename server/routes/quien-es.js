@@ -4,12 +4,16 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import jwt from "jsonwebtoken";
 import { requireAuth } from "../middleware/auth.js";
+import { rateLimit } from "../middleware/rateLimit.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ALL = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/equipo-jugador-players.json"), "utf-8")).jugadores;
 
 const router = Router();
 router.use(requireAuth);
+
+// Evita que alguien prueba a las patadas cientos de nombres por minuto.
+const guessLimiter = rateLimit({ windowMs: 60 * 1000, max: 20, message: "Muchos intentos seguidos, esperá un momento." });
 
 // "¿Quién es?": se muestra la carrera del jugador club por club (con años) y
 // hay que adivinarlo antes de la última pista. Sin estado en la base: el
@@ -67,7 +71,7 @@ router.get("/clue", (req, res) => {
   res.json({ clue: clues[i] });
 });
 
-router.post("/guess", (req, res) => {
+router.post("/guess", guessLimiter, (req, res) => {
   const p = open(req.body?.token);
   if (!p) return res.status(400).json({ error: "Partida inválida o vencida" });
   const shown = Math.max(1, Number(req.body?.cluesShown) || 1);

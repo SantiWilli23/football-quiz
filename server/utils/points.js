@@ -10,6 +10,24 @@ export function addDays(dateStr, delta) {
   return d.toISOString().slice(0, 10);
 }
 
+// Día de la semana ISO: lunes = 0 ... domingo = 6. Se usa "T12:00:00Z" (no
+// medianoche) para no cruzar de día por redondeo de huso horario.
+export function dayIndex(dateStr) {
+  return (new Date(`${dateStr}T12:00:00Z`).getUTCDay() + 6) % 7;
+}
+
+// El lunes de la semana a la que pertenece dateStr.
+export function mondayOf(dateStr) {
+  return addDays(dateStr, -dayIndex(dateStr));
+}
+
+// El primer día (01) del trimestre al que pertenece dateStr.
+export function quarterStart(dateStr) {
+  const [y, m] = dateStr.split("-").map(Number);
+  const qm = Math.floor((m - 1) / 3) * 3 + 1;
+  return `${y}-${String(qm).padStart(2, "0")}-01`;
+}
+
 function diffDays(a, b) {
   const da = new Date(a + "T00:00:00Z");
   const db_ = new Date(b + "T00:00:00Z");

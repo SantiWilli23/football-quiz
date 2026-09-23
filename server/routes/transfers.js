@@ -4,7 +4,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
+import { rateLimit } from "../middleware/rateLimit.js";
 import { todayStr } from "../utils/points.js";
+
+const predictLimiter = rateLimit({ windowMs: 60 * 1000, max: 30, message: "Muchos cambios seguidos, esperá un momento." });
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ALL = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/equipo-jugador-players.json"), "utf-8")).jugadores;
@@ -78,7 +81,7 @@ router.get("/", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/predict", requireAuth, async (req, res) => {
+router.post("/predict", requireAuth, predictLimiter, async (req, res) => {
   try {
     const id = Number(req.body?.rumorId);
     const pick = String(req.body?.pick || "");

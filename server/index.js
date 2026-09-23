@@ -46,6 +46,10 @@ if (!process.env.JWT_SECRET) {
 }
 
 const app = express();
+// Render sirve detrás de su propio proxy: sin esto, req.ip devuelve la IP
+// del proxy para todo el mundo y el rate limiting (ver middleware/rateLimit.js)
+// terminaría agrupando a todos los usuarios bajo una sola IP.
+app.set("trust proxy", 1);
 app.use(cors());
 app.use(express.json());
 
