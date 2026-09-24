@@ -39,14 +39,19 @@ function PlayerCard({ c, selected, onClick, small, onSell }) {
   return (
     <Tag
       onClick={onClick}
-      className={`relative text-left rounded-xl border ${TIER_STYLE[c.tier]} ${small ? "p-2" : "p-3"} ${selected ? "ring-2 ring-accent" : ""} ${onClick ? "hover:brightness-125 transition" : ""}`}
+      className={`relative text-left rounded-xl border ${TIER_STYLE[c.tier]} ${small ? "p-2" : "p-3"} ${selected ? "ring-2 ring-accent" : ""} ${onClick ? "hover:brightness-125 transition" : ""} ${c.special ? "ring-1 ring-amber-400/60" : ""}`}
     >
-      <div className="flex items-start justify-between gap-2">
+      {c.special && (
+        <span className="absolute top-1.5 left-1.5 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-amber-400 text-black">
+          {c.special}
+        </span>
+      )}
+      <div className={`flex items-start justify-between gap-2 ${c.special ? "mt-4" : ""}`}>
         <span className="text-lg font-bold tabular-nums leading-none">{c.ovr}</span>
         <span className="text-[10px] uppercase tracking-wide opacity-80">{c.pos}</span>
       </div>
-      <p className="text-sm font-semibold text-white mt-2 leading-tight">{c.name}</p>
-      <p className="text-[11px] text-gray-400 truncate">{c.club}</p>
+      <p className="text-sm font-semibold text-white mt-2 leading-tight">{c.realName || c.name}</p>
+      <p className="text-[11px] text-gray-400 truncate">{c.note || c.club}</p>
       <p className="text-[10px] opacity-70 mt-1">{c.tierLabel}{c.count > 1 ? ` · x${c.count}` : ""}{c.isNew ? " · ¡NUEVA!" : ""}</p>
       {onSell && (
         <button

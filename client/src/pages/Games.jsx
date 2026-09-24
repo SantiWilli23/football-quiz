@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Gamepad2, Search } from "lucide-react";
 import EmptyState from "../components/EmptyState.jsx";
 import Layout from "../components/Layout.jsx";
+import MyCardsTeam from "../components/MyCardsTeam.jsx";
 import { FAMILIES, FAMILY_ORDER, TIME_FILTERS, gamesByFamily, minutesOf } from "../data/gameCatalog.js";
 import { daysSince, playedToday, readVisits } from "../utils/visits.js";
 
@@ -72,6 +73,8 @@ export default function Games() {
           <p className="text-gray-400 text-sm">Agrupados por cómo se juegan, no por cuándo se agregaron.</p>
         </div>
       </div>
+
+      <MyCardsTeam />
 
       <div className="mb-8 space-y-3">
         <div className="flex items-center gap-2 bg-panel border border-border rounded-card px-3 py-2.5">

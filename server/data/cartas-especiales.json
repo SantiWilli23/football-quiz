@@ -1,0 +1,167 @@
+{
+  "cartas_especiales": {
+    "Flashback": [
+      { "jugador": "Lionel Messi", "nota": "Temporada 2011-12 en Barça", "media": 100 },
+      { "jugador": "Ronaldinho", "nota": "Barça 2004-06", "media": 98 },
+      { "jugador": "Cristiano Ronaldo", "nota": "Sporting CP 2002-03", "media": 87 },
+      { "jugador": "Kaká", "nota": "AC Milan 2006-07", "media": 86 },
+      { "jugador": "Andriy Shevchenko", "nota": "AC Milan 2003-04", "media": 85 },
+      { "jugador": "Didier Drogba", "nota": "Chelsea 2009-10", "media": 85 },
+      { "jugador": "Steven Gerrard", "nota": "Liverpool 2004-05", "media": 84 },
+      { "jugador": "Marco van Basten", "nota": "AC Milan 1988-89", "media": 84 },
+      { "jugador": "Pavel Nedvěd", "nota": "Juventus 2002-03", "media": 83 },
+      { "jugador": "Lamine Yamal", "nota": "Cuando tenía 5 años", "media": 0 }
+    ],
+    "One Club Man": [
+      { "jugador": "Marco Reus", "nota": "Borussia Dortmund", "media": 93 },
+      { "jugador": "Francesco Totti", "nota": "Roma", "media": 91 },
+      { "jugador": "Paolo Maldini", "nota": "AC Milan", "media": 90 },
+      { "jugador": "Gerd Müller", "nota": "Bayern Munich", "media": 89 },
+      { "jugador": "Carles Puyol", "nota": "Barcelona", "media": 89 },
+      { "jugador": "Eusébio", "nota": "Benfica", "media": 88 },
+      { "jugador": "Franco Baresi", "nota": "AC Milan", "media": 87 },
+      { "jugador": "Ryan Giggs", "nota": "Manchester United", "media": 85 },
+      { "jugador": "Ledley King", "nota": "Tottenham Hotspur", "media": 83 },
+      { "jugador": "Mark Noble", "nota": "West Ham United", "media": 78 }
+    ],
+    "Gold Balón Idols": [
+      { "jugador": "Lionel Messi", "nota": "8 Balones de Oro", "media": 99 },
+      { "jugador": "Cristiano Ronaldo", "nota": "5 Balones de Oro", "media": 97 },
+      { "jugador": "Ronaldo Nazário", "nota": "2 Balones de Oro", "media": 95 },
+      { "jugador": "Ronaldinho", "nota": "1 Balón de Oro", "media": 94 },
+      { "jugador": "Michel Platini", "nota": "3 Balones de Oro", "media": 93 },
+      { "jugador": "Kaká", "nota": "1 Balón de Oro", "media": 92 },
+      { "jugador": "Zinedine Zidane", "nota": "1 Balón de Oro", "media": 91 },
+      { "jugador": "Alfredo Di Stéfano", "nota": "2 Balones de Oro", "media": 90 },
+      { "jugador": "Johan Cruyff", "nota": "3 Balones de Oro", "media": 89 },
+      { "jugador": "Luís Figo", "nota": "1 Balón de Oro", "media": 87 }
+    ],
+    "Mr Finals": [
+      { "jugador": "Sergio Ramos", "nota": "Champions 2014 — cabezazo al 93'", "media": 93 },
+      { "jugador": "Zinedine Zidane", "nota": "Champions 2002 — volea del siglo", "media": 92 },
+      { "jugador": "Andrés Iniesta", "nota": "Mundial 2010 — gol campeón", "media": 91 },
+      { "jugador": "Didier Drogba", "nota": "Champions 2012 — gol y penal decisivo", "media": 89 },
+      { "jugador": "Ángel Di María", "nota": "Champions 2014 + Mundial 2022", "media": 88 },
+      { "jugador": "Ronaldo Nazário", "nota": "Mundial 2002 — doblete en la final", "media": 88 },
+      { "jugador": "Arjen Robben", "nota": "Champions 2013 — gol campeón", "media": 86 },
+      { "jugador": "Gareth Bale", "nota": "Champions 2018 — chilena", "media": 85 },
+      { "jugador": "Mario Gotze", "nota": "Mundial 2014 — gol campeón", "media": 84 },
+      { "jugador": "Alexis Sanchez", "nota": "Copa América 2015 y 2016", "media": 83 }
+    ],
+    "Prime": [
+      { "jugador": "Eden Hazard", "nota": "Chelsea 2014-15", "media": 96 },
+      { "jugador": "Cole Palmer", "nota": "Chelsea 2023-24", "media": 88 },
+      { "jugador": "Xavi Hernández", "nota": "Barça 2010-11", "media": 88 },
+      { "jugador": "Raphinha", "nota": "Barça 2024-25", "media": 88 },
+      { "jugador": "Fernando Torres", "nota": "Liverpool 2007-08", "media": 87 },
+      { "jugador": "Virgil van Dijk", "nota": "Liverpool 2018-19", "media": 87 },
+      { "jugador": "Sergio Agüero", "nota": "Manchester City 2014-15", "media": 86 },
+      { "jugador": "Xabi Alonso", "nota": "Real Madrid 2013-14", "media": 84 }
+    ],
+    "Fantasmas": [
+      { "jugador": "Gianluigi Buffon", "nota": "Mejor portero de la historia, nunca ganó el Balón de Oro", "media": 91 },
+      { "jugador": "Zlatan Ibrahimovic", "nota": "Dominó una década sin ser premiado", "media": 90 },
+      { "jugador": "Robert Lewandowski", "nota": "Mejor 9 de su generación, ignorado en premios", "media": 89 },
+      { "jugador": "Luis Suárez", "nota": "Goleador histórico nunca nominado al Balón de Oro", "media": 88 },
+      { "jugador": "Vinicius Jr", "nota": "Le robaron el Balón de Oro 2023", "media": 88 },
+      { "jugador": "Neymar", "nota": "Pudo ser el mejor del mundo", "media": 87 },
+      { "jugador": "Raúl González", "nota": "Dominó Europa años 90-2000, nunca premiado", "media": 87 },
+      { "jugador": "Thierry Henry", "nota": "2003 estuvo a punto de ganarlo", "media": 86 },
+      { "jugador": "Samuel Eto'o", "nota": "Mejor 9 africano ever, ignorado en premios", "media": 85 },
+      { "jugador": "Paolo Maldini", "nota": "Mejor defensa de la historia, nunca ganó el Balón de Oro", "media": 84 }
+    ],
+    "Selección": [
+      { "jugador": "Pelé", "nota": "Brasil", "media": 98 },
+      { "jugador": "Miroslav Klose", "nota": "Alemania", "media": 94 },
+      { "jugador": "Kylian Mbappé", "nota": "Francia", "media": 92 },
+      { "jugador": "Luka Modric", "nota": "Croacia", "media": 92 },
+      { "jugador": "Alexis Sanchez", "nota": "Chile", "media": 91 },
+      { "jugador": "Emiliano Martínez", "nota": "Argentina", "media": 90 },
+      { "jugador": "Edinson Cavani", "nota": "Uruguay", "media": 88 },
+      { "jugador": "Claudio Bravo", "nota": "Chile", "media": 87 },
+      { "jugador": "Thomas Muller", "nota": "Alemania", "media": 85 },
+      { "jugador": "Guillermo Ochoa", "nota": "México", "media": 84 }
+    ],
+    "Promesas": [
+      { "jugador": "Pau Cubarsí", "nota": "Barcelona", "media": 92 },
+      { "jugador": "Lamine Yamal", "nota": "Barcelona", "media": 88 },
+      { "jugador": "Xabi Espart", "nota": "Barcelona", "media": 86 },
+      { "jugador": "Desire Doue", "nota": "Paris Saint-Germain", "media": 84 },
+      { "jugador": "Estêvão", "nota": "Palmeiras", "media": 81 },
+      { "jugador": "Warren Zaïre-Emery", "nota": "Paris Saint-Germain", "media": 80 },
+      { "jugador": "Kobbie Mainoo", "nota": "Manchester United", "media": 79 },
+      { "jugador": "Claudio Echeverri", "nota": "River Plate", "media": 79 }
+    ],
+    "Actual Champions": [
+      { "jugador": "Ousmane Dembélé", "nota": "Paris Saint-Germain", "media": 94 },
+      { "jugador": "Achraf Hakimi", "nota": "Paris Saint-Germain", "media": 91 },
+      { "jugador": "Marquinhos", "nota": "Paris Saint-Germain", "media": 89 },
+      { "jugador": "Gianluigi Donnarumma", "nota": "Paris Saint-Germain", "media": 88 },
+      { "jugador": "Joao Neves", "nota": "Paris Saint-Germain", "media": 87 },
+      { "jugador": "Vitinha", "nota": "Paris Saint-Germain", "media": 86 },
+      { "jugador": "Bradley Barcola", "nota": "Paris Saint-Germain", "media": 85 },
+      { "jugador": "Nuno Mendes", "nota": "Paris Saint-Germain", "media": 84 },
+      { "jugador": "Fabian Ruiz", "nota": "Paris Saint-Germain", "media": 83 },
+      { "jugador": "Goncalo Ramos", "nota": "Paris Saint-Germain", "media": 82 }
+    ],
+    "Actual Libertadores": [
+      { "jugador": "Pedro (Flamengo)", "nota": "Flamengo", "media": 88 },
+      { "jugador": "Giorgian De Arrascaeta", "nota": "Flamengo", "media": 87 },
+      { "jugador": "Danilo", "nota": "Flamengo", "media": 84 },
+      { "jugador": "Gerson", "nota": "Flamengo", "media": 84 },
+      { "jugador": "Erick Pulgar", "nota": "Flamengo", "media": 82 },
+      { "jugador": "Everton Cebolinha", "nota": "Flamengo", "media": 82 },
+      { "jugador": "Wesley (Flamengo)", "nota": "Flamengo", "media": 81 },
+      { "jugador": "Léo Pereira", "nota": "Flamengo", "media": 81 },
+      { "jugador": "Léo Ortiz", "nota": "Flamengo", "media": 80 },
+      { "jugador": "Fabrício Bruno", "nota": "Flamengo", "media": 79 }
+    ],
+    "Actual Balón de Oro": [
+      { "jugador": "Ousmane Dembélé", "nota": "1° en la votación", "media": 95 },
+      { "jugador": "Lamine Yamal", "nota": "2° en la votación", "media": 93 },
+      { "jugador": "Vinicius Jr", "nota": "3° en la votación", "media": 91 },
+      { "jugador": "Erling Haaland", "nota": "4° en la votación", "media": 90 },
+      { "jugador": "Mohamed Salah", "nota": "5° en la votación", "media": 90 },
+      { "jugador": "Jude Bellingham", "nota": "6° en la votación", "media": 89 },
+      { "jugador": "Vitinha", "nota": "7° en la votación", "media": 88 },
+      { "jugador": "Raphinha", "nota": "8° en la votación", "media": 88 },
+      { "jugador": "Robert Lewandowski", "nota": "9° en la votación", "media": 86 }
+    ],
+    "Retirados": [
+      { "jugador": "Zlatan Ibrahimovic", "nota": "Retirado", "media": 87 },
+      { "jugador": "Andrés Iniesta", "nota": "Retirado", "media": 87 },
+      { "jugador": "John Terry", "nota": "Retirado", "media": 84 },
+      { "jugador": "Andrea Pirlo", "nota": "Retirado", "media": 83 },
+      { "jugador": "Javier Zanetti", "nota": "Retirado", "media": 83 },
+      { "jugador": "Carlos Tevez", "nota": "Retirado", "media": 82 },
+      { "jugador": "David Villa", "nota": "Retirado", "media": 81 },
+      { "jugador": "Gerard Pique", "nota": "Retirado", "media": 80 },
+      { "jugador": "Guillermo Ochoa", "nota": "Retirado", "media": 80 },
+      { "jugador": "Giorgio Chiellini", "nota": "Retirado", "media": 78 }
+    ],
+    "Malditos": [
+      { "jugador": "Neymar", "nota": "Lesiones crónicas en tobillo y rodilla", "media": 88 },
+      { "jugador": "Paul Pogba", "nota": "Lesiones y polémicas frenaron su carrera", "media": 85 },
+      { "jugador": "Eden Hazard", "nota": "En Real Madrid fue pura enfermería", "media": 85 },
+      { "jugador": "Philippe Coutinho", "nota": "Nunca cumplió en el Barça", "media": 84 },
+      { "jugador": "Ansu Fati", "nota": "Rodilla destruida con 18 años", "media": 83 },
+      { "jugador": "Kingsley Coman", "nota": "Rodillas destruidas múltiples veces", "media": 83 },
+      { "jugador": "Mario Gotze", "nota": "Enfermedad metabólica paró su carrera", "media": 82 },
+      { "jugador": "Bojan Krkić", "nota": "El nuevo Messi que nunca fue", "media": 82 },
+      { "jugador": "Robinho", "nota": "Nunca cumplió su enorme potencial", "media": 79 },
+      { "jugador": "Endrick", "nota": "Frenado por lesiones en Real Madrid", "media": 79 }
+    ],
+    "Infravalorados": [
+      { "jugador": "Isco", "nota": "Mejor mediapunta del mundo, nunca premiado", "media": 87 },
+      { "jugador": "Samuel Eto'o", "nota": "Mejor 9 africano ever, ignorado en premios", "media": 86 },
+      { "jugador": "Ricardo Quaresma", "nota": "Genialidades sin reconocimiento", "media": 85 },
+      { "jugador": "Paul Pogba", "nota": "Sus grandes actuaciones siempre olvidadas", "media": 84 },
+      { "jugador": "Paulo Dybala", "nota": "Siempre en la sombra de alguien", "media": 84 },
+      { "jugador": "Vincent Kompany", "nota": "Mejor defensa de su era sin reconocimiento", "media": 83 },
+      { "jugador": "Charles Aranguiz", "nota": "El mejor chileno de su generación, ignorado mundialmente", "media": 82 },
+      { "jugador": "Iago Aspas", "nota": "Crack histórico del Celta, ignorado en selección", "media": 82 },
+      { "jugador": "Jordi Alba", "nota": "Mejor lateral izquierdo de su era, poco reconocido", "media": 81 },
+      { "jugador": "Dominik Szoboszlai", "nota": "Talento brutal que pocos reconocen", "media": 80 }
+    ]
+  }
+}

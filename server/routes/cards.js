@@ -10,6 +10,21 @@ import { rankingBetween } from "./stats.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ALL = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/equipo-jugador-players.json"), "utf-8")).jugadores;
+const ESPECIALES_RAW = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/cartas-especiales.json"), "utf-8")).cartas_especiales;
+
+// Los 8 jugadores que las cartas especiales necesitan y todavía no estaban en
+// la base principal (ver server/data/cartas-especiales.json). Se agregan acá,
+// aparte, para no tocar el archivo grande de 2003 jugadores a mano.
+const EXTRA_PLAYERS = [
+  { nombre: "Bojan Krkić", nacionalidad: "España", posicion: "Delantero", nacimiento: 1990, carrera: [{ club: "Barcelona", inicio: 2007, fin: 2011 }, { club: "AC Milan", inicio: 2011, fin: 2012 }, { club: "Stoke City", inicio: 2014, fin: 2021 }] },
+  { nombre: "Everton Cebolinha", nacionalidad: "Brasil", posicion: "Delantero", nacimiento: 1996, carrera: [{ club: "Grêmio", inicio: 2013, fin: 2018 }, { club: "Benfica", inicio: 2018, fin: 2023 }, { club: "Flamengo", inicio: 2023, fin: null }] },
+  { nombre: "Fabrício Bruno", nacionalidad: "Brasil", posicion: "Defensa", nacimiento: 1996, carrera: [{ club: "Cruzeiro", inicio: 2018, fin: 2021 }, { club: "Flamengo", inicio: 2022, fin: null }] },
+  { nombre: "Gerson", nacionalidad: "Brasil", posicion: "Mediocampista", nacimiento: 1997, carrera: [{ club: "Fluminense", inicio: 2015, fin: 2016 }, { club: "Roma", inicio: 2016, fin: 2017 }, { club: "Olympique Marseille", inicio: 2019, fin: 2021 }, { club: "Flamengo", inicio: 2021, fin: null }] },
+  { nombre: "Léo Ortiz", nacionalidad: "Brasil", posicion: "Defensa", nacimiento: 1996, carrera: [{ club: "Athletico Paranaense", inicio: 2018, fin: 2020 }, { club: "Flamengo", inicio: 2021, fin: null }] },
+  { nombre: "Léo Pereira", nacionalidad: "Brasil", posicion: "Defensa", nacimiento: 1996, carrera: [{ club: "Athletico Paranaense", inicio: 2018, fin: 2020 }, { club: "Flamengo", inicio: 2021, fin: null }] },
+  { nombre: "Wesley (Flamengo)", nacionalidad: "Brasil", posicion: "Defensa", nacimiento: 2001, carrera: [{ club: "Flamengo", inicio: 2021, fin: null }] },
+  { nombre: "Xabi Espart", nacionalidad: "España", posicion: "Mediocampista", nacimiento: 2005, carrera: [{ club: "Barcelona", inicio: 2023, fin: null }] },
+];
 
 const router = Router();
 router.use(requireAuth);
@@ -77,7 +92,12 @@ function isActive(p) {
   return career.length > 0 && career[career.length - 1].fin === null;
 }
 
-const CARDS = ALL.map((p, i) => {
+// EXTRA_PLAYERS también consigue su carta base normal, no solo la especial
+// — van al final de la lista (índice más alto = tier más bajo por defecto,
+// coherente con que no son "famosos" en la base principal).
+const ALL_WITH_EXTRAS = [...ALL, ...EXTRA_PLAYERS];
+
+const BASE_CARDS = ALL_WITH_EXTRAS.map((p, i) => {
   const bigCount = new Set((p.carrera || []).map((c) => c.club.replace(/\s*\((cedido|cantera)\)\s*$/i, "")).filter((c) => BIG.has(c))).size;
   const minTier = bigCount >= 3 ? 1 : bigCount >= 2 ? 2 : TIERS.length - 1;
   const tier = TIERS[Math.min(TIERS.findIndex((t) => i < t.upTo), minTier)];
@@ -87,6 +107,8 @@ const CARDS = ALL.map((p, i) => {
   const realOvr = isActive(p) ? REAL_OVR[p.nombre] : undefined;
   return {
     name: p.nombre,
+    realName: p.nombre,
+    special: null,
     tier: tier.key,
     tierLabel: tier.label,
     ovr: realOvr ?? (tier.base + (h % 9)),
@@ -96,9 +118,64 @@ const CARDS = ALL.map((p, i) => {
     club: [...clubs].pop(),
   };
 });
+
+// Cartas especiales (ver server/data/cartas-especiales.json): cada jugador
+// puede tener como mucho 2 (además de su carta base) — si aparece en más de
+// 2 categorías, se quedan las 2 primeras y el resto no se agrega. La media
+// va de 0 a 100, y solo UNA carta en todo el juego puede llegar a 100 (la
+// primera que aparezca con ese valor; cualquier otra se topea en 99).
+const REAL_PLAYER_BY_NAME = new Map([...ALL, ...EXTRA_PLAYERS].map((p) => [p.nombre, p]));
+
+function tierForOvr(ovr) {
+  if (ovr >= 88) return TIERS[0]; // estrella
+  if (ovr >= 78) return TIERS[1]; // oro
+  if (ovr >= 65) return TIERS[2]; // plata
+  return TIERS[3]; // bronce
+}
+
+const SPECIAL_CARDS = [];
+{
+  const perPlayer = new Map();
+  let hundredTaken = false;
+  for (const [category, entries] of Object.entries(ESPECIALES_RAW)) {
+    for (const e of entries) {
+      const count = perPlayer.get(e.jugador) || 0;
+      if (count >= 2) continue; // máximo 2 especiales por jugador — se descarta el resto
+      const base = REAL_PLAYER_BY_NAME.get(e.jugador);
+      if (!base) continue; // no debería pasar: los 8 que faltaban están en EXTRA_PLAYERS
+
+      let ovr = Math.max(0, Math.min(100, e.media));
+      if (ovr >= 100) {
+        if (hundredTaken) ovr = 99;
+        else hundredTaken = true;
+      }
+
+      const clubs = new Set((base.carrera || []).map((c) => c.club.replace(/\s*\((cedido|cantera)\)\s*$/i, "")));
+      const tier = tierForOvr(ovr);
+      SPECIAL_CARDS.push({
+        name: `${e.jugador} · ${category}`,
+        realName: e.jugador,
+        special: category,
+        note: e.nota || null,
+        tier: tier.key,
+        tierLabel: tier.label,
+        ovr,
+        pos: POS[base.posicion] || "MID",
+        nationality: base.nacionalidad,
+        clubs,
+        club: [...clubs].pop(),
+      });
+      perPlayer.set(e.jugador, count + 1);
+    }
+  }
+}
+
+const CARDS = [...BASE_CARDS, ...SPECIAL_CARDS];
 const BY_NAME = new Map(CARDS.map((c) => [c.name, c]));
-const BY_TIER = Object.fromEntries(TIERS.map((t) => [t.key, CARDS.filter((c) => c.tier === t.key)]));
-const pub = (c) => ({ name: c.name, tier: c.tier, tierLabel: c.tierLabel, ovr: c.ovr, pos: c.pos, nationality: c.nationality, club: c.club });
+// Los sobres normales/buenos solo salen de la base — las especiales son más
+// raras y salen aparte (ver drawCard) para que sigan siendo especiales.
+const BY_TIER = Object.fromEntries(TIERS.map((t) => [t.key, BASE_CARDS.filter((c) => c.tier === t.key)]));
+const pub = (c) => ({ name: c.name, realName: c.realName, special: c.special, note: c.note || null, tier: c.tier, tierLabel: c.tierLabel, ovr: c.ovr, pos: c.pos, nationality: c.nationality, club: c.club });
 
 // Calidad de sobre: "weights" alternativos a los de TIERS, para que un sobre
 // ganado por buen rendimiento (o comprado más caro en la tienda) tenga mejor
@@ -110,7 +187,14 @@ const PACK_QUALITY = {
   top: { estrella: 20, oro: 35, plata: 30, bronce: 15 },
 };
 
+// Solo un sobre "top" puede llegar a tocar una carta especial, y con poca
+// chance (6%) — si no, sigue el sorteo normal por tier de siempre.
+const SPECIAL_CHANCE_TOP = 0.06;
+
 function drawCard(quality = "normal") {
+  if (quality === "top" && SPECIAL_CARDS.length > 0 && Math.random() < SPECIAL_CHANCE_TOP) {
+    return SPECIAL_CARDS[Math.floor(Math.random() * SPECIAL_CARDS.length)];
+  }
   const weights = PACK_QUALITY[quality] || PACK_QUALITY.normal;
   let r = Math.random() * TIERS.reduce((s, t) => s + (weights[t.key] ?? t.weight), 0);
   for (const t of TIERS) {
@@ -443,6 +527,9 @@ router.put("/lineup", async (req, res) => {
     const owned = new Set((await db.execute({ sql: "SELECT player_name FROM user_cards WHERE user_id = ?", args: [req.userId] })).rows.map((r) => r.player_name));
     const cards = names.map((n) => BY_NAME.get(n));
     if (cards.some((c) => !c) || names.some((n) => !owned.has(n))) return res.status(400).json({ error: "Solo podés usar cartas que tenés" });
+    if (new Set(cards.map((c) => c.realName)).size !== 11) {
+      return res.status(400).json({ error: "No podés poner dos cartas de la misma persona (base + especial) en el mismo equipo" });
+    }
     const count = { GK: 0, DEF: 0, MID: 0, FWD: 0 };
     for (const c of cards) count[c.pos]++;
     if (Object.keys(FORMATION).some((k) => count[k] !== FORMATION[k])) {
