@@ -7,6 +7,7 @@ import Avatar from "../components/Avatar.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 import { SkeletonRows } from "../components/Skeleton.jsx";
+import Sparkline from "../components/Sparkline.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 
 // Liga del grupo: temporada trimestral con una fecha por semana y divisiones.
@@ -54,6 +55,7 @@ export default function LigaGrupo() {
                       <span className="text-sm font-medium flex-1 truncate">{r.username}</span>
                       {r.zone === "sube" && <span className="text-emerald-500 inline-flex items-center text-xs"><ArrowUp size={13} />Sube</span>}
                       {r.zone === "baja" && <span className="text-red-400 inline-flex items-center text-xs"><ArrowDown size={13} />Baja</span>}
+                      <Sparkline values={r.weekSeries} className={`hidden sm:block shrink-0 ${r.zone === "sube" ? "text-emerald-500" : r.zone === "baja" ? "text-red-400" : "text-accent"}`} />
                       <span className="text-xs text-gray-500 tabular-nums w-20 text-right">+{r.weekPoints} sem.</span>
                       <span className="text-sm font-semibold tabular-nums w-16 text-right">{r.seasonPoints}</span>
                     </div>

@@ -10,7 +10,7 @@ export default function ResultScreen({
   score, unit, groupId, saveState, onAgain, shareText, highlight,
 }) {
   const [copied, setCopied] = useState(false);
-  const { toast } = useToast();
+  const { toast, celebrate } = useToast();
 
   async function share() {
     const text = shareText || `⚽ Futotal · ${score} ${unit}`;
@@ -28,8 +28,10 @@ export default function ResultScreen({
   const saved = saveState && saveState !== "saving";
 
   useEffect(() => {
-    if (saved) toast(improved ? "Marca guardada · nuevo récord de la semana" : "Marca guardada");
-  }, [saved, improved, toast]);
+    if (!saved) return;
+    if (improved) celebrate("¡Nuevo récord de la semana!");
+    else toast("Marca guardada");
+  }, [saved, improved, toast, celebrate]);
 
   return (
     <Card className="mt-4 text-center py-10">

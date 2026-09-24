@@ -71,8 +71,21 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Escudo del grupo: reutiliza la columna `avatar` (existía en el esquema
+// desde el principio, sin usar) para guardar {color, initials} como JSON.
+// No es una foto — es lo mismo que un editor de escudo simple: un color y
+// hasta 3 iniciales, para que el grupo tenga una marca propia en vez de solo
+// su nombre en texto.
+const CREST_COLORS = ["#4ade80", "#ffb400", "#3b9dd6", "#e85d5d", "#a78bfa", "#f472b6", "#facc15", "#22d3ee"];
+
+function buildCrest(name, crestInput) {
+  const initials = String(crestInput?.initials || name || "").trim().toUpperCase().slice(0, 3) || "FT";
+  const color = CREST_COLORS.includes(crestInput?.color) ? crestInput.color : CREST_COLORS[0];
+  return JSON.stringify({ color, initials });
+}
+
 router.post("/", async (req, res) => {
-  const { name, description } = req.body || {};
+  const { name, description, crest } = req.body || {};
   if (!name || !name.trim()) {
     return res.status(400).json({ error: "El nombre del grupo es requerido" });
   }
@@ -80,8 +93,8 @@ router.post("/", async (req, res) => {
   try {
     const invite_code = await uniqueInviteCode();
     const result = await db.execute({
-      sql: `INSERT INTO groups_t (name, description, invite_code, created_by) VALUES (?, ?, ?, ?)`,
-      args: [name.trim(), description || null, invite_code, req.userId],
+      sql: `INSERT INTO groups_t (name, description, avatar, invite_code, created_by) VALUES (?, ?, ?, ?, ?)`,
+      args: [name.trim(), description || null, buildCrest(name, crest), invite_code, req.userId],
     });
     const groupId = Number(result.lastInsertRowid);
 

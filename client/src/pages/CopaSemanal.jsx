@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Crown, Trophy } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
@@ -6,6 +6,7 @@ import Card from "../components/Card.jsx";
 import Avatar from "../components/Avatar.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 
@@ -26,14 +27,25 @@ function Side({ p, winner, pts }) {
 // Copa semanal: inscripción de lunes a jueves, eliminatoria viernes a domingo.
 export default function CopaSemanal() {
   const { activeGroupId: groupId } = useGroups();
-  const { toast } = useToast();
+  const { user } = useAuth();
+  const { toast, celebrate } = useToast();
   const [data, setData] = useState(null);
+  const celebratedWeek = useRef(null);
 
   const load = useCallback(() => {
     if (!groupId) return;
     api.get(`/weekly-cup/${groupId}`).then((r) => setData(r.data)).catch(() => setData(null));
   }, [groupId]);
   useEffect(() => { load(); }, [load]);
+
+  // Festejo una sola vez por semana ganada, la primera vez que esta pantalla
+  // se abre después de que vos seas el campeón (no en cada render).
+  useEffect(() => {
+    if (!data?.champion || data.champion.id !== user?.id) return;
+    if (celebratedWeek.current === data.week) return;
+    celebratedWeek.current = data.week;
+    celebrate("¡Campeón de la copa semanal!");
+  }, [data, user, celebrate]);
 
   async function join() {
     try {

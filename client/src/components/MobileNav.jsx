@@ -87,20 +87,31 @@ export default function MobileNav() {
             to={to}
             end={end}
             className={({ isActive }) =>
-              `flex-1 min-w-0 flex flex-col items-center gap-0.5 py-2 px-0.5 text-xs font-medium leading-tight transition-colors ${
+              `relative flex-1 min-w-0 flex flex-col items-center gap-0.5 py-2 px-0.5 text-xs font-medium leading-tight transition-colors ${
                 isActive ? "text-accent" : "text-gray-500"
               }`
             }
           >
-            <Icon size={20} />
-            {label}
+            {({ isActive }) => (
+              <>
+                {/* Reflector: una franja encendida arriba del ícono activo, en vez
+                    de solo cambiarle el color — se nota incluso de reojo. */}
+                <span
+                  className={`absolute top-0 h-0.5 w-8 rounded-full bg-accent transition-opacity ${isActive ? "opacity-100" : "opacity-0"}`}
+                  aria-hidden="true"
+                />
+                <Icon size={20} />
+                {label}
+              </>
+            )}
           </NavLink>
         ))}
         <button
           onClick={() => setMoreOpen((o) => !o)}
           aria-expanded={moreOpen}
-          className={`flex-1 min-w-0 flex flex-col items-center gap-0.5 py-2 px-0.5 text-xs font-medium leading-tight transition-colors ${moreOpen ? "text-accent" : "text-gray-500"}`}
+          className={`relative flex-1 min-w-0 flex flex-col items-center gap-0.5 py-2 px-0.5 text-xs font-medium leading-tight transition-colors ${moreOpen ? "text-accent" : "text-gray-500"}`}
         >
+          <span className={`absolute top-0 h-0.5 w-8 rounded-full bg-accent transition-opacity ${moreOpen ? "opacity-100" : "opacity-0"}`} aria-hidden="true" />
           <MoreHorizontal size={20} />
           Más
         </button>

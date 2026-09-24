@@ -33,14 +33,24 @@ router.get("/:groupId", async (req, res) => {
 
     const totals = new Map();
     const weekPts = new Map();
+    const series = new Map(); // id -> puntos de cada fecha, en orden, para el sparkline
     const info = new Map();
     for (const monday of weeks) {
       const from = monday < start ? start : monday;
       const rows = await rankingBetween(groupId, from, addDays(monday, 6));
+      const seen = new Set();
       for (const r of rows) {
         info.set(r.id, r);
         totals.set(r.id, (totals.get(r.id) || 0) + Number(r.total_points || 0));
         if (monday === thisMonday) weekPts.set(r.id, Number(r.total_points || 0));
+        if (!series.has(r.id)) series.set(r.id, []);
+        series.get(r.id).push(Number(r.total_points || 0));
+        seen.add(r.id);
+      }
+      // Quien no aparece en `rankingBetween` esa semana es porque no sumó
+      // nada — el sparkline necesita el 0 explícito para no saltearse fechas.
+      for (const id of info.keys()) {
+        if (!seen.has(id)) series.get(id)?.push(0);
       }
     }
 
@@ -58,6 +68,7 @@ router.get("/:groupId", async (req, res) => {
           avatar_config: r.avatar_config,
           weekPoints: weekPts.get(r.id) || 0,
           seasonPoints: totals.get(r.id) || 0,
+          weekSeries: series.get(r.id) || [],
           zone: divisions.length > 1 && ordered.length >= 4
             ? (i < 2 && di > 0 ? "sube" : i >= ordered.length - 2 && di < divisions.length - 1 ? "baja" : null)
             : null,

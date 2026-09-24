@@ -9,6 +9,7 @@ import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import Avatar from "../components/Avatar.jsx";
+import Crest, { CREST_COLORS } from "../components/Crest.jsx";
 import QuestionBank from "../components/QuestionBank.jsx";
 import WeeklyChallenges from "../components/WeeklyChallenges.jsx";
 import FlashPoll from "../components/FlashPoll.jsx";
@@ -85,6 +86,8 @@ export default function Group() {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
+  const [crestColor, setCrestColor] = useState(CREST_COLORS[0]);
+  const [crestInitials, setCrestInitials] = useState("");
   const [createError, setCreateError] = useState("");
   const [createLoading, setCreateLoading] = useState(false);
 
@@ -146,9 +149,14 @@ export default function Group() {
     }
     setCreateLoading(true);
     try {
-      await api.post("/groups", { name: newName.trim(), description: newDescription.trim() });
+      await api.post("/groups", {
+        name: newName.trim(),
+        description: newDescription.trim(),
+        crest: { color: crestColor, initials: crestInitials.trim() || newName.trim() },
+      });
       setNewName("");
       setNewDescription("");
+      setCrestInitials("");
       setShowCreate(false);
       await reloadGroups();
     } catch (err) {
@@ -276,6 +284,33 @@ export default function Group() {
               placeholder="Descripción (opcional)"
               className="w-full bg-bg border border-border rounded-card px-4 py-2.5 text-sm focus:outline-none focus:border-accent"
             />
+
+            {/* Escudo: un color + hasta 3 iniciales, para que el grupo tenga
+                marca propia en vez de ser solo un nombre en una lista. */}
+            <div className="flex items-center gap-3 pt-1">
+              <Crest group={{ name: newName, avatar: JSON.stringify({ color: crestColor, initials: crestInitials || newName }) }} size={44} />
+              <input
+                value={crestInitials}
+                onChange={(e) => setCrestInitials(e.target.value.toUpperCase().slice(0, 3))}
+                placeholder="Iniciales del escudo"
+                maxLength={3}
+                className="flex-1 bg-bg border border-border rounded-card px-4 py-2.5 text-sm uppercase tracking-widest focus:outline-none focus:border-accent"
+              />
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {CREST_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCrestColor(c)}
+                  aria-label={`Color ${c}`}
+                  aria-pressed={crestColor === c}
+                  className={`w-7 h-7 rounded-full transition-transform ${crestColor === c ? "scale-110 ring-2 ring-offset-2 ring-offset-panel ring-white/70" : ""}`}
+                  style={{ background: c }}
+                />
+              ))}
+            </div>
+
             {createError && <p className="text-sm text-red-400">{createError}</p>}
             <button
               type="submit"
@@ -327,14 +362,17 @@ export default function Group() {
               <button
                 key={g.id}
                 onClick={() => selectGroup(g.id)}
-                className={`w-full text-left px-4 py-3 rounded-card border transition-colors ${
+                className={`w-full flex items-center gap-3 text-left px-4 py-3 rounded-card border transition-colors ${
                   activeGroupId === g.id
                     ? "border-accent/40 bg-accent/10"
                     : "border-border bg-panel hover:border-white/30"
                 }`}
               >
-                <p className="text-sm font-medium truncate">{g.name}</p>
-                <p className="text-xs text-gray-500">{g.member_count} miembros</p>
+                <Crest group={g} size={30} />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{g.name}</p>
+                  <p className="text-xs text-gray-500">{g.member_count} miembros</p>
+                </div>
               </button>
             ))}
           </div>
@@ -342,11 +380,14 @@ export default function Group() {
           {detail && (
             <Card>
               <div className="flex items-start justify-between mb-6">
-                <div>
-                  <h2 className="text-lg font-semibold">{detail.name}</h2>
-                  {detail.description && (
-                    <p className="text-sm text-gray-400 mt-0.5">{detail.description}</p>
-                  )}
+                <div className="flex items-center gap-3">
+                  <Crest group={detail} size={48} />
+                  <div>
+                    <h2 className="text-lg font-semibold">{detail.name}</h2>
+                    {detail.description && (
+                      <p className="text-sm text-gray-400 mt-0.5">{detail.description}</p>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
