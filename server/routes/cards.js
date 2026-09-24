@@ -63,6 +63,20 @@ const FORMATION = { GK: 1, DEF: 4, MID: 3, FWD: 3 };
 // (las leyendas se cargaron después que las figuras actuales).
 const BIG = new Set(["Real Madrid", "Barcelona", "Manchester United", "Manchester City", "Juventus", "AC Milan", "Inter Milan", "Bayern Munich", "Liverpool", "Chelsea", "Arsenal", "Paris Saint-Germain", "Atletico Madrid", "Borussia Dortmund"]);
 
+// Media real para jugadores EN ACTIVIDAD (no retirados): en vez del cálculo
+// por fama/hash, estos usan su rating real de verdad. Solo aplica si el
+// jugador está activo (su último club en carrera no tiene fecha de fin) —
+// un retirado sigue usando el cálculo de siempre, tenga o no entrada acá.
+const REAL_OVR = {
+  "Lionel Messi": 86,
+  "Cristiano Ronaldo": 82,
+};
+
+function isActive(p) {
+  const career = p.carrera || [];
+  return career.length > 0 && career[career.length - 1].fin === null;
+}
+
 const CARDS = ALL.map((p, i) => {
   const bigCount = new Set((p.carrera || []).map((c) => c.club.replace(/\s*\((cedido|cantera)\)\s*$/i, "")).filter((c) => BIG.has(c))).size;
   const minTier = bigCount >= 3 ? 1 : bigCount >= 2 ? 2 : TIERS.length - 1;
@@ -70,11 +84,12 @@ const CARDS = ALL.map((p, i) => {
   let h = 0;
   for (const ch of p.nombre) h = (h * 31 + ch.charCodeAt(0)) % 9973;
   const clubs = new Set((p.carrera || []).map((c) => c.club.replace(/\s*\((cedido|cantera)\)\s*$/i, "")));
+  const realOvr = isActive(p) ? REAL_OVR[p.nombre] : undefined;
   return {
     name: p.nombre,
     tier: tier.key,
     tierLabel: tier.label,
-    ovr: tier.base + (h % 9),
+    ovr: realOvr ?? (tier.base + (h % 9)),
     pos: POS[p.posicion] || "MID",
     nationality: p.nacionalidad,
     clubs,
