@@ -51,9 +51,18 @@ const PHOTOS = {
   area_foul: ["Penalty_save_on_the_match_of_UEFA_league.jpg", "Gianluigi_Buffon_Euro_2012_vs_England_penalty.JPG"],
   protest: ["Martin_Atkinson_yellow_card_Carr_Rosicky.jpg", "Yellow_card_at_Galaxy_at_Earthquakes_2010-08-21_1.JPG"],
   tackle: ["Slidetackle.JPG", "Soccer_player_pushes_opponent.jpg"],
-  offside: ["Offside_(7080859329).jpg", "Assistant_referee_15abr2007.jpg"],
-  handball: ["Clemens_Schüttengruber,_Fußballschiedsrichter_(02).jpg"],
-  goal_review: ["VAR_decision.jpg", "Baldomero_Toledo_checks_VAR_-_Seattle_Sounders_vs._Sporting_Kansas_City.jpg"],
+  // "Clemens_Schüttengruber..." (asistente con la banderola) se sacó de acá:
+  // esa foto es de un fuera de juego, no de una mano — no había forma de que
+  // alguien "decidiera por la foto" si la foto mostraba otra infracción.
+  // Se movió abajo, a offside, que es lo que realmente muestra.
+  offside: ["Offside_(7080859329).jpg", "Assistant_referee_15abr2007.jpg", "Clemens_Schüttengruber,_Fußballschiedsrichter_(02).jpg"],
+  // Sin foto verificada de una mano real con licencia libre: mejor mostrar el
+  // diagrama esquemático (ver PlayDiagram.jsx) que una foto que no es de esto.
+  handball: [],
+  // "VAR_decision.jpg" se sacó de acá: es un scoreboard real que dice
+  // "DECISION GOAL" a texto plano — en jugadas cuya respuesta correcta es
+  // "Gol anulado" la foto contradecía directamente la respuesta.
+  goal_review: ["Baldomero_Toledo_checks_VAR_-_Seattle_Sounders_vs._Sporting_Kansas_City.jpg"],
   violent: ["2009-3-14_ManUtd_vs_LFC_Red_Card_Vidic.JPG", "Cardiff-Millwall_redcard.jpg"],
 };
 
