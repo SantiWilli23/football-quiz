@@ -11,6 +11,7 @@ import TutorialModal from "../components/TutorialModal.jsx";
 import ContinuePlaying, { findSavedGames } from "../components/ContinuePlaying.jsx";
 import DailyChallenge from "../components/DailyChallenge.jsx";
 import WeeklyRankingHero from "../components/WeeklyRankingHero.jsx";
+import GroupDivision from "../components/GroupDivision.jsx";
 import Crest from "../components/Crest.jsx";
 import SeasonBanner from "../components/SeasonBanner.jsx";
 import api from "../api.js";
@@ -175,6 +176,12 @@ export default function Dashboard() {
       {/* El centro de la app: el ranking semanal del grupo, primero que
           nada — es lo que genera la competitividad constante entre amigos. */}
       <WeeklyRankingHero groupId={groupId} />
+
+      {groupId && (
+        <div className="mb-8">
+          <GroupDivision groupId={groupId} />
+        </div>
+      )}
 
       <DailyChallenge standalone />
 

@@ -16,11 +16,11 @@ function durationLabel(min) {
 // --c-emerald/--c-amber/--c-red (uno por tema, ver tailwind.config.js), pero
 // Tailwind necesita ver la clase completa en el código para generarla.
 const FAMILY_STYLE = {
-  emerald: { badge: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30", dot: "bg-emerald-500", text: "text-emerald-500" },
-  amber: { badge: "bg-amber-500/15 text-amber-500 border-amber-500/30", dot: "bg-amber-500", text: "text-amber-500" },
-  red: { badge: "bg-red-500/15 text-red-500 border-red-500/30", dot: "bg-red-500", text: "text-red-500" },
-  blue: { badge: "bg-blue-500/15 text-blue-500 border-blue-500/30", dot: "bg-blue-500", text: "text-blue-500" },
-  purple: { badge: "bg-purple-500/15 text-purple-500 border-purple-500/30", dot: "bg-purple-500", text: "text-purple-500" },
+  emerald: { badge: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30", dot: "bg-emerald-500", text: "text-emerald-500", glow: "group-hover:shadow-[0_0_0_1px_rgba(16,185,129,0.35),0_8px_24px_-8px_rgba(16,185,129,0.35)]", bar: "from-emerald-500" },
+  amber: { badge: "bg-amber-500/15 text-amber-500 border-amber-500/30", dot: "bg-amber-500", text: "text-amber-500", glow: "group-hover:shadow-[0_0_0_1px_rgba(245,158,11,0.35),0_8px_24px_-8px_rgba(245,158,11,0.35)]", bar: "from-amber-500" },
+  red: { badge: "bg-red-500/15 text-red-500 border-red-500/30", dot: "bg-red-500", text: "text-red-500", glow: "group-hover:shadow-[0_0_0_1px_rgba(239,68,68,0.35),0_8px_24px_-8px_rgba(239,68,68,0.35)]", bar: "from-red-500" },
+  blue: { badge: "bg-blue-500/15 text-blue-500 border-blue-500/30", dot: "bg-blue-500", text: "text-blue-500", glow: "group-hover:shadow-[0_0_0_1px_rgba(59,130,246,0.35),0_8px_24px_-8px_rgba(59,130,246,0.35)]", bar: "from-blue-500" },
+  purple: { badge: "bg-purple-500/15 text-purple-500 border-purple-500/30", dot: "bg-purple-500", text: "text-purple-500", glow: "group-hover:shadow-[0_0_0_1px_rgba(168,85,247,0.35),0_8px_24px_-8px_rgba(168,85,247,0.35)]", bar: "from-purple-500" },
 };
 
 function GameTile({ href, to, label, icon: Icon, description, available, style, minutes, visits }) {
@@ -28,12 +28,13 @@ function GameTile({ href, to, label, icon: Icon, description, available, style, 
   const days = to ? daysSince(to, visits) : Infinity;
   const inner = (
     <>
-      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${style.badge}`}>
+      <div className={`absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r ${style.bar} to-transparent opacity-0 group-hover:opacity-100 transition-opacity`} aria-hidden="true" />
+      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border transition-transform group-hover:scale-105 ${style.badge}`}>
         <Icon size={21} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <p className="font-semibold text-sm">{label}</p>
+          <p className="font-semibold text-sm group-hover:text-white transition-colors">{label}</p>
           <span className="text-xs font-medium px-2 py-0.5 rounded-full border border-border text-gray-400">{durationLabel(minutes)}</span>
         </div>
         <p className="text-xs text-gray-500 leading-snug">{description}</p>
@@ -47,10 +48,10 @@ function GameTile({ href, to, label, icon: Icon, description, available, style, 
     </>
   );
 
-  const className = "flex items-center gap-4 px-4 py-4 rounded-2xl border border-border bg-panel hover:border-white/20 hover:bg-white/5 transition-colors";
+  const className = `group relative flex items-center gap-4 px-4 py-4 rounded-2xl border border-border bg-panel hover:border-white/20 hover:-translate-y-0.5 transition-all overflow-hidden ${style.glow}`;
 
   if (to) return <Link to={to} className={className}>{inner}</Link>;
-  if (!href) return <div className="flex items-center gap-4 px-4 py-4 rounded-2xl border border-border bg-panel opacity-60 cursor-default">{inner}</div>;
+  if (!href) return <div className="relative flex items-center gap-4 px-4 py-4 rounded-2xl border border-border bg-panel opacity-60 cursor-default overflow-hidden">{inner}</div>;
   return <a href={href} className={className}>{inner}</a>;
 }
 
