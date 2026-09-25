@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, Check, Lightbulb, Lock, Sparkles, User, X } from "lucide-react";
+import { ArrowDown, ArrowUp, BarChart3, Check, Lightbulb, Lock, Sparkles, User, X } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
@@ -143,7 +143,10 @@ export default function Wordle() {
 
   function applyGame(next, wasPlaying) {
     setGame(next);
-    if (wasPlaying && next.status !== "playing") reportToGroup(next);
+    if (wasPlaying && next.status !== "playing") {
+      reportToGroup(next);
+      setStats(null); // que el historial se vuelva a pedir con la partida recién terminada
+    }
   }
 
   const suggestions = query.trim().length >= 2 && game?.status === "playing"
