@@ -25,13 +25,33 @@ function shuffle(arr) {
   return a;
 }
 
+// Distancia entre dos colores hex (RGB euclidiana) — cuanto más chica, más se parecen los escudos.
+function hexToRgb(hex) {
+  const h = (hex || "#888888").replace("#", "");
+  const n = parseInt(h.length === 3 ? h.split("").map((c) => c + c).join("") : h, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function colorDist(a, b) {
+  const [r1, g1, b1] = hexToRgb(a);
+  const [r2, g2, b2] = hexToRgb(b);
+  return Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
+}
+
+// Los distractores se eligen por parecido (mismo color principal y, si se puede, misma liga)
+// para que el escudo borroso no se pueda adivinar solo por la mancha de color.
+function pickDecoys(team, pool) {
+  const rest = pool.filter((t) => t.id !== team.id);
+  const ranked = shuffle(rest).sort((a, b) => {
+    const da = colorDist(team.colors?.primary, a.colors?.primary) - (a.league === team.league ? 40 : 0);
+    const db = colorDist(team.colors?.primary, b.colors?.primary) - (b.league === team.league ? 40 : 0);
+    return da - db;
+  });
+  return ranked.slice(0, 3);
+}
+
 function buildRounds() {
   const chosen = shuffle(POOL).slice(0, ROUNDS);
-  return chosen.map((team) => {
-    const sameLeague = POOL.filter((t) => t.league === team.league && t.id !== team.id);
-    const decoys = shuffle(sameLeague.length >= 3 ? sameLeague : POOL.filter((t) => t.id !== team.id)).slice(0, 3);
-    return { team, options: shuffle([team, ...decoys]) };
-  });
+  return chosen.map((team) => ({ team, options: shuffle([team, ...pickDecoys(team, POOL)]) }));
 }
 
 export default function CrestQuiz() {
