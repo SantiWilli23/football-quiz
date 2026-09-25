@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Radio, Shield, Skull, Swords, Timer, User } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Radio, Timer } from "lucide-react";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -151,39 +150,6 @@ export default function Trivia() {
                 Especial
               </button>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2 mb-4">
-            <Link
-              to="/duelos"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded border border-gray-600 text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
-            >
-              <Swords size={14} /> Duelos
-            </Link>
-            <Link
-              to="/supervivencia"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded border border-gray-600 text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
-            >
-              <Skull size={14} /> Supervivencia
-            </Link>
-            <Link
-              to="/fulbodle"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded border border-gray-600 text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
-            >
-              <User size={14} /> Fulbodle
-            </Link>
-            <Link
-              to="/un-minuto"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded border border-gray-600 text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
-            >
-              <Timer size={14} /> Un Minuto
-            </Link>
-            <Link
-              to="/escudos"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded border border-gray-600 text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
-            >
-              <Shield size={14} /> Escudos
-            </Link>
           </div>
 
           <div className="flex items-center gap-3 mb-6">
