@@ -1,6 +1,6 @@
 import {
-  Building2, CalendarDays, Crown, Gavel, Link2, Shield, ShieldCheck, Skull, Sparkles,
-  Award, Layers, ListOrdered, Radio, Repeat, Star, Swords, Target, Timer, Trophy, TrendingUp, Tv, Users, Zap,
+  Brain, Building2, CalendarDays, Crown, Gavel, Shield, ShieldCheck, Skull, Sparkles,
+  Award, Layers, ListOrdered, Radio, Repeat, Star, Target, Timer, Trophy, TrendingUp, Users,
 } from "lucide-react";
 
 // Familias de color secundario: reemplazan los ~14 hex sueltos que tenía
@@ -28,16 +28,13 @@ export const GAMES = [
   { to: "/mercado", label: "Mercado de pases", icon: Repeat, description: "Predecí a dónde juega cada figura en la próxima ventana; cada acierto suma puntos.", family: "pronostico", available: true },
   { to: "/pase", label: "Pase de temporada", icon: Award, description: "Misiones del mes con lo que ya jugás: sobres de cartas y títulos.", family: "carrera", available: true },
   { to: "/cartas", label: "Cartas", icon: Layers, description: "Abrí sobres con los 2000 jugadores, armá tu once y jugá partidos: la química sale de los clubes que compartieron.", family: "grupo", available: true },
-  { to: "/quien-es", label: "¿Quién es?", icon: Tv, description: "Te mostramos su carrera club por club, con años. Adiviná quién es con la menor cantidad de pistas.", family: "solo", available: true },
   { to: "/escudos", label: "Escudos a ciegas", icon: ShieldCheck, description: "Práctica con pistas o reto semanal sin pistas: adiviná el club solo por el escudo borroso.", family: "solo", available: true },
   { to: "/supervivencia", label: "Supervivencia", icon: Skull, description: "Trivia sin margen de error: una vida, a ver hasta dónde llegás.", family: "solo", available: true },
   { href: "/draft-europeo.html", label: "8a2", icon: Star, description: "Armá tu XI con jugadores de 138 planteles históricos de la Champions League.", family: "solo", available: true },
 
   // ---- Con amigos ----
-  { to: "/duelos", label: "Duelos", icon: Swords, description: "Uno contra uno con las preguntas más difíciles del grupo.", family: "grupo", available: true },
-  { href: "/mentiroso.html", label: "Mentiroso", icon: Zap, description: "Duelo 1 contra 1: ¿sabés más jugadores que el otro antes de que se te acaben?", family: "grupo", available: true },
+  { to: "/quien-sabe-mas", label: "¿Quién sabe más de fútbol?", icon: Brain, description: "Elegí entre Duelos, Mentiroso, Equipo-Jugador y ¿Quién es? y jugá 1 contra 1 o solo.", family: "grupo", available: true },
   { to: "/copa-8a2", label: "Copa 8a2", icon: Trophy, description: "Torneo de eliminación directa del grupo: cada uno arma su equipo draftando jugadores reales.", family: "grupo", available: true },
-  { to: "/equipo-jugador", label: "Equipo-Jugador", icon: Link2, description: "Cadena de conexiones futbolísticas: jugador → equipo → jugador. El que falla, queda eliminado.", family: "grupo", available: true },
   { to: "/fantasyfiction", label: "FantasyFiction", icon: TrendingUp, description: "Liga simulada con todo tu grupo: jornadas semanales y dos mercados de pases por semana apenas se sumen todos.", family: "grupo", available: true },
   { to: "/dt-liga", label: "Modo DT Online", icon: Users, description: "Armá una liga con amigos: cada uno elige un club real y compite temporada a temporada.", family: "grupo", available: true },
 
@@ -59,7 +56,7 @@ export const GAMES = [
 // Duración aproximada de una partida, en minutos. Sirve para filtrar en /juegos.
 const MINUTES = {
   Fichado: 5, Fulbodle: 5, "¿Quién es?": 3, Cartas: 10, "Liga del grupo": 5, "Copa semanal": 5, "¿Quién es? en vivo": 4, "Mercado de pases": 5, "Pase de temporada": 5, "Escudos a ciegas": 5, Supervivencia: 10, "8a2": 15,
-  Duelos: 10, Mentiroso: 10, "Copa 8a2": 30, "Equipo-Jugador": 15, FantasyFiction: 10, "Modo DT Online": 60,
+  "¿Quién sabe más de fútbol?": 10, "Copa 8a2": 30, FantasyFiction: 10, "Modo DT Online": 60,
   "Un Minuto": 1, "Arbitraje / VAR": 3, "Quiniela semanal": 5, "Campeón y descenso": 5,
   Cotrero: 60, "Modo DT": 120, "Modo Presidente": 120, "Vida FUT": 240,
 };

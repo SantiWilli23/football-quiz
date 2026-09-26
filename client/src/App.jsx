@@ -43,6 +43,7 @@ const FantasyFiction = lazy(() => import("./pages/FantasyFiction.jsx"));
 const Presidente = lazy(() => import("./pages/Presidente.jsx"));
 const ArbitrajeVar = lazy(() => import("./pages/ArbitrajeVar.jsx"));
 const GlobalRanking = lazy(() => import("./pages/GlobalRanking.jsx"));
+const QuienSabeMas = lazy(() => import("./pages/QuienSabeMas.jsx"));
 const VidaFut = lazy(() => import("./pages/VidaFut.jsx"));
 
 function RouteFallback() {
@@ -212,6 +213,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <Duels />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/quien-sabe-mas"
+        element={
+          <PrivateRoute>
+            <QuienSabeMas />
           </PrivateRoute>
         }
       />
