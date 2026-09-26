@@ -518,9 +518,6 @@ export default function Group() {
 
               {tab === "ranking" && (
               <>
-              <div className="mb-6">
-                <GroupDivision groupId={activeGroupId} />
-              </div>
               {/* La temporada del mes es la que se mira día a día: el histórico
                   lo gana siempre el que arrancó primero. */}
               <div className="flex items-center gap-2 mb-4 flex-wrap">
@@ -632,6 +629,12 @@ export default function Group() {
 
       {tab === "jugar" && activeGroupId && (
         <div className="mt-6 space-y-5">
+          <div>
+            <h2 className="t-eyebrow border-b border-border pb-2 mb-4 flex items-center gap-1.5">
+              <Shield size={13} /> Liga del grupo
+            </h2>
+            <GroupDivision groupId={activeGroupId} />
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Link
               to="/dt-liga"
