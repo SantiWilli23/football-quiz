@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Trophy, Eye } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Trophy, Eye, Lock } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
@@ -37,14 +37,25 @@ function colorDist(a, b) {
   return Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
 }
 
-// Los distractores se eligen por parecido (mismo color principal y, si se puede, misma liga)
-// para que el escudo borroso no se pueda adivinar solo por la mancha de color.
+// Los distractores se eligen por parecido: mismo color principal, misma
+// liga si se puede, y —clave para que no se puedan descartar por pura
+// fama— un nivel de reconocimiento (prestige, 1-10) PARECIDO al del club
+// posta. Antes solo pesaba el color, así que un escudo obscuro podía
+// terminar al lado de 3 clubes gigantes: cualquiera que ya conocía esos 3
+// de memoria acertaba por descarte sin reconocer el escudo borroso en sí.
 function pickDecoys(team, pool) {
+  const targetPrestige = team.prestige ?? 5;
   const rest = pool.filter((t) => t.id !== team.id);
   const ranked = shuffle(rest).sort((a, b) => {
-    const da = colorDist(team.colors?.primary, a.colors?.primary) - (a.league === team.league ? 40 : 0);
-    const db = colorDist(team.colors?.primary, b.colors?.primary) - (b.league === team.league ? 40 : 0);
-    return da - db;
+    const scoreA =
+      colorDist(team.colors?.primary, a.colors?.primary) +
+      Math.abs((a.prestige ?? 5) - targetPrestige) * 18 -
+      (a.league === team.league ? 40 : 0);
+    const scoreB =
+      colorDist(team.colors?.primary, b.colors?.primary) +
+      Math.abs((b.prestige ?? 5) - targetPrestige) * 18 -
+      (b.league === team.league ? 40 : 0);
+    return scoreA - scoreB;
   });
   return ranked.slice(0, 3);
 }
@@ -52,6 +63,25 @@ function pickDecoys(team, pool) {
 function buildRounds() {
   const chosen = shuffle(POOL).slice(0, ROUNDS);
   return chosen.map((team) => ({ team, options: shuffle([team, ...pickDecoys(team, POOL)]) }));
+}
+
+// Puntaje del reto semanal: rendimiento (aciertos) × dificultad (cuánto
+// menos conocido es el club — prestige bajo = escudo más difícil de
+// reconocer, vale más) × duración (más rápido en promedio, más puntos,
+// pero nunca menos de 70% ni más de 130% del puntaje base — pensar un
+// segundo de más no debería arruinar la marca).
+const IDEAL_SECONDS_PER_ROUND = 8;
+
+function computeWeeklyScore(rounds, results, elapsedMs) {
+  let raw = 0;
+  rounds.forEach((r, i) => {
+    if (!results[i]) return;
+    const difficulty = 11 - (r.team.prestige ?? 5); // 1 (muy famoso) a 10 (muy obscuro)
+    raw += 10 + difficulty * 2; // 12 a 30 puntos por acierto según qué tan reconocible es
+  });
+  const idealMs = IDEAL_SECONDS_PER_ROUND * rounds.length * 1000;
+  const timeFactor = Math.min(1.3, Math.max(0.7, idealMs / Math.max(1, elapsedMs)));
+  return Math.round(raw * timeFactor);
 }
 
 export default function CrestQuiz() {
@@ -65,11 +95,23 @@ export default function CrestQuiz() {
   const [blurLevel, setBlurLevel] = useState(0);
   const [feedback, setFeedback] = useState(null); // "correct" | "wrong"
   const [saveState, setSaveState] = useState(null);
+  const [startedAt, setStartedAt] = useState(null);
+  const [weeklyStatus, setWeeklyStatus] = useState(undefined); // undefined mientras carga | { played, score }
+  const [lockedMsg, setLockedMsg] = useState("");
 
   const current = rounds[index];
   const blur = BLUR_STEPS[Math.min(blurLevel, BLUR_STEPS.length - 1)];
 
+  useEffect(() => {
+    if (!groupId) { setWeeklyStatus(null); return; }
+    setWeeklyStatus(undefined);
+    api.get("/challenges/mine", { params: { gameKey: "escudos", groupId } })
+      .then(({ data }) => setWeeklyStatus(data))
+      .catch(() => setWeeklyStatus(null));
+  }, [groupId, phase]);
+
   function start(isWeekly) {
+    if (isWeekly && weeklyStatus?.locked) return;
     setWeekly(isWeekly);
     setRounds(buildRounds());
     setIndex(0);
@@ -78,6 +120,8 @@ export default function CrestQuiz() {
     setBlurLevel(0);
     setFeedback(null);
     setSaveState(null);
+    setLockedMsg("");
+    setStartedAt(Date.now());
     setPhase("playing");
   }
 
@@ -90,7 +134,8 @@ export default function CrestQuiz() {
     const correct = teamId === current.team.id;
     setFeedback(correct ? "correct" : "wrong");
     if (correct) setCorrectCount((c) => c + 1);
-    setResults((r) => [...r, correct]);
+    const nextResults = [...results, correct];
+    setResults(nextResults);
 
     setTimeout(async () => {
       if (index + 1 < rounds.length) {
@@ -102,10 +147,14 @@ export default function CrestQuiz() {
         if (groupId && weekly) {
           setSaveState("saving");
           try {
-            const finalCorrect = correct ? correctCount + 1 : correctCount;
-            const { data } = await api.post("/challenges/submit", { gameKey: "escudos", groupId, score: finalCorrect });
+            const elapsedMs = Date.now() - startedAt;
+            const score = computeWeeklyScore(rounds, nextResults, elapsedMs);
+            const { data } = await api.post("/challenges/submit", { gameKey: "escudos", groupId, score });
             setSaveState({ improved: data.improved });
-          } catch {
+          } catch (err) {
+            if (err.response?.status === 409) {
+              setLockedMsg("Ya se había guardado el reto de esta semana (jugaste en otra pestaña) — esta corrida no se contó.");
+            }
             setSaveState(null);
           }
         }
@@ -113,11 +162,13 @@ export default function CrestQuiz() {
     }, 700);
   }
 
+  const alreadyPlayed = weeklyStatus?.locked;
+
   return (
     <Layout focus={phase === "playing"}>
       <h1 className="text-xl sm:text-2xl font-bold mb-1">Escudos a ciegas</h1>
       <p className="text-gray-400 text-sm mb-4">
-        {ROUNDS} escudos reales, muy borrosos. En práctica podés pedir pistas para verlos más nítidos; el reto semanal es a ciegas, sin pistas, y tu mejor marca suma al ranking del grupo.
+        {ROUNDS} escudos reales, muy borrosos. En práctica podés pedir pistas para verlos más nítidos; el reto semanal es a ciegas, sin pistas, un solo intento por semana, y el puntaje pondera cuántos acertaste, qué tan reconocibles eran y qué tan rápido respondiste.
       </p>
 
       <GroupSelector />
@@ -126,12 +177,21 @@ export default function CrestQuiz() {
         <Card className="mt-4 text-center py-10">
           <Trophy size={32} className="mx-auto text-accent mb-3" />
           <p className="text-sm text-gray-400 mb-5">¿Cuántos clubes reconocés solo por el escudo, bien borroso?</p>
+
+          {alreadyPlayed && (
+            <p className="flex items-center justify-center gap-1.5 text-xs text-amber-500 mb-4">
+              <Lock size={13} /> Ya jugaste el reto semanal esta semana · {weeklyStatus.score} pts. Volvé el lunes.
+            </p>
+          )}
+
           <div className="flex flex-wrap gap-3 justify-center">
             <button
               onClick={() => start(true)}
-              className="btn btn-primary"
+              disabled={!!alreadyPlayed}
+              className="btn btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
+              title={alreadyPlayed ? "Ya jugaste el reto semanal — un solo intento por semana" : undefined}
             >
-              Reto semanal (sin pistas)
+              {alreadyPlayed ? "Reto semanal jugado" : "Reto semanal (sin pistas)"}
             </button>
             <button
               onClick={() => start(false)}
@@ -220,7 +280,11 @@ export default function CrestQuiz() {
           unit="escudos acertados"
           groupId={weekly ? groupId : null}
           saveState={saveState}
-          highlight={weekly ? undefined : "Fue práctica: no cuenta para el ranking. Jugá el reto semanal (sin pistas) para sumar."}
+          highlight={
+            !weekly
+              ? "Fue práctica: no cuenta para el ranking. Jugá el reto semanal (sin pistas) para sumar."
+              : lockedMsg || "Puntaje del reto: aciertos × qué tan reconocible era el club × qué tan rápido respondiste. Un solo intento por semana."
+          }
           onAgain={() => setPhase("idle")}
           shareText={`⚽ Futotal · Escudos a ciegas: ${correctCount}/${ROUNDS} — ¿me ganás?`}
         />

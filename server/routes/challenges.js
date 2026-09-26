@@ -16,6 +16,12 @@ const ALLOWED_GAMES = new Set(["draft_europeo", "cotrero", "fichado", "equipo_ju
 // fijo en vez de la semana ISO.
 const FIXED_PERIOD_GAMES = { cotrero_legado: "alltime", presidente_legado: "alltime" };
 
+// Juegos donde el reto semanal es de UN SOLO INTENTO: una vez que mandaste
+// puntaje esta semana, no se puede volver a jugar (ni para mejorar la marca)
+// hasta la semana que viene. El resto de los retos siguen dejando reintentar
+// y quedarse con la mejor marca — este set es opt-in a propósito.
+const SINGLE_ATTEMPT_GAMES = new Set(["escudos"]);
+
 function periodKeyFor(gameKey) {
   return FIXED_PERIOD_GAMES[gameKey] || isoWeekKey();
 }
@@ -50,6 +56,11 @@ router.post("/submit", async (req, res) => {
   });
 
   const current = existing.rows[0];
+
+  if (current && SINGLE_ATTEMPT_GAMES.has(gameKey)) {
+    return res.status(409).json({ error: "Ya jugaste el reto semanal de esta semana", score: current.score, periodKey });
+  }
+
   const isBetter = !current || (ascending ? score < current.score : score > current.score);
 
   if (!current) {
@@ -66,6 +77,34 @@ router.post("/submit", async (req, res) => {
   }
 
   res.status(201).json({ saved: true, improved: isBetter, periodKey });
+});
+
+// Para que el cliente sepa ANTES de arrancar si ya se jugó el reto de esta
+// semana (y con qué puntaje) — así puede deshabilitar el botón en vez de
+// dejar que la persona juegue las 10 rondas para recién ahí enterarse.
+router.get("/mine", async (req, res) => {
+  const gameKey = String(req.query.gameKey || "");
+  const groupId = Number(req.query.groupId);
+
+  if (!ALLOWED_GAMES.has(gameKey)) return res.status(400).json({ error: "Juego desconocido" });
+  if (!Number.isInteger(groupId)) return res.status(400).json({ error: "groupId requerido" });
+  if (!(await assertMember(req.userId, groupId))) {
+    return res.status(403).json({ error: "No pertenecés a ese grupo" });
+  }
+
+  const periodKey = periodKeyFor(gameKey);
+  const result = await db.execute({
+    sql: "SELECT score FROM challenge_scores WHERE game_key = ? AND period_key = ? AND group_id = ? AND user_id = ?",
+    args: [gameKey, periodKey, groupId, req.userId],
+  });
+
+  const row = result.rows[0];
+  res.json({
+    periodKey,
+    played: !!row,
+    locked: !!row && SINGLE_ATTEMPT_GAMES.has(gameKey),
+    score: row ? row.score : null,
+  });
 });
 
 router.get("/leaderboard", async (req, res) => {
