@@ -921,7 +921,10 @@ let pendingPersonalityReveal = null;
 let expandedHofIds = new Set();
 let pendingDynasty = null; // { bonus, surname, generation } — se consume en start_game
 
-const SAVE_KEY = "cotrero_v1";
+// Abierto desde Vida FUT (?vidafut=1), Cotrero guarda aparte (prefijo "vidafut_"):
+// la partida de la campaña no se mezcla con las que jugás suelto.
+const VF_PREFIX = new URLSearchParams(location.search).get("vidafut") === "1" ? "vidafut_" : "";
+const SAVE_KEY = VF_PREFIX + "cotrero_v1";
 
 function save() {
   if (state) localStorage.setItem(SAVE_KEY, JSON.stringify(state));
@@ -941,7 +944,7 @@ function deleteSave() { localStorage.removeItem(SAVE_KEY); state = null; }
 // ── SALÓN DE LA FAMA ──────────────────────────────────────────────
 // Cada carrera que termina (retiro) queda registrada acá, para que las
 // próximas partidas tengan algo con qué compararse.
-const HOF_KEY = "cotrero_hof";
+const HOF_KEY = VF_PREFIX + "cotrero_hof";
 const HOF_MAX = 20;
 let hofRecorded = false; // evita duplicar el registro si se renderiza game_over más de una vez
 let weeklyScoreSubmitted = false; // idem, para no mandar el puntaje del reto semanal más de una vez
@@ -986,7 +989,7 @@ function recordCareerInHallOfFame() {
 // retiro queda anotado acá, y desde game_over se puede arrancar la
 // siguiente generación como hijo/a del jugador que se retira, heredando
 // un pequeño plus de potencial según qué tan bueno fue el padre/madre.
-const DYNASTY_KEY = "cotrero_dynasty_v1";
+const DYNASTY_KEY = VF_PREFIX + "cotrero_dynasty_v1";
 const DYNASTY_MAX = 30;
 let dynastyRecorded = false;
 
@@ -2047,7 +2050,7 @@ function renderMenu() {
         <button class="btn btn-outline" data-action="weekly_challenge">🗓 Reto semanal · ranking de grupo</button>
         <button class="btn btn-outline" data-action="view_hof">🏛 Salón de la fama</button>
         ${saveExists ? `<button class="btn btn-ghost" data-action="delete_save">Borrar partida</button>` : ""}
-        <a class="btn btn-ghost" href="/cotrero.html" style="text-align:center;text-decoration:none">← Cambiar de modo</a>
+        ${VF_PREFIX ? '<a class="btn btn-ghost" href="/vida-fut" style="text-align:center;text-decoration:none">← Volver a Vida FUT</a>' : '<a class="btn btn-ghost" href="/cotrero.html" style="text-align:center;text-decoration:none">← Cambiar de modo</a>'}
         <a class="btn btn-ghost" href="/" style="text-align:center;text-decoration:none">🏠 Menú principal de Futotal</a>
       </div>
     </div>
@@ -3254,7 +3257,8 @@ function handleClick(e) {
       if (state && state.club) {
         try { localStorage.setItem("fq_dt_prefill_team", state.club.id); } catch (e) {}
       }
-      window.location.href = "/carrera-dt";
+      // En Vida FUT el retiro lleva a la etapa DT de la campaña, no a una carrera suelta.
+      window.location.href = VF_PREFIX ? "/carrera-dt?vidafut=1" : "/carrera-dt";
       break;
 
     case "continue_game":

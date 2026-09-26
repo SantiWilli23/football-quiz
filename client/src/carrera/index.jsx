@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import VidaFutBanner from "../components/VidaFutBanner.jsx";
 import {
   Home, Shuffle, LayoutDashboard, Users, ArrowLeftRight,
   Wallet, CalendarDays, History,
@@ -104,8 +105,14 @@ function CareerApp() {
 }
 
 export default function CareerMode() {
+  // La key fuerza un remount al pasar entre la Carrera DT suelta y la de Vida
+  // FUT (misma ruta, distinto ?vidafut): si no, quedaría cargada la partida de
+  // un modo y se guardaría en el otro.
+  const { search } = useLocation();
+  const vf = new URLSearchParams(search).get("vidafut") === "1";
   return (
-    <CareerProvider>
+    <CareerProvider key={vf ? "vidafut" : "suelta"}>
+      <VidaFutBanner />
       <CareerApp />
     </CareerProvider>
   );

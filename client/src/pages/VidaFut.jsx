@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { Award, Check, Lock, Sparkles, Trophy } from "lucide-react";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
-import { listSaveSlots, loadCareer } from "../carrera/hooks/useCareerSave.js";
+import { listSaveSlots, loadCareer, withCareerNamespace } from "../carrera/hooks/useCareerSave.js";
+import { VIDAFUT_PREFIX } from "../utils/vidaFut.js";
 import api from "../api.js";
 import { useToast } from "../context/ToastContext.jsx";
 
@@ -26,16 +27,13 @@ function save(state) {
   }
 }
 
-// Cada etapa se mide contra el progreso REAL que ya guarda cada modo por su
-// cuenta — no hay una tabla nueva ni un estado paralelo que se pueda
-// desincronizar. Simplificación consciente: no exige que el progreso haya
-// arrancado DESPUÉS de empezar la campaña (sería más estricto, pero pedía
-// trackear "snapshots" cruzando tres localStorage distintos) — si ya tenías
-// una carrera de Presidente con 3 temporadas antes de arrancar Vida FUT, esa
-// etapa cuenta hecha. Es una campaña personal, no un modo competitivo.
+// Vida FUT tiene sus PROPIAS partidas: cada juego abierto desde acá lleva
+// ?vidafut=1 y guarda con el prefijo "vidafut_" (ver utils/vidaFut.js). Así un
+// Cotrero, una Carrera DT o un Presidente que jugás suelto no cuentan para la
+// campaña, y lo que jugás en la campaña no aparece en tus partidas sueltas.
 function cotreroCareersDone() {
   try {
-    const raw = localStorage.getItem("cotrero_hof");
+    const raw = localStorage.getItem(`${VIDAFUT_PREFIX}cotrero_hof`);
     const list = raw ? JSON.parse(raw) : [];
     return Array.isArray(list) ? list.length : 0;
   } catch {
@@ -45,14 +43,15 @@ function cotreroCareersDone() {
 
 function bestDtSeasons() {
   try {
-    const slots = listSaveSlots();
-    let best = 0;
-    for (const slot of slots) {
-      const data = loadCareer(slot.id);
-      const seasons = (data?.history || []).filter((h) => !h.note).length;
-      if (seasons > best) best = seasons;
-    }
-    return best;
+    return withCareerNamespace(true, () => {
+      let best = 0;
+      for (const slot of listSaveSlots()) {
+        const data = loadCareer(slot.id);
+        const seasons = (data?.history || []).filter((h) => !h.note).length;
+        if (seasons > best) best = seasons;
+      }
+      return best;
+    });
   } catch {
     return 0;
   }
@@ -60,7 +59,7 @@ function bestDtSeasons() {
 
 function presidenteSeasons() {
   try {
-    const raw = localStorage.getItem("presidente_v1");
+    const raw = localStorage.getItem(`${VIDAFUT_PREFIX}presidente_v1`);
     const state = raw ? JSON.parse(raw) : null;
     return state?.history?.length || 0;
   } catch {
@@ -73,7 +72,7 @@ const STAGES = [
     id: 1,
     title: "Cotrero Especialista",
     goal: "Retirá al menos un jugador (una carrera completa)",
-    to: "/cotrero/",
+    to: "/cotrero/?vidafut=1",
     external: true,
     target: 1,
     progress: cotreroCareersDone,
@@ -83,7 +82,7 @@ const STAGES = [
     id: 2,
     title: "Carrera DT",
     goal: "Dirigí 3 temporadas completas",
-    to: "/carrera-dt",
+    to: "/carrera-dt?vidafut=1",
     target: 3,
     progress: bestDtSeasons,
     label: (p) => `${Math.min(p, 3)} de 3 temporadas`,
@@ -92,7 +91,7 @@ const STAGES = [
     id: 3,
     title: "Modo Presidente",
     goal: "Presidí el club 3 temporadas completas",
-    to: "/presidente",
+    to: "/presidente?vidafut=1",
     target: 3,
     progress: presidenteSeasons,
     label: (p) => `${Math.min(p, 3)} de 3 temporadas`,
@@ -146,6 +145,10 @@ export default function VidaFut() {
       <p className="text-gray-400 text-sm mb-6">
         Una carrera larga en tres etapas: arrancás jugando como futbolista en Cotrero Especialista, después colgás los
         botines y dirigís 3 temporadas como DT, y terminás presidiendo el club otras 3 temporadas.
+      </p>
+      <p className="text-xs text-gray-500 -mt-4 mb-6">
+        Las partidas de Vida FUT son aparte: lo que jugás suelto en Cotrero, Carrera DT o Presidente no cuenta acá, y
+        la campaña no toca tus partidas sueltas.
       </p>
 
       {allDone && (

@@ -12,12 +12,16 @@ import { teamsByLeague, teamById } from "../carrera/data/teams.js";
 import TeamCrest from "../carrera/components/TeamCrest.jsx";
 import * as E from "../presidente/engine.js";
 import { buildPresidenteLegacy } from "../presidente/legacy.js";
+import { vfKey } from "../utils/vidaFut.js";
+import { useLocation } from "react-router-dom";
+import VidaFutBanner from "../components/VidaFutBanner.jsx";
 
-const SAVE_KEY = "presidente_v1"; // mismo nombre: Vida FUT y "Seguir jugando" lo leen
+// "Seguir jugando" lee presidente_v1; desde Vida FUT (?vidafut=1) se guarda aparte en vidafut_presidente_v1.
+const SAVE_KEY = () => vfKey("presidente_v1");
 
 function load() {
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
+    const raw = localStorage.getItem(SAVE_KEY());
     return raw ? E.migrateState(JSON.parse(raw)) : null;
   } catch {
     return null;
@@ -26,7 +30,7 @@ function load() {
 
 function save(state) {
   try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+    localStorage.setItem(SAVE_KEY(), JSON.stringify(state));
   } catch {
     /* sin storage disponible: no rompe el juego */
   }
@@ -990,7 +994,7 @@ function Dashboard({ state, setState, onExit }) {
   );
 }
 
-export default function Presidente() {
+function PresidenteGame() {
   const [state, setState] = useState(() => load());
 
   useEffect(() => {
@@ -998,7 +1002,7 @@ export default function Presidente() {
   }, [state]);
 
   const exit = () => {
-    try { localStorage.removeItem(SAVE_KEY); } catch { /* nada que borrar */ }
+    try { localStorage.removeItem(SAVE_KEY()); } catch { /* nada que borrar */ }
     setState(null);
   };
 
@@ -1008,6 +1012,7 @@ export default function Presidente() {
 
   return (
     <Layout>
+      <VidaFutBanner />
       <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2">
@@ -1029,4 +1034,13 @@ export default function Presidente() {
       {state && <Dashboard state={state} setState={setState} onExit={exit} />}
     </Layout>
   );
+}
+
+// La key fuerza un remount al pasar entre el Presidente suelto y el de Vida FUT
+// (misma ruta, distinto ?vidafut): si no, quedaría cargada la partida de un
+// modo y se guardaría en el otro.
+export default function Presidente() {
+  const { search } = useLocation();
+  const vf = new URLSearchParams(search).get("vidafut") === "1";
+  return <PresidenteGame key={vf ? "vidafut" : "suelta"} />;
 }
