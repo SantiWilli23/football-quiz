@@ -326,33 +326,36 @@ export async function rankingBetween(groupId, from, to) {
   const placeholders = members.map(() => "?").join(",");
   const memberIds = members.map((m) => m.id);
 
-  const triviaResult = await db.execute({
-    sql: `SELECT a.user_id,
-                 COALESCE(SUM(a.points), 0) AS points,
-                 COUNT(*) AS answered,
-                 COALESCE(SUM(a.is_correct), 0) AS correct
-          FROM answers a JOIN questions q ON q.id = a.question_id
-          WHERE a.user_id IN (${placeholders})
-            AND q.scheduled_date >= ? AND q.scheduled_date <= ?
-          GROUP BY a.user_id`,
-    args: [...memberIds, from, to],
-  });
+  // Las 8 consultas son independientes: van en paralelo. Contra Turso (remoto)
+  // cada una tarda ~50-100ms, así que en serie sumaban casi un segundo por ranking.
+  const [triviaResult, modeBResult, duelByUser, dtLeagueByUser, wordleByUser, quinielaByUser, betByUser, seasonPredByUser] = await Promise.all([
+    db.execute({
+      sql: `SELECT a.user_id,
+                   COALESCE(SUM(a.points), 0) AS points,
+                   COUNT(*) AS answered,
+                   COALESCE(SUM(a.is_correct), 0) AS correct
+            FROM answers a JOIN questions q ON q.id = a.question_id
+            WHERE a.user_id IN (${placeholders})
+              AND q.scheduled_date >= ? AND q.scheduled_date <= ?
+            GROUP BY a.user_id`,
+      args: [...memberIds, from, to],
+    }),
+    db.execute({
+      sql: `SELECT user_id, COALESCE(SUM(points), 0) AS points
+            FROM mode_b_scores
+            WHERE group_id = ? AND scheduled_date >= ? AND scheduled_date <= ?
+            GROUP BY user_id`,
+      args: [groupId, from, to],
+    }),
+    duelPointsByUser(groupId, from, to),
+    dtLeaguePointsByUser(groupId, from, to),
+    wordlePointsByUser(memberIds, from, to),
+    quinielaPointsByUser(memberIds, from, to),
+    betPointsByUser(groupId, from, to),
+    seasonPredictionPointsByUser(memberIds, from, to),
+  ]);
   const triviaByUser = new Map(triviaResult.rows.map((r) => [r.user_id, r]));
-
-  const modeBResult = await db.execute({
-    sql: `SELECT user_id, COALESCE(SUM(points), 0) AS points
-          FROM mode_b_scores
-          WHERE group_id = ? AND scheduled_date >= ? AND scheduled_date <= ?
-          GROUP BY user_id`,
-    args: [groupId, from, to],
-  });
   const modeBByUser = new Map(modeBResult.rows.map((r) => [r.user_id, Number(r.points)]));
-  const duelByUser = await duelPointsByUser(groupId, from, to);
-  const dtLeagueByUser = await dtLeaguePointsByUser(groupId, from, to);
-  const wordleByUser = await wordlePointsByUser(memberIds, from, to);
-  const quinielaByUser = await quinielaPointsByUser(memberIds, from, to);
-  const betByUser = await betPointsByUser(groupId, from, to);
-  const seasonPredByUser = await seasonPredictionPointsByUser(memberIds, from, to);
 
   return members
     .map((m) => {
@@ -625,10 +628,13 @@ router.get("/champions", async (req, res) => {
 
     const currentMonth = monthOf(todayStr());
     const champions = [];
-    for (const row of monthsResult.rows) {
-      if (row.month >= currentMonth) continue;
+    const pastMonths = monthsResult.rows.filter((row) => row.month < currentMonth);
+    const rankings = await Promise.all(pastMonths.map((row) => {
       const { from, to } = monthBounds(row.month);
-      const ranking = await rankingBetween(groupId, from, to);
+      return rankingBetween(groupId, from, to);
+    }));
+    for (const [i, row] of pastMonths.entries()) {
+      const ranking = rankings[i];
       const winner = ranking[0];
       if (!winner || winner.points === 0) continue;
       champions.push({

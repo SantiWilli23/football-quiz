@@ -35,16 +35,20 @@ router.get("/:groupId", async (req, res) => {
     const weekPts = new Map();
     const series = new Map(); // id -> puntos de cada fecha, en orden, para el sparkline
     const info = new Map();
-    for (const monday of weeks) {
-      const from = monday < start ? start : monday;
-      const rows = await rankingBetween(groupId, from, addDays(monday, 6));
+    // Todas las semanas a la vez en vez de una por una (antes eran hasta 13
+    // rankings en serie contra la base remota — la pantalla tardaba varios segundos).
+    const weekly = await Promise.all(weeks.map((monday) => rankingBetween(groupId, monday < start ? start : monday, addDays(monday, 6))));
+    for (const [wi, monday] of weeks.entries()) {
+      const rows = weekly[wi];
       const seen = new Set();
       for (const r of rows) {
+        // rankingBetween devuelve `points` (antes se leía `total_points`, que no existe: todo daba 0).
+        const pts = Number(r.points || 0);
         info.set(r.id, r);
-        totals.set(r.id, (totals.get(r.id) || 0) + Number(r.total_points || 0));
-        if (monday === thisMonday) weekPts.set(r.id, Number(r.total_points || 0));
+        totals.set(r.id, (totals.get(r.id) || 0) + pts);
+        if (monday === thisMonday) weekPts.set(r.id, pts);
         if (!series.has(r.id)) series.set(r.id, []);
-        series.get(r.id).push(Number(r.total_points || 0));
+        series.get(r.id).push(pts);
         seen.add(r.id);
       }
       // Quien no aparece en `rankingBetween` esa semana es porque no sumó

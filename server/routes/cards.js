@@ -223,9 +223,9 @@ async function grantRetoPacks(userId) {
     sql: "SELECT date FROM wordle_results WHERE user_id = ? AND league = 'reto' ORDER BY date DESC LIMIT 30",
     args: [userId],
   })).rows;
-  for (const r of rows) {
-    await db.execute({ sql: "INSERT OR IGNORE INTO card_packs (user_id, date, source) VALUES (?, ?, 'reto')", args: [userId, r.date] });
-  }
+  if (rows.length === 0) return;
+  // Una sola ida a la base en vez de hasta 30 inserciones sueltas.
+  await db.batch(rows.map((r) => ({ sql: "INSERT OR IGNORE INTO card_packs (user_id, date, source) VALUES (?, ?, 'reto')", args: [userId, r.date] })), "write");
 }
 
 function mondayOf(dateStr) {
@@ -237,6 +237,8 @@ function mondayOf(dateStr) {
 // Cartas activado — se otorga perezosamente (al visitar Cartas) por cada
 // semana YA TERMINADA que todavía no se premió. El date=lunes de esa semana
 // hace que sea idempotente vía el UNIQUE(user_id, date, source) de siempre.
+const WEEK_WINNER_CACHE = new Map();
+
 async function grantWeeklyRankingPack(userId) {
   const today = todayStr();
   const thisMonday = mondayOf(today);
@@ -249,10 +251,18 @@ async function grantWeeklyRankingPack(userId) {
     args: [userId],
   })).rows;
 
-  for (const { group_id: groupId } of groups) {
-    const ranking = await rankingBetween(groupId, lastMonday, lastSunday);
-    const top = ranking[0];
-    if (top && top.id === userId && top.points > 0) {
+  // Una semana terminada ya no cambia: su ganador se calcula una vez por grupo
+  // y queda en memoria, en vez de rehacer el ranking en cada visita a Cartas.
+  const winners = await Promise.all(groups.map(async ({ group_id: groupId }) => {
+    const key = `${groupId}|${lastMonday}`;
+    if (!WEEK_WINNER_CACHE.has(key)) {
+      const top = (await rankingBetween(groupId, lastMonday, lastSunday))[0];
+      WEEK_WINNER_CACHE.set(key, top && top.points > 0 ? top.id : null);
+    }
+    return { groupId, winnerId: WEEK_WINNER_CACHE.get(key) };
+  }));
+  for (const { groupId, winnerId } of winners) {
+    if (winnerId === userId) {
       await db.execute({
         sql: "INSERT OR IGNORE INTO card_packs (user_id, date, source) VALUES (?, ?, ?)",
         args: [userId, lastMonday, `top-ranking${groupId}`],
@@ -293,14 +303,19 @@ router.post("/open", async (req, res) => {
     const upd = await db.execute({ sql: "UPDATE card_packs SET opened_at = datetime('now') WHERE id = ? AND opened_at IS NULL", args: [pack.id] });
     if (upd.rowsAffected === 0) return res.status(409).json({ error: "Ese sobre ya se abrió" });
     const quality = qualityOf(pack.source);
-    const cards = [];
-    for (let i = 0; i < 5; i++) {
-      const c = drawCard(quality);
-      const have = (await db.execute({ sql: "SELECT count FROM user_cards WHERE user_id = ? AND player_name = ?", args: [req.userId, c.name] })).rows[0];
-      if (have) await db.execute({ sql: "UPDATE user_cards SET count = count + 1 WHERE user_id = ? AND player_name = ?", args: [req.userId, c.name] });
-      else await db.execute({ sql: "INSERT INTO user_cards (user_id, player_name, count) VALUES (?, ?, 1)", args: [req.userId, c.name] });
-      cards.push({ ...pub(c), isNew: !have });
-    }
+    // Una lectura de lo que ya tenés + una escritura en lote (antes eran 2 idas
+    // a la base por carta, 10 en total, y abrir un sobre se sentía lento).
+    const drawn = Array.from({ length: 5 }, () => drawCard(quality));
+    const owned = new Set((await db.execute({ sql: "SELECT player_name FROM user_cards WHERE user_id = ?", args: [req.userId] })).rows.map((r) => r.player_name));
+    const cards = drawn.map((c) => {
+      const isNew = !owned.has(c.name);
+      owned.add(c.name); // si salen dos iguales en el mismo sobre, la segunda ya no es "nueva"
+      return { ...pub(c), isNew };
+    });
+    await db.batch(drawn.map((c) => ({
+      sql: "INSERT INTO user_cards (user_id, player_name, count) VALUES (?, ?, 1) ON CONFLICT(user_id, player_name) DO UPDATE SET count = count + 1",
+      args: [req.userId, c.name],
+    })), "write");
     res.json({ cards, quality });
   } catch (err) {
     console.error(err);
