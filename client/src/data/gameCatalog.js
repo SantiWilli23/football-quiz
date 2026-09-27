@@ -1,6 +1,6 @@
 import {
   Brain, Building2, CalendarDays, Crown, Gavel, Shield, ShieldCheck, Skull, Sparkles,
-  Award, Layers, ListOrdered, Radio, Repeat, Star, Target, Timer, Trophy, TrendingUp, Users,
+  Award, Layers, Radio, Repeat, Star, Target, Timer, Trophy, TrendingUp, Users,
 } from "lucide-react";
 
 // Familias de color secundario: reemplazan los ~14 hex sueltos que tenía
@@ -22,7 +22,6 @@ export const FAMILY_ORDER = ["solo", "grupo", "reloj", "pronostico", "carrera"];
 export const GAMES = [
   // ---- Solo ----
   { to: "/fulbodle", label: "Fichado", icon: Target, description: "Adiviná al futbolista secreto con colores, número de parecido, ligas y dificultades. Diario o aleatorio; la partida suma al reto semanal del grupo.", family: "solo", available: true },
-  { to: "/liga-grupo", label: "Liga del grupo", icon: ListOrdered, description: "Temporada trimestral con divisiones: todos los juegos suman, cada semana es una fecha y se sube o se baja.", family: "grupo", available: true },
   { to: "/copa-semanal", label: "Copa semanal", icon: Trophy, description: "Anotate de lunes a jueves; de viernes a domingo se juega a eliminación por puntos de cada día.", family: "grupo", available: true },
   { to: "/quien-es-vivo", label: "¿Quién es? en vivo", icon: Radio, description: "Uno contra uno con las mismas pistas en tiempo real y reacciones con emojis.", family: "grupo", available: true },
   { to: "/mercado", label: "Mercado de pases", icon: Repeat, description: "Predecí a dónde juega cada figura en la próxima ventana; cada acierto suma puntos.", family: "pronostico", available: true },
@@ -55,7 +54,7 @@ export const GAMES = [
 
 // Duración aproximada de una partida, en minutos. Sirve para filtrar en /juegos.
 const MINUTES = {
-  Fichado: 5, Fulbodle: 5, "¿Quién es?": 3, Cartas: 10, "Liga del grupo": 5, "Copa semanal": 5, "¿Quién es? en vivo": 4, "Mercado de pases": 5, "Pase de temporada": 5, "Escudos a ciegas": 5, Supervivencia: 10, "8a2": 15,
+  Fichado: 5, Fulbodle: 5, "¿Quién es?": 3, Cartas: 10, "Copa semanal": 5, "¿Quién es? en vivo": 4, "Mercado de pases": 5, "Pase de temporada": 5, "Escudos a ciegas": 5, Supervivencia: 10, "8a2": 15,
   "¿Quién sabe más de fútbol?": 10, "Copa 8a2": 30, FantasyFiction: 10, "Modo DT Online": 60,
   "Un Minuto": 1, "Arbitraje / VAR": 3, "Quiniela semanal": 5, "Campeón y descenso": 5,
   Cotrero: 60, "Modo DT": 120, "Modo Presidente": 120, "Vida FUT": 240,

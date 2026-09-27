@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Brain, Link2, Tv, Zap, Swords } from "lucide-react";
+import { Brain, Link2, Radio, Zap, Swords } from "lucide-react";
 import Layout from "../components/Layout.jsx";
 
 // Antes Duelos, Mentiroso, Equipo-Jugador y ¿Quién es? eran 4 entradas
@@ -26,10 +26,10 @@ const MODES = [
     description: "Cadena de conexiones futbolísticas: jugador → equipo → jugador. El que falla, queda eliminado.",
   },
   {
-    to: "/quien-es",
-    label: "¿Quién es?",
-    icon: Tv,
-    description: "Te mostramos su carrera club por club, con años. Adiviná quién es con la menor cantidad de pistas.",
+    to: "/quien-es-vivo",
+    label: "¿Quién es? en vivo",
+    icon: Radio,
+    description: "Uno contra uno con las mismas pistas en tiempo real: gana quien adivine primero.",
   },
 ];
 

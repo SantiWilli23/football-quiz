@@ -794,6 +794,21 @@ CREATE TABLE IF NOT EXISTS fichado_guesses (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_fichado_daily ON fichado_games(user_id, date, league) WHERE mode = 'daily';
 CREATE INDEX IF NOT EXISTS idx_fichado_games_user ON fichado_games(user_id, status);
 
+-- Liga del grupo (server/routes/group-league.js): un registro por persona y
+-- temporada, para repartir los sobres de cierre una sola vez aunque la
+-- pantalla se recalcule sola en cada visita (resolución perezosa).
+CREATE TABLE IF NOT EXISTS league_rewards (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  season_key TEXT NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  division INTEGER NOT NULL,
+  position INTEGER NOT NULL,
+  packs INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(group_id, season_key, user_id)
+);
+
 -- Álbum de cartas (server/routes/cards.js): sobres, colección y equipo guardado.
 CREATE TABLE IF NOT EXISTS card_packs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

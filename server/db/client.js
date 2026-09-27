@@ -38,6 +38,7 @@ export async function initSchema() {
   await migrateDuelTournamentMatch();
   await migrateGroupMemberRival();
   await migrateGroupCards();
+  await migrateGroupLeague();
   await migrateDtLeagueColumns();
   await migrateDtLeagueDraft();
   await migrateWordleLeague();
@@ -193,6 +194,23 @@ async function migrateGroupCards() {
   if (info.rows.length === 0) return;
   if (info.rows.some((r) => r.name === "cards_enabled")) return;
   await db.execute("ALTER TABLE groups_t ADD COLUMN cards_enabled INTEGER NOT NULL DEFAULT 0");
+}
+
+// Liga del grupo: igual que Cartas, es opt-in por grupo (ver groups.js) y
+// necesita 10+ miembros al momento de activarla (dos divisiones necesitan
+// gente de sobra para que cada una tenga sentido). `league_packs_enabled`
+// es un segundo interruptor, aparte, para dar sobres de cartas según la
+// posición y división al cerrar la temporada — se puede tener la liga
+// activada sin repartir sobres.
+async function migrateGroupLeague() {
+  const info = await db.execute("PRAGMA table_info(groups_t)");
+  if (info.rows.length === 0) return;
+  if (!info.rows.some((r) => r.name === "league_enabled")) {
+    await db.execute("ALTER TABLE groups_t ADD COLUMN league_enabled INTEGER NOT NULL DEFAULT 0");
+  }
+  if (!info.rows.some((r) => r.name === "league_packs_enabled")) {
+    await db.execute("ALTER TABLE groups_t ADD COLUMN league_packs_enabled INTEGER NOT NULL DEFAULT 0");
+  }
 }
 
 // Instalaciones anteriores tienen `users` sin la columna del avatar dibujado.

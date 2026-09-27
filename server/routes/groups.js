@@ -456,4 +456,51 @@ router.post("/:id/cards/toggle", async (req, res) => {
   }
 });
 
+// Liga del grupo: opt-in igual que Cartas, pero con un mínimo de 10
+// miembros (dos divisiones necesitan gente de sobra). "packsEnabled" es un
+// segundo interruptor aparte para repartir sobres de cartas según posición
+// y división al cerrar la temporada — solo tiene efecto si la liga ya está
+// activada, y solo la puede tocar quien creó el grupo.
+const LEAGUE_MIN_MEMBERS = 10;
+
+router.post("/:id/league/toggle", async (req, res) => {
+  const groupId = Number(req.params.id);
+  const body = req.body || {};
+
+  try {
+    const group = (await db.execute({ sql: "SELECT created_by, league_enabled FROM groups_t WHERE id = ?", args: [groupId] })).rows[0];
+    if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+    if (group.created_by !== req.userId) return res.status(403).json({ error: "Solo quien creó el grupo puede administrar la liga" });
+
+    if ("enable" in body) {
+      const enable = !!body.enable;
+      if (enable) {
+        const memberCount = Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM group_members WHERE group_id = ?", args: [groupId] })).rows[0].n);
+        if (memberCount < LEAGUE_MIN_MEMBERS) {
+          return res.status(400).json({ error: `Hacen falta al menos ${LEAGUE_MIN_MEMBERS} miembros en el grupo para activar la liga` });
+        }
+      }
+      await db.execute({ sql: "UPDATE groups_t SET league_enabled = ? WHERE id = ?", args: [enable ? 1 : 0, groupId] });
+      // Si se apaga la liga, apagar también el reparto de sobres: no tiene
+      // sentido dejarlo prendido sin la liga activa.
+      if (!enable) await db.execute({ sql: "UPDATE groups_t SET league_packs_enabled = 0 WHERE id = ?", args: [groupId] });
+    }
+
+    if ("packsEnabled" in body) {
+      const packsEnabled = !!body.packsEnabled;
+      const current = (await db.execute({ sql: "SELECT league_enabled FROM groups_t WHERE id = ?", args: [groupId] })).rows[0];
+      if (packsEnabled && !current.league_enabled) {
+        return res.status(400).json({ error: "Primero hay que activar la liga" });
+      }
+      await db.execute({ sql: "UPDATE groups_t SET league_packs_enabled = ? WHERE id = ?", args: [packsEnabled ? 1 : 0, groupId] });
+    }
+
+    const updated = (await db.execute({ sql: "SELECT league_enabled, league_packs_enabled FROM groups_t WHERE id = ?", args: [groupId] })).rows[0];
+    res.json({ league_enabled: !!updated.league_enabled, league_packs_enabled: !!updated.league_packs_enabled });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 export default router;

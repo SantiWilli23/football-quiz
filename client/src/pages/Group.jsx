@@ -17,6 +17,7 @@ import AnniversaryBanner from "../components/AnniversaryBanner.jsx";
 import WeeklyRecap from "../components/WeeklyRecap.jsx";
 import GroupCup from "../components/GroupCup.jsx";
 import GroupDivision from "../components/GroupDivision.jsx";
+import GroupLeague from "../components/GroupLeague.jsx";
 import DuelBets from "../components/DuelBets.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 
@@ -629,9 +630,14 @@ export default function Group() {
 
       {tab === "jugar" && activeGroupId && (
         <div className="mt-6 space-y-5">
+          {/* La liga trimestral (opt-in, 10+ miembros, dos divisiones) es
+              distinta de la división mensual de abajo — antes vivía como
+              pantalla propia en el catálogo de Juegos, ahora es una función
+              del grupo como Cartas. */}
+          <GroupLeague groupId={activeGroupId} isCreator={detail?.created_by === user?.id} />
           <div>
             <h2 className="t-eyebrow border-b border-border pb-2 mb-4 flex items-center gap-1.5">
-              <Shield size={13} /> Liga del grupo
+              <Shield size={13} /> División mensual
             </h2>
             <GroupDivision groupId={activeGroupId} />
           </div>

@@ -29,6 +29,22 @@ export function quarterStart(dateStr) {
   return `${y}-${String(qm).padStart(2, "0")}-01`;
 }
 
+// El último día del trimestre al que pertenece dateStr (el día antes de que
+// arranque el trimestre siguiente).
+export function quarterEnd(dateStr) {
+  const [y, m] = dateStr.split("-").map(Number);
+  const qm = Math.floor((m - 1) / 3) * 3 + 1;
+  const nextQuarterFirst = qm + 3 > 12 ? `${y + 1}-01-01` : `${y}-${String(qm + 3).padStart(2, "0")}-01`;
+  return addDays(nextQuarterFirst, -1);
+}
+
+// Clave estable de temporada ("2026-Q3") — sirve para no repartir los
+// sobres de cierre dos veces para la misma temporada.
+export function quarterKey(dateStr) {
+  const [y, m] = dateStr.split("-").map(Number);
+  return `${y}-Q${Math.floor((m - 1) / 3) + 1}`;
+}
+
 function diffDays(a, b) {
   const da = new Date(a + "T00:00:00Z");
   const db_ = new Date(b + "T00:00:00Z");
