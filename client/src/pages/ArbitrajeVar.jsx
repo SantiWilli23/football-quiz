@@ -6,10 +6,11 @@ import Card from "../components/Card.jsx";
 import ResultScreen from "../components/ResultScreen.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 import PlayDiagram from "../components/PlayDiagram.jsx";
+import PlayReplay, { hasReplay } from "../components/PlayReplay.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 
 const TOTAL_SITUATIONS = 10;
-const SECONDS_PER_SITUATION = 18;
+const SECONDS_PER_SITUATION = 25; // hay que mirar la repetición antes de decidir
 
 export default function ArbitrajeVar() {
   const { activeGroupId: groupId } = useGroups();
@@ -23,7 +24,6 @@ export default function ArbitrajeVar() {
   const [loading, setLoading] = useState(false);
   const [saveState, setSaveState] = useState(null);
   const [timed, setTimed] = useState(true); // con reloj suma al ranking semanal
-  const [photoFailed, setPhotoFailed] = useState(false);
   const timerRef = useRef(null);
   const situationRef = useRef(null);
   const seenRef = useRef([]);
@@ -37,7 +37,6 @@ export default function ArbitrajeVar() {
       const { data } = await api.get("/arbitraje-var/situation", { params: { exclude: exclude.join(",") } });
       setSituation(data.situation);
       situationRef.current = data.situation;
-      setPhotoFailed(false);
       setSecondsLeft(SECONDS_PER_SITUATION);
     } catch {
       setSituation(null);
@@ -138,7 +137,7 @@ export default function ArbitrajeVar() {
         <Card className="mt-4 text-center py-10">
           <Gavel size={32} className="mx-auto text-accent mb-3" />
           <p className="text-sm text-gray-400 mb-5">
-            Se te describe la jugada. Elegí la decisión correcta antes de que se acabe el reloj.
+            Mirá la repetición de cada jugada — pausala, pasala en cámara lenta o cuadro a cuadro — y decidí como el VAR.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <button
@@ -172,18 +171,8 @@ export default function ArbitrajeVar() {
 
           {situation && (
             <Card>
-              {situation.photo && !photoFailed ? (
-                <figure className="mb-4 -mx-6 -mt-6 card-bleed">
-                  <img
-                    src={`https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(situation.photo)}?width=800`}
-                    alt="Foto real de una jugada parecida"
-                    loading="eager"
-                    referrerPolicy="no-referrer"
-                    onError={() => setPhotoFailed(true)}
-                    className="w-full h-48 sm:h-64 object-cover rounded-t-2xl"
-                  />
-                  <figcaption className="text-xs text-gray-600 mt-1 px-6">Foto de referencia: Wikimedia Commons</figcaption>
-                </figure>
+              {hasReplay(situation.id) ? (
+                <PlayReplay situationId={situation.id} />
               ) : (
                 <PlayDiagram type={situation.diagram} />
               )}

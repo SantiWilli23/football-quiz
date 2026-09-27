@@ -14,9 +14,7 @@ router.use(requireAuth);
 // generan debate en cualquier transmisión, así que cada una trae un
 // "why" que explica el criterio exacto que la resuelve (se muestra recién
 // después de responder, junto con la decisión correcta). "diagram" clasifica
-// el tipo de jugada para el dibujo esquemático de la cancha — el cliente
-// muestra una foto real de esa categoría (ver PHOTOS más abajo) y, si no carga,
-// un diagrama genérico.
+// el tipo de jugada (diagrama de respaldo si una jugada no tiene repetición).
 const DECISIONS = ["Sigue el juego", "Amarilla", "Roja", "Penal", "Fuera de juego", "Gol anulado"];
 
 const SITUATIONS = [
@@ -42,38 +40,9 @@ const SITUATIONS = [
   { id: 20, text: "El defensor, último hombre, jala de la camiseta al delantero que se le escapa mano a mano con el arquero ya batido — el delantero no cae, sigue corriendo y remata desviado.", correct: 2, diagram: "violent", why: "Cortar una ocasión manifiesta de gol como último hombre es roja directa (DOGSO) aunque el delantero no haya caído ni la jugada terminara en gol — se sanciona la infracción a la ocasión, no el resultado final del remate." },
 ];
 
-// Fotos reales de Wikimedia Commons (licencias libres, se sirven directo desde
-// commons.wikimedia.org con Special:FilePath, sin copiarlas al repo). Cada
-// categoría de jugada tiene un par de fotos de esa situación real; la
-// situación elige una según su id. Si una foto no carga, el cliente cae al
-// diagrama esquemático.
-const PHOTOS = {
-  area_foul: ["Penalty_save_on_the_match_of_UEFA_league.jpg", "Gianluigi_Buffon_Euro_2012_vs_England_penalty.JPG"],
-  protest: ["Martin_Atkinson_yellow_card_Carr_Rosicky.jpg", "Yellow_card_at_Galaxy_at_Earthquakes_2010-08-21_1.JPG"],
-  tackle: ["Slidetackle.JPG", "Soccer_player_pushes_opponent.jpg"],
-  // "Clemens_Schüttengruber..." (asistente con la banderola) se sacó de acá:
-  // esa foto es de un fuera de juego, no de una mano — no había forma de que
-  // alguien "decidiera por la foto" si la foto mostraba otra infracción.
-  // Se movió abajo, a offside, que es lo que realmente muestra.
-  offside: ["Offside_(7080859329).jpg", "Assistant_referee_15abr2007.jpg", "Clemens_Schüttengruber,_Fußballschiedsrichter_(02).jpg"],
-  // Sin foto verificada de una mano real con licencia libre: mejor mostrar el
-  // diagrama esquemático (ver PlayDiagram.jsx) que una foto que no es de esto.
-  handball: [],
-  // "VAR_decision.jpg" se sacó de acá: es un scoreboard real que dice
-  // "DECISION GOAL" a texto plano — en jugadas cuya respuesta correcta es
-  // "Gol anulado" la foto contradecía directamente la respuesta.
-  goal_review: ["Baldomero_Toledo_checks_VAR_-_Seattle_Sounders_vs._Sporting_Kansas_City.jpg"],
-  violent: ["2009-3-14_ManUtd_vs_LFC_Red_Card_Vidic.JPG", "Cardiff-Millwall_redcard.jpg"],
-};
-
-function photoFor(s) {
-  const list = PHOTOS[s.diagram] || [];
-  if (!list.length) return null;
-  return list[s.id % list.length];
-}
-
+// El cliente muestra una repetición animada por id (PlayReplay.jsx).
 function publicSituation(s) {
-  return { id: s.id, text: s.text, options: DECISIONS, diagram: s.diagram, photo: photoFor(s) };
+  return { id: s.id, text: s.text, options: DECISIONS, diagram: s.diagram };
 }
 
 router.get("/situation", (req, res) => {
