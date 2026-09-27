@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Crown, Trophy } from "lucide-react";
+import { Crown, Layers, Play, Target, Trophy } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import Avatar from "../components/Avatar.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
+import MatchPitch from "../components/MatchPitch.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
@@ -30,6 +31,7 @@ export default function CopaSemanal() {
   const { user } = useAuth();
   const { toast, celebrate } = useToast();
   const [data, setData] = useState(null);
+  const [replay, setReplay] = useState(null); // partido de cartas que se está repitiendo en la cancha
   const celebratedWeek = useRef(null);
 
   const load = useCallback(() => {
@@ -57,6 +59,16 @@ export default function CopaSemanal() {
     }
   }
 
+  async function setMode(mode) {
+    try {
+      await api.put(`/weekly-cup/${groupId}/mode`, { mode });
+      toast(mode === "cartas" ? "La copa de esta semana se juega con Cartas" : "La copa de esta semana es por puntos");
+      load();
+    } catch (err) {
+      toast(err.response?.data?.error || "No se pudo cambiar la modalidad");
+    }
+  }
+
   const roundName = (r, total) => (r === total ? "Final" : r === total - 1 ? "Semifinales" : ROUND_NAMES[1]);
 
   return (
@@ -65,7 +77,7 @@ export default function CopaSemanal() {
         <div>
           <h1 className="t-title mb-1">Copa semanal</h1>
           <p className="text-gray-400 text-sm">
-            Anotate de lunes a jueves. Desde el viernes se juega a eliminación: gana cada cruce quien sume más puntos ese día (trivia, Fichado y reto del día). La final es el domingo.
+            Anotate de lunes a jueves. Desde el viernes se juega a eliminación y la final es el domingo. Hay dos modalidades: por puntos (gana quien sume más ese día en trivia, Fichado y reto del día) o con Cartas (partido simulado entre los equipos de cada uno).
           </p>
         </div>
         <GroupSelector />
@@ -82,6 +94,32 @@ export default function CopaSemanal() {
               <p className="text-2xl font-bold">{data.champion.username}</p>
             </Card>
           )}
+
+          <Card>
+            <p className="t-eyebrow mb-2">Modalidad de esta semana</p>
+            <div className="flex gap-2 flex-wrap mb-2">
+              {[["puntos", "Por puntos", Target], ["cartas", "Con Cartas", Layers]].map(([k, label, Icon]) => {
+                const active = data.mode === k;
+                const disabled = !data.canChangeMode || (k === "cartas" && !data.cardsAvailable);
+                return (
+                  <button
+                    key={k}
+                    onClick={() => !active && setMode(k)}
+                    disabled={disabled && !active}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-card border text-xs font-medium transition-colors ${active ? "border-accent/40 bg-accent/10 text-accent" : "border-border text-gray-400 hover:text-white disabled:opacity-40 disabled:hover:text-gray-400"}`}
+                  >
+                    <Icon size={13} /> {label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="t-meta">
+              {data.mode === "cartas"
+                ? "Cada cruce es un partido simulado entre los equipos de Cartas (el once que tengas guardado ese día). Empate: penales. Sin equipo armado, perdés por W.O."
+                : "Cada cruce lo gana quien sume más puntos ese día."}
+              {data.canChangeMode ? (data.cardsAvailable ? " Como creaste el grupo, podés cambiarla hasta el jueves." : " Para jugarla con Cartas, primero activá Cartas en el grupo.") : ""}
+            </p>
+          </Card>
 
           <Card>
             <p className="t-eyebrow mb-3">Anotados ({data.signups.length}/{data.max})</p>
@@ -112,11 +150,30 @@ export default function CopaSemanal() {
                     <Side p={m.a} winner={m.winner && m.a && m.winner === m.a.id} pts={m.aPts} />
                     <div className="border-t border-border" />
                     <Side p={m.b} winner={m.winner && m.b && m.winner === m.b.id} pts={m.bPts} />
+                    {m.events && (
+                      m.aPts == null ? (
+                        <p className="text-xs text-gray-500 pt-1.5">{m.events[0]?.text}</p>
+                      ) : (
+                        <button onClick={() => setReplay({ key: `${r.round}-${i}`, m })} className="mt-1.5 inline-flex items-center gap-1 text-xs text-accent hover:underline">
+                          <Play size={11} /> Ver partido{m.events.some((e) => e.type === "penalties") ? " (se definió por penales)" : ""}
+                        </button>
+                      )
+                    )}
                   </div>
                 ))}
               </div>
             </Card>
           ))}
+
+          {replay && (
+            <Card>
+              <div className="flex items-center justify-between mb-3">
+                <p className="t-heading">{replay.m.a?.username} vs {replay.m.b?.username}</p>
+                <button onClick={() => setReplay(null)} className="text-xs text-gray-500 hover:text-white">Cerrar</button>
+              </div>
+              <MatchPitch key={replay.key} events={replay.m.events} homeLabel={replay.m.a?.username} awayLabel={replay.m.b?.username} />
+            </Card>
+          )}
         </div>
       )}
     </Layout>

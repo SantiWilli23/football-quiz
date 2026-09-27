@@ -43,9 +43,19 @@ export async function initSchema() {
   await migrateDtLeagueDraft();
   await migrateWordleLeague();
   await migrateFichadoBonusHints();
+  await migrateCupMatchEvents();
 }
 
 // Comodín de racha: pistas gratis que no cuentan como intento gastado.
+// Copa semanal en modo "cartas": se guarda la línea de tiempo del partido
+// simulado (JSON) para poder repetirlo en la cancha animada.
+async function migrateCupMatchEvents() {
+  const info = await db.execute("PRAGMA table_info(cup_matches)");
+  if (info.rows.length === 0) return;
+  if (info.rows.some((r) => r.name === "events")) return;
+  await db.execute("ALTER TABLE cup_matches ADD COLUMN events TEXT");
+}
+
 async function migrateFichadoBonusHints() {
   const info = await db.execute("PRAGMA table_info(fichado_games)");
   if (info.rows.length === 0) return; // instalación nueva: ya sale del schema.sql

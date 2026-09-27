@@ -510,13 +510,13 @@ router.post("/sbc/:id/submit", async (req, res) => {
 });
 
 // ---------- equipo y partidos ----------
-async function lineupOf(userId) {
+export async function lineupOf(userId) {
   const row = (await db.execute({ sql: "SELECT players FROM card_lineups WHERE user_id = ?", args: [userId] })).rows[0];
   if (!row) return [];
   try { return JSON.parse(row.players).map((n) => BY_NAME.get(n)).filter(Boolean); } catch { return []; }
 }
 
-function strengthOf(cards) {
+export function strengthOf(cards) {
   const base = cards.reduce((s, c) => s + c.ovr, 0);
   let chem = 0, nat = 0;
   for (let i = 0; i < cards.length; i++) {

@@ -892,3 +892,13 @@ CREATE TABLE IF NOT EXISTS cup_matches (
   b_pts INTEGER,
   UNIQUE(week, group_id, round, slot)
 );
+
+-- Modalidad de la copa semanal de cada grupo: "puntos" (quien más suma ese día)
+-- o "cartas" (partido simulado entre los equipos de Cartas). La elige quien
+-- creó el grupo, solo durante la inscripción.
+CREATE TABLE IF NOT EXISTS cup_modes (
+  week TEXT NOT NULL,
+  group_id INTEGER NOT NULL,
+  mode TEXT NOT NULL DEFAULT 'puntos',
+  PRIMARY KEY (week, group_id)
+);
