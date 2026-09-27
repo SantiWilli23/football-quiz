@@ -1,14 +1,48 @@
 import { useEffect, useState } from "react";
-import { Eye, Search, Tv } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { Eye, Radio, Search, Tv, User } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import ResultScreen from "../components/ResultScreen.jsx";
+import { QuienEsVivoBody } from "./QuienEsVivo.jsx";
 import { playSfx } from "../utils/sfx.js";
 
-// "¿Quién es?": aparece la carrera del jugador club por club y hay que
-// adivinarlo con la menor cantidad de pistas. Cada pista extra resta 10 puntos.
+// "¿Quién es?" tiene dos modos en una sola pantalla: Solo (carrera club por
+// club, adivinarlo con las menos pistas posibles) y En vivo (1 contra 1 con
+// las mismas pistas en tiempo real). Antes eran dos entradas separadas.
+const MODES = [
+  { key: "solo", label: "Solo", icon: User },
+  { key: "vivo", label: "En vivo · 1 vs 1", icon: Radio },
+];
+
 export default function QuienEs() {
+  const [params, setParams] = useSearchParams();
+  const mode = params.get("modo") === "vivo" ? "vivo" : "solo";
+
+  return (
+    <Layout>
+      <div className="flex gap-1.5 mb-6">
+        {MODES.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setParams(key === "solo" ? {} : { modo: key }, { replace: true })}
+            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-card text-sm font-semibold border transition-colors ${
+              mode === key ? "border-accent bg-accent text-bg" : "border-border text-gray-400 hover:text-white"
+            }`}
+          >
+            <Icon size={14} /> {label}
+          </button>
+        ))}
+      </div>
+      {mode === "vivo" ? <QuienEsVivoBody /> : <QuienEsSolo />}
+    </Layout>
+  );
+}
+
+// "¿Quién es?" solo: aparece la carrera del jugador club por club y hay que
+// adivinarlo con la menor cantidad de pistas. Cada pista extra resta 10 puntos.
+function QuienEsSolo() {
   const [difficulty, setDifficulty] = useState("facil");
   const [game, setGame] = useState(null); // { token, total, clues: [] }
   const [names, setNames] = useState([]);
@@ -84,7 +118,7 @@ export default function QuienEs() {
     : [];
 
   return (
-    <Layout>
+    <>
       <div className="mb-6 flex items-center gap-3">
         <Tv size={22} className="text-accent shrink-0" />
         <div>
@@ -217,6 +251,6 @@ export default function QuienEs() {
           )}
         </>
       )}
-    </Layout>
+    </>
   );
 }

@@ -4,6 +4,7 @@ import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useGroups } from "../context/GroupContext.jsx";
 import { playSfx } from "../utils/sfx.js";
 
 // ¿Quién es? en vivo, 1 contra 1: los dos ven las mismas pistas al mismo tiempo
@@ -14,8 +15,12 @@ const GAME = "quien_es_vivo";
 const CLUE_EVERY = 12;
 const EMOJIS = ["😂", "😱", "🔥", "👏", "🤔"];
 
-export default function QuienEsVivo() {
+// El cuerpo se exporta aparte (sin Layout) para poder embeberlo en la pantalla
+// fusionada de ¿Quién es? (Solo / En vivo). La ruta /quien-es-vivo sigue
+// andando con el export por defecto de abajo.
+export function QuienEsVivoBody() {
   const { user } = useAuth();
+  const { activeGroupId: groupId } = useGroups();
   const [phase, setPhase] = useState("menu"); // menu | waiting | playing | over
   const [code, setCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
@@ -115,6 +120,11 @@ export default function QuienEsVivo() {
     setQuery("");
     const { data } = await api.post("/quien-es/guess", { token: g.token, name, cluesShown: g.shown });
     if (data.correct) {
+      // Puntaje semanal: el que adivina suma lo que vale su partida (100 menos
+      // 10 por cada pista extra que hizo falta, y las pistas salen cada 12 s,
+      // así que adivinar rápido y con pocas pistas vale más). Se guarda la mejor
+      // del ganador de la semana.
+      if (groupId) api.post("/challenges/submit", { gameKey: "quien_es_vivo", groupId, score: data.points }).catch(() => {});
       send({ t: "won", name: data.name, by: user.username, points: data.points });
       finish({ name: data.name, by: user.username, points: data.points });
     } else {
@@ -127,7 +137,7 @@ export default function QuienEsVivo() {
   const suggestions = query.trim().length >= 2 ? names.filter((n) => n.toLowerCase().includes(query.trim().toLowerCase())).slice(0, 6) : [];
 
   return (
-    <Layout>
+    <>
       <div className="mb-6 flex items-center gap-3">
         <Radio size={22} className="text-accent shrink-0" />
         <div>
@@ -219,6 +229,14 @@ export default function QuienEsVivo() {
           )}
         </div>
       )}
+    </>
+  );
+}
+
+export default function QuienEsVivo() {
+  return (
+    <Layout>
+      <QuienEsVivoBody />
     </Layout>
   );
 }

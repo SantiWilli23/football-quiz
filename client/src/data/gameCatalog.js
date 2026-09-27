@@ -1,6 +1,6 @@
 import {
-  Brain, Building2, CalendarDays, Crown, Gavel, Shield, ShieldCheck, Skull, Sparkles,
-  Award, Layers, Radio, Repeat, Star, Target, Timer, Trophy, TrendingUp, Users,
+  Brain, Building2, CalendarDays, Crown, Gavel, Shield, ShieldCheck, Sparkles,
+  Award, Layers, Repeat, Star, Target, Timer, Trophy, TrendingUp, Users,
 } from "lucide-react";
 
 // Familias de color secundario: reemplazan los ~14 hex sueltos que tenía
@@ -23,16 +23,14 @@ export const GAMES = [
   // ---- Solo ----
   { to: "/fulbodle", label: "Fichado", icon: Target, description: "Adiviná al futbolista secreto con colores, número de parecido, ligas y dificultades. Diario o aleatorio; la partida suma al reto semanal del grupo.", family: "solo", available: true },
   { to: "/copa-semanal", label: "Copa semanal", icon: Trophy, description: "Anotate de lunes a jueves; de viernes a domingo se juega a eliminación por puntos de cada día.", family: "grupo", available: true },
-  { to: "/quien-es-vivo", label: "¿Quién es? en vivo", icon: Radio, description: "Uno contra uno con las mismas pistas en tiempo real y reacciones con emojis.", family: "grupo", available: true },
   { to: "/mercado", label: "Mercado de pases", icon: Repeat, description: "Predecí a dónde juega cada figura en la próxima ventana; cada acierto suma puntos.", family: "pronostico", available: true },
   { to: "/pase", label: "Pase de temporada", icon: Award, description: "Misiones del mes con lo que ya jugás: sobres de cartas y títulos.", family: "carrera", available: true },
   { to: "/cartas", label: "Cartas", icon: Layers, description: "Abrí sobres con los 2000 jugadores, armá tu once y jugá partidos: la química sale de los clubes que compartieron.", family: "grupo", available: true },
   { to: "/escudos", label: "Escudos a ciegas", icon: ShieldCheck, description: "Práctica con pistas o reto semanal sin pistas: adiviná el club solo por el escudo borroso.", family: "solo", available: true },
-  { to: "/supervivencia", label: "Supervivencia", icon: Skull, description: "Trivia sin margen de error: una vida, a ver hasta dónde llegás.", family: "solo", available: true },
   { href: "/draft-europeo.html", label: "8a2", icon: Star, description: "Armá tu XI con jugadores de 138 planteles históricos de la Champions League.", family: "solo", available: true },
 
   // ---- Con amigos ----
-  { to: "/quien-sabe-mas", label: "¿Quién sabe más de fútbol?", icon: Brain, description: "Elegí entre Duelos, Mentiroso, Equipo-Jugador y ¿Quién es? y jugá 1 contra 1 o solo.", family: "grupo", available: true },
+  { to: "/quien-sabe-mas", label: "¿Quién sabe más de fútbol?", icon: Brain, description: "Elegí entre Duelos, Mentiroso, Equipo-Jugador, ¿Quién es? (solo o en vivo) y Supervivencia.", family: "grupo", available: true },
   { to: "/copa-8a2", label: "Copa 8a2", icon: Trophy, description: "Torneo de eliminación directa del grupo: cada uno arma su equipo draftando jugadores reales.", family: "grupo", available: true },
   { to: "/fantasyfiction", label: "FantasyFiction", icon: TrendingUp, description: "Liga simulada con todo tu grupo: jornadas semanales y dos mercados de pases por semana apenas se sumen todos.", family: "grupo", available: true },
   { to: "/dt-liga", label: "Modo DT Online", icon: Users, description: "Armá una liga con amigos: cada uno elige un club real y compite temporada a temporada.", family: "grupo", available: true },
