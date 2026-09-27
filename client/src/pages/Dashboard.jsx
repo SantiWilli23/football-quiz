@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  BarChart3, Flame, Gamepad2, Globe2, HelpCircle, Radio, Sparkles, Star, Swords, Users,
-} from "lucide-react";
+import { Flame } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -19,68 +17,10 @@ import useAlerts from "../hooks/useAlerts.js";
 const FAVORITES_KEY = "fq_favorite_sections";
 const tutorialSeenKey = (userId) => `fq_tutorial_seen_${userId}`;
 
-// "En vivo" y "Juegos" eran una sola sección ("Fútbol") que mezclaba datos
-// reales con el catálogo de 23 juegos — ver client/src/pages/Football.jsx y
-// Games.jsx, que ahora son pantallas separadas.
-const SECTIONS = [
-  {
-    to: "/trivia",
-    label: "Trivia",
-    icon: HelpCircle,
-    description: "Trivia diaria, preguntas especiales del grupo, duelos 1v1 y supervivencia en vivo.",
-    color: "rgb(var(--c-red))",
-  },
-  {
-    to: "/juegos",
-    label: "Juegos",
-    icon: Gamepad2,
-    description: "Los 23 modos de Futotal, agrupados por cómo se juegan: solo, con amigos, contrarreloj...",
-    color: "rgb(var(--c-emerald))",
-  },
-  {
-    to: "/futbol",
-    label: "En vivo",
-    icon: Radio,
-    description: "Resultados, tabla de posiciones y goleadores reales de las principales ligas.",
-    color: "rgb(var(--c-blue))",
-  },
-  {
-    to: "/grupo",
-    label: "Grupos",
-    icon: Users,
-    description: "Competí con tus amigos, mirá el ranking del grupo y los campeones mensuales.",
-    color: "rgb(var(--c-amber))",
-  },
-  {
-    to: "/estadisticas",
-    label: "Estadísticas",
-    icon: BarChart3,
-    description: "Resumen semanal, compatibilidad con el grupo y logros desbloqueados.",
-    color: "rgb(var(--c-emerald))",
-  },
-  {
-    to: "/ranking-global",
-    label: "Ranking global",
-    icon: Globe2,
-    description: "Los 100 con más puntos de toda la app, sin importar el grupo.",
-    color: "rgb(var(--c-amber))",
-  },
-  {
-    to: "/vida-fut",
-    label: "Vida FUT",
-    icon: Sparkles,
-    description: "Jugador en Cotrero, después 3 temporadas de DT y 3 de presidente — una carrera larga en tres etapas.",
-    color: "rgb(var(--c-purple))",
-  },
-];
-
 export default function Dashboard() {
   const { user, stats } = useAuth();
   const { groups, activeGroupId: groupId } = useGroups();
   const [groupDetail, setGroupDetail] = useState(null);
-  const [favorites, setFavorites] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(FAVORITES_KEY)) || []; } catch { return []; }
-  });
   const [showTutorial, setShowTutorial] = useState(false);
   const alerts = useAlerts();
   const [savedGames] = useState(findSavedGames);
@@ -104,15 +44,8 @@ export default function Dashboard() {
       localStorage.setItem(FAVORITES_KEY, JSON.stringify(picked));
       if (user) localStorage.setItem(tutorialSeenKey(user.id), "1");
     } catch { /* noop */ }
-    setFavorites(picked);
     setShowTutorial(false);
   }
-
-  const sortedSections = [...SECTIONS].sort((a, b) => {
-    const fa = favorites.includes(a.to) ? 0 : 1;
-    const fb = favorites.includes(b.to) ? 0 : 1;
-    return fa - fb;
-  });
 
   const current = stats?.current_streak ?? 0;
   const best = stats?.best_streak ?? 0;
@@ -180,38 +113,7 @@ export default function Dashboard() {
 
       <ContinuePlaying items={savedGames} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-x-14 gap-y-12">
-        <div>
-          <h2 className="text-xs font-medium text-gray-600 uppercase tracking-[0.2em] mb-4">
-            Secciones
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/5 rounded-2xl overflow-hidden">
-            {sortedSections.map(({ to, label, icon: Icon, description, color }) => (
-              <Link
-                key={to}
-                to={to}
-                className="group flex items-start gap-4 px-5 py-5 bg-bg hover:bg-panel transition-colors"
-              >
-                <div
-                  className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
-                  style={{ background: `color-mix(in srgb, ${color} 15%, transparent)`, border: `1px solid color-mix(in srgb, ${color} 30%, transparent)`, color }}
-                >
-                  <Icon size={19} />
-                </div>
-                <div className="min-w-0 pt-1">
-                  <p className="text-sm font-medium mb-1 group-hover:text-white transition-colors flex items-center gap-1.5">
-                    {label}
-                    {favorites.includes(to) && <Star size={11} className="text-accent" fill="currentColor" />}
-                  </p>
-                  <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Panel lateral */}
-        <div className="space-y-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-14 gap-y-8">
           <div>
             <p className="text-xs font-medium text-gray-500 uppercase tracking-[0.2em] mb-4">Mis stats</p>
             <div className="divide-y divide-white/5">
@@ -223,7 +125,7 @@ export default function Dashboard() {
           </div>
 
           {groups.length > 0 && (
-            <div className="pt-8 border-t border-white/5">
+            <div>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-[0.2em] mb-4">Mi grupo</p>
               {groupDetail ? (
                 <div className="flex items-center gap-3">
@@ -247,7 +149,6 @@ export default function Dashboard() {
               )}
             </div>
           )}
-        </div>
       </div>
 
       {showTutorial && <TutorialModal onDone={finishTutorial} />}
