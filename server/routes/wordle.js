@@ -266,7 +266,11 @@ function serialize({ game, guessNames }) {
           position: secret.posicion,
           birth_year: secret.nacimiento,
           league: leagueOf(secret) || null,
-          style: styleLabel(styleOf(secret)),
+          // El tipo de juego pesa en el puntaje en TODAS las dificultades,
+          // pero solo se muestra como dato en fácil — en normal/difícil/la
+          // diaria queda invisible: afecta el número de parecido pero nunca
+          // aparece como pista ni al revelar el secreto.
+          style: game.difficulty === "facil" ? styleLabel(styleOf(secret)) : null,
         }
       : null,
   };
