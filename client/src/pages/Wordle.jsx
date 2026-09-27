@@ -45,13 +45,16 @@ function SimilarityBar({ value }) {
 }
 
 function GuessRow({ g }) {
+  // "Estilo" (tipo de juego real: pivote, extremo, killer...) solo viaja en
+  // modo fácil — ver server/routes/wordle.js. El resto de las dificultades
+  // no la manda, así que la grilla se acomoda sola a 5 o 6 columnas.
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-semibold truncate">{g.name}</p>
         <SimilarityBar value={g.similarity} />
       </div>
-      <div className="grid grid-cols-5 gap-1.5">
+      <div className={`grid gap-1.5 ${g.style ? "grid-cols-3 sm:grid-cols-6" : "grid-cols-5"}`}>
         <Cell label="Nacionalidad" tone={g.nationality.match ? "good" : "bad"}>{g.nationality.value}</Cell>
         <Cell label="Posición" tone={g.position.match ? "good" : "bad"}>{g.position.value}</Cell>
         <Cell label="Club" tone={g.club.match ? "good" : "bad"}>{g.club.value || "?"}</Cell>
@@ -61,6 +64,7 @@ function GuessRow({ g }) {
           {g.birth_year.direction === "up" && <ArrowUp size={12} />}
           {g.birth_year.direction === "down" && <ArrowDown size={12} />}
         </Cell>
+        {g.style && <Cell label="Estilo" tone={g.style.match ? "good" : "bad"}>{g.style.value}</Cell>}
       </div>
     </div>
   );
@@ -73,7 +77,7 @@ function shareText(game) {
   const result = game.status === "won" ? `${game.attemptsUsed}/${game.maxAttempts}` : `X/${game.maxAttempts}`;
   const sq = (ok) => (ok ? "🟩" : "🟥");
   const rows = [...game.guesses].reverse().map((g) =>
-    [g.nationality.match, g.position.match, g.club.match, g.league.match, g.birth_year.direction === "match"].map(sq).join("")
+    [g.nationality.match, g.position.match, g.club.match, g.league.match, g.birth_year.direction === "match", ...(g.style ? [g.style.match] : [])].map(sq).join("")
   );
   return `${title} · ${result} · ${game.points} pts\n${rows.join("\n")}`;
 }
@@ -401,6 +405,7 @@ export default function Wordle() {
                 <p className="text-sm text-gray-400 mt-1">
                   {game.secret.position} · {game.secret.nationality} · {game.secret.club || "sin club"}
                   {game.secret.league ? ` (${game.secret.league})` : ""} · nació en {game.secret.birth_year}
+                  {game.secret.style ? ` · ${game.secret.style}` : ""}
                 </p>
                 <p className="text-sm text-gray-400 mt-2">
                   {game.status === "won"

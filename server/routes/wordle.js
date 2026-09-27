@@ -5,7 +5,8 @@ import { fileURLToPath } from "node:url";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { todayStr } from "../utils/points.js";
-import { LEAGUES, leagueForClub } from "../data/league-clubs.js";
+import { LEAGUES, leagueForClub, wideLeagueLabelForClub } from "../data/league-clubs.js";
+import { styleOf, styleLabel } from "../data/player-style.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = path.join(__dirname, "../data/equipo-jugador-players.json");
@@ -89,8 +90,13 @@ function randomSecret(leagueKey, difficulty) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
+// Liga "ancha" para pista y parecido — no es la misma que filtra los pools
+// jugables (esa sigue siendo solo las 4 de LEAGUES): esta también reconoce
+// una docena de ligas más (Ligue 1, Süper Lig, Brasileirão...) para no
+// mostrar "Otra" ni perder el punto de "misma liga" cuando dos jugadores
+// están en una de esas ligas no jugables.
 function leagueOf(player) {
-  return leagueForClub(currentClubOf(player)) || "";
+  return wideLeagueLabelForClub(currentClubOf(player)) || "";
 }
 
 function clamp(v, lo, hi) {
@@ -104,6 +110,11 @@ function lerp(lo, hi, t) {
 // Número de parecido 0-100 contra el secreto (100 solo si es el mismo).
 // Mismos tramos que tenía Fichado: nada en común 0-15, un atributo 15-30,
 // dos atributos 40-65, compañeros de equipo o compatriotas de misma posición 80-98.
+// "sameStyle" (tipo de juego real, ver player-style.js) es la excepción: no
+// cuenta como "campo mostrado" porque solo hay dato para jugadores
+// conocidos, pero cuando existe pesa fuerte — es justamente lo que separa a
+// Rodri (más parecido a Busquets) de Pedri, aunque los tres compartan
+// nacionalidad y posición genérica.
 function similarity(guess, secret) {
   if (guess.nombre === secret.nombre) return 100;
   const guessClub = currentClubOf(guess);
@@ -112,16 +123,19 @@ function similarity(guess, secret) {
   const sameNationality = normalize(guess.nacionalidad) === normalize(secret.nacionalidad);
   const gl = leagueOf(guess);
   const sameLeague = gl !== "" && gl === leagueOf(secret);
+  const guessStyle = styleOf(guess);
+  const sameStyle = guessStyle != null && guessStyle === styleOf(secret);
   const ageCloseness = clamp(1 - Math.abs((guess.nacimiento || 0) - (secret.nacimiento || 0)) / 15, 0, 1);
 
   if (sameTeam || (sameNationality && samePosition)) {
     let t = 0.5;
     if (sameTeam && sameNationality) t += 0.22;
     if (sameLeague) t += 0.1;
+    if (sameStyle) t += 0.12;
     t += ageCloseness * 0.16;
     return Math.round(lerp(80, 98, clamp(t, 0, 1)));
   }
-  const minor = [sameLeague, samePosition, sameNationality].filter(Boolean).length;
+  const minor = [sameLeague, samePosition, sameNationality, sameStyle].filter(Boolean).length;
   if (minor >= 2) {
     let t = 0.28;
     if (minor >= 3) t += 0.22;
@@ -130,38 +144,49 @@ function similarity(guess, secret) {
   }
   if (minor === 1) {
     let t = 0.15 + ageCloseness * 0.3;
-    if (samePosition) t += 0.2;
+    if (samePosition || sameStyle) t += 0.2;
     return Math.round(lerp(15, 30, clamp(t, 0, 1)));
   }
   return Math.round(lerp(0, 15, clamp(ageCloseness * 0.55, 0, 1)));
 }
 
-function leagueLabel(key) {
-  return LEAGUES.find((l) => l.key === key)?.label || null;
-}
-
-function feedbackFor(guess, secret) {
+// El campo "style" solo se manda en modo fácil: ahí el pool de secretos son
+// puros cracks conocidos (ver secretPool), así que el dato curado casi
+// siempre existe. En normal/difícil el secreto puede ser cualquiera de la
+// base y casi nunca va a tener un tipo de juego cargado — mostrar "sin
+// dato" en la mayoría de los intentos sería más confuso que útil.
+function feedbackFor(guess, secret, difficulty) {
   const guessClub = currentClubOf(guess);
   const secretClub = currentClubOf(secret);
   const birthDirection =
     guess.nacimiento === secret.nacimiento ? "match" : guess.nacimiento < secret.nacimiento ? "up" : "down";
   const gl = leagueOf(guess);
 
-  return {
+  const feedback = {
     name: guess.nombre,
     similarity: similarity(guess, secret),
     nationality: { value: guess.nacionalidad, match: normalize(guess.nacionalidad) === normalize(secret.nacionalidad) },
     position: { value: guess.posicion, match: normalize(guess.posicion) === normalize(secret.posicion) },
     birth_year: { value: guess.nacimiento, direction: birthDirection },
     club: { value: guessClub, match: guessClub != null && normalize(guessClub) === normalize(secretClub) },
-    league: { value: leagueLabel(gl) || "Otra", match: gl !== "" && gl === leagueOf(secret) },
+    league: { value: gl || "Otra", match: gl !== "" && gl === leagueOf(secret) },
   };
+
+  if (difficulty === "facil") {
+    const guessStyle = styleOf(guess);
+    const secretStyle = styleOf(secret);
+    if (secretStyle) {
+      feedback.style = { value: styleLabel(guessStyle) || "Sin dato", match: guessStyle != null && guessStyle === secretStyle };
+    }
+  }
+
+  return feedback;
 }
 
 function hintText(secret, kind) {
   switch (kind) {
     case "position": return `Posición: ${secret.posicion}`;
-    case "league": return `Liga: ${leagueLabel(leagueOf(secret)) || "otra liga"}`;
+    case "league": return `Liga: ${leagueOf(secret) || "otra liga"}`;
     case "nationality": return `Nacionalidad: ${secret.nacionalidad}`;
     case "age": return `Nació en ${secret.nacimiento}`;
     default: return `Club actual: ${currentClubOf(secret) || "sin club"}`;
@@ -215,7 +240,7 @@ function bestSimilarityOf(guessNames, secret) {
 
 function serialize({ game, guessNames }) {
   const secret = byName(game.secret_name);
-  const guesses = guessNames.map((n) => feedbackFor(byName(n), secret));
+  const guesses = guessNames.map((n) => feedbackFor(byName(n), secret, game.difficulty));
   const hints = HINT_ORDER.slice(0, game.hints_used + (game.bonus_hints || 0)).map((k) => hintText(secret, k));
   const ended = game.status !== "playing";
   return {
@@ -240,7 +265,8 @@ function serialize({ game, guessNames }) {
           nationality: secret.nacionalidad,
           position: secret.posicion,
           birth_year: secret.nacimiento,
-          league: leagueLabel(leagueOf(secret)),
+          league: leagueOf(secret) || null,
+          style: styleLabel(styleOf(secret)),
         }
       : null,
   };
