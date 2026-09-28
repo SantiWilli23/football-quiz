@@ -550,6 +550,28 @@
     try { localStorage.setItem("mentiroso_stats", JSON.stringify(stats)); } catch (e) {}
   }
 
+  function submitChallengeScore(gameKey, score) {
+    try {
+      var token = localStorage.getItem("fq_token");
+      var groupId = localStorage.getItem("fq_active_group");
+      if (!token || !groupId) return;
+      fetch("/api/challenges/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ gameKey: gameKey, groupId: Number(groupId), score: score })
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  // Puntaje semanal: una victoria vale por el tamano de la apuesta (esfuerzo:
+  // cuantos jugadores nombraste o le atrapaste a la IA) mas un bonus por
+  // rapidez que baja con los segundos que tardo la mano.
+  function weeklyScoreFor(target) {
+    var elapsed = game && game.startedAt ? (Date.now() - game.startedAt) / 1000 : 120;
+    var speedBonus = Math.max(0, 30 - Math.floor(elapsed / 5));
+    return Math.round(10 + 6 * (target || 1) + speedBonus);
+  }
+
   function showScreen(id) {
     document.querySelectorAll(".screen").forEach(function(s) { s.classList.remove("active"); });
     document.getElementById("screen-" + id).classList.add("active");
@@ -809,6 +831,7 @@
     document.getElementById("bid-topic").textContent = game.topic.text;
     document.getElementById("chat-log").innerHTML = "";
     game.chatMessages = [];
+    game.startedAt = Date.now();
     game.currentBid = 0;
     updateBidDisplay();
 
@@ -1331,6 +1354,7 @@
       var accused = game.namingWho;
       var accuser = accused === "p1" ? "p2" : "p1";
       var winner = success ? accused : accuser;
+      if (game.online && winner === game.myRole) submitChallengeScore("mentiroso", weeklyScoreFor(game.namingTarget || game.currentBid));
       icon.textContent = "🏆";
       title.textContent = "¡Ganó " + pName(winner) + "!";
       title.className = "result-title win";
@@ -1368,6 +1392,7 @@
     }
     saveStats();
 
+    if (playerWins) submitChallengeScore("mentiroso", weeklyScoreFor(game.namingTarget || game.currentBid));
     if (playerWins) {
       icon.textContent = "🏆";
       title.textContent = "¡Ganaste!";

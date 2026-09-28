@@ -6,6 +6,7 @@ import {
   listSaveSlots, getActiveSlotId, setActiveSlotId, saveLegacy,
 } from "../hooks/useCareerSave.js";
 import { buildLegacy } from "../utils/legacy.js";
+import api from "../../api.js";
 import { simulateUserMatch, simulateQuickMatch, simulateHalf, combineHalves, dayFormFactor } from "../engine/matchEngine.js";
 import { ageSquad, generateYouthProspects, applyPositionTrainings } from "../engine/playerGrowth.js";
 import { assignInitialNumbers, nextAvailableNumber } from "../engine/squadNumbers.js";
@@ -320,6 +321,22 @@ export function CareerProvider({ children }) {
       setSaveSlots(listSaveSlots());
     }
   }, [state]);
+
+  // Puntaje semanal de Modo DT: cada vez que cerrás una temporada se manda
+  // lo que llevás en la carrera — 15 por temporada dirigida (el esfuerzo de
+  // jugarla entera), +40 por objetivo cumplido, +25 por copa, +60 por
+  // título continental. El servidor guarda el mejor de la semana, así que
+  // jugar más temporadas esta semana es lo que sube el número.
+  const seasonsDone = state ? state.history.filter((h) => !h.note).length : 0;
+  useEffect(() => {
+    if (!state || seasonsDone === 0) return;
+    const groupId = Number(localStorage.getItem("fq_active_group"));
+    if (!groupId) return;
+    const l = buildLegacy(state.history, null);
+    const score = l.seasonsCount * 15 + l.titles * 40 + l.copas * 25 + l.continental * 60;
+    api.post("/challenges/submit", { gameKey: "carrera_dt", groupId, score }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seasonsDone]);
 
   const team = state ? teamById(state.teamId) : null;
   const leagueTeams = team ? teamsByLeague(team.league) : [];

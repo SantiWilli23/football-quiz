@@ -2,6 +2,19 @@ import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { normalize } from "../db/seed-equipo-jugador.js";
+import { todayStr } from "../utils/points.js";
+
+// Puntos al ranking semanal del grupo, en el mismo libro de bonus que usan
+// Fichado y el mercado (wordle_results, una fila por usuario+día+clave):
+// 2 por armar el plantel (el esfuerzo de draftear) y por cada ronda ganada
+// 3 × número de ronda — la final vale más que los cuartos.
+async function awardCupPoints(userId, league, points) {
+  if (!userId || points <= 0) return;
+  await db.execute({
+    sql: "INSERT OR IGNORE INTO wordle_results (user_id, date, league, attempts, points) VALUES (?, ?, ?, 0, ?)",
+    args: [userId, todayStr(), league, points],
+  });
+}
 
 const router = Router();
 router.use(requireAuth);
@@ -242,6 +255,7 @@ router.post("/:cupId/join", async (req, res) => {
           VALUES (?, ?, 0, ?, ?, ?)`,
     args: [cup.id, req.userId, teamName, JSON.stringify(squad), squadRating(squad)],
   });
+  await awardCupPoints(req.userId, `cup${cup.id}join`, 2);
 
   res.status(201).json({ cup: await serializeCup(cup, req.userId) });
 });
@@ -331,6 +345,8 @@ router.post("/:cupId/advance", async (req, res) => {
       sql: "UPDATE group_cup_matches SET score_a = ?, score_b = ?, winner_id = ?, played = 1 WHERE id = ?",
       args: [scoreA, scoreB, winnerId, m.id],
     });
+    const winner = winnerId === a.id ? a : b;
+    await awardCupPoints(winner.user_id, `cup${cup.id}r${cup.round}`, 3 * cup.round);
     if (winnerId !== a.id) await db.execute({ sql: "UPDATE group_cup_participants SET eliminated = 1 WHERE id = ?", args: [a.id] });
     if (winnerId !== b.id) await db.execute({ sql: "UPDATE group_cup_participants SET eliminated = 1 WHERE id = ?", args: [b.id] });
   }

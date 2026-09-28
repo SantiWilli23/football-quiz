@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { Check, Copy, Crown, Skull, Trophy, Users } from "lucide-react";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useGroups } from "../context/GroupContext.jsx";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
+import GroupSelector from "../components/GroupSelector.jsx";
 import useRoomRelay from "../hooks/useRoomRelay.js";
 
 const GAME = "survival";
@@ -13,6 +15,7 @@ const DIFFICULTIES = [
   ["ultra", "Ultra difícil"],
   ["demonio", "Demonio"],
 ];
+const DIFFICULTY_WEIGHT = { dificil: 1, ultra: 1.4, demonio: 1.9 };
 
 function myId() {
   let id = sessionStorage.getItem("fq_survival_id");
@@ -25,6 +28,7 @@ function myId() {
 
 export default function Survival() {
   const { user } = useAuth();
+  const { activeGroupId: groupId } = useGroups();
   const { status, roomCode, role, error, lastMessage, createRoom, joinRoom, send, leave } = useRoomRelay(GAME);
 
   const [joinCode, setJoinCode] = useState("");
@@ -46,6 +50,10 @@ export default function Survival() {
   const answersRef = useRef({}); // { [round]: { [playerId]: answer } }
   const timerRef = useRef(null);
   const roundTimeoutRef = useRef(null);
+  const eliminatedAtRef = useRef(null); // ronda (1-based) en la que ME eliminaron, o null si seguía en pie
+  const submittedRef = useRef(false);
+  const difficultyRef = useRef("dificil"); // la dificultad la elige el host: se manda en cada pregunta para que todos la sepan
+  const roundsPlayedRef = useRef(0);
   const me = { id: myId(), username: user?.username || "Vos" };
 
   const isHost = role === "host";
@@ -72,6 +80,9 @@ export default function Survival() {
     } else if (msg.type === "roster" && !isHost) {
       setPlayers(msg.players);
     } else if (msg.type === "question" && !isHost) {
+      if (msg.round === 0) { eliminatedAtRef.current = null; submittedRef.current = false; }
+      if (msg.difficulty) difficultyRef.current = msg.difficulty;
+      roundsPlayedRef.current = msg.round + 1;
       setPhase("question");
       setRoundIndex(msg.round);
       setCurrentQuestion(msg.question);
@@ -82,6 +93,7 @@ export default function Survival() {
       answersRef.current[msg.round] = answersRef.current[msg.round] || {};
       answersRef.current[msg.round][msg.id] = msg.answer;
     } else if (msg.type === "reveal" && !isHost) {
+      if (eliminatedAtRef.current === null && msg.eliminated.includes(me.id)) eliminatedAtRef.current = msg.round + 1;
       setPhase("reveal");
       setReveal(msg);
       setPlayers((prev) => prev.map((p) => (msg.eliminated.includes(p.id) ? { ...p, alive: false } : p)));
@@ -107,6 +119,19 @@ export default function Survival() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, phase]);
 
+  // Puntaje semanal: rondas que aguantaste (esfuerzo) × dificultad elegida,
+  // + bonus por ganar. Cuantas más rondas sobrevivís, más tiempo y más
+  // preguntas difíciles respondiste bien, así que la duración va implícita.
+  useEffect(() => {
+    if (phase !== "gameover" || submittedRef.current || !groupId) return;
+    submittedRef.current = true;
+    const survived = eliminatedAtRef.current ? eliminatedAtRef.current - 1 : roundsPlayedRef.current;
+    const won = winner?.id === me.id;
+    const score = Math.round(survived * 10 * (DIFFICULTY_WEIGHT[difficultyRef.current] ?? 1) + (won ? 25 : 0));
+    if (score > 0) api.post("/challenges/submit", { gameKey: "supervivencia", groupId, score }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
   async function handleCreate() {
     createRoom(16);
   }
@@ -122,6 +147,9 @@ export default function Survival() {
     if (!data.questions?.length) return;
     setQuestions(data.questions);
     answersRef.current = {};
+    eliminatedAtRef.current = null;
+    submittedRef.current = false;
+    difficultyRef.current = difficulty;
     setPlayers((prev) => prev.map((p) => ({ ...p, alive: true })));
     startRound(0, data.questions, players.map((p) => ({ ...p, alive: true })));
   }
@@ -136,7 +164,8 @@ export default function Survival() {
     setReveal(null);
     setPhase("question");
     setTimeLeft(ROUND_SECONDS);
-    send({ type: "question", round: index, total: qList.length, question: publicQ });
+    roundsPlayedRef.current = index + 1;
+    send({ type: "question", round: index, total: qList.length, question: publicQ, difficulty: difficultyRef.current });
   }
 
   function resolveRound() {
@@ -158,6 +187,7 @@ export default function Survival() {
     const willEliminate = eliminated.length < alive.length ? eliminated : [];
     const survivors = players.map((p) => (willEliminate.includes(p.id) ? { ...p, alive: false } : p));
 
+    if (eliminatedAtRef.current === null && willEliminate.includes(me.id)) eliminatedAtRef.current = roundIndex + 1;
     send({ type: "reveal", round: roundIndex, correct: q.correct_answer, results, eliminated: willEliminate });
     setPhase("reveal");
     setReveal({ correct: q.correct_answer, results, eliminated: willEliminate });
@@ -202,7 +232,8 @@ export default function Survival() {
   return (
     <Layout>
       <h1 className="text-2xl font-bold mb-1">Supervivencia</h1>
-      <p className="text-gray-400 text-sm mb-6">Todos responden la misma pregunta a la vez. El que falla, queda afuera. Gana el último en pie.</p>
+      <p className="text-gray-400 text-sm mb-4">Todos responden la misma pregunta a la vez. El que falla, queda afuera. Gana el último en pie. Tu mejor partida de la semana suma al ranking del grupo (rondas aguantadas × dificultad).</p>
+      <div className="mb-4"><GroupSelector /></div>
 
       {phase === "lobby" && status !== "in-room" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Award, Building2, Coins, Crown, Gavel, Handshake, Heart, Landmark, ListOrdered, Megaphone,
   Newspaper, Search, ShieldX, Target, Trophy, Tv, UserPlus, Users, Vote, Wallet,
@@ -887,6 +887,19 @@ function Dashboard({ state, setState, onExit }) {
     }
     setState((s) => fn(s, ...args));
   };
+
+  // Puntaje semanal: el puntaje de legado que llevás AHORA (temporadas,
+  // títulos y logros acumulados) se manda cada vez que sube, y el servidor se
+  // queda con el mejor de la semana — así jugar más esta semana (más
+  // temporadas resueltas) suma, sin esperar a renunciar. El de "legado" de
+  // siempre sigue siendo el histórico.
+  const liveLegacyScore = useMemo(() => buildPresidenteLegacy(state).legacyScore, [state]);
+  const lastSentRef = useRef(0);
+  useEffect(() => {
+    if (!groupId || liveLegacyScore <= lastSentRef.current) return;
+    lastSentRef.current = liveLegacyScore;
+    api.post("/challenges/submit", { gameKey: "presidente", groupId, score: liveLegacyScore }).catch(() => {});
+  }, [liveLegacyScore, groupId]);
 
   const retire = async (legacy) => {
     if (groupId) {

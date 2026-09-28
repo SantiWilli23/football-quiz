@@ -7,6 +7,25 @@ import { requireAuth } from "../middleware/auth.js";
 import { addDays, todayStr } from "../utils/points.js";
 import { simulateMatchEvents } from "../utils/match-engine.js";
 import { rankingBetween } from "./stats.js";
+import { isoWeekKey } from "../utils/challenges.js";
+
+// Reto semanal de Cartas: cada victoria vale 20 + 10 por gol de diferencia,
+// más un plus si el rival tenía un equipo más fuerte (ganarle a alguien mejor
+// cuesta más) y ×1.5 si le ganaste a una persona real en vez de a la CPU. Se
+// guarda la MEJOR victoria de la semana en cada uno de tus grupos, así que
+// jugar 50 partidos no infla nada: importa ganar bien, no ganar seguido.
+async function submitCardsWeekly(userId, score) {
+  const period = isoWeekKey();
+  const groups = (await db.execute({ sql: "SELECT group_id FROM group_members WHERE user_id = ?", args: [userId] })).rows;
+  for (const { group_id } of groups) {
+    const cur = (await db.execute({ sql: "SELECT id, score FROM challenge_scores WHERE game_key = 'cartas' AND period_key = ? AND group_id = ? AND user_id = ?", args: [period, group_id, userId] })).rows[0];
+    if (!cur) {
+      await db.execute({ sql: "INSERT INTO challenge_scores (game_key, period_key, group_id, user_id, score) VALUES ('cartas', ?, ?, ?, ?)", args: [period, group_id, userId, score] });
+    } else if (score > cur.score) {
+      await db.execute({ sql: "UPDATE challenge_scores SET score = ?, submitted_at = datetime('now') WHERE id = ?", args: [score, cur.id] });
+    }
+  }
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ALL = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/equipo-jugador-players.json"), "utf-8")).jugadores;
@@ -613,6 +632,9 @@ router.post("/match", async (req, res) => {
     const won = myGoals > theirGoals;
     let pack = false;
     if (won) {
+      const weeklyMargin = myGoals - theirGoals;
+      const underdog = Math.max(0, Math.round((b.total - a.total) / 11)) * 2;
+      await submitCardsWeekly(req.userId, Math.round((20 + 10 * weeklyMargin + underdog) * (Number(vs) ? 1.5 : 1)));
       const today = todayStr();
       // El sobre por victoria mejora con lo contundente que fue: por 2+ de
       // diferencia da un sobre "top", por la mínima uno "bueno".

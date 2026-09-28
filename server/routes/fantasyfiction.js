@@ -155,8 +155,10 @@ async function resolvePendingJornadas(league) {
 
   for (let i = 0; i < pending; i++) {
     jornada += 1;
+    const scored = [];
     for (const p of participants) {
       const points = p.squad.reduce((sum, id) => sum + simulatePlayerJornada(id), 0);
+      scored.push({ userId: p.user_id, points });
       await db.execute({
         sql: `INSERT INTO fantasy_jornada_scores (league_id, jornada, participant_id, points)
               VALUES (?, ?, ?, ?)`,
@@ -165,6 +167,16 @@ async function resolvePendingJornadas(league) {
       await db.execute({
         sql: "UPDATE fantasy_participants SET points_total = points_total + ? WHERE id = ?",
         args: [points, p.id],
+      });
+    }
+    // Puntos al ranking semanal del grupo por la jornada (misma tabla de
+    // bonus que Fichado y el mercado): 1° 8, 2° 5, 3° 3 y el resto 1 —
+    // sostener un plantel y moverse en el mercado toda la semana ya vale algo.
+    scored.sort((a, b) => b.points - a.points);
+    for (const [rank, s] of scored.entries()) {
+      await db.execute({
+        sql: "INSERT OR IGNORE INTO wordle_results (user_id, date, league, attempts, points) VALUES (?, ?, ?, 0, ?)",
+        args: [s.userId, new Date().toISOString().slice(0, 10), `fant${league.id}j${jornada}`, [8, 5, 3][rank] ?? 1],
       });
     }
   }
