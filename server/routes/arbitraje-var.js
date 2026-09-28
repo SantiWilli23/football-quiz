@@ -4,45 +4,95 @@ import { requireAuth } from "../middleware/auth.js";
 const router = Router();
 router.use(requireAuth);
 
-// Modo Arbitraje/VAR: banco de jugadas fijo (no hace falta tabla propia, el
-// puntaje final se manda al framework genérico de "retos" como cualquier
-// otro juego semanal, mismo patrón que Un Minuto). "correct" es el índice
-// de la decisión correcta dentro de "options".
-//
-// Las jugadas están pensadas para ser POLÉMICAS a propósito — el reglamento
-// real de fuera de juego/manos/roja tiene casos límite documentados que
-// generan debate en cualquier transmisión, así que cada una trae un
-// "why" que explica el criterio exacto que la resuelve (se muestra recién
-// después de responder, junto con la decisión correcta). "diagram" clasifica
-// el tipo de jugada (diagrama de respaldo si una jugada no tiene repetición).
+// Modo Arbitraje/VAR: jugadas polémicas REALES revisadas por el VAR en la MLS
+// 2026. Los clips son del programa "Inside Video Review" de la Professional
+// Referee Organization (PRO), embebidos desde su canal oficial de YouTube
+// (no se copian ni se re-alojan). "video.start/end" recorta el tramo de la
+// jugada en vivo, antes de que el video muestre la sala del VAR. El cliente
+// los reproduce SIN SONIDO: el comentario del video dice la decisión.
+// "correct" es el índice dentro de DECISIONS y "why" se muestra recién
+// después de responder. El puntaje va al framework genérico de "retos".
 const DECISIONS = ["Sigue el juego", "Amarilla", "Roja", "Penal", "Fuera de juego", "Gol anulado"];
 
+const MLS27 = "8yUs8cGzGww";
+const MLS2526 = "C5NmUjVD6RU";
+const MLS24 = "q4EpQPYsx4o";
+
 const SITUATIONS = [
-  { id: 1, text: "El defensor llega tarde y golpea el tobillo del rival en el área, sin jugar la pelota — pero el delantero ya había perdido el control y el remate iba directo afuera.", correct: 3, diagram: "area_foul", why: "El contacto imprudente dentro del área es penal aunque la jugada ya no fuera a terminar en gol — el VAR no evalúa si el remate iba a entrar, solo si hubo infracción." },
-  { id: 2, text: "Un jugador va corriendo hasta el árbitro, agita los brazos y le grita a centímetros de la cara, sin tocarlo ni insultarlo.", correct: 1, diagram: "protest", why: "Invadir el espacio personal del árbitro de forma agresiva y sostenida es amarilla por conducta antideportiva, aunque no haya contacto ni insulto." },
-  { id: 3, text: "Entrada por detrás, a destiempo, con los tapones altos sobre la espinilla del rival — el jugador frena en el último instante y el contacto es leve.", correct: 1, diagram: "tackle", why: "Frenar antes del impacto baja la intensidad real del contacto: sigue siendo falta, pero sin fuerza ni riesgo de lesión no llega a roja — sólo amarilla." },
-  { id: 4, text: "El delantero recibe un pase con el hombro apenas por delante de la línea defensiva — el resto del cuerpo está en posición legal.", correct: 0, diagram: "offside", why: "Desde 2022 el VAR solo sanciona fuera de juego por partes del cuerpo habilitadas para jugar el balón (no el hombro) — con esa parte adelantada, sigue el juego." },
-  { id: 5, text: "Mano de un defensor dentro del área, con el brazo pegado al cuerpo, en un rebote a corta distancia que no le da tiempo a reaccionar.", correct: 0, diagram: "handball", why: "Brazo pegado al cuerpo + distancia corta que no permite reacción = posición natural, no es mano punible aunque el balón termine tocándolo." },
-  { id: 6, text: "Mano de un defensor dentro del área con el brazo extendido y separado del cuerpo en una posición que agranda artificialmente su volumen, aunque no mire hacia el balón.", correct: 3, diagram: "handball", why: "No hace falta \"querer\" tocarla: agrandar el volumen corporal con el brazo separado ya alcanza para penal, sin importar hacia dónde mire el jugador." },
-  { id: 7, text: "Segundo amarillo del partido para el mismo jugador tras una falta táctica que corta un avance, sin agresividad.", correct: 2, diagram: "tackle", why: "Dos amarillas en el mismo partido son roja automática (doble amonestación), sin importar que la segunda haya sido una falta menor." },
-  { id: 8, text: "Gol convertido tras una jugada donde el pasador estaba adelantado, pero el balón le llegó tras rebotar en un rival que interceptó el pase original.", correct: 5, diagram: "goal_review", why: "Un rebote en un defensor NO \"resetea\" el fuera de juego si el balón sigue viniendo de la misma jugada — se sigue mirando la posición al momento del pase original." },
-  { id: 9, text: "Un jugador se deja caer dentro del área tras un roce mínimo, exagerando la caída para reclamar penal.", correct: 1, diagram: "protest", why: "La simulación (engañar al árbitro fingiendo una falta que no existió con esa intensidad) es amarilla — no roja, salvo casos extremos y reiterados." },
-  { id: 10, text: "Choque fortuito entre dos jugadores disputando el balón limpiamente, ambos con los ojos puestos en la pelota, sin intención ni imprudencia de ninguno.", correct: 0, diagram: "tackle", why: "Sin intención, imprudencia ni fuerza excesiva de ninguno de los dos, un choque disputando el balón limpiamente no es sancionable." },
-  { id: 11, text: "El arquero sale, no llega a la pelota y derriba al delantero justo en el borde del área — el punto de contacto queda dudoso entre adentro y afuera.", correct: 2, diagram: "area_foul", why: "Cuando el punto de contacto es dudoso, se define por dónde estaba el balón en el momento de la falta — si el balón seguía dentro del área, es adentro aunque el arquero haya salido." },
-  { id: 12, text: "Falta táctica clara para cortar un contragolpe peligroso a mitad de cancha, sujetando la camiseta sin caída del rival.", correct: 1, diagram: "tackle", why: "Cortar un contragolpe claro con una falta táctica (sin jugar el balón) es amarilla obligatoria por el protocolo de \"oportunidad clara de gol\" interrumpida a mitad de cancha." },
-  { id: 13, text: "El balón pega en la mano de un defensor que está cayendo al piso perdiendo el equilibrio, con el brazo buscando apoyo de forma instintiva.", correct: 0, diagram: "handball", why: "Un brazo usado para amortiguar una caída perdiendo el equilibrio se considera posición natural del cuerpo, no una mano punible." },
-  { id: 14, text: "Un jugador empuja con las dos manos a un rival en la espalda dentro del área, quien cae pero el árbitro duda si ya iba a caerse solo.", correct: 3, diagram: "area_foul", why: "Si hubo empuje real con las dos manos, es penal aunque el rival pudiera haber perdido el equilibrio solo — el contacto ilegal ya existió." },
-  { id: 15, text: "Codazo lejos del balón, con contacto real en la cara del rival, pero sin que se vea intención clara en la repetición.", correct: 2, diagram: "violent", why: "El VAR sanciona por el RESULTADO del contacto (golpe con fuerza en la cara) más que por poder probar la intención — roja igual sin \"mala intención\" evidente." },
-  { id: 16, text: "El delantero estaba en posición adelantada cuando su compañero remató, pero se quedó quieto lejos de la jugada sin tocar el balón ni molestar a nadie.", correct: 0, diagram: "offside", why: "Estar adelantado no alcanza: hace falta interferir en la jugada, un rival o el balón — parado lejos y sin participar, no hay sanción." },
-  { id: 17, text: "Un defensor, ya amonestado, comete una falta clara pero blanda (sin fuerza) sobre el mismo rival por segunda vez.", correct: 1, diagram: "tackle", why: "Una falta blanda sin agravantes no escala a roja directa solo por ser reincidente en un único episodio — ojo: si ya tenía amarilla previa, esta amarilla sería la segunda (ver situación de doble amonestación)." },
-  { id: 18, text: "Pisotón al tobillo del rival mientras está en el piso, en una disputa por el balón donde ambos caen forcejeando.", correct: 1, diagram: "tackle", why: "Sin poder confirmar intención clara en una caída conjunta forcejeando, el criterio del VAR es no escalar a roja por un contacto que puede ser accidental en la caída." },
-  { id: 19, text: "Gol de cabeza tras un córner, con un leve empujón previo entre dos jugadores dentro del área que no afecta la disputa por el balón.", correct: 0, diagram: "goal_review", why: "El forcejeo normal dentro del área en un córner (sin infracción clara que afecte la jugada) es parte del juego — el gol sube." },
-  { id: 20, text: "El defensor, último hombre, jala de la camiseta al delantero que se le escapa mano a mano con el arquero ya batido — el delantero no cae, sigue corriendo y remata desviado.", correct: 2, diagram: "violent", why: "Cortar una ocasión manifiesta de gol como último hombre es roja directa (DOGSO) aunque el delantero no haya caído ni la jugada terminara en gol — se sanciona la infracción a la ocasión, no el resultado final del remate." },
+  {
+    id: 1,
+    video: { id: MLS27, start: 12, end: 22 },
+    text: "Montreal. La jugada termina en gol de Prince Owusu. Mirá dónde está Fabian Herbers en el momento en que le juegan la pelota.",
+    correct: 4,
+    why: "Herbers estaba en posición adelantada cuando recibió el pase que terminó en el gol de Owusu. El VAR intervino y el gol se anuló por fuera de juego.",
+  },
+  {
+    id: 2,
+    video: { id: MLS27, start: 22, end: 35 },
+    text: "St. Louis. Gol tras una jugada que arranca cerca de la mitad de cancha. Fijate en Carlo Holse al inicio.",
+    correct: 4,
+    why: "Holse estaba adelantado cerca de la mitad de cancha y después interfirió al tocar la pelota antes del gol. Fuera de juego: gol anulado.",
+  },
+  {
+    id: 3,
+    video: { id: MLS27, start: 37, end: 46 },
+    text: "LAFC. Gol de Son Heung-min. Revisá el comienzo del ataque: Sergio Valencia intenta regatear a Costa.",
+    correct: 5,
+    why: "Valencia erró la pelota y pisó con los tapones la bota de Costa, que no pudo seguir defendiendo. Falta en la fase de ataque del gol: gol anulado, tiro libre directo y amarilla por temeraria.",
+  },
+  {
+    id: 4,
+    video: { id: MLS27, start: 186, end: 195 },
+    text: "New England. El árbitro cobró mano de Miller y dio tiro libre justo afuera del área. Mirá dónde le pega la pelota.",
+    correct: 3,
+    why: "La pelota tocó el brazo derecho extendido de Miller antes de pegarle en la cara, y el contacto fue sobre la línea del área (la línea es parte del área). El VAR recomendó revisión y el árbitro cambió el tiro libre por penal.",
+  },
+  {
+    id: 5,
+    video: { id: MLS2526, start: 20, end: 30 },
+    text: "Orlando. Tiro libre y gol en contra de Walker Zimmerman (Toronto). Fijate en el número 5 de Orlando, Luis Otávio.",
+    correct: 4,
+    why: "Cuando se pateó el tiro libre, Luis Otávio estaba adelantado y después disputó con Zimmerman, afectando su posibilidad de jugar la pelota. Fuera de juego por interferir con un rival: no hay gol.",
+  },
+  {
+    id: 6,
+    video: { id: MLS2526, start: 147, end: 157 },
+    text: "Orlando. El arquero Luka Gavran se tira a los pies de Martín Ojeda y el árbitro cobra penal con amarilla para el arquero.",
+    correct: 0,
+    why: "Gavran llegó a jugar la pelota con el pie antes de cualquier contacto con Ojeda. En el monitor quedó claro que era una disputa legal: sin penal, y el juego se reanudó con balón a tierra.",
+  },
+  {
+    id: 7,
+    video: { id: MLS2526, start: 245, end: 257 },
+    text: "San Diego. Alejandro Alvarado patea la pelota contra la cabeza de un rival justo cuando suena el silbato. El árbitro mostró roja.",
+    correct: 1,
+    why: "La patada ocurrió al mismo tiempo que el silbatazo y no hubo malicia ni brutalidad. El árbitro fue al monitor y bajó la roja a amarilla por imprudente.",
+  },
+  {
+    id: 8,
+    video: { id: MLS24, start: 17, end: 27 },
+    text: "Austin. Gol de Facundo Torres. Mirá bien con qué parte del cuerpo toca la pelota justo antes de anotar.",
+    correct: 5,
+    why: "La pelota le pegó en el cuerpo y enseguida en el brazo antes de entrar. Si fuera un defensor no sería falta, pero para un atacante es mano si anota inmediatamente después, aunque sea sin querer: gol anulado.",
+  },
+  {
+    id: 9,
+    video: { id: MLS24, start: 222, end: 233 },
+    text: "Miami. Miguel Almirón remata al arco y Casemiro intenta bloquear. El árbitro dio córner.",
+    correct: 3,
+    why: "Casemiro hizo contacto con los tapones en la pierna de Almirón al bloquear el remate. Falta temeraria dentro del área: penal y amarilla.",
+  },
+  {
+    id: 10,
+    video: { id: MLS24, start: 326, end: 336 },
+    text: "Vancouver. Centro al área y el árbitro cobra penal por mano del número 6. Mirá en qué parte del cuerpo le pega la pelota.",
+    correct: 0,
+    why: "La pelota rebotó en la cabeza de otro jugador y le dio en la parte de atrás de la cabeza al número 6, no en la mano. Tras la revisión se anuló el penal.",
+  },
 ];
 
-// El cliente muestra una repetición animada por id (PlayReplay.jsx).
 function publicSituation(s) {
-  return { id: s.id, text: s.text, options: DECISIONS, diagram: s.diagram };
+  return { id: s.id, text: s.text, options: DECISIONS, video: s.video };
 }
 
 router.get("/situation", (req, res) => {
@@ -54,7 +104,7 @@ router.get("/situation", (req, res) => {
   const pool = SITUATIONS.filter((s) => !exclude.includes(s.id));
   const list = pool.length ? pool : SITUATIONS;
   const picked = list[Math.floor(Math.random() * list.length)];
-  res.json({ situation: publicSituation(picked) });
+  res.json({ situation: publicSituation(picked), total: SITUATIONS.length });
 });
 
 router.post("/decide", (req, res) => {

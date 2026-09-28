@@ -5,12 +5,11 @@ import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import ResultScreen from "../components/ResultScreen.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
-import PlayDiagram from "../components/PlayDiagram.jsx";
-import PlayReplay, { hasReplay } from "../components/PlayReplay.jsx";
+import VarClip from "../components/VarClip.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 
 const TOTAL_SITUATIONS = 10;
-const SECONDS_PER_SITUATION = 25; // hay que mirar la repetición antes de decidir
+const SECONDS_PER_SITUATION = 30; // hay que mirar el clip (y quizás en cámara lenta) antes de decidir
 
 export default function ArbitrajeVar() {
   const { activeGroupId: groupId } = useGroups();
@@ -137,7 +136,7 @@ export default function ArbitrajeVar() {
         <Card className="mt-4 text-center py-10">
           <Gavel size={32} className="mx-auto text-accent mb-3" />
           <p className="text-sm text-gray-400 mb-5">
-            Mirá la repetición de cada jugada — pausala, pasala en cámara lenta o cuadro a cuadro — y decidí como el VAR.
+            Jugadas polémicas reales revisadas por el VAR, en video y sin sonido. Pausalas o pasalas en cámara lenta y decidí qué cobrarías.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <button
@@ -171,11 +170,7 @@ export default function ArbitrajeVar() {
 
           {situation && (
             <Card>
-              {hasReplay(situation.id) ? (
-                <PlayReplay situationId={situation.id} />
-              ) : (
-                <PlayDiagram type={situation.diagram} />
-              )}
+              {situation.video && <VarClip video={situation.video} />}
               <p className="font-medium mb-4">{situation.text}</p>
               <div className="grid grid-cols-2 gap-2">
                 {situation.options.map((opt, idx) => {
