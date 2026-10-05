@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import Sidebar from "./Sidebar.jsx";
 import MobileNav from "./MobileNav.jsx";
 import TopBar from "./TopBar.jsx";
+import HelpButton from "./HelpButton.jsx";
 import { markVisit } from "../utils/visits.js";
 
 // `focus` = modo enfoque: durante una partida se esconden el menú y la barra
@@ -17,7 +18,8 @@ export default function Layout({ children, focus = false, exitTo = "/juegos" }) 
   if (focus) {
     return (
       <div className="min-h-screen bg-bg text-white page-fade">
-        <div className="flex justify-end px-4 pt-3 sm:px-6">
+        <div className="flex justify-end items-center gap-2 px-4 pt-3 sm:px-6">
+          <HelpButton inline />
           <Link to={exitTo} className="btn btn-secondary btn-sm">
             <X size={14} /> Salir
           </Link>
@@ -37,6 +39,7 @@ export default function Layout({ children, focus = false, exitTo = "/juegos" }) 
         <main className="flex-1 px-4 py-5 pb-24 sm:px-6 lg:px-8 lg:py-8 lg:pb-8 max-w-[1400px] page-fade">
           {children}
         </main>
+        <HelpButton />
       </div>
     </div>
   );

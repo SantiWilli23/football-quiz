@@ -1,0 +1,145 @@
+// Textos de ayuda del botón «?»: uno por pantalla. `match` es el prefijo de ruta;
+// gana el más largo. Se usan también en el tutorial de bienvenida.
+//
+// Regla común a casi todos los juegos: lo que jugás suma un puntaje semanal a tu
+// grupo, que crece con el esfuerzo (dificultad, aciertos) y la rapidez. Cada
+// semana arranca de cero.
+
+const WEEKLY = "Suma un puntaje semanal para tu grupo: cuenta el esfuerzo (aciertos, dificultad) y el tiempo. Cada semana se reinicia.";
+
+export const GROUP_HELP = {
+  title: "Cómo funcionan los grupos",
+  intro: "Un grupo es tu pandilla de amigos dentro de Futotal. Todo lo que jugás se compara con ellos.",
+  points: [
+    "Crear o unirte: creás un grupo y compartís el código o el link de invitación; los demás entran con eso. Podés estar en varios grupos y cambiar de uno a otro arriba.",
+    "Escudo del grupo: se genera con el nombre y los colores del grupo, y es la identidad que ven todos.",
+    "Ranking semanal: suma los puntos de todos los juegos de la semana (trivia, duelos, retos, Copa 8a2, FantasyFiction y más). Cada lunes se reinicia y queda en el historial.",
+    "Retos semanales: cada juego tiene su propia tabla del grupo, con puntajes según esfuerzo y tiempo. Se premia al top 3.",
+    "Copa semanal: te anotás de lunes a jueves y de viernes a domingo se juega a eliminación según los puntos de cada día.",
+    "Preguntas del grupo: el grupo puede escribir sus propias preguntas de trivia para pelearse entre amigos.",
+    "Liga del grupo (opcional): la activa quien creó el grupo y hace falta tener al menos 10 miembros. Hay dos divisiones, Primera y Segunda, con ascensos y descensos cada temporada, y se pueden habilitar sobres de cartas según tu posición y división.",
+    "Sobres de cartas: si el creador los habilita, la Liga del grupo reparte sobres al cerrar la temporada.",
+  ],
+};
+
+const H = (title, intro, points = []) => ({ title, intro, points });
+
+export const HELP = [
+  { match: "/panel", ...H("Inicio", "Tu pizarra del día: qué te falta jugar hoy, cómo viene tu grupo y lo que sigue.", [
+    "Arriba ves tu progreso del día y la trivia diaria.",
+    "El ranking semanal del grupo está acá resumido; el detalle está en Mi grupo.",
+  ]) },
+  { match: "/trivia", ...H("Trivia", "Preguntas de fútbol: la diaria y las especiales.", [
+    "Trivia diaria: una tanda por día, igual para todo tu grupo. Cada acierto suma, y responder más rápido da más puntos.",
+    "Especial: preguntas temáticas de la semana o del momento.",
+    WEEKLY,
+  ]) },
+  { match: "/juegos", ...H("Juegos", "El catálogo completo, ordenado por tipo: Solo, Con amigos, Contrarreloj, Pronóstico y Carrera larga.", [
+    "Filtrá por duración si tenés poco tiempo.",
+    "Cada juego tiene su propio «?» con las reglas y cómo puntúa.",
+    "Casi todos suman un puntaje semanal a tu grupo.",
+  ]) },
+  { match: "/futbol", ...H("En vivo", "Partidos, tablas y goleadores reales de las ligas.", [
+    "Sirve para ver los resultados que después se pronostican en Quiniela.",
+  ]) },
+  { match: "/grupo", ...GROUP_HELP },
+  { match: "/estadisticas", ...H("Estadísticas", "Tus números y los del grupo: aciertos, rachas y evolución.") },
+  { match: "/historial", ...H("Historial", "Las semanas anteriores: quién ganó cada una y con cuántos puntos.") },
+  { match: "/ranking-global", ...H("Ranking global", "Todos los jugadores de Futotal comparados, más allá de tu grupo.") },
+  { match: "/perfil", ...H("Mi perfil", "Tu avatar, tu vitrina de logros y tu pase de temporada.", [
+    "Pase de temporada: ganás niveles jugando y desbloqueás recompensas.",
+    "Acá también cambiás el tema, el sonido y los avisos.",
+  ]) },
+  { match: "/pase", ...H("Pase de temporada", "Cada cosa que jugás suma experiencia; al subir de nivel desbloqueás recompensas hasta fin de temporada.") },
+  { match: "/vida-fut", ...H("Vida FUT", "Una carrera larga en tres etapas: jugador (Cotrero), 3 temporadas de DT y 3 de presidente.", [
+    "Cada etapa se juega con su propio modo; lo que lográs en una pasa a la siguiente.",
+  ]) },
+
+  { match: "/fulbodle", ...H("Fichado", "Adiviná al futbolista secreto.", [
+    "Cada intento te da colores y un número de parecido: verde es acierto exacto, amarillo está cerca.",
+    "Hay modo diario (el mismo para todos) y aleatorio, y dificultades por liga.",
+    WEEKLY,
+  ]) },
+  { match: "/copa-semanal", ...H("Copa semanal", "Un torneo del grupo cada semana.", [
+    "De lunes a jueves te anotás. De viernes a domingo se juega a eliminación: gana quien sume más puntos ese día.",
+    "Te anotás una vez y se arma sola; no necesitás jugar un partido aparte.",
+  ]) },
+  { match: "/mercado", ...H("Mercado de pases", "Predecí a dónde se va cada figura en la próxima ventana de pases.", [
+    "Cada acierto suma puntos cuando se cierra el mercado.",
+  ]) },
+  { match: "/cartas", ...H("Cartas", "Abrí sobres con jugadores reales, armá tu once y jugá partidos.", [
+    "La química sale de los clubes que compartieron los jugadores de tu equipo: más química, mejor rendimiento.",
+    "Podés jugar contra la máquina o contra otra persona del grupo.",
+    "Tu mejor victoria de la semana suma al grupo: cuenta la diferencia de goles y si el rival era más fuerte. Ganarle a una persona vale más.",
+  ]) },
+  { match: "/escudos", ...H("Escudos a ciegas", "Adiviná el club solo por su escudo borroso.", [
+    "Práctica: con pistas y las veces que quieras.",
+    "Reto semanal: una sola vez por semana, sin pistas. Vale más acertar clubes difíciles y rápido, y las opciones falsas se parecen al escudo real.",
+  ]) },
+  { match: "/quien-sabe-mas", ...H("¿Quién sabe más de fútbol?", "Cinco formas de medirte: Duelos, Mentiroso, Equipo-Jugador, ¿Quién es? y Supervivencia.", [
+    "Elegí el modo según el tiempo y con quién juegues. Cada uno tiene su «?».",
+  ]) },
+  { match: "/duelos", ...H("Duelos", "Uno contra uno con las preguntas más difíciles del grupo.", [
+    "Ganás puntos por cada pregunta que le sacás de ventaja al rival; también se pueden hacer apuestas.",
+    "Suma al ranking semanal del grupo.",
+  ]) },
+  { match: "/equipo-jugador", ...H("Equipo-Jugador", "Una cadena de conexiones: jugador → equipo → jugador.", [
+    "Si fallás, quedás eliminado. Gana quien llegue más lejos.",
+    WEEKLY,
+  ]) },
+  { match: "/quien-es-vivo", ...H("¿Quién es? en vivo", "Uno contra uno con las mismas pistas para los dos.", [
+    "Crean una sala y pasan el código. Sale una pista nueva cada 12 segundos; gana quien adivine primero.",
+    "Cuantas menos pistas necesites, más puntos. " + WEEKLY,
+  ]) },
+  { match: "/quien-es", ...H("¿Quién es?", "Adiviná al jugador por su carrera: clubes y años, de a una pista.", [
+    "Menos pistas usadas = más puntos.",
+    "También podés jugarlo en vivo contra una persona.",
+  ]) },
+  { match: "/supervivencia", ...H("Supervivencia", "Trivia sin margen de error: una vida.", [
+    "En cuanto fallás, se termina. Cuantas más rondas aguantes y más difícil el nivel, más puntos.",
+    WEEKLY,
+  ]) },
+  { match: "/copa-8a2", ...H("Copa 8a2", "Torneo de eliminación directa del grupo.", [
+    "Cada uno arma su equipo draftando jugadores reales y se cruzan por rondas.",
+    "Sumás puntos por anotarte y por cada ronda que ganás, más cuanto más avanzás.",
+  ]) },
+  { match: "/fantasyfiction", ...H("FantasyFiction", "Liga simulada con todo tu grupo.", [
+    "Hay jornadas semanales y dos mercados de pases por semana.",
+    "En cada jornada el top 3 del grupo suma 8, 5 y 3 puntos, y el resto 1.",
+  ]) },
+  { match: "/dt-liga", ...H("Modo DT Online", "Una liga con amigos: cada uno elige un club real y compite temporada a temporada.", [
+    "Los partidos entre ustedes se pueden seguir en vivo.",
+  ]) },
+  { match: "/un-minuto", ...H("Un Minuto", "Trivia contrarreloj: respondé todas las que puedas en un minuto.", [
+    "Cada acierto suma; fallar no resta. Sirve para entrar en calor.",
+    WEEKLY,
+  ]) },
+  { match: "/arbitraje-var", ...H("Arbitraje / VAR", "Mirá la jugada y decidí como árbitro.", [
+    "Decidí por lo que ves en el video, no por la descripción. Después se muestra qué decidió el VAR y por qué.",
+    "Un clip sin sonido por ronda, contra reloj.",
+    WEEKLY,
+  ]) },
+  { match: "/quiniela", ...H("Quiniela semanal", "Predecí el resultado exacto de los próximos partidos reales.", [
+    "Tenés que cargar tu pronóstico antes de que arranque cada partido.",
+    "Exacto suma más; acertar solo el ganador suma menos.",
+  ]) },
+  { match: "/pronosticos", ...H("Campeón y descenso", "Predecí quién sale campeón y quiénes bajan esta temporada.", [
+    "Se paga al final de la temporada real.",
+  ]) },
+  { match: "/carrera-dt", ...H("Modo DT", "Dirigí un club real: tácticas, fichajes, selección y partidos en vivo.", [
+    "Cada temporada suma al puntaje semanal; los objetivos y títulos valen más.",
+  ]) },
+  { match: "/presidente", ...H("Modo Presidente", "Tu historia como presidente de un club: decisiones, prensa y presión de la directiva.", [
+    "Se juega solo, a tu ritmo. Tu legado puntúa para el grupo.",
+  ]) },
+];
+
+export function helpFor(pathname) {
+  let best = null;
+  for (const h of HELP) {
+    if (pathname === h.match || pathname.startsWith(`${h.match}/`)) {
+      if (!best || h.match.length > best.match.length) best = h;
+    }
+  }
+  return best;
+}
