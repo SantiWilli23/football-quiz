@@ -36,8 +36,129 @@ const TTL_SECONDS = {
 // el usuario lo sepa.
 const FALLBACK_SEASON = 2023;
 
+// Sin FOOTBALL_API_KEY se usa la API pública de ESPN (no pide clave, trae la
+// temporada actual completa). Las funciones de abajo la traducen al mismo
+// formato de api-football, así que rutas y pantallas no notan la diferencia.
+const useEspn = () => !process.env.FOOTBALL_API_KEY;
+
 export function isConfigured() {
-  return !!process.env.FOOTBALL_API_KEY;
+  return true;
+}
+
+const ESPN_BASE = "https://site.api.espn.com/apis";
+const ESPN_SLUGS = { bundesliga: "ger.1", laliga: "esp.1", premier: "eng.1", serie_a: "ita.1", ligue1: "fra.1", chile: "chi.1" };
+
+async function espnGet(url) {
+  let response;
+  try {
+    response = await fetch(url);
+  } catch (err) {
+    throw new FootballApiError(`No se pudo contactar a la API de fútbol: ${err.message}`, 502);
+  }
+  if (!response.ok) throw new FootballApiError(`La API de fútbol respondió ${response.status}`, 502);
+  return response.json();
+}
+
+// Igual que cachedFetch, pero con un loader cualquiera en vez de api-football.
+async function espnCached(cacheKey, ttlSeconds, loader) {
+  const fresh = await readCache(cacheKey, ttlSeconds);
+  if (fresh) return fresh;
+  try {
+    const data = await loader();
+    await writeCache(cacheKey, data);
+    return data;
+  } catch (err) {
+    const stale = await readCache(cacheKey, Infinity);
+    if (stale) return stale;
+    throw err;
+  }
+}
+
+function espnStatusShort(status) {
+  const name = status?.type?.name || "";
+  const state = status?.type?.state;
+  if (/POSTPONED/.test(name)) return "PST";
+  if (/CANCELED|CANCELLED/.test(name)) return "CANC";
+  if (/HALFTIME/.test(name)) return "HT";
+  if (state === "pre") return "NS";
+  if (state === "post") return /PEN/.test(name) ? "PEN" : /AET|EXTRA/.test(name) ? "AET" : "FT";
+  if (state === "in") return status.period >= 3 ? "ET" : status.period === 2 ? "2H" : "1H";
+  return "TBD";
+}
+
+function espnFixture(ev) {
+  const comp = ev.competitions?.[0] || {};
+  const side = (ha) => comp.competitors?.find((c) => c.homeAway === ha) || {};
+  const home = side("home");
+  const away = side("away");
+  const short = espnStatusShort(ev.status);
+  const started = short !== "NS" && short !== "TBD" && short !== "PST" && short !== "CANC";
+  const team = (c) => ({ id: Number(c.team?.id), name: c.team?.displayName, logo: c.team?.logo, winner: c.winner ?? null });
+  return {
+    fixture: {
+      id: Number(ev.id),
+      date: ev.date,
+      status: { short, elapsed: parseInt(ev.status?.displayClock, 10) || null },
+      venue: { name: comp.venue?.fullName ?? null },
+    },
+    teams: { home: team(home), away: team(away) },
+    goals: { home: started ? Number(home.score) : null, away: started ? Number(away.score) : null },
+  };
+}
+
+async function espnScoreboard(leagueKey, date) {
+  const slug = ESPN_SLUGS[leagueKey];
+  const q = date ? `?dates=${date.replaceAll("-", "")}` : "";
+  const json = await espnGet(`${ESPN_BASE}/site/v2/sports/soccer/${slug}/scoreboard${q}`);
+  return (json.events || []).map(espnFixture);
+}
+
+async function espnStandings(leagueKey) {
+  const json = await espnGet(`${ESPN_BASE}/v2/sports/soccer/${ESPN_SLUGS[leagueKey]}/standings`);
+  const entries = json.children?.[0]?.standings?.entries || [];
+  const rows = entries.map((e) => {
+    const s = Object.fromEntries((e.stats || []).map((x) => [x.name, x.value]));
+    return {
+      rank: s.rank,
+      team: { id: Number(e.team.id), name: e.team.displayName, logo: e.team.logos?.[0]?.href ?? null },
+      all: { played: s.gamesPlayed, win: s.wins, draw: s.ties, lose: s.losses, goals: { for: s.pointsFor, against: s.pointsAgainst } },
+      goalsDiff: s.pointDifferential,
+      points: s.points,
+      form: null,
+    };
+  }).sort((a, b) => a.rank - b.rank);
+  return [{ league: { standings: [rows] } }];
+}
+
+async function espnScorers(leagueKey) {
+  const json = await espnGet(`${ESPN_BASE}/site/v2/sports/soccer/${ESPN_SLUGS[leagueKey]}/statistics`);
+  const goals = json.stats?.find((s) => s.name === "goalsLeaders")?.leaders || [];
+  const assists = new Map((json.stats?.find((s) => s.name === "assistsLeaders")?.leaders || []).map((l) => [l.athlete.id, l.value]));
+  return goals.slice(0, 20).map((l) => {
+    const t = l.athlete.team;
+    return {
+      player: { id: Number(l.athlete.id), name: l.athlete.displayName, photo: null },
+      statistics: [{
+        team: t ? { id: Number(t.id), name: t.displayName, logo: t.logos?.[0]?.href ?? null } : null,
+        goals: { total: l.value, assists: assists.get(l.athlete.id) ?? 0 },
+        games: { appearences: parseInt(/Matches:\s*(\d+)/.exec(l.displayValue || "")?.[1], 10) || 0 },
+      }],
+    };
+  });
+}
+
+async function espnLineups(fixtureId) {
+  const json = await espnGet(`${ESPN_BASE}/site/v2/sports/soccer/all/summary?event=${fixtureId}`);
+  return (json.rosters || []).map((r) => {
+    const p = (x) => ({ player: { number: x.jersey ? Number(x.jersey) : null, name: x.athlete?.displayName, pos: x.position?.abbreviation ?? null } });
+    return {
+      team: { id: Number(r.team?.id), name: r.team?.displayName, logo: r.team?.logos?.[0]?.href ?? r.team?.logo ?? null },
+      formation: r.formation ?? null,
+      coach: null,
+      startXI: (r.roster || []).filter((x) => x.starter).map(p),
+      substitutes: (r.roster || []).filter((x) => !x.starter).map(p),
+    };
+  });
 }
 
 // La temporada de las ligas europeas arranca en agosto y cruza el año
@@ -167,6 +288,11 @@ async function seasonScopedFetch(cacheKey, ttlSeconds, path, params) {
 export async function getLiveFixtures(leagueKey) {
   const league = LEAGUES[leagueKey];
   if (!league) throw new FootballApiError("Liga desconocida", 400);
+  if (useEspn()) {
+    const data = await espnCached(`espn:live:${leagueKey}`, 60, async () =>
+      (await espnScoreboard(leagueKey)).filter((f) => ["1H", "2H", "HT", "ET"].includes(f.fixture.status.short)));
+    return { data, stale: false, demo: false };
+  }
   // Ojo: sin `season`. api-football trata "en vivo" como una foto del momento
   // que no depende de temporada, y es el único filtro por liga que el plan
   // gratis no bloquea — pedirle una temporada de más lo rompe sin necesidad.
@@ -189,6 +315,10 @@ export async function getLiveFixtures(leagueKey) {
 export async function getFixturesByDate(leagueKey, date) {
   const league = LEAGUES[leagueKey];
   if (!league) throw new FootballApiError("Liga desconocida", 400);
+  if (useEspn()) {
+    const data = await espnCached(`espn:fixtures:${leagueKey}:${date}`, TTL_SECONDS.fixtures, () => espnScoreboard(leagueKey, date));
+    return { data, blocked_by_plan: false, demo: false };
+  }
 
   const cacheKey = `fixtures:${leagueKey}:${date}`;
   const cached = await readCache(cacheKey, TTL_SECONDS.fixtures);
@@ -276,6 +406,9 @@ export async function findDemoFixtureById(leagueKey, fixtureId) {
 export async function getStandings(leagueKey) {
   const league = LEAGUES[leagueKey];
   if (!league) throw new FootballApiError("Liga desconocida", 400);
+  if (useEspn()) {
+    return { data: await espnCached(`espn:standings:${leagueKey}`, TTL_SECONDS.standings, () => espnStandings(leagueKey)), demo: false };
+  }
   return seasonScopedFetch(`standings:${leagueKey}`, TTL_SECONDS.standings, "/standings", {
     league: league.id,
     season: currentSeason(leagueKey),
@@ -285,6 +418,9 @@ export async function getStandings(leagueKey) {
 export async function getTopScorers(leagueKey) {
   const league = LEAGUES[leagueKey];
   if (!league) throw new FootballApiError("Liga desconocida", 400);
+  if (useEspn()) {
+    return { data: await espnCached(`espn:scorers:${leagueKey}`, TTL_SECONDS.scorers, () => espnScorers(leagueKey)), demo: false };
+  }
   return seasonScopedFetch(`scorers:${leagueKey}`, TTL_SECONDS.scorers, "/players/topscorers", {
     league: league.id,
     season: currentSeason(leagueKey),
@@ -292,6 +428,9 @@ export async function getTopScorers(leagueKey) {
 }
 
 export async function getLineups(fixtureId) {
+  if (useEspn()) {
+    return { data: await espnCached(`espn:lineup:${fixtureId}`, TTL_SECONDS.lineup, () => espnLineups(fixtureId)), stale: false };
+  }
   return cachedFetch(`lineup:${fixtureId}`, TTL_SECONDS.lineup, "/fixtures/lineups", {
     fixture: fixtureId,
   });
