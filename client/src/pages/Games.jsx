@@ -5,10 +5,10 @@ import EmptyState from "../components/EmptyState.jsx";
 import Layout from "../components/Layout.jsx";
 import MyCardsTeam from "../components/MyCardsTeam.jsx";
 import { FAMILIES, FAMILY_ORDER, TIME_FILTERS, gamesByFamily, minutesOf } from "../data/gameCatalog.js";
-import { daysSince, playedToday, readVisits } from "../utils/visits.js";
+import { playedToday, readVisits } from "../utils/visits.js";
 
 function durationLabel(min) {
-  return min <= 5 ? `${min} min` : min <= 30 ? `${min} min` : "larga";
+  return min >= 60 ? "larga" : `${min} min`;
 }
 
 // Clases de Tailwind escritas literales a propósito (no armadas con string
@@ -23,35 +23,28 @@ const FAMILY_STYLE = {
   purple: { badge: "bg-purple-500/15 text-purple-500 border-purple-500/30", dot: "bg-purple-500", text: "text-purple-500", glow: "group-hover:shadow-[0_0_0_1px_rgba(168,85,247,0.35),0_8px_24px_-8px_rgba(168,85,247,0.35)]", bar: "from-purple-500" },
 };
 
-function GameTile({ href, to, label, icon: Icon, description, available, style, minutes, visits }) {
+function GameTile({ href, to, label, icon: Icon, description, style, minutes, visits }) {
   const today = to ? playedToday(to, visits) : false;
-  const days = to ? daysSince(to, visits) : Infinity;
   const inner = (
     <>
-      <div className={`absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r ${style.bar} to-transparent opacity-0 group-hover:opacity-100 transition-opacity`} aria-hidden="true" />
-      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border transition-transform group-hover:scale-105 ${style.badge}`}>
-        <Icon size={21} />
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${style.badge}`}>
+        <Icon size={17} />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <p className="font-semibold text-sm group-hover:text-white transition-colors">{label}</p>
-          <span className="text-xs font-medium px-2 py-0.5 rounded-full border border-border text-gray-400">{durationLabel(minutes)}</span>
+        <div className="flex items-center gap-2">
+          <p className="font-semibold text-sm truncate">{label}</p>
+          {today && <span className="w-1.5 h-1.5 rounded-full bg-good shrink-0" title="Jugado hoy" />}
         </div>
-        <p className="text-xs text-gray-500 leading-snug">{description}</p>
-        {to && (
-          <p className={`text-xs mt-1.5 flex items-center gap-1.5 ${today ? "text-good" : "text-gray-500"}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${today ? "bg-good" : "bg-gray-600"}`} />
-            {today ? "Jugado hoy" : days === Infinity ? "Todavía no lo jugaste" : `Última vez hace ${days} día${days === 1 ? "" : "s"}`}
-          </p>
-        )}
+        <p className="text-xs text-gray-500 truncate" title={description}>{description}</p>
       </div>
+      <span className="text-[11px] text-gray-500 shrink-0 tabular-nums">{durationLabel(minutes)}</span>
     </>
   );
 
-  const className = `group relative flex items-center gap-4 px-4 py-4 rounded-2xl border border-border bg-panel hover:border-white/20 hover:-translate-y-0.5 transition-all overflow-hidden ${style.glow}`;
+  const className = "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border bg-panel hover:border-white/20 hover:bg-white/5 transition-colors overflow-hidden";
 
   if (to) return <Link to={to} className={className}>{inner}</Link>;
-  if (!href) return <div className="relative flex items-center gap-4 px-4 py-4 rounded-2xl border border-border bg-panel opacity-60 cursor-default overflow-hidden">{inner}</div>;
+  if (!href) return <div className={`${className} opacity-60 cursor-default`}>{inner}</div>;
   return <a href={href} className={className}>{inner}</a>;
 }
 
@@ -67,47 +60,41 @@ export default function Games() {
 
   return (
     <Layout>
-      <div className="mb-8 flex items-center gap-3">
-        <Gamepad2 size={22} className="text-accent shrink-0" />
-        <div>
-          <h1 className="t-title mb-1">Juegos</h1>
-          <p className="text-gray-400 text-sm">Agrupados por cómo se juegan, no por cuándo se agregaron.</p>
-        </div>
+      <div className="mb-4 flex items-center gap-3">
+        <Gamepad2 size={20} className="text-accent shrink-0" />
+        <h1 className="t-title">Juegos</h1>
       </div>
 
       <MyCardsTeam />
 
-      <div className="mb-8 space-y-3">
-        <div className="flex items-center gap-2 bg-panel border border-border rounded-card px-3 py-2.5">
-          <Search size={15} className="text-gray-500 shrink-0" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar un juego…"
-            aria-label="Buscar un juego"
-            className="flex-1 bg-transparent text-sm focus:outline-none"
-          />
+      <div className="mb-6 space-y-2">
+        <div className="flex gap-2">
+          <div className="flex-1 flex items-center gap-2 bg-panel border border-border rounded-card px-3 py-2 min-w-0">
+            <Search size={14} className="text-gray-500 shrink-0" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar un juego…"
+              aria-label="Buscar un juego"
+              className="flex-1 bg-transparent text-sm focus:outline-none min-w-0"
+            />
+          </div>
+          <select
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            aria-label="Duración"
+            className="bg-panel border border-border rounded-card px-2 text-xs text-gray-300 focus:outline-none"
+          >
+            {TIME_FILTERS.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+          </select>
         </div>
-        <div className="flex gap-1.5 flex-wrap">
-          {TIME_FILTERS.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setTime(t.key)}
-              className={`px-3 py-1.5 rounded-card text-xs font-medium border transition-colors ${
-                time === t.key ? "border-accent/40 bg-accent/10 text-accent" : "border-border text-gray-400 hover:text-white hover:border-white/30"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-1.5 flex-wrap">
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
           {[["todos", "Todos"], ...FAMILY_ORDER.map((k) => [k, FAMILIES[k].label])].map(([k, label]) => (
             <button
               key={k}
               onClick={() => setOnly(k)}
-              className={`px-3 py-1.5 rounded-card text-xs font-medium border transition-colors ${
-                only === k ? "border-accent/40 bg-accent/10 text-accent" : "border-border text-gray-400 hover:text-white hover:border-white/30"
+              className={`px-3 py-1 rounded-full text-xs font-medium border whitespace-nowrap transition-colors ${
+                only === k ? "border-accent/40 bg-accent/10 text-accent" : "border-border text-gray-400 hover:text-white"
               }`}
             >
               {label}
@@ -125,7 +112,7 @@ export default function Games() {
         />
       )}
 
-      <div className="space-y-10">
+      <div className="space-y-6">
         {FAMILY_ORDER.map((key) => {
           if (!visibleKeys.includes(key)) return null;
           const family = FAMILIES[key];
@@ -135,13 +122,12 @@ export default function Games() {
 
           return (
             <div key={key}>
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-2">
                 <span className={`w-2 h-2 rounded-full ${style.dot}`} />
-                <h2 className={`font-semibold ${style.text}`}>{family.label}</h2>
-                <span className="text-xs text-gray-600">· {games.length}</span>
+                <h2 className={`text-sm font-semibold ${style.text}`}>{family.label}</h2>
+                <span className="text-xs text-gray-600">{games.length}</span>
               </div>
-              <p className="text-xs text-gray-500 mb-3">{family.subtitle}</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {games.map((game) => (
                   <GameTile key={game.to || game.href || game.label} {...game} style={style} minutes={minutesOf(game)} visits={visits} />
                 ))}
