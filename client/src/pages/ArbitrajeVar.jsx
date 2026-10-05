@@ -8,7 +8,7 @@ import GroupSelector from "../components/GroupSelector.jsx";
 import VarClip from "../components/VarClip.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 
-const TOTAL_SITUATIONS = 10;
+const MAX_ROUNDS = 10; // tope; si hay menos jugadas en el banco, se juegan todas
 const SECONDS_PER_SITUATION = 30; // hay que mirar el clip (y quizás en cámara lenta) antes de decidir
 
 export default function ArbitrajeVar() {
@@ -23,6 +23,8 @@ export default function ArbitrajeVar() {
   const [loading, setLoading] = useState(false);
   const [saveState, setSaveState] = useState(null);
   const [timed, setTimed] = useState(true); // con reloj suma al ranking semanal
+  const [totalRounds, setTotalRounds] = useState(MAX_ROUNDS);
+  const totalRef = useRef(MAX_ROUNDS);
   const timerRef = useRef(null);
   const situationRef = useRef(null);
   const seenRef = useRef([]);
@@ -34,6 +36,9 @@ export default function ArbitrajeVar() {
     setFeedback(null);
     try {
       const { data } = await api.get("/arbitraje-var/situation", { params: { exclude: exclude.join(",") } });
+      const n = Math.min(MAX_ROUNDS, data.total ?? MAX_ROUNDS);
+      totalRef.current = n;
+      setTotalRounds(n);
       setSituation(data.situation);
       situationRef.current = data.situation;
       setSecondsLeft(SECONDS_PER_SITUATION);
@@ -88,7 +93,7 @@ export default function ArbitrajeVar() {
         setTimeout(() => {
           setRound((r) => {
             const nextRound = r + 1;
-            if (nextRound >= TOTAL_SITUATIONS) finish(next);
+            if (nextRound >= totalRef.current) finish(next);
             else fetchSituation(nextSeen);
             return nextRound;
           });
@@ -127,7 +132,7 @@ export default function ArbitrajeVar() {
         Arbitraje / VAR
       </h1>
       <p className="text-gray-400 text-sm mb-4">
-        {TOTAL_SITUATIONS} jugadas. Tu decisión contra la del VAR, con reloj de {SECONDS_PER_SITUATION} segundos por jugada (que suma al ranking semanal) o sin tiempo, para practicar tranquilo.
+        Jugadas polémicas reales de LaLiga. Tu decisión contra la del VAR, con reloj de {SECONDS_PER_SITUATION} segundos por jugada (que suma al ranking semanal) o sin tiempo, para practicar tranquilo.
       </p>
 
       <GroupSelector />
@@ -162,7 +167,7 @@ export default function ArbitrajeVar() {
               {timed ? `${secondsLeft}s` : "Sin tiempo"}
             </span>
             <span className="text-sm text-gray-400">
-              Jugada {Math.min(round + 1, TOTAL_SITUATIONS)}/{TOTAL_SITUATIONS} · {correctCount} correctas
+              Jugada {Math.min(round + 1, totalRounds)}/{totalRounds} · {correctCount} correctas
             </span>
           </div>
 
@@ -210,13 +215,13 @@ export default function ArbitrajeVar() {
 
       {phase === "done" && (
         <ResultScreen
-          score={`${correctCount}/${TOTAL_SITUATIONS}`}
+          score={`${correctCount}/${totalRounds}`}
           unit="decisiones correctas"
           groupId={timed ? groupId : null}
           saveState={saveState}
           highlight={timed ? undefined : "Sin reloj es práctica: no cuenta para el ranking semanal."}
           onAgain={() => setPhase("idle")}
-          shareText={`⚽ Futotal · Arbitraje / VAR: ${correctCount}/${TOTAL_SITUATIONS} — ¿me ganás?`}
+          shareText={`⚽ Futotal · Arbitraje / VAR: ${correctCount}/${totalRounds} — ¿me ganás?`}
         />
       )}
     </Layout>

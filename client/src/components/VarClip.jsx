@@ -53,6 +53,9 @@ export default function VarClip({ video }) {
   const [speed, setSpeed] = useState(1);
   const [t, setT] = useState(0);
   const [segIdx, setSegIdx] = useState(0);
+  // YouTube dibuja el título del video arriba al cargar y al pausar: se tapa.
+  const [titleMask, setTitleMask] = useState(true);
+  const maskTimer = useRef(null);
 
   function goToSegment(i, within = 0) {
     segRef.current = i;
@@ -100,8 +103,17 @@ export default function VarClip({ video }) {
           },
           onStateChange: (e) => {
             silence(e.target);
-            if (e.data === YT.PlayerState.PLAYING) setPlaying(true);
-            if (e.data === YT.PlayerState.PAUSED) setPlaying(false);
+            if (e.data === YT.PlayerState.PLAYING) {
+              setPlaying(true);
+              setTitleMask(true);
+              clearTimeout(maskTimer.current);
+              maskTimer.current = setTimeout(() => setTitleMask(false), 3500);
+            }
+            if (e.data === YT.PlayerState.PAUSED) {
+              clearTimeout(maskTimer.current);
+              setPlaying(false);
+              setTitleMask(true);
+            }
             if (e.data === YT.PlayerState.ENDED) {
               segRef.current = 0;
               setSegIdx(0);
@@ -116,6 +128,7 @@ export default function VarClip({ video }) {
     }).catch(() => setFailed(true));
     return () => {
       cancelled = true;
+      clearTimeout(maskTimer.current);
       try { playerRef.current?.destroy(); } catch { /* ya destruido */ }
       playerRef.current = null;
     };
@@ -180,18 +193,21 @@ export default function VarClip({ video }) {
   return (
     <div className="mb-4 -mx-6 -mt-6 card-bleed">
       <div className="relative bg-black rounded-t-2xl overflow-hidden aspect-video">
-        <div ref={hostRef} className="absolute inset-0 [&>iframe]:w-full [&>iframe]:h-full" />
+        {/* Con "crop" el video se agranda un 18% anclado arriba: el borde inferior,
+            donde YouTube/RFEF ponen los subtítulos del VAR, queda afuera. */}
+        <div
+          ref={hostRef}
+          className="absolute [&>iframe]:w-full [&>iframe]:h-full"
+          style={video.crop ? { width: "118%", height: "118%", left: "-9%", top: 0 } : { inset: 0 }}
+        />
         {/* Capa que bloquea cualquier interacción con el reproductor de YouTube;
             en pausa además tapa la pantalla de "Más videos" de YouTube. */}
         <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={toggle} aria-hidden="true">
+          {titleMask && <div className="absolute inset-x-0 top-0 h-[14%] bg-black" />}
           {ready && !playing && (
-            <>
-              <div className="absolute inset-x-0 top-0 h-[16%] bg-black" />
-              <div className="absolute inset-x-0 bottom-0 h-[22%] bg-black" />
-              <span className="relative w-16 h-16 rounded-full bg-black border border-white/30 flex items-center justify-center text-white">
-                <Play size={26} />
-              </span>
-            </>
+            <span className="relative w-[76px] h-[76px] rounded-full bg-black/90 border border-white/30 flex items-center justify-center text-white">
+              <Play size={26} />
+            </span>
           )}
         </div>
         <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded bg-black/70 text-[10px] font-semibold tracking-wider text-white pointer-events-none">
