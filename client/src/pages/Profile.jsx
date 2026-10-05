@@ -11,6 +11,7 @@ import AccountSettings from "../components/AccountSettings.jsx";
 import ThemeSettings from "../components/ThemeSettings.jsx";
 import Vitrina from "../components/Vitrina.jsx";
 import PlayerCard from "../components/PlayerCard.jsx";
+import SeasonPass from "../components/SeasonPass.jsx";
 
 export default function Profile() {
   const { user, stats, refreshMe } = useAuth();
@@ -83,6 +84,10 @@ export default function Profile() {
 
       <div className="mb-6">
         <PlayerCard user={user} stats={stats} activeGroup={activeGroup} position={position} />
+      </div>
+
+      <div className="mb-8">
+        <SeasonPass />
       </div>
 
       <div className="mb-6">
