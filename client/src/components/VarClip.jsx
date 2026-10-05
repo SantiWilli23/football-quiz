@@ -32,20 +32,41 @@ function silence(p) {
   } catch { /* el reproductor todavía no está listo */ }
 }
 
+// Un clip puede tener varios tramos del mismo video (p. ej. la jugada en
+// vivo y después la repetición con zoom); se reproducen seguidos y la línea
+// de tiempo recorre el total.
+function segmentsOf(video) {
+  return video.segments || [[video.start, video.end]];
+}
+
 export default function VarClip({ video }) {
+  const segs = segmentsOf(video);
+  const segsKey = JSON.stringify(segs);
+  const offsets = segs.reduce((acc, [s, e], i) => [...acc, (acc[i] ?? 0) + (e - s)], [0]);
+  const total = offsets[segs.length];
   const hostRef = useRef(null);
   const playerRef = useRef(null);
+  const segRef = useRef(0);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
-  const [t, setT] = useState(video.start);
+  const [t, setT] = useState(0);
+  const [segIdx, setSegIdx] = useState(0);
+
+  function goToSegment(i, within = 0) {
+    segRef.current = i;
+    setSegIdx(i);
+    playerRef.current?.seekTo(segs[i][0] + within, true);
+  }
 
   useEffect(() => {
     let cancelled = false;
     setReady(false);
     setFailed(false);
-    setT(video.start);
+    setT(0);
+    setSegIdx(0);
+    segRef.current = 0;
     setSpeed(1);
     loadYouTubeApi().then((YT) => {
       if (cancelled || !hostRef.current) return;
@@ -56,7 +77,7 @@ export default function VarClip({ video }) {
         width: "100%",
         height: "100%",
         playerVars: {
-          start: video.start,
+          start: Math.floor(segs[0][0]),
           autoplay: 1,
           mute: 1,
           controls: 0,
@@ -73,7 +94,7 @@ export default function VarClip({ video }) {
           onReady: (e) => {
             if (cancelled) return;
             silence(e.target);
-            e.target.seekTo(video.start, true);
+            e.target.seekTo(segs[0][0], true);
             e.target.playVideo();
             setReady(true);
           },
@@ -82,7 +103,9 @@ export default function VarClip({ video }) {
             if (e.data === YT.PlayerState.PLAYING) setPlaying(true);
             if (e.data === YT.PlayerState.PAUSED) setPlaying(false);
             if (e.data === YT.PlayerState.ENDED) {
-              e.target.seekTo(video.start, true);
+              segRef.current = 0;
+              setSegIdx(0);
+              e.target.seekTo(segs[0][0], true);
               e.target.pauseVideo();
               setPlaying(false);
             }
@@ -96,9 +119,10 @@ export default function VarClip({ video }) {
       try { playerRef.current?.destroy(); } catch { /* ya destruido */ }
       playerRef.current = null;
     };
-  }, [video.id, video.start, video.end]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [video.id, segsKey]);
 
-  // Refuerzo del silencio + posición para la línea de tiempo.
+  // Refuerzo del silencio, salto entre tramos y posición para la línea de tiempo.
   useEffect(() => {
     if (!ready) return;
     const iv = setInterval(() => {
@@ -106,14 +130,27 @@ export default function VarClip({ video }) {
       if (!p?.getCurrentTime) return;
       if (!p.isMuted?.() || p.getOption?.("captions", "track")?.languageCode) silence(p);
       const now = p.getCurrentTime();
-      if (now >= video.end || now < video.start - 1) {
-        p.pauseVideo();
-        p.seekTo(video.start, true);
+      const i = segRef.current;
+      const [s, e] = segs[i];
+      if (now >= e) {
+        if (i + 1 < segs.length) {
+          goToSegment(i + 1);
+        } else {
+          p.pauseVideo();
+          goToSegment(0);
+          setT(0);
+        }
+        return;
       }
-      setT(Math.max(video.start, Math.min(video.end, now)));
-    }, 200);
+      if (now < s - 1) {
+        goToSegment(i);
+        return;
+      }
+      setT(Math.max(0, Math.min(total, offsets[i] + (now - s))));
+    }, 150);
     return () => clearInterval(iv);
-  }, [ready, video.start, video.end]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, segsKey]);
 
   function toggle() {
     const p = playerRef.current;
@@ -122,17 +159,19 @@ export default function VarClip({ video }) {
     else p.playVideo();
   }
   function restart() {
-    const p = playerRef.current;
-    if (!p) return;
-    p.seekTo(video.start, true);
-    p.playVideo();
+    if (!playerRef.current) return;
+    goToSegment(0);
+    setT(0);
+    playerRef.current.playVideo();
   }
   function changeSpeed(s) {
     setSpeed(s);
     playerRef.current?.setPlaybackRate?.(s);
   }
   function seek(v) {
-    playerRef.current?.seekTo(v, true);
+    let i = segs.length - 1;
+    while (i > 0 && v < offsets[i]) i--;
+    goToSegment(i, v - offsets[i]);
     setT(v);
   }
 
@@ -157,7 +196,7 @@ export default function VarClip({ video }) {
         </div>
         <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded bg-black/70 text-[10px] font-semibold tracking-wider text-white pointer-events-none">
           <span className={`w-1.5 h-1.5 rounded-full ${playing ? "bg-red-500 animate-pulse" : "bg-gray-400"}`} />
-          VAR · CLIP REAL
+          VAR · {segIdx > 0 ? "REPETICIÓN" : "CLIP REAL"}
         </div>
         <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded bg-black/70 text-[10px] text-white pointer-events-none">
           <VolumeX size={11} /> sin sonido
@@ -175,8 +214,8 @@ export default function VarClip({ video }) {
       <div className="px-6 pt-3 space-y-2">
         <input
           type="range"
-          min={video.start}
-          max={video.end}
+          min={0}
+          max={total}
           step="0.1"
           value={t}
           disabled={!ready}
@@ -189,7 +228,7 @@ export default function VarClip({ video }) {
             {playing ? <Pause size={15} /> : <Play size={15} />}
           </button>
           <button onClick={restart} disabled={!ready} className={btn} aria-label="Repetir la jugada"><RotateCcw size={15} /></button>
-          <span className="text-xs text-gray-500 tabular-nums">{(t - video.start).toFixed(1)}s / {video.end - video.start}s</span>
+          <span className="text-xs text-gray-500 tabular-nums">{t.toFixed(1)}s / {total}s</span>
           <div className="ml-auto flex items-center gap-1">
             {SPEEDS.map((s) => (
               <button
@@ -203,7 +242,7 @@ export default function VarClip({ video }) {
             ))}
           </div>
         </div>
-        <p className="text-[11px] text-gray-600">Clip: Professional Referee Organization (PRO) · MLS 2026</p>
+        {video.credit && <p className="text-[11px] text-gray-600">Clip: {video.credit}</p>}
       </div>
     </div>
   );
