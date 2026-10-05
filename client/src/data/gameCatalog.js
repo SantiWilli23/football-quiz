@@ -2,6 +2,7 @@ import {
   Brain, Building2, CalendarDays, Crown, Gavel, Shield, ShieldCheck, Sparkles,
   Layers, Repeat, Star, Target, Timer, Trophy, TrendingUp, Users,
 } from "lucide-react";
+import { isEnabled } from "./features.js";
 
 // Familias de color secundario: reemplazan los ~14 hex sueltos que tenía
 // cada juego antes. Usan los slots de color que YA existen por tema (ver
@@ -17,13 +18,15 @@ export const FAMILIES = {
   carrera: { label: "Carrera larga", subtitle: "Temporada a temporada, partidas de horas.", tw: "purple" },
 };
 
-export const FAMILY_ORDER = ["solo", "grupo", "reloj", "pronostico", "carrera"];
+const ALL_FAMILY_ORDER = ["solo", "grupo", "reloj", "pronostico", "carrera"];
 
-export const GAMES = [
+// Los juegos con `feature` apagada (client/src/data/features.js) siguen definidos acá
+// pero no salen en el catálogo, ni en el buscador, ni en la barra superior.
+const ALL_GAMES = [
   // ---- Solo ----
   { to: "/fulbodle", label: "Fichado", icon: Target, description: "Adiviná al futbolista secreto con colores, número de parecido, ligas y dificultades. Diario o aleatorio; la partida suma al reto semanal del grupo.", family: "solo", available: true },
   { to: "/copa-semanal", label: "Copa semanal", icon: Trophy, description: "Anotate de lunes a jueves; de viernes a domingo se juega a eliminación por puntos de cada día.", family: "grupo", available: true },
-  { to: "/mercado", label: "Mercado de pases", icon: Repeat, description: "Predecí a dónde juega cada figura en la próxima ventana; cada acierto suma puntos.", family: "pronostico", available: true },
+  { to: "/mercado", label: "Mercado de pases", icon: Repeat, description: "Predecí a dónde juega cada figura en la próxima ventana; cada acierto suma puntos.", family: "pronostico", feature: "pronosticos", available: true },
   { to: "/cartas", label: "Cartas", icon: Layers, description: "Abrí sobres con los 2000 jugadores, armá tu once y jugá partidos: la química sale de los clubes que compartieron.", family: "grupo", available: true },
   { to: "/escudos", label: "Escudos a ciegas", icon: ShieldCheck, description: "Práctica con pistas o reto semanal sin pistas: adiviná el club solo por el escudo borroso.", family: "solo", available: true },
   { href: "/draft-europeo.html", label: "8a2", icon: Star, description: "Armá tu XI con jugadores de 138 planteles históricos de la Champions League.", family: "solo", available: true },
@@ -39,8 +42,8 @@ export const GAMES = [
   { to: "/arbitraje-var", label: "Arbitraje / VAR", icon: Gavel, description: "Se te describe la jugada: decidí como el árbitro contra reloj y comparate con el VAR.", family: "reloj", available: true },
 
   // ---- Pronóstico ----
-  { to: "/quiniela", label: "Quiniela semanal", icon: CalendarDays, description: "Predecí el resultado exacto de los próximos partidos reales antes de que arranquen.", family: "pronostico", available: true },
-  { to: "/pronosticos", label: "Campeón y descenso", icon: Trophy, description: "Predecí quién sale campeón y qué 3 equipos bajan esta temporada real.", family: "pronostico", available: true },
+  { to: "/quiniela", label: "Quiniela semanal", icon: CalendarDays, description: "Predecí el resultado exacto de los próximos partidos reales antes de que arranquen.", family: "pronostico", feature: "pronosticos", available: true },
+  { to: "/pronosticos", label: "Campeón y descenso", icon: Trophy, description: "Predecí quién sale campeón y qué 3 equipos bajan esta temporada real.", family: "pronostico", feature: "pronosticos", available: true },
 
   // ---- Carrera larga ----
   { href: "/cotrero.html", label: "Cotrero", icon: Crown, description: "De potrero a leyenda: simulá toda la carrera de un jugador, temporada a temporada.", family: "carrera", available: true },
@@ -48,6 +51,10 @@ export const GAMES = [
   { to: "/presidente", label: "Modo Presidente", icon: Building2, description: "Tu historia como presidente: decisiones, prensa y presión de la directiva. Solo, a tu ritmo, sin depender del grupo.", family: "carrera", available: true },
   { to: "/vida-fut", label: "Vida FUT", icon: Sparkles, description: "Jugador en Cotrero, después 3 temporadas de DT y 3 de presidente: una carrera larga en tres etapas.", family: "carrera", available: true },
 ];
+
+export const GAMES = ALL_GAMES.filter((g) => isEnabled(g.feature));
+// Una familia sin juegos habilitados no se muestra (ni su filtro).
+export const FAMILY_ORDER = ALL_FAMILY_ORDER.filter((k) => GAMES.some((g) => g.family === k));
 
 // Duración aproximada de una partida, en minutos. Sirve para filtrar en /juegos.
 const MINUTES = {

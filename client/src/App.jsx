@@ -7,6 +7,13 @@ import Splash from "./pages/Splash.jsx";
 import InvitePreview from "./pages/InvitePreview.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import CommandPalette from "./components/CommandPalette.jsx";
+import { FEATURES } from "./data/features.js";
+
+// Pantallas de funciones apagadas (client/src/data/features.js): si la bandera
+// está en false, quien entre por un link viejo vuelve a Juegos.
+function FeatureGate({ flag, children }) {
+  return FEATURES[flag] ? children : <Navigate to="/juegos" replace />;
+}
 
 // Todo lo que no hace falta para el primer pantallazo (login/splash/panel) se
 // separa en su propio chunk — el bundle venía creciendo con cada juego nuevo
@@ -163,7 +170,9 @@ export default function App() {
         path="/mercado"
         element={
           <PrivateRoute>
-            <Mercado />
+            <FeatureGate flag="pronosticos">
+              <Mercado />
+            </FeatureGate>
           </PrivateRoute>
         }
       />
@@ -251,7 +260,9 @@ export default function App() {
         path="/quiniela"
         element={
           <PrivateRoute>
-            <Quiniela />
+            <FeatureGate flag="pronosticos">
+              <Quiniela />
+            </FeatureGate>
           </PrivateRoute>
         }
       />
@@ -259,7 +270,9 @@ export default function App() {
         path="/pronosticos"
         element={
           <PrivateRoute>
-            <SeasonPredictions />
+            <FeatureGate flag="pronosticos">
+              <SeasonPredictions />
+            </FeatureGate>
           </PrivateRoute>
         }
       />
