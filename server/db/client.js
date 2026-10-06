@@ -44,6 +44,16 @@ export async function initSchema() {
   await migrateWordleLeague();
   await migrateFichadoBonusHints();
   await migrateCupMatchEvents();
+  await migrateSeasonPredictionPhase();
+}
+
+// Campeón y descenso: en qué ventana se hizo la predicción ("inicio" o
+// "final"). Las de final de temporada valen la mitad: ya se sabe mucho más.
+async function migrateSeasonPredictionPhase() {
+  const info = await db.execute("PRAGMA table_info(season_predictions)");
+  if (info.rows.length === 0) return;
+  if (info.rows.some((r) => r.name === "phase")) return;
+  await db.execute("ALTER TABLE season_predictions ADD COLUMN phase TEXT NOT NULL DEFAULT 'inicio'");
 }
 
 // Comodín de racha: pistas gratis que no cuentan como intento gastado.

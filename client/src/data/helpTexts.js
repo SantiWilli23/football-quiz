@@ -64,8 +64,10 @@ export const HELP = [
     "De lunes a jueves te anotás. De viernes a domingo se juega a eliminación: gana quien sume más puntos ese día.",
     "Te anotás una vez y se arma sola; no necesitás jugar un partido aparte.",
   ]) },
-  { match: "/mercado", ...H("Mercado de pases", "Predecí a dónde se va cada figura en la próxima ventana de pases.", [
-    "Cada acierto suma puntos cuando se cierra el mercado.",
+  { match: "/mercado", ...H("Mercado de pases", "Predecí a dónde se va cada figura. Hay un mercado de Europa y otro de Chile.", [
+    "Solo abre al inicio y al final de cada temporada. Europa: julio–agosto y abril–mayo. Chile: enero–febrero y octubre–15 de diciembre.",
+    "Fuera de esas fechas podés ver el último mercado, pero no elegir.",
+    "Cada acierto suma puntos cuando se resuelve el mercado.",
   ]) },
   { match: "/cartas", ...H("Cartas", "Abrí sobres con jugadores reales, armá tu once y jugá partidos.", [
     "La química sale de los clubes que compartieron los jugadores de tu equipo: más química, mejor rendimiento.",
@@ -123,8 +125,10 @@ export const HELP = [
     "Tenés que cargar tu pronóstico antes de que arranque cada partido.",
     "Exacto suma más; acertar solo el ganador suma menos.",
   ]) },
-  { match: "/pronosticos", ...H("Campeón y descenso", "Predecí quién sale campeón y quiénes bajan esta temporada.", [
-    "Se paga al final de la temporada real.",
+  { match: "/pronosticos", ...H("Campeón y descenso", "Predecí quién sale campeón y quiénes bajan esta temporada, en las 5 grandes de Europa y en Chile.", [
+    "Solo abre al inicio y al final de cada temporada. Europa: julio–agosto y abril–mayo. Chile: enero–febrero y octubre–15 de diciembre.",
+    "Se paga cuando termina la temporada real: 20 puntos por el campeón y 7 por cada descenso acertado (en Chile bajan 2, en Europa se eligen 3).",
+    "Lo que predecís al final de temporada vale la mitad, porque ya se sabe mucho más.",
   ]) },
   { match: "/carrera-dt", ...H("Modo DT", "Dirigí un club real: tácticas, fichajes, selección y partidos en vivo.", [
     "Cada temporada suma al puntaje semanal; los objetivos y títulos valen más.",

@@ -4,6 +4,7 @@ import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import LeagueTabs from "../components/LeagueTabs.jsx";
+import SeasonWindowNotice from "../components/SeasonWindowNotice.jsx";
 
 export default function SeasonPredictions() {
   const [leagues, setLeagues] = useState([]);
@@ -16,10 +17,12 @@ export default function SeasonPredictions() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [count, setCount] = useState(3);
+  const [win, setWin] = useState(null);
 
   useEffect(() => {
     api.get("/football/leagues").then(({ data }) => {
-      const opts = data.leagues.filter((l) => l.key !== "chile");
+      const opts = data.leagues;
       setLeagues(opts);
       if (opts.length > 0) setLeague(opts[0].key);
     });
@@ -36,6 +39,8 @@ export default function SeasonPredictions() {
       .then(({ data }) => {
         setTable(data.table);
         setDemo(data.demo);
+        setCount(data.relegatedCount || 3);
+        setWin(data.window || null);
       })
       .catch(() => setTable(null))
       .finally(() => setLoading(false));
@@ -46,13 +51,13 @@ export default function SeasonPredictions() {
   function toggleRelegated(id) {
     setRelegatedIds((prev) => {
       if (prev.includes(id)) return prev.filter((x) => x !== id);
-      if (prev.length >= 3) return prev;
+      if (prev.length >= count) return prev;
       return [...prev, id];
     });
   }
 
   async function submit() {
-    if (!championId || relegatedIds.length !== 3) return;
+    if (!championId || relegatedIds.length !== count) return;
     setSaving(true);
     setError("");
     try {
@@ -76,11 +81,14 @@ export default function SeasonPredictions() {
     <Layout>
       <h1 className="text-xl sm:text-2xl font-bold mb-1">Campeón y descenso</h1>
       <p className="text-gray-400 text-sm mb-6">
-        Predecí quién sale campeón y qué 3 equipos bajan esta temporada. Se resuelve solo cuando casi no
-        queden partidos: 20 puntos por el campeón, 7 por cada equipo que sí descendió.
+        Predecí quién sale campeón y qué equipos bajan esta temporada. Abre solo al inicio y al final de cada
+        temporada (Europa y Chile por separado). Se resuelve solo cuando casi no queden partidos: 20 puntos por el
+        campeón y 7 por cada equipo que sí descendió. Lo que predecís al final de temporada vale la mitad.
       </p>
 
       {leagues.length > 0 && league && <LeagueTabs leagues={leagues} active={league} onChange={setLeague} />}
+
+      {!loading && <div className="mt-4"><SeasonWindowNotice status={win} /></div>}
 
       {loading && <p className="text-sm text-gray-500 mt-4">Cargando tabla...</p>}
       {error && <p className="text-sm text-red-400 mt-4">{error}</p>}
@@ -115,7 +123,7 @@ export default function SeasonPredictions() {
         </Card>
       )}
 
-      {!loading && !demo && table && existing?.scored !== 1 && (
+      {!loading && !demo && table && win?.open && existing?.scored !== 1 && (
         <Card className="mt-4">
           {existing && (
             <p className="text-xs text-gray-500 mb-3">
@@ -145,7 +153,7 @@ export default function SeasonPredictions() {
             </div>
             <div>
               <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-red-400 font-semibold mb-2">
-                <TrendingDown size={14} /> Descienden (elegí 3) — {relegatedIds.length}/3
+                <TrendingDown size={14} /> Descienden (elegí {count}) — {relegatedIds.length}/{count}
               </div>
               <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
                 {table.map((t) => (
@@ -167,7 +175,7 @@ export default function SeasonPredictions() {
           </div>
           <button
             onClick={submit}
-            disabled={!championId || relegatedIds.length !== 3 || saving}
+            disabled={!championId || relegatedIds.length !== count || saving}
             className="btn btn-primary mt-5 w-full transition"
           >
             {saving ? "Guardando..." : existing ? "Actualizar predicción" : "Guardar predicción"}

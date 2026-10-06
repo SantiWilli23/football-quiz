@@ -26,7 +26,7 @@ const ALL_GAMES = [
   // ---- Solo ----
   { to: "/fulbodle", label: "Fichado", icon: Target, description: "Adiviná al futbolista secreto con colores, número de parecido, ligas y dificultades. Diario o aleatorio; la partida suma al reto semanal del grupo.", family: "solo", available: true },
   { to: "/copa-semanal", label: "Copa semanal", icon: Trophy, description: "Anotate de lunes a jueves; de viernes a domingo se juega a eliminación por puntos de cada día.", family: "grupo", available: true },
-  { to: "/mercado", label: "Mercado de pases", icon: Repeat, description: "Predecí a dónde juega cada figura en la próxima ventana; cada acierto suma puntos.", family: "pronostico", feature: "pronosticos", available: true },
+  { to: "/mercado", label: "Mercado de pases", icon: Repeat, description: "Predecí a dónde juega cada figura, en Europa o en Chile. Abre solo al inicio y al final de cada temporada.", family: "pronostico", feature: "temporada", available: true },
   { to: "/cartas", label: "Cartas", icon: Layers, description: "Abrí sobres con los 2000 jugadores, armá tu once y jugá partidos: la química sale de los clubes que compartieron.", family: "grupo", available: true },
   { to: "/escudos", label: "Escudos a ciegas", icon: ShieldCheck, description: "Práctica con pistas o reto semanal sin pistas: adiviná el club solo por el escudo borroso.", family: "solo", available: true },
   { href: "/draft-europeo.html", label: "8a2", icon: Star, description: "Armá tu XI con jugadores de 138 planteles históricos de la Champions League.", family: "solo", available: true },
@@ -43,7 +43,7 @@ const ALL_GAMES = [
 
   // ---- Pronóstico ----
   { to: "/quiniela", label: "Quiniela semanal", icon: CalendarDays, description: "Predecí el resultado exacto de los próximos partidos reales antes de que arranquen.", family: "pronostico", feature: "pronosticos", available: true },
-  { to: "/pronosticos", label: "Campeón y descenso", icon: Trophy, description: "Predecí quién sale campeón y qué 3 equipos bajan esta temporada real.", family: "pronostico", feature: "pronosticos", available: true },
+  { to: "/pronosticos", label: "Campeón y descenso", icon: Trophy, description: "Predecí campeón y descensos de las ligas europeas y la chilena. Abre solo al inicio y al final de cada temporada.", family: "pronostico", feature: "temporada", available: true },
 
   // ---- Carrera larga ----
   { href: "/cotrero.html", label: "Cotrero", icon: Crown, description: "De potrero a leyenda: simulá toda la carrera de un jugador, temporada a temporada.", family: "carrera", available: true },

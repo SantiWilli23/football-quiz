@@ -396,6 +396,7 @@ CREATE TABLE IF NOT EXISTS season_predictions (
   actual_relegated_team_ids TEXT,
   points INTEGER,
   scored INTEGER NOT NULL DEFAULT 0,
+  phase TEXT NOT NULL DEFAULT 'inicio',
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE(user_id, league, season_year)
 );

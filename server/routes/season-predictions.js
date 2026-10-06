@@ -3,14 +3,20 @@ import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { LEAGUES, FootballApiError, getStandings, currentSeason } from "../utils/football-api.js";
 import { SEASON_CHAMPION_POINTS, SEASON_RELEGATED_POINTS } from "../utils/points-config.js";
+import { windowStatus, regionOfLeague } from "../utils/season-windows.js";
 
 const router = Router();
 router.use(requireAuth);
 
-// El formato de la liga chilena (Apertura/Clausura) no es un todos-contra-todos
-// de ida y vuelta parejo, así que la heurística de "temporada casi terminada"
-// de abajo no le queda bien. Esta predicción se limita a las 5 grandes.
-const ALLOWED_LEAGUES = Object.keys(LEAGUES).filter((k) => k !== "chile");
+// Las 5 grandes de Europa y la Primera chilena (hoy un todos-contra-todos de
+// ida y vuelta de 16 equipos, así que la heurística de fin de temporada de
+// abajo le sirve igual). En Chile bajan 2; en las europeas se piden 3.
+const ALLOWED_LEAGUES = Object.keys(LEAGUES);
+const RELEGATED_COUNT = (league) => (league === "chile" ? 2 : 3);
+
+// Solo se predice al inicio o al final de la temporada de cada región (ver
+// utils/season-windows.js). Lo que se predice al final vale la mitad.
+const PHASE_FACTOR = { inicio: 1, final: 0.5 };
 
 function handleFootballError(err, res) {
   if (err instanceof FootballApiError) return res.status(err.status).json({ error: err.message });
@@ -35,7 +41,7 @@ router.get("/:league/table", async (req, res) => {
   if (!ALLOWED_LEAGUES.includes(league)) return res.status(404).json({ error: "Liga desconocida" });
   try {
     const { table, demo } = await tableFor(league);
-    res.json({ table, demo });
+    res.json({ table, demo, relegatedCount: RELEGATED_COUNT(league), window: windowStatus(regionOfLeague(league)) });
   } catch (err) {
     handleFootballError(err, res);
   }
@@ -45,12 +51,18 @@ router.post("/:league/predict", async (req, res) => {
   const league = req.params.league;
   if (!ALLOWED_LEAGUES.includes(league)) return res.status(404).json({ error: "Liga desconocida" });
 
+  const win = windowStatus(regionOfLeague(league));
+  if (!win.open) {
+    return res.status(403).json({ error: `Las predicciones de ${win.label} abren al inicio y al final de la temporada (próxima: ${win.next.date})` });
+  }
+
+  const count = RELEGATED_COUNT(league);
   const championTeamId = Number(req.body?.championTeamId);
   const championTeamName = String(req.body?.championTeamName || "");
-  const relegated = Array.isArray(req.body?.relegated) ? req.body.relegated.slice(0, 3) : [];
+  const relegated = Array.isArray(req.body?.relegated) ? req.body.relegated.slice(0, count) : [];
   if (!championTeamId || !championTeamName) return res.status(400).json({ error: "Falta elegir un campeón" });
-  if (relegated.length !== 3 || relegated.some((t) => !t?.id || !t?.name)) {
-    return res.status(400).json({ error: "Elegí exactamente 3 equipos que crees que descienden" });
+  if (relegated.length !== count || relegated.some((t) => !t?.id || !t?.name)) {
+    return res.status(400).json({ error: `Elegí exactamente ${count} equipos que crees que descienden` });
   }
   if (relegated.some((t) => Number(t.id) === championTeamId)) {
     return res.status(400).json({ error: "Un equipo no puede ser campeón y descender a la vez" });
@@ -69,9 +81,10 @@ router.post("/:league/predict", async (req, res) => {
 
     await db.execute({
       sql: `INSERT INTO season_predictions
-              (user_id, league, season_year, champion_team_id, champion_team_name, relegated_team_ids, relegated_team_names)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+              (user_id, league, season_year, champion_team_id, champion_team_name, relegated_team_ids, relegated_team_names, phase)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(user_id, league, season_year) DO UPDATE SET
+              phase = excluded.phase,
               champion_team_id = excluded.champion_team_id,
               champion_team_name = excluded.champion_team_name,
               relegated_team_ids = excluded.relegated_team_ids,
@@ -84,6 +97,7 @@ router.post("/:league/predict", async (req, res) => {
         championTeamName,
         JSON.stringify(relegated.map((t) => Number(t.id))),
         JSON.stringify(relegated.map((t) => t.name)),
+        win.phase,
       ],
     });
 
@@ -118,13 +132,14 @@ async function tryScore(pred) {
 
   const sorted = [...table].sort((a, b) => a.rank - b.rank);
   const champion = sorted[0];
-  const relegatedActual = sorted.slice(-3);
+  const relegatedActual = sorted.slice(-RELEGATED_COUNT(pred.league));
   const relegatedActualIds = relegatedActual.map((t) => t.id);
 
   const predictedRelegatedIds = JSON.parse(pred.relegated_team_ids || "[]");
   const championHit = champion.id === pred.champion_team_id;
   const relegatedHits = predictedRelegatedIds.filter((id) => relegatedActualIds.includes(id)).length;
-  const points = (championHit ? CHAMPION_POINTS : 0) + relegatedHits * RELEGATED_POINTS;
+  const raw = (championHit ? CHAMPION_POINTS : 0) + relegatedHits * RELEGATED_POINTS;
+  const points = Math.round(raw * (PHASE_FACTOR[pred.phase] ?? 1));
 
   await db.execute({
     sql: `UPDATE season_predictions SET

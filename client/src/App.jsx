@@ -170,7 +170,7 @@ export default function App() {
         path="/mercado"
         element={
           <PrivateRoute>
-            <FeatureGate flag="pronosticos">
+            <FeatureGate flag="temporada">
               <Mercado />
             </FeatureGate>
           </PrivateRoute>
@@ -270,7 +270,7 @@ export default function App() {
         path="/pronosticos"
         element={
           <PrivateRoute>
-            <FeatureGate flag="pronosticos">
+            <FeatureGate flag="temporada">
               <SeasonPredictions />
             </FeatureGate>
           </PrivateRoute>

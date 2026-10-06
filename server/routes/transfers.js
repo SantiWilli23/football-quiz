@@ -7,6 +7,7 @@ import { requireAuth } from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rateLimit.js";
 import { todayStr } from "../utils/points.js";
 import { TRANSFER_HIT_POINTS as HIT_POINTS } from "../utils/points-config.js";
+import { windowStatus, PHASE_LABEL } from "../utils/season-windows.js";
 
 const predictLimiter = rateLimit({ windowMs: 60 * 1000, max: 30, message: "Muchos cambios seguidos, esperá un momento." });
 
@@ -21,16 +22,36 @@ const router = Router();
 // cada acierto suma 10 puntos. Los puntos se guardan en wordle_results con
 // league 'tp<id>' para que sumen al total del perfil y al ranking sin tocar
 // la suma de puntos de stats.js.
+// Hay dos mercados, Europa y Chile, y cada uno abre solo al inicio y al final
+// de su temporada (ver utils/season-windows.js). Fuera de la ventana se ve el
+// último mercado de esa región, pero ya no se puede elegir.
 const RUMORS_PER_WINDOW = 12;
-const DESTINATIONS = ["Real Madrid", "Barcelona", "Manchester City", "Manchester United", "Liverpool", "Arsenal", "Chelsea", "Bayern Munich", "Paris Saint-Germain", "Inter Milan", "Juventus", "AC Milan", "Atletico Madrid", "Tottenham Hotspur", "Napoli", "Borussia Dortmund", "Al Hilal", "Al Nassr"];
+const DESTINATIONS = {
+  europa: ["Real Madrid", "Barcelona", "Manchester City", "Manchester United", "Liverpool", "Arsenal", "Chelsea", "Bayern Munich", "Paris Saint-Germain", "Inter Milan", "Juventus", "AC Milan", "Atletico Madrid", "Tottenham Hotspur", "Napoli", "Borussia Dortmund", "Al Hilal", "Al Nassr"],
+  chile: ["Colo-Colo", "Universidad de Chile", "Universidad Católica", "Unión Española", "Palestino", "Cobreloa", "Huachipato", "Coquimbo Unido", "O'Higgins", "Audax Italiano", "Everton de Viña del Mar", "Boca Juniors", "River Plate", "Flamengo", "Palmeiras", "Club América"],
+};
+const CHILE_CLUBS = DESTINATIONS.chile.slice(0, 11).concat(["Universidad Catolica", "Colo Colo", "Cobresal", "Ñublense", "Deportes Iquique", "Unión La Calera", "Deportes La Serena", "Deportes Limache", "Union La Calera", "Union Espanola", "Everton de Vina", "OHiggins"]);
+// Los nombres de la base vienen sin acentos ni signos ("OHiggins", "Union
+// Espanola"): se comparan normalizados para no ofrecer el propio club.
+const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ñ/gi, "n").replace(/[^a-z]/gi, "").toLowerCase();
+const sameClub = (a, b) => norm(a) === norm(b) || norm(a).startsWith(norm(b)) || norm(b).startsWith(norm(a));
+const isChileClub = (club) => CHILE_CLUBS.some((c) => norm(club) === norm(c));
 
-function windowKey(dateStr) {
-  const [y, m] = dateStr.split("-").map(Number);
-  // Sep-Dic apunta al mercado de enero; Ene-May al de verano; Jun-Ago al de verano del mismo año.
-  if (m >= 9) return { key: `${y + 1}-invierno`, label: `Mercado de invierno ${y + 1}` };
-  if (m <= 1) return { key: `${y}-invierno`, label: `Mercado de invierno ${y}` };
-  return { key: `${y}-verano`, label: `Mercado de verano ${y}` };
+function windowFor(region) {
+  const status = windowStatus(region);
+  if (!status.open) return { status, key: null };
+  const year = new Date().getFullYear();
+  return {
+    status,
+    key: `${year}-${region}-${status.phase}`,
+    label: `Mercado ${status.label} · ${status.phaseLabel} ${year}`,
+  };
 }
+
+const labelForKey = (key) => {
+  const [year, region, phase] = key.split("-");
+  return `Mercado ${region === "chile" ? "Chile" : "Europa"} · ${PHASE_LABEL[phase] || phase} ${year}`;
+};
 
 function seeded(seed) {
   let s = 0;
@@ -43,35 +64,49 @@ const currentClub = (p) => {
   return (open || [...p.carrera].sort((a, b) => (b.inicio || 0) - (a.inicio || 0))[0])?.club.replace(/\s*\((cedido|cantera)\)\s*$/i, "");
 };
 
-async function ensureRumors(win) {
-  const have = Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM transfer_rumors WHERE window = ?", args: [win.key] })).rows[0].n);
+async function ensureRumors(key, region) {
+  const have = Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM transfer_rumors WHERE window = ?", args: [key] })).rows[0].n);
   if (have > 0) return;
-  const rnd = seeded(win.key);
-  // Figuras (la base viene de más a menos conocido) que hoy están en un club de nivel para tener destino.
-  const stars = ALL.slice(0, 220).filter((p) => currentClub(p) && p.carrera.some((c) => c.fin === null));
-  const pool = [...stars];
+  const rnd = seeded(key);
+  // Europa: figuras (la base viene de más a menos conocido) en un club activo.
+  // Chile: cualquiera que hoy juegue en un club chileno.
+  const active = (p) => currentClub(p) && p.carrera.some((c) => c.fin === null);
+  const pool = region === "chile"
+    ? ALL.filter((p) => active(p) && isChileClub(currentClub(p)))
+    : ALL.slice(0, 220).filter((p) => active(p) && !isChileClub(currentClub(p)));
   for (let i = 0; i < RUMORS_PER_WINDOW && pool.length; i++) {
     const p = pool.splice(Math.floor(rnd() * pool.length), 1)[0];
     const club = currentClub(p);
-    const others = DESTINATIONS.filter((d) => d !== club);
+    const others = DESTINATIONS[region].filter((d) => !sameClub(d, club));
     const picks = [];
     while (picks.length < 3) picks.push(...others.splice(Math.floor(rnd() * others.length), 1));
     const options = [`Se queda en ${club}`, ...picks];
     await db.execute({
       sql: "INSERT INTO transfer_rumors (window, player_name, options) VALUES (?, ?, ?)",
-      args: [win.key, p.nombre, JSON.stringify(options)],
+      args: [key, p.nombre.replace(/\s*\([^)]*\)\s*$/, ""), JSON.stringify(options)],
     });
   }
 }
 
 router.get("/", requireAuth, async (req, res) => {
   try {
-    const win = windowKey(todayStr());
-    await ensureRumors(win);
-    const rumors = (await db.execute({ sql: "SELECT id, player_name, options, answer FROM transfer_rumors WHERE window = ? ORDER BY id", args: [win.key] })).rows;
+    const region = req.query.region === "chile" ? "chile" : "europa";
+    const win = windowFor(region);
+    let key = win.key;
+    if (key) {
+      await ensureRumors(key, region);
+    } else {
+      // Cerrado: se muestra el último mercado de esta región, solo para mirar.
+      const last = (await db.execute({ sql: "SELECT window FROM transfer_rumors WHERE window LIKE ? ORDER BY id DESC LIMIT 1", args: [`%-${region}-%`] })).rows[0];
+      key = last?.window || null;
+    }
+    const rumors = key ? (await db.execute({ sql: "SELECT id, player_name, options, answer FROM transfer_rumors WHERE window = ? ORDER BY id", args: [key] })).rows : [];
     const mine = new Map((await db.execute({ sql: "SELECT rumor_id, pick FROM transfer_predictions WHERE user_id = ?", args: [req.userId] })).rows.map((r) => [r.rumor_id, r.pick]));
     res.json({
-      window: win.label,
+      region,
+      open: win.status.open,
+      status: win.status,
+      window: key ? (win.key ? win.label : labelForKey(key)) : null,
       points: HIT_POINTS,
       rumors: rumors.map((r) => ({ id: r.id, player: r.player_name, options: JSON.parse(r.options), answer: r.answer, pick: mine.get(r.id) || null })),
     });
@@ -85,9 +120,11 @@ router.post("/predict", requireAuth, predictLimiter, async (req, res) => {
   try {
     const id = Number(req.body?.rumorId);
     const pick = String(req.body?.pick || "");
-    const r = (await db.execute({ sql: "SELECT options, answer FROM transfer_rumors WHERE id = ?", args: [id] })).rows[0];
+    const r = (await db.execute({ sql: "SELECT window, options, answer FROM transfer_rumors WHERE id = ?", args: [id] })).rows[0];
     if (!r) return res.status(404).json({ error: "Rumor inexistente" });
     if (r.answer) return res.status(400).json({ error: "Este mercado ya se resolvió" });
+    const region = String(r.window).includes("-chile-") ? "chile" : "europa";
+    if (windowFor(region).key !== r.window) return res.status(403).json({ error: "Este mercado está cerrado: abre al inicio y al final de la temporada" });
     if (!JSON.parse(r.options).includes(pick)) return res.status(400).json({ error: "Opción inválida" });
     await db.execute({
       sql: "INSERT INTO transfer_predictions (user_id, rumor_id, pick) VALUES (?, ?, ?) ON CONFLICT(user_id, rumor_id) DO UPDATE SET pick = excluded.pick",
