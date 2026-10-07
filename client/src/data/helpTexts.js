@@ -30,13 +30,13 @@ export const HELP = [
     "El ranking semanal del grupo está acá resumido; el detalle está en Mi grupo.",
   ]) },
   { match: "/trivia", ...H("Trivia", "Preguntas de fútbol: la diaria y las especiales.", [
-    "Trivia diaria: una tanda por día, igual para todo tu grupo. Cada acierto suma, y responder más rápido da más puntos.",
+    "Trivia diaria: una tanda por día, igual para todo tu grupo. Cada pregunta acertada suma 1 punto, sin rachas ni bonus.",
     "Especial: preguntas temáticas de la semana o del momento.",
     WEEKLY,
   ]) },
   { match: "/juegos", ...H("Juegos", "Arriba, el juego diario de hoy; después «Con amigos» y «Fútbol 12» (todos los demás, incluido el diario).", [
-    "El juego diario cambia cada día (rota entre diez): una partida da hasta 20 puntos y un sobre de cartas (normal, bueno o top según tu rendimiento). Los demás juegos dan un sobre normal por jugar. Los demás juegos se juegan libres ese día.",
-    "La semana se suma: el 1° del grupo gana +30 puntos y un sobre top, el 2° +20 y uno bueno, el 3° +10 y uno normal. La Copa semanal da puntos y sobre por cada fase ganada.",
+    "El juego diario cambia cada día (rota entre diez): tu partida da un puntaje de 0 a 20 (solo de referencia) y un sobre de cartas (normal, bueno o top según tu rendimiento). Con ese puntaje se ordena al grupo ese día: el 1° suma 5 puntos, el 2° 3 y el 3° 3. Los demás juegos dan un sobre normal por jugar. Los demás juegos se juegan libres ese día.",
+    "La semana se suma: los diarios de la semana dan sobres al podio del grupo (top, bueno y normal). Los «Juegos semanales» (Fichado, Quiniela y Modo DT Online) pagan sus puntos los domingos, solo en grupos que los activaron.",
     "Cada juego tiene su propio «?» con las reglas y cómo puntúa.",
   ]) },
   { match: "/futbol", ...H("En vivo", "Partidos, tablas y goleadores reales de las 5 grandes de Europa y de Chile.", [
@@ -59,11 +59,11 @@ export const HELP = [
 
   { match: "/fulbodle", ...H("Fichado", "Adiviná al futbolista secreto.", [
     "Cada intento te da colores y un número de parecido: verde es acierto exacto, amarillo está cerca.",
-    "Hay modo diario (el mismo para todos) y aleatorio, y dificultades por liga.",
+    "Según por dónde entres: como juego diario es UN solo jugador y no se repite; como reto del día, el secreto sale de un grupo restringido (jóvenes, leyendas, porteros…); desde Juegos es partida libre, sin límite. Es un juego semanal: su rendimiento de la semana se premia los domingos.",
     WEEKLY,
   ]) },
   { match: "/copa-semanal", ...H("Copa semanal", "Un torneo del grupo cada semana.", [
-    "De lunes a jueves te anotás. De viernes a domingo se juega a eliminación: gana quien sume más puntos ese día.",
+    "De lunes a jueves te anotás. De viernes a domingo se juega a eliminación: gana quien sume más puntos ese día. Al terminar: 5 puntos por participar y un extra a los 4 primeros (el campeón suma 55 en total). Cada fase ganada da además un sobre.",
     "Te anotás una vez y se arma sola; no necesitás jugar un partido aparte.",
   ]) },
   { match: "/mercado", ...H("Mercado de pases", "Predecí a dónde se va cada figura. Hay un mercado de Europa y otro de Chile.", [
@@ -131,7 +131,7 @@ export const HELP = [
   ]) },
   { match: "/quiniela", ...H("Quiniela diaria", "Predecí el resultado exacto de los partidos de hoy.", [
     "Tenés que cargar tu pronóstico antes de que arranque cada partido.",
-    "Exacto suma 5; acertar solo el ganador o el empate suma 2. Cada día que jugás te da un sobre de cartas.",
+    "Exacto suma 5; acertar solo el ganador o el empate suma 2. Es un juego semanal: esos puntos se pagan los domingos si tu grupo activó los juegos semanales. Cada día que jugás te da un sobre de cartas.",
   ]) },
   { match: "/pronosticos", ...H("Campeón y descenso", "Predecí quién sale campeón y quiénes bajan esta temporada, en las 5 grandes de Europa y en Chile.", [
     "Solo abre al inicio y al final de cada temporada. Europa: julio–agosto y abril–mayo. Chile: enero–febrero y octubre–15 de diciembre.",

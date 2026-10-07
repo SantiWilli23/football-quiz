@@ -5,6 +5,7 @@ import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import MyCardsTeam from "../components/MyCardsTeam.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import { CON_AMIGOS_GAMES, JUEGOS_SEMANALES, FAMILIES, FUTBOL12_GAMES, GAMES } from "../data/gameCatalog.js";
 import { playedToday, readVisits } from "../utils/visits.js";
 
@@ -109,18 +110,18 @@ function WeeklyStandings({ groupId }) {
         <Medal size={15} className="text-accent shrink-0" />
         <span className="font-medium">Clasificación de la semana</span>
         <span className="text-xs text-gray-500 ml-auto">
-          {data.myPack ? `Tu premio: +${data.myBonus} pts y sobre ${data.myPack}` : `podio: sobre ${podium.join(" / ")} + puntos`}
+          {data.myPack ? `Tu premio: sobre ${data.myPack}` : `podio: sobre ${podium.join(" / ")}`}
         </span>
       </summary>
       <div className="mt-3 text-xs">
         {data.standings.length === 0 ? (
-          <p className="text-gray-500">Todavía nadie sumó en el juego diario esta semana. El 1° del grupo gana 30 puntos y un sobre top, el 2° 20 y uno bueno, el 3° 10 y uno normal.</p>
+          <p className="text-gray-500">Todavía nadie sumó en el juego diario esta semana. Al terminar la semana, el 1° del grupo gana un sobre top, el 2° uno bueno y el 3° uno normal.</p>
         ) : (
           <p className="text-gray-500 leading-relaxed">
             {data.standings.slice(0, 5).map((s, i) => (
               <span key={s.userId} className={s.me ? "text-white" : ""}>
                 {i > 0 && " · "}
-                {s.rank}° {s.username} {s.score}{s.pack ? ` (+${s.bonus} pts, sobre ${s.pack})` : ""}
+                {s.rank}° {s.username} {s.score}{s.pack ? ` (sobre ${s.pack})` : ""}
               </span>
             ))}
           </p>

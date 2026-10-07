@@ -1356,7 +1356,7 @@
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
           if (!d || d.notToday) return;
-          addSeasonResultLine(lines, "Juego diario", d.practice ? (d.pack ? "Partida libre: sobre normal de cartas" : "Partida libre: hoy ya tenés el sobre") : d.already ? "Hoy ya sumaste tus puntos y tu sobre" : "+" + d.points + " de " + d.max + " pts" + (d.pack ? " y sobre " + d.pack : ""), null, !d.already);
+          addSeasonResultLine(lines, "Juego diario", d.practice ? (d.pack ? "Partida libre: sobre normal de cartas" : "Partida libre: hoy ya tenés el sobre") : d.already ? "Hoy ya jugaste el diario: tu sobre ya está" : "Puntaje " + d.points + "/" + d.max + (d.pack ? " · sobre " + d.pack + " de cartas" : ""), null, !d.already);
         })
         .catch(function () {});
     } catch (e) {}

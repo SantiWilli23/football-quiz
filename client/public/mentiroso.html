@@ -550,6 +550,20 @@
     try { localStorage.setItem("mentiroso_stats", JSON.stringify(stats)); } catch (e) {}
   }
 
+  // Juego online: el ganador suma 3 puntos por cada persona a la que le ganó.
+  function reportOnlineWin(opponents) {
+    try {
+      var token = localStorage.getItem("fq_token");
+      var groupId = localStorage.getItem("fq_active_group");
+      if (!token || !groupId) return;
+      fetch("/api/online-games/win", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ gameKey: "mentiroso", groupId: Number(groupId), opponents: opponents, room: "m-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) }),
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
   function submitChallengeScore(gameKey, score) {
     try {
       var token = localStorage.getItem("fq_token");
@@ -1355,6 +1369,7 @@
       var accuser = accused === "p1" ? "p2" : "p1";
       var winner = success ? accused : accuser;
       if (game.online && winner === game.myRole) submitChallengeScore("mentiroso", weeklyScoreFor(game.namingTarget || game.currentBid));
+      if (game.online && winner === game.myRole) reportOnlineWin(1);
       icon.textContent = "🏆";
       title.textContent = "¡Ganó " + pName(winner) + "!";
       title.className = "result-title win";

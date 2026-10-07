@@ -56,7 +56,7 @@ export default function ArbitrajeVar() {
     clearInterval(timerRef.current);
     setPhase("done");
     logGame("arbitraje_var", timedRef.current ? 4 : 2, finalCorrect / Math.max(1, totalRef.current), finalCorrect + "/" + totalRef.current + " decisiones" + (timedRef.current ? " · con reloj" : " · práctica"));
-    // Juego diario: la primera partida CON TIEMPO del día da hasta 20 puntos y un sobre de cartas (mejor cuanto mejor te va).
+    // Juego diario: la primera partida CON TIEMPO del día te da un puntaje de hasta 20 (de referencia) y un sobre de cartas; el podio del día del grupo suma 5 / 3 / 3 puntos.
     if (timedRef.current) {
       submitDaily("arbitraje_var", finalCorrect / Math.max(1, totalRef.current), finalCorrect).then((r) => setDailyMsg(dailyMessage(r)));
     }

@@ -8,7 +8,7 @@ export async function submitDaily(gameKey, fraction, score = 0) {
   try {
     const { data } = await api.post("/daily-games/submit", { gameKey, fraction, score });
     if (!data.already && !data.practice && data.points > 0) {
-      celebrateScore({ points: data.points, unit: `puntos del juego diario (de ${data.max})`, detail: data.pack ? `y un sobre ${data.pack} de cartas` : "" });
+      celebrateScore({ points: data.points, unit: `de puntaje en el juego diario (de ${data.max})`, detail: data.pack ? `y un sobre ${data.pack} de cartas` : "" });
     }
     return data;
   } catch {
@@ -19,8 +19,8 @@ export async function submitDaily(gameKey, fraction, score = 0) {
 export function dailyMessage(res) {
   if (res?.practice) return res.pack ? "Partida libre: ganaste un sobre normal de cartas (no suma puntos)." : "Partida libre: hoy ya tenés el sobre de este juego.";
   if (!res || res.notToday) return ""; // hoy el diario es otro juego: esta partida es práctica
-  if (res.already) return "Ya jugaste el diario de hoy: tus puntos y tu sobre ya están. Esta partida no da más.";
+  if (res.already) return "Ya jugaste el diario de hoy: tu puntaje y tu sobre ya están. Esta partida no da más.";
   return res.pack
-    ? `Juego diario: +${res.points} de ${res.max} puntos y un sobre ${res.pack} de cartas.`
-    : `Juego diario: +${res.points} de ${res.max} puntos. Esta vez no alcanzó para sobre.`;
+    ? `Juego diario: puntaje ${res.points}/${res.max} y un sobre ${res.pack} de cartas. El podio del día suma 5 / 3 / 3 puntos.`
+    : `Juego diario: puntaje ${res.points}/${res.max}. Esta vez no alcanzó para sobre.`;
 }

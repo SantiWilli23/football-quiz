@@ -2193,8 +2193,8 @@
           slot.insertAdjacentHTML("beforeend",
             '<div class="csub" style="margin-top:8px">' +
             (d.already
-              ? "Ya jugaste el diario de hoy: tus puntos y tu sobre ya están."
-              : (d.practice ? (d.pack ? "Partida libre: ganaste un sobre normal de cartas." : "Partida libre: hoy ya tenés el sobre.") : "Juego diario: +" + d.points + " de " + d.max + " puntos" + (d.pack ? " y un sobre " + d.pack + " de cartas." : "."))) +
+              ? "Ya jugaste el diario de hoy: tu sobre ya está."
+              : (d.practice ? (d.pack ? "Partida libre: ganaste un sobre normal de cartas." : "Partida libre: hoy ya tenés el sobre.") : "Juego diario: puntaje " + d.points + "/" + d.max + (d.pack ? " y un sobre " + d.pack + " de cartas." : "."))) +
             "</div>");
         })
         .catch(function () {});
