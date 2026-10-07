@@ -49,8 +49,7 @@ export const HELP = [
   { match: "/estadisticas", ...H("Estadísticas", "Tus números y los del grupo: aciertos, rachas y evolución.") },
   { match: "/historial", ...H("Historial", "Las semanas anteriores: quién ganó cada una y con cuántos puntos.") },
   { match: "/ranking-global", ...H("Ranking global", "Todos los jugadores de Futotal comparados, más allá de tu grupo.") },
-  { match: "/perfil", ...H("Mi perfil", "Tu avatar, tu vitrina de logros y tu pase de temporada.", [
-    "Pase de temporada: ganás niveles jugando y desbloqueás recompensas.",
+  { match: "/perfil", ...H("Mi perfil", "Tu avatar, tu vitrina de logros y tus ajustes.", [
     "Acá también cambiás el tema, el sonido y los avisos.",
   ]) },
   { match: "/pase", ...H("Pase de temporada", "Cada cosa que jugás suma experiencia; al subir de nivel desbloqueás recompensas hasta fin de temporada.") },

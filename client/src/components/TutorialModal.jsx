@@ -27,7 +27,7 @@ const STEPS = [
       "Juegos: todo el catálogo — solo, con amigos, contrarreloj y carreras largas.",
       "En vivo: partidos y tablas reales.",
       "Mi grupo: ranking, retos, copa y liga de tus amigos.",
-      "Perfil: avatar, vitrina y pase de temporada.",
+      "Perfil: avatar, vitrina de logros y ajustes.",
       "Cada pantalla tiene un botón «?» con las reglas.",
     ],
   },
