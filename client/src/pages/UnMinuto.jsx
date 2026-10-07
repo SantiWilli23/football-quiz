@@ -4,6 +4,7 @@ import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import ResultScreen from "../components/ResultScreen.jsx";
+import { logGame } from "../utils/logGame.js";
 import GroupSelector from "../components/GroupSelector.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import { playSfx } from "../utils/sfx.js";
@@ -63,6 +64,8 @@ export default function UnMinuto() {
     clearInterval(timerRef.current);
     setPhase("done");
     const finalScore = Math.round(points * multiplier);
+    // Rendimiento: precisión, pero solo vale entero si contestaste bastantes (12+).
+    logGame("un_minuto", { dificil: 3, ultra: 4, demonio: 5 }[difficulty] || 3, answeredCount ? (correctCount / answeredCount) * Math.min(1, correctCount / 12) : 0, correctCount + " aciertos de " + answeredCount);
     if (difficulty === DAILY_DIFFICULTY) {
       submitDaily("un_minuto", finalScore / DAILY_TARGET, finalScore).then((r) => setDailyMsg(dailyMessage(r)));
     } else {
@@ -80,7 +83,7 @@ export default function UnMinuto() {
     } catch {
       setSaveState(null);
     }
-  }, [groupId, points, multiplier, difficulty, difficulties]);
+  }, [groupId, points, multiplier, difficulty, difficulties, correctCount, answeredCount]);
 
   function start() {
     endedRef.current = false;

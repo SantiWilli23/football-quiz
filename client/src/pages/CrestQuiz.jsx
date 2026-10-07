@@ -6,6 +6,7 @@ import Card from "../components/Card.jsx";
 import ResultScreen from "../components/ResultScreen.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
+import { logGame } from "../utils/logGame.js";
 import { teams, badgeFor } from "../carrera/data/teams.js";
 import { submitDaily, dailyMessage } from "../utils/dailyGames.js";
 
@@ -154,6 +155,7 @@ export default function CrestQuiz() {
         setFeedback(null);
       } else {
         setPhase("done");
+        logGame("escudos", weekly ? 4 : isDaily ? 3 : 2, nextResults.filter(Boolean).length / ROUNDS, nextResults.filter(Boolean).length + "/" + ROUNDS + " escudos" + (weekly ? " · reto semanal" : isDaily ? " · diario" : " · práctica"));
         if (isDaily) {
           const hits = nextResults.filter(Boolean).length;
           submitDaily("escudos", hits / ROUNDS, hits).then((r) => setDailyMsg(dailyMessage(r)));

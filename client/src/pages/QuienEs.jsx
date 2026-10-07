@@ -4,6 +4,7 @@ import { Eye, Radio, Search, Tv, User } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
+import { logGame } from "../utils/logGame.js";
 import ResultScreen from "../components/ResultScreen.jsx";
 import { QuienEsVivoBody } from "./QuienEsVivo.jsx";
 import { playSfx } from "../utils/sfx.js";
@@ -95,6 +96,7 @@ function QuienEsSolo() {
       if (data.correct) {
         playSfx("win");
         setResult({ won: true, name: data.name, points: data.points });
+        logGame("quien_es", difficulty === "dificil" ? 4 : 2, data.points / 100, "Adivinado con " + game.clues.length + " pista" + (game.clues.length === 1 ? "" : "s") + ": " + data.name);
       } else {
         playSfx("bad");
         setWrong((w) => [...w, name]);
@@ -111,6 +113,7 @@ function QuienEsSolo() {
   async function giveUp() {
     const { data } = await api.post("/quien-es/reveal", { token: game.token });
     setResult({ won: false, name: data.name, points: 0 });
+    logGame("quien_es", difficulty === "dificil" ? 4 : 2, 0, "Te rendiste: " + data.name);
   }
 
   const suggestions = query.trim().length >= 2

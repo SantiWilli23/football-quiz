@@ -4,6 +4,7 @@ import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import ResultScreen from "../components/ResultScreen.jsx";
+import { logGame } from "../utils/logGame.js";
 import GroupSelector from "../components/GroupSelector.jsx";
 import VarClip from "../components/VarClip.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -54,6 +55,7 @@ export default function ArbitrajeVar() {
   const finish = useCallback(async (finalCorrect) => {
     clearInterval(timerRef.current);
     setPhase("done");
+    logGame("arbitraje_var", timedRef.current ? 4 : 2, finalCorrect / Math.max(1, totalRef.current), finalCorrect + "/" + totalRef.current + " decisiones" + (timedRef.current ? " · con reloj" : " · práctica"));
     // Juego diario: la primera partida CON TIEMPO del día suma hasta 20 puntos.
     if (timedRef.current) {
       submitDaily("arbitraje_var", finalCorrect / Math.max(1, totalRef.current), finalCorrect).then((r) => setDailyMsg(dailyMessage(r)));

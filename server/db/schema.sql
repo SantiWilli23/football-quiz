@@ -920,3 +920,18 @@ CREATE TABLE IF NOT EXISTS cup_modes (
   mode TEXT NOT NULL DEFAULT 'puntos',
   PRIMARY KEY (week, group_id)
 );
+
+-- Historial de partidas (server/routes/game-history.js): una fila por partida
+-- terminada de los juegos que se juegan en el cliente. "rating" es un puntaje
+-- de rendimiento (dificultad x cómo te fue) y NO suma a ningún ranking.
+CREATE TABLE IF NOT EXISTS game_history (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  game_key TEXT NOT NULL,
+  difficulty INTEGER NOT NULL,
+  performance REAL NOT NULL,
+  rating INTEGER NOT NULL,
+  detail TEXT,
+  played_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_game_history_user ON game_history(user_id, played_at);
