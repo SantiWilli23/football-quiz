@@ -97,7 +97,7 @@ export default function Quiniela() {
       const { data } = await api.get("/quiniela/week", { params: { league } });
       setWeek(data);
     } catch {
-      setError("No se pudo cargar la semana");
+      setError("No se pudieron cargar los partidos de hoy");
       setWeek(null);
     } finally {
       setLoading(false);
@@ -142,9 +142,9 @@ export default function Quiniela() {
 
   return (
     <Layout>
-      <h1 className="text-xl sm:text-2xl font-bold mb-1">Quiniela semanal</h1>
+      <h1 className="text-xl sm:text-2xl font-bold mb-1">Quiniela diaria</h1>
       <p className="text-gray-400 text-sm mb-6">
-        Predecí el marcador exacto antes de que arranque cada partido — 5 puntos si le pegás justo, 2 si acertás quién gana o el empate.
+        Predecí el marcador exacto de los partidos de hoy antes de que arranquen — 5 puntos si le pegás justo, 2 si acertás quién gana o el empate. Es un juego diario: hasta 20 puntos por día.
       </p>
 
       {leagues.length > 0 && league && (
@@ -218,7 +218,7 @@ export default function Quiniela() {
       )}
 
       {!loading && week && !week.blocked_by_plan && week.fixtures.length === 0 && (
-        <p className="text-sm text-gray-500">No hay partidos programados para los próximos 7 días en esta liga.</p>
+        <p className="text-sm text-gray-500">Hoy no hay partidos para predecir en esta liga. Volvé mañana o probá con otra liga.</p>
       )}
 
       {!loading && week && !week.blocked_by_plan && week.fixtures.length > 0 && (

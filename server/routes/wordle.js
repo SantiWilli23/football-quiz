@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { todayStr } from "../utils/points.js";
+import { recordDailyResult } from "../utils/daily-games.js";
 import { LEAGUES, leagueForClub, wideLeagueLabelForClub } from "../data/league-clubs.js";
 import { styleOf, styleLabel } from "../data/player-style.js";
 
@@ -208,6 +209,10 @@ function speedBonus(game, timed) {
   return secs <= 60 ? 4 : secs <= 120 ? 2 : secs <= 180 ? 1 : 0;
 }
 
+// Mejor puntaje posible de la diaria (normal): ganar al primer intento,
+// round(18 × 1.3) = 23, más 4 de bonus por rapidez.
+const FICHADO_DAILY_BEST = 27;
+
 function finalPoints({ won, guessesUsed, hintsUsed, difficulty, bestSimilarity }) {
   const mult = (DIFFICULTIES[difficulty] || DIFFICULTIES.normal).multiplier;
   if (won) {
@@ -325,10 +330,17 @@ async function closeGame(loaded, won, opts = {}) {
   // La diaria ganada suma al ranking global el MISMO puntaje que ve el
   // jugador en pantalla (antes era un número aparte, más chico y sin
   // relación con la dificultad ni la velocidad — quedaba inconsistente).
+  if (game.mode === "daily") {
+    // Fichado es un juego diario: la diaria (dificultad normal) paga el mismo
+    // tope que los demás diarios, en proporción al puntaje de la partida.
+    // wordle_results queda con 0 puntos (solo marca que se ganó ese día) para
+    // no contar dos veces.
+    await recordDailyResult(game.user_id, game.date, "fichado", total / FICHADO_DAILY_BEST, total);
+  }
   if (won && game.mode === "daily") {
     await db.execute({
-      sql: "INSERT OR IGNORE INTO wordle_results (user_id, date, league, attempts, points) VALUES (?, ?, ?, ?, ?)",
-      args: [game.user_id, game.date, game.league, guessNames.length, total],
+      sql: "INSERT OR IGNORE INTO wordle_results (user_id, date, league, attempts, points) VALUES (?, ?, ?, ?, 0)",
+      args: [game.user_id, game.date, game.league, guessNames.length],
     });
     const streak = await dailyWinStreakEndingOn(game.user_id, game.date);
     await maybeAwardWildcard(game.user_id, streak);

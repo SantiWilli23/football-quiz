@@ -38,6 +38,7 @@ import weeklyCupRoutes from "./routes/weekly-cup.js";
 import pollsRoutes from "./routes/polls.js";
 import fantasyFictionRoutes from "./routes/fantasyfiction.js";
 import arbitrajeVarRoutes from "./routes/arbitraje-var.js";
+import dailyGamesRoutes from "./routes/daily-games.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -82,6 +83,7 @@ app.use("/api/weekly-cup", weeklyCupRoutes);
 app.use("/api/polls", pollsRoutes);
 app.use("/api/fantasyfiction", fantasyFictionRoutes);
 app.use("/api/arbitraje-var", arbitrajeVarRoutes);
+app.use("/api/daily-games", dailyGamesRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 

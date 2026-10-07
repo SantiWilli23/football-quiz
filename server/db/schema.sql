@@ -462,6 +462,23 @@ CREATE TABLE IF NOT EXISTS challenge_scores (
 
 CREATE INDEX IF NOT EXISTS idx_challenge_scores_lookup ON challenge_scores(game_key, period_key, group_id);
 
+-- Juegos diarios: una fila por usuario, día y juego (solo cuenta la primera
+-- partida del día). Los puntos ya vienen normalizados al tope común de todos
+-- los diarios (DAILY_GAME_MAX_POINTS en server/utils/points-config.js). Son del
+-- usuario, no del grupo, como trivia y Fichado.
+CREATE TABLE IF NOT EXISTS daily_game_results (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  date TEXT NOT NULL,
+  game_key TEXT NOT NULL,
+  score REAL NOT NULL DEFAULT 0,
+  points INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(user_id, date, game_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_game_results_date ON daily_game_results(date, game_key);
+
 -- Modo Carrera DT Online: una liga que arma un usuario e invita a amigos por
 -- código. Cada uno elige un club real de la liga elegida (Premier/La Liga) y
 -- el resto de los clubes de esa liga quedan controlados por la CPU. Fase 1:

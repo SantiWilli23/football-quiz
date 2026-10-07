@@ -1344,6 +1344,24 @@
     return true;
   }
 
+  function submitDailyCotrero(fraction, score, lines) {
+    try {
+      var token = localStorage.getItem("fq_token");
+      if (!token) return;
+      fetch("/api/daily-games/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ gameKey: "cotrero", fraction: fraction, score: score }),
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (!d) return;
+          addSeasonResultLine(lines, "Juego diario", d.already ? "Hoy ya sumaste (" + d.points + "/" + d.max + ")" : "+" + d.points + " de " + d.max + " pts", null, !d.already);
+        })
+        .catch(function () {});
+    } catch (e) {}
+  }
+
   function simulateSeason() {
     var startAge = player.age;
     var ovrBefore = player.ovr;
@@ -1391,6 +1409,12 @@
     var allTitles = s1.newTitles.concat(s2.newTitles);
     for (var ti = 0; ti < allTitles.length; ti++) line("Premio", allTitles[ti]);
     line("Overall", player.ovr, ovrDelta, true);
+
+    // Juego diario: el primer bloque de temporadas del día suma hasta 20 puntos
+    // según cómo le fue (goles, premios y si mejoró el overall).
+    var blockGoals = s1.goals + s2.goals;
+    var dailyFraction = 0.35 + Math.min(blockGoals, 30) / 30 * 0.35 + (allTitles.length > 0 ? 0.2 : 0) + (ovrDelta > 0 ? 0.1 : 0);
+    submitDailyCotrero(Math.min(1, dailyFraction), blockGoals, lines);
 
     var sub = document.getElementById("season-result-subtitle");
     if (sub) sub.textContent = "Temporadas " + seasonNum1 + " y " + seasonNum2 + " · de " + startAge + " a " + endAge + " años";

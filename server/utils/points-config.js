@@ -23,6 +23,20 @@
 export const QUINIELA_EXACT_POINTS = 5;
 export const QUINIELA_RESULT_POINTS = 2;
 
+// JUEGOS DIARIOS — Cotrero simple, Fichado, Quiniela diaria, Escudos a ciegas,
+// 8a2, Un Minuto y Arbitraje/VAR (menos Cotrero, todos en su dificultad media).
+// TODOS comparten el mismo tope: un juego perfecto vale esto, y uno regular una
+// fracción. Cambiar este número reescala los siete a la vez.
+export const DAILY_GAME_MAX_POINTS = 20;
+// Clasificación semanal de cada juego diario entre los miembros del grupo
+// (suma de la semana, lunes a domingo): 1°, 2° y 3°. Hacen falta al menos dos
+// jugadores con puntos ese juego esa semana para que haya podio.
+export const WEEKLY_GAME_RANK_POINTS = { 1: 30, 2: 20, 3: 10 };
+// Copa semanal del grupo: por cada fase ganada (cuartos, semis, final) se paga
+// WEEKLY_CUP_ROUND_POINTS × número de fase, y el campeón suma un extra.
+export const WEEKLY_CUP_ROUND_POINTS = 5;
+export const WEEKLY_CUP_CHAMPION_BONUS = 10;
+
 // DIARIO
 export const DAILY_CHALLENGE_BONUS_POINTS = 5;
 // Ranking diario de trivia por % de acierto del grupo (1° a 4° puesto).

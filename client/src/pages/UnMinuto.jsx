@@ -7,6 +7,12 @@ import ResultScreen from "../components/ResultScreen.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import { playSfx } from "../utils/sfx.js";
+import { submitDaily, dailyMessage } from "../utils/dailyGames.js";
+
+// Juego diario: cuenta en la dificultad media (Ultra difícil) y una partida de
+// ~30 puntos (ya con el multiplicador) se lleva el máximo del día.
+const DAILY_DIFFICULTY = "ultra";
+const DAILY_TARGET = 30;
 
 // Arrancás con 20 segundos: cada acierto suma y cada error resta.
 const ROUND_SECONDS = 20;
@@ -19,7 +25,8 @@ const STREAK_STEP = 5;
 export default function UnMinuto() {
   const { activeGroupId: groupId } = useGroups();
   const [difficulties, setDifficulties] = useState([]);
-  const [difficulty, setDifficulty] = useState("dificil");
+  const [difficulty, setDifficulty] = useState(DAILY_DIFFICULTY);
+  const [dailyMsg, setDailyMsg] = useState("");
   useEffect(() => { api.get("/un-minuto/difficulties").then((r) => setDifficulties(r.data.difficulties)).catch(() => {}); }, []);
   const multiplier = difficulties.find((d) => d.id === difficulty)?.multiplier ?? 1;
   const [phase, setPhase] = useState("idle"); // idle | playing | done
@@ -55,6 +62,12 @@ export default function UnMinuto() {
     endedRef.current = true;
     clearInterval(timerRef.current);
     setPhase("done");
+    const finalScore = Math.round(points * multiplier);
+    if (difficulty === DAILY_DIFFICULTY) {
+      submitDaily("un_minuto", finalScore / DAILY_TARGET, finalScore).then((r) => setDailyMsg(dailyMessage(r)));
+    } else {
+      setDailyMsg(`El juego diario cuenta en ${difficulties.find((d) => d.id === DAILY_DIFFICULTY)?.label || "la dificultad media"}.`);
+    }
     if (!groupId) return;
     setSaveState("saving");
     try {
@@ -67,10 +80,11 @@ export default function UnMinuto() {
     } catch {
       setSaveState(null);
     }
-  }, [groupId, points, multiplier]);
+  }, [groupId, points, multiplier, difficulty, difficulties]);
 
   function start() {
     endedRef.current = false;
+    setDailyMsg("");
     setPhase("playing");
     setCorrectCount(0);
     setPoints(0);
@@ -140,7 +154,8 @@ export default function UnMinuto() {
       {phase === "idle" && (
         <Card className="mt-4 text-center py-10">
           <Timer size={32} className="mx-auto text-accent mb-3" />
-          <p className="text-sm text-gray-400 mb-5">Arrancás ya, sin vueltas: preguntas de a una hasta que se acabe el reloj.</p>
+          <p className="text-sm text-gray-400 mb-2">Arrancás ya, sin vueltas: preguntas de a una hasta que se acabe el reloj.</p>
+          <p className="text-xs text-gray-500 mb-5">Juego diario: la primera partida del día en Ultra difícil (la dificultad media) suma hasta 20 puntos.</p>
           {difficulties.length > 0 && (
             <div className="flex gap-2 justify-center mb-6 flex-wrap">
               {difficulties.map((d) => (
@@ -224,6 +239,7 @@ export default function UnMinuto() {
           unit={`puntos (${correctCount} aciertos${multiplier !== 1 ? `, ×${multiplier}` : ""})`}
           groupId={groupId}
           saveState={saveState}
+          highlight={dailyMsg || undefined}
           onAgain={start}
           shareText={`⚽ Futotal · Un Minuto: ${points} puntos (${correctCount} aciertos) — ¿me ganás?`}
         />

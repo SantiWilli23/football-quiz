@@ -79,16 +79,17 @@ async function scorePendingPredictions(userId) {
 const router = Router();
 router.use(requireAuth);
 
-// Los siete próximos días de una liga, solo los partidos que todavía no
-// arrancaron (los únicos en los que tiene sentido predecir). Si el primer
-// día viene bloqueado por el plan de la API, ni se molesta en pedir el
-// resto — es la misma limitación para todos los días.
+// La quiniela es un juego DIARIO: solo los partidos de hoy que todavía no
+// arrancaron (los únicos en los que tiene sentido predecir). Los puntos del
+// día se topan en el máximo común de los juegos diarios (ver
+// utils/daily-games.js). Si el día viene bloqueado por el plan de la API, se
+// avisa igual que antes. (Se mantiene la ruta /week por compatibilidad.)
 router.get("/week", async (req, res) => {
   const league = requireLeague(req, res);
   if (!league) return;
 
   try {
-    const dates = Array.from({ length: 7 }, (_, i) => addDays(todayStr(), i));
+    const dates = [todayStr()];
     const fixtures = [];
     let blockedByPlan = false;
     let isDemo = false;

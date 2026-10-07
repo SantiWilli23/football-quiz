@@ -7,6 +7,7 @@ import ResultScreen from "../components/ResultScreen.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 import VarClip from "../components/VarClip.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
+import { submitDaily, dailyMessage } from "../utils/dailyGames.js";
 
 const MAX_ROUNDS = 10; // tope; si hay menos jugadas en el banco, se juegan todas
 const SECONDS_PER_SITUATION = 30; // hay que mirar el clip (y quizás en cámara lenta) antes de decidir
@@ -22,6 +23,7 @@ export default function ArbitrajeVar() {
   const [secondsLeft, setSecondsLeft] = useState(SECONDS_PER_SITUATION);
   const [loading, setLoading] = useState(false);
   const [saveState, setSaveState] = useState(null);
+  const [dailyMsg, setDailyMsg] = useState("");
   const [timed, setTimed] = useState(true); // con reloj suma al ranking semanal
   const [totalRounds, setTotalRounds] = useState(MAX_ROUNDS);
   const totalRef = useRef(MAX_ROUNDS);
@@ -52,6 +54,10 @@ export default function ArbitrajeVar() {
   const finish = useCallback(async (finalCorrect) => {
     clearInterval(timerRef.current);
     setPhase("done");
+    // Juego diario: la primera partida CON TIEMPO del día suma hasta 20 puntos.
+    if (timedRef.current) {
+      submitDaily("arbitraje_var", finalCorrect / Math.max(1, totalRef.current), finalCorrect).then((r) => setDailyMsg(dailyMessage(r)));
+    }
     if (!groupId || !timedRef.current) return;
     setSaveState("saving");
     try {
@@ -75,6 +81,7 @@ export default function ArbitrajeVar() {
     setSeenIds([]);
     seenRef.current = [];
     setSaveState(null);
+    setDailyMsg("");
     fetchSituation([]);
   }
 
@@ -143,6 +150,7 @@ export default function ArbitrajeVar() {
           <p className="text-sm text-gray-400 mb-5">
             Jugadas polémicas reales revisadas por el VAR, en video y sin sonido. Pausalas o pasalas en cámara lenta y decidí qué cobrarías.
           </p>
+          <p className="text-xs text-gray-500 mb-5 -mt-2">Juego diario: la primera partida con tiempo del día suma hasta 20 puntos.</p>
           <div className="flex flex-wrap gap-3 justify-center">
             <button
               onClick={() => start(true)}
@@ -219,7 +227,7 @@ export default function ArbitrajeVar() {
           unit="decisiones correctas"
           groupId={timed ? groupId : null}
           saveState={saveState}
-          highlight={timed ? undefined : "Sin reloj es práctica: no cuenta para el ranking semanal."}
+          highlight={timed ? dailyMsg || undefined : "Sin reloj es práctica: no cuenta para el ranking semanal ni para el juego diario."}
           onAgain={() => setPhase("idle")}
           shareText={`⚽ Futotal · Arbitraje / VAR: ${correctCount}/${totalRounds} — ¿me ganás?`}
         />

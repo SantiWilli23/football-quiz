@@ -7,6 +7,7 @@ import ResultScreen from "../components/ResultScreen.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import { teams, badgeFor } from "../carrera/data/teams.js";
+import { submitDaily, dailyMessage } from "../utils/dailyGames.js";
 
 const ROUNDS = 10;
 const BLUR_STEPS = [14, 9, 5, 2]; // se va destapando con cada pista, si el usuario la pide
@@ -60,8 +61,13 @@ function pickDecoys(team, pool) {
   return ranked.slice(0, 3);
 }
 
-function buildRounds() {
-  const chosen = shuffle(POOL).slice(0, ROUNDS);
+// Juego diario: dificultad MEDIA = clubes de reconocimiento intermedio (prestige
+// 4 a 7), ni los gigantes que se adivinan solos ni los escudos más obscuros.
+const MID_POOL = POOL.filter((t) => (t.prestige ?? 5) >= 4 && (t.prestige ?? 5) <= 7);
+
+function buildRounds(mid = false) {
+  const base = mid && MID_POOL.length >= ROUNDS ? MID_POOL : POOL;
+  const chosen = shuffle(base).slice(0, ROUNDS);
   return chosen.map((team) => ({ team, options: shuffle([team, ...pickDecoys(team, POOL)]) }));
 }
 
@@ -88,6 +94,8 @@ export default function CrestQuiz() {
   const { activeGroupId: groupId } = useGroups();
   const [phase, setPhase] = useState("idle"); // idle | playing | done
   const [weekly, setWeekly] = useState(true); // reto semanal: sin pistas, suma al grupo
+  const [isDaily, setIsDaily] = useState(false); // juego diario: sin pistas, dificultad media
+  const [dailyMsg, setDailyMsg] = useState("");
   const [rounds, setRounds] = useState([]);
   const [index, setIndex] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
@@ -110,10 +118,12 @@ export default function CrestQuiz() {
       .catch(() => setWeeklyStatus(null));
   }, [groupId, phase]);
 
-  function start(isWeekly) {
-    if (isWeekly && weeklyStatus?.locked) return;
-    setWeekly(isWeekly);
-    setRounds(buildRounds());
+  function start(kind) {
+    if (kind === "weekly" && weeklyStatus?.locked) return;
+    setWeekly(kind === "weekly");
+    setIsDaily(kind === "daily");
+    setDailyMsg("");
+    setRounds(buildRounds(kind === "daily"));
     setIndex(0);
     setCorrectCount(0);
     setResults([]);
@@ -144,6 +154,10 @@ export default function CrestQuiz() {
         setFeedback(null);
       } else {
         setPhase("done");
+        if (isDaily) {
+          const hits = nextResults.filter(Boolean).length;
+          submitDaily("escudos", hits / ROUNDS, hits).then((r) => setDailyMsg(dailyMessage(r)));
+        }
         if (groupId && weekly) {
           setSaveState("saving");
           try {
@@ -185,16 +199,19 @@ export default function CrestQuiz() {
           )}
 
           <div className="flex flex-wrap gap-3 justify-center">
+            <button onClick={() => start("daily")} className="btn btn-primary">
+              Juego diario (media)
+            </button>
             <button
-              onClick={() => start(true)}
+              onClick={() => start("weekly")}
               disabled={!!alreadyPlayed}
-              className="btn btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-6 py-2.5 rounded-card border border-border text-sm text-gray-300 hover:text-white hover:border-white/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               title={alreadyPlayed ? "Ya jugaste el reto semanal — un solo intento por semana" : undefined}
             >
               {alreadyPlayed ? "Reto semanal jugado" : "Reto semanal (sin pistas)"}
             </button>
             <button
-              onClick={() => start(false)}
+              onClick={() => start("practice")}
               className="px-6 py-2.5 rounded-card border border-border text-sm text-gray-300 hover:text-white hover:border-white/30 transition-colors"
             >
               Práctica (con pistas)
@@ -217,7 +234,7 @@ export default function CrestQuiz() {
               ))}
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">Escudo {index + 1} / {rounds.length}{weekly ? " · sin pistas" : " · práctica"}</span>
+              <span className="text-gray-400">Escudo {index + 1} / {rounds.length}{isDaily ? " · diario, sin pistas" : weekly ? " · sin pistas" : " · práctica"}</span>
               <span className="text-gray-400">
                 {correctCount} correctas
                 {(() => { let n = 0; for (let i = results.length - 1; i >= 0 && results[i]; i--) n++; return n >= 2 ? ` · racha de ${n}` : ""; })()}
@@ -234,7 +251,7 @@ export default function CrestQuiz() {
                 style={{ filter: `blur(${blur}px)` }}
               />
 
-              {!weekly && !feedback && blurLevel < BLUR_STEPS.length - 1 && (
+              {!weekly && !isDaily && !feedback && blurLevel < BLUR_STEPS.length - 1 && (
                 <button
                   onClick={revealMore}
                   className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors"
@@ -281,8 +298,10 @@ export default function CrestQuiz() {
           groupId={weekly ? groupId : null}
           saveState={saveState}
           highlight={
-            !weekly
-              ? "Fue práctica: no cuenta para el ranking. Jugá el reto semanal (sin pistas) para sumar."
+            isDaily
+              ? dailyMsg || "Guardando tu puntaje del día…"
+              : !weekly
+              ? "Fue práctica: no cuenta para el ranking. Jugá el juego diario o el reto semanal (sin pistas) para sumar."
               : lockedMsg || "Puntaje del reto: aciertos × qué tan reconocible era el club × qué tan rápido respondiste. Un solo intento por semana."
           }
           onAgain={() => setPhase("idle")}

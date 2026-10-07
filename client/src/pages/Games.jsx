@@ -1,9 +1,11 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Gamepad2 } from "lucide-react";
+import { CalendarCheck, Gamepad2, Medal } from "lucide-react";
+import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import MyCardsTeam from "../components/MyCardsTeam.jsx";
-import { FAMILIES, FAMILY_ORDER, GAMES, gamesByFamily, minutesOf } from "../data/gameCatalog.js";
+import { useGroups } from "../context/GroupContext.jsx";
+import { DAILY_GAMES, DAILY_SECTION_FAMILIES, FAMILIES, FUTBOL12_GAMES, GAMES, gamesByFamily, minutesOf } from "../data/gameCatalog.js";
 import { playedToday, readVisits } from "../utils/visits.js";
 
 function durationLabel(min) {
@@ -82,22 +84,114 @@ function Featured({ visits }) {
   );
 }
 
-function Circle({ game, style, visits }) {
+function Circle({ game, style, visits, daily }) {
   const Icon = game.icon;
-  const today = game.to ? playedToday(game.to, visits) : false;
+  const today = daily ? daily.done : game.to ? playedToday(game.to, visits) : false;
   return (
-    <GameLink game={game} className="shrink-0 w-[72px] flex flex-col items-center gap-1.5 text-center group">
+    <GameLink game={game} className="shrink-0 w-[76px] flex flex-col items-center gap-1.5 text-center group">
       <span className={`relative w-[62px] h-[62px] rounded-full border-2 flex items-center justify-center transition-transform group-hover:scale-105 ${style.ring}`}>
         <Icon size={25} />
         {today && <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-good border-2 border-bg" title="Jugado hoy" />}
       </span>
       <span className="text-[11px] leading-tight text-gray-300 group-hover:text-white transition-colors">{game.label}</span>
+      {daily && (
+        <span className={`text-[10px] font-semibold tabular-nums ${daily.done ? "text-good" : "text-gray-600"}`}>
+          {daily.points}/{daily.max} pts
+        </span>
+      )}
     </GameLink>
+  );
+}
+
+function CircleRow({ games, visits, dailyByTo }) {
+  return (
+    <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible">
+      {games.map((game) => (
+        <Circle
+          key={game.to || game.href || game.label}
+          game={game}
+          style={FAMILY_STYLE[FAMILIES[game.family].tw]}
+          visits={visits}
+          daily={dailyByTo ? dailyByTo[game.to || game.href] : undefined}
+        />
+      ))}
+    </div>
+  );
+}
+
+function SubHeader({ dotClass, textClass, label, count }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <span className={`w-2 h-2 rounded-full ${dotClass}`} />
+      <h3 className={`text-sm font-semibold ${textClass}`}>{label}</h3>
+      {count != null && <span className="text-xs text-gray-600">{count}</span>}
+    </div>
+  );
+}
+
+function SectionTitle({ children, hint }) {
+  return (
+    <div className="mb-4 border-b border-border pb-2">
+      <h2 className="t-title text-lg">{children}</h2>
+      {hint && <p className="text-xs text-gray-500 mt-0.5">{hint}</p>}
+    </div>
+  );
+}
+
+// Clasificación de ESTA semana en cada juego diario, entre los miembros del
+// grupo activo: el podio (1°, 2°, 3°) suma puntos al ranking semanal.
+function WeeklyStandings({ groupId }) {
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    if (!groupId) { setData(null); return; }
+    api.get("/daily-games/weekly", { params: { groupId } }).then((r) => setData(r.data)).catch(() => setData(null));
+  }, [groupId]);
+
+  if (!groupId || !data) return null;
+  const podium = Object.values(data.podium || {});
+  const playing = data.games.filter((g) => g.standings.length > 0);
+
+  return (
+    <details className="mt-3 rounded-card border border-border bg-panel/40 px-3 py-2">
+      <summary className="flex items-center gap-2 text-sm cursor-pointer select-none list-none">
+        <Medal size={15} className="text-accent shrink-0" />
+        <span className="font-medium">Clasificación de la semana</span>
+        <span className="text-xs text-gray-500 ml-auto">
+          {data.myBonus > 0 ? `+${data.myBonus} pts por podios` : `podio: ${podium.map((p) => `+${p}`).join(" / ")}`}
+        </span>
+      </summary>
+      <div className="mt-3 space-y-2.5">
+        {playing.length === 0 && <p className="text-xs text-gray-500">Todavía nadie jugó un diario esta semana. El podio de cada juego suma al ranking del grupo.</p>}
+        {playing.map((g) => (
+          <div key={g.key} className="text-xs">
+            <p className="text-gray-400 font-medium mb-0.5">{g.label}</p>
+            <p className="text-gray-500 leading-relaxed">
+              {g.standings.slice(0, 4).map((s, i) => (
+                <span key={s.userId} className={s.me ? "text-white" : ""}>
+                  {i > 0 && " · "}
+                  {s.rank}° {s.username} {s.score}{s.bonus ? ` (+${s.bonus})` : ""}
+                </span>
+              ))}
+            </p>
+          </div>
+        ))}
+      </div>
+    </details>
   );
 }
 
 export default function Games() {
   const visits = readVisits();
+  const { activeGroupId } = useGroups();
+  const [today, setToday] = useState(null);
+
+  useEffect(() => {
+    api.get("/daily-games/today").then((r) => setToday(r.data)).catch(() => setToday(null));
+  }, []);
+
+  const dailyByTo = {};
+  (today?.games || []).forEach((g) => { dailyByTo[g.to] = { done: g.done, points: g.points, max: today.max }; });
+  const doneCount = (today?.games || []).filter((g) => g.done && dailyByTo[g.to]).length;
 
   return (
     <Layout>
@@ -110,27 +204,41 @@ export default function Games() {
 
       <MyCardsTeam />
 
-      <div className="space-y-6">
-        {FAMILY_ORDER.map((key) => {
-          const games = gamesByFamily(key);
-          if (games.length === 0) return null;
-          const style = FAMILY_STYLE[FAMILIES[key].tw];
-          return (
-            <div key={key}>
-              <div className="flex items-center gap-2 mb-3">
-                <span className={`w-2 h-2 rounded-full ${style.dot}`} />
-                <h2 className={`text-sm font-semibold ${style.text}`}>{FAMILIES[key].label}</h2>
-                <span className="text-xs text-gray-600">{games.length}</span>
-              </div>
-              <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible">
-                {games.map((game) => (
-                  <Circle key={game.to || game.href || game.label} game={game} style={style} visits={visits} />
-                ))}
-              </div>
+      <section className="mb-10">
+        <SectionTitle hint="Una partida por día de cada juego suma al ranking, con el mismo tope de puntos para todos.">Juegos diarios</SectionTitle>
+
+        <div className="space-y-6">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <CalendarCheck size={15} className="text-accent" />
+              <h3 className="text-sm font-semibold text-accent">Juego diario</h3>
+              <span className="text-xs text-gray-600">
+                {today ? `${doneCount}/${DAILY_GAMES.length} hoy · ${today.total}/${today.totalMax} pts` : DAILY_GAMES.length}
+              </span>
             </div>
-          );
-        })}
-      </div>
+            <CircleRow games={DAILY_GAMES} visits={visits} dailyByTo={dailyByTo} />
+            <WeeklyStandings groupId={activeGroupId} />
+          </div>
+
+          {DAILY_SECTION_FAMILIES.map((key) => {
+            const games = gamesByFamily(key).filter((g) => !g.daily);
+            const style = FAMILY_STYLE[FAMILIES[key].tw];
+            return (
+              <div key={key}>
+                <SubHeader dotClass={style.dot} textClass={style.text} label={FAMILIES[key].label} count={games.length} />
+                <CircleRow games={games} visits={visits} />
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {FUTBOL12_GAMES.length > 0 && (
+        <section>
+          <SectionTitle>Fútbol 12</SectionTitle>
+          <CircleRow games={FUTBOL12_GAMES} visits={visits} />
+        </section>
+      )}
     </Layout>
   );
 }

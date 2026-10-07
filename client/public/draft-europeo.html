@@ -485,7 +485,7 @@
 
       <h2>Modo</h2>
       <div class="chiprow" id="mode-row">
-        <div class="chip active" data-mode="clasico">Clásico<small>ratings ocultos</small></div>
+        <div class="chip active" data-mode="clasico">Clásico<small>ratings ocultos · cuenta para el diario</small></div>
         <div class="chip" data-mode="almanaque">De almanaque<small>ratings visibles</small></div>
         <div class="chip" data-mode="clasico_facil">Clásico Fácil<small>6 cambios · rivales duros</small></div>
         <div class="chip weekly" data-mode="bayern2020">🔥 Semanal: Bayern 2020<small>rivales fijos · ranking de grupo</small></div>
@@ -2120,6 +2120,7 @@
     }
     renderWeeklyTable(isChampion);
     renderGroupWeeklyTable();
+    submitDailyDraft(isChampion);
 
     var container = document.getElementById("bracket-rounds");
     container.innerHTML = "";
@@ -2165,6 +2166,38 @@
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
         body: JSON.stringify({ gameKey: gameKey, groupId: Number(groupId), score: score }),
       }).catch(function () {});
+    } catch (e) {}
+  }
+
+  // Juego diario: la primera copa del día en modo Clásico (la dificultad media)
+  // suma hasta 20 puntos según qué tan lejos llegaste. El servidor se queda con
+  // la primera partida del día, así que repetir no cambia nada.
+  var DAILY_DRAFT_FRACTION = { octavos: 0.2, cuartos: 0.45, semis: 0.7, final: 0.85 };
+
+  function submitDailyDraft(isChampion) {
+    if (state.mode !== "clasico") return;
+    try {
+      var token = localStorage.getItem("fq_token");
+      if (!token) return;
+      var fraction = isChampion ? 1 : (DAILY_DRAFT_FRACTION[state.cup.eliminatedAtRound] || 0.2);
+      fetch("/api/daily-games/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ gameKey: "draft_europeo", fraction: fraction, score: Math.round(fraction * 100) }),
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (!d) return;
+          var slot = document.getElementById("bracket-champion-slot");
+          if (!slot) return;
+          slot.insertAdjacentHTML("beforeend",
+            '<div class="csub" style="margin-top:8px">' +
+            (d.already
+              ? "Ya jugaste el diario de hoy (" + d.points + "/" + d.max + " pts). Esta copa no suma al día."
+              : "Juego diario: +" + d.points + " de " + d.max + " puntos.") +
+            "</div>");
+        })
+        .catch(function () {});
     } catch (e) {}
   }
 
