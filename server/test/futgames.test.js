@@ -1,8 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  buildIndex, cellsForPlayer, dailySeed, generateGrid, normalize, rankRanges, revealSets,
-  scorePyramid, squadOf, squadRevealOrders, tierOfRank,
+  buildIndex, cellsForPlayer, dailySeed, generateGrid, normalize, rankRanges, scorePyramid, tierOfRank,
 } from "../utils/futgames.js";
 import { PYRAMID_PUZZLES } from "../data/pyramid-puzzles.js";
 
@@ -89,25 +88,4 @@ test("Pirámide: los puzzles de datos tienen 10 jugadores distintos", () => {
     assert.equal(new Set(p.entries.map((e) => e.name)).size, 10, p.key);
     assert.ok(p.entries.every((e) => Number.isFinite(e.value)), p.key);
   }
-});
-
-test("Torta: se revelan porciones enteras hasta 30% / 60% / 100%", () => {
-  const countries = [{ count: 5 }, { count: 3 }, { count: 1 }, { count: 1 }]; // total 10
-  const sets = revealSets(countries, [0, 1, 2, 3]);
-  assert.deepEqual(sets[0], [0]); // 50% >= 30%
-  assert.deepEqual(sets[1], [0, 1]); // 80% >= 60%
-  assert.deepEqual(sets[2], [0, 1, 2, 3]);
-  // En orden aleatorio arrancando por las chicas, hacen falta más porciones
-  const rnd = revealSets(countries, [3, 2, 1, 0]);
-  assert.deepEqual(rnd[0], [1, 2, 3]); // 1+1+3 = 50%
-  assert.deepEqual(rnd[2], [0, 1, 2, 3]);
-});
-
-test("Torta: plantel por nacionalidad ordenado y órdenes de revelado", () => {
-  const s = squadOf(PLAYERS, "Man Utd");
-  assert.deepEqual(s.map((c) => [c.country, c.count]), [["Francia", 2], ["Argentina", 1], ["Inglaterra", 1]]);
-  const orders = squadRevealOrders(s, "2026-10-07");
-  assert.equal(orders.clockwise.length, 3);
-  assert.deepEqual(orders.clockwise[2], [0, 1, 2]);
-  assert.deepEqual(orders.random[2], [0, 1, 2]);
 });

@@ -53,7 +53,6 @@ const QuienSabeMas = lazy(() => import("./pages/QuienSabeMas.jsx"));
 const VidaFut = lazy(() => import("./pages/VidaFut.jsx"));
 const Tateti = lazy(() => import("./pages/Tateti.jsx"));
 const Piramide = lazy(() => import("./pages/Piramide.jsx"));
-const Torta = lazy(() => import("./pages/Torta.jsx"));
 
 function RouteFallback() {
   return (
@@ -340,14 +339,6 @@ export default function App() {
         element={
           <PrivateRoute>
             <Piramide />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/torta"
-        element={
-          <PrivateRoute>
-            <Torta />
           </PrivateRoute>
         }
       />

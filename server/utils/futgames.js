@@ -1,5 +1,5 @@
-// Lógica pura de los tres juegos diarios "Tateti", "Pirámide" y "Torta de
-// plantel" (inspirados en la mecánica de Grid / Pyramid / SquadSlice). No
+// Lógica pura de los juegos diarios "Tateti" y "Pirámide" (inspirados en la
+// mecánica de Grid / Pyramid). No
 // toca Express ni la base: recibe datos y devuelve datos, así se testea sola
 // (ver test/futgames.test.js). Todo lo "del día" sale de dailySeed(fecha):
 // misma fecha => mismo reto para todos.
@@ -167,55 +167,4 @@ export function scorePyramid(entries, placement) {
 // Orden en que aparecen los 10 jugadores (determinista por fecha).
 export function pyramidOrder(entries, date) {
   return shuffle(entries.map((e) => e.id), rng(dailySeed(date, "pyramid-order")));
-}
-
-// ---------- Torta de plantel (SquadSlice) ----------
-
-export const REVEAL_STEPS = [0.3, 0.6, 1];
-
-// countries: [{ country, count }] ya ordenados por count desc (así se dibuja
-// la torta, en sentido horario). order: índices en el orden en que se van
-// destapando. Devuelve, para cada intento, los índices visibles: se suman
-// porciones ENTERAS hasta llegar al umbral (30% / 60% / 100%).
-export function revealSets(countries, order, steps = REVEAL_STEPS) {
-  const total = countries.reduce((s, c) => s + c.count, 0);
-  return steps.map((pct) => {
-    const visible = [];
-    let acc = 0;
-    for (const i of order) {
-      if (acc >= pct * total && visible.length > 0) break;
-      visible.push(i);
-      acc += countries[i].count;
-    }
-    return visible.sort((a, b) => a - b);
-  });
-}
-
-export function squadRevealOrders(countries, date) {
-  const clockwise = countries.map((_, i) => i);
-  const random = shuffle(clockwise, rng(dailySeed(date, "squad-random")));
-  return {
-    clockwise: revealSets(countries, clockwise),
-    random: revealSets(countries, random),
-  };
-}
-
-// Plantel histórico de un club según la base: nacionalidades de todos los
-// jugadores que lo vistieron, agrupadas y ordenadas por cantidad.
-export function squadOf(players, club) {
-  const byCountry = new Map();
-  for (const p of players) {
-    if (!(p.carrera || []).some((c) => c.club === club)) continue;
-    if (!byCountry.has(p.nacionalidad)) byCountry.set(p.nacionalidad, []);
-    byCountry.get(p.nacionalidad).push(p.nombre);
-  }
-  return [...byCountry.entries()]
-    .map(([country, names]) => ({ country, count: names.length, players: names.sort() }))
-    .sort((a, b) => b.count - a.count || a.country.localeCompare(b.country));
-}
-
-// Club del día entre los candidatos (con suficientes jugadores y países).
-export function pickSquadClub(candidates, date) {
-  const rand = rng(dailySeed(date, "squad-club"));
-  return candidates[Math.floor(rand() * candidates.length)];
 }

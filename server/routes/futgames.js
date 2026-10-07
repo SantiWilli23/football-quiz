@@ -7,13 +7,12 @@ import { todayStr } from "../utils/points.js";
 import { flagOf } from "../data/country-flags.js";
 import { PYRAMID_PUZZLES } from "../data/pyramid-puzzles.js";
 import {
-  buildIndex, cellsForPlayer, dailySeed, generateGrid, GRID_MODES, normalize, pickSquadClub,
-  pyramidOrder, rankRanges, scorePyramid, squadOf, squadRevealOrders, tierOfRank, validFor,
+  buildIndex, cellsForPlayer, dailySeed, generateGrid, GRID_MODES,
+  pyramidOrder, rankRanges, scorePyramid, tierOfRank, validFor,
 } from "../utils/futgames.js";
 
-// Tres juegos diarios: Tateti (club/selección x club), Pirámide (ordenar 10
-// jugadores por una estadística) y Torta de plantel (adivinar el club por las
-// nacionalidades). El reto sale de la fecha, igual para todos; las respuestas
+// Dos juegos diarios: Tateti (club/selección x club) y Pirámide (ordenar 10
+// jugadores por una estadística). El reto sale de la fecha, igual para todos; las respuestas
 // se quedan en el server y el cliente solo pregunta "¿encaja?", "¿cuántas
 // bien?" o "¿es este?". El estado de la partida vive en el cliente.
 
@@ -125,46 +124,6 @@ router.post("/pyramid/submit", (req, res) => {
     correct,
     slots: slots.map((s) => ({ ...s, value: byId[s.id]?.value ?? null })),
   });
-});
-
-// ---------- Torta de plantel ----------
-
-// Clubes con suficientes jugadores en la base y variedad de países.
-const SQUAD_CANDIDATES = [...new Set(PLAYERS.flatMap((p) => (p.carrera || []).map((c) => c.club)))]
-  .filter((club) => {
-    const s = squadOf(PLAYERS, club);
-    const total = s.reduce((n, c) => n + c.count, 0);
-    return total >= 20 && s.length >= 6;
-  })
-  .sort();
-const ALL_CLUBS = [...new Set(PLAYERS.flatMap((p) => (p.carrera || []).map((c) => c.club)))].sort((a, b) => a.localeCompare(b));
-
-function squadFor(date) {
-  const club = pickSquadClub(SQUAD_CANDIDATES, date);
-  const countries = squadOf(PLAYERS, club);
-  return { club, countries, reveal: squadRevealOrders(countries, date) };
-}
-
-router.get("/squad", (req, res) => {
-  const date = todayStr();
-  const s = squadFor(date);
-  res.json({
-    date,
-    total: s.countries.reduce((n, c) => n + c.count, 0),
-    countries: s.countries.map((c) => ({ country: c.country, flag: flagOf(c.country), count: c.count })),
-    reveal: s.reveal,
-    clubs: ALL_CLUBS,
-  });
-});
-
-router.post("/squad/guess", (req, res) => {
-  const s = squadFor(todayStr());
-  res.json({ correct: normalize(req.body?.club) === normalize(s.club) });
-});
-
-router.get("/squad/reveal", (req, res) => {
-  const s = squadFor(todayStr());
-  res.json({ club: s.club, countries: s.countries.map((c) => ({ country: c.country, players: c.players })) });
 });
 
 export default router;

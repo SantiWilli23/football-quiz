@@ -1,4 +1,4 @@
-// Guardado local de los tres juegos diarios (Tateti, Pirámide, Torta): la
+// Guardado local de los juegos diarios (Tateti y Pirámide): la
 // partida del día (para retomarla si se recarga y para no dejar rejugar el
 // diario) y las estadísticas de cada juego. Todo en localStorage, envuelto en
 // try/catch porque puede no estar disponible (modo privado, etc.).
