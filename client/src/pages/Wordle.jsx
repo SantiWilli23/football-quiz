@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ArrowDown, ArrowUp, BarChart3, Check, Lightbulb, Lock, Sparkles, User, X } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
@@ -8,10 +9,14 @@ import { playSfx } from "../utils/sfx.js";
 
 const GLOBAL_TAB = { key: "global", label: "Todos" };
 const HINT_ORDER_LABELS = ["Posición", "Liga", "Nacionalidad", "Nacimiento", "Club"];
-const MODES = [
-  { key: "daily", label: "Diario", hint: "El mismo jugador secreto para todos hoy." },
-  { key: "random", label: "Aleatorio", hint: "Un secreto nuevo cada partida, con dificultad a elección." },
-];
+// Fichado se juega según por dónde entrás: desde "Juego diario" (?diario=1) es UN
+// solo jugador y no se repite; desde el reto del día (?reto=1) el secreto sale de
+// un grupo restringido (jóvenes, leyendas...); desde Juegos es partida libre.
+const MODE_INFO = {
+  daily: { label: "Juego diario", hint: "Un solo jugador secreto para todos hoy: si lo adivinás sumás, y después no se puede volver a jugar." },
+  reto: { label: "Reto del día", hint: "El secreto sale de un grupo restringido." },
+  random: { label: "Partida libre", hint: "Un secreto nuevo cada partida, con dificultad a elección. Practicá sin límite." },
+};
 
 function Cell({ label, children, tone }) {
   const toneClass =
@@ -73,7 +78,7 @@ function GuessRow({ g }) {
 // Una fila de cuadritos por intento (del primero al último): verde si
 // coincide, rojo si no — nacionalidad, posición, club, liga y año.
 function shareText(game) {
-  const title = game.mode === "daily" ? "Fichado diario" : "Fichado";
+  const title = game.mode === "daily" ? "Fichado diario" : game.mode === "reto" ? "Fichado · reto del día" : "Fichado";
   const result = game.status === "won" ? `${game.attemptsUsed}/${game.maxAttempts}` : `X/${game.maxAttempts}`;
   const sq = (ok) => (ok ? "🟩" : "🟥");
   const rows = [...game.guesses].reverse().map((g) =>
@@ -85,7 +90,9 @@ function shareText(game) {
 export default function Wordle() {
   const { activeGroupId: groupId } = useGroups();
   const [meta, setMeta] = useState({ leagues: [], difficulties: [], maxAttempts: 8, hintCost: 3 });
-  const [mode, setMode] = useState("daily");
+  const [params] = useSearchParams();
+  const mode = params.get("reto") ? "reto" : params.get("diario") ? "daily" : "random";
+  const [modeNote, setModeNote] = useState(null); // { notToday, notFichado, challenge }
   const [league, setLeague] = useState("global");
   const [difficulty, setDifficulty] = useState("normal");
   const [players, setPlayers] = useState([]);
@@ -126,8 +133,9 @@ export default function Wordle() {
     setLoading(true);
     setError("");
     setGroupSave(null);
+    setModeNote(null);
     api.get("/wordle/game", { params: { mode, league } })
-      .then((r) => setGame(r.data.game))
+      .then((r) => { setGame(r.data.game); setModeNote(r.data.game ? (r.data.challenge ? { challenge: r.data.challenge } : null) : { notToday: !!r.data.notToday, notFichado: !!r.data.notFichado }); })
       .catch(() => setError("No se pudo cargar el juego"))
       .finally(() => setLoading(false));
   }, [mode, league]);
@@ -231,21 +239,12 @@ export default function Wordle() {
         {wildcards.streak > 0 && <span className="text-amber ml-1">Racha actual: {wildcards.streak} día{wildcards.streak === 1 ? "" : "s"}.</span>}
       </p>
 
-      <div className="flex gap-1.5 mb-3">
-        {MODES.map((m) => (
-          <button
-            key={m.key}
-            onClick={() => setMode(m.key)}
-            className={`px-4 py-2 rounded-card text-sm font-semibold border transition-colors ${
-              mode === m.key ? "border-accent bg-accent text-bg" : "border-border text-gray-400 hover:text-white"
-            }`}
-          >
-            {m.label}
-          </button>
-        ))}
-        <span className="text-xs text-gray-500 self-center ml-2">{MODES.find((m) => m.key === mode).hint}</span>
+      <div className="mb-3">
+        <span className="text-xs font-semibold uppercase tracking-wide text-accent">{MODE_INFO[mode].label}</span>
+        <span className="text-xs text-gray-500 ml-2">{modeNote?.challenge?.label || MODE_INFO[mode].hint}</span>
       </div>
 
+      {mode === "random" && (<>
       <select
         value={league}
         onChange={(e) => setLeague(e.target.value)}
@@ -269,6 +268,7 @@ export default function Wordle() {
           </button>
         ))}
       </div>
+      </>)}
 
       <div className="flex items-center gap-3 mb-4 text-xs text-gray-400 flex-wrap">
         <button
@@ -291,6 +291,14 @@ export default function Wordle() {
       </div>
 
       {loading && <p className="text-sm text-gray-500">Cargando...</p>}
+
+      {!loading && !game && mode !== "random" && (
+        <Card className="mb-6">
+          <p className="text-sm text-gray-400">
+            {modeNote?.notToday ? "Hoy el juego diario es otro. Fichado lo vas a poder jugar como diario cuando le toque; mientras tanto, la partida libre está en Juegos." : modeNote?.notFichado ? "El reto de hoy no es de Fichado: lo encontrás en Inicio." : "No se pudo cargar la partida."}
+          </p>
+        </Card>
+      )}
 
       {!loading && mode === "random" && !game && (
         <Card className="mb-6">
@@ -322,7 +330,7 @@ export default function Wordle() {
           <Card className="mb-6 order-2 lg:order-1 sticky bottom-20 lg:static z-10">
             <div className="flex items-center justify-between mb-3 text-xs text-gray-500">
               <span className="uppercase tracking-wide">
-                {game.mode === "daily" ? "Diario" : `Aleatorio · ${meta.difficulties.find((d) => d.id === game.difficulty)?.label || ""}`}
+                {game.mode === "daily" ? "Juego diario" : game.mode === "reto" ? "Reto del día" : `Aleatorio · ${meta.difficulties.find((d) => d.id === game.difficulty)?.label || ""}`}
               </span>
               <span className="tabular-nums font-medium text-gray-300">
                 Intento {Math.min(game.attemptsUsed, game.maxAttempts)} / {game.maxAttempts}

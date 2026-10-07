@@ -5,7 +5,7 @@ import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import MyCardsTeam from "../components/MyCardsTeam.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
-import { CON_AMIGOS_GAMES, FAMILIES, FUTBOL12_GAMES, GAMES } from "../data/gameCatalog.js";
+import { CON_AMIGOS_GAMES, JUEGOS_SEMANALES, FAMILIES, FUTBOL12_GAMES, GAMES } from "../data/gameCatalog.js";
 import { playedToday, readVisits } from "../utils/visits.js";
 
 // Clases de Tailwind escritas literales a propósito (no armadas con string
@@ -28,13 +28,15 @@ function GameLink({ game, className, children }) {
 }
 
 // La casilla grande: el juego diario de hoy. Rota solo (lo decide el servidor,
-// así que todos juegan el mismo), paga hasta max puntos y el primero de la
-// semana en el grupo suma 30.
+// así que todos juegan el mismo). El puntaje 0-20 es solo de referencia: ordena al
+// grupo ese día y el podio suma 5 / 3 / 3 puntos.
 function DailyFeatured({ today, visits }) {
   if (!today) return null;
   const daily = today.game;
-  const game = GAMES.find((g) => (g.to || g.href) === daily.to);
-  if (!game) return null;
+  const base = GAMES.find((g) => (g.to || g.href) === daily.to);
+  if (!base) return null;
+  // Fichado como juego diario es otra cosa que la partida libre: un solo jugador.
+  const game = base.to === "/fulbodle" ? { ...base, to: "/fulbodle?diario=1" } : base;
   const fam = FAMILIES[game.family];
   const style = FAMILY_STYLE[fam.tw];
   const Icon = game.icon;
@@ -45,12 +47,12 @@ function DailyFeatured({ today, visits }) {
     >
       <Icon size={26} className={`absolute top-5 right-5 ${style.text}`} />
       <span className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider ${style.text}`}>
-        <CalendarCheck size={13} /> Juego diario · hasta {today.max} pts y sobre de cartas
+        <CalendarCheck size={13} /> Juego diario · puntaje de {today.max} y sobre · podio del día: 5 / 3 / 3 pts
       </span>
       <span className="t-title block text-2xl leading-tight mt-2">{game.label}</span>
       <span className="text-sm text-gray-400 leading-snug block mt-1.5 max-w-xl">{game.description}</span>
       <span className={`inline-block mt-3 text-xs font-semibold tabular-nums ${daily.done ? "text-good" : "text-gray-500"}`}>
-        {daily.done ? `Hecho hoy · ${daily.points}/${today.max} pts y sobre` : "Todavía no lo jugaste hoy"}
+        {daily.done ? `Hecho hoy · puntaje ${daily.points}/${today.max} y sobre` : "Todavía no lo jugaste hoy"}
       </span>
     </GameLink>
   );
@@ -128,6 +130,41 @@ function WeeklyStandings({ groupId }) {
   );
 }
 
+// Activar los juegos semanales en el grupo: solo quien lo creó. Sin esto no dan puntos.
+function WeeklyGamesToggle() {
+  const { activeGroup, reloadGroups } = useGroups();
+  const { user } = useAuth();
+  const [busy, setBusy] = useState(false);
+  if (!activeGroup) return <p className="text-xs text-gray-500 mb-3">Unite a un grupo para que estos juegos den puntos.</p>;
+  const on = !!activeGroup.weekly_games_enabled;
+  const isOwner = activeGroup.created_by === user?.id;
+
+  async function toggle() {
+    setBusy(true);
+    try {
+      await api.post(`/groups/${activeGroup.id}/weekly-games/toggle`, { enable: !on });
+      await reloadGroups();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mb-4 flex items-center gap-3 rounded-card border border-border bg-panel/40 px-3 py-2 text-xs">
+      <span className={`w-2 h-2 rounded-full shrink-0 ${on ? "bg-good" : "bg-gray-600"}`} />
+      <span className="flex-1 text-gray-400">
+        {on ? `Activados en ${activeGroup.name}: los puntos se reparten los domingos.` : `Desactivados en ${activeGroup.name}: no dan puntos.`}
+        {!isOwner && " Solo quien creó el grupo puede cambiarlo."}
+      </span>
+      {isOwner && (
+        <button onClick={toggle} disabled={busy} className="px-3 py-1.5 rounded-card border border-accent/40 text-accent hover:bg-accent/10 transition-colors disabled:opacity-50">
+          {on ? "Desactivar" : "Activar"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function Games() {
   const visits = readVisits();
   const { activeGroupId } = useGroups();
@@ -158,9 +195,17 @@ export default function Games() {
         </section>
       )}
 
+      {JUEGOS_SEMANALES.length > 0 && (
+        <section className="mb-10">
+          <SectionTitle hint="Sus puntos se reparten los domingos y solo cuentan en los grupos que los activaron.">Juegos semanales</SectionTitle>
+          <WeeklyGamesToggle />
+          <CircleRow games={JUEGOS_SEMANALES} visits={visits} />
+        </section>
+      )}
+
       {FUTBOL12_GAMES.length > 0 && (
         <section>
-          <SectionTitle hint="El juego diario de hoy da puntos y un sobre; los demás dan un sobre normal por jugar.">Fútbol 12</SectionTitle>
+          <SectionTitle hint="Partidas libres: dan un sobre normal por jugar (uno por juego y día).">Fútbol 12</SectionTitle>
           <CircleRow games={FUTBOL12_GAMES} visits={visits} />
         </section>
       )}

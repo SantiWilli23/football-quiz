@@ -40,6 +40,7 @@ import pollsRoutes from "./routes/polls.js";
 import fantasyFictionRoutes from "./routes/fantasyfiction.js";
 import arbitrajeVarRoutes from "./routes/arbitraje-var.js";
 import dailyGamesRoutes from "./routes/daily-games.js";
+import onlineGamesRoutes from "./routes/online-games.js";
 import gameHistoryRoutes from "./routes/game-history.js";
 import futgamesRoutes from "./routes/futgames.js";
 
@@ -88,6 +89,7 @@ app.use("/api/polls", pollsRoutes);
 app.use("/api/fantasyfiction", fantasyFictionRoutes);
 app.use("/api/arbitraje-var", arbitrajeVarRoutes);
 app.use("/api/daily-games", dailyGamesRoutes);
+app.use("/api/online-games", onlineGamesRoutes);
 app.use("/api/game-history", gameHistoryRoutes);
 app.use("/api/futgames", futgamesRoutes);
 

@@ -6,6 +6,7 @@ import Card from "../components/Card.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import { playSfx } from "../utils/sfx.js";
+import { reportOnlineWin } from "../utils/onlineWin.js";
 
 // ¿Quién es? en vivo, 1 contra 1: los dos ven las mismas pistas al mismo tiempo
 // (la sala va por el relay genérico de /ws) y gana quien adivine primero. El
@@ -125,6 +126,7 @@ export function QuienEsVivoBody() {
       // así que adivinar rápido y con pocas pistas vale más). Se guarda la mejor
       // del ganador de la semana.
       if (groupId) api.post("/challenges/submit", { gameKey: "quien_es_vivo", groupId, score: data.points }).catch(() => {});
+      reportOnlineWin("quien_es_vivo", 1, g.token); // 3 puntos por la persona a la que le ganó
       send({ t: "won", name: data.name, by: user.username, points: data.points });
       finish({ name: data.name, by: user.username, points: data.points });
     } else {

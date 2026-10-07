@@ -38,6 +38,7 @@ export async function initSchema() {
   await migrateDuelTournamentMatch();
   await migrateGroupMemberRival();
   await migrateGroupCards();
+  await migrateGroupWeeklyGames();
   await migrateGroupLeague();
   await migrateDtLeagueColumns();
   await migrateDtLeagueDraft();
@@ -209,6 +210,15 @@ async function migrateGroupMemberRival() {
 // Cartas es un módulo opt-in por grupo: solo existe si un admin lo activó
 // (y el grupo tenía 3+ miembros al momento de activarlo). Una vez activado
 // queda así aunque el grupo baje de 3 después.
+// Juegos semanales: opt-in por grupo (los activa quien lo creó). Sin esto, los
+// juegos semanales no dan puntos en ese grupo.
+async function migrateGroupWeeklyGames() {
+  const info = await db.execute("PRAGMA table_info(groups_t)");
+  if (info.rows.length === 0) return;
+  if (info.rows.some((r) => r.name === "weekly_games_enabled")) return;
+  await db.execute("ALTER TABLE groups_t ADD COLUMN weekly_games_enabled INTEGER NOT NULL DEFAULT 0");
+}
+
 async function migrateGroupCards() {
   const info = await db.execute("PRAGMA table_info(groups_t)");
   if (info.rows.length === 0) return;

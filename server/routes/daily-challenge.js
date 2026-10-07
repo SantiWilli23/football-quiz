@@ -14,13 +14,21 @@ router.use(requireAuth);
 // suma de puntos de stats.js.
 const CHALLENGE_LEAGUE = "reto";
 
+// Los retos ya no dicen "jugá a tal juego": cambian las condiciones. Los de
+// Fichado tienen un secreto restringido (solo jóvenes, solo leyendas...) y se
+// juegan desde /fulbodle?reto=1; el de trivia usa la trivia del día. Cada reto
+// puede ser de cualquier juego activo — sumar uno nuevo es agregarlo acá.
 const CHALLENGES = [
-  { key: "fichado_5", label: "Adiviná el Fichado del día en 5 intentos o menos", to: "/fulbodle" },
+  { key: "fichado_jovenes", label: "Adiviná al jugador secreto: hoy son solo jugadores jóvenes (nacidos desde 2003)", to: "/fulbodle?reto=1", fichado: "young" },
   { key: "trivia_2", label: "Acertá al menos 2 de las 3 preguntas de la trivia del día", to: "/trivia" },
-  { key: "fichado_win", label: "Resolvé el Fichado del día (sin importar los intentos)", to: "/fulbodle" },
+  { key: "fichado_leyendas", label: "Adiviná al jugador secreto: hoy son solo leyendas retiradas", to: "/fulbodle?reto=1", fichado: "legends" },
+  { key: "fichado_porteros", label: "Adiviná al jugador secreto: hoy son solo porteros", to: "/fulbodle?reto=1", fichado: "keepers" },
+  { key: "fichado_premier", label: "Adiviná al jugador secreto: hoy son solo jugadores de la Premier League", to: "/fulbodle?reto=1", fichado: "premier" },
+  { key: "fichado_laliga", label: "Adiviná al jugador secreto: hoy son solo jugadores de LaLiga", to: "/fulbodle?reto=1", fichado: "laliga" },
+  { key: "fichado_seriea", label: "Adiviná al jugador secreto: hoy son solo jugadores de la Serie A", to: "/fulbodle?reto=1", fichado: "seriea" },
 ];
 
-function challengeFor(dateStr) {
+export function challengeFor(dateStr) {
   const days = Math.floor(new Date(`${dateStr}T12:00:00Z`).getTime() / 86400000);
   return CHALLENGES[((days % CHALLENGES.length) + CHALLENGES.length) % CHALLENGES.length];
 }
@@ -35,14 +43,12 @@ async function isDone(key, userId, today) {
     });
     return Number(r.rows[0]?.ok || 0) >= 2;
   }
+  // Retos de Fichado: ganar la partida 'reto' de hoy (secreto restringido).
   const g = (await db.execute({
-    sql: `SELECT id FROM fichado_games WHERE user_id = ? AND mode = 'daily' AND date = ? AND status = 'won' LIMIT 1`,
+    sql: `SELECT id FROM fichado_games WHERE user_id = ? AND mode = 'reto' AND date = ? AND status = 'won' LIMIT 1`,
     args: [userId, today],
   })).rows[0];
-  if (!g) return false;
-  if (key === "fichado_win") return true;
-  const n = (await db.execute({ sql: "SELECT COUNT(*) AS n FROM fichado_guesses WHERE game_id = ?", args: [g.id] })).rows[0];
-  return Number(n.n) <= 5;
+  return !!g;
 }
 
 async function streakOf(userId, today) {

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "../context/ToastContext.jsx";
 import { Check, RotateCcw, Share2, Trophy } from "lucide-react";
 import Card from "./Card.jsx";
+import { celebrateScore } from "../utils/celebrate.js";
 
 // Pantalla final común a los juegos con puntaje: antes cada uno armaba su
 // propia tarjeta con el mismo esqueleto copiado. `saveState` es el que ya
@@ -26,6 +27,12 @@ export default function ResultScreen({
 
   const improved = saveState && saveState !== "saving" && saveState.improved;
   const saved = saveState && saveState !== "saving";
+
+  // Felicitaciones con el puntaje al terminar (una vez por pantalla final).
+  useEffect(() => {
+    celebrateScore({ points: score, unit: String(unit || "puntos").split(" · ")[0] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!saved) return;

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Radio, Timer } from "lucide-react";
+import { ArrowRight, Radio, Timer } from "lucide-react";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -13,6 +13,7 @@ import GroupQuestionComposer from "../components/GroupQuestionComposer.jsx";
 import ShareButton from "../components/ShareButton.jsx";
 import GroupStreakCard from "../components/GroupStreakCard.jsx";
 import EscudoQuiz from "../components/EscudoQuiz.jsx";
+import { celebrateScore } from "../utils/celebrate.js";
 
 const LIVE_REFRESH_MS = 15000;
 
@@ -50,11 +51,16 @@ export default function Trivia() {
   const [modeBData, setModeBData] = useState(null);
   const [mode, setMode] = useState("a");
   const [powerupUsage, setPowerupUsage] = useState(loadPowerupUsage);
+  // Una pregunta a la vez: se contesta y "Siguiente" pasa a la próxima.
+  // Arranca en la primera sin responder (si ya respondiste alguna hoy).
+  const [current, setCurrent] = useState(0);
+  const [skippedIds, setSkippedIds] = useState([]);
 
   const budget = powerupBudget(stats?.current_streak ?? 0);
   const powerupsLeft = { fifty: Math.max(0, budget.fifty - powerupUsage.fifty), skip: Math.max(0, budget.skip - powerupUsage.skip) };
 
   const handleUsePowerup = (type) => {
+    if (type === "skip" && questions?.[current]) setSkippedIds((ids) => [...ids, questions[current].question.id]);
     setPowerupUsage((prev) => {
       const next = { ...prev, [type]: prev[type] + 1 };
       savePowerupUsage(next);
@@ -66,6 +72,8 @@ export default function Trivia() {
     try {
       const { data } = await api.get("/questions/today");
       setQuestions(data.questions);
+      const firstOpen = data.questions.findIndex((q) => !q.answered);
+      setCurrent(firstOpen === -1 ? data.questions.length : firstOpen);
     } catch {
       setQuestions([]);
     }
@@ -106,6 +114,23 @@ export default function Trivia() {
     );
     refreshMe();
   };
+
+  // Al pasar la última: felicitaciones con lo que sumó la trivia de hoy.
+  const goNext = () => {
+    const next = current + 1;
+    setCurrent(next);
+    if (next >= questions.length) {
+      const pts = questions.reduce((n, q) => n + (q.result?.points || 0), 0);
+      const ok = questions.filter((q) => q.result?.is_correct).length;
+      celebrateScore({ points: pts, unit: "puntos en la trivia de hoy", detail: `${ok} de ${questions.length} correctas` });
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const currentItem = questions?.[current];
+  const currentDone = currentItem && (currentItem.answered || skippedIds.includes(currentItem.question.id));
+  const triviaPoints = questions ? questions.reduce((n, q) => n + (q.result?.points || 0), 0) : 0;
+  const triviaCorrect = questions ? questions.filter((q) => q.result?.is_correct).length : 0;
 
   const handleModeBChanged = async () => {
     await loadModeB();
@@ -192,18 +217,33 @@ export default function Trivia() {
           <div className="space-y-6">
             {mode === "a" ? (
               <>
-                {questions?.map((item, i) => (
-                  <QuestionCard
-                    key={item.question.id}
-                    item={item}
-                    index={i}
-                    total={questions.length}
-                    onAnswered={(result) => handleAnswered(i, result)}
-                    timedMode
-                    powerups={powerupsLeft}
-                    onUsePowerup={handleUsePowerup}
-                  />
-                ))}
+                {currentItem && (
+                  <>
+                    <QuestionCard
+                      key={currentItem.question.id}
+                      item={currentItem}
+                      index={current}
+                      total={questions.length}
+                      onAnswered={(result) => handleAnswered(current, result)}
+                      timedMode
+                      powerups={powerupsLeft}
+                      onUsePowerup={handleUsePowerup}
+                    />
+                    {currentDone && (
+                      <button onClick={goNext} className="btn btn-primary w-full inline-flex items-center justify-center gap-2">
+                        {current + 1 < questions.length ? "Siguiente pregunta" : "Ver resultado"} <ArrowRight size={16} />
+                      </button>
+                    )}
+                  </>
+                )}
+                {questions && questions.length > 0 && current >= questions.length && (
+                  <Card className="text-center py-8">
+                    <p className="text-sm text-gray-400 mb-1">Trivia de hoy terminada</p>
+                    <p className="text-4xl font-bold tabular-nums">{triviaCorrect}/{questions.length}</p>
+                    <p className="text-sm text-gray-400 mt-1">correctas · +{triviaPoints} puntos</p>
+                    <p className="text-xs text-gray-500 mt-3">Mañana hay preguntas nuevas.</p>
+                  </Card>
+                )}
                 {groupId && <BonusCard groupId={groupId} />}
                 <EscudoQuiz />
               </>

@@ -3,7 +3,8 @@ import { todayStr } from "./points.js";
 
 // Modo B no tiene respuesta "correcta": los puntos salen de participar y de
 // predecir qué va a votar la mayoría del grupo.
-export const MODE_B_POINTS = { answer: 5, prediction: 15 };
+// Modo B ya no da puntos (solo es para divertirse y conocerse en el grupo).
+export const MODE_B_POINTS = { answer: 0, prediction: 0 };
 
 export const MODE_B_EMOJIS = ["👍", "😂", "❤️", "😱", "🔥"];
 

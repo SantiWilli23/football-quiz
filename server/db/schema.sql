@@ -935,3 +935,20 @@ CREATE TABLE IF NOT EXISTS game_history (
   played_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_game_history_user ON game_history(user_id, played_at);
+
+-- Juegos online (¿Quién es? en vivo, Supervivencia, Equipo-Jugador...): el
+-- ganador suma 3 puntos por cada persona a la que le ganó. Una fila por partida
+-- (room = código de sala o token de la partida) para que no se repita.
+CREATE TABLE IF NOT EXISTS online_game_points (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  game_key TEXT NOT NULL,
+  room TEXT NOT NULL,
+  date TEXT NOT NULL,
+  opponents INTEGER NOT NULL,
+  points INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(user_id, game_key, room)
+);
+CREATE INDEX IF NOT EXISTS idx_online_game_points_group ON online_game_points(group_id, date);

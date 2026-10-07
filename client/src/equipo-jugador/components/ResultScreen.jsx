@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { saveMatchResult } from "../matchHistory.js";
 import { registerFourPlayerWin } from "../weeklyChallenge.js";
+import { reportOnlineWin } from "../../utils/onlineWin.js";
 
 export default function ResultScreen({ state, mySeat, mode = "local", onPlayAgain, onExit }) {
   const winnerName = state.winnerSeat != null ? state.playerNames[state.winnerSeat] : null;
@@ -21,6 +22,10 @@ export default function ResultScreen({ state, mySeat, mode = "local", onPlayAgai
     // jugadores (el modo "de a hartos" con eliminación grupal); 1v1 no cuenta.
     if (mode === "online" && iWon && state.playerCount >= 4) {
       registerFourPlayerWin();
+    }
+    // Juego online: 3 puntos por cada persona a la que le ganó (cualquier tamaño de sala).
+    if (mode === "online" && iWon && state.playerCount >= 2) {
+      reportOnlineWin("equipo_jugador", state.playerCount - 1, `ej-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

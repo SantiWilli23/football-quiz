@@ -24,7 +24,7 @@ const ALL_FAMILY_ORDER = ["solo", "grupo", "reloj", "pronostico", "carrera"];
 // pero no salen en el catálogo, ni en el buscador, ni en la barra superior.
 const ALL_GAMES = [
   // ---- Solo ----
-  { to: "/fulbodle", label: "Fichado", icon: Target, description: "Adiviná al futbolista secreto con colores, número de parecido, ligas y dificultades. Diario o aleatorio; la partida suma al reto semanal del grupo.", family: "solo", daily: true, available: true },
+  { to: "/fulbodle", label: "Fichado", icon: Target, description: "Adiviná al futbolista secreto con colores, número de parecido, ligas y dificultades. Diario o aleatorio; la partida suma al reto semanal del grupo.", family: "solo", daily: true, weekly: true, available: true },
   { to: "/copa-semanal", label: "Copa semanal", icon: Trophy, description: "Anotate de lunes a jueves; de viernes a domingo se juega a eliminación por puntos de cada día.", family: "grupo", available: true },
   { to: "/mercado", label: "Mercado de pases", icon: Repeat, description: "Predecí a dónde juega cada figura, en Europa o en Chile. Abre solo al inicio y al final de cada temporada.", family: "pronostico", feature: "temporada", available: true },
   { to: "/cartas", label: "Cartas", icon: Layers, description: "Abrí sobres con los 2000 jugadores, armá tu once y jugá partidos: la química sale de los clubes que compartieron.", family: "grupo", available: true },
@@ -38,14 +38,14 @@ const ALL_GAMES = [
   { to: "/quien-sabe-mas", label: "¿Quién sabe más de fútbol?", icon: Brain, description: "Elegí entre Duelos, Mentiroso, Equipo-Jugador, ¿Quién es? (solo o en vivo) y Supervivencia.", family: "grupo", available: true },
   { to: "/copa-8a2", label: "Copa 8a2", icon: Trophy, description: "Torneo de eliminación directa del grupo: cada uno arma su equipo draftando jugadores reales.", family: "grupo", available: true },
   { to: "/fantasyfiction", label: "FantasyFiction", icon: TrendingUp, description: "Liga simulada con todo tu grupo: jornadas semanales y dos mercados de pases por semana apenas se sumen todos.", family: "grupo", available: true },
-  { to: "/dt-liga", label: "Modo DT Online", icon: Users, description: "Armá una liga con amigos: cada uno elige un club real y compite temporada a temporada.", family: "grupo", available: true },
+  { to: "/dt-liga", label: "Modo DT Online", icon: Users, description: "Armá una liga con amigos: cada uno elige un club real y compite temporada a temporada.", family: "grupo", weekly: true, available: true },
 
   // ---- Contrarreloj ----
   { to: "/un-minuto", label: "Un Minuto", icon: Timer, description: "Trivia contrarreloj: respondé todas las que puedas antes de que se acabe el reloj.", family: "reloj", daily: true, available: true },
   { to: "/arbitraje-var", label: "Arbitraje / VAR", icon: Gavel, description: "Jugadas polémicas reales en video: decidí como el árbitro contra reloj y comparate con el VAR.", family: "reloj", daily: true, available: true },
 
   // ---- Pronóstico ----
-  { to: "/quiniela", label: "Quiniela diaria", icon: CalendarDays, description: "Predecí el marcador exacto de los partidos de hoy antes de que arranquen.", family: "pronostico", feature: "pronosticos", daily: true, available: true },
+  { to: "/quiniela", label: "Quiniela", icon: CalendarDays, description: "Predecí el marcador exacto de los partidos de hoy antes de que arranquen.", family: "pronostico", feature: "pronosticos", daily: true, weekly: true, available: true },
   { to: "/pronosticos", label: "Campeón y descenso", icon: Trophy, description: "Predecí campeón y descensos de las ligas europeas y la chilena. Abre solo al inicio y al final de cada temporada.", family: "pronostico", feature: "temporada", available: true },
 
   // ---- Carrera ----
@@ -63,7 +63,7 @@ export const FAMILY_ORDER = ALL_FAMILY_ORDER.filter((k) => GAMES.some((g) => g.f
 const MINUTES = {
   Fichado: 5, Fulbodle: 5, Tateti: 5, "Pirámide": 3, "Torta de plantel": 3, "¿Quién es?": 3, Cartas: 10, "Copa semanal": 5, "¿Quién es? en vivo": 4, "Mercado de pases": 5, "Escudos a ciegas": 5, Supervivencia: 10, "8a2": 15,
   "¿Quién sabe más de fútbol?": 10, "Copa 8a2": 30, FantasyFiction: 10, "Modo DT Online": 60,
-  "Un Minuto": 1, "Arbitraje / VAR": 3, "Quiniela diaria": 5, "Campeón y descenso": 5,
+  "Un Minuto": 1, "Arbitraje / VAR": 3, "Quiniela": 5, "Campeón y descenso": 5,
   "Cotrero simple": 60, "Modo DT": 120, "Modo Presidente": 120, "Vida FUT": 240,
 };
 export const minutesOf = (game) => MINUTES[game.label] ?? 15;
@@ -87,5 +87,8 @@ export const DAILY_GAMES = GAMES.filter((g) => g.daily);
 //  - "Con amigos": la familia de grupo.
 //  - "Fútbol 12": todos los demás juegos, incluido el diario de hoy (se repite
 //    a propósito: arriba es el destacado y acá sigue en su lugar).
-export const CON_AMIGOS_GAMES = GAMES.filter((g) => g.family === "grupo");
-export const FUTBOL12_GAMES = GAMES.filter((g) => g.family !== "grupo");
+// Juegos semanales: sus puntos se reparten los domingos y solo cuentan en los
+// grupos que los activaron. Salen de las otras listas para no repetirse.
+export const JUEGOS_SEMANALES = GAMES.filter((g) => g.weekly);
+export const CON_AMIGOS_GAMES = GAMES.filter((g) => g.family === "grupo" && !g.weekly);
+export const FUTBOL12_GAMES = GAMES.filter((g) => g.family !== "grupo" && !g.weekly);

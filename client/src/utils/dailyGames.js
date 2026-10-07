@@ -1,4 +1,5 @@
 import api from "../api.js";
+import { celebrateScore } from "./celebrate.js";
 
 // Manda el resultado de la primera partida del día de un juego diario. `fraction`
 // es qué tan bien salió (0 a 1); el servidor lo convierte en puntos con el tope
@@ -6,6 +7,9 @@ import api from "../api.js";
 export async function submitDaily(gameKey, fraction, score = 0) {
   try {
     const { data } = await api.post("/daily-games/submit", { gameKey, fraction, score });
+    if (!data.already && !data.practice && data.points > 0) {
+      celebrateScore({ points: data.points, unit: `puntos del juego diario (de ${data.max})`, detail: data.pack ? `y un sobre ${data.pack} de cartas` : "" });
+    }
     return data;
   } catch {
     return null;

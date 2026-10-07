@@ -3,6 +3,7 @@ import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { duelSidePoints } from "./duels.js";
 import { getCurrentStreak } from "../utils/points.js";
+import { settleGroupCup } from "./weekly-cup.js";
 
 const router = Router();
 
@@ -237,6 +238,7 @@ router.get("/:id", async (req, res) => {
   const groupId = Number(req.params.id);
 
   try {
+    await settleGroupCup(groupId).catch(() => {}); // cierra la copa de la semana pasada si quedó pendiente
     const membership = await db.execute({
       sql: "SELECT id FROM group_members WHERE group_id = ? AND user_id = ?",
       args: [groupId, req.userId],
@@ -464,6 +466,22 @@ router.put("/:id/rival", async (req, res) => {
 // solo si ya hay 3+ miembros. Una vez activado queda así aunque el grupo
 // baje de 3 después — el mínimo es un requisito para PRENDERLO, no para
 // mantenerlo prendido.
+// Juegos semanales: opt-in por grupo, solo lo cambia quien lo creó.
+router.post("/:id/weekly-games/toggle", async (req, res) => {
+  const groupId = Number(req.params.id);
+  const enable = !!req.body?.enable;
+  try {
+    const group = (await db.execute({ sql: "SELECT created_by FROM groups_t WHERE id = ?", args: [groupId] })).rows[0];
+    if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+    if (group.created_by !== req.userId) return res.status(403).json({ error: "Solo quien creó el grupo puede activar los juegos semanales" });
+    await db.execute({ sql: "UPDATE groups_t SET weekly_games_enabled = ? WHERE id = ?", args: [enable ? 1 : 0, groupId] });
+    res.json({ weekly_games_enabled: enable });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 router.post("/:id/cards/toggle", async (req, res) => {
   const groupId = Number(req.params.id);
   const enable = !!req.body?.enable;

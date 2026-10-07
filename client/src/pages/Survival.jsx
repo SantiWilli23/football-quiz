@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, Copy, Crown, Skull, Trophy, Users } from "lucide-react";
 import api from "../api.js";
+import { reportOnlineWin } from "../utils/onlineWin.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import Layout from "../components/Layout.jsx";
@@ -127,6 +128,7 @@ export default function Survival() {
     submittedRef.current = true;
     const survived = eliminatedAtRef.current ? eliminatedAtRef.current - 1 : roundsPlayedRef.current;
     const won = winner?.id === me.id;
+    if (won && players.length >= 2) reportOnlineWin("supervivencia", players.length - 1, `${roomCode}-${Date.now()}`); // 3 puntos por persona vencida
     const score = Math.round(survived * 10 * (DIFFICULTY_WEIGHT[difficultyRef.current] ?? 1) + (won ? 25 : 0));
     if (score > 0) api.post("/challenges/submit", { gameKey: "supervivencia", groupId, score }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps

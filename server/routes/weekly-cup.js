@@ -67,14 +67,9 @@ async function pointsOnDay(userId, day) {
 // idempotente aunque la copa se consulte varias veces.
 async function awardCupPack(userId, day, quality, base, points) {
   if (!userId) return;
+  // Por fase ganada hay sobre; los PUNTOS se pagan al terminar la copa (5 por
+  // participar y un extra a los 4 primeros: ver cupPointsByUser en utils/weekly-points.js).
   await grantPack(userId, day, quality, base);
-  // Además del sobre, suma puntos al ranking del grupo (mismo libro de bonus que Fichado).
-  if (points > 0) {
-    await db.execute({
-      sql: "INSERT OR IGNORE INTO wordle_results (user_id, date, league, attempts, points) VALUES (?, ?, ?, 0, ?)",
-      args: [userId, day, `wcup-${base}`, points],
-    });
-  }
 }
 
 const coin = (week, a, b) => (((week.charCodeAt(9) || 0) + a * 31 + b * 17) % 2 === 0 ? a : b);
@@ -149,12 +144,22 @@ async function requireMember(req, res) {
   return groupId;
 }
 
+// Cierra la copa de la semana pasada (su final se juega el domingo y se resuelve al
+// día siguiente) aunque nadie abra la pantalla de la copa: así paga sus puntos.
+export async function settleGroupCup(groupId) {
+  const today = todayStr();
+  await sync(addDays(mondayOf(today), -7), groupId, today);
+}
+
 router.get("/:groupId", async (req, res) => {
   try {
     const groupId = await requireMember(req, res);
     if (groupId === null) return;
     const today = todayStr();
     const week = mondayOf(today);
+    // La final se juega el domingo y recién se resuelve al día siguiente: se
+    // sincroniza también la semana anterior para cerrarla (y que pague sus puntos).
+    try { await sync(addDays(week, -7), groupId, today); } catch (e) { console.error(e); }
     const { signups, rounds, dayOf } = await sync(week, groupId, today);
     const mode = await modeOf(week, groupId);
     const matches = (await db.execute({ sql: "SELECT * FROM cup_matches WHERE week = ? AND group_id = ? ORDER BY round, slot", args: [week, groupId] })).rows;

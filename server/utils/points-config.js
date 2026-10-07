@@ -53,3 +53,20 @@ export const SEASON_RELEGATED_POINTS = 7; // por cada equipo que sí bajó, hast
 //   - Fichado: server/routes/wordle.js → finalPoints() (8-18 según eficiencia y dificultad,
 //     el mismo número que ve el jugador en pantalla ahora suma al ranking)
 //   - DT League: server/utils/dt-match.js → dtWeeklyPoints() (sin techo, ver nota arriba)
+
+// ---- Sistema vigente (reemplaza lo anterior de arriba donde se contradiga) ----
+// Juego diario: el puntaje 0-20 (DAILY_GAME_MAX_POINTS) es solo de referencia y
+// ordena a los del grupo ese día; el podio del día suma estos puntos.
+export const DAILY_GAME_PLACEMENT_POINTS = { 1: 5, 2: 3, 3: 3 };
+// Juegos semanales (Fichado y DT Online por rendimiento de la semana): el podio
+// se reparte los domingos, solo en grupos que activaron los juegos semanales. La
+// Quiniela mantiene su propio puntaje (5 exacto / 2 resultado), que también se
+// paga el domingo.
+export const WEEKLY_GAME_PODIUM_POINTS = { 1: 15, 2: 10, 3: 5 };
+// Copa semanal: al terminar, 5 por participar y un extra según el puesto (los 4
+// primeros). El campeón suma 55 en total contando los 5 de participar.
+export const CUP_PARTICIPATION_POINTS = 5;
+export const CUP_PLACE_EXTRA_POINTS = { champion: 50, finalist: 30, semifinalist: 15 };
+
+// Juegos online: el ganador suma esto por cada persona a la que le ganó.
+export const ONLINE_POINTS_PER_OPPONENT = 3;

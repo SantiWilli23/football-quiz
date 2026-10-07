@@ -120,38 +120,22 @@ router.post("/:id/answer", async (req, res) => {
     const onTime = isWithinTimeBudget(req.userId, today);
     const is_correct = onTime && answer === question.correct_answer;
 
-    // Multiplicador de racha: contando esta respuesta, cuántas seguidas
-    // acertó hoy (se corta apenas falla una). Un pequeño bonus de puntos
-    // aparte del puesto del día — 2.ª seguida +1, 3.ª o más +2.
-    let answerStreak = 0;
-    if (is_correct) {
-      const prior = await db.execute({
-        sql: "SELECT is_correct FROM answers WHERE user_id = ? AND question_id IN (SELECT id FROM questions WHERE scheduled_date = ?) ORDER BY answered_at",
-        args: [req.userId, today],
-      });
-      answerStreak = 1;
-      for (const row of prior.rows) { if (row.is_correct) answerStreak++; else break; }
-    }
-    const streakBonus = is_correct ? Math.min(answerStreak - 1, 2) : 0;
+    // La trivia paga 1 punto por pregunta acertada, y nada más: sin bonus por
+    // racha ni por puesto del día.
+    const answerStreak = 0;
+    const streakBonus = 0;
+    const answerPoints = is_correct ? 1 : 0;
 
     await db.execute({
       sql: `INSERT INTO answers (user_id, question_id, answer, is_correct, points)
             VALUES (?, ?, ?, ?, ?)`,
-      args: [req.userId, questionId, answer, is_correct ? 1 : 0, streakBonus],
+      args: [req.userId, questionId, answer, is_correct ? 1 : 0, answerPoints],
     });
 
-    // Recién cuando completa las 3 preguntas de hoy se sabe su % de acierto
-    // final, así que ahí se calcula el puesto del día y se le suman los
-    // puntos correspondientes a ESA respuesta (la que cerró el día) — se
-    // SUMAN al bonus de racha ya guardado, no lo pisan.
+    // Cuando completa las preguntas de hoy se calcula su puesto del día (solo
+    // informativo: ya no da puntos extra).
     const settlement = await settleDailyScoreIfComplete(req.userId, today);
-    const points = streakBonus + (settlement?.points ?? 0);
-    if (settlement) {
-      await db.execute({
-        sql: "UPDATE answers SET points = points + ? WHERE user_id = ? AND question_id = ?",
-        args: [settlement.points, req.userId, questionId],
-      });
-    }
+    const points = answerPoints;
 
     const current_streak = await getCurrentStreak(req.userId);
 

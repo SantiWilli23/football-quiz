@@ -5,7 +5,8 @@ import { fileURLToPath } from "node:url";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { todayStr } from "../utils/points.js";
-import { recordDailyResult } from "../utils/daily-games.js";
+import { dailyGameKeyFor, recordDailyResult } from "../utils/daily-games.js";
+import { challengeFor } from "./daily-challenge.js";
 import { LEAGUES, leagueForClub, wideLeagueLabelForClub } from "../data/league-clubs.js";
 import { styleOf, styleLabel } from "../data/player-style.js";
 
@@ -335,7 +336,8 @@ async function closeGame(loaded, won, opts = {}) {
     // tope que los demás diarios, en proporción al puntaje de la partida.
     // wordle_results queda con 0 puntos (solo marca que se ganó ese día) para
     // no contar dos veces.
-    await recordDailyResult(game.user_id, game.date, "fichado", total / FICHADO_DAILY_BEST, total);
+    // Como juego diario: un solo jugador, si lo adivinás sumás y si no, no.
+    await recordDailyResult(game.user_id, game.date, "fichado", won ? total / FICHADO_DAILY_BEST : 0, total);
   }
   if (won && game.mode === "daily") {
     await db.execute({
@@ -387,12 +389,48 @@ const DAILY_SQL = "SELECT id FROM fichado_games WHERE user_id = ? AND mode = 'da
 
 // Partida actual de un modo: la diaria (se crea sola la primera vez que se
 // pide) o la aleatoria en curso (null si no hay ninguna empezada).
+// Filtros del reto del día: "adiviná con solo jugadores jóvenes (o leyendas,
+// porteros, de una liga...)". Se arma el pool con los más conocidos de cada filtro.
+const RETO_FILTERS = {
+  young: (p) => (p.nacimiento || 0) >= 2003,
+  legends: (p) => (p.carrera || []).length > 0 && p.carrera[p.carrera.length - 1].fin !== null,
+  keepers: (p) => p.posicion === "Portero",
+  premier: (p) => leagueForClub((p.carrera || []).at(-1)?.club)?.key === "premier" || leagueForClub((p.carrera || []).at(-1)?.club) === "premier",
+  laliga: (p) => leagueForClub((p.carrera || []).at(-1)?.club) === "laliga",
+  seriea: (p) => leagueForClub((p.carrera || []).at(-1)?.club) === "seriea",
+};
+
+function retoSecret(dateStr, constraint) {
+  const filter = RETO_FILTERS[constraint] || (() => true);
+  const pool = playersFor("global").filter(filter).slice(0, 150);
+  const list = pool.length ? pool : playersFor("global").slice(0, 150);
+  return list[hashKey(`${dateStr}|reto|${constraint}`) % list.length];
+}
+
 router.get("/game", async (req, res) => {
-  const mode = req.query.mode === "random" ? "random" : "daily";
-  const league = leagueKeyFrom(req.query.league);
+  const mode = ["random", "reto"].includes(req.query.mode) ? req.query.mode : "daily";
+  const league = mode === "random" ? leagueKeyFrom(req.query.league) : "global";
   try {
+    if (mode === "reto") {
+      // Reto del día de Fichado: una sola partida por día, con el secreto restringido.
+      const date = todayStr();
+      const challenge = challengeFor(date);
+      if (!challenge.fichado) return res.json({ game: null, notFichado: true });
+      let row = (await db.execute({ sql: "SELECT id FROM fichado_games WHERE user_id = ? AND mode = 'reto' AND date = ?", args: [req.userId, date] })).rows[0];
+      if (!row) {
+        const secret = retoSecret(date, challenge.fichado);
+        await db.execute({
+          sql: "INSERT INTO fichado_games (user_id, mode, league, difficulty, date, secret_name, max_attempts) VALUES (?, 'reto', 'global', 'normal', ?, ?, ?)",
+          args: [req.userId, date, secret.nombre, MAX_ATTEMPTS],
+        });
+        row = (await db.execute({ sql: "SELECT id FROM fichado_games WHERE user_id = ? AND mode = 'reto' AND date = ?", args: [req.userId, date] })).rows[0];
+      }
+      return res.json({ game: serialize(await loadGame(row.id, req.userId)), challenge: { key: challenge.key, label: challenge.label } });
+    }
     if (mode === "daily") {
       const date = todayStr();
+      // Solo es el "juego diario" los días que le toca a Fichado.
+      if (dailyGameKeyFor(date) !== "fichado") return res.json({ game: null, notToday: true });
       let row = (await db.execute({ sql: DAILY_SQL, args: [req.userId, date, league] })).rows[0];
       if (!row) {
         const secret = dailySecret(date, league);
