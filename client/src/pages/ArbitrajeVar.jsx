@@ -56,7 +56,7 @@ export default function ArbitrajeVar() {
     clearInterval(timerRef.current);
     setPhase("done");
     logGame("arbitraje_var", timedRef.current ? 4 : 2, finalCorrect / Math.max(1, totalRef.current), finalCorrect + "/" + totalRef.current + " decisiones" + (timedRef.current ? " · con reloj" : " · práctica"));
-    // Juego diario: la primera partida CON TIEMPO del día suma hasta 20 puntos.
+    // Juego diario: la primera partida CON TIEMPO del día da un sobre de cartas (mejor cuanto mejor te va).
     if (timedRef.current) {
       submitDaily("arbitraje_var", finalCorrect / Math.max(1, totalRef.current), finalCorrect).then((r) => setDailyMsg(dailyMessage(r)));
     }
@@ -152,7 +152,7 @@ export default function ArbitrajeVar() {
           <p className="text-sm text-gray-400 mb-5">
             Jugadas polémicas reales revisadas por el VAR, en video y sin sonido. Pausalas o pasalas en cámara lenta y decidí qué cobrarías.
           </p>
-          <p className="text-xs text-gray-500 mb-5 -mt-2">Juego diario: la primera partida con tiempo del día suma hasta 20 puntos.</p>
+          <p className="text-xs text-gray-500 mb-5 -mt-2">Juego diario: la primera partida con tiempo del día da un sobre de cartas (mejor cuanto mejor te va).</p>
           <div className="flex flex-wrap gap-3 justify-center">
             <button
               onClick={() => start(true)}

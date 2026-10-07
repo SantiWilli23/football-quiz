@@ -4,7 +4,7 @@ import { requireAuth } from "../middleware/auth.js";
 import { addDays, todayStr, mondayOf, dayIndex } from "../utils/points.js";
 import { lineupOf, strengthOf } from "./cards.js";
 import { simulateMatchEvents } from "../utils/match-engine.js";
-import { WEEKLY_CUP_ROUND_POINTS, WEEKLY_CUP_CHAMPION_BONUS } from "../utils/points-config.js";
+import { grantPack } from "../utils/rewards.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -61,16 +61,12 @@ async function pointsOnDay(userId, day) {
   return t + w + d;
 }
 
-// Puntos al ranking del grupo por cada fase ganada de la copa: 5 × número de
-// fase (cuartos 5, semis 10, final 15) y el campeón suma un extra. Se guardan
-// en el mismo libro de bonus que Fichado y el mercado, con la fecha del partido
-// para que caigan en la semana de la copa. INSERT OR IGNORE lo hace idempotente.
-async function awardCupPoints(userId, day, key, points) {
-  if (!userId || points <= 0) return;
-  await db.execute({
-    sql: "INSERT OR IGNORE INTO wordle_results (user_id, date, league, attempts, points) VALUES (?, ?, ?, 0, ?)",
-    args: [userId, day, key, points],
-  });
+// Recompensa por cada fase ganada de la copa: un sobre de cartas (ver el
+// reparto abajo). date = día del partido + UNIQUE(user, date, source) lo hace
+// idempotente aunque la copa se consulte varias veces.
+async function awardCupPack(userId, day, quality, base) {
+  if (!userId) return;
+  await grantPack(userId, day, quality, base);
 }
 
 const coin = (week, a, b) => (((week.charCodeAt(9) || 0) + a * 31 + b * 17) % 2 === 0 ? a : b);
@@ -115,8 +111,10 @@ async function sync(week, groupId, today) {
     // Puntos por fase ganada (los pases libres, sin rival, no suman).
     for (const m of fresh) {
       if (!m.winner || m.b === null) continue;
-      await awardCupPoints(m.winner, dayOf(r), `wcup${groupId}r${r}`, WEEKLY_CUP_ROUND_POINTS * r);
-      if (r === R) await awardCupPoints(m.winner, dayOf(r), `wcup${groupId}champ`, WEEKLY_CUP_CHAMPION_BONUS);
+      // Fase ganada = sobre de cartas: normal en las primeras, bueno en la
+      // semifinal y top para el campeón.
+      if (r === R) await awardCupPack(m.winner, dayOf(r), "top", `copa${groupId}campeon`);
+      else await awardCupPack(m.winner, dayOf(r), r === R - 1 ? "bueno" : "normal", `copa${groupId}r${r}`);
     }
     if (r < R && fresh.length > 0 && fresh.every((m) => m.winner)) {
       const nextCount = (await db.execute({ sql: "SELECT COUNT(*) AS n FROM cup_matches WHERE week = ? AND group_id = ? AND round = ?", args: [week, groupId, r + 1] })).rows[0].n;

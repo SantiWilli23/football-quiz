@@ -144,7 +144,7 @@ export default function Quiniela() {
     <Layout>
       <h1 className="text-xl sm:text-2xl font-bold mb-1">Quiniela diaria</h1>
       <p className="text-gray-400 text-sm mb-6">
-        Predecí el marcador exacto de los partidos de hoy antes de que arranquen — 5 puntos si le pegás justo, 2 si acertás quién gana o el empate. Es un juego diario: hasta 20 puntos por día.
+        Predecí el marcador exacto de los partidos de hoy antes de que arranquen — 5 puntos si le pegás justo, 2 si acertás quién gana o el empate. Cuando la quiniela es el juego diario, tu día da un sobre de cartas.
       </p>
 
       {leagues.length > 0 && league && (

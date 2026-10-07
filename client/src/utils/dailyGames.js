@@ -14,6 +14,8 @@ export async function submitDaily(gameKey, fraction, score = 0) {
 
 export function dailyMessage(res) {
   if (!res || res.notToday) return ""; // hoy el diario es otro juego: esta partida es práctica
-  if (res.already) return `Ya jugaste el diario de hoy (${res.points}/${res.max} pts). Esta partida no suma al día.`;
-  return `Juego diario: +${res.points} de ${res.max} puntos.`;
+  if (res.already) return "Ya jugaste el diario de hoy: tu sobre ya está en Cartas. Esta partida no da otro.";
+  return res.pack
+    ? `Juego diario: puntaje ${res.points}/${res.max} · ganaste un sobre ${res.pack} de cartas.`
+    : `Juego diario: puntaje ${res.points}/${res.max}. Esta vez no alcanzó para sobre.`;
 }

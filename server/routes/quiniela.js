@@ -3,6 +3,7 @@ import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { LEAGUES, getFixturesByDate, findDemoFixtureById } from "../utils/football-api.js";
 import { todayStr, addDays } from "../utils/points.js";
+import { grantQuinielaPacks } from "../utils/daily-games.js";
 import { QUINIELA_EXACT_POINTS as EXACT_POINTS, QUINIELA_RESULT_POINTS as RESULT_POINTS } from "../utils/points-config.js";
 
 function resultOf(home, away) {
@@ -166,6 +167,7 @@ router.post("/predict", async (req, res) => {
 router.get("/mine", async (req, res) => {
   try {
     await scorePendingPredictions(req.userId);
+    await grantQuinielaPacks(req.userId); // el sobre del juego diario, cuando le tocó a la quiniela
     const result = await db.execute({
       sql: `SELECT * FROM quiniela_predictions WHERE user_id = ? ORDER BY fixture_date DESC, id DESC LIMIT 60`,
       args: [req.userId],

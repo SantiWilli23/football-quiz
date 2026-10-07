@@ -158,7 +158,7 @@ export default function UnMinuto() {
         <Card className="mt-4 text-center py-10">
           <Timer size={32} className="mx-auto text-accent mb-3" />
           <p className="text-sm text-gray-400 mb-2">Arrancás ya, sin vueltas: preguntas de a una hasta que se acabe el reloj.</p>
-          <p className="text-xs text-gray-500 mb-5">Juego diario: la primera partida del día en Ultra difícil (la dificultad media) suma hasta 20 puntos.</p>
+          <p className="text-xs text-gray-500 mb-5">Juego diario: la primera partida del día en Ultra difícil (la dificultad media) da un sobre de cartas (mejor cuanto mejor te va).</p>
           {difficulties.length > 0 && (
             <div className="flex gap-2 justify-center mb-6 flex-wrap">
               {difficulties.map((d) => (

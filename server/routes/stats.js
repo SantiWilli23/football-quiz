@@ -4,7 +4,6 @@ import { requireAuth } from "../middleware/auth.js";
 import { addDays, getBestStreak, getCurrentStreak, todayStr } from "../utils/points.js";
 import { duelSidePoints } from "./duels.js";
 import { rankEntries } from "../utils/challenges.js";
-import { dailyPointsByUser, quinielaDailyRows, weeklyGameBonusByUser } from "../utils/daily-games.js";
 import {
   QUESTION_KINDS,
   answersFor,
@@ -109,7 +108,7 @@ router.get("/global-ranking", async (req, res) => {
   try {
     const period = ["week", "month"].includes(req.query.period) ? req.query.period : "all";
     const since = periodStart(period);
-    const [result, challengePoints, dailyRows] = await Promise.all([
+    const [result, challengePoints] = await Promise.all([
       db.execute({ args: since ? [since, since] : [], sql: `
         SELECT
           u.id, u.username, u.avatar, u.avatar_config,
@@ -124,17 +123,11 @@ router.get("/global-ranking", async (req, res) => {
         ) mb ON mb.user_id = u.id
       ` }),
       challengePointsByUser(since),
-      db.execute({
-        sql: `SELECT user_id, SUM(points) AS points FROM daily_game_results ${since ? "WHERE date >= ?" : ""} GROUP BY user_id`,
-        args: since ? [since.slice(0, 10)] : [],
-      }),
     ]);
-    const dailyPoints = new Map(dailyRows.rows.map((r) => [r.user_id, Number(r.points)]));
 
     const ranking = result.rows
       .map((r) => {
-        // Los puntos de los juegos diarios viajan junto a los de retos.
-        const challenge_points = (challengePoints.get(r.id) || 0) + (dailyPoints.get(r.id) || 0);
+        const challenge_points = challengePoints.get(r.id) || 0;
         return {
           ...r,
           challenge_points,
@@ -282,9 +275,16 @@ async function wordlePointsByUser(memberIds, from, to) {
 // Es un juego diario: el total de cada día se topa en el máximo común de los
 // diarios (ver DAILY_GAME_MAX_POINTS).
 async function quinielaPointsByUser(memberIds, from, to) {
-  const totals = new Map();
-  for (const r of await quinielaDailyRows(memberIds, from, to)) totals.set(r.user_id, (totals.get(r.user_id) || 0) + r.points);
-  return totals;
+  if (memberIds.length === 0) return new Map();
+  const placeholders = memberIds.map(() => "?").join(",");
+  const result = await db.execute({
+    sql: `SELECT user_id, COALESCE(SUM(points), 0) AS points
+          FROM quiniela_predictions
+          WHERE user_id IN (${placeholders}) AND scored = 1 AND fixture_date >= ? AND fixture_date <= ?
+          GROUP BY user_id`,
+    args: [...memberIds, from, to],
+  });
+  return new Map(result.rows.map((r) => [r.user_id, Number(r.points)]));
 }
 
 // Puntos de predicción de campeón/descenso, ya resueltos (scored = 1). Se
@@ -330,7 +330,7 @@ export async function rankingBetween(groupId, from, to) {
 
   // Las 8 consultas son independientes: van en paralelo. Contra Turso (remoto)
   // cada una tarda ~50-100ms, así que en serie sumaban casi un segundo por ranking.
-  const [triviaResult, modeBResult, duelByUser, dtLeagueByUser, wordleByUser, quinielaByUser, betByUser, seasonPredByUser, dailyByUser, weeklyGameByUser] = await Promise.all([
+  const [triviaResult, modeBResult, duelByUser, dtLeagueByUser, wordleByUser, quinielaByUser, betByUser, seasonPredByUser] = await Promise.all([
     db.execute({
       sql: `SELECT a.user_id,
                    COALESCE(SUM(a.points), 0) AS points,
@@ -355,8 +355,6 @@ export async function rankingBetween(groupId, from, to) {
     quinielaPointsByUser(memberIds, from, to),
     betPointsByUser(groupId, from, to),
     seasonPredictionPointsByUser(memberIds, from, to),
-    dailyPointsByUser(memberIds, from, to),
-    weeklyGameBonusByUser(memberIds, from, to),
   ]);
   const triviaByUser = new Map(triviaResult.rows.map((r) => [r.user_id, r]));
   const modeBByUser = new Map(modeBResult.rows.map((r) => [r.user_id, Number(r.points)]));
@@ -372,8 +370,6 @@ export async function rankingBetween(groupId, from, to) {
       const quiniela_points = quinielaByUser.get(m.id) || 0;
       const bet_points = betByUser.get(m.id) || 0;
       const season_prediction_points = seasonPredByUser.get(m.id) || 0;
-      const daily_points = dailyByUser.get(m.id) || 0;
-      const weekly_game_points = weeklyGameByUser.get(m.id) || 0;
       const answered = trivia ? Number(trivia.answered) : 0;
       const correct = trivia ? Number(trivia.correct) : 0;
       return {
@@ -389,9 +385,7 @@ export async function rankingBetween(groupId, from, to) {
         quiniela_points,
         bet_points,
         season_prediction_points,
-        daily_points,
-        weekly_game_points,
-        points: trivia_points + mode_b_points + duel_points + dt_league_points + wordle_points + quiniela_points + bet_points + season_prediction_points + daily_points + weekly_game_points,
+        points: trivia_points + mode_b_points + duel_points + dt_league_points + wordle_points + quiniela_points + bet_points + season_prediction_points,
         answered,
         correct,
         accuracy: answered > 0 ? Math.round((correct / answered) * 100) : 0,

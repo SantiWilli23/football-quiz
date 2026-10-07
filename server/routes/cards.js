@@ -8,6 +8,7 @@ import { addDays, todayStr } from "../utils/points.js";
 import { simulateMatchEvents } from "../utils/match-engine.js";
 import { rankingBetween } from "./stats.js";
 import { isoWeekKey } from "../utils/challenges.js";
+import { grantQuinielaPacks, grantWeeklyGamePacks } from "../utils/daily-games.js";
 
 // Reto semanal de Cartas: cada victoria vale 20 + 10 por gol de diferencia,
 // más un plus si el rival tenía un equipo más fuerte (ganarle a alguien mejor
@@ -294,6 +295,8 @@ router.get("/state", async (req, res) => {
   try {
     await grantRetoPacks(req.userId);
     await grantWeeklyRankingPack(req.userId);
+    await grantWeeklyGamePacks(req.userId); // podio semanal de los juegos diarios
+    await grantQuinielaPacks(req.userId); // sobre de la quiniela, cuando era el juego diario
     const today = todayStr();
     const packs = Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM card_packs WHERE user_id = ? AND opened_at IS NULL", args: [req.userId] })).rows[0].n);
     const dailyClaimed = !!(await db.execute({ sql: "SELECT 1 FROM card_packs WHERE user_id = ? AND date = ? AND source = 'diario'", args: [req.userId, today] })).rows[0];

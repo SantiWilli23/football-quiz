@@ -2170,7 +2170,7 @@
   }
 
   // Juego diario: la primera copa del día en modo Clásico (la dificultad media)
-  // suma hasta 20 puntos según qué tan lejos llegaste. El servidor se queda con
+  // da un sobre de cartas según qué tan lejos llegaste. El servidor se queda con
   // la primera partida del día, así que repetir no cambia nada.
   var DAILY_DRAFT_FRACTION = { octavos: 0.2, cuartos: 0.45, semis: 0.7, final: 0.85 };
 
@@ -2193,8 +2193,8 @@
           slot.insertAdjacentHTML("beforeend",
             '<div class="csub" style="margin-top:8px">' +
             (d.already
-              ? "Ya jugaste el diario de hoy (" + d.points + "/" + d.max + " pts). Esta copa no suma al día."
-              : "Juego diario: +" + d.points + " de " + d.max + " puntos.") +
+              ? "Ya jugaste el diario de hoy: tu sobre ya está en Cartas."
+              : (d.pack ? "Juego diario: ganaste un sobre " + d.pack + " de cartas (puntaje " + d.points + "/" + d.max + ")." : "Juego diario: puntaje " + d.points + "/" + d.max + ", sin sobre esta vez.")) +
             "</div>");
         })
         .catch(function () {});
