@@ -1,0 +1,30 @@
+{
+  "nota": "Cartas de entrenador: no entran al once, se ponen aparte. effect: nations/nationOvr = +ovr a los jugadores de esas nacionalidades; pos/posOvr = +ovr por posición (GK, DEF, MID, FWD); clubs/clubOvr = +ovr a quien jugó en esos clubes; chem = química plana. Nacionalidades y clubes con los nombres de la base.",
+  "entrenadores": [
+    { "nombre": "Marcelo Bielsa", "nacionalidad": "Argentina", "ovr": 94, "effect": { "nations": ["Argentina", "Brasil", "Chile", "Uruguay", "Colombia", "Paraguay"], "nationOvr": 2 }, "texto": "+2 a todos los sudamericanos" },
+    { "nombre": "Pep Guardiola", "nacionalidad": "España", "ovr": 96, "effect": { "pos": ["MID"], "posOvr": 2, "chem": 3 }, "texto": "+2 a los mediocampistas y +3 de química" },
+    { "nombre": "Carlo Ancelotti", "nacionalidad": "Italia", "ovr": 95, "effect": { "chem": 8 }, "texto": "+8 de química: hace equipo con cualquiera" },
+    { "nombre": "José Mourinho", "nacionalidad": "Portugal", "ovr": 93, "effect": { "pos": ["GK", "DEF"], "posOvr": 2 }, "texto": "+2 al arquero y a los defensas" },
+    { "nombre": "Jürgen Klopp", "nacionalidad": "Alemania", "ovr": 92, "effect": { "pos": ["FWD"], "posOvr": 3 }, "texto": "+3 a los delanteros" },
+    { "nombre": "Alex Ferguson", "nacionalidad": "Escocia", "ovr": 97, "effect": { "clubs": ["Manchester United"], "clubOvr": 2, "chem": 3 }, "texto": "+2 a quien pasó por el Manchester United y +3 de química" },
+    { "nombre": "Diego Simeone", "nacionalidad": "Argentina", "ovr": 90, "effect": { "pos": ["DEF"], "posOvr": 3 }, "texto": "+3 a los defensas" },
+    { "nombre": "Zinedine Zidane", "nacionalidad": "Francia", "ovr": 93, "effect": { "clubs": ["Real Madrid"], "clubOvr": 2, "nations": ["Francia"], "nationOvr": 2 }, "texto": "+2 a franceses y +2 a quien pasó por el Real Madrid" },
+    { "nombre": "Johan Cruyff", "nacionalidad": "Países Bajos", "ovr": 96, "effect": { "clubs": ["Barcelona", "Ajax"], "clubOvr": 2 }, "texto": "+2 a quien pasó por el Barcelona o el Ajax" },
+    { "nombre": "Arrigo Sacchi", "nacionalidad": "Italia", "ovr": 88, "effect": { "pos": ["DEF"], "posOvr": 2, "chem": 4 }, "texto": "+2 a los defensas y +4 de química" },
+    { "nombre": "Fabio Capello", "nacionalidad": "Italia", "ovr": 86, "effect": { "chem": 6 }, "texto": "+6 de química" },
+    { "nombre": "Marcello Lippi", "nacionalidad": "Italia", "ovr": 89, "effect": { "nations": ["Italia"], "nationOvr": 3 }, "texto": "+3 a los italianos" },
+    { "nombre": "Vicente del Bosque", "nacionalidad": "España", "ovr": 89, "effect": { "nations": ["España"], "nationOvr": 3 }, "texto": "+3 a los españoles" },
+    { "nombre": "Lionel Scaloni", "nacionalidad": "Argentina", "ovr": 90, "effect": { "nations": ["Argentina"], "nationOvr": 3 }, "texto": "+3 a los argentinos" },
+    { "nombre": "Tite", "nacionalidad": "Brasil", "ovr": 84, "effect": { "nations": ["Brasil"], "nationOvr": 3 }, "texto": "+3 a los brasileños" },
+    { "nombre": "Joachim Löw", "nacionalidad": "Alemania", "ovr": 88, "effect": { "nations": ["Alemania"], "nationOvr": 3 }, "texto": "+3 a los alemanes" },
+    { "nombre": "Didier Deschamps", "nacionalidad": "Francia", "ovr": 89, "effect": { "nations": ["Francia"], "nationOvr": 3 }, "texto": "+3 a los franceses" },
+    { "nombre": "Antonio Conte", "nacionalidad": "Italia", "ovr": 87, "effect": { "pos": ["DEF"], "posOvr": 3 }, "texto": "+3 a los defensas" },
+    { "nombre": "Arsène Wenger", "nacionalidad": "Francia", "ovr": 90, "effect": { "clubs": ["Arsenal"], "clubOvr": 3 }, "texto": "+3 a quien pasó por el Arsenal" },
+    { "nombre": "Mauricio Pochettino", "nacionalidad": "Argentina", "ovr": 82, "effect": { "nations": ["Argentina"], "nationOvr": 2, "pos": ["MID"], "posOvr": 1 }, "texto": "+2 a los argentinos y +1 a los mediocampistas" },
+    { "nombre": "Jorge Sampaoli", "nacionalidad": "Argentina", "ovr": 80, "effect": { "nations": ["Chile"], "nationOvr": 3 }, "texto": "+3 a los chilenos (Copa América 2015)" },
+    { "nombre": "Luis Enrique", "nacionalidad": "España", "ovr": 88, "effect": { "pos": ["FWD"], "posOvr": 1, "chem": 6 }, "texto": "+1 a los delanteros y +6 de química" },
+    { "nombre": "Hansi Flick", "nacionalidad": "Alemania", "ovr": 85, "effect": { "clubs": ["Bayern Munich", "Barcelona"], "clubOvr": 2 }, "texto": "+2 a quien pasó por el Bayern o el Barcelona" },
+    { "nombre": "Xavi Hernández", "nacionalidad": "España", "ovr": 80, "effect": { "clubs": ["Barcelona"], "clubOvr": 3 }, "texto": "+3 a quien pasó por el Barcelona" },
+    { "nombre": "Gerardo Martino", "nacionalidad": "Argentina", "ovr": 79, "effect": { "nations": ["Argentina", "Paraguay"], "nationOvr": 2 }, "texto": "+2 a argentinos y paraguayos" }
+  ]
+}

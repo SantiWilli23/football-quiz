@@ -5,6 +5,7 @@ import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import MatchPitch from "../components/MatchPitch.jsx";
+import CardExtrasPanel from "../components/CardExtrasPanel.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import { playSfx } from "../utils/sfx.js";
 
@@ -15,7 +16,7 @@ const TIER_STYLE = {
   plata: "border-gray-400/60 bg-gray-400/10 text-gray-300",
   bronce: "border-orange-700/60 bg-orange-700/10 text-orange-500",
 };
-const POS_LABEL = { GK: "Arquero", DEF: "Defensas", MID: "Medios", FWD: "Delanteros" };
+const POS_LABEL = { GK: "Arquero", DEF: "Defensas", MID: "Medios", FWD: "Delanteros", DT: "Entrenadores" };
 const FORMATION = { GK: 1, DEF: 4, MID: 3, FWD: 3 };
 const SELL_VALUE = { estrella: 120, oro: 40, plata: 15, bronce: 5 };
 const SHOP_PRICE = { normal: 30, bueno: 90, top: 220 };
@@ -55,6 +56,7 @@ function PlayerCard({ c, selected, onClick, small, onSell }) {
       <p className="text-sm font-semibold text-white mt-2 leading-tight">{c.realName || c.name}</p>
       <p className="text-[11px] text-gray-400 truncate">{c.note || c.club}</p>
       <p className="text-[10px] opacity-70 mt-1">{c.tierLabel}{c.count > 1 ? ` · x${c.count}` : ""}{c.isNew ? " · ¡NUEVA!" : ""}</p>
+      {c.form && <span className="absolute bottom-1.5 left-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400" title="Hizo un gol esta semana">En forma +{c.ovrBonus}</span>}
       {onSell && (
         <button
           onClick={(e) => { e.stopPropagation(); onSell(c); }}
@@ -108,6 +110,7 @@ export default function Cartas() {
   const [collection, setCollection] = useState([]);
   const [opened, setOpened] = useState(null);
   const [selected, setSelected] = useState([]);
+  const [saved, setSaved] = useState([]); // el once ya guardado (el que usan el capitán y las selecciones)
   const [strength, setStrength] = useState(null);
   const [rivals, setRivals] = useState([]);
   const [rival, setRival] = useState("cpu");
@@ -182,6 +185,7 @@ export default function Cartas() {
     setState(s.data);
     setCollection(c.data.cards);
     setSelected(l.data.players.map((p) => p.name));
+    setSaved(l.data.players.map((p) => p.name));
     setStrength(l.data.strength);
     setRivals(r.data.rivals);
     setWallet(w.data.balance);
@@ -481,11 +485,13 @@ export default function Cartas() {
             )}
           </Card>
 
+          {collection.length > 0 && <CardExtrasPanel lineupNames={saved} collection={collection} onChanged={load} />}
+
           {collection.length === 0 ? (
             <Card><EmptyState icon={Package} title="Sin cartas todavía" hint="Abrí sobres para poder armar tu equipo." actions={[{ label: "Ir a Sobres", onClick: () => setTab("sobres") }]} /></Card>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {collection.map((c) => <PlayerCard key={c.name} c={c} small selected={selected.includes(c.name)} onClick={() => toggle(c)} />)}
+              {collection.filter((c) => c.pos !== "DT").map((c) => <PlayerCard key={c.name} c={c} small selected={selected.includes(c.name)} onClick={() => toggle(c)} />)}
             </div>
           )}
         </div>

@@ -10,6 +10,7 @@ import { rankingBetween } from "./stats.js";
 import { isoWeekKey } from "../utils/challenges.js";
 import { leagueForClub } from "../data/league-clubs.js";
 import { grantQuinielaPacks, grantWeeklyGamePacks } from "../utils/daily-games.js";
+import { buildExtraCards, drawExtra, EXTRA_PACKS, extraPub, extrasFor, lineupEffects, refreshFormIfStale, CAPTAIN_CHEM_CAP_EXTRA } from "../utils/card-types.js";
 
 // Reto semanal de Cartas: cada victoria vale 20 + 10 por gol de diferencia,
 // más un plus si el rival tenía un equipo más fuerte (ganarle a alguien mejor
@@ -215,12 +216,13 @@ const SPECIAL_CARDS = [];
   }
 }
 
-const CARDS = [...BASE_CARDS, ...SPECIAL_CARDS];
+// Íconos, Momentos y entrenadores (server/utils/card-types.js).
+const CARDS = [...BASE_CARDS, ...SPECIAL_CARDS, ...buildExtraCards(BASE_CARDS)];
 const BY_NAME = new Map(CARDS.map((c) => [c.name, c]));
 // Los sobres normales/buenos solo salen de la base — las especiales son más
 // raras y salen aparte (ver drawCard) para que sigan siendo especiales.
 const BY_TIER = Object.fromEntries(TIERS.map((t) => [t.key, BASE_CARDS.filter((c) => c.tier === t.key)]));
-const pub = (c) => ({ name: c.name, realName: c.realName, special: c.special, note: c.note || null, tier: c.tier, tierLabel: c.tierLabel, ovr: c.ovr, pos: c.pos, nationality: c.nationality, club: c.club });
+const pub = (c) => ({ name: c.name, realName: c.realName, special: c.special, note: c.note || null, tier: c.tier, tierLabel: c.tierLabel, ovr: c.ovr, pos: c.pos, nationality: c.nationality, club: c.club, ...extraPub(c) });
 
 // Tipos de sobre. Cada uno tiene probabilidades por nivel ("weights"), y
 // opcionalmente un filtro de jugadores (leyendas, promesas, una liga) y/o una
@@ -243,6 +245,8 @@ const PACKS = {
   bundesliga: { label: "Sobre Bundesliga", desc: "Jugadores de clubes de la Bundesliga.", price: 100, weights: W_BUENO, filter: (c) => c.league === "bundesliga" },
 };
 
+Object.assign(PACKS, EXTRA_PACKS); // sobre de Íconos
+
 const FILTERED_POOLS = new Map();
 function poolFor(type, tierKey) {
   const def = PACKS[type];
@@ -261,6 +265,8 @@ const pickOf = (pool) => pool[Math.floor(Math.random() * pool.length)];
 // asegurada de un sobre estrella es la primera.
 function drawCard(type = "normal", index = 1) {
   const def = PACKS[type] || PACKS.normal;
+  const extra = drawExtra(type, index, def); // Ícono, Momento o entrenador
+  if (extra) return extra;
   const special = def.special && SPECIAL_CARDS.length > 0 && Math.random() < def.special;
   if (special) return pickOf(SPECIAL_CARDS);
   if (def.guarantee && index === 0) return pickOf(poolFor(type, def.guarantee));
@@ -580,24 +586,32 @@ router.post("/sbc/:id/submit", async (req, res) => {
 });
 
 // ---------- equipo y partidos ----------
+// El once viene con `.extras` (entrenador y capitán ya validados): strengthOf lo usa.
 export async function lineupOf(userId) {
+  refreshFormIfStale(); // "En forma": actualiza en segundo plano si hace falta
   const row = (await db.execute({ sql: "SELECT players FROM card_lineups WHERE user_id = ?", args: [userId] })).rows[0];
   if (!row) return [];
-  try { return JSON.parse(row.players).map((n) => BY_NAME.get(n)).filter(Boolean); } catch { return []; }
+  let cards;
+  try { cards = JSON.parse(row.players).map((n) => BY_NAME.get(n)).filter(Boolean); } catch { return []; }
+  try { cards.extras = await extrasFor(userId, cards); } catch { cards.extras = { coach: null, captain: null }; }
+  return cards;
 }
 
 export function strengthOf(cards) {
-  const base = cards.reduce((s, c) => s + c.ovr, 0);
+  const fx = lineupEffects(cards); // En forma, entrenador, selecciones y capitán
+  const base = cards.reduce((s, c) => s + c.ovr, 0) + fx.ovr;
   let chem = 0, nat = 0;
   for (let i = 0; i < cards.length; i++) {
     for (let j = i + 1; j < cards.length; j++) {
-      if ([...cards[i].clubs].some((c) => cards[j].clubs.has(c))) chem += 1;
+      // Las conexiones de club con el capitán cuentan doble.
+      const weight = fx.captain && (cards[i].name === fx.captain || cards[j].name === fx.captain) ? 2 : 1;
+      if ([...cards[i].clubs].some((c) => cards[j].clubs.has(c))) chem += weight;
       if (cards[i].nationality === cards[j].nationality) nat += 0.5;
     }
   }
-  chem = Math.min(chem, 25);
+  chem = Math.min(chem, 25 + (fx.captain ? CAPTAIN_CHEM_CAP_EXTRA : 0)) + fx.chem;
   nat = Math.min(nat, 10);
-  return { base, chem, nat, total: base + chem + nat };
+  return { base, chem, nat, total: base + chem + nat, extra: fx.breakdown };
 }
 
 router.get("/lineup", async (req, res) => {
@@ -624,7 +638,7 @@ router.put("/lineup", async (req, res) => {
       sql: "INSERT INTO card_lineups (user_id, players, updated_at) VALUES (?, ?, datetime('now')) ON CONFLICT(user_id) DO UPDATE SET players = excluded.players, updated_at = excluded.updated_at",
       args: [req.userId, JSON.stringify(names)],
     });
-    res.json({ ok: true, strength: strengthOf(cards) });
+    res.json({ ok: true, strength: strengthOf(await lineupOf(req.userId)) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

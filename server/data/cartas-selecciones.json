@@ -1,0 +1,12 @@
+{
+  "nota": "Colecciones de selección: cuántos jugadores de un plantel histórico juegan en tu once. Los nombres con tildes o sin: se buscan sin tildes. Los que no estén en la base no cuentan.",
+  "selecciones": [
+    { "id": "chile-2015", "label": "Chile · Copa América 2015", "jugadores": ["Claudio Bravo", "Mauricio Isla", "Gary Medel", "Gonzalo Jara", "Jean Beausejour", "Marcelo Díaz", "Charles Aránguiz", "Arturo Vidal", "Jorge Valdivia", "Alexis Sánchez", "Eduardo Vargas", "Mauricio Pinilla", "José Pedro Fuenzalida", "Gary Medel", "Francisco Silva"] },
+    { "id": "argentina-2022", "label": "Argentina · Mundial 2022", "jugadores": ["Emiliano Martínez", "Nahuel Molina", "Nicolás Otamendi", "Cristian Romero", "Marcos Acuña", "Rodrigo De Paul", "Enzo Fernández", "Alexis Mac Allister", "Ángel Di María", "Lionel Messi", "Julián Álvarez", "Lautaro Martínez", "Leandro Paredes", "Lisandro Martínez", "Nicolás Tagliafico"] },
+    { "id": "alemania-2014", "label": "Alemania · Mundial 2014", "jugadores": ["Manuel Neuer", "Philipp Lahm", "Per Mertesacker", "Jérôme Boateng", "Mats Hummels", "Bastian Schweinsteiger", "Toni Kroos", "Sami Khedira", "Mesut Özil", "Thomas Müller", "Miroslav Klose", "Mario Götze", "André Schürrle"] },
+    { "id": "francia-2018", "label": "Francia · Mundial 2018", "jugadores": ["Hugo Lloris", "Benjamin Pavard", "Raphaël Varane", "Samuel Umtiti", "Lucas Hernández", "Paul Pogba", "N'Golo Kanté", "Blaise Matuidi", "Antoine Griezmann", "Kylian Mbappé", "Olivier Giroud", "Ousmane Dembélé", "Nabil Fekir"] },
+    { "id": "italia-2006", "label": "Italia · Mundial 2006", "jugadores": ["Gianluigi Buffon", "Gianluca Zambrotta", "Fabio Cannavaro", "Marco Materazzi", "Gennaro Gattuso", "Andrea Pirlo", "Daniele De Rossi", "Francesco Totti", "Luca Toni", "Alberto Gilardino", "Mauro Camoranesi", "Alessandro Del Piero"] },
+    { "id": "espana-2010", "label": "España · Mundial 2010", "jugadores": ["Iker Casillas", "Sergio Ramos", "Gerard Piqué", "Carles Puyol", "Sergio Busquets", "Xabi Alonso", "Andrés Iniesta", "Xavi Hernández", "David Villa", "Fernando Torres", "Pedro", "Jesús Navas", "Cesc Fàbregas", "David Silva"] },
+    { "id": "uruguay-2011", "label": "Uruguay · Copa América 2011", "jugadores": ["Fernando Muslera", "Diego Godín", "Luis Suárez", "Edinson Cavani", "Diego Forlán", "Sebastián Abreu", "Diego Lugano", "Martín Cáceres"] }
+  ]
+}

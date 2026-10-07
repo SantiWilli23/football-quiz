@@ -73,6 +73,12 @@ export const HELP = [
   ]) },
   { match: "/cartas", ...H("Cartas", "Abrí sobres con jugadores reales, armá tu once y jugá partidos.", [
     "La química sale de los clubes que compartieron los jugadores de tu equipo: más química, mejor rendimiento.",
+    "Tipos de carta: Jugador, Ícono (versión de leyenda con más media), Momento (una jugada histórica) y Entrenador.",
+    "Entrenador: no juega, se pone aparte y da bonus (por ejemplo +3 a los argentinos o más química). Tiene un tope para que no regale el partido.",
+    "Capitán: eliges uno de tu once y sus conexiones de club cuentan doble.",
+    "Selecciones: si pones en tu once jugadores de un plantel histórico (Chile 2015, Argentina 2022…) ganas química extra.",
+    "En forma: las cartas de quienes hicieron un gol en las ligas reales en los últimos 7 días suman +3 por esa semana.",
+    "Los Íconos, Momentos y entrenadores salen en los sobres; el Sobre Íconos tiene un Ícono asegurado.",
     "Podés jugar contra la máquina o contra otra persona del grupo.",
     "Tu mejor victoria de la semana suma al grupo: cuenta la diferencia de goles y si el rival era más fuerte. Ganarle a una persona vale más.",
   ]) },
