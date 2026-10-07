@@ -7,6 +7,7 @@ import {
   getLineups,
   getLiveFixtures,
   getStandings,
+  getTeamInfo,
   getTopScorers,
   isConfigured,
 } from "../utils/football-api.js";
@@ -76,6 +77,40 @@ router.get("/:league/fixtures", async (req, res) => {
   try {
     const { data, blocked_by_plan } = await getFixturesByDate(league, date);
     res.json({ date, fixtures: data.map(publicFixture), blocked_by_plan });
+  } catch (err) {
+    handleFootballError(err, res);
+  }
+});
+
+// Próximos días: desde `from` (o hoy), `days` días seguidos, partidos por día.
+router.get("/:league/upcoming", async (req, res) => {
+  const league = requireLeague(req, res);
+  if (!league) return;
+  const from = /^\d{4}-\d{2}-\d{2}$/.test(req.query.from || "") ? req.query.from : todayStr();
+  const days = Math.min(Math.max(Number(req.query.days) || 2, 1), 7);
+  try {
+    const out = [];
+    for (let i = 0; i < days; i++) {
+      const d = new Date(`${from}T00:00:00Z`);
+      d.setUTCDate(d.getUTCDate() + i);
+      const date = d.toISOString().slice(0, 10);
+      const { data } = await getFixturesByDate(league, date);
+      out.push({ date, fixtures: data.map(publicFixture) });
+    }
+    res.json({ days: out });
+  } catch (err) {
+    handleFootballError(err, res);
+  }
+});
+
+// Ficha de un equipo: liga pasada, plantilla, lesiones y títulos.
+router.get("/:league/teams/:teamId", async (req, res) => {
+  const league = requireLeague(req, res);
+  if (!league) return;
+  const teamId = Number(req.params.teamId);
+  if (!teamId) return res.status(400).json({ error: "Falta el equipo" });
+  try {
+    res.json(await getTeamInfo(league, teamId));
   } catch (err) {
     handleFootballError(err, res);
   }

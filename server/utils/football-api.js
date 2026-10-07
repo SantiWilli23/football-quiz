@@ -285,6 +285,103 @@ async function seasonScopedFetch(cacheKey, ttlSeconds, path, params) {
   }
 }
 
+// ---- Ficha de equipo (ESPN) -------------------------------------------------
+// Resultado de la liga pasada, plantilla, lesiones y títulos de liga. ESPN no
+// tiene "palmarés": los títulos se cuentan mirando quién terminó 1º en la tabla
+// final de cada temporada. Europa desde 2005-06; Chile desde 2020 (antes el
+// campeonato se partía en torneos y la tabla no define al campeón).
+const TITLES_FROM = { chile: 2020 };
+const TITLES_FROM_DEFAULT = 2005;
+const TTL_DAY = 24 * 3600;
+
+async function espnStandingsFor(leagueKey, season) {
+  const json = await espnGet(`${ESPN_BASE}/v2/sports/soccer/${ESPN_SLUGS[leagueKey]}/standings?season=${season}`);
+  return json.children?.[0]?.standings?.entries || [];
+}
+
+const statOf = (entry, name) => (entry.stats || []).find((x) => x.name === name)?.value;
+
+async function espnChampions(leagueKey) {
+  const from = TITLES_FROM[leagueKey] ?? TITLES_FROM_DEFAULT;
+  const last = currentSeason(leagueKey) - 1; // la temporada en curso todavía no tiene campeón
+  const years = [];
+  for (let y = from; y <= last; y++) years.push(y);
+  const tables = await Promise.all(years.map((y) => espnStandingsFor(leagueKey, y).catch(() => [])));
+  const champions = {};
+  const missing = []; // temporadas sin tabla usable (ESPN a veces las trae vacías, con 0 puntos)
+  tables.forEach((entries, i) => {
+    const top = entries.find((e) => statOf(e, "rank") === 1);
+    if (top && entries.length >= 10 && statOf(top, "points") > 0) {
+      const id = String(top.team.id);
+      (champions[id] ||= []).push(years[i]);
+    } else {
+      missing.push(years[i]);
+    }
+  });
+  return { from, last, champions, missing };
+}
+
+async function espnTeamInfo(leagueKey, teamId) {
+  const slug = ESPN_SLUGS[leagueKey];
+  const [roster, lastTable, champs] = await Promise.all([
+    espnGet(`${ESPN_BASE}/site/v2/sports/soccer/${slug}/teams/${teamId}/roster`),
+    espnStandingsFor(leagueKey, currentSeason(leagueKey) - 1).catch(() => []),
+    espnCached(`espn:champions:${leagueKey}`, 30 * TTL_DAY, () => espnChampions(leagueKey)).catch(() => null),
+  ]);
+
+  const season = currentSeason(leagueKey);
+  const mine = lastTable.find((e) => String(e.team.id) === String(teamId));
+  const lastSeason = mine
+    ? {
+        label: leagueKey === "chile" ? String(season - 1) : `${season - 1}-${String(season).slice(2)}`,
+        position: statOf(mine, "rank"),
+        of: lastTable.length,
+        points: statOf(mine, "points"),
+        won: statOf(mine, "wins"),
+        drawn: statOf(mine, "ties"),
+        lost: statOf(mine, "losses"),
+        goals_for: statOf(mine, "pointsFor"),
+        goals_against: statOf(mine, "pointsAgainst"),
+      }
+    : null;
+
+  const squad = (roster.athletes || []).map((a) => ({
+    name: a.displayName,
+    number: a.jersey ? Number(a.jersey) : null,
+    position: a.position?.abbreviation ?? null,
+    age: a.age ?? null,
+    nationality: a.citizenship ?? a.flag?.alt ?? null,
+  }));
+  const injuries = (roster.athletes || [])
+    .filter((a) => Array.isArray(a.injuries) && a.injuries.length > 0)
+    .map((a) => ({
+      name: a.displayName,
+      detail: a.injuries[0].type?.description || a.injuries[0].status || a.injuries[0].details?.type || "Lesionado",
+      return_date: a.injuries[0].details?.returnDate ?? null,
+    }));
+
+  const years = champs?.champions?.[String(teamId)] || [];
+  const coach = roster.coach?.[0];
+  return {
+    team: {
+      id: Number(teamId),
+      name: roster.team?.displayName,
+      logo: roster.team?.logo ?? null,
+      coach: coach ? `${coach.firstName ?? ""} ${coach.lastName ?? ""}`.trim() || null : null,
+    },
+    lastSeason,
+    squad,
+    injuries,
+    titles: { count: years.length, years, from: champs?.from ?? null, until: champs?.last ?? null, missing: champs?.missing ?? [] },
+  };
+}
+
+export async function getTeamInfo(leagueKey, teamId) {
+  if (!LEAGUES[leagueKey]) throw new FootballApiError("Liga desconocida", 400);
+  if (!useEspn()) throw new FootballApiError("La ficha de equipo solo está disponible con la fuente pública", 501);
+  return espnCached(`espn:team:${leagueKey}:${teamId}`, 6 * 3600, () => espnTeamInfo(leagueKey, teamId));
+}
+
 export async function getLiveFixtures(leagueKey) {
   const league = LEAGUES[leagueKey];
   if (!league) throw new FootballApiError("Liga desconocida", 400);

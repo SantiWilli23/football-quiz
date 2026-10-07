@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Radio, Table2, Trophy } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { CalendarDays, CalendarSearch, Radio, Sun, Table2, Trophy } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
@@ -7,297 +7,240 @@ import LeagueTabs from "../components/LeagueTabs.jsx";
 import FixtureCard from "../components/FixtureCard.jsx";
 import StandingsTable from "../components/StandingsTable.jsx";
 import ScorersList from "../components/ScorersList.jsx";
+import MonthCalendar from "../components/MonthCalendar.jsx";
+import TeamModal from "../components/TeamModal.jsx";
 import { CHALK } from "../theme.js";
 
-const LIVE_REFRESH_MS = 60000;
+const REFRESH_MS = 60000;
+const LIVE = new Set(["1H", "2H", "HT", "ET", "BT", "P", "LIVE"]);
 
-const LIVE_TABS = [
-  { key: "vivo", label: "En vivo", icon: Radio },
-  { key: "hoy", label: "Partidos", icon: CalendarDays },
+const TABS = [
+  { key: "hoy", label: "Hoy", icon: Sun },
+  { key: "partidos", label: "Partidos", icon: CalendarDays },
   { key: "tabla", label: "Tabla", icon: Table2 },
   { key: "goleadores", label: "Goleadores", icon: Trophy },
 ];
 
-function addDays(dateStr, delta) {
-  const d = new Date(dateStr + "T00:00:00Z");
-  d.setUTCDate(d.getUTCDate() + delta);
-  return d.toISOString().slice(0, 10);
-}
-
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function formatDate(dateStr) {
+// Fechas en hora local de quien mira (no UTC): "hoy" tiene que ser el día de su calendario.
+const pad = (n) => String(n).padStart(2, "0");
+const localIso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const todayStr = () => localIso(new Date());
+const addDays = (dateStr, delta) => {
   const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("es-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-}
+  return localIso(new Date(y, m - 1, d + delta));
+};
+const formatDate = (dateStr, opts = { weekday: "long", day: "numeric", month: "long" }) => {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const s = new Date(y, m - 1, d).toLocaleDateString("es-ES", opts);
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
 
-function NotConfigured() {
+// Los que están jugando primero, después por hora de inicio.
+const sortFixtures = (list) =>
+  [...list].sort((a, b) => (LIVE.has(b.status) ? 1 : 0) - (LIVE.has(a.status) ? 1 : 0) || new Date(a.date) - new Date(b.date));
+
+// Partidos agrupados por liga (cuando se mira "Todas") o en una sola lista.
+function FixtureList({ byLeague, leagues, grouped, empty }) {
+  const keys = leagues.map((l) => l.key).filter((k) => (byLeague[k] || []).length > 0);
+  if (keys.length === 0) return <p className="text-sm text-gray-500">{empty}</p>;
+  if (!grouped) {
+    return <div className="space-y-2">{sortFixtures(byLeague[keys[0]]).map((f) => <FixtureCard key={f.id} fixture={f} />)}</div>;
+  }
   return (
-    <Card>
-      <div className="flex items-start gap-3">
-        <AlertTriangle size={20} className="text-amber-400 shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-medium mb-1">Falta configurar los datos en vivo</p>
-          <p className="text-sm text-gray-400">
-            Esta sección necesita una clave de{" "}
-            <a
-              href="https://dashboard.api-football.com"
-              target="_blank"
-              rel="noreferrer"
-              className="text-accent underline"
-            >
-              api-football.com
-            </a>{" "}
-            (el plan gratis alcanza). Una vez configurada del lado del servidor, los resultados,
-            tablas y goleadores aparecen acá solos.
-          </p>
+    <div className="space-y-5">
+      {keys.map((k) => (
+        <div key={k}>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{leagues.find((l) => l.key === k)?.name}</h3>
+          <div className="space-y-2">{sortFixtures(byLeague[k]).map((f) => <FixtureCard key={f.id} fixture={f} />)}</div>
         </div>
-      </div>
-    </Card>
-  );
-}
-
-function DemoBanner({ season }) {
-  return (
-    <div className="flex items-start gap-2.5 mb-4 px-3.5 py-2.5 rounded-card border border-amber-500/30 bg-amber-500/5">
-      <AlertTriangle size={15} className="text-amber-400 shrink-0 mt-0.5" />
-      <p className="text-xs text-amber-200/90">
-        Esto es de la temporada {season}, no la actual: el plan gratis de la API no llega a la de
-        ahora. Se pasa a datos reales solos cuando se active un plan pago.
-      </p>
+      ))}
     </div>
   );
 }
 
-function BlockedByPlan() {
-  return (
-    <div className="flex items-start gap-3">
-      <AlertTriangle size={20} className="text-amber-400 shrink-0 mt-0.5" />
-      <div>
-        <p className="text-sm font-medium mb-1">Esta vista necesita un plan pago</p>
-        <p className="text-sm text-gray-400">
-          El plan gratis de la API no deja consultar partidos por fecha fuera de una ventana muy
-          chica alrededor de hoy. La pestaña "En vivo" sí funciona con datos reales.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// Solo los datos reales en vivo (resultados, tabla, goleadores) — el
-// catálogo de juegos se mudó a /juegos, así esta pantalla hace un solo
-// trabajo en vez de dos (antes había que pasar por encima de 23 juegos
-// para ver un resultado, o al revés).
+// Resultados, tabla de posiciones y goleadores reales de las principales ligas.
 export default function Football() {
   const [leagues, setLeagues] = useState([]);
-  const [configured, setConfigured] = useState(true);
   const [ready, setReady] = useState(false);
   const [league, setLeague] = useState("chile");
-  const [liveTab, setLiveTab] = useState("vivo");
-  const [date, setDate] = useState(todayStr());
+  const [tab, setTab] = useState("hoy");
+  const [pickedDate, setPickedDate] = useState(null); // día elegido en el calendario (null = próximos días)
+  const [calOpen, setCalOpen] = useState(false);
+  const [team, setTeam] = useState(null);
 
-  const [live, setLive] = useState(null);
-  const [liveAll, setLiveAll] = useState(null); // { [leagueKey]: fixtures[] } cuando league === "__all"
-  const [fixtures, setFixtures] = useState(null);
-  const [fixturesBlocked, setFixturesBlocked] = useState(false);
+  const [todayData, setTodayData] = useState(null); // { [leagueKey]: fixtures[] }
+  const [upcoming, setUpcoming] = useState(null); // [{ date, byLeague }]
+  const [dayData, setDayData] = useState(null); // { [leagueKey]: fixtures[] }
   const [standings, setStandings] = useState(null);
-  const [standingsDemo, setStandingsDemo] = useState(null);
   const [scorers, setScorers] = useState(null);
-  const [scorersDemo, setScorersDemo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const calRef = useRef(null);
+
+  const today = todayStr();
+  const grouped = league === "__all";
+  const activeKeys = useCallback(() => (grouped ? leagues.map((l) => l.key) : [league]), [grouped, leagues, league]);
 
   useEffect(() => {
-    api
-      .get("/football/leagues")
-      .then(({ data }) => {
-        setConfigured(data.configured);
-        setLeagues(data.leagues);
-      })
-      .catch(() => setConfigured(false))
+    api.get("/football/leagues")
+      .then(({ data }) => setLeagues(data.leagues))
+      .catch(() => setError("No se pudieron cargar las ligas"))
       .finally(() => setReady(true));
   }, []);
 
+  // "Todas" solo sirve para partidos; tabla y goleadores son de una liga.
+  useEffect(() => {
+    if ((tab === "tabla" || tab === "goleadores") && league === "__all") setLeague("chile");
+  }, [tab, league]);
+
   const load = useCallback(async () => {
-    if (!ready || !configured) return;
+    if (!ready || leagues.length === 0) return;
+    if (league === "__all" && (tab === "tabla" || tab === "goleadores")) return; // el efecto de arriba ya lo pasa a una liga
     setLoading(true);
     setError("");
     try {
-      if (liveTab === "vivo" && league === "__all") {
-        const results = await Promise.all(
-          leagues.map((l) => api.get(`/football/${l.key}/live`).then((r) => [l.key, r.data.fixtures]).catch(() => [l.key, []]))
-        );
-        setLiveAll(Object.fromEntries(results));
-      } else if (liveTab === "vivo") {
-        const { data } = await api.get(`/football/${league}/live`);
-        setLive(data.fixtures);
-      } else if (liveTab === "hoy") {
-        const { data } = await api.get(`/football/${league}/fixtures`, { params: { date } });
-        setFixtures(data.fixtures);
-        setFixturesBlocked(data.blocked_by_plan);
-      } else if (liveTab === "tabla") {
+      const keys = activeKeys();
+      if (tab === "hoy") {
+        const res = await Promise.all(keys.map((k) => api.get(`/football/${k}/fixtures`, { params: { date: today } }).then((r) => [k, r.data.fixtures]).catch(() => [k, []])));
+        setTodayData(Object.fromEntries(res));
+      } else if (tab === "partidos" && pickedDate) {
+        const res = await Promise.all(keys.map((k) => api.get(`/football/${k}/fixtures`, { params: { date: pickedDate } }).then((r) => [k, r.data.fixtures]).catch(() => [k, []])));
+        setDayData(Object.fromEntries(res));
+      } else if (tab === "partidos") {
+        const from = addDays(today, 1);
+        const res = await Promise.all(keys.map((k) => api.get(`/football/${k}/upcoming`, { params: { from, days: 2 } }).then((r) => [k, r.data.days]).catch(() => [k, []])));
+        const byDate = {};
+        for (const [k, days] of res) for (const d of days) (byDate[d.date] ||= {})[k] = d.fixtures;
+        setUpcoming([from, addDays(from, 1)].map((date) => ({ date, byLeague: byDate[date] || {} })));
+      } else if (tab === "tabla") {
         const { data } = await api.get(`/football/${league}/standings`);
         setStandings(data.table);
-        setStandingsDemo(data.demo ? data.demo_season : null);
-      } else if (liveTab === "goleadores") {
+      } else if (tab === "goleadores") {
         const { data } = await api.get(`/football/${league}/scorers`);
         setScorers(data.scorers);
-        setScorersDemo(data.demo ? data.demo_season : null);
       }
     } catch (err) {
       setError(err.response?.data?.error || "No se pudo cargar la información");
     } finally {
       setLoading(false);
     }
-  }, [ready, configured, league, liveTab, date, leagues]);
+  }, [ready, leagues, activeKeys, tab, today, pickedDate, league]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
+  // Hoy se actualiza solo (marcadores y minutos).
   useEffect(() => {
-    if (liveTab !== "vivo" || !configured) return;
-    const id = setInterval(() => {
-      if (document.visibilityState === "visible") load();
-    }, LIVE_REFRESH_MS);
+    if (tab !== "hoy") return undefined;
+    const id = setInterval(() => { if (document.visibilityState === "visible") load(); }, REFRESH_MS);
     return () => clearInterval(id);
-  }, [liveTab, configured, load]);
+  }, [tab, load]);
+
+  // El calendario se cierra al tocar afuera.
+  useEffect(() => {
+    if (!calOpen) return undefined;
+    const onDown = (e) => { if (calRef.current && !calRef.current.contains(e.target)) setCalOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [calOpen]);
 
   const activeLeague = leagues.find((l) => l.key === league);
+  const showAll = tab === "hoy" || tab === "partidos";
+  const anyLive = tab === "hoy" && todayData && Object.values(todayData).some((l) => l.some((f) => LIVE.has(f.status)));
 
   return (
     <Layout>
       <div className="mb-6">
         <h1 className="text-xl sm:text-2xl font-bold mb-1">En vivo</h1>
-        <p className="text-gray-400 text-sm">
-          Resultados, tabla de posiciones y goleadores reales de las principales ligas.
-        </p>
+        <p className="text-gray-400 text-sm">Los partidos de hoy, los próximos días, la tabla y los goleadores de las principales ligas.</p>
       </div>
 
-      {!configured ? (
-        <NotConfigured />
-      ) : (
-        <>
-          <LeagueTabs leagues={leagues} active={league} onChange={setLeague} showAll={liveTab === "vivo"} />
+      <LeagueTabs leagues={leagues} active={league} onChange={setLeague} showAll={showAll} />
 
-          <div className="flex items-center gap-2 mb-6 flex-wrap">
-            {LIVE_TABS.map(({ key, label, icon: Icon }) => (
-              <button
-                key={key}
-                onClick={() => setLiveTab(key)}
-                className={`px-3 py-1.5 rounded-card text-sm font-medium border transition-colors flex items-center gap-1.5 ${
-                  liveTab === key
-                    ? "border-blue-500/50 bg-blue-500/10 text-blue-400"
-                    : "border-border text-gray-400 hover:text-white hover:border-white/30"
-                }`}
-              >
-                <Icon size={14} />
-                {label}
-              </button>
-            ))}
-          </div>
+      <div className="flex items-center gap-2 mb-6 flex-wrap">
+        {TABS.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`px-3 py-1.5 rounded-card text-sm font-medium border transition-colors flex items-center gap-1.5 ${
+              tab === key ? "border-blue-500/50 bg-blue-500/10 text-blue-400" : "border-border text-gray-400 hover:text-white hover:border-white/30"
+            }`}
+          >
+            <Icon size={14} />
+            {label}
+          </button>
+        ))}
+      </div>
 
-          <Card>
-            <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-              <h2 className="font-semibold">{league === "__all" ? "Todas las ligas" : activeLeague?.name ?? "Cargando..."}</h2>
-              {liveTab === "vivo" && (
-                <span className="text-xs text-gray-500 flex items-center gap-1.5">
-                  <Radio size={11} style={{ color: CHALK.red }} className="animate-pulse" />
-                  se actualiza solo
-                </span>
+      <Card>
+        <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+          <h2 className="font-semibold">{grouped ? "Todas las ligas" : activeLeague?.name ?? "Cargando..."}</h2>
+
+          {tab === "hoy" && (
+            <span className="text-xs text-gray-500 flex items-center gap-1.5">
+              {anyLive && <Radio size={11} style={{ color: CHALK.red }} className="animate-pulse" />}
+              <span>{formatDate(today)}</span> · se actualiza solo
+            </span>
+          )}
+
+          {tab === "partidos" && (
+            <div className="relative flex items-center gap-2" ref={calRef}>
+              {pickedDate && (
+                <button onClick={() => { setPickedDate(null); setCalOpen(false); }} className="text-xs text-gray-400 hover:text-white underline underline-offset-4">
+                  Ver próximos días
+                </button>
               )}
-              {liveTab === "hoy" && (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setDate((d) => addDays(d, -1))}
-                    aria-label="Día anterior"
-                    className="p-1.5 rounded-card border border-border text-gray-400 hover:text-white hover:border-white/30 transition-colors"
-                  >
-                    <ChevronLeft size={15} />
-                  </button>
-                  <span className="text-xs text-gray-400 capitalize w-40 text-center">
-                    {formatDate(date)}
-                  </span>
-                  <button
-                    onClick={() => setDate((d) => addDays(d, 1))}
-                    aria-label="Día siguiente"
-                    className="p-1.5 rounded-card border border-border text-gray-400 hover:text-white hover:border-white/30 transition-colors"
-                  >
-                    <ChevronRight size={15} />
-                  </button>
+              <button
+                onClick={() => setCalOpen((o) => !o)}
+                aria-expanded={calOpen}
+                className="px-3 py-1.5 rounded-card text-xs font-medium border border-border text-gray-300 hover:text-white hover:border-white/30 transition-colors flex items-center gap-1.5"
+              >
+                <CalendarSearch size={14} />
+                {pickedDate ? formatDate(pickedDate, { day: "numeric", month: "short" }) : "Elegir día"}
+              </button>
+              {calOpen && (
+                <div className="absolute right-0 top-full mt-2 z-20 bg-panel border border-border rounded-2xl p-4 shadow-lg">
+                  <MonthCalendar value={pickedDate || addDays(today, 1)} today={today} onPick={(d) => { setPickedDate(d); setCalOpen(false); }} />
                 </div>
               )}
             </div>
+          )}
+        </div>
 
-            {loading && <p className="text-sm text-gray-500">Cargando...</p>}
-            {error && !loading && <p className="text-sm text-red-400">{error}</p>}
+        {loading && <p className="text-sm text-gray-500">Cargando...</p>}
+        {error && !loading && <p className="text-sm text-red-400">{error}</p>}
 
-            {!loading && !error && liveTab === "vivo" && league === "__all" && (
-              liveAll && Object.values(liveAll).some((f) => f.length > 0) ? (
-                <div className="space-y-5">
-                  {leagues.filter((l) => (liveAll[l.key] || []).length > 0).map((l) => (
-                    <div key={l.key}>
-                      <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{l.name}</h3>
-                      <div className="space-y-2">
-                        {liveAll[l.key].map((f) => <FixtureCard key={f.id} fixture={f} />)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">No hay partidos en vivo en ninguna liga ahora mismo.</p>
-              )
-            )}
+        {!loading && !error && tab === "hoy" && todayData && (
+          <FixtureList byLeague={todayData} leagues={leagues} grouped={grouped} empty={grouped ? "Hoy no hay partidos en ninguna liga." : "Hoy no hay partidos en esta liga."} />
+        )}
 
-            {!loading && !error && liveTab === "vivo" && league !== "__all" && (
-              live && live.length > 0 ? (
-                <div className="space-y-2">
-                  {live.map((f) => (
-                    <FixtureCard key={f.id} fixture={f} />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">
-                  No hay partidos en vivo en esta liga ahora mismo.
-                </p>
-              )
-            )}
+        {!loading && !error && tab === "partidos" && pickedDate && dayData && (
+          <>
+            <p className="text-sm font-medium mb-3">{formatDate(pickedDate)}</p>
+            <FixtureList byLeague={dayData} leagues={leagues} grouped={grouped} empty="No hay partidos programados ese día." />
+          </>
+        )}
 
-            {!loading && !error && liveTab === "hoy" && (
-              fixturesBlocked ? (
-                <BlockedByPlan />
-              ) : fixtures && fixtures.length > 0 ? (
-                <div className="space-y-2">
-                  {fixtures.map((f) => (
-                    <FixtureCard key={f.id} fixture={f} />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">No hay partidos programados ese día.</p>
-              )
-            )}
+        {!loading && !error && tab === "partidos" && !pickedDate && upcoming && (
+          <div className="space-y-6">
+            {upcoming.map(({ date, byLeague }) => (
+              <div key={date}>
+                <p className="text-sm font-medium mb-3">{formatDate(date)}</p>
+                <FixtureList byLeague={byLeague} leagues={leagues} grouped={grouped} empty="No hay partidos programados ese día." />
+              </div>
+            ))}
+          </div>
+        )}
 
-            {!loading && !error && liveTab === "tabla" && standings && (
-              <>
-                {standingsDemo && <DemoBanner season={standingsDemo} />}
-                <StandingsTable table={standings} />
-              </>
-            )}
-            {!loading && !error && liveTab === "goleadores" && scorers && (
-              <>
-                {scorersDemo && <DemoBanner season={scorersDemo} />}
-                <ScorersList scorers={scorers} />
-              </>
-            )}
-          </Card>
-        </>
-      )}
+        {!loading && !error && tab === "tabla" && standings && (
+          <>
+            <p className="text-xs text-gray-500 mb-3">Tocá un equipo para ver su ficha: liga pasada, plantilla, lesiones y títulos.</p>
+            <StandingsTable table={standings} onTeamClick={setTeam} />
+          </>
+        )}
+        {!loading && !error && tab === "goleadores" && scorers && <ScorersList scorers={scorers} />}
+      </Card>
+
+      {team && <TeamModal league={league} team={team} onClose={() => setTeam(null)} />}
     </Layout>
   );
 }

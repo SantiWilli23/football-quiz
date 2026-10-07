@@ -34,13 +34,16 @@ export const HELP = [
     "Especial: preguntas temáticas de la semana o del momento.",
     WEEKLY,
   ]) },
-  { match: "/juegos", ...H("Juegos", "El catálogo completo, ordenado por tipo: Solo, Con amigos, Contrarreloj, Pronóstico y Carrera larga.", [
-    "Filtrá por duración si tenés poco tiempo.",
+  { match: "/juegos", ...H("Juegos", "Dos apartados: «Juegos diarios» (los siete juegos diarios, Carrera y Con amigos) y «Fútbol 12» (el resto).", [
+    "Los siete juegos diarios pagan el mismo tope: 20 puntos por día cada uno.",
+    "El podio semanal de cada diario (1°, 2° y 3° del grupo) suma +30, +20 y +10 al ranking.",
     "Cada juego tiene su propio «?» con las reglas y cómo puntúa.",
-    "Casi todos suman un puntaje semanal a tu grupo.",
   ]) },
-  { match: "/futbol", ...H("En vivo", "Partidos, tablas y goleadores reales de las ligas.", [
-    "Sirve para ver los resultados que después se pronostican en Quiniela.",
+  { match: "/futbol", ...H("En vivo", "Partidos, tablas y goleadores reales de las 5 grandes de Europa y de Chile.", [
+    "Hoy: todos los partidos del día, los que están jugando primero. Se actualiza solo.",
+    "Partidos: los próximos 2 días. Con «Elegir día» abrís un calendario del mes y mirás cualquier fecha.",
+    "Tabla: tocá un equipo para ver cómo le fue la liga pasada, su plantilla, lesionados y títulos de liga.",
+    "Los títulos se cuentan por la tabla final de cada temporada (Europa desde 2005-06, Chile desde 2020) y no incluyen copas.",
   ]) },
   { match: "/grupo", ...GROUP_HELP },
   { match: "/estadisticas", ...H("Estadísticas", "Tus números y los del grupo: aciertos, rachas y evolución.") },
@@ -121,9 +124,9 @@ export const HELP = [
     "Un clip sin sonido por ronda, contra reloj.",
     WEEKLY,
   ]) },
-  { match: "/quiniela", ...H("Quiniela semanal", "Predecí el resultado exacto de los próximos partidos reales.", [
+  { match: "/quiniela", ...H("Quiniela diaria", "Predecí el resultado exacto de los partidos de hoy.", [
     "Tenés que cargar tu pronóstico antes de que arranque cada partido.",
-    "Exacto suma más; acertar solo el ganador suma menos.",
+    "Exacto suma 5; acertar solo el ganador o el empate suma 2. Tope de 20 puntos por día.",
   ]) },
   { match: "/pronosticos", ...H("Campeón y descenso", "Predecí quién sale campeón y quiénes bajan esta temporada, en las 5 grandes de Europa y en Chile.", [
     "Solo abre al inicio y al final de cada temporada. Europa: julio–agosto y abril–mayo. Chile: enero–febrero y octubre–15 de diciembre.",

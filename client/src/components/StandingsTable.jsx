@@ -1,7 +1,7 @@
 // Tabla de posiciones. Las primeras 4 posiciones se marcan (zona de
 // copas continentales) y las últimas 3 también (descenso) — son lecturas
 // de un vistazo que cualquiera que sigue una liga espera encontrar.
-export default function StandingsTable({ table }) {
+export default function StandingsTable({ table, onTeamClick }) {
   if (table.length === 0) {
     return <p className="text-sm text-gray-500">No hay tabla disponible todavía.</p>;
   }
@@ -31,10 +31,17 @@ export default function StandingsTable({ table }) {
               <tr key={row.team.id} className={`border-b border-border/60 ${zone}`}>
                 <td className="py-2 pr-2 pl-2 tabular-nums text-gray-400">{row.position}</td>
                 <td className="py-2 pr-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    {row.team.logo && <img src={row.team.logo} alt="" className="w-5 h-5 shrink-0" loading="lazy" />}
-                    <span className="truncate">{row.team.name}</span>
-                  </div>
+                  {onTeamClick ? (
+                    <button onClick={() => onTeamClick(row.team)} className="flex items-center gap-2 min-w-0 text-left hover:text-accent transition-colors" title="Ver ficha del equipo">
+                      {row.team.logo && <img src={row.team.logo} alt="" className="w-5 h-5 shrink-0" loading="lazy" />}
+                      <span className="truncate underline decoration-dotted decoration-gray-600 underline-offset-4">{row.team.name}</span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2 min-w-0">
+                      {row.team.logo && <img src={row.team.logo} alt="" className="w-5 h-5 shrink-0" loading="lazy" />}
+                      <span className="truncate">{row.team.name}</span>
+                    </div>
+                  )}
                 </td>
                 <td className="py-2 px-2 text-center tabular-nums text-gray-400">{row.played}</td>
                 <td className="py-2 px-2 text-center tabular-nums text-gray-400">{row.won}</td>
