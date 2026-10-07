@@ -12,14 +12,16 @@ router.use(requireAuth);
 // "crop" recorta el borde inferior del video para tapar los subtítulos del
 // diálogo del VAR, que dicen la decisión; el cliente además reproduce todo SIN
 // SONIDO. Cada decisión se verificó con el diálogo y los gráficos del propio
-// video. "correct" es el índice dentro de "options" y "why" se muestra recién
+// video. OJO: estos videos tienen un tramo largo de imagen CONGELADA mientras
+// el VAR habla; el tramo de repetición tiene que ser la parte que se MUEVE
+// (verificado midiendo cambio entre cuadros, no a ojo). "correct" es el índice dentro de "options" y "why" se muestra recién
 // después de responder. El puntaje va al framework genérico de "retos".
 const RFEF_CREDIT = "Real Federación Española de Fútbol (RFEF) · Audio revisión VAR";
 
 const SITUATIONS = [
   {
     id: 1,
-    video: { id: "YrmGWw6RsLk", segments: [[2, 10.4], [10.8, 24]], crop: true, credit: RFEF_CREDIT },
+    video: { id: "YrmGWw6RsLk", segments: [[1, 10.5], [34.2, 45.5]], crop: true, credit: RFEF_CREDIT },
     text: "Elche vs Real Sociedad, minuto 61. Un jugador de Real Sociedad corta un pase del Elche en pleno ataque. Mirá en la repetición con qué parte del cuerpo toca la pelota.",
     options: ["Sigue el juego", "Tiro libre y amarilla", "Tiro libre directo y roja", "Penal"],
     correct: 2,
@@ -27,7 +29,7 @@ const SITUATIONS = [
   },
   {
     id: 2,
-    video: { id: "Z4QWPGsj_F4", segments: [[0.5, 6.5], [36, 52]], crop: true, credit: RFEF_CREDIT },
+    video: { id: "Z4QWPGsj_F4", segments: [[0.5, 6.5], [48, 59.5]], crop: true, credit: RFEF_CREDIT },
     text: "Atlético vs Real Madrid, minuto 36. Entrada en el piso entre un jugador del Madrid y uno del Atlético: el árbitro amonestó al del Madrid. Mirá la repetición: quién toca la pelota y qué pasa con el pie de cada uno.",
     options: [
       "Se mantiene la amarilla al jugador del Madrid",
@@ -40,15 +42,15 @@ const SITUATIONS = [
   },
   {
     id: 3,
-    video: { id: "mISh-y9W8Pc", segments: [[0.5, 8.5], [24.5, 40]], crop: true, credit: RFEF_CREDIT },
-    text: "Atlético vs Real Madrid, minuto 49. Falta de Huijsen (Madrid) sobre un delantero que iba hacia el arco: el árbitro le había mostrado amarilla. Mirá la repetición del contacto.",
+    video: { id: "mISh-y9W8Pc", segments: [[0.5, 8.5], [44.6, 53.6]], crop: true, credit: RFEF_CREDIT },
+    text: "Atlético vs Real Madrid, minuto 49. Huijsen (Madrid) frena a un delantero que iba hacia el arco y el árbitro cobra penal con amarilla para Huijsen. Mirá en la repetición si Huijsen intenta jugar la pelota.",
     options: ["Se mantiene la amarilla", "La amarilla pasa a roja", "Se retira la amarilla (sin tarjeta)"],
     correct: 1,
-    why: "El VAR señaló que Huijsen sujeta al jugador sin opción de disputar el balón, en una ocasión manifiesta de gol. Tras ver las repeticiones, el árbitro retiró la amarilla y le mostró la roja (se ve en el gráfico del video).",
+    why: "El VAR señaló que Huijsen sujeta al jugador sin opción de disputar el balón, en una ocasión manifiesta de gol. Tras ver las repeticiones, el árbitro mantuvo el penal y cambió la amarilla por roja.",
   },
   {
     id: 4,
-    video: { id: "4DGpY0xxGTw", segments: [[0.5, 8], [17.5, 33]], crop: true, credit: RFEF_CREDIT },
+    video: { id: "4DGpY0xxGTw", segments: [[0.5, 8], [38.6, 55]], crop: true, credit: RFEF_CREDIT },
     text: "Atlético vs Villarreal, minuto 72. Un defensor y un delantero pelean por la pelota en el área y el árbitro no cobra nada, pero el VAR lo llama al monitor. Mirá cómo usa las manos el defensor.",
     options: ["Sigue el juego", "Penal", "Penal y amarilla", "Penal y roja"],
     correct: 3,
@@ -56,23 +58,11 @@ const SITUATIONS = [
   },
   {
     id: 5,
-    video: { id: "Yj1zehwObH4", segments: [[0.5, 6], [9.5, 25]], crop: true, credit: RFEF_CREDIT },
+    video: { id: "Yj1zehwObH4", segments: [[0.5, 7.8], [35, 56.5]], crop: true, credit: RFEF_CREDIT },
     text: "Celta vs Osasuna, minuto 38. Entrada de Marcos Alonso (Celta) sobre un rival, y el árbitro le mostró amarilla. Mirá en la repetición dónde impactan los tacos.",
     options: ["Se mantiene la amarilla", "La amarilla pasa a roja", "Sin tarjeta"],
     correct: 1,
     why: "Los tacos le impactan al rival en la tibia, no en el pie ni en el tobillo. El árbitro cambió la amarilla por tarjeta roja para Marcos Alonso.",
-  },
-  {
-    id: 6,
-    video: {
-      id: "SykqgukYMko",
-      segments: [[12, 23], [61, 72]],
-      credit: "ESPN · Real Madrid vs Santiago Wanderers, Intercontinental Sub-20",
-    },
-    text: "Real Madrid vs Santiago Wanderers (final Intercontinental Sub-20). El 7 del Madrid encara hacia el área, el 18 de Wanderers lo persigue y lo derriba. Mirá en la repetición dónde es el contacto.",
-    options: ["Sigue el juego", "Tiro libre", "Penal"],
-    correct: 1,
-    why: "El contacto del 18 de Wanderers es falta, pero ocurre afuera del área: el árbitro cobró tiro libre (no penal), pese a las protestas de los jugadores de Wanderers.",
   },
 ];
 
