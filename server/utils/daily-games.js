@@ -1,6 +1,6 @@
 import { db } from "../db/client.js";
 import { addDays, mondayOf } from "./points.js";
-import { DAILY_GAME_MAX_POINTS } from "./points-config.js";
+import { DAILY_GAME_MAX_POINTS, WEEKLY_GAME_RANK_POINTS } from "./points-config.js";
 import { WEEKLY_PODIUM_PACKS, dailyPackQuality, grantPack } from "./rewards.js";
 
 // Los siete juegos que se turnan como "juego diario": cada día es UNO solo (ver
@@ -40,7 +40,12 @@ export function pointsFromFraction(fraction) {
 // Devuelve { points, already }.
 export async function recordDailyResult(userId, date, gameKey, fraction, score = 0) {
   // Solo el juego diario de HOY suma; jugar otro es práctica libre.
-  if (dailyGameKeyFor(date) !== gameKey) return { points: 0, already: false, notToday: true, today: dailyGameKeyFor(date) };
+  if (dailyGameKeyFor(date) !== gameKey) {
+    // Práctica libre: no suma puntos, pero da un sobre normal (uno por juego y día).
+    const pack = fraction > 0 ? "normal" : null;
+    const fresh = await grantPack(userId, date, pack, `juego-${gameKey}`);
+    return { points: 0, already: !fresh && !!pack, notToday: true, practice: true, pack: fresh ? pack : null, today: dailyGameKeyFor(date) };
+  }
   const points = pointsFromFraction(fraction);
   const res = await db.execute({
     sql: "INSERT OR IGNORE INTO daily_game_results (user_id, date, game_key, score, points) VALUES (?, ?, ?, ?, ?)",
@@ -107,7 +112,11 @@ function standingsOf(rows) {
   entries.sort((a, b) => b.score - a.score);
   const withRank = entries.map((e) => ({ ...e, rank: 1 + entries.filter((o) => o.score > e.score).length }));
   const podium = entries.length >= 2;
-  return withRank.map((e) => ({ ...e, pack: podium ? WEEKLY_PODIUM_PACKS[e.rank] || null : null }));
+  return withRank.map((e) => ({
+    ...e,
+    bonus: podium ? WEEKLY_GAME_RANK_POINTS[e.rank] || 0 : 0,
+    pack: podium ? WEEKLY_PODIUM_PACKS[e.rank] || null : null,
+  }));
 }
 
 // La clasificación de cada semana cuyo lunes cae en [from, to]:
@@ -134,6 +143,15 @@ export async function weeklyStandings(userIds, from, to) {
     if (standings.length) out.push({ week, standings });
   }
   return out;
+}
+
+// Puntos del podio semanal, sumados por usuario (además del sobre).
+export async function weeklyGameBonusByUser(userIds, from, to) {
+  const totals = new Map();
+  for (const { standings } of await weeklyStandings(userIds, from, to)) {
+    for (const s of standings) if (s.bonus) totals.set(s.user_id, (totals.get(s.user_id) || 0) + s.bonus);
+  }
+  return totals;
 }
 
 // Sobres del podio de la SEMANA PASADA en cada grupo del usuario (1° top, 2°
@@ -164,7 +182,11 @@ export async function grantQuinielaPacks(userId) {
     args: [userId],
   })).rows;
   for (const r of rows) {
-    if (dailyGameKeyFor(r.date) !== "quiniela") continue;
-    await grantPack(userId, r.date, dailyPackQuality(Math.min(DAILY_GAME_MAX_POINTS, Number(r.p)) / DAILY_GAME_MAX_POINTS), "juego-quiniela");
+    // Si le tocaba ser el juego diario, el sobre depende del rendimiento; el resto de
+    // los días un sobre normal por haber jugado.
+    const quality = dailyGameKeyFor(r.date) === "quiniela"
+      ? dailyPackQuality(Math.min(DAILY_GAME_MAX_POINTS, Number(r.p)) / DAILY_GAME_MAX_POINTS)
+      : "normal";
+    await grantPack(userId, r.date, quality, "juego-quiniela");
   }
 }

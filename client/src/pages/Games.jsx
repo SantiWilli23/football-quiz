@@ -45,12 +45,12 @@ function DailyFeatured({ today, visits }) {
     >
       <Icon size={26} className={`absolute top-5 right-5 ${style.text}`} />
       <span className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider ${style.text}`}>
-        <CalendarCheck size={13} /> Juego diario · premio: sobre de cartas
+        <CalendarCheck size={13} /> Juego diario · hasta {today.max} pts y sobre de cartas
       </span>
       <span className="t-title block text-2xl leading-tight mt-2">{game.label}</span>
       <span className="text-sm text-gray-400 leading-snug block mt-1.5 max-w-xl">{game.description}</span>
       <span className={`inline-block mt-3 text-xs font-semibold tabular-nums ${daily.done ? "text-good" : "text-gray-500"}`}>
-        {daily.done ? `Hecho hoy · puntaje ${daily.points}/${today.max}` : "Todavía no lo jugaste hoy"}
+        {daily.done ? `Hecho hoy · ${daily.points}/${today.max} pts y sobre` : "Todavía no lo jugaste hoy"}
       </span>
     </GameLink>
   );
@@ -90,7 +90,7 @@ function SectionTitle({ children, hint }) {
 }
 
 // Clasificación de ESTA semana entre los miembros del grupo activo: la suma de
-// los juegos diarios de la semana. El podio gana sobres de cartas.
+// los juegos diarios de la semana. El podio gana puntos y sobres de cartas.
 function WeeklyStandings({ groupId }) {
   const [data, setData] = useState(null);
   useEffect(() => {
@@ -107,18 +107,18 @@ function WeeklyStandings({ groupId }) {
         <Medal size={15} className="text-accent shrink-0" />
         <span className="font-medium">Clasificación de la semana</span>
         <span className="text-xs text-gray-500 ml-auto">
-          {data.myPack ? `Tu premio: sobre ${data.myPack}` : `podio: sobre ${podium.join(" / ")}`}
+          {data.myPack ? `Tu premio: +${data.myBonus} pts y sobre ${data.myPack}` : `podio: sobre ${podium.join(" / ")} + puntos`}
         </span>
       </summary>
       <div className="mt-3 text-xs">
         {data.standings.length === 0 ? (
-          <p className="text-gray-500">Todavía nadie sumó en el juego diario esta semana. El 1° del grupo gana un sobre top, el 2° uno bueno y el 3° uno normal.</p>
+          <p className="text-gray-500">Todavía nadie sumó en el juego diario esta semana. El 1° del grupo gana 30 puntos y un sobre top, el 2° 20 y uno bueno, el 3° 10 y uno normal.</p>
         ) : (
           <p className="text-gray-500 leading-relaxed">
             {data.standings.slice(0, 5).map((s, i) => (
               <span key={s.userId} className={s.me ? "text-white" : ""}>
                 {i > 0 && " · "}
-                {s.rank}° {s.username} {s.score}{s.pack ? ` (sobre ${s.pack})` : ""}
+                {s.rank}° {s.username} {s.score}{s.pack ? ` (+${s.bonus} pts, sobre ${s.pack})` : ""}
               </span>
             ))}
           </p>
@@ -160,7 +160,7 @@ export default function Games() {
 
       {FUTBOL12_GAMES.length > 0 && (
         <section>
-          <SectionTitle hint="El juego diario de hoy da un sobre de cartas; los demás se juegan libres.">Fútbol 12</SectionTitle>
+          <SectionTitle hint="El juego diario de hoy da puntos y un sobre; los demás dan un sobre normal por jugar.">Fútbol 12</SectionTitle>
           <CircleRow games={FUTBOL12_GAMES} visits={visits} />
         </section>
       )}

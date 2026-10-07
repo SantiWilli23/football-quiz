@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { todayStr, mondayOf, addDays } from "../utils/points.js";
-import { DAILY_GAME_MAX_POINTS } from "../utils/points-config.js";
+import { DAILY_GAME_MAX_POINTS, WEEKLY_GAME_RANK_POINTS } from "../utils/points-config.js";
 import { WEEKLY_PODIUM_PACKS } from "../utils/rewards.js";
 import { DAILY_GAMES, SUBMITTABLE_DAILY, dailyGameKeyFor, recordDailyResult, weeklyStandings, quinielaDailyRows } from "../utils/daily-games.js";
 
@@ -70,10 +70,12 @@ router.get("/weekly", async (req, res) => {
       username: names.get(s.user_id),
       score: s.score,
       rank: s.rank,
+      bonus: s.bonus,
       pack: s.pack,
       me: s.user_id === req.userId,
     }));
-    res.json({ week, podium: WEEKLY_PODIUM_PACKS, standings, myPack: standings.find((s) => s.me)?.pack || null });
+    const me = standings.find((s) => s.me);
+    res.json({ week, podium: WEEKLY_PODIUM_PACKS, podiumPoints: WEEKLY_GAME_RANK_POINTS, standings, myPack: me?.pack || null, myBonus: me?.bonus || 0 });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

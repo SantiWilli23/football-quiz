@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { isoWeekKey, todayKey, rankEntries, LOWER_IS_BETTER } from "../utils/challenges.js";
+import { grantPack } from "../utils/rewards.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -21,6 +22,9 @@ const FIXED_PERIOD_GAMES = { cotrero_legado: "alltime", presidente_legado: "allt
 // hasta la semana que viene. El resto de los retos siguen dejando reintentar
 // y quedarse con la mejor marca — este set es opt-in a propósito.
 const SINGLE_ATTEMPT_GAMES = new Set(["escudos"]);
+
+// Premiados por el sistema de juegos diarios (o rankings históricos): no dan el sobre de "juego libre".
+const PACK_SKIP = new Set(["un_minuto", "escudos", "arbitraje_var", "draft_europeo", "cotrero", "fichado", "cotrero_legado", "presidente_legado", "cartas"]);
 
 function periodKeyFor(gameKey) {
   return FIXED_PERIOD_GAMES[gameKey] || isoWeekKey();
@@ -49,6 +53,14 @@ router.post("/submit", async (req, res) => {
 
   const periodKey = periodKeyFor(gameKey);
   const ascending = LOWER_IS_BETTER.has(gameKey);
+
+  // Los juegos que no dan puntos al ranking del grupo (Supervivencia, Mentiroso,
+  // Equipo-Jugador, Presidente, Modo DT, ¿Quién es? en vivo…) dan un sobre
+  // normal por jugar, uno por juego y día. Los diarios y los "legado" se
+  // premian por su propio camino.
+  if (score > 0 && !PACK_SKIP.has(gameKey)) {
+    await grantPack(req.userId, todayKey(), "normal", `juego-${gameKey}`).catch(() => {});
+  }
 
   const existing = await db.execute({
     sql: "SELECT id, score FROM challenge_scores WHERE game_key = ? AND period_key = ? AND group_id = ? AND user_id = ?",

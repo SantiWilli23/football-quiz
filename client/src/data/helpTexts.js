@@ -35,8 +35,8 @@ export const HELP = [
     WEEKLY,
   ]) },
   { match: "/juegos", ...H("Juegos", "Arriba, el juego diario de hoy; después «Con amigos» y «Fútbol 12» (todos los demás, incluido el diario).", [
-    "El juego diario cambia cada día (rota entre siete): una partida da un sobre de cartas (normal, bueno o top según tu rendimiento). Los demás juegos se juegan libres ese día.",
-    "La semana se suma: el 1° del grupo gana un sobre top, el 2° uno bueno y el 3° uno normal. La Copa semanal también da sobres por cada fase ganada.",
+    "El juego diario cambia cada día (rota entre siete): una partida da hasta 20 puntos y un sobre de cartas (normal, bueno o top según tu rendimiento). Los demás juegos dan un sobre normal por jugar. Los demás juegos se juegan libres ese día.",
+    "La semana se suma: el 1° del grupo gana +30 puntos y un sobre top, el 2° +20 y uno bueno, el 3° +10 y uno normal. La Copa semanal da puntos y sobre por cada fase ganada.",
     "Cada juego tiene su propio «?» con las reglas y cómo puntúa.",
   ]) },
   { match: "/futbol", ...H("En vivo", "Partidos, tablas y goleadores reales de las 5 grandes de Europa y de Chile.", [
@@ -125,7 +125,7 @@ export const HELP = [
   ]) },
   { match: "/quiniela", ...H("Quiniela diaria", "Predecí el resultado exacto de los partidos de hoy.", [
     "Tenés que cargar tu pronóstico antes de que arranque cada partido.",
-    "Exacto suma 5; acertar solo el ganador o el empate suma 2. Cuando es el juego diario, el día da un sobre de cartas.",
+    "Exacto suma 5; acertar solo el ganador o el empate suma 2. Cada día que jugás te da un sobre de cartas.",
   ]) },
   { match: "/pronosticos", ...H("Campeón y descenso", "Predecí quién sale campeón y quiénes bajan esta temporada, en las 5 grandes de Europa y en Chile.", [
     "Solo abre al inicio y al final de cada temporada. Europa: julio–agosto y abril–mayo. Chile: enero–febrero y octubre–15 de diciembre.",

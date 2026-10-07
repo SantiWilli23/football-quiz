@@ -1356,7 +1356,7 @@
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
           if (!d || d.notToday) return;
-          addSeasonResultLine(lines, "Juego diario", d.notToday ? "Hoy el diario es otro juego" : d.already ? "Hoy ya tenés tu sobre" : (d.pack ? "Sobre " + d.pack + " de cartas (puntaje " + d.points + "/" + d.max + ")" : "Puntaje " + d.points + "/" + d.max + ", sin sobre"), null, !d.already);
+          addSeasonResultLine(lines, "Juego diario", d.practice ? (d.pack ? "Partida libre: sobre normal de cartas" : "Partida libre: hoy ya tenés el sobre") : d.already ? "Hoy ya sumaste tus puntos y tu sobre" : "+" + d.points + " de " + d.max + " pts" + (d.pack ? " y sobre " + d.pack : ""), null, !d.already);
         })
         .catch(function () {});
     } catch (e) {}
@@ -1410,7 +1410,7 @@
     for (var ti = 0; ti < allTitles.length; ti++) line("Premio", allTitles[ti]);
     line("Overall", player.ovr, ovrDelta, true);
 
-    // Juego diario: el primer bloque de temporadas del día da un sobre de cartas
+    // Juego diario: el primer bloque de temporadas del día da hasta 20 puntos y un sobre de cartas
     // según cómo le fue (goles, premios y si mejoró el overall).
     var blockGoals = s1.goals + s2.goals;
     var dailyFraction = 0.35 + Math.min(blockGoals, 30) / 30 * 0.35 + (allTitles.length > 0 ? 0.2 : 0) + (ovrDelta > 0 ? 0.1 : 0);
