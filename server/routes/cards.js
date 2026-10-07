@@ -8,6 +8,7 @@ import { addDays, todayStr } from "../utils/points.js";
 import { simulateMatchEvents } from "../utils/match-engine.js";
 import { rankingBetween } from "./stats.js";
 import { isoWeekKey } from "../utils/challenges.js";
+import { leagueForClub } from "../data/league-clubs.js";
 import { grantQuinielaPacks, grantWeeklyGamePacks } from "../utils/daily-games.js";
 
 // Reto semanal de Cartas: cada victoria vale 20 + 10 por gol de diferencia,
@@ -115,12 +116,33 @@ function isActive(p) {
 // EXTRA_PLAYERS también consigue su carta base normal, no solo la especial
 // — van al final de la lista (índice más alto = tier más bajo por defecto,
 // coherente con que no son "famosos" en la base principal).
-const ALL_WITH_EXTRAS = [...ALL, ...EXTRA_PLAYERS];
+// Jugadores extra para las Cartas (server/data/cartas-jugadores-extra.json): se
+// suman a la base; si alguno ya estaba (mismo nombre sin tildes) se descarta.
+const normName = (s) => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+const CARTAS_EXTRA = (() => {
+  try {
+    const known = new Set([...ALL, ...EXTRA_PLAYERS].map((p) => normName(p.nombre)));
+    const raw = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/cartas-jugadores-extra.json"), "utf-8")).jugadores || [];
+    return raw.filter((p) => {
+      const k = normName(p.nombre);
+      if (known.has(k)) return false;
+      known.add(k);
+      return true;
+    });
+  } catch {
+    return [];
+  }
+})();
+
+const ALL_WITH_EXTRAS = [...ALL, ...EXTRA_PLAYERS, ...CARTAS_EXTRA];
 
 const BASE_CARDS = ALL_WITH_EXTRAS.map((p, i) => {
   const bigCount = new Set((p.carrera || []).map((c) => c.club.replace(/\s*\((cedido|cantera)\)\s*$/i, "")).filter((c) => BIG.has(c))).size;
   const minTier = bigCount >= 3 ? 1 : bigCount >= 2 ? 2 : TIERS.length - 1;
-  const tier = TIERS[Math.min(TIERS.findIndex((t) => i < t.upTo), minTier)];
+  const byRank = Math.min(TIERS.findIndex((t) => i < t.upTo), minTier);
+  // Los jugadores del archivo extra pueden traer su propio nivel mínimo ("tier").
+  const forced = p.tier ? TIERS.findIndex((t) => t.key === p.tier) : -1;
+  const tier = TIERS[forced >= 0 ? Math.min(forced, byRank) : byRank];
   let h = 0;
   for (const ch of p.nombre) h = (h * 31 + ch.charCodeAt(0)) % 9973;
   const clubs = new Set((p.carrera || []).map((c) => c.club.replace(/\s*\((cedido|cantera)\)\s*$/i, "")));
@@ -136,6 +158,9 @@ const BASE_CARDS = ALL_WITH_EXTRAS.map((p, i) => {
     nationality: p.nacionalidad,
     clubs,
     club: [...clubs].pop(),
+    born: p.nacimiento || null,
+    retired: !isActive(p),
+    league: leagueForClub([...clubs].pop())?.key ?? leagueForClub([...clubs].pop()) ?? null,
   };
 });
 
@@ -144,7 +169,7 @@ const BASE_CARDS = ALL_WITH_EXTRAS.map((p, i) => {
 // 2 categorías, se quedan las 2 primeras y el resto no se agrega. La media
 // va de 0 a 100, y solo UNA carta en todo el juego puede llegar a 100 (la
 // primera que aparezca con ese valor; cualquier otra se topea en 99).
-const REAL_PLAYER_BY_NAME = new Map([...ALL, ...EXTRA_PLAYERS].map((p) => [p.nombre, p]));
+const REAL_PLAYER_BY_NAME = new Map([...ALL, ...EXTRA_PLAYERS, ...CARTAS_EXTRA].map((p) => [p.nombre, p]));
 
 function tierForOvr(ovr) {
   if (ovr >= 88) return TIERS[0]; // estrella
@@ -197,44 +222,63 @@ const BY_NAME = new Map(CARDS.map((c) => [c.name, c]));
 const BY_TIER = Object.fromEntries(TIERS.map((t) => [t.key, BASE_CARDS.filter((c) => c.tier === t.key)]));
 const pub = (c) => ({ name: c.name, realName: c.realName, special: c.special, note: c.note || null, tier: c.tier, tierLabel: c.tierLabel, ovr: c.ovr, pos: c.pos, nationality: c.nationality, club: c.club });
 
-// Calidad de sobre: "weights" alternativos a los de TIERS, para que un sobre
-// ganado por buen rendimiento (o comprado más caro en la tienda) tenga mejor
-// probabilidad de tocar algo bueno, sin dejar de ser el mismo sistema de
-// sobres de 5 cartas de siempre.
-const PACK_QUALITY = {
-  normal: { estrella: 3, oro: 12, plata: 30, bronce: 55 }, // = los weights de TIERS
-  bueno: { estrella: 8, oro: 25, plata: 35, bronce: 32 },
-  top: { estrella: 20, oro: 35, plata: 30, bronce: 15 },
+// Tipos de sobre. Cada uno tiene probabilidades por nivel ("weights"), y
+// opcionalmente un filtro de jugadores (leyendas, promesas, una liga) y/o una
+// carta asegurada (estrella). Si el filtro deja un nivel sin jugadores, ese nivel
+// sale del pool general. Siempre son 5 cartas.
+const W_NORMAL = { estrella: 3, oro: 12, plata: 30, bronce: 55 }; // = los weights de TIERS
+const W_BUENO = { estrella: 8, oro: 25, plata: 35, bronce: 32 };
+const W_TOP = { estrella: 20, oro: 35, plata: 30, bronce: 15 };
+
+const PACKS = {
+  normal: { label: "Sobre normal", desc: "5 cartas al azar.", price: 30, weights: W_NORMAL },
+  bueno: { label: "Sobre bueno", desc: "Más chances de oro y estrella.", price: 90, weights: W_BUENO },
+  top: { label: "Sobre top", desc: "Muy buenas chances de estrella, y una mínima de carta especial.", price: 220, weights: W_TOP, special: 0.06 },
+  estrella: { label: "Sobre estrella", desc: "Una estrella asegurada y cuatro cartas de nivel top. Con más chance de especial.", price: 420, weights: W_TOP, special: 0.12, guarantee: "estrella" },
+  leyendas: { label: "Sobre leyendas", desc: "Solo jugadores retirados, con chances de nivel bueno.", price: 130, weights: W_BUENO, filter: (c) => c.retired },
+  promesas: { label: "Sobre promesas", desc: "Solo jóvenes (nacidos desde 2003), con chances de nivel bueno.", price: 110, weights: W_BUENO, filter: (c) => c.born && c.born >= 2003 },
+  premier: { label: "Sobre Premier", desc: "Jugadores de clubes de la Premier League.", price: 100, weights: W_BUENO, filter: (c) => c.league === "premier" },
+  laliga: { label: "Sobre LaLiga", desc: "Jugadores de clubes de LaLiga.", price: 100, weights: W_BUENO, filter: (c) => c.league === "laliga" },
+  seriea: { label: "Sobre Serie A", desc: "Jugadores de clubes de la Serie A.", price: 100, weights: W_BUENO, filter: (c) => c.league === "seriea" },
+  bundesliga: { label: "Sobre Bundesliga", desc: "Jugadores de clubes de la Bundesliga.", price: 100, weights: W_BUENO, filter: (c) => c.league === "bundesliga" },
 };
 
-// Solo un sobre "top" puede llegar a tocar una carta especial, y con poca
-// chance (6%) — si no, sigue el sorteo normal por tier de siempre.
-const SPECIAL_CHANCE_TOP = 0.06;
-
-function drawCard(quality = "normal") {
-  if (quality === "top" && SPECIAL_CARDS.length > 0 && Math.random() < SPECIAL_CHANCE_TOP) {
-    return SPECIAL_CARDS[Math.floor(Math.random() * SPECIAL_CARDS.length)];
+const FILTERED_POOLS = new Map();
+function poolFor(type, tierKey) {
+  const def = PACKS[type];
+  if (!def?.filter) return BY_TIER[tierKey];
+  const key = `${type}|${tierKey}`;
+  if (!FILTERED_POOLS.has(key)) {
+    const filtered = BY_TIER[tierKey].filter(def.filter);
+    FILTERED_POOLS.set(key, filtered.length ? filtered : BY_TIER[tierKey]);
   }
-  const weights = PACK_QUALITY[quality] || PACK_QUALITY.normal;
-  let r = Math.random() * TIERS.reduce((s, t) => s + (weights[t.key] ?? t.weight), 0);
+  return FILTERED_POOLS.get(key);
+}
+
+const pickOf = (pool) => pool[Math.floor(Math.random() * pool.length)];
+
+// `index` es la posición de la carta dentro del sobre (0 a 4): la carta
+// asegurada de un sobre estrella es la primera.
+function drawCard(type = "normal", index = 1) {
+  const def = PACKS[type] || PACKS.normal;
+  const special = def.special && SPECIAL_CARDS.length > 0 && Math.random() < def.special;
+  if (special) return pickOf(SPECIAL_CARDS);
+  if (def.guarantee && index === 0) return pickOf(poolFor(type, def.guarantee));
+  const weights = def.weights;
+  let r = Math.random() * TIERS.reduce((sum, t) => sum + (weights[t.key] ?? t.weight), 0);
   for (const t of TIERS) {
     r -= weights[t.key] ?? t.weight;
-    if (r <= 0) {
-      const pool = BY_TIER[t.key];
-      return pool[Math.floor(Math.random() * pool.length)];
-    }
+    if (r <= 0) return pickOf(poolFor(type, t.key));
   }
   return CARDS[CARDS.length - 1];
 }
 
-// La calidad de un sobre queda codificada en su `source`: los que arrancan
-// con "top-" (victoria perfecta, campeón del ranking semanal, tienda-top)
-// usan la mejor probabilidad; "bueno-" es la franja intermedia; el resto
-// (diario, reto, vidafutN) sigue siendo el sobre normal de siempre.
+// El tipo de un sobre queda codificado en su `source`: lo que va antes del primer
+// guión ("top-ranking3", "leyendas-tienda1", "estrella-copa4campeon"). Lo demás
+// (diario, reto, vidafutN, juego-…) es el sobre normal de siempre.
 function qualityOf(source) {
-  if (source.startsWith("top-")) return "top";
-  if (source.startsWith("bueno-")) return "bueno";
-  return "normal";
+  const prefix = String(source).split("-")[0];
+  return PACKS[prefix] ? prefix : "normal";
 }
 
 // Sobre por reto del día cumplido (el bonus vive en wordle_results con league 'reto').
@@ -327,7 +371,7 @@ router.post("/open", async (req, res) => {
     const quality = qualityOf(pack.source);
     // Una lectura de lo que ya tenés + una escritura en lote (antes eran 2 idas
     // a la base por carta, 10 en total, y abrir un sobre se sentía lento).
-    const drawn = Array.from({ length: 5 }, () => drawCard(quality));
+    const drawn = Array.from({ length: 5 }, (_, i) => drawCard(quality, i));
     const owned = new Set((await db.execute({ sql: "SELECT player_name FROM user_cards WHERE user_id = ?", args: [req.userId] })).rows.map((r) => r.player_name));
     const cards = drawn.map((c) => {
       const isNew = !owned.has(c.name);
@@ -430,10 +474,14 @@ router.post("/sell", async (req, res) => {
 // Tienda de sobres: se paga con la moneda de vender cartas / SBCs, nunca con
 // dinero real. Un sobre "top" pensado para ser caro a propósito (no es la
 // forma normal de progresar, es un lujo ocasional).
-const SHOP_PRICE = { normal: 30, bueno: 90, top: 220 };
+const SHOP_PRICE = Object.fromEntries(Object.entries(PACKS).map(([k, d]) => [k, d.price]));
 
 router.get("/shop", (req, res) => {
-  res.json({ prices: SHOP_PRICE });
+  res.json({
+    prices: SHOP_PRICE,
+    labels: Object.fromEntries(Object.entries(PACKS).map(([k, d]) => [k, d.label])),
+    descriptions: Object.fromEntries(Object.entries(PACKS).map(([k, d]) => [k, d.desc])),
+  });
 });
 
 router.post("/shop/buy", async (req, res) => {

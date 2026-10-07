@@ -120,8 +120,8 @@ async function sync(week, groupId, today) {
     for (const m of fresh) {
       if (!m.winner || m.b === null) continue;
       // Fase ganada = sobre de cartas: normal en las primeras, bueno en la
-      // semifinal y top para el campeón.
-      if (r === R) await awardCupPack(m.winner, dayOf(r), "top", `copa${groupId}campeon`, WEEKLY_CUP_ROUND_POINTS * r + WEEKLY_CUP_CHAMPION_BONUS);
+      // semifinal y estrella (con estrella asegurada) para el campeón.
+      if (r === R) await awardCupPack(m.winner, dayOf(r), "estrella", `copa${groupId}campeon`, WEEKLY_CUP_ROUND_POINTS * r + WEEKLY_CUP_CHAMPION_BONUS);
       else await awardCupPack(m.winner, dayOf(r), r === R - 1 ? "bueno" : "normal", `copa${groupId}r${r}`, WEEKLY_CUP_ROUND_POINTS * r);
     }
     if (r < R && fresh.length > 0 && fresh.every((m) => m.winner)) {

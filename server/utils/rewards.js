@@ -8,9 +8,8 @@ import { db } from "../db/client.js";
 export const PACK_NAMES = { top: "top", bueno: "bueno", normal: "normal" };
 
 export function packSource(quality, base) {
-  if (quality === "top") return `top-${base}`;
-  if (quality === "bueno") return `bueno-${base}`;
-  return base;
+  // Cualquier tipo de sobre distinto del normal va de prefijo (ver PACKS en routes/cards.js).
+  return quality && quality !== "normal" ? `${quality}-${base}` : base;
 }
 
 // Devuelve true si se entregó un sobre nuevo (false si ya estaba entregado).
