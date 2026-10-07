@@ -323,10 +323,11 @@ async function espnChampions(leagueKey) {
 
 async function espnTeamInfo(leagueKey, teamId) {
   const slug = ESPN_SLUGS[leagueKey];
-  const [roster, lastTable, champs] = await Promise.all([
+  const [roster, lastTable, champs, schedule] = await Promise.all([
     espnGet(`${ESPN_BASE}/site/v2/sports/soccer/${slug}/teams/${teamId}/roster`),
     espnStandingsFor(leagueKey, currentSeason(leagueKey) - 1).catch(() => []),
     espnCached(`espn:champions:${leagueKey}`, 30 * TTL_DAY, () => espnChampions(leagueKey)).catch(() => null),
+    espnGet(`${ESPN_BASE}/site/v2/sports/soccer/${slug}/teams/${teamId}/schedule`).catch(() => null),
   ]);
 
   const season = currentSeason(leagueKey);
@@ -346,6 +347,7 @@ async function espnTeamInfo(leagueKey, teamId) {
     : null;
 
   const squad = (roster.athletes || []).map((a) => ({
+    id: a.id ? Number(a.id) : null,
     name: a.displayName,
     number: a.jersey ? Number(a.jersey) : null,
     position: a.position?.abbreviation ?? null,
@@ -360,6 +362,19 @@ async function espnTeamInfo(leagueKey, teamId) {
       return_date: a.injuries[0].details?.returnDate ?? null,
     }));
 
+  // Últimos resultados y próximos partidos, desde el calendario del equipo.
+  const games = (schedule?.events || []).map((ev) => {
+    const comp = ev.competitions?.[0] || {};
+    const side = (ha) => comp.competitors?.find((c) => c.homeAway === ha) || {};
+    const h = side("home");
+    const a = side("away");
+    const t = (c) => ({ id: Number(c.team?.id), name: c.team?.displayName, logo: c.team?.logos?.[0]?.href ?? null, score: c.score?.displayValue ?? (c.score != null ? String(c.score) : null) });
+    const state = comp.status?.type?.state ?? ev.status?.type?.state;
+    return { id: Number(ev.id), date: ev.date, state, home: t(h), away: t(a), venue: comp.venue?.fullName ?? null };
+  }).sort((x, y) => new Date(x.date) - new Date(y.date));
+  const recent = games.filter((g) => g.state === "post").slice(-5).reverse();
+  const upcoming = games.filter((g) => g.state !== "post").slice(0, 3);
+
   const years = champs?.champions?.[String(teamId)] || [];
   const coach = roster.coach?.[0];
   return {
@@ -367,11 +382,16 @@ async function espnTeamInfo(leagueKey, teamId) {
       id: Number(teamId),
       name: roster.team?.displayName,
       logo: roster.team?.logo ?? null,
+      color: roster.team?.color ? `#${roster.team.color}` : null,
+      standing: roster.team?.standingSummary ?? null,
+      record: roster.team?.recordSummary ?? null,
       coach: coach ? `${coach.firstName ?? ""} ${coach.lastName ?? ""}`.trim() || null : null,
     },
     lastSeason,
     squad,
     injuries,
+    recent,
+    upcoming,
     titles: { count: years.length, years, from: champs?.from ?? null, until: champs?.last ?? null, missing: champs?.missing ?? [] },
   };
 }

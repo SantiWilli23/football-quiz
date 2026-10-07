@@ -6,12 +6,14 @@ import Card from "../components/Card.jsx";
 import LeagueTabs from "../components/LeagueTabs.jsx";
 import FixtureCard from "../components/FixtureCard.jsx";
 import StandingsTable from "../components/StandingsTable.jsx";
-import ScorersList from "../components/ScorersList.jsx";
+import LeadersBoard from "../components/LeadersBoard.jsx";
+import PlayerModal from "../components/PlayerModal.jsx";
 import MonthCalendar from "../components/MonthCalendar.jsx";
 import TeamModal from "../components/TeamModal.jsx";
 import { CHALK } from "../theme.js";
 
 const REFRESH_MS = 60000;
+const NEXT_COUNT = 5;
 const LIVE = new Set(["1H", "2H", "HT", "ET", "BT", "P", "LIVE"]);
 
 const TABS = [
@@ -62,23 +64,26 @@ function FixtureList({ byLeague, leagues, grouped, empty }) {
 export default function Football() {
   const [leagues, setLeagues] = useState([]);
   const [ready, setReady] = useState(false);
-  const [league, setLeague] = useState("chile");
+  const [league, setLeague] = useState("chile"); // solo para Tabla y Goleadores
   const [tab, setTab] = useState("hoy");
   const [pickedDate, setPickedDate] = useState(null); // día elegido en el calendario (null = próximos días)
   const [calOpen, setCalOpen] = useState(false);
   const [team, setTeam] = useState(null);
+  const [player, setPlayer] = useState(null);
+  const [nextMatch, setNextMatch] = useState(null); // próximo partido cuando hoy no hay ninguno
 
   const [todayData, setTodayData] = useState(null); // { [leagueKey]: fixtures[] }
-  const [upcoming, setUpcoming] = useState(null); // [{ date, byLeague }]
+  const [upcoming, setUpcoming] = useState(null); // próximos 5 partidos de cualquier liga
   const [dayData, setDayData] = useState(null); // { [leagueKey]: fixtures[] }
   const [standings, setStandings] = useState(null);
-  const [scorers, setScorers] = useState(null);
+  const [leaders, setLeaders] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const calRef = useRef(null);
 
   const today = todayStr();
-  const grouped = league === "__all";
+  const showAll = tab === "hoy" || tab === "partidos"; // Hoy y Partidos siempre muestran todas las ligas
+  const grouped = showAll;
   const activeKeys = useCallback(() => (grouped ? leagues.map((l) => l.key) : [league]), [grouped, leagues, league]);
 
   useEffect(() => {
@@ -88,36 +93,35 @@ export default function Football() {
       .finally(() => setReady(true));
   }, []);
 
-  // "Todas" solo sirve para partidos; tabla y goleadores son de una liga.
-  useEffect(() => {
-    if ((tab === "tabla" || tab === "goleadores") && league === "__all") setLeague("chile");
-  }, [tab, league]);
-
   const load = useCallback(async () => {
     if (!ready || leagues.length === 0) return;
-    if (league === "__all" && (tab === "tabla" || tab === "goleadores")) return; // el efecto de arriba ya lo pasa a una liga
     setLoading(true);
     setError("");
     try {
       const keys = activeKeys();
       if (tab === "hoy") {
         const res = await Promise.all(keys.map((k) => api.get(`/football/${k}/fixtures`, { params: { date: today } }).then((r) => [k, r.data.fixtures]).catch(() => [k, []])));
-        setTodayData(Object.fromEntries(res));
+        const byLeague = Object.fromEntries(res);
+        setTodayData(byLeague);
+        setNextMatch(null);
+        if (Object.values(byLeague).every((l) => l.length === 0)) {
+          const ups = await Promise.all(keys.map((k) => api.get(`/football/${k}/upcoming`, { params: { from: addDays(today, 1), days: 7 } }).then((r) => r.data.days.flatMap((d) => d.fixtures.map((f) => ({ ...f, leagueKey: k })))).catch(() => [])));
+          const all = ups.flat().filter((f) => f.status === "NS").sort((x, y) => new Date(x.date) - new Date(y.date));
+          setNextMatch(all[0] || false);
+        }
       } else if (tab === "partidos" && pickedDate) {
         const res = await Promise.all(keys.map((k) => api.get(`/football/${k}/fixtures`, { params: { date: pickedDate } }).then((r) => [k, r.data.fixtures]).catch(() => [k, []])));
         setDayData(Object.fromEntries(res));
       } else if (tab === "partidos") {
-        const from = addDays(today, 1);
-        const res = await Promise.all(keys.map((k) => api.get(`/football/${k}/upcoming`, { params: { from, days: 2 } }).then((r) => [k, r.data.days]).catch(() => [k, []])));
-        const byDate = {};
-        for (const [k, days] of res) for (const d of days) (byDate[d.date] ||= {})[k] = d.fixtures;
-        setUpcoming([from, addDays(from, 1)].map((date) => ({ date, byLeague: byDate[date] || {} })));
+        const res = await Promise.all(keys.map((k) => api.get(`/football/${k}/upcoming`, { params: { from: today, days: 7 } }).then((r) => r.data.days.flatMap((day) => day.fixtures.map((f) => ({ ...f, leagueKey: k })))).catch(() => [])));
+        const now = Date.now();
+        setUpcoming(res.flat().filter((f) => f.status === "NS" && new Date(f.date).getTime() > now).sort((x, y) => new Date(x.date) - new Date(y.date)).slice(0, NEXT_COUNT));
       } else if (tab === "tabla") {
         const { data } = await api.get(`/football/${league}/standings`);
         setStandings(data.table);
       } else if (tab === "goleadores") {
-        const { data } = await api.get(`/football/${league}/scorers`);
-        setScorers(data.scorers);
+        const { data } = await api.get(`/football/${league}/leaders`);
+        setLeaders(data);
       }
     } catch (err) {
       setError(err.response?.data?.error || "No se pudo cargar la información");
@@ -144,17 +148,24 @@ export default function Football() {
   }, [calOpen]);
 
   const activeLeague = leagues.find((l) => l.key === league);
-  const showAll = tab === "hoy" || tab === "partidos";
   const anyLive = tab === "hoy" && todayData && Object.values(todayData).some((l) => l.some((f) => LIVE.has(f.status)));
+
+  if (team) {
+    return (
+      <Layout wide>
+        <TeamModal league={league} team={team} onClose={() => setTeam(null)} />
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
       <div className="mb-6">
         <h1 className="text-xl sm:text-2xl font-bold mb-1">En vivo</h1>
-        <p className="text-gray-400 text-sm">Los partidos de hoy, los próximos días, la tabla y los goleadores de las principales ligas.</p>
+        <p className="text-gray-400 text-sm">Los partidos de hoy, los próximos partidos de todas las ligas, la tabla y los líderes de cada liga.</p>
       </div>
 
-      <LeagueTabs leagues={leagues} active={league} onChange={setLeague} showAll={showAll} />
+      {!showAll && <LeagueTabs leagues={leagues} active={league} onChange={setLeague} showAll={false} />}
 
       <div className="flex items-center gap-2 mb-6 flex-wrap">
         {TABS.map(({ key, label, icon: Icon }) => (
@@ -210,7 +221,16 @@ export default function Football() {
         {error && !loading && <p className="text-sm text-red-400">{error}</p>}
 
         {!loading && !error && tab === "hoy" && todayData && (
-          <FixtureList byLeague={todayData} leagues={leagues} grouped={grouped} empty={grouped ? "Hoy no hay partidos en ninguna liga." : "Hoy no hay partidos en esta liga."} />
+          <>
+            <FixtureList byLeague={todayData} leagues={leagues} grouped={grouped} empty="Hoy no hay partidos en ninguna liga." />
+            {nextMatch && (
+              <div className="mt-4">
+                <p className="text-sm font-medium mb-2">El próximo partido es {formatDate(localIso(new Date(nextMatch.date)), { weekday: "long", day: "numeric", month: "long" })} a las {new Date(nextMatch.date).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })} · {leagues.find((l) => l.key === nextMatch.leagueKey)?.name}</p>
+                <FixtureCard fixture={nextMatch} />
+              </div>
+            )}
+            {nextMatch === false && <p className="text-xs text-gray-500 mt-2">Tampoco hay partidos programados en los próximos 7 días.</p>}
+          </>
         )}
 
         {!loading && !error && tab === "partidos" && pickedDate && dayData && (
@@ -221,11 +241,15 @@ export default function Football() {
         )}
 
         {!loading && !error && tab === "partidos" && !pickedDate && upcoming && (
-          <div className="space-y-6">
-            {upcoming.map(({ date, byLeague }) => (
-              <div key={date}>
-                <p className="text-sm font-medium mb-3">{formatDate(date)}</p>
-                <FixtureList byLeague={byLeague} leagues={leagues} grouped={grouped} empty="No hay partidos programados ese día." />
+          <div className="space-y-3">
+            <p className="text-xs text-gray-500">Los próximos {NEXT_COUNT} partidos de cualquier liga.</p>
+            {upcoming.length === 0 && <p className="text-sm text-gray-500">No hay partidos programados en los próximos 7 días.</p>}
+            {upcoming.map((fx) => (
+              <div key={fx.id}>
+                <p className="text-xs text-gray-500 mb-1">
+                  {formatDate(localIso(new Date(fx.date)), { weekday: "short", day: "numeric", month: "short" })} · {new Date(fx.date).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })} · {leagues.find((l) => l.key === fx.leagueKey)?.name}
+                </p>
+                <FixtureCard fixture={fx} />
               </div>
             ))}
           </div>
@@ -233,14 +257,19 @@ export default function Football() {
 
         {!loading && !error && tab === "tabla" && standings && (
           <>
-            <p className="text-xs text-gray-500 mb-3">Tocá un equipo para ver su ficha: liga pasada, plantilla, lesiones y títulos.</p>
+            <p className="text-xs text-gray-500 mb-3">Tocá un equipo para ver su página: liga pasada, resultados, plantilla, lesiones y títulos.</p>
             <StandingsTable table={standings} onTeamClick={setTeam} />
           </>
         )}
-        {!loading && !error && tab === "goleadores" && scorers && <ScorersList scorers={scorers} />}
+        {!loading && !error && tab === "goleadores" && leaders && (
+          <>
+            <p className="text-xs text-gray-500 mb-4">Tocá un jugador para ver su carrera: clubes, temporadas y datos.</p>
+            <LeadersBoard data={leaders} onPick={(p) => setPlayer(p)} />
+          </>
+        )}
       </Card>
 
-      {team && <TeamModal league={league} team={team} onClose={() => setTeam(null)} />}
+      {player && <PlayerModal playerId={player.id} fallback={player} onClose={() => setPlayer(null)} />}
     </Layout>
   );
 }

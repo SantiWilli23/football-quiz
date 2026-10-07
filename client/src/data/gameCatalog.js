@@ -25,7 +25,7 @@ const ALL_FAMILY_ORDER = ["solo", "grupo", "reloj", "pronostico", "carrera"];
 const ALL_GAMES = [
   // ---- Solo ----
   { to: "/fulbodle", label: "Fichado", icon: Target, description: "Adiviná al futbolista secreto con colores, número de parecido, ligas y dificultades. Diario o aleatorio; la partida suma al reto semanal del grupo.", family: "solo", daily: true, weekly: true, available: true },
-  { to: "/copa-semanal", label: "Copa semanal", icon: Trophy, description: "Anotate de lunes a jueves; de viernes a domingo se juega a eliminación por puntos de cada día.", family: "grupo", available: true },
+  { to: "/copa-semanal", label: "Copa semanal", icon: Trophy, description: "Anotate de lunes a jueves; de viernes a domingo se juega a eliminación por puntos de cada día.", family: "grupo", weekly: true, available: true },
   { to: "/mercado", label: "Mercado de pases", icon: Repeat, description: "Predecí a dónde juega cada figura, en Europa o en Chile. Abre solo al inicio y al final de cada temporada.", family: "pronostico", feature: "temporada", available: true },
   { to: "/cartas", label: "Cartas", icon: Layers, description: "Abrí sobres con los 2000 jugadores, armá tu once y jugá partidos: la química sale de los clubes que compartieron.", family: "grupo", available: true },
   { to: "/escudos", label: "Escudos a ciegas", icon: ShieldCheck, description: "Práctica con pistas o reto semanal sin pistas: adiviná el club solo por el escudo borroso.", family: "solo", daily: true, available: true },
@@ -37,7 +37,7 @@ const ALL_GAMES = [
   // ---- Con amigos ----
   { to: "/quien-sabe-mas", label: "¿Quién sabe más de fútbol?", icon: Brain, description: "Elegí entre Duelos, Mentiroso, Equipo-Jugador, ¿Quién es? (solo o en vivo) y Supervivencia.", family: "grupo", available: true },
   { to: "/copa-8a2", label: "Copa 8a2", icon: Trophy, description: "Torneo de eliminación directa del grupo: cada uno arma su equipo draftando jugadores reales.", family: "grupo", available: true },
-  { to: "/fantasyfiction", label: "FantasyFiction", icon: TrendingUp, description: "Liga simulada con todo tu grupo: jornadas semanales y dos mercados de pases por semana apenas se sumen todos.", family: "grupo", available: true },
+  { to: "/fantasyfiction", label: "FantasyFiction", icon: TrendingUp, description: "Liga simulada con todo tu grupo: jornadas semanales y dos mercados de pases por semana apenas se sumen todos.", family: "grupo", weekly: true, available: true },
   { to: "/dt-liga", label: "Modo DT Online", icon: Users, description: "Armá una liga con amigos: cada uno elige un club real y compite temporada a temporada.", family: "grupo", weekly: true, available: true },
 
   // ---- Contrarreloj ----

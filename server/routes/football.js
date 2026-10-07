@@ -11,6 +11,7 @@ import {
   getTopScorers,
   isConfigured,
 } from "../utils/football-api.js";
+import { getLeaders, getPlayer } from "../utils/espn-players.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -51,6 +52,28 @@ function publicFixture(f) {
     score: { home: f.goals.home, away: f.goals.away },
   };
 }
+
+// Ficha de carrera de un jugador (clubes, temporadas, datos personales).
+router.get("/players/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: "Falta el jugador" });
+  try {
+    res.json(await getPlayer(id));
+  } catch {
+    res.status(502).json({ error: "No se pudo cargar la ficha del jugador" });
+  }
+});
+
+// Top 5 de goles, asistencias y participaciones en gol por partido.
+router.get("/:league/leaders", async (req, res) => {
+  const league = requireLeague(req, res);
+  if (!league) return;
+  try {
+    res.json(await getLeaders(league));
+  } catch {
+    res.status(502).json({ error: "No se pudieron cargar los líderes" });
+  }
+});
 
 router.get("/leagues", (req, res) => {
   res.json({
