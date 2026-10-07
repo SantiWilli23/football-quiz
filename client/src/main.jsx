@@ -8,8 +8,14 @@ import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { ToastProvider } from "./context/ToastContext.jsx";
 import { applyStoredDensity } from "./utils/density.js";
 import "./index.css";
+import { polyfillCountryFlagEmojis } from "country-flag-emoji-polyfill";
+import flagFontUrl from "country-flag-emoji-polyfill/dist/TwemojiCountryFlags.woff2?url";
 
 applyStoredDensity();
+
+// Windows no trae banderas emoji (muestra "AR", "NL"...): si el navegador no
+// las dibuja, se carga una fuente solo con banderas (servida desde la app).
+polyfillCountryFlagEmojis("Twemoji Country Flags", flagFontUrl);
 
 // Registrar el service worker de una vez (no solo cuando el usuario activa
 // push, como era antes) para que la PWA sea instalable y funcione el modo

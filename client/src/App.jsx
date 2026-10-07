@@ -51,6 +51,9 @@ const ArbitrajeVar = lazy(() => import("./pages/ArbitrajeVar.jsx"));
 const GlobalRanking = lazy(() => import("./pages/GlobalRanking.jsx"));
 const QuienSabeMas = lazy(() => import("./pages/QuienSabeMas.jsx"));
 const VidaFut = lazy(() => import("./pages/VidaFut.jsx"));
+const Tateti = lazy(() => import("./pages/Tateti.jsx"));
+const Piramide = lazy(() => import("./pages/Piramide.jsx"));
+const Torta = lazy(() => import("./pages/Torta.jsx"));
 
 function RouteFallback() {
   return (
@@ -321,6 +324,30 @@ export default function App() {
         element={
           <PrivateRoute>
             <VidaFut />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/tateti"
+        element={
+          <PrivateRoute>
+            <Tateti />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/piramide"
+        element={
+          <PrivateRoute>
+            <Piramide />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/torta"
+        element={
+          <PrivateRoute>
+            <Torta />
           </PrivateRoute>
         }
       />

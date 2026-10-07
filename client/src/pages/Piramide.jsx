@@ -1,0 +1,208 @@
+import { useState } from "react";
+import { HelpCircle, Triangle } from "lucide-react";
+import api from "../api.js";
+import Card from "../components/Card.jsx";
+import { GameHeader, Layout, OptionRow, PreGame, ShareResult } from "../futgames/Shell.jsx";
+import { loadGame, recordResult, saveGame } from "../futgames/storage.js";
+import { playSfx } from "../utils/sfx.js";
+
+// Pirámide: 10 jugadores aparecen de a uno y hay que ubicarlos de mayor (1,
+// arriba) a menor (10) según la estadística del día, sin saber quién viene.
+// Después se puede reordenar (arrastrar o tocar dos casillas) y enviar.
+const GAME = "piramide";
+const today = () => new Date().toISOString().slice(0, 10);
+const ROWS = [[0], [1, 2], [3, 4, 5], [6, 7, 8, 9]];
+const TIER_LABEL = { 1: "la fila de arriba (puesto 1)", 2: "la 2ª fila (puestos 2-3)", 3: "la 3ª fila (puestos 4-6)", 4: "la fila de abajo (puestos 7-10)" };
+
+export default function Piramide() {
+  const [mode, setMode] = useState("normal");
+  const [state, setState] = useState(() => loadGame(GAME, today()));
+  // state: { mode, category, unit, players:[{id,name,detail,tier}], next, slots[10], selected, helpUsed, help, status, result }
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [drag, setDrag] = useState(null);
+
+  function persist(next) {
+    setState(next);
+    saveGame(GAME, today(), next);
+  }
+
+  async function start() {
+    setBusy(true);
+    setError("");
+    try {
+      const { data } = await api.get("/futgames/pyramid", { params: { mode } });
+      persist({ mode, category: data.category, unit: data.unit, players: data.players, next: 0, slots: Array(10).fill(null), selected: null, helpUsed: false, help: null, status: "playing", result: null });
+    } catch {
+      setError("No se pudo cargar la pirámide. Probá de nuevo.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const byId = state ? Object.fromEntries(state.players.map((p) => [p.id, p])) : {};
+  const current = state && state.next < state.players.length ? state.players[state.next] : null;
+  const allPlaced = state && state.slots.every(Boolean);
+  const playing = state?.status === "playing";
+
+  function move(from, to) {
+    const slots = [...state.slots];
+    [slots[from], slots[to]] = [slots[to], slots[from]];
+    persist({ ...state, slots, selected: null });
+  }
+
+  function clickSlot(i) {
+    if (!playing) return;
+    const sel = state.selected;
+    if (sel != null) {
+      if (sel === i) return persist({ ...state, selected: null });
+      return move(sel, i);
+    }
+    if (!state.slots[i] && current) {
+      const slots = [...state.slots];
+      slots[i] = current.id;
+      playSfx("tick");
+      return persist({ ...state, slots, next: state.next + 1 });
+    }
+    if (state.slots[i]) persist({ ...state, selected: i });
+  }
+
+  async function useHelp() {
+    if (state.helpUsed) return;
+    try {
+      const { data } = await api.post("/futgames/pyramid/help", { placement: state.slots });
+      persist({ ...state, helpUsed: true, help: data.correct });
+    } catch {
+      setError("No se pudo pedir la ayuda.");
+    }
+  }
+
+  async function submit() {
+    setBusy(true);
+    try {
+      const { data } = await api.post("/futgames/pyramid/submit", { placement: state.slots });
+      const next = { ...state, status: "done", result: data, selected: null };
+      persist(next);
+      recordResult(GAME, today(), { won: data.correct === 10, bucket: data.correct });
+      playSfx(data.correct >= 7 ? "win" : "bad");
+    } catch {
+      setError("No se pudo enviar. Probá de nuevo.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const shareText = state?.result
+    ? `⚽ Futotal · Pirámide ${today()}\n` +
+      ROWS.map((row) => row.map((i) => (state.result.slots[i].correct ? "🟩" : "🟥")).join("")).join("\n") +
+      `\n${state.result.correct}/10`
+    : "";
+
+  return (
+    <Layout>
+      <GameHeader game={GAME} title="Pirámide" subtitle="Ordená 10 jugadores de mayor a menor." icon={Triangle} distLabel="aciertos" />
+
+      {!state && (
+        <PreGame
+          busy={busy}
+          onStart={start}
+          how={[
+            "Arriba ves la estadística del día. La casilla 1 es el valor más alto; la 10, el más bajo.",
+            "Los jugadores aparecen de a uno: ubicá cada uno en una casilla libre antes de ver al siguiente.",
+            "Podés reordenar cuando quieras: arrastrá o tocá dos casillas para intercambiarlas.",
+            "Una ayuda por partida: te dice cuántos están bien ubicados (no cuáles).",
+          ]}
+        >
+          <OptionRow label="Modo" value={mode} onChange={setMode} options={[["facil", "Fácil · te dice la fila"], ["normal", "Normal · sin pistas"]]} />
+          {error && <p className="text-sm text-red-400">{error}</p>}
+        </PreGame>
+      )}
+
+      {state && (
+        <div className="space-y-4">
+          <Card variant="feature" className="text-center">
+            <p className="t-eyebrow">Estadística del día</p>
+            <p className="text-lg font-bold">{state.category}</p>
+          </Card>
+
+          {playing && current && (
+            <Card className="text-center">
+              <p className="text-xs text-gray-400">Siguiente jugador ({state.next + 1}/10)</p>
+              <p className="text-xl font-bold">{current.name}</p>
+              {current.detail && <p className="text-xs text-gray-400">{current.detail}</p>}
+              {current.tier && <p className="text-xs text-accent mt-1">Va en {TIER_LABEL[current.tier]}</p>}
+              <p className="text-xs text-gray-500 mt-2">Tocá una casilla libre para ubicarlo.</p>
+            </Card>
+          )}
+
+          <div className="space-y-2" aria-label="Pirámide">
+            {ROWS.map((row, r) => (
+              <div key={r} className="flex justify-center gap-2">
+                {row.map((i) => {
+                  const id = state.slots[i];
+                  const p = id ? byId[id] : null;
+                  const res = state.result?.slots[i];
+                  const selected = state.selected === i;
+                  return (
+                    <button
+                      key={i}
+                      draggable={playing && !!id}
+                      onDragStart={() => setDrag(i)}
+                      onDragOver={(e) => playing && e.preventDefault()}
+                      onDrop={() => { if (drag != null && drag !== i) move(drag, i); setDrag(null); }}
+                      onClick={() => clickSlot(i)}
+                      aria-label={p ? `Casilla ${i + 1}: ${p.name}` : `Casilla ${i + 1}: vacía`}
+                      className={`w-[23%] max-w-[120px] min-h-[76px] rounded-xl border p-1.5 flex flex-col items-center justify-center text-center transition-colors ${
+                        res ? (res.correct ? "border-emerald-500/60 bg-emerald-500/15" : "border-red-500/60 bg-red-500/15")
+                          : selected ? "border-accent bg-accent/20"
+                          : p ? "border-border bg-panel hover:border-white/30"
+                          : "border-dashed border-border bg-bg hover:border-accent/50"
+                      }`}
+                    >
+                      <span className="text-[10px] text-gray-500 tabular-nums">{i + 1}</span>
+                      {p && <span className="text-[11px] font-semibold leading-tight line-clamp-2">{p.name}</span>}
+                      {res && (
+                        <span className="text-[10px] text-gray-300 tabular-nums">
+                          {res.value} {res.correct ? "" : `· va ${res.first === res.last ? res.first : `${res.first}-${res.last}`}`}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          {playing && (
+            <div className="flex gap-2 justify-center flex-wrap">
+              <button
+                onClick={useHelp}
+                disabled={state.helpUsed}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-card border border-border text-xs font-medium text-gray-300 hover:text-white disabled:opacity-50"
+              >
+                <HelpCircle size={14} /> {state.helpUsed ? `Ayuda: ${state.help} bien ubicados` : "Ayuda (1 vez)"}
+              </button>
+              <button
+                onClick={submit}
+                disabled={!allPlaced || busy}
+                className="px-5 py-2 rounded-card bg-accent text-onaccent text-sm font-semibold hover:opacity-90 disabled:opacity-40"
+              >
+                Enviar
+              </button>
+            </div>
+          )}
+          {error && <p className="text-sm text-red-400 text-center">{error}</p>}
+
+          {state.result && (
+            <Card className="text-center py-6 space-y-3">
+              <p className="text-2xl font-bold">{state.result.correct}/10 bien ubicados</p>
+              <p className="text-xs text-gray-400">Valores en {state.unit}. En rojo, la casilla donde iba.</p>
+              <ShareResult text={shareText} />
+              <p className="text-xs text-gray-500">Mañana hay una pirámide nueva.</p>
+            </Card>
+          )}
+        </div>
+      )}
+    </Layout>
+  );
+}
