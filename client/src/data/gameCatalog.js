@@ -29,9 +29,9 @@ const ALL_GAMES = [
   { to: "/mercado", label: "Mercado de pases", icon: Repeat, description: "Predecí a dónde juega cada figura, en Europa o en Chile. Abre solo al inicio y al final de cada temporada.", family: "pronostico", feature: "temporada", available: true },
   { to: "/cartas", label: "Cartas", icon: Layers, description: "Abrí sobres con los 2000 jugadores, armá tu once y jugá partidos: la química sale de los clubes que compartieron.", family: "grupo", available: true },
   { to: "/escudos", label: "Escudos a ciegas", icon: ShieldCheck, description: "Práctica con pistas o reto semanal sin pistas: adiviná el club solo por el escudo borroso.", family: "solo", daily: true, available: true },
-  { to: "/tateti", label: "Tateti", icon: Grid3x3, description: "Tablero 3x3 del día: un jugador que haya pasado por el club (o sea de la selección) de la fila y el club de la columna.", family: "solo", available: true },
-  { to: "/piramide", label: "Pirámide", icon: Triangle, description: "Ordená 10 jugadores de mayor a menor según la estadística del día, sin saber quién viene después.", family: "solo", available: true },
-  { to: "/torta", label: "Torta de plantel", icon: PieChart, description: "Adiviná el club por la torta de nacionalidades de sus jugadores, en 3 intentos.", family: "solo", available: true },
+  { to: "/tateti", label: "Tateti", icon: Grid3x3, description: "Tablero 3x3 del día: un jugador que haya pasado por el club (o sea de la selección) de la fila y el club de la columna.", family: "solo", daily: true, available: true },
+  { to: "/piramide", label: "Pirámide", icon: Triangle, description: "Ordená 10 jugadores de mayor a menor según la estadística del día, sin saber quién viene después.", family: "solo", daily: true, available: true },
+  { to: "/torta", label: "Torta de plantel", icon: PieChart, description: "Adiviná el club por la torta de nacionalidades de sus jugadores, en 3 intentos.", family: "solo", daily: true, available: true },
   { href: "/draft-europeo.html", label: "8a2", icon: Star, description: "Armá tu XI con jugadores de 138 planteles históricos de la Champions League.", family: "solo", daily: true, available: true },
 
   // ---- Con amigos ----
@@ -79,11 +79,11 @@ export function gamesByFamily(familyKey) {
   return GAMES.filter((g) => g.family === familyKey);
 }
 
-// Los siete juegos diarios (todos pagan el mismo tope de puntos por día).
+// Los diez juegos diarios (todos pagan el mismo tope de puntos por día).
 export const DAILY_GAMES = GAMES.filter((g) => g.daily);
 
 // La pantalla de Juegos tiene tres bloques:
-//  - Arriba, en la casilla grande: el juego diario de hoy (uno de los siete, rota).
+//  - Arriba, en la casilla grande: el juego diario de hoy (uno de los diez, rota).
 //  - "Con amigos": la familia de grupo.
 //  - "Fútbol 12": todos los demás juegos, incluido el diario de hoy (se repite
 //    a propósito: arriba es el destacado y acá sigue en su lugar).

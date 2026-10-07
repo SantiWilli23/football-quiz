@@ -5,6 +5,7 @@ import Card from "../components/Card.jsx";
 import Autocomplete from "../futgames/Autocomplete.jsx";
 import { GameHeader, Layout, OptionRow, PreGame, ShareResult } from "../futgames/Shell.jsx";
 import { loadGame, recordResult, saveGame } from "../futgames/storage.js";
+import { reportResult } from "../futgames/report.js";
 import { playSfx } from "../utils/sfx.js";
 
 // Torta de plantel: una torta con las nacionalidades de los jugadores (de la
@@ -85,6 +86,23 @@ export default function Torta() {
   const [error, setError] = useState("");
 
   const over = state && state.status !== "playing";
+
+  // Al terminar (una sola vez): puntos/sobre del juego diario + Historial.
+  const [dailyMsg, setDailyMsg] = useState("");
+  useEffect(() => {
+    if (!state || state.status === "playing" || state.reported) return;
+    const next = { ...state, reported: true };
+    setState(next);
+    saveGame(GAME, today(), next);
+    reportResult("torta", {
+      // Acertar en el 1º intento = 1; en el 2º = 2/3; en el 3º = 1/3; no acertar = 0.
+      fraction: state.status === "win" ? (MAX + 1 - state.guesses.length) / MAX : 0,
+      score: state.status === "win" ? MAX + 1 - state.guesses.length : 0,
+      difficulty: state.mode === "random" ? 3 : 2,
+      detail: state.status === "win" ? `Acertado en ${state.guesses.length}/${MAX}` : "No salió",
+    }).then(setDailyMsg);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.status]);
 
   async function fetchPuzzle() {
     const { data: d } = await api.get("/futgames/squad");
@@ -233,6 +251,7 @@ export default function Torta() {
               <Shirt size={22} className="mx-auto text-accent" />
               <p className="text-2xl font-bold">{state.status === "win" ? "¡Acertaste!" : "Sin intentos"}</p>
               <p className="text-gray-400 text-sm">Era <span className="text-white font-semibold">{reveal?.club || "…"}</span></p>
+              {dailyMsg && <p className="text-sm text-accent">{dailyMsg}</p>}
               <ShareResult text={shareText} />
               <p className="text-xs text-gray-500">Mañana hay otro club.</p>
             </Card>

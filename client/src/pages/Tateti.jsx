@@ -5,6 +5,7 @@ import Card from "../components/Card.jsx";
 import Autocomplete from "../futgames/Autocomplete.jsx";
 import { GameHeader, Layout, OptionRow, PreGame, ShareResult } from "../futgames/Shell.jsx";
 import { loadGame, recordResult, saveGame } from "../futgames/storage.js";
+import { reportResult } from "../futgames/report.js";
 import { playSfx } from "../utils/sfx.js";
 
 // Tateti futbolero: tablero 3x3 con clubes/selecciones en filas y columnas;
@@ -42,6 +43,22 @@ export default function Tateti() {
 
   const playing = state && state.status === "playing";
   const over = state && state.status !== "playing";
+
+  // Al terminar (una sola vez): puntos/sobre del juego diario + Historial.
+  const [dailyMsg, setDailyMsg] = useState("");
+  useEffect(() => {
+    if (!state || state.status === "playing" || state.reported) return;
+    const next = { ...state, reported: true };
+    setState(next);
+    saveGame(GAME, today(), next);
+    reportResult("tateti", {
+      fraction: state.cells.filter(Boolean).length / 9,
+      score: state.cells.filter(Boolean).length,
+      difficulty: state.mode === "medio" ? 4 : 2,
+      detail: `${state.cells.filter(Boolean).length}/9 casillas · ${state.mode === "medio" ? "medio" : "fácil"}`,
+    }).then(setDailyMsg);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.status]);
 
   // Si hay partida guardada de hoy, cargar su tablero directamente.
   useEffect(() => {
@@ -263,6 +280,7 @@ export default function Tateti() {
             <Card className="text-center py-6 space-y-3">
               <p className="text-2xl font-bold">{state.status === "win" ? "¡Tablero completo!" : state.status === "time" ? "Se acabó el tiempo" : state.status === "lose" ? "Sin errores restantes" : "Partida terminada"}</p>
               <p className="text-gray-400 text-sm">{score}/9 casillas · {answers ? "En las vacías ves respuestas posibles." : ""}</p>
+              {dailyMsg && <p className="text-sm text-accent">{dailyMsg}</p>}
               <ShareResult text={shareText} />
               <p className="text-xs text-gray-500">Mañana hay un tablero nuevo.</p>
             </Card>

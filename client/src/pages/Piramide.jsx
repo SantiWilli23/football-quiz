@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { HelpCircle, Triangle } from "lucide-react";
 import api from "../api.js";
 import Card from "../components/Card.jsx";
 import { GameHeader, Layout, OptionRow, PreGame, ShareResult } from "../futgames/Shell.jsx";
 import { loadGame, recordResult, saveGame } from "../futgames/storage.js";
+import { reportResult } from "../futgames/report.js";
 import { playSfx } from "../utils/sfx.js";
 
 // Pirámide: 10 jugadores aparecen de a uno y hay que ubicarlos de mayor (1,
@@ -44,6 +45,22 @@ export default function Piramide() {
   const current = state && state.next < state.players.length ? state.players[state.next] : null;
   const allPlaced = state && state.slots.every(Boolean);
   const playing = state?.status === "playing";
+
+  // Al terminar (una sola vez): puntos/sobre del juego diario + Historial.
+  const [dailyMsg, setDailyMsg] = useState("");
+  useEffect(() => {
+    if (!state || state.status === "playing" || state.reported) return;
+    const next = { ...state, reported: true };
+    setState(next);
+    saveGame(GAME, today(), next);
+    reportResult("piramide", {
+      fraction: (state.result?.correct || 0) / 10,
+      score: state.result?.correct || 0,
+      difficulty: state.mode === "facil" ? 2 : 3,
+      detail: `${state.result?.correct || 0}/10 · ${state.category}`,
+    }).then(setDailyMsg);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.status]);
 
   function move(from, to) {
     const slots = [...state.slots];
@@ -197,6 +214,7 @@ export default function Piramide() {
             <Card className="text-center py-6 space-y-3">
               <p className="text-2xl font-bold">{state.result.correct}/10 bien ubicados</p>
               <p className="text-xs text-gray-400">Valores en {state.unit}. En rojo, la casilla donde iba.</p>
+              {dailyMsg && <p className="text-sm text-accent">{dailyMsg}</p>}
               <ShareResult text={shareText} />
               <p className="text-xs text-gray-500">Mañana hay una pirámide nueva.</p>
             </Card>

@@ -3,8 +3,8 @@ import { addDays, mondayOf } from "./points.js";
 import { DAILY_GAME_MAX_POINTS, WEEKLY_GAME_RANK_POINTS } from "./points-config.js";
 import { WEEKLY_PODIUM_PACKS, dailyPackQuality, grantPack } from "./rewards.js";
 
-// Los siete juegos que se turnan como "juego diario": cada día es UNO solo (ver
-// dailyGameKeyFor), y ese paga hasta DAILY_GAME_MAX_POINTS. Los otros seis ese
+// Los diez juegos que se turnan como "juego diario": cada día es UNO solo (ver
+// dailyGameKeyFor), y ese paga hasta DAILY_GAME_MAX_POINTS. Los otros nueve ese
 // día se juegan igual, pero no suman al juego diario.
 // "level" es la dificultad en la que cuenta el puntaje del día (todos en la
 // media, salvo Cotrero que no tiene niveles).
@@ -18,9 +18,12 @@ export const DAILY_GAMES = [
   { key: "draft_europeo", label: "8a2", to: "/draft-europeo.html", level: "Clásico" },
   { key: "un_minuto", label: "Un Minuto", to: "/un-minuto", level: "Ultra difícil" },
   { key: "arbitraje_var", label: "Arbitraje / VAR", to: "/arbitraje-var", level: null },
+  { key: "tateti", label: "Tateti", to: "/tateti", level: null },
+  { key: "piramide", label: "Pirámide", to: "/piramide", level: null },
+  { key: "torta", label: "Torta de plantel", to: "/torta", level: null },
 ];
 
-// El juego diario de una fecha: rota por los siete en orden, un día cada uno.
+// El juego diario de una fecha: rota por los diez en orden, un día cada uno.
 // Lo decide el servidor, así que todos los miembros juegan el mismo.
 export function dailyGameKeyFor(dateStr) {
   const day = Math.floor(Date.parse(dateStr + "T00:00:00Z") / 86400000);
@@ -28,7 +31,7 @@ export function dailyGameKeyFor(dateStr) {
 }
 
 // Los que mandan su resultado desde el cliente (fichado y quiniela no).
-export const SUBMITTABLE_DAILY = new Set(["cotrero", "escudos", "draft_europeo", "un_minuto", "arbitraje_var"]);
+export const SUBMITTABLE_DAILY = new Set(["cotrero", "escudos", "draft_europeo", "un_minuto", "arbitraje_var", "tateti", "piramide", "torta"]);
 
 export function pointsFromFraction(fraction) {
   const f = Number(fraction);

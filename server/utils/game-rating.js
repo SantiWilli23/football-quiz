@@ -16,4 +16,7 @@ export const GAME_LABELS = {
   quien_es: "¿Quién es?",
   fichado: "Fichado",
   duelos: "Duelos",
+  tateti: "Tateti",
+  piramide: "Pirámide",
+  torta: "Torta de plantel",
 };

@@ -35,7 +35,7 @@ export const HELP = [
     WEEKLY,
   ]) },
   { match: "/juegos", ...H("Juegos", "Arriba, el juego diario de hoy; después «Con amigos» y «Fútbol 12» (todos los demás, incluido el diario).", [
-    "El juego diario cambia cada día (rota entre siete): una partida da hasta 20 puntos y un sobre de cartas (normal, bueno o top según tu rendimiento). Los demás juegos dan un sobre normal por jugar. Los demás juegos se juegan libres ese día.",
+    "El juego diario cambia cada día (rota entre diez): una partida da hasta 20 puntos y un sobre de cartas (normal, bueno o top según tu rendimiento). Los demás juegos dan un sobre normal por jugar. Los demás juegos se juegan libres ese día.",
     "La semana se suma: el 1° del grupo gana +30 puntos y un sobre top, el 2° +20 y uno bueno, el 3° +10 y uno normal. La Copa semanal da puntos y sobre por cada fase ganada.",
     "Cada juego tiene su propio «?» con las reglas y cómo puntúa.",
   ]) },
