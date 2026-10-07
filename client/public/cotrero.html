@@ -33,6 +33,33 @@
 
   .wrap { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; }
 
+  /* Pantallas anchas: antes quedaba una columna de 760px con los costados
+     vacíos. Desde 900px el juego usa casi todo el ancho, con tipografía un
+     poco más grande y el inicio repartido en columnas. */
+  @media (min-width: 900px) {
+    .wrap { max-width: min(1240px, 94vw); padding: 28px clamp(24px, 4vw, 56px) 72px; }
+    .hero-title { font-size: 52px; }
+    .hero-sub { font-size: 16px; max-width: 560px; }
+    #screen-mode .hero-block { display: grid; grid-template-columns: 1.2fr 1fr; column-gap: 48px; align-items: center; padding-bottom: 34px; }
+    #screen-mode .hero-block > .hero-eyebrow,
+    #screen-mode .hero-block > .hero-title,
+    #screen-mode .hero-block > .hero-sub { grid-column: 1; }
+    #screen-mode .hero-block > .hero-card { grid-column: 2; grid-row: 1 / span 3; flex-direction: column; align-items: flex-start; padding: 26px; gap: 18px; margin-bottom: 0; }
+    #screen-mode .hero-block > .hero-card .hstats { margin-left: 0; gap: 28px; width: 100%; justify-content: space-between; }
+    #screen-mode .hero-block > .hero-card .htitle { font-size: 18px; }
+    #screen-mode .hero-block > .hero-card .hstat b { font-size: 24px; }
+    #screen-mode .hero-block > .hero-footer-row { grid-column: 1 / -1; margin-top: 22px; }
+    #screen-mode .panel > .mode-card { margin-bottom: 0; }
+    #screen-mode .panel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    #screen-mode .panel > h2,
+    #screen-mode .panel > .sub,
+    #screen-mode .panel > .btn-block { grid-column: 1 / -1; }
+    .mode-card { padding: 22px; }
+    .mode-card .mtitle { font-size: 19px; }
+    .mode-card p { font-size: 13.5px; }
+    .dash { gap: 18px; }
+  }
+
   .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
   .brand .mark {
     width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center;
