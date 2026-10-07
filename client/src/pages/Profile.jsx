@@ -4,8 +4,10 @@ import { useGroups } from "../context/GroupContext.jsx";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
-import Avatar from "../components/Avatar.jsx";
+import Avatar, { PROFILE_BANNERS } from "../components/Avatar.jsx";
 import AvatarEditor from "../components/AvatarEditor.jsx";
+import ProfileEditor from "../components/ProfileEditor.jsx";
+import { badgeFor, teamById } from "../carrera/data/teams.js";
 import PushToggle from "../components/PushToggle.jsx";
 import AccountSettings from "../components/AccountSettings.jsx";
 import ThemeSettings from "../components/ThemeSettings.jsx";
@@ -46,6 +48,8 @@ export default function Profile() {
 
   if (!user || !stats) return null;
 
+  const favTeam = user.profile?.favTeam ? teamById(user.profile.favTeam) : null;
+
   const items = [
     { label: "Puntos totales", value: stats.total_points },
     { label: "Puntos de trivia", value: stats.trivia_points ?? 0 },
@@ -64,21 +68,31 @@ export default function Profile() {
     <Layout>
       <h1 className="text-2xl font-bold mb-6">Mi perfil</h1>
 
-      <Card className="mb-6">
-        <div className="flex items-center gap-4">
-          <Avatar user={user} size={64} />
-          <div>
-            <p className="text-lg font-semibold">{user.username}</p>
-            <p className="text-sm text-gray-400">{user.email}</p>
-            <p className="text-xs text-gray-600 mt-1">
-              Miembro desde{" "}
-              {new Date(user.created_at).toLocaleDateString("es-ES", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-            </p>
+      <Card className="mb-6 !p-0 overflow-hidden">
+        <div className="h-24" style={{ background: PROFILE_BANNERS[user.profile?.banner] || PROFILE_BANNERS.verde }} />
+        <div className="px-5 pb-5 -mt-10">
+          <div className="flex items-end gap-4">
+            <span className="rounded-full ring-4 ring-panel inline-flex">
+              <Avatar user={user} size={88} />
+            </span>
+            {favTeam && (
+              <div className="ml-auto flex items-center gap-2 pb-1 text-xs text-gray-400">
+                {badgeFor(favTeam.id) && <img src={badgeFor(favTeam.id)} alt="" className="w-7 h-7 object-contain" />}
+                <span>{favTeam.name}</span>
+              </div>
+            )}
           </div>
+          <p className="text-lg font-semibold mt-3">{user.username}</p>
+          {user.profile?.bio && <p className="text-sm text-gray-300 mt-0.5">{user.profile.bio}</p>}
+          <p className="text-sm text-gray-500 mt-1">{user.email}</p>
+          <p className="text-xs text-gray-600 mt-1">
+            Miembro desde{" "}
+            {new Date(user.created_at).toLocaleDateString("es-ES", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+          </p>
         </div>
       </Card>
 
@@ -92,6 +106,10 @@ export default function Profile() {
 
       <div className="mb-6">
         <AvatarEditor user={user} onSaved={refreshMe} />
+      </div>
+
+      <div className="mb-6">
+        <ProfileEditor user={user} onSaved={refreshMe} />
       </div>
 
       <div className="mb-6">

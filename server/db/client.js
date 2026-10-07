@@ -237,8 +237,14 @@ async function migrateGroupLeague() {
 // Es una columna nueva y nullable, así que entra con un ALTER TABLE simple.
 async function migrateAvatarConfig() {
   const info = await db.execute("PRAGMA table_info(users)");
-  if (info.rows.some((r) => r.name === "avatar_config")) return;
-  await db.execute("ALTER TABLE users ADD COLUMN avatar_config TEXT");
+  if (!info.rows.some((r) => r.name === "avatar_config")) {
+    await db.execute("ALTER TABLE users ADD COLUMN avatar_config TEXT");
+  }
+  // Foto de perfil (data URL ya reducida por el cliente) y datos extra del
+  // perfil (frase, equipo del corazón, banner) como JSON. Columnas nullable.
+  const names = new Set((await db.execute("PRAGMA table_info(users)")).rows.map((r) => r.name));
+  if (!names.has("photo")) await db.execute("ALTER TABLE users ADD COLUMN photo TEXT");
+  if (!names.has("profile")) await db.execute("ALTER TABLE users ADD COLUMN profile TEXT");
 }
 
 // Las tablas de predicciones y reacciones nacieron con un CHECK que sólo

@@ -76,13 +76,43 @@ router.get("/", async (req, res) => {
 // No es una foto — es lo mismo que un editor de escudo simple: un color y
 // hasta 3 iniciales, para que el grupo tenga una marca propia en vez de solo
 // su nombre en texto.
-const CREST_COLORS = ["#4ade80", "#ffb400", "#3b9dd6", "#e85d5d", "#a78bfa", "#f472b6", "#facc15", "#22d3ee"];
+// Escudo personalizable: forma, dos colores, diseño y símbolo (listas cerradas,
+// espejo de client/src/components/Crest.jsx).
+const CREST_COLORS = [
+  "#4ade80", "#ffb400", "#3b9dd6", "#e85d5d", "#a78bfa", "#f472b6", "#facc15", "#22d3ee",
+  "#16a34a", "#1d4ed8", "#7c3aed", "#dc2626", "#f97316", "#0f172a", "#ffffff", "#94a3b8",
+];
+const CREST_SHAPES = ["escudo", "redondo", "cuadrado", "rombo", "clasico"];
+const CREST_PATTERNS = ["liso", "mitades", "franjas", "banda", "cruz", "diagonal"];
+const CREST_SYMBOLS = ["iniciales", "estrella", "balon", "corona", "rayo", "corazon"];
 
 function buildCrest(name, crestInput) {
   const initials = String(crestInput?.initials || name || "").trim().toUpperCase().slice(0, 3) || "FT";
-  const color = CREST_COLORS.includes(crestInput?.color) ? crestInput.color : CREST_COLORS[0];
-  return JSON.stringify({ color, initials });
+  const pick = (list, v, fallback) => (list.includes(v) ? v : fallback);
+  return JSON.stringify({
+    color: pick(CREST_COLORS, crestInput?.color, CREST_COLORS[0]),
+    color2: pick(CREST_COLORS, crestInput?.color2, "#0f172a"),
+    shape: pick(CREST_SHAPES, crestInput?.shape, "escudo"),
+    pattern: pick(CREST_PATTERNS, crestInput?.pattern, "liso"),
+    symbol: pick(CREST_SYMBOLS, crestInput?.symbol, "iniciales"),
+    initials,
+  });
 }
+
+// Solo quien creó el grupo cambia el escudo.
+router.put("/:id/crest", async (req, res) => {
+  try {
+    const group = (await db.execute({ sql: "SELECT id, name, created_by FROM groups_t WHERE id = ?", args: [Number(req.params.id)] })).rows[0];
+    if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+    if (group.created_by !== req.userId) return res.status(403).json({ error: "Solo quien creó el grupo puede cambiar el escudo" });
+    const avatar = buildCrest(group.name, req.body?.crest);
+    await db.execute({ sql: "UPDATE groups_t SET avatar = ? WHERE id = ?", args: [avatar, group.id] });
+    res.json({ avatar });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
 
 router.post("/", async (req, res) => {
   const { name, description, crest } = req.body || {};

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Lock, Shuffle } from "lucide-react";
+import { Camera, Lock, Shuffle, Trash2 } from "lucide-react";
 import api from "../api.js";
 import Card from "./Card.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -81,6 +81,37 @@ function pick(list) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+// Recorta al centro en cuadrado y reduce a 256 px: la foto original (varios MB)
+// nunca sale del dispositivo, y lo que se sube pesa unas decenas de KB.
+async function photoToDataUrl(file) {
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const img = await loadImage(objectUrl);
+    const side = Math.min(img.width, img.height);
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 256;
+    canvas.getContext("2d").drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, 256, 256);
+    let quality = 0.85;
+    let url = canvas.toDataURL("image/jpeg", quality);
+    while (url.length > 85000 && quality > 0.4) {
+      quality -= 0.1;
+      url = canvas.toDataURL("image/jpeg", quality);
+    }
+    return url;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 function ColorRow({ label, colors, value, onChange }) {
   return (
     <div>
@@ -136,6 +167,7 @@ export default function AvatarEditor({ user, onSaved }) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [unlockedCount, setUnlockedCount] = useState(0);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     api
@@ -149,6 +181,50 @@ export default function AvatarEditor({ user, onSaved }) {
     setSaved(false);
   };
 
+  const hasPhoto = !!config.photo;
+  const photoUrl = hasPhoto ? `/api/auth/photo/${user.id}?v=${config.photo}` : null;
+  const showingPhoto = hasPhoto && !!config.usePhoto;
+
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Elegí un archivo de imagen (JPG, PNG o WebP)");
+      return;
+    }
+    setUploading(true);
+    setError("");
+    try {
+      const dataUrl = await photoToDataUrl(file);
+      const { data } = await api.put("/auth/photo", { dataUrl });
+      const next = parseAvatarConfig(data.avatar_config);
+      setConfig((prev) => ({ ...prev, photo: next?.photo, usePhoto: true }));
+      onSaved();
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo subir la foto");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removePhoto = async () => {
+    setUploading(true);
+    setError("");
+    try {
+      await api.delete("/auth/photo");
+      setConfig((prev) => {
+        const { photo, usePhoto, ...rest } = prev;
+        return rest;
+      });
+      onSaved();
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo quitar la foto");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const randomize = () => {
     setConfig((prev) => ({
       bg: pick(BACKGROUNDS),
@@ -160,6 +236,8 @@ export default function AvatarEditor({ user, onSaved }) {
       jersey: pick(JERSEYS),
       jerseyColor: pick(JERSEY_COLORS),
       frame: prev.frame, // el marco se gana, no se sortea
+      photo: prev.photo,
+      usePhoto: prev.usePhoto,
     }));
     setSaved(false);
   };
@@ -187,16 +265,41 @@ export default function AvatarEditor({ user, onSaved }) {
             recorren las opciones, que ahora son muchas. */}
         <div className="flex sm:flex-col items-center gap-3 shrink-0 sm:sticky sm:top-6 sm:self-start">
           <div className="rounded-full overflow-hidden" style={frameStyle(config.frame) || {}}>
-            <AvatarSvg config={config} size={112} />
+            {showingPhoto ? (
+              <img src={photoUrl} alt="Tu foto de perfil" width={112} height={112} className="w-28 h-28 object-cover" />
+            ) : (
+              <AvatarSvg config={config} size={112} />
+            )}
           </div>
-          <button
-            type="button"
-            onClick={randomize}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors"
-          >
-            <Shuffle size={13} />
-            Al azar
-          </button>
+          <div className="flex flex-col gap-1.5 items-start">
+            <label className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-card border border-accent/40 text-accent hover:bg-accent/10 transition-colors cursor-pointer ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+              <Camera size={13} />
+              {uploading ? "Subiendo..." : hasPhoto ? "Cambiar foto" : "Subir foto"}
+              <input type="file" accept="image/*" className="sr-only" onChange={handleFile} />
+            </label>
+            {hasPhoto && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => { set("usePhoto")(!config.usePhoto); }}
+                  className="text-xs text-gray-400 hover:text-white transition-colors"
+                >
+                  {config.usePhoto ? "Usar mi muñequito" : "Usar mi foto"}
+                </button>
+                <button type="button" onClick={removePhoto} className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-400 transition-colors">
+                  <Trash2 size={12} /> Quitar foto
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={randomize}
+              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors"
+            >
+              <Shuffle size={13} />
+              Al azar
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 min-w-0 space-y-4">

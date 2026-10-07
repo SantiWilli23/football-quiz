@@ -116,6 +116,18 @@ export function frameStyle(frame) {
   return FRAME_STYLES[frame] || null;
 }
 
+// Banners del perfil (espejo de PROFILE_BANNERS en server/routes/auth.js).
+export const PROFILE_BANNERS = {
+  verde: "linear-gradient(135deg, #16a34a, #4ade80)",
+  azul: "linear-gradient(135deg, #1d4ed8, #38bdf8)",
+  violeta: "linear-gradient(135deg, #6d28d9, #c084fc)",
+  ambar: "linear-gradient(135deg, #d97706, #fde047)",
+  rojo: "linear-gradient(135deg, #b91c1c, #fb923c)",
+  turquesa: "linear-gradient(135deg, #0f766e, #22d3ee)",
+  rosa: "linear-gradient(135deg, #be185d, #f9a8d4)",
+  noche: "linear-gradient(135deg, #0f172a, #475569)",
+};
+
 export const DEFAULT_AVATAR = {
   bg: BACKGROUNDS[0],
   skin: SKINS[2],
@@ -433,6 +445,8 @@ export default function Avatar({ user, size = 32, className = "" }) {
   const config = parseAvatarConfig(user?.avatar_config);
   const initial = user?.avatar || user?.username?.charAt(0).toUpperCase() || "?";
   const ring = config ? frameStyle(config.frame) : null;
+  // Si subió una foto y la tiene activa, se muestra en vez del muñequito.
+  const photoUrl = config?.usePhoto && config?.photo && user?.id ? `/api/auth/photo/${user.id}?v=${config.photo}` : null;
 
   return (
     <span
@@ -442,7 +456,13 @@ export default function Avatar({ user, size = 32, className = "" }) {
       style={{ width: size, height: size, fontSize: Math.round(size * 0.4), ...ring }}
       title={user?.username}
     >
-      {config ? <AvatarSvg config={config} size={size} /> : initial}
+      {photoUrl ? (
+        <img src={photoUrl} alt="" width={size} height={size} className="w-full h-full object-cover" loading="lazy" />
+      ) : config ? (
+        <AvatarSvg config={config} size={size} />
+      ) : (
+        initial
+      )}
     </span>
   );
 }

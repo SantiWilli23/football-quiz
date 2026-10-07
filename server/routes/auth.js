@@ -22,6 +22,15 @@ function signToken(userId) {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "30d" });
 }
 
+function parseProfile(raw) {
+  try {
+    const p = JSON.parse(raw || "null");
+    return p && typeof p === "object" ? p : {};
+  } catch {
+    return {};
+  }
+}
+
 function publicUser(u) {
   return {
     id: u.id,
@@ -29,9 +38,88 @@ function publicUser(u) {
     email: u.email,
     avatar: u.avatar,
     avatar_config: u.avatar_config,
+    profile: parseProfile(u.profile),
     created_at: u.created_at,
   };
 }
+
+// Datos extra del perfil. Los banners son una lista cerrada (espejo de
+// PROFILE_BANNERS en client/src/components/Avatar.jsx).
+const PROFILE_BANNERS = ["verde", "azul", "violeta", "ambar", "rojo", "turquesa", "rosa", "noche"];
+const PHOTO_MAX_CHARS = 90_000; // el cliente la reduce a ~256 px; el body de Express admite 100 kb
+
+function currentConfig(raw) {
+  try {
+    const c = JSON.parse(raw || "null");
+    return c && typeof c === "object" ? c : null;
+  } catch {
+    return null;
+  }
+}
+
+// La foto se sirve como imagen normal (un <img> no puede mandar el token), con
+// ?v=<versión> para que el navegador la cachee y se refresque al cambiarla.
+router.get("/photo/:id", async (req, res) => {
+  try {
+    const row = (await db.execute({ sql: "SELECT photo FROM users WHERE id = ?", args: [Number(req.params.id)] })).rows[0];
+    const m = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(row?.photo || "");
+    if (!m) return res.status(404).end();
+    res.set("Content-Type", m[1]);
+    res.set("Cache-Control", "public, max-age=86400");
+    res.send(Buffer.from(m[2], "base64"));
+  } catch (err) {
+    console.error(err);
+    res.status(500).end();
+  }
+});
+
+router.put("/photo", requireAuth, async (req, res) => {
+  const data = String(req.body?.dataUrl || "");
+  if (!/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(data) || data.length > PHOTO_MAX_CHARS) {
+    return res.status(400).json({ error: "La foto no es válida o es demasiado grande" });
+  }
+  try {
+    const row = (await db.execute({ sql: "SELECT avatar_config FROM users WHERE id = ?", args: [req.userId] })).rows[0];
+    const config = { ...(currentConfig(row?.avatar_config) || {}), photo: Date.now(), usePhoto: true };
+    await db.execute({ sql: "UPDATE users SET photo = ?, avatar_config = ? WHERE id = ?", args: [data, JSON.stringify(config), req.userId] });
+    res.json({ avatar_config: JSON.stringify(config) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+router.delete("/photo", requireAuth, async (req, res) => {
+  try {
+    const row = (await db.execute({ sql: "SELECT avatar_config FROM users WHERE id = ?", args: [req.userId] })).rows[0];
+    const config = currentConfig(row?.avatar_config);
+    if (config) {
+      delete config.photo;
+      delete config.usePhoto;
+    }
+    await db.execute({ sql: "UPDATE users SET photo = NULL, avatar_config = ? WHERE id = ?", args: [config ? JSON.stringify(config) : null, req.userId] });
+    res.json({ avatar_config: config ? JSON.stringify(config) : null });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+router.put("/profile", requireAuth, async (req, res) => {
+  const bio = String(req.body?.bio ?? "").trim().slice(0, 80);
+  const favTeam = String(req.body?.favTeam ?? "");
+  const banner = String(req.body?.banner ?? "");
+  if (favTeam && !/^[a-z0-9_-]{1,40}$/i.test(favTeam)) return res.status(400).json({ error: "Equipo inválido" });
+  if (banner && !PROFILE_BANNERS.includes(banner)) return res.status(400).json({ error: "Banner inválido" });
+  try {
+    const profile = { bio, favTeam, banner: banner || "verde" };
+    await db.execute({ sql: "UPDATE users SET profile = ? WHERE id = ?", args: [JSON.stringify(profile), req.userId] });
+    res.json({ profile });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
 
 // El avatar es un muñequito dibujado con SVG en el cliente; acá sólo se guarda
 // su configuración. Se valida contra listas cerradas para que nadie meta
@@ -47,7 +135,10 @@ const AVATAR_OPTIONS = {
     "#0f0f0f", "#2c1b18", "#5a3825", "#a55728", "#d6b370", "#f2e2b0",
     "#b9b9b9", "#ffffff", "#2f6fa8", "#c2185b", "#2e7d32", "#7b1fa2",
   ],
-  hair: ["corto", "rulos", "largo", "gorro", "pelado", "afro", "mohicano", "jopo", "colita", "raya"],
+  hair: [
+    "corto", "rulos", "largo", "gorro", "pelado", "afro", "mohicano", "jopo", "colita", "raya",
+    "ondulado", "trenzas", "flequillo", "punta", "recogido", "media",
+  ],
   face: ["sonrisa", "seria", "grito", "picara", "enojada", "sorprendida", "guino", "triste"],
   accessory: ["ninguno", "anteojos", "vincha", "barba", "bigote", "gorra", "pintura", "sol"],
   jersey: ["lisa", "rayas", "banda", "mitades"],
@@ -82,6 +173,14 @@ router.put("/avatar", requireAuth, async (req, res) => {
       }
     }
     clean.frame = frame;
+
+    // La foto subida vive en este mismo JSON: se conserva y el usuario elige si
+    // se muestra la foto o el muñequito.
+    const prev = currentConfig((await db.execute({ sql: "SELECT avatar_config FROM users WHERE id = ?", args: [req.userId] })).rows[0]?.avatar_config);
+    if (prev?.photo) {
+      clean.photo = prev.photo;
+      clean.usePhoto = config.usePhoto === undefined ? !!prev.usePhoto : !!config.usePhoto;
+    }
 
     await db.execute({
       sql: "UPDATE users SET avatar_config = ? WHERE id = ?",

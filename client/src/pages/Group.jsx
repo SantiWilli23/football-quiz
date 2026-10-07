@@ -9,7 +9,8 @@ import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import Avatar from "../components/Avatar.jsx";
-import Crest, { CREST_COLORS } from "../components/Crest.jsx";
+import Crest, { DEFAULT_CREST, parseCrest } from "../components/Crest.jsx";
+import CrestEditor from "../components/CrestEditor.jsx";
 import QuestionBank from "../components/QuestionBank.jsx";
 import WeeklyChallenges from "../components/WeeklyChallenges.jsx";
 import FlashPoll from "../components/FlashPoll.jsx";
@@ -87,8 +88,9 @@ export default function Group() {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
-  const [crestColor, setCrestColor] = useState(CREST_COLORS[0]);
-  const [crestInitials, setCrestInitials] = useState("");
+  const [newCrest, setNewCrest] = useState(DEFAULT_CREST);
+  const [crestDraft, setCrestDraft] = useState(null); // edición del escudo del grupo abierto
+  const [crestSaving, setCrestSaving] = useState(false);
   const [createError, setCreateError] = useState("");
   const [createLoading, setCreateLoading] = useState(false);
 
@@ -153,17 +155,31 @@ export default function Group() {
       await api.post("/groups", {
         name: newName.trim(),
         description: newDescription.trim(),
-        crest: { color: crestColor, initials: crestInitials.trim() || newName.trim() },
+        crest: { ...newCrest, initials: newCrest.initials.trim() || newName.trim() },
       });
       setNewName("");
       setNewDescription("");
-      setCrestInitials("");
+      setNewCrest(DEFAULT_CREST);
       setShowCreate(false);
       await reloadGroups();
     } catch (err) {
       setCreateError(err.response?.data?.error || "No se pudo crear el grupo");
     } finally {
       setCreateLoading(false);
+    }
+  };
+
+  const saveCrest = async () => {
+    setCrestSaving(true);
+    try {
+      const { data } = await api.put(`/groups/${detail.id}/crest`, { crest: { ...crestDraft, initials: crestDraft.initials.trim() || detail.name } });
+      setDetail((d) => ({ ...d, avatar: data.avatar }));
+      setCrestDraft(null);
+      await reloadGroups();
+    } catch {
+      /* se deja abierto el editor para reintentar */
+    } finally {
+      setCrestSaving(false);
     }
   };
 
@@ -286,30 +302,10 @@ export default function Group() {
               className="w-full bg-bg border border-border rounded-card px-4 py-2.5 text-sm focus:outline-none focus:border-accent"
             />
 
-            {/* Escudo: un color + hasta 3 iniciales, para que el grupo tenga
-                marca propia en vez de ser solo un nombre en una lista. */}
-            <div className="flex items-center gap-3 pt-1">
-              <Crest group={{ name: newName, avatar: JSON.stringify({ color: crestColor, initials: crestInitials || newName }) }} size={44} />
-              <input
-                value={crestInitials}
-                onChange={(e) => setCrestInitials(e.target.value.toUpperCase().slice(0, 3))}
-                placeholder="Iniciales del escudo"
-                maxLength={3}
-                className="flex-1 bg-bg border border-border rounded-card px-4 py-2.5 text-sm uppercase tracking-widest focus:outline-none focus:border-accent"
-              />
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              {CREST_COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setCrestColor(c)}
-                  aria-label={`Color ${c}`}
-                  aria-pressed={crestColor === c}
-                  className={`w-7 h-7 rounded-full transition-transform ${crestColor === c ? "scale-110 ring-2 ring-offset-2 ring-offset-panel ring-white/70" : ""}`}
-                  style={{ background: c }}
-                />
-              ))}
+            {/* Escudo personalizable: forma, símbolo, diseño, dos colores e
+                iniciales, para que el grupo tenga marca propia. */}
+            <div className="pt-1">
+              <CrestEditor value={newCrest} onChange={setNewCrest} name={newName} />
             </div>
 
             {createError && <p className="text-sm text-red-400">{createError}</p>}
@@ -382,7 +378,18 @@ export default function Group() {
             <Card>
               <div className="flex items-start justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <Crest group={detail} size={48} />
+                  <div className="relative group/crest">
+                    <Crest group={detail} size={56} />
+                    {detail.created_by === user?.id && (
+                      <button
+                        type="button"
+                        onClick={() => setCrestDraft(parseCrest(detail))}
+                        className="absolute -bottom-1 -right-2 text-[10px] px-1.5 py-0.5 rounded-full bg-panel border border-border text-gray-300 hover:text-white"
+                      >
+                        Editar
+                      </button>
+                    )}
+                  </div>
                   <div>
                     <h2 className="text-lg font-semibold">{detail.name}</h2>
                     {detail.description && (
@@ -408,6 +415,25 @@ export default function Group() {
                   </button>
                 </div>
               </div>
+
+              {crestDraft && (
+                <div className="mb-5 p-4 rounded-card border border-border bg-bg/40">
+                  <p className="text-sm font-semibold mb-3">Escudo del grupo</p>
+                  <CrestEditor value={crestDraft} onChange={setCrestDraft} name={detail.name} />
+                  <div className="flex gap-2 mt-4">
+                    <button type="button" className="btn btn-primary" disabled={crestSaving} onClick={saveCrest}>
+                      {crestSaving ? "Guardando..." : "Guardar escudo"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCrestDraft(null)}
+                      className="px-4 py-2 rounded-card border border-border text-sm text-gray-300 hover:text-white hover:border-white/30 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Salir es difícil de deshacer (hace falta el código para
                   volver), y si sos el último el grupo se borra: por eso pide
