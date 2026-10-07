@@ -2187,7 +2187,7 @@
       })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
-          if (!d) return;
+          if (!d || d.notToday) return;
           var slot = document.getElementById("bracket-champion-slot");
           if (!slot) return;
           slot.insertAdjacentHTML("beforeend",

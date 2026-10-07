@@ -2,8 +2,9 @@ import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { todayStr, mondayOf, addDays } from "../utils/points.js";
-import { DAILY_GAME_MAX_POINTS, WEEKLY_GAME_RANK_POINTS } from "../utils/points-config.js";
-import { DAILY_GAMES, SUBMITTABLE_DAILY, recordDailyResult, weeklyStandings, quinielaDailyRows } from "../utils/daily-games.js";
+import { DAILY_GAME_MAX_POINTS } from "../utils/points-config.js";
+import { WEEKLY_PODIUM_PACKS } from "../utils/rewards.js";
+import { DAILY_GAMES, SUBMITTABLE_DAILY, dailyGameKeyFor, recordDailyResult, weeklyStandings, quinielaDailyRows } from "../utils/daily-games.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -22,38 +23,35 @@ router.post("/submit", async (req, res) => {
   }
 });
 
-// Qué se jugó hoy y cuántos puntos dio cada diario.
+// El juego diario de hoy y cuántos puntos dio.
 router.get("/today", async (req, res) => {
   try {
     const today = todayStr();
-    const [rows, quiniela, pending] = await Promise.all([
-      db.execute({ sql: "SELECT game_key, points FROM daily_game_results WHERE user_id = ? AND date = ?", args: [req.userId, today] }),
-      quinielaDailyRows([req.userId], today, today),
-      db.execute({ sql: "SELECT COUNT(*) AS n FROM quiniela_predictions WHERE user_id = ? AND fixture_date = ?", args: [req.userId, today] }),
-    ]);
-    const byKey = new Map(rows.rows.map((r) => [r.game_key, Number(r.points)]));
-    const quinielaPoints = quiniela[0]?.points || 0;
-    const games = DAILY_GAMES.map((g) => {
-      if (g.key === "quiniela") {
-        const predicted = Number(pending.rows[0]?.n || 0) > 0;
-        return { ...g, done: predicted, points: quinielaPoints };
-      }
-      return { ...g, done: byKey.has(g.key), points: byKey.get(g.key) || 0 };
-    });
-    res.json({
-      date: today,
-      max: DAILY_GAME_MAX_POINTS,
-      games,
-      total: games.reduce((sum, g) => sum + g.points, 0),
-      totalMax: DAILY_GAME_MAX_POINTS * DAILY_GAMES.length,
-    });
+    const key = dailyGameKeyFor(today);
+    const def = DAILY_GAMES.find((g) => g.key === key);
+    let done = false;
+    let points = 0;
+    if (key === "quiniela") {
+      const [rows, pending] = await Promise.all([
+        quinielaDailyRows([req.userId], today, today),
+        db.execute({ sql: "SELECT COUNT(*) AS n FROM quiniela_predictions WHERE user_id = ? AND fixture_date = ?", args: [req.userId, today] }),
+      ]);
+      done = Number(pending.rows[0]?.n || 0) > 0;
+      points = rows[0]?.points || 0;
+    } else {
+      const row = (await db.execute({ sql: "SELECT points FROM daily_game_results WHERE user_id = ? AND date = ? AND game_key = ?", args: [req.userId, today, key] })).rows[0];
+      done = !!row;
+      points = row ? Number(row.points) : 0;
+    }
+    res.json({ date: today, max: DAILY_GAME_MAX_POINTS, game: { ...def, done, points } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });
   }
 });
 
-// Clasificación de ESTA semana en cada juego diario, entre los miembros del grupo.
+// Clasificación de ESTA semana entre los miembros del grupo: suma de los
+// puntos de los juegos diarios de la semana. 1° suma 30 al ranking semanal.
 router.get("/weekly", async (req, res) => {
   const groupId = Number(req.query.groupId);
   if (!Number.isInteger(groupId)) return res.status(400).json({ error: "groupId requerido" });
@@ -64,28 +62,18 @@ router.get("/weekly", async (req, res) => {
     })).rows;
     if (!members.some((m) => m.id === req.userId)) return res.status(403).json({ error: "No pertenecés a ese grupo" });
 
-    const today = todayStr();
-    const week = mondayOf(today);
+    const week = mondayOf(todayStr());
     const names = new Map(members.map((m) => [m.id, m.username]));
-    const standings = await weeklyStandings(members.map((m) => m.id), week, addDays(week, 6));
-
-    const games = DAILY_GAMES.map((g) => {
-      const entry = standings.find((s) => s.game_key === g.key && s.week === week);
-      return {
-        key: g.key,
-        label: g.label,
-        standings: (entry?.standings || []).map((s) => ({
-          userId: s.user_id,
-          username: names.get(s.user_id),
-          score: s.score,
-          rank: s.rank,
-          bonus: s.bonus,
-          me: s.user_id === req.userId,
-        })),
-      };
-    });
-    const myBonus = games.reduce((sum, g) => sum + (g.standings.find((s) => s.me)?.bonus || 0), 0);
-    res.json({ week, podium: WEEKLY_GAME_RANK_POINTS, games, myBonus });
+    const entry = (await weeklyStandings(members.map((m) => m.id), week, addDays(week, 6))).find((s) => s.week === week);
+    const standings = (entry?.standings || []).map((s) => ({
+      userId: s.user_id,
+      username: names.get(s.user_id),
+      score: s.score,
+      rank: s.rank,
+      pack: s.pack,
+      me: s.user_id === req.userId,
+    }));
+    res.json({ week, podium: WEEKLY_PODIUM_PACKS, standings, myPack: standings.find((s) => s.me)?.pack || null });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

@@ -34,9 +34,9 @@ export const HELP = [
     "Especial: preguntas temáticas de la semana o del momento.",
     WEEKLY,
   ]) },
-  { match: "/juegos", ...H("Juegos", "Dos apartados: «Juegos diarios» (los siete juegos diarios, Carrera y Con amigos) y «Fútbol 12» (el resto).", [
-    "Los siete juegos diarios pagan el mismo tope: 20 puntos por día cada uno.",
-    "El podio semanal de cada diario (1°, 2° y 3° del grupo) suma +30, +20 y +10 al ranking.",
+  { match: "/juegos", ...H("Juegos", "Arriba, el juego diario de hoy; después «Con amigos» y «Fútbol 12» (todos los demás, incluido el diario).", [
+    "El juego diario cambia cada día (rota entre siete): una partida suma hasta 20 puntos. Los demás juegos se juegan libres ese día.",
+    "La semana se suma: el 1° del grupo gana +30 al ranking, el 2° +20 y el 3° +10.",
     "Cada juego tiene su propio «?» con las reglas y cómo puntúa.",
   ]) },
   { match: "/futbol", ...H("En vivo", "Partidos, tablas y goleadores reales de las 5 grandes de Europa y de Chile.", [

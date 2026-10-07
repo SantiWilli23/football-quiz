@@ -1355,7 +1355,7 @@
       })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
-          if (!d) return;
+          if (!d || d.notToday) return;
           addSeasonResultLine(lines, "Juego diario", d.already ? "Hoy ya sumaste (" + d.points + "/" + d.max + ")" : "+" + d.points + " de " + d.max + " pts", null, !d.already);
         })
         .catch(function () {});

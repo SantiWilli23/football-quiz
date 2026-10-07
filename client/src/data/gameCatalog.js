@@ -79,11 +79,10 @@ export function gamesByFamily(familyKey) {
 // Los siete juegos diarios (todos pagan el mismo tope de puntos por día).
 export const DAILY_GAMES = GAMES.filter((g) => g.daily);
 
-// La pantalla de Juegos tiene dos apartados:
-//  - "Juegos diarios": los diarios, la familia Carrera y la de Con amigos.
-//  - "Fútbol 12": todo lo demás.
-// Un juego diario sale una sola vez, en el bloque de diarios (Cotrero está en
-// Carrera pero cuenta como diario, así que no se repite).
-const inDailySection = (g) => g.daily || g.family === "carrera" || g.family === "grupo";
-export const DAILY_SECTION_FAMILIES = ["carrera", "grupo"].filter((k) => GAMES.some((g) => g.family === k && !g.daily));
-export const FUTBOL12_GAMES = GAMES.filter((g) => !inDailySection(g));
+// La pantalla de Juegos tiene tres bloques:
+//  - Arriba, en la casilla grande: el juego diario de hoy (uno de los siete, rota).
+//  - "Con amigos": la familia de grupo.
+//  - "Fútbol 12": todos los demás juegos, incluido el diario de hoy (se repite
+//    a propósito: arriba es el destacado y acá sigue en su lugar).
+export const CON_AMIGOS_GAMES = GAMES.filter((g) => g.family === "grupo");
+export const FUTBOL12_GAMES = GAMES.filter((g) => g.family !== "grupo");

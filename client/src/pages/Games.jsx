@@ -1,16 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CalendarCheck, Gamepad2, Medal } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import MyCardsTeam from "../components/MyCardsTeam.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
-import { DAILY_GAMES, DAILY_SECTION_FAMILIES, FAMILIES, FUTBOL12_GAMES, GAMES, gamesByFamily, minutesOf } from "../data/gameCatalog.js";
+import { CON_AMIGOS_GAMES, FAMILIES, FUTBOL12_GAMES, GAMES } from "../data/gameCatalog.js";
 import { playedToday, readVisits } from "../utils/visits.js";
-
-function durationLabel(min) {
-  return min >= 60 ? "larga" : `${min} min`;
-}
 
 // Clases de Tailwind escritas literales a propósito (no armadas con string
 // interpolation): Tailwind necesita ver la clase completa para generarla. El
@@ -23,9 +19,6 @@ const FAMILY_STYLE = {
   purple: { dot: "bg-purple-500", text: "text-purple-500", ring: "border-purple-500 bg-purple-500/15 text-purple-500", feat: "from-purple-500/40 border-purple-500/40" },
 };
 
-// Los que se ofrecen arriba, en el carrusel de destacados.
-const FEATURED = ["/fulbodle", "/copa-semanal", "/un-minuto"];
-
 function GameLink({ game, className, children }) {
   return game.to ? (
     <Link to={game.to} className={className}>{children}</Link>
@@ -34,97 +27,55 @@ function GameLink({ game, className, children }) {
   );
 }
 
-function Featured({ visits }) {
-  const ref = useRef(null);
-  const [index, setIndex] = useState(0);
-  const games = FEATURED.map((to) => GAMES.find((g) => g.to === to)).filter(Boolean);
-
-  function onScroll() {
-    const el = ref.current;
-    if (!el) return;
-    const card = el.firstElementChild;
-    if (!card) return;
-    setIndex(Math.round(el.scrollLeft / (card.offsetWidth + 12)));
-  }
-
-  return (
-    <div className="mb-6">
-      <div
-        ref={ref}
-        onScroll={onScroll}
-        className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-1 px-1 [scrollbar-width:none]"
-      >
-        {games.map((game) => {
-          const fam = FAMILIES[game.family];
-          const style = FAMILY_STYLE[fam.tw];
-          const Icon = game.icon;
-          const today = playedToday(game.to, visits);
-          return (
-            <GameLink
-              key={game.to}
-              game={game}
-              className={`snap-start shrink-0 basis-[85%] sm:basis-[46%] lg:basis-[32%] min-h-[150px] rounded-2xl border bg-gradient-to-br ${style.feat} to-panel p-4 flex flex-col justify-end gap-1.5 hover:opacity-90 transition-opacity relative`}
-            >
-              <Icon size={22} className={`absolute top-4 right-4 ${style.text}`} />
-              <span className={`text-xs font-semibold uppercase tracking-wider ${style.text}`}>
-                {fam.label} · {durationLabel(minutesOf(game))}{today ? " · jugado hoy" : ""}
-              </span>
-              <span className="t-title leading-none">{game.label}</span>
-              <span className="text-xs text-gray-400 leading-snug line-clamp-2">{game.description}</span>
-            </GameLink>
-          );
-        })}
-      </div>
-      <div className="flex justify-center gap-1.5 mt-1" aria-hidden="true">
-        {games.map((g, i) => (
-          <span key={g.to} className={`h-1.5 rounded-full transition-all ${i === index ? "w-4 bg-accent" : "w-1.5 bg-border"}`} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function Circle({ game, style, visits, daily }) {
+// La casilla grande: el juego diario de hoy. Rota solo (lo decide el servidor,
+// así que todos juegan el mismo), paga hasta max puntos y el primero de la
+// semana en el grupo suma 30.
+function DailyFeatured({ today, visits }) {
+  if (!today) return null;
+  const daily = today.game;
+  const game = GAMES.find((g) => (g.to || g.href) === daily.to);
+  if (!game) return null;
+  const fam = FAMILIES[game.family];
+  const style = FAMILY_STYLE[fam.tw];
   const Icon = game.icon;
-  const today = daily ? daily.done : game.to ? playedToday(game.to, visits) : false;
   return (
-    <GameLink game={game} className="shrink-0 w-[76px] flex flex-col items-center gap-1.5 text-center group">
-      <span className={`relative w-[62px] h-[62px] rounded-full border-2 flex items-center justify-center transition-transform group-hover:scale-105 ${style.ring}`}>
-        <Icon size={25} />
-        {today && <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-good border-2 border-bg" title="Jugado hoy" />}
+    <GameLink
+      game={game}
+      className={`block min-h-[170px] rounded-2xl border bg-gradient-to-br ${style.feat} to-panel p-5 hover:opacity-90 transition-opacity relative mb-2`}
+    >
+      <Icon size={26} className={`absolute top-5 right-5 ${style.text}`} />
+      <span className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider ${style.text}`}>
+        <CalendarCheck size={13} /> Juego diario · hasta {today.max} pts
       </span>
-      <span className="text-[11px] leading-tight text-gray-300 group-hover:text-white transition-colors">{game.label}</span>
-      {daily && (
-        <span className={`text-[10px] font-semibold tabular-nums ${daily.done ? "text-good" : "text-gray-600"}`}>
-          {daily.points}/{daily.max} pts
-        </span>
-      )}
+      <span className="t-title block text-2xl leading-tight mt-2">{game.label}</span>
+      <span className="text-sm text-gray-400 leading-snug block mt-1.5 max-w-xl">{game.description}</span>
+      <span className={`inline-block mt-3 text-xs font-semibold tabular-nums ${daily.done ? "text-good" : "text-gray-500"}`}>
+        {daily.done ? `Hecho hoy · ${daily.points}/${today.max} pts` : "Todavía no lo jugaste hoy"}
+      </span>
     </GameLink>
   );
 }
 
-function CircleRow({ games, visits, dailyByTo }) {
+function Circle({ game, style, visits }) {
+  const Icon = game.icon;
+  const played = game.to ? playedToday(game.to, visits) : false;
   return (
-    <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible">
-      {games.map((game) => (
-        <Circle
-          key={game.to || game.href || game.label}
-          game={game}
-          style={FAMILY_STYLE[FAMILIES[game.family].tw]}
-          visits={visits}
-          daily={dailyByTo ? dailyByTo[game.to || game.href] : undefined}
-        />
-      ))}
-    </div>
+    <GameLink game={game} className="shrink-0 w-[76px] flex flex-col items-center gap-1.5 text-center group">
+      <span className={`relative w-[62px] h-[62px] rounded-full border-2 flex items-center justify-center transition-transform group-hover:scale-105 ${style.ring}`}>
+        <Icon size={25} />
+        {played && <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-good border-2 border-bg" title="Jugado hoy" />}
+      </span>
+      <span className="text-[11px] leading-tight text-gray-300 group-hover:text-white transition-colors">{game.label}</span>
+    </GameLink>
   );
 }
 
-function SubHeader({ dotClass, textClass, label, count }) {
+function CircleRow({ games, visits }) {
   return (
-    <div className="flex items-center gap-2 mb-3">
-      <span className={`w-2 h-2 rounded-full ${dotClass}`} />
-      <h3 className={`text-sm font-semibold ${textClass}`}>{label}</h3>
-      {count != null && <span className="text-xs text-gray-600">{count}</span>}
+    <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible">
+      {games.map((game) => (
+        <Circle key={game.to || game.href || game.label} game={game} style={FAMILY_STYLE[FAMILIES[game.family].tw]} visits={visits} />
+      ))}
     </div>
   );
 }
@@ -138,8 +89,8 @@ function SectionTitle({ children, hint }) {
   );
 }
 
-// Clasificación de ESTA semana en cada juego diario, entre los miembros del
-// grupo activo: el podio (1°, 2°, 3°) suma puntos al ranking semanal.
+// Clasificación de ESTA semana entre los miembros del grupo activo: la suma de
+// los juegos diarios de la semana. El 1° suma 30 puntos al ranking semanal.
 function WeeklyStandings({ groupId }) {
   const [data, setData] = useState(null);
   useEffect(() => {
@@ -149,7 +100,6 @@ function WeeklyStandings({ groupId }) {
 
   if (!groupId || !data) return null;
   const podium = Object.values(data.podium || {});
-  const playing = data.games.filter((g) => g.standings.length > 0);
 
   return (
     <details className="mt-3 rounded-card border border-border bg-panel/40 px-3 py-2">
@@ -157,24 +107,22 @@ function WeeklyStandings({ groupId }) {
         <Medal size={15} className="text-accent shrink-0" />
         <span className="font-medium">Clasificación de la semana</span>
         <span className="text-xs text-gray-500 ml-auto">
-          {data.myBonus > 0 ? `+${data.myBonus} pts por podios` : `podio: ${podium.map((p) => `+${p}`).join(" / ")}`}
+          {data.myBonus > 0 ? `+${data.myBonus} pts por podio` : `podio: ${podium.map((p) => `+${p}`).join(" / ")}`}
         </span>
       </summary>
-      <div className="mt-3 space-y-2.5">
-        {playing.length === 0 && <p className="text-xs text-gray-500">Todavía nadie jugó un diario esta semana. El podio de cada juego suma al ranking del grupo.</p>}
-        {playing.map((g) => (
-          <div key={g.key} className="text-xs">
-            <p className="text-gray-400 font-medium mb-0.5">{g.label}</p>
-            <p className="text-gray-500 leading-relaxed">
-              {g.standings.slice(0, 4).map((s, i) => (
-                <span key={s.userId} className={s.me ? "text-white" : ""}>
-                  {i > 0 && " · "}
-                  {s.rank}° {s.username} {s.score}{s.bonus ? ` (+${s.bonus})` : ""}
-                </span>
-              ))}
-            </p>
-          </div>
-        ))}
+      <div className="mt-3 text-xs">
+        {data.standings.length === 0 ? (
+          <p className="text-gray-500">Todavía nadie sumó en el juego diario esta semana. El 1° del grupo suma {podium[0]} puntos.</p>
+        ) : (
+          <p className="text-gray-500 leading-relaxed">
+            {data.standings.slice(0, 5).map((s, i) => (
+              <span key={s.userId} className={s.me ? "text-white" : ""}>
+                {i > 0 && " · "}
+                {s.rank}° {s.username} {s.score}{s.bonus ? ` (+${s.bonus})` : ""}
+              </span>
+            ))}
+          </p>
+        )}
       </div>
     </details>
   );
@@ -189,10 +137,6 @@ export default function Games() {
     api.get("/daily-games/today").then((r) => setToday(r.data)).catch(() => setToday(null));
   }, []);
 
-  const dailyByTo = {};
-  (today?.games || []).forEach((g) => { dailyByTo[g.to] = { done: g.done, points: g.points, max: today.max }; });
-  const doneCount = (today?.games || []).filter((g) => g.done && dailyByTo[g.to]).length;
-
   return (
     <Layout>
       <div className="mb-5 flex items-center gap-3">
@@ -200,42 +144,23 @@ export default function Games() {
         <h1 className="t-title">Juegos</h1>
       </div>
 
-      <Featured visits={visits} />
+      <DailyFeatured today={today} visits={visits} />
+      <WeeklyStandings groupId={activeGroupId} />
 
-      <MyCardsTeam />
+      <div className="mt-6">
+        <MyCardsTeam />
+      </div>
 
-      <section className="mb-10">
-        <SectionTitle hint="Una partida por día de cada juego suma al ranking, con el mismo tope de puntos para todos.">Juegos diarios</SectionTitle>
-
-        <div className="space-y-6">
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <CalendarCheck size={15} className="text-accent" />
-              <h3 className="text-sm font-semibold text-accent">Juego diario</h3>
-              <span className="text-xs text-gray-600">
-                {today ? `${doneCount}/${DAILY_GAMES.length} hoy · ${today.total}/${today.totalMax} pts` : DAILY_GAMES.length}
-              </span>
-            </div>
-            <CircleRow games={DAILY_GAMES} visits={visits} dailyByTo={dailyByTo} />
-            <WeeklyStandings groupId={activeGroupId} />
-          </div>
-
-          {DAILY_SECTION_FAMILIES.map((key) => {
-            const games = gamesByFamily(key).filter((g) => !g.daily);
-            const style = FAMILY_STYLE[FAMILIES[key].tw];
-            return (
-              <div key={key}>
-                <SubHeader dotClass={style.dot} textClass={style.text} label={FAMILIES[key].label} count={games.length} />
-                <CircleRow games={games} visits={visits} />
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      {CON_AMIGOS_GAMES.length > 0 && (
+        <section className="mb-10">
+          <SectionTitle hint={FAMILIES.grupo.subtitle}>Con amigos</SectionTitle>
+          <CircleRow games={CON_AMIGOS_GAMES} visits={visits} />
+        </section>
+      )}
 
       {FUTBOL12_GAMES.length > 0 && (
         <section>
-          <SectionTitle>Fútbol 12</SectionTitle>
+          <SectionTitle hint="Una partida del juego diario de hoy suma hasta 20 puntos; los demás se juegan libres.">Fútbol 12</SectionTitle>
           <CircleRow games={FUTBOL12_GAMES} visits={visits} />
         </section>
       )}
