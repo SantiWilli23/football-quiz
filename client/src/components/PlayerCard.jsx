@@ -12,7 +12,8 @@ const H = 500;
 
 function cardSvg({ username, groupLabel, points, accuracy, streak, position }) {
   const posLine = position ? `#${position} en ${groupLabel}` : "Sin grupo activo";
-  const initials = username.slice(0, 2).toUpperCase();
+  const initials = Array.from(username).slice(0, 2).join("").toUpperCase();
+  const nameSize = username.length > 14 ? 17 : username.length > 10 ? 21 : 26;
   return `
 <svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
@@ -30,7 +31,7 @@ function cardSvg({ username, groupLabel, points, accuracy, streak, position }) {
   <circle cx="${W / 2}" cy="150" r="62" fill="#0f2f28" fill-opacity="0.85"/>
   <text x="${W / 2}" y="166" text-anchor="middle" font-family="Arial, sans-serif" font-size="46" fill="#e8dd8a" font-weight="800">${escapeXml(initials)}</text>
 
-  <text x="${W / 2}" y="252" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" fill="#0f2f28" font-weight="800">${escapeXml(username)}</text>
+  <text x="${W / 2}" y="252" text-anchor="middle" font-family="Arial, sans-serif" font-size="${nameSize}" fill="#0f2f28" font-weight="800">${escapeXml(username)}</text>
   <text x="${W / 2}" y="276" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#0f2f28" fill-opacity="0.75">${escapeXml(posLine)}</text>
 
   <rect x="22" y="320" width="${W - 44}" height="1" fill="#0f2f28" fill-opacity="0.25"/>
@@ -66,6 +67,9 @@ export default function PlayerCard({ user, stats, activeGroup, position }) {
     position,
   });
 
+  // Para mostrarla, el SVG se escala al ancho del contenedor (antes quedaba fijo en 360x500 y se recortaba).
+  const displayMarkup = svgMarkup.replace(`width="${W}" height="${H}"`, `width="100%" style="display:block;height:auto"`);
+
   function download() {
     const svgBlob = new Blob([svgMarkup], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(svgBlob);
@@ -97,7 +101,7 @@ export default function PlayerCard({ user, stats, activeGroup, position }) {
       <div
         ref={svgRef}
         className="rounded-2xl overflow-hidden border border-border max-w-[220px] mx-auto sm:mx-0"
-        dangerouslySetInnerHTML={{ __html: svgMarkup }}
+        dangerouslySetInnerHTML={{ __html: displayMarkup }}
       />
       <button
         onClick={download}
