@@ -4,6 +4,8 @@
 // (ver test/futgames.test.js). Todo lo "del día" sale de dailySeed(fecha):
 // misma fecha => mismo reto para todos.
 
+import { leagueForClub } from "../data/league-clubs.js";
+
 // ---------- Utilidades ----------
 
 export function normalize(s) {
@@ -47,8 +49,35 @@ export function shuffle(list, rand) {
 
 // ---------- Tateti (Grid) ----------
 
-// Un criterio es un club o una selección: { type: "club"|"pais", name }.
+// Un criterio es un club, una selección o una categoría:
+// { type: "club"|"pais"|"cat", name }. Las categorías (type "cat") salen de la
+// carrera del jugador: "champions" y las cuatro ligas grandes.
 export const critKey = (c) => `${c.type}:${c.name}`;
+
+export const CATEGORIES = {
+  champions: "Ganó la Champions",
+  premier: "Jugó en la Premier",
+  laliga: "Jugó en LaLiga",
+  seriea: "Jugó en la Serie A",
+  bundesliga: "Jugó en la Bundesliga",
+};
+
+// Campeones de Europa por año en que terminó la temporada (final en mayo).
+export const CHAMPIONS_WINNERS = {
+  1992: "Barcelona", 1993: "Marseille", 1994: "AC Milan", 1995: "Ajax", 1996: "Juventus", 1997: "Borussia Dortmund",
+  1998: "Real Madrid", 1999: "Manchester United", 2000: "Real Madrid", 2001: "Bayern Munich", 2002: "Real Madrid",
+  2003: "AC Milan", 2004: "Porto", 2005: "Liverpool", 2006: "Barcelona", 2007: "AC Milan", 2008: "Manchester United",
+  2009: "Barcelona", 2010: "Inter Milan", 2011: "Barcelona", 2012: "Chelsea", 2013: "Bayern Munich", 2014: "Real Madrid",
+  2015: "Barcelona", 2016: "Real Madrid", 2017: "Real Madrid", 2018: "Real Madrid", 2019: "Liverpool", 2020: "Bayern Munich",
+  2021: "Chelsea", 2022: "Real Madrid", 2023: "Manchester City", 2024: "Real Madrid", 2025: "Paris Saint-Germain",
+};
+
+// Aproximación: estuvo en el plantel de un campeón si su etapa en el club
+// (inicio→fin, años de verano) abarca el año en que ese club ganó la copa.
+export function wonChampions(player) {
+  return (player.carrera || []).some((c) =>
+    Object.entries(CHAMPIONS_WINNERS).some(([year, club]) => club === c.club && Number(year) > c.inicio && Number(year) <= (c.fin ?? 2026)));
+}
 
 // Índice criterio -> Set de nombres de jugadores que lo cumplen. Un jugador
 // cuenta para un club si figura en su carrera (pasado o presente) y para una
@@ -61,7 +90,12 @@ export function buildIndex(players) {
   };
   for (const p of players) {
     add(`pais:${p.nacionalidad}`, p.nombre);
-    for (const c of p.carrera || []) add(`club:${c.club}`, p.nombre);
+    for (const c of p.carrera || []) {
+      add(`club:${c.club}`, p.nombre);
+      const lg = leagueForClub(c.club);
+      if (lg) add(`cat:${lg}`, p.nombre);
+    }
+    if (wonChampions(p)) add("cat:champions", p.nombre);
   }
   return index;
 }
@@ -92,11 +126,15 @@ export function generateGrid({ index, pools, mode, date, maxTries = 4000 }) {
     const rand = rng(dailySeed(date, `grid-${mode}-${attempt}`));
     const clubs = shuffle(pool.clubs, rand);
     const countries = shuffle(pool.countries, rand);
-    const nCountries = 1 + Math.floor(rand() * 2);
+    // Casi siempre una fila es una categoría (ganó la Champions, jugó en tal liga…).
+    const cats = shuffle(pool.cats || [], rand);
+    const nCats = cats.length && rand() < 0.85 ? 1 : 0;
+    const nCountries = Math.min(1 + Math.floor(rand() * 2), 3 - nCats);
     const cols = clubs.slice(0, 3).map((name) => ({ type: "club", name }));
-    const rowClubs = clubs.slice(3, 3 + (3 - nCountries)).map((name) => ({ type: "club", name }));
+    const rowClubs = clubs.slice(3, 3 + (3 - nCountries - nCats)).map((name) => ({ type: "club", name }));
+    const rowCats = cats.slice(0, nCats).map((name) => ({ type: "cat", name }));
     const rowCountries = countries.slice(0, nCountries).map((name) => ({ type: "pais", name }));
-    const rows = shuffle([...rowCountries, ...rowClubs], rand);
+    const rows = shuffle([...rowCountries, ...rowCats, ...rowClubs], rand);
     const counts = [];
     let ok = true;
     for (const r of rows) {

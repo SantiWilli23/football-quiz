@@ -9,4 +9,22 @@ export const FEATURES = {
   temporada: true,
 };
 
-export const isEnabled = (flag) => !flag || !!FEATURES[flag];
+// Ventanas de temporada (espejo de server/utils/season-windows.js): Campeón y
+// descenso y Mercado de pases solo aparecen cuando alguna región está abierta.
+// [mes, día] inclusivos; una ventana puede cruzar el año.
+const SEASON_WINDOWS = [
+  [[7, 1], [8, 31]], [[4, 1], [5, 31]], // Europa: inicio y final
+  [[1, 1], [2, 28]], [[10, 1], [12, 15]], // Chile: inicio y final
+];
+
+export function seasonWindowOpen(now = new Date()) {
+  const x = (now.getMonth() + 1) * 100 + now.getDate();
+  const v = ([m, d]) => m * 100 + d;
+  return SEASON_WINDOWS.some(([from, to]) => (v(from) <= v(to) ? x >= v(from) && x <= v(to) : x >= v(from) || x <= v(to)));
+}
+
+export const isEnabled = (flag) => {
+  if (!flag) return true;
+  if (!FEATURES[flag]) return false;
+  return flag === "temporada" ? seasonWindowOpen() : true;
+};

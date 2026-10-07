@@ -7,7 +7,7 @@ import { todayStr } from "../utils/points.js";
 import { flagOf } from "../data/country-flags.js";
 import { PYRAMID_PUZZLES } from "../data/pyramid-puzzles.js";
 import {
-  buildIndex, cellsForPlayer, dailySeed, generateGrid, GRID_MODES, normalize, pickSquadClub,
+  buildIndex, CATEGORIES, cellsForPlayer, dailySeed, generateGrid, GRID_MODES, normalize, pickSquadClub,
   pyramidOrder, rankRanges, scorePyramid, squadOf, squadRevealOrders, tierOfRank, validFor,
 } from "../utils/futgames.js";
 
@@ -24,7 +24,17 @@ const INDEX = buildIndex(PLAYERS);
 const router = Router();
 router.use(requireAuth);
 
-const withFlag = (c) => ({ ...c, flag: c.type === "pais" ? flagOf(c.name) : null });
+// IDs de ESPN para mostrar el escudo de cada club del Tateti.
+const CREST_IDS = {"Real Madrid":86,"Barcelona":83,"Manchester United":360,"Manchester City":382,"Chelsea":363,"Arsenal":359,"Liverpool":364,"Juventus":111,"AC Milan":103,"Inter Milan":110,"Bayern Munich":132,"Paris Saint-Germain":160,"Atletico Madrid":1068,"Tottenham Hotspur":367,"Borussia Dortmund":124,"Roma":104,"Marseille":176,"Newcastle United":361,"Aston Villa":362,"Benfica":1929,"Fiorentina":109,"Ajax":139,"Monaco":174,"West Ham United":371,"Sevilla":243,"Lyon":167,"Valencia":94,"Everton":368,"Villarreal":102,"Napoli":114,"Lille":166,"Lazio":112,"Porto":437,"Bayer Leverkusen":131,"Sporting CP":2250,"Galatasaray":432,"Fenerbahce":436,"Atalanta":105,"Real Sociedad":89,"Real Betis":244,"Leicester City":375,"Southampton":376,"Crystal Palace":384,"Udinese":118,"Celtic":256};
+const CAT_ICONS = { champions: "🏆", premier: "🦁", laliga: "🇪🇸", seriea: "🇮🇹", bundesliga: "🇩🇪" };
+
+const withFlag = (c) => ({
+  ...c,
+  flag: c.type === "pais" ? flagOf(c.name) : null,
+  logo: c.type === "club" && CREST_IDS[c.name] ? `https://a.espncdn.com/i/teamlogos/soccer/500/${CREST_IDS[c.name]}.png` : null,
+  label: c.type === "cat" ? CATEGORIES[c.name] : null,
+  icon: c.type === "cat" ? CAT_ICONS[c.name] : null,
+});
 
 // ---------- Tateti ----------
 
@@ -32,10 +42,12 @@ const GRID_POOLS = {
   facil: {
     clubs: ["Real Madrid", "Barcelona", "Manchester United", "Manchester City", "Chelsea", "Arsenal", "Liverpool", "Juventus", "AC Milan", "Inter Milan", "Bayern Munich", "Paris Saint-Germain", "Atletico Madrid", "Tottenham Hotspur", "Borussia Dortmund"],
     countries: ["España", "Francia", "Argentina", "Brasil", "Alemania", "Italia", "Inglaterra", "Portugal", "Países Bajos"],
+    cats: ["champions", "premier", "laliga", "seriea", "bundesliga"],
   },
   medio: {
     clubs: ["Roma", "Marseille", "Newcastle United", "Aston Villa", "Benfica", "Fiorentina", "Ajax", "Monaco", "West Ham United", "Sevilla", "Lyon", "Valencia", "Everton", "Villarreal", "Napoli", "Lille", "Lazio", "Porto", "Bayer Leverkusen", "Sporting CP", "Galatasaray", "Fenerbahce", "Atalanta", "Real Sociedad", "Real Betis", "Leicester City", "Southampton", "Crystal Palace", "Udinese", "Celtic"],
     countries: ["Uruguay", "Bélgica", "Croacia", "Colombia", "Chile", "Dinamarca", "Senegal", "Costa de Marfil", "Nigeria", "Marruecos", "Suecia", "Polonia", "Serbia", "Suiza", "Escocia", "Estados Unidos", "Japón"],
+    cats: ["champions", "premier", "laliga", "seriea", "bundesliga"],
   },
 };
 

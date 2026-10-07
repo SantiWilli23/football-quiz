@@ -112,7 +112,38 @@ router.put("/profile", requireAuth, async (req, res) => {
   if (favTeam && !/^[a-z0-9_-]{1,40}$/i.test(favTeam)) return res.status(400).json({ error: "Equipo inválido" });
   if (banner && !PROFILE_BANNERS.includes(banner)) return res.status(400).json({ error: "Banner inválido" });
   try {
+    const prev = (await db.execute({ sql: "SELECT profile FROM users WHERE id = ?", args: [req.userId] })).rows[0];
     const profile = { bio, favTeam, banner: banner || "verde" };
+    const old = parseProfile(prev?.profile);
+    if (old.favClub) profile.favClub = old.favClub; // el club favorito del fútbol real se edita aparte
+    await db.execute({ sql: "UPDATE users SET profile = ? WHERE id = ?", args: [JSON.stringify(profile), req.userId] });
+    res.json({ profile });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Club favorito del fútbol real (liga + equipo de las tablas): sus partidos
+// salen en el Inicio. Se guarda dentro del perfil sin pisar el resto.
+const FAV_LEAGUES = ["bundesliga", "laliga", "premier", "serie_a", "ligue1", "chile"];
+router.put("/fav-club", requireAuth, async (req, res) => {
+  const b = req.body || {};
+  try {
+    const row = (await db.execute({ sql: "SELECT profile FROM users WHERE id = ?", args: [req.userId] })).rows[0];
+    const profile = parseProfile(row?.profile);
+    if (!b.id) {
+      delete profile.favClub;
+    } else {
+      const id = Number(b.id);
+      if (!FAV_LEAGUES.includes(b.league) || !Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "Equipo inválido" });
+      profile.favClub = {
+        league: b.league,
+        id,
+        name: String(b.name || "").slice(0, 60),
+        logo: String(b.logo || "").startsWith("https://") && String(b.logo).length < 300 && !/[\s"'<>]/.test(String(b.logo)) ? String(b.logo) : null,
+      };
+    }
     await db.execute({ sql: "UPDATE users SET profile = ? WHERE id = ?", args: [JSON.stringify(profile), req.userId] });
     res.json({ profile });
   } catch (err) {

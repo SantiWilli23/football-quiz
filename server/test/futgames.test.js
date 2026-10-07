@@ -111,3 +111,10 @@ test("Torta: plantel por nacionalidad ordenado y órdenes de revelado", () => {
   assert.deepEqual(orders.clockwise[2], [0, 1, 2]);
   assert.deepEqual(orders.random[2], [0, 1, 2]);
 });
+
+test("Tateti: la categoría 'champions' sale de la etapa en un club campeón", async () => {
+  const { wonChampions } = await import("../utils/futgames.js");
+  assert.equal(wonChampions({ carrera: [{ club: "Barcelona", inicio: 2004, fin: 2021 }] }), true); // 2006, 2009, 2011, 2015
+  assert.equal(wonChampions({ carrera: [{ club: "Barcelona", inicio: 2016, fin: 2018 }] }), false);
+  assert.equal(wonChampions({ carrera: [{ club: "Everton", inicio: 2000, fin: 2010 }] }), false);
+});

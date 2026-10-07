@@ -22,8 +22,12 @@ function initials(name) {
 function CritLabel({ c }) {
   return (
     <div className="flex flex-col items-center justify-center text-center gap-1 p-1 min-h-[64px]">
-      <span className="text-2xl leading-none" aria-hidden="true">{c.flag || "🛡️"}</span>
-      <span className="text-[11px] font-semibold leading-tight break-words">{c.name}</span>
+      {c.logo ? (
+        <img src={c.logo} alt="" className="w-9 h-9 object-contain" loading="lazy" />
+      ) : (
+        <span className="text-2xl leading-none" aria-hidden="true">{c.flag || c.icon || "🛡️"}</span>
+      )}
+      <span className="text-[11px] font-semibold leading-tight break-words">{c.label || c.name}</span>
     </div>
   );
 }

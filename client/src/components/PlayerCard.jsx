@@ -100,7 +100,7 @@ export default function PlayerCard({ user, stats, activeGroup, position }) {
     <div>
       <div
         ref={svgRef}
-        className="rounded-2xl overflow-hidden border border-border max-w-[220px] mx-auto sm:mx-0"
+        className="rounded-2xl overflow-hidden border border-border max-w-[340px] sm:max-w-[420px] mx-auto sm:mx-0 shadow-lg"
         dangerouslySetInnerHTML={{ __html: displayMarkup }}
       />
       <button

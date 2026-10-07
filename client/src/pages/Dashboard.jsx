@@ -11,6 +11,7 @@ import DailyChallenge from "../components/DailyChallenge.jsx";
 import WeeklyRankingHero from "../components/WeeklyRankingHero.jsx";
 import Crest from "../components/Crest.jsx";
 import SeasonBanner from "../components/SeasonBanner.jsx";
+import FavClubCard from "../components/FavClubCard.jsx";
 import api from "../api.js";
 import useAlerts from "../hooks/useAlerts.js";
 
@@ -107,6 +108,8 @@ export default function Dashboard() {
 
       {/* El centro de la app: el ranking semanal del grupo, primero que
           nada — es lo que genera la competitividad constante entre amigos. */}
+      <FavClubCard />
+
       <WeeklyRankingHero groupId={groupId} />
 
       <DailyChallenge standalone />

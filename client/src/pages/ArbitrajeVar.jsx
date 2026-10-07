@@ -25,6 +25,7 @@ export default function ArbitrajeVar() {
   const [loading, setLoading] = useState(false);
   const [saveState, setSaveState] = useState(null);
   const [dailyMsg, setDailyMsg] = useState("");
+  const [dailyToday, setDailyToday] = useState(false); // hoy este es el juego diario y todavía no se jugó
   const [timed, setTimed] = useState(true); // con reloj suma al ranking semanal
   const [totalRounds, setTotalRounds] = useState(MAX_ROUNDS);
   const totalRef = useRef(MAX_ROUNDS);
@@ -134,6 +135,11 @@ export default function ArbitrajeVar() {
 
   useEffect(() => () => clearInterval(timerRef.current), []);
 
+  // Si hoy es el juego diario, la partida es SIEMPRE con tiempo (así da puntos).
+  useEffect(() => {
+    api.get("/daily-games/today").then((r) => setDailyToday(r.data?.game?.key === "arbitraje_var" && !r.data.game.done)).catch(() => {});
+  }, [phase]);
+
   return (
     <Layout focus={phase === "playing"}>
       <h1 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2">
@@ -152,7 +158,11 @@ export default function ArbitrajeVar() {
           <p className="text-sm text-gray-400 mb-5">
             Jugadas polémicas reales revisadas por el VAR, en video y sin sonido. Pausalas o pasalas en cámara lenta y decidí qué cobrarías.
           </p>
-          <p className="text-xs text-gray-500 mb-5 -mt-2">Juego diario: la primera partida con tiempo del día da un sobre de cartas (mejor cuanto mejor te va).</p>
+          {dailyToday ? (
+            <p className="text-xs text-amber-500 mb-5 -mt-2">Hoy es el juego diario: se juega con tiempo y suma puntos. Una sola vez al día.</p>
+          ) : (
+            <p className="text-xs text-gray-500 mb-5 -mt-2">Juego diario: la primera partida con tiempo del día da un sobre de cartas (mejor cuanto mejor te va).</p>
+          )}
           <div className="flex flex-wrap gap-3 justify-center">
             <button
               onClick={() => start(true)}
@@ -160,12 +170,12 @@ export default function ArbitrajeVar() {
             >
               Con tiempo ({SECONDS_PER_SITUATION}s)
             </button>
-            <button
+            {!dailyToday && <button
               onClick={() => start(false)}
               className="px-6 py-2.5 rounded-card border border-border text-sm text-gray-300 hover:text-white hover:border-white/30 transition-colors"
             >
               Sin tiempo (práctica)
-            </button>
+            </button>}
           </div>
         </Card>
       )}
