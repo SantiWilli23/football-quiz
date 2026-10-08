@@ -308,6 +308,11 @@ body {
 .celebrate-confetti span:nth-child(5) { left: 68%; background: rgb(var(--c-amber)); animation-delay: 0.06s; }
 .celebrate-confetti span:nth-child(6) { left: 82%; animation-delay: 0.11s; }
 .celebrate-confetti span:nth-child(7) { left: 94%; background: rgb(var(--c-emerald)); animation-delay: 0.03s; }
+.celebrate-confetti span:nth-child(8) { left: 14%; background: rgb(var(--c-pink)); animation-delay: 0.16s; }
+.celebrate-confetti span:nth-child(9) { left: 30%; background: rgb(var(--c-cyan)); animation-delay: 0.05s; }
+.celebrate-confetti span:nth-child(10) { left: 46%; background: rgb(var(--c-purple)); animation-delay: 0.12s; }
+.celebrate-confetti span:nth-child(11) { left: 62%; background: rgb(var(--c-pink)); animation-delay: 0.01s; }
+.celebrate-confetti span:nth-child(12) { left: 76%; background: rgb(var(--c-cyan)); animation-delay: 0.18s; }
 @media (prefers-reduced-motion: reduce) {
   .celebrate-pop { animation: none; }
   .celebrate-confetti span { animation: none; display: none; }

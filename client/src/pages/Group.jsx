@@ -519,31 +519,7 @@ export default function Group() {
                 </div>
               )}
 
-              {/* Antes esto era un solo scroll de 8 bloques con el mismo peso
-                  — ranking, Copa, apuestas, encuesta, retos y banco de
-                  preguntas, todos apilados. Tres pestañas para que no
-                  compitan entre sí: lo que se mira todos los días
-                  (Ranking), los modos estructurados con el grupo (Jugar
-                  juntos) y lo más liviano/social (Actividad). */}
-              <div className="flex items-center gap-2 mb-5 border-b border-border">
-                {[
-                  { key: "ranking", label: "Ranking", icon: BarChart3 },
-                  { key: "jugar", label: "Jugar juntos", icon: Trophy },
-                ].map(({ key, label, icon: Icon }) => (
-                  <button
-                    key={key}
-                    onClick={() => setTab(key)}
-                    className={`flex items-center gap-1.5 px-3.5 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                      tab === key ? "border-accent text-accent" : "border-transparent text-gray-500 hover:text-white"
-                    }`}
-                  >
-                    <Icon size={14} />
-                    {label}
-                  </button>
-                ))}
-              </div>
-
-              {tab === "ranking" && (
+              {(
               <>
               {/* La temporada del mes es la que se mira día a día: el histórico
                   lo gana siempre el que arrancó primero. */}
@@ -654,15 +630,16 @@ export default function Group() {
         </div>
       )}
 
-      {tab === "jugar" && activeGroupId && (
-        <div className="mt-6 space-y-5">
+      {activeGroupId && (
+        <div className="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+        <div className="space-y-5">
           {/* La liga trimestral (opt-in, 10+ miembros, dos divisiones) es
               distinta de la división mensual de abajo — antes vivía como
               pantalla propia en el catálogo de Juegos, ahora es una función
               del grupo como Cartas. */}
           <GroupLeague groupId={activeGroupId} isCreator={detail?.created_by === user?.id} />
           <div>
-            <h2 className="t-eyebrow border-b border-border pb-2 mb-4 flex items-center gap-1.5">
+            <h2 className="tone-amber t-eyebrow text-tone border-b border-tone pb-2 mb-4 flex items-center gap-1.5">
               <Shield size={13} /> División mensual
             </h2>
             <GroupDivision groupId={activeGroupId} />
@@ -693,13 +670,12 @@ export default function Group() {
           <DuelBets groupId={activeGroupId} />
           <WeeklyChallenges groupId={activeGroupId} />
         </div>
-      )}
 
-      {tab === "ranking" && activeGroupId && (
-        <div className="mt-8 space-y-5">
-          <h2 className="t-eyebrow border-b border-border pb-2 flex items-center gap-1.5"><MessageSquareText size={13} /> Actividad del grupo</h2>
+        <div className="space-y-5">
+          <h2 className="tone-pink t-eyebrow text-tone border-b border-tone pb-2 flex items-center gap-1.5"><MessageSquareText size={13} /> Actividad del grupo</h2>
           <FlashPoll groupId={activeGroupId} />
           <QuestionBank groupId={activeGroupId} />
+        </div>
         </div>
       )}
     </Layout>

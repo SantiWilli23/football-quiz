@@ -20,11 +20,11 @@ const MODE_INFO = {
 
 function Cell({ label, children, tone }) {
   const toneClass =
-    tone === "good" ? "bg-emerald/15 border-emerald/40 text-emerald"
-    : tone === "bad" ? "bg-red-500/10 border-red-500/30 text-red-300"
-    : "bg-panel border-border text-gray-300";
+    tone === "good" ? "bg-emerald border-emerald text-onaccent shadow-[0_0_14px_-4px_rgb(var(--c-emerald))]"
+    : tone === "bad" ? "bg-white/5 border-border text-gray-500"
+    : "tone-blue bg-tone-soft border-tone text-gray-100";
   return (
-    <div className={`rounded-card border px-2 py-2 text-center ${toneClass}`}>
+    <div className={`rounded-card border px-2 py-2.5 text-center ${toneClass}`}>
       <p className="text-xs uppercase tracking-wide opacity-70 mb-0.5">{label}</p>
       <p className="text-xs font-semibold flex items-center justify-center gap-1 truncate">
         {tone === "good" && <span aria-label="coincide">✓</span>}
@@ -56,7 +56,10 @@ function GuessRow({ g }) {
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold truncate">{g.name}</p>
+        <p className="text-sm font-semibold truncate flex items-center gap-2">
+          <span className="w-6 h-6 shrink-0 rounded-full bg-accent/20 text-accent text-[11px] font-bold flex items-center justify-center">{String(g.name || "?")[0]}</span>
+          {g.name}
+        </p>
         <SimilarityBar value={g.similarity} />
       </div>
       <div className={`grid gap-1.5 ${g.style ? "grid-cols-3 sm:grid-cols-6" : "grid-cols-5"}`}>

@@ -174,7 +174,7 @@ export default function Piramide() {
                         res ? (res.correct ? "border-emerald-500/60 bg-emerald-500/15" : "border-red-500/60 bg-red-500/15")
                           : selected ? "border-accent bg-accent/20"
                           : p ? "border-tone bg-tone-soft hover:brightness-110"
-                          : "border-dashed border-tone bg-bg/60 hover:bg-tone-soft"
+                          : "border-dashed border-tone bg-bg/60"
                       }`}
                     >
                       <span className="text-[10px] text-gray-500 tabular-nums">{i + 1}</span>

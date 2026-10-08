@@ -30,10 +30,11 @@ export default function ScoreCelebration() {
   const [main, ...rest] = lines;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 px-4" onClick={() => setLines(null)} role="dialog" aria-live="polite" aria-label="Felicitaciones">
-      <div className="celebrate-pop relative overflow-hidden w-full max-w-xs bg-panel border border-accent/50 rounded-2xl px-6 py-7 text-center shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[70] flex items-center justify-center px-4"
+      style={{ background: "radial-gradient(60% 60% at 50% 50%, rgb(var(--c-accent) / 0.28), rgb(0 0 0 / 0.62))" }} onClick={() => setLines(null)} role="dialog" aria-live="polite" aria-label="Felicitaciones">
+      <div className="celebrate-pop hero-b relative overflow-hidden w-full max-w-xs rounded-3xl px-6 py-8 text-center" style={{ "--hero-a": "var(--c-accent)", "--hero-b": "var(--c-amber)", boxShadow: "0 0 70px -8px rgb(var(--c-accent) / 0.75)" }} onClick={(e) => e.stopPropagation()}>
         <div className="celebrate-confetti absolute inset-x-0 top-0 h-0 pointer-events-none" aria-hidden="true">
-          {Array.from({ length: 7 }).map((_, i) => <span key={i} />)}
+          {Array.from({ length: 12 }).map((_, i) => <span key={i} />)}
         </div>
         <button onClick={() => setLines(null)} className="absolute top-3 right-3 text-gray-500 hover:text-white" aria-label="Cerrar"><X size={16} /></button>
         <PartyPopper size={30} className="mx-auto text-accent mb-2" />

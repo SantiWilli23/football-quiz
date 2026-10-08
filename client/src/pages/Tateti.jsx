@@ -13,6 +13,8 @@ import { playSfx } from "../utils/sfx.js";
 // reto es el mismo para todos en el día (lo arma el server según la fecha).
 const GAME = "tateti";
 const today = () => new Date().toISOString().slice(0, 10);
+const COL_TONES = ["accent", "blue", "purple"];
+const ROW_TONES = ["amber", "pink", "cyan"];
 const TIMERS = [["0", "Sin tiempo"], ["90", "90 s"], ["60", "60 s"], ["40", "40 s"]];
 
 function initials(name) {
@@ -224,10 +226,10 @@ export default function Tateti() {
 
           <div className="grid grid-cols-4 gap-1.5 max-w-md mx-auto">
             <div />
-            {grid.cols.map((c) => <Card key={c.name} className="!p-1"><CritLabel c={c} /></Card>)}
+            {grid.cols.map((c, ci) => <div key={c.name} className={`tone-${COL_TONES[ci]} rounded-xl border border-tone bg-tone-soft p-1`}><CritLabel c={c} /></div>)}
             {grid.rows.map((r, ri) => (
               <div key={r.name} className="contents">
-                <Card className="!p-1"><CritLabel c={r} /></Card>
+                <div className={`tone-${ROW_TONES[ri]} rounded-xl border border-tone bg-tone-soft p-1`}><CritLabel c={r} /></div>
                 {grid.cols.map((c, ci) => {
                   const i = ri * 3 + ci;
                   const name = state.cells[i];
@@ -239,15 +241,15 @@ export default function Tateti() {
                       disabled={!selectable}
                       onClick={() => selectable && place(choices.name, i)}
                       aria-label={name ? `${r.name} y ${c.name}: ${name}` : `${r.name} y ${c.name}: vacía`}
-                      className={`aspect-square rounded-xl border flex flex-col items-center justify-center p-1 text-center transition-colors ${
-                        name ? "border-emerald-500/50 bg-emerald-500/10"
+                      className={`tone-${COL_TONES[ci]} aspect-square rounded-xl border flex flex-col items-center justify-center p-1 text-center transition-colors ${
+                        name ? "border-tone bg-tone text-onaccent"
                           : selectable ? "border-accent bg-accent/15 animate-pulse cursor-pointer"
                           : "border-border bg-panel"
                       }`}
                     >
                       {name ? (
                         <>
-                          <span className="w-8 h-8 rounded-full bg-emerald-500/25 text-emerald-300 text-xs font-bold flex items-center justify-center mb-1">{initials(name)}</span>
+                          <span className="w-8 h-8 rounded-full bg-black/25 text-white text-xs font-bold flex items-center justify-center mb-1">{initials(name)}</span>
                           <span className="text-[10px] leading-tight font-medium line-clamp-2">{name}</span>
                         </>
                       ) : hint ? (
