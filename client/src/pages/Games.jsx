@@ -6,7 +6,7 @@ import Layout from "../components/Layout.jsx";
 import MyCardsTeam from "../components/MyCardsTeam.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
-import { CON_AMIGOS_GAMES, JUEGOS_SEMANALES, FAMILIES, FUTBOL12_GAMES, GAMES, minutesOf } from "../data/gameCatalog.js";
+import { CON_AMIGOS_GAMES, JUEGOS_SEMANALES, FAMILIES, FUTBOL12_GAMES, GAMES } from "../data/gameCatalog.js";
 import { playedToday, readVisits } from "../utils/visits.js";
 
 // Clases de Tailwind escritas literales a propósito (no armadas con string
@@ -63,24 +63,19 @@ function Circle({ game, style, visits }) {
   const Icon = game.icon;
   const played = game.to ? playedToday(game.to, visits) : false;
   return (
-    <GameLink
-      game={game}
-      className={`${style.tone} group relative shrink-0 w-[150px] rounded-2xl border border-tone p-3.5 flex flex-col items-start gap-2 transition-transform hover:-translate-y-0.5`}
-    >
-      <span className="absolute inset-0 rounded-2xl pointer-events-none" style={{ backgroundImage: "linear-gradient(160deg, rgb(var(--tone) / 0.26), transparent 70%)" }} />
-      <span className="relative w-12 h-12 rounded-full bg-tone flex items-center justify-center text-onaccent" style={{ boxShadow: "0 0 18px -2px rgb(var(--tone))" }}>
-        <Icon size={22} />
+    <GameLink game={game} className="shrink-0 w-[76px] flex flex-col items-center gap-1.5 text-center group">
+      <span className={`relative w-[62px] h-[62px] rounded-full border-2 flex items-center justify-center transition-transform group-hover:scale-105 ${style.ring}`}>
+        <Icon size={25} />
         {played && <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-good border-2 border-bg" title="Jugado hoy" />}
       </span>
-      <span className="relative text-sm font-semibold leading-tight">{game.label}</span>
-      <span className="relative text-[11px] text-gray-400">{minutesOf(game)} min</span>
+      <span className="text-[11px] leading-tight text-gray-300 group-hover:text-white transition-colors">{game.label}</span>
     </GameLink>
   );
 }
 
 function CircleRow({ games, visits }) {
   return (
-    <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 [scrollbar-width:thin]">
+    <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible">
       {games.map((game) => (
         <Circle key={game.to || game.href || game.label} game={game} style={FAMILY_STYLE[FAMILIES[game.family].tw]} visits={visits} />
       ))}
