@@ -139,7 +139,28 @@ export default function Trivia() {
 
   return (
     <Layout>
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
+      <div className="grid grid-cols-1 gap-6">
+        <div className="rounded-2xl border border-border bg-panel p-4 sm:p-5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-4">
+            <div className="strip-cell tone-amber">
+              <p className="text-xs uppercase tracking-wider text-gray-500">Racha</p>
+              <p className="text-2xl sm:text-3xl font-bold tabular-nums text-tone mt-1">{stats?.current_streak ?? 0} <span className="text-sm font-medium text-gray-500">días</span></p>
+            </div>
+            <div className="strip-cell tone-emerald">
+              <p className="text-xs uppercase tracking-wider text-gray-500">Mejor racha</p>
+              <p className="text-2xl sm:text-3xl font-bold tabular-nums text-tone mt-1">{stats?.best_streak ?? 0} <span className="text-sm font-medium text-gray-500">días</span></p>
+            </div>
+            <div className="strip-cell tone-blue">
+              <p className="text-xs uppercase tracking-wider text-gray-500">Puntos de trivia</p>
+              <p className="text-2xl sm:text-3xl font-bold tabular-nums text-tone mt-1">{stats?.trivia_points ?? 0}</p>
+            </div>
+            <div className="strip-cell tone-pink">
+              <p className="text-xs uppercase tracking-wider text-gray-500">Puntos especial</p>
+              <p className="text-2xl sm:text-3xl font-bold tabular-nums text-tone mt-1">{stats?.mode_b_points ?? 0}</p>
+            </div>
+          </div>
+        </div>
+
         <div>
           <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
             <h1 className="text-xl sm:text-2xl font-bold">Trivia del día</h1>
@@ -281,27 +302,7 @@ export default function Trivia() {
           </div>
         </div>
 
-        <div className="space-y-6">
-          {groupId && <GroupStreakCard groupId={groupId} />}
-          <Card>
-            <p className="text-xs text-gray-500 mb-2">Racha actual</p>
-            <p className="text-3xl font-bold">{stats?.current_streak ?? 0} días</p>
-            <p className="text-xs text-gray-500 mt-1">Mejor: {stats?.best_streak ?? 0} días</p>
-          </Card>
-          <Card>
-            <p className="text-xs text-gray-500 mb-2">Mis puntos</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-xs text-gray-600">Trivia</p>
-                <p className="font-semibold">{stats?.trivia_points ?? 0}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600">Especial</p>
-                <p className="font-semibold text-purple-400">{stats?.mode_b_points ?? 0}</p>
-              </div>
-            </div>
-          </Card>
-        </div>
+        {groupId && <GroupStreakCard groupId={groupId} />}
       </div>
     </Layout>
   );

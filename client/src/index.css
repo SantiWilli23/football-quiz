@@ -47,6 +47,8 @@
   --c-amber: 240 169 62;
   --c-orange: 138 100 35;
   --c-red: 224 102 79;
+  --c-pink: 242 122 168;
+  --c-cyan: 60 214 196;
 
   --radius-card: 10px;
   --theme-color: #0e1317;
@@ -80,42 +82,11 @@
   --c-amber: 217 164 65;
   --c-orange: 138 100 35;
   --c-red: 240 144 126;
+  --c-pink: 155 140 240;
+  --c-cyan: 156 204 101;
 
   --radius-card: 4px;
   --theme-color: #262b35;
-}
-
-[data-theme="cancha-noche"] {
-  --c-bg: 9 28 19;
-  --c-panel: 15 40 27;
-  --c-panel-hi: 20 50 34;
-  --c-border: 44 84 60;
-
-  --c-white: 238 245 236;
-  --c-onaccent: 9 28 19;
-
-  --c-gray-200: 44 84 60;
-  --c-gray-300: 196 216 202;
-  --c-gray-400: 168 196 178;
-  --c-gray-500: 148 178 160;
-  --c-gray-600: 118 150 130;
-  --c-gray-700: 84 116 96;
-  --c-gray-800: 44 84 60;
-  --c-gray-900: 6 20 13;
-
-  --c-accent: 232 221 138;
-  --c-accent-dark: 186 174 92;
-  --c-accent-light: 244 236 176;
-
-  --c-blue: 110 190 230;
-  --c-purple: 196 170 230;
-  --c-emerald: 74 200 128;
-  --c-amber: 240 180 70;
-  --c-orange: 210 130 60;
-  --c-red: 232 108 86;
-
-  --radius-card: 8px;
-  --theme-color: #091c13;
 }
 
 [data-theme="bengala"] {
@@ -146,6 +117,8 @@
   --c-amber: 240 180 41;
   --c-orange: 204 61 18;
   --c-red: 229 72 77;
+  --c-pink: 232 64 138;
+  --c-cyan: 0 168 190;
 
   --radius-card: 16px;
   --theme-color: #f6f6f8;
@@ -275,18 +248,35 @@ body {
 .toast-in { animation: toast-in 0.35s ease both; }
 @media (prefers-reduced-motion: reduce) { .toast-in { animation: none; } }
 
-/* Cancha de noche: líneas de cancha (medio campo y círculo) al 8% sobre el fondo. */
-[data-theme="cancha-noche"] body {
-  background-image:
-    linear-gradient(90deg, transparent calc(50% - 0.5px), rgb(255 255 255 / 0.05) calc(50% - 0.5px), rgb(255 255 255 / 0.05) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
-    radial-gradient(circle at 50% 50%, transparent 118px, rgb(255 255 255 / 0.05) 118px, rgb(255 255 255 / 0.05) 119px, transparent 119px);
-}
-
 /* Bengala: el naranja se reserva para lo que se toca. Los títulos van en tinta. */
 [data-theme="bengala"] :is(h1, h2, h3, h4).text-accent,
 [data-theme="bengala"] :is(h1, h2, h3, h4) .text-accent {
   color: rgb(var(--c-white));
 }
+
+/* ---- Rediseño "Portada": portadas con degradado de dos colores, tiras de datos
+   con subrayado de color y filas con franja. Usan los slots de color del tema,
+   así cada tema (Nocturno, Azul clásico, Bengala) las pinta con su paleta. ---- */
+.hero-b {
+  --hero-a: var(--c-accent);
+  --hero-b: var(--c-blue);
+  position: relative;
+  border: 1px solid rgb(var(--hero-a) / 0.4);
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgb(var(--hero-a) / 0.34), transparent 60%),
+    radial-gradient(90% 120% at 100% 100%, rgb(var(--hero-b) / 0.3), transparent 65%),
+    rgb(var(--c-panel));
+}
+.strip-cell { position: relative; padding: 0.25rem 1.1rem; border-left: 1px solid rgb(var(--c-border)); }
+.strip-cell:first-child { border-left: 0; padding-left: 0.25rem; }
+.strip-cell::after { content: ""; display: block; width: 34px; height: 3px; border-radius: 2px; margin-top: 6px; background: rgb(var(--tone, var(--c-accent))); }
+.tone-accent { --tone: var(--c-accent); } .tone-blue { --tone: var(--c-blue); } .tone-purple { --tone: var(--c-purple); }
+.tone-emerald { --tone: var(--c-emerald); } .tone-amber { --tone: var(--c-amber); } .tone-red { --tone: var(--c-red); }
+.tone-pink { --tone: var(--c-pink); } .tone-cyan { --tone: var(--c-cyan); }
+.text-tone { color: rgb(var(--tone, var(--c-accent))); }
+.bg-tone { background-color: rgb(var(--tone, var(--c-accent))); }
+.bg-tone-soft { background-color: rgb(var(--tone, var(--c-accent)) / 0.16); }
+.border-tone { border-color: rgb(var(--tone, var(--c-accent)) / 0.5); }
 
 /* Semánticos compartidos: un solo verde y un solo rojo para acierto y error. */
 .text-good { color: rgb(var(--c-emerald)); }

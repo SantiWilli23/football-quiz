@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Home, HelpCircle, Users, History, BarChart3, Gamepad2, Radio, User, LogOut, Flame, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import Avatar from "./Avatar.jsx";
 import AlertsBell from "./AlertsBell.jsx";
+import { SIDEBAR_SIZES, readSidebarSize, setSidebarSize } from "../utils/sidebarSize.js";
 
 // El menú contesta "¿a qué PARTE de la app voy?", no "¿a qué juego?" — antes
 // mezclaba 8 secciones con 3 juegos sueltos sin acceso desde ningún otro
@@ -11,25 +12,23 @@ import AlertsBell from "./AlertsBell.jsx";
 // Los juegos ahora entran todos por /juegos; "En vivo" y "Juegos" separan
 // lo que antes vivía junto en una sola pantalla de Fútbol.
 const links = [
-  { to: "/panel", label: "Inicio", icon: Home, end: true },
-  { to: "/trivia", label: "Trivia", icon: HelpCircle },
-  { to: "/juegos", label: "Juegos", icon: Gamepad2 },
-  { to: "/futbol", label: "En vivo", icon: Radio },
-  { to: "/grupo", label: "Mi grupo", icon: Users },
+  { to: "/panel", label: "Inicio", icon: Home, end: true, tone: "accent" },
+  { to: "/trivia", label: "Trivia", icon: HelpCircle, tone: "amber" },
+  { to: "/juegos", label: "Juegos", icon: Gamepad2, tone: "purple" },
+  { to: "/futbol", label: "En vivo", icon: Radio, tone: "red" },
+  { to: "/grupo", label: "Mi grupo", icon: Users, tone: "blue" },
 ];
 
 const accountLinks = [
-  { to: "/estadisticas", label: "Estadísticas", icon: BarChart3 },
-  { to: "/historial", label: "Historial", icon: History },
-  { to: "/perfil", label: "Mi perfil", icon: User },
+  { to: "/estadisticas", label: "Estadísticas", icon: BarChart3, tone: "emerald" },
+  { to: "/historial", label: "Historial", icon: History, tone: "cyan" },
+  { to: "/perfil", label: "Mi perfil", icon: User, tone: "pink" },
 ];
-
-const COLLAPSED_KEY = "fq_sidebar_collapsed";
 
 function NavGroup({ items, collapsed }) {
   return (
     <>
-      {items.map(({ to, label, icon: Icon, end }) => (
+      {items.map(({ to, label, icon: Icon, end, tone }) => (
         <NavLink
           key={to}
           to={to}
@@ -37,14 +36,15 @@ function NavGroup({ items, collapsed }) {
           title={collapsed ? label : undefined}
           aria-label={collapsed ? label : undefined}
           className={({ isActive }) =>
-            `flex items-center gap-3 py-2.5 rounded-card text-sm font-medium transition-colors ${collapsed ? "justify-center px-0" : "px-3"} ${
+            `tone-${tone} flex items-center gap-3 py-2.5 rounded-card text-sm font-medium transition-colors border ${collapsed ? "justify-center px-0" : "px-3"} ${
               isActive
-                ? "bg-accent/15 text-accent border border-accent/30"
-                : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
+                ? "text-white border-tone font-semibold"
+                : "text-gray-400 hover:text-white hover:bg-white/5 border-transparent"
             }`
           }
+          style={({ isActive }) => (isActive ? { backgroundImage: "linear-gradient(90deg, rgb(var(--tone) / 0.3), rgb(var(--tone) / 0.02))" } : undefined)}
         >
-          <Icon size={18} />
+          <Icon size={18} className="text-tone" />
           {!collapsed && label}
         </NavLink>
       ))}
@@ -54,19 +54,19 @@ function NavGroup({ items, collapsed }) {
 
 export default function Sidebar() {
   const { user, stats, logout } = useAuth();
-  const [collapsed, setCollapsed] = useState(() => {
-    try { return localStorage.getItem(COLLAPSED_KEY) === "1"; } catch { return false; }
-  });
+  const [size, setSize] = useState(readSidebarSize);
+  useEffect(() => {
+    const sync = () => setSize(readSidebarSize());
+    window.addEventListener("fq-sidebar-size", sync);
+    return () => window.removeEventListener("fq-sidebar-size", sync);
+  }, []);
+  const collapsed = size === "compacta";
+  const width = SIDEBAR_SIZES.find((s) => s.id === size)?.px ?? 256;
 
-  const toggle = () => {
-    setCollapsed((c) => {
-      try { localStorage.setItem(COLLAPSED_KEY, c ? "0" : "1"); } catch { /* sin storage */ }
-      return !c;
-    });
-  };
+  const toggle = () => setSidebarSize(collapsed ? "normal" : "compacta");
 
   return (
-    <aside className={`hidden lg:flex ${collapsed ? "w-[72px] px-2" : "w-64 px-4"} shrink-0 h-screen sticky top-0 flex-col border-r border-border bg-panel py-6 transition-[width] duration-150`}>
+    <aside style={{ width }} className={`hidden lg:flex ${collapsed ? "px-2" : "px-4"} shrink-0 h-screen sticky top-0 flex-col border-r border-border bg-panel py-6 transition-[width] duration-150`}>
       <div className={`flex items-center mb-8 ${collapsed ? "flex-col gap-3" : "gap-2 px-2"}`}>
         <div className="w-9 h-9 rounded-card bg-accent/15 border border-accent/30 flex items-center justify-center text-accent font-bold shrink-0">
           FT

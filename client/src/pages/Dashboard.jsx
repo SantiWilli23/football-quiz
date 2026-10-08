@@ -116,17 +116,17 @@ export default function Dashboard() {
 
       <ContinuePlaying items={savedGames} />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-14 gap-y-8">
-          <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-[0.2em] mb-4">Mis stats</p>
-            <div className="divide-y divide-white/5">
-              <StatRow label="Puntos" value={stats?.total_points ?? 0} />
-              <StatRow label="Aciertos" value={`${stats?.accuracy ?? 0}%`} accent />
-              <StatRow label="Trivia" value={stats?.trivia_points ?? 0} />
-              <StatRow label="Especial" value={stats?.mode_b_points ?? 0} />
-            </div>
-          </div>
+      <div className="mb-8 rounded-2xl border border-border bg-panel p-5 sm:p-6">
+        <p className="t-eyebrow mb-4">Mis stats</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-5">
+          <StatCell tone="accent" label="Puntos" value={stats?.total_points ?? 0} />
+          <StatCell tone="blue" label="Aciertos" value={`${stats?.accuracy ?? 0}%`} />
+          <StatCell tone="purple" label="Trivia" value={stats?.trivia_points ?? 0} />
+          <StatCell tone="pink" label="Especial" value={stats?.mode_b_points ?? 0} />
+        </div>
+      </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-14 gap-y-8">
           {groups.length > 0 && (
             <div>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-[0.2em] mb-4">Mi grupo</p>
@@ -159,11 +159,11 @@ export default function Dashboard() {
   );
 }
 
-function StatRow({ label, value, accent }) {
+function StatCell({ label, value, tone }) {
   return (
-    <div className="flex items-center justify-between text-sm py-2.5 first:pt-0 last:pb-0">
-      <span className="text-gray-500 text-xs">{label}</span>
-      <span className={`font-medium tabular-nums ${accent ? "text-accent" : ""}`}>{value}</span>
+    <div className={`strip-cell tone-${tone}`}>
+      <p className="text-xs uppercase tracking-wider text-gray-500">{label}</p>
+      <p className="text-3xl sm:text-4xl font-bold tabular-nums tracking-tight text-tone mt-1">{value}</p>
     </div>
   );
 }

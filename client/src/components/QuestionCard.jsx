@@ -14,6 +14,7 @@ const SLOT_COLORS = Object.fromEntries(
 );
 
 const TIMER_SECONDS = 10;
+const OPTION_TONES = { a: "tone-accent", b: "tone-blue", c: "tone-purple", d: "tone-pink" };
 
 export default function QuestionCard({ item, index, total, onAnswered, timedMode, powerups, onUsePowerup }) {
   const { question } = item;
@@ -190,11 +191,11 @@ export default function QuestionCard({ item, index, total, onAnswered, timedMode
               key={key}
               disabled={!!result || isEliminated}
               onClick={() => setSelected(key)}
-              className={`w-full text-left px-4 py-3.5 rounded-card border transition-colors flex items-center gap-3 ${optionClass} ${
+              className={`${OPTION_TONES[key]} w-full text-left px-4 py-3.5 rounded-2xl border transition-colors flex items-center gap-3 ${optionClass} ${
                 result || isEliminated ? "cursor-default" : "cursor-pointer"
               }`}
             >
-              <span className="w-7 h-7 shrink-0 rounded-full border border-current/40 flex items-center justify-center text-xs font-semibold">
+              <span className="w-8 h-8 shrink-0 rounded-full bg-tone text-onaccent flex items-center justify-center text-sm font-bold">
                 {OPTION_LABELS[key]}
               </span>
               <span className={`text-sm flex-1 ${isEliminated ? "line-through" : ""}`}>{text}</span>

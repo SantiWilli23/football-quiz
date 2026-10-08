@@ -6,18 +6,18 @@ import Layout from "../components/Layout.jsx";
 import MyCardsTeam from "../components/MyCardsTeam.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
-import { CON_AMIGOS_GAMES, JUEGOS_SEMANALES, FAMILIES, FUTBOL12_GAMES, GAMES } from "../data/gameCatalog.js";
+import { CON_AMIGOS_GAMES, JUEGOS_SEMANALES, FAMILIES, FUTBOL12_GAMES, GAMES, minutesOf } from "../data/gameCatalog.js";
 import { playedToday, readVisits } from "../utils/visits.js";
 
 // Clases de Tailwind escritas literales a propósito (no armadas con string
 // interpolation): Tailwind necesita ver la clase completa para generarla. El
 // color de cada familia sale de los slots por tema (--c-emerald, --c-amber…).
 const FAMILY_STYLE = {
-  emerald: { dot: "bg-emerald-500", text: "text-emerald-500", ring: "border-emerald-500 bg-emerald-500/15 text-emerald-500", feat: "from-emerald-500/40 border-emerald-500/40" },
-  amber: { dot: "bg-amber-500", text: "text-amber-500", ring: "border-amber-500 bg-amber-500/15 text-amber-500", feat: "from-amber-500/40 border-amber-500/40" },
-  red: { dot: "bg-red-500", text: "text-red-500", ring: "border-red-500 bg-red-500/15 text-red-500", feat: "from-red-500/40 border-red-500/40" },
-  blue: { dot: "bg-blue-500", text: "text-blue-500", ring: "border-blue-500 bg-blue-500/15 text-blue-500", feat: "from-blue-500/40 border-blue-500/40" },
-  purple: { dot: "bg-purple-500", text: "text-purple-500", ring: "border-purple-500 bg-purple-500/15 text-purple-500", feat: "from-purple-500/40 border-purple-500/40" },
+  emerald: { tone: "tone-emerald", dot: "bg-emerald-500", text: "text-emerald-500", ring: "border-emerald-500 bg-emerald-500/15 text-emerald-500", feat: "from-emerald-500/40 border-emerald-500/40" },
+  amber: { tone: "tone-amber", dot: "bg-amber-500", text: "text-amber-500", ring: "border-amber-500 bg-amber-500/15 text-amber-500", feat: "from-amber-500/40 border-amber-500/40" },
+  red: { tone: "tone-red", dot: "bg-red-500", text: "text-red-500", ring: "border-red-500 bg-red-500/15 text-red-500", feat: "from-red-500/40 border-red-500/40" },
+  blue: { tone: "tone-blue", dot: "bg-blue-500", text: "text-blue-500", ring: "border-blue-500 bg-blue-500/15 text-blue-500", feat: "from-blue-500/40 border-blue-500/40" },
+  purple: { tone: "tone-purple", dot: "bg-purple-500", text: "text-purple-500", ring: "border-purple-500 bg-purple-500/15 text-purple-500", feat: "from-purple-500/40 border-purple-500/40" },
 };
 
 function GameLink({ game, className, children }) {
@@ -63,19 +63,24 @@ function Circle({ game, style, visits }) {
   const Icon = game.icon;
   const played = game.to ? playedToday(game.to, visits) : false;
   return (
-    <GameLink game={game} className="shrink-0 w-[76px] flex flex-col items-center gap-1.5 text-center group">
-      <span className={`relative w-[62px] h-[62px] rounded-full border-2 flex items-center justify-center transition-transform group-hover:scale-105 ${style.ring}`}>
-        <Icon size={25} />
+    <GameLink
+      game={game}
+      className={`${style.tone} group relative shrink-0 w-[150px] rounded-2xl border border-tone p-3.5 flex flex-col items-start gap-2 transition-transform hover:-translate-y-0.5`}
+    >
+      <span className="absolute inset-0 rounded-2xl pointer-events-none" style={{ backgroundImage: "linear-gradient(160deg, rgb(var(--tone) / 0.26), transparent 70%)" }} />
+      <span className="relative w-12 h-12 rounded-full bg-tone flex items-center justify-center text-onaccent" style={{ boxShadow: "0 0 18px -2px rgb(var(--tone))" }}>
+        <Icon size={22} />
         {played && <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-good border-2 border-bg" title="Jugado hoy" />}
       </span>
-      <span className="text-[11px] leading-tight text-gray-300 group-hover:text-white transition-colors">{game.label}</span>
+      <span className="relative text-sm font-semibold leading-tight">{game.label}</span>
+      <span className="relative text-[11px] text-gray-400">{minutesOf(game)} min</span>
     </GameLink>
   );
 }
 
 function CircleRow({ games, visits }) {
   return (
-    <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible">
+    <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 [scrollbar-width:thin]">
       {games.map((game) => (
         <Circle key={game.to || game.href || game.label} game={game} style={FAMILY_STYLE[FAMILIES[game.family].tw]} visits={visits} />
       ))}

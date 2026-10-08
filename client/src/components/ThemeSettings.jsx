@@ -3,19 +3,21 @@ import { useState } from "react";
 import Card from "./Card.jsx";
 import { DENSITIES, readDensity, setDensity } from "../utils/density.js";
 import { isSfxOn, playSfx, setSfxOn } from "../utils/sfx.js";
+import { SIDEBAR_SIZES, readSidebarSize, setSidebarSize } from "../utils/sidebarSize.js";
 
 export default function ThemeSettings() {
   const { theme, setTheme, themes, shape, setShape, shapes } = useTheme();
   const [density, setDensityState] = useState(readDensity);
   const [sfx, setSfxState] = useState(isSfxOn);
+  const [sbSize, setSbSize] = useState(readSidebarSize);
 
   return (
     <Card>
-      <h2 className="font-semibold mb-1">Apariencia</h2>
-      <p className="text-xs text-gray-500 mb-5">Nocturno + Redondeada es lo que ves por default. Cada elección se guarda en este dispositivo.</p>
+      <h2 className="font-semibold mb-1">Diseño</h2>
+      <p className="text-xs text-gray-500 mb-5">Elegí el diseño de color, la forma, el ancho del menú lateral y la densidad. Cada elección se guarda en este dispositivo.</p>
 
-      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2.5">Color</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2.5">Diseño de color</p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         {themes.map((t) => {
           const active = theme === t.id;
           return (
@@ -68,6 +70,24 @@ export default function ThemeSettings() {
             </button>
           );
         })}
+      </div>
+
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mt-6 mb-2.5">Ancho de la barra lateral</p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {SIDEBAR_SIZES.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => { setSidebarSize(s.id); setSbSize(s.id); }}
+            className={`text-left p-3.5 rounded-card border transition-colors ${sbSize === s.id ? "border-accent bg-accent/10" : "border-border hover:border-gray-500"}`}
+          >
+            <div className="flex h-8 mb-3 rounded-card overflow-hidden border border-border/60">
+              <div className="bg-accent/30" style={{ width: `${Math.round((s.px / 320) * 60)}%` }} />
+              <div className="flex-1 bg-bg" />
+            </div>
+            <span className="text-sm font-medium">{s.label}</span>
+            <p className="text-xs text-gray-500 mt-0.5">{s.hint}</p>
+          </button>
+        ))}
       </div>
 
       <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mt-6 mb-2.5">Densidad</p>
