@@ -8,6 +8,7 @@ import { teamById } from "../data/teams.js";
 import { getInjury } from "../engine/injuryEngine.js";
 import TeamCrest from "./TeamCrest.jsx";
 import NationalTeamCard from "./NationalTeamCard.jsx";
+import WeeklyDecisionCard from "./WeeklyDecisionCard.jsx";
 
 const CONFIDENCE_GRADIENT = {
   good: "linear-gradient(90deg, rgb(var(--c-emerald)), #3b9dd6)",
@@ -328,6 +329,9 @@ export default function Dashboard({ onPlayMatch }) {
           </div>
         </div>
       </div>
+
+      {/* Decisión de la semana: una por jornada */}
+      <WeeklyDecisionCard />
 
       {/* Próximo partido — la acción principal de la pantalla, ocupa todo el ancho */}
       <div className="hero-b rounded-3xl p-5 sm:p-6" style={fixtureIsDerby ? { "--hero-a": "var(--c-red)", "--hero-b": "var(--c-amber)" } : { "--hero-a": "var(--c-accent)", "--hero-b": "var(--c-purple)" }}>

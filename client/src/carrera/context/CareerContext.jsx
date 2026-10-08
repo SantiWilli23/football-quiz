@@ -216,6 +216,12 @@ function generateReleaseClauses() {
   return clauses;
 }
 
+export const WEEKLY_DECISIONS = [
+  { id: "elogiar", label: "Elogiar al plantel", desc: "Conferencia de prensa: destacás el trabajo del grupo.", morale: 4, board: 0 },
+  { id: "exigir", label: "Exigir más", desc: "Vestuario: pedís un salto de nivel. La directiva lo valora, el grupo no tanto.", morale: -3, board: 5 },
+  { id: "defender", label: "Defender al club", desc: "Entrevista: respaldás a la institución frente a las críticas.", morale: 1, board: 3 },
+];
+
 function applyMatchMorale(morale, squad, lineup, isWin, isLoss) {
   const updated = { ...morale };
   const starterSet = new Set(lineup.starters.map(s => s.playerId).filter(Boolean));
@@ -392,6 +398,23 @@ export function CareerProvider({ children }) {
   function setSlider(key, value) { setState((s) => ({ ...s, sliders: { ...s.sliders, [key]: value } })); }
   function setLineup(lineup) { setState((s) => ({ ...s, lineup })); }
   function setTrainingFocus(focus) { setState((s) => ({ ...s, trainingFocus: focus })); }
+
+  // Decisión de la semana (una por jornada): mueve la moral de todo el plantel y la confianza de la directiva.
+  function takeWeeklyDecision(optionId) {
+    const opt = WEEKLY_DECISIONS.find((o) => o.id === optionId);
+    if (!opt) return;
+    setState((s) => {
+      if (s.weeklyDecision?.week === s.week) return s; // ya decidiste esta semana
+      const morale = { ...(s.morale || {}) };
+      s.squad.forEach((p) => { morale[p.id] = Math.max(0, Math.min(100, (morale[p.id] ?? 70) + opt.morale)); });
+      return {
+        ...s,
+        morale,
+        boardConfidence: Math.max(0, Math.min(100, (s.boardConfidence ?? 60) + opt.board)),
+        weeklyDecision: { week: s.week, id: opt.id },
+      };
+    });
+  }
 
   // Objetivo personal del usuario, aparte del que fija la directiva — texto
   // libre porque no hay forma de trackear automáticamente algo arbitrario
@@ -1565,6 +1588,7 @@ export function CareerProvider({ children }) {
       setSlider,
       setLineup,
       setTrainingFocus,
+      takeWeeklyDecision,
       setCustomObjective,
       toggleCustomObjectiveDone,
       clearCustomObjective,
