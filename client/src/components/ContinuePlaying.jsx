@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ClipboardList, GraduationCap, Play, Shirt } from "lucide-react";
+import { ClipboardList, GraduationCap, Play, Shirt, Star } from "lucide-react";
 import { listSaveSlots } from "../carrera/hooks/useCareerSave.js";
 
 function readJSON(key) {
@@ -45,6 +45,15 @@ export function findSavedGames() {
       key: "cotrero", href: "/cotrero.html", icon: Shirt,
       label: `Cotrero · ${cot.age} años`,
       progress: Math.min(100, Math.round(((cot.age - 16) / 22) * 100)),
+    });
+  }
+
+  const draft = readJSON("draft8a2_v1");
+  if (draft && draft.round && draft.club) {
+    items.push({
+      key: "8a2", href: "/draft-europeo.html?continuar=1", icon: Star,
+      label: `8a2 · Ronda ${draft.round}/11`,
+      progress: Math.min(100, Math.round((((draft.round || 1) - 1) / 11) * 100)),
     });
   }
 

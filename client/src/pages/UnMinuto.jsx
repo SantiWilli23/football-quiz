@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Timer, Check, X } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
@@ -30,6 +31,8 @@ const DOWN_AFTER = 2;
 const CATEGORY_LABELS = { todas: "Todas", mundiales: "Mundiales", champions: "Champions", chile: "Chile", premier: "Premier", laliga: "LaLiga" };
 
 export default function UnMinuto() {
+  // Entrando por el juego diario (?diario=1) solo está la versión diaria: Ultra difícil, todas las categorías.
+  const fromDaily = useSearchParams()[0].get("diario") === "1";
   const { activeGroupId: groupId } = useGroups();
   const [difficulties, setDifficulties] = useState([]);
   const [difficulty, setDifficulty] = useState(DAILY_DIFFICULTY);
@@ -195,7 +198,7 @@ export default function UnMinuto() {
           <Timer size={32} className="mx-auto text-accent mb-3" />
           <p className="text-sm text-gray-400 mb-2">Arrancás ya, sin vueltas: preguntas de a una hasta que se acabe el reloj.</p>
           <p className="text-xs text-gray-500 mb-5">Juego diario: la primera partida del día en Ultra difícil (la dificultad media) te da un puntaje de hasta 20 (de referencia) y un sobre de cartas; el podio del día del grupo suma 5 / 3 / 3 puntos.</p>
-          <div className="flex gap-1.5 justify-center mb-3 flex-wrap" role="group" aria-label="Categoría">
+          {!fromDaily && <div className="flex gap-1.5 justify-center mb-3 flex-wrap" role="group" aria-label="Categoría">
             {Object.entries(CATEGORY_LABELS).map(([id, label]) => (
               <button
                 key={id}
@@ -206,8 +209,8 @@ export default function UnMinuto() {
                 {label}
               </button>
             ))}
-          </div>
-          {difficulties.length > 0 && (
+          </div>}
+          {!fromDaily && difficulties.length > 0 && (
             <div className="flex gap-2 justify-center mb-6 flex-wrap">
               {difficulties.map((d) => (
                 <button

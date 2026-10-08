@@ -100,22 +100,28 @@ router.get("/grid/reveal", (req, res) => {
 
 // ---------- Pirámide ----------
 
-function pyramidFor(date) {
-  const p = PYRAMID_PUZZLES[dailySeed(date, "pyramid") % PYRAMID_PUZZLES.length];
+// Sin "seed" es la pirámide del día (igual para todos, juego diario); con "seed" (un
+// texto al azar que manda el cliente al empezar) cada partida libre tiene su propia
+// estadística y sus propios jugadores.
+const seedOf = (v) => String(v || "").replace(/[^a-z0-9]/gi, "").slice(0, 16);
+
+function pyramidFor(date, seed = "") {
+  const salt = seed ? `${date}|${seed}` : date;
+  const p = PYRAMID_PUZZLES[dailySeed(salt, "pyramid") % PYRAMID_PUZZLES.length];
   // Ids opacos por fecha: los de los datos delatan el orden (…-0 es el 1º).
-  const entries = p.entries.map((e) => ({ ...e, id: dailySeed(date, e.id).toString(36) }));
-  return { ...p, entries };
+  const entries = p.entries.map((e) => ({ ...e, id: dailySeed(salt, e.id).toString(36) }));
+  return { ...p, entries, salt };
 }
 
 router.get("/pyramid", (req, res) => {
   const mode = req.query.mode === "facil" ? "facil" : "normal";
   const date = todayStr();
-  const p = pyramidFor(date);
+  const p = pyramidFor(date, seedOf(req.query.seed));
   const ranges = rankRanges(p.entries);
   const byId = Object.fromEntries(p.entries.map((e) => [e.id, e]));
   res.json({
     date, mode, category: p.category, unit: p.unit,
-    players: pyramidOrder(p.entries, date).map((id) => ({
+    players: pyramidOrder(p.entries, p.salt).map((id) => ({
       id,
       name: byId[id].name,
       detail: byId[id].detail,
@@ -128,13 +134,13 @@ router.get("/pyramid", (req, res) => {
 const placementFrom = (body) => (Array.isArray(body?.placement) ? body.placement.slice(0, 10) : []).map((x) => (x == null ? null : String(x)));
 
 router.post("/pyramid/help", (req, res) => {
-  const p = pyramidFor(todayStr());
+  const p = pyramidFor(todayStr(), seedOf(req.body?.seed));
   res.json({ correct: scorePyramid(p.entries, placementFrom(req.body)).correct });
 });
 
 // Espiada: dice si el jugador va en la mitad de arriba (puestos 1-5) o de abajo (6-10), sin dar la casilla.
 router.post("/pyramid/peek", (req, res) => {
-  const p = pyramidFor(todayStr());
+  const p = pyramidFor(todayStr(), seedOf(req.body?.seed));
   const id = String(req.body?.playerId || "");
   const range = rankRanges(p.entries)[id];
   if (!range) return res.status(400).json({ error: "Jugador desconocido" });
@@ -142,7 +148,7 @@ router.post("/pyramid/peek", (req, res) => {
 });
 
 router.post("/pyramid/submit", (req, res) => {
-  const p = pyramidFor(todayStr());
+  const p = pyramidFor(todayStr(), seedOf(req.body?.seed));
   const placement = placementFrom(req.body);
   const { correct, slots } = scorePyramid(p.entries, placement);
   const byId = Object.fromEntries(p.entries.map((e) => [e.id, e]));

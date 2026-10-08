@@ -98,7 +98,9 @@ function CritLabel({ c }) {
 export default function Bingo() {
   const [params] = useSearchParams();
   const fromDaily = params.get("diario") === "1";
-  const [saved, setSaved] = useState(() => loadGame(GAME, today()));
+  // El juego diario y la partida libre se guardan por separado.
+  const KEY = fromDaily ? GAME : `${GAME}-libre`;
+  const [saved, setSaved] = useState(() => loadGame(KEY, today()));
   const [mode, setMode] = useState(saved?.mode || (fromDaily ? "medio" : "facil"));
   const [timer, setTimer] = useState(saved?.timer || "0");
   const [grid, setGrid] = useState(null);
@@ -119,7 +121,7 @@ export default function Bingo() {
     if (!state || state.status === "playing" || state.reported) return;
     const next = { ...state, reported: true };
     setState(next);
-    saveGame(GAME, today(), next);
+    saveGame(KEY, today(), next);
     reportResult("tateti", {
       fraction: state.cells.filter(Boolean).length / 9,
       score: state.cells.filter(Boolean).length,
@@ -142,7 +144,7 @@ export default function Bingo() {
 
   function persist(next) {
     setState(next);
-    saveGame(GAME, today(), next);
+    saveGame(KEY, today(), next);
     if (next.status !== "playing") {
       const score = next.cells.filter(Boolean).length;
       recordResult(GAME, today(), { won: next.status === "win", bucket: score });
@@ -158,7 +160,7 @@ export default function Bingo() {
         if (!s || s.status !== "playing") return s;
         const left = s.left - 1;
         const next = left <= 0 ? { ...s, left: 0, status: "time" } : { ...s, left };
-        saveGame(GAME, today(), next);
+        saveGame(KEY, today(), next);
         if (next.status === "time") {
           recordResult(GAME, today(), { won: false, bucket: next.cells.filter(Boolean).length });
           playSfx("bad");

@@ -390,6 +390,21 @@
   .goal-flash.show { animation: goalflash 0.9s ease; }
   @keyframes goalflash { 0% { opacity: 0; } 25% { opacity: 1; } 100% { opacity: 0; } }
 
+  .match-pitch { position: relative; width: 100%; aspect-ratio: 2 / 1; margin-bottom: 14px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line, #2c3a2c);
+    background: repeating-linear-gradient(90deg, #1f5a2e 0 10%, #236835 10% 20%); }
+  .match-pitch .ln { position: absolute; border: 2px solid rgba(255,255,255,.35); pointer-events: none; }
+  .match-pitch .ln.mid { left: 50%; top: 0; bottom: 0; border-width: 0 0 0 2px; }
+  .match-pitch .ln.circle { left: 50%; top: 50%; width: 18%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; }
+  .match-pitch .ln.box-l { left: 0; top: 24%; bottom: 24%; width: 14%; border-left: 0; }
+  .match-pitch .ln.box-r { right: 0; top: 24%; bottom: 24%; width: 14%; border-right: 0; }
+  .match-pitch .pl { position: absolute; width: 3.2%; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%); transition: left .7s ease, top .7s ease; box-shadow: 0 0 0 1.5px rgba(0,0,0,.35); }
+  .match-pitch .pl.a { background: #f2c14e; }
+  .match-pitch .pl.b { background: #e8e6e0; }
+  .match-pitch .pl.you { background: #3fd0b4; }
+  .match-pitch .ball { position: absolute; width: 2.4%; aspect-ratio: 1; border-radius: 50%; background: #fff; border: 2px solid #111; transform: translate(-50%, -50%); transition: left .55s ease, top .55s ease; z-index: 3; }
+  .match-pitch .pitch-flash { position: absolute; inset: 0; background: rgba(255,255,255,.55); opacity: 0; pointer-events: none; }
+  .match-pitch .pitch-flash.show { animation: pitchflash .8s ease-out; }
+  @keyframes pitchflash { 0% { opacity: .9; } 100% { opacity: 0; } }
   .event-log {
     display: flex; flex-direction: column-reverse; gap: 6px; min-height: 180px; max-height: 260px;
     overflow-y: auto; padding: 4px 2px;
@@ -481,7 +496,7 @@
     <div class="panel">
       <h2>Configurá tu copa</h2>
       <p class="sub">
-        Elegís un jugador que encaje en un puesto vacío de tu formación en cada ronda. 3 rerolls, un equipo.
+        Elegís un jugador que encaje en un puesto vacío de tu formación en cada ronda. En Clásico tenés 1 cambio de equipo; en De almanaque, 3.
       </p>
 
       <h2 style="margin-top:4px">Formación</h2>
@@ -507,6 +522,12 @@
         <div class="chip active" data-players="1">1 Jugador<small>vs. la copa</small></div>
         <div class="chip" data-players="2">2 Jugadores<small>local · mismo dispositivo</small></div>
         <div class="chip" data-players="online">Online<small>en vivo · con código</small></div>
+      </div>
+
+      <h2>Simulación</h2>
+      <div class="chiprow" id="sim-row">
+        <div class="chip active" data-sim="marcador">Marcador<small>goles y minuto a minuto</small></div>
+        <div class="chip" data-sim="cancha">Con cancha<small>ves la pelota y los jugadores</small></div>
       </div>
 
       <button class="btn btn-holo btn-block" id="btn-start" style="margin-top:6px">Empezar copa</button>
@@ -662,6 +683,12 @@
         <span class="sb-flag" id="sb-flag-b">🏳️</span>
         <span class="sb-name" id="sb-name-b">—</span>
       </div>
+    </div>
+
+    <div class="match-pitch" id="match-pitch" style="display:none" aria-hidden="true">
+      <span class="ln mid"></span><span class="ln circle"></span><span class="ln box-l"></span><span class="ln box-r"></span>
+      <span class="ball" id="pitch-ball"></span>
+      <span class="pitch-flash" id="pitch-flash"></span>
     </div>
 
     <div class="panel" style="padding:14px 16px">
@@ -960,8 +987,14 @@
   }
 
   function rerollsTotal() { return state.rerollsClub + state.rerollsSeason; }
-  function canRerollClub() { return state.rerollsClub < 2 && rerollsTotal() < 3; }
+  // Clásico: un solo cambio, por un equipo al azar (no se puede volver al anterior).
+  // De almanaque: hasta 3 (2 de equipo y 1 de temporada).
+  function canRerollClub() {
+    if (state.mode === "clasico") return state.rerollsClub < 1;
+    return state.rerollsClub < 2 && rerollsTotal() < 3;
+  }
   function canRerollSeason() {
+    if (state.mode === "clasico") return false;
     if (!state.team) return false;
     if (SEASON_COUNT_BY_CLUB[state.team.club] < 2) return false;
     return state.rerollsSeason < 1 && rerollsTotal() < 3;
@@ -1104,6 +1137,23 @@
     document.querySelectorAll("#style-row .chip").forEach(function (c) { c.classList.remove("active"); });
     chip.classList.add("active");
     selectedStyle = chip.dataset.style;
+  });
+
+  // Simulación con cancha (se recuerda entre partidas).
+  var PITCH_ON = false;
+  try { PITCH_ON = localStorage.getItem("draft8a2_pitch") === "1"; } catch (e) {}
+  (function () {
+    document.querySelectorAll("#sim-row .chip").forEach(function (c) {
+      c.classList.toggle("active", (c.dataset.sim === "cancha") === PITCH_ON);
+    });
+  })();
+  document.getElementById("sim-row").addEventListener("click", function (e) {
+    var chip = e.target.closest(".chip");
+    if (!chip) return;
+    document.querySelectorAll("#sim-row .chip").forEach(function (c) { c.classList.remove("active"); });
+    chip.classList.add("active");
+    PITCH_ON = chip.dataset.sim === "cancha";
+    try { localStorage.setItem("draft8a2_pitch", PITCH_ON ? "1" : "0"); } catch (err) {}
   });
 
   document.getElementById("players-row").addEventListener("click", function (e) {
@@ -1321,7 +1371,7 @@
       if (!canRerollClub()) return;
       state.rerollsClub += 1;
       state.round -= 1;
-      drawNewTeam({ keepSeason: true });
+      drawNewTeam(state.mode === "clasico" ? {} : { keepSeason: true });
     } else {
       if (!canRerollSeason()) return;
       state.rerollsSeason += 1;
@@ -1343,7 +1393,9 @@
     banner.classList.toggle("sorpresa", !!state.team.revelacion);
     banner.classList.toggle("best11", !!state.bestXI);
 
-    var clubLeft = 2 - state.rerollsClub;
+    var clasico = state.mode === "clasico";
+    document.getElementById("btn-reroll-season").style.display = clasico ? "none" : "";
+    var clubLeft = (clasico ? 1 : 2) - state.rerollsClub;
     document.getElementById("reroll-club-count").textContent = clubLeft + (clubLeft === 1 ? " uso" : " usos");
     var seasonLeft = SEASON_COUNT_BY_CLUB[state.team.club] < 2 ? "sin temporadas extra" : (1 - state.rerollsSeason) + (1 - state.rerollsSeason === 1 ? " uso" : " usos");
     document.getElementById("reroll-season-count").textContent = seasonLeft;
@@ -1352,7 +1404,46 @@
 
     renderPool();
     renderPitch();
+    saveDraft();
   }
+
+  // La partida de un jugador se guarda sola para retomarla desde «Continuar jugando».
+  var DRAFT_KEY = "draft8a2_v1";
+  function saveDraft() {
+    if (twoPlayerMode || onlineMode || !state || !state.team) return;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        formation: state.formation, mode: state.mode, style: state.style, round: state.round,
+        slots: state.slots, club: state.team.club, season: state.team.season,
+        pool: state.pool.map(function (p) { return p.n; }),
+        rerollsClub: state.rerollsClub, rerollsSeason: state.rerollsSeason,
+        excludeClub: state.excludeClub, excludeSeason: state.excludeSeason
+      }));
+    } catch (e) {}
+  }
+  function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} }
+
+  function resumeDraft() {
+    var s;
+    try { s = JSON.parse(localStorage.getItem(DRAFT_KEY)); } catch (e) { s = null; }
+    if (!s || !s.club) return false;
+    var team = TEAMS.filter(function (t) { return t.club === s.club && t.season === s.season; })[0];
+    if (!team || !FORMATIONS[s.formation]) return false;
+    twoPlayerMode = false; activePlayerNum = 1; p1Result = null;
+    state = freshState();
+    state.formation = s.formation; state.mode = s.mode; state.style = s.style; state.round = s.round;
+    state.slots = s.slots;
+    state.rerollsClub = s.rerollsClub; state.rerollsSeason = s.rerollsSeason;
+    state.excludeClub = s.excludeClub; state.excludeSeason = s.excludeSeason;
+    state.team = team;
+    state.pool = s.pool.map(function (n) { return team.players.filter(function (p) { return p.n === n; })[0]; }).filter(Boolean);
+    state.bestXI = isBestXI(team, state.pool);
+    document.getElementById("mode-badge").textContent = modeLabel(state.mode);
+    showScreen("draft");
+    renderDraft();
+    return true;
+  }
+  if (/[?&]continuar=1/.test(location.search)) resumeDraft();
 
   function renderPool() {
     var grid = document.getElementById("pool-grid");
@@ -1480,6 +1571,7 @@
   /* ============ RESULTADO ============ */
 
   function finishCup() {
+    if (!twoPlayerMode && !onlineMode) clearDraft();
     var total = 0;
     state.slots.forEach(function (s) { total += s.filled.eff; });
     var avg = total / state.slots.length;
@@ -1518,7 +1610,7 @@
     document.getElementById("stat-formation").textContent = state.formation;
     document.getElementById("stat-style").textContent =
       state.style === "equilibrado" ? "Equilibrado" : state.style === "defensivo" ? "Defensivo" : "Ofensivo";
-    document.getElementById("stat-rerolls").textContent = rerollsTotal() + "/3";
+    document.getElementById("stat-rerolls").textContent = rerollsTotal() + "/" + (state.mode === "clasico" ? 1 : 3);
     showScreen("result");
   }
 
@@ -2072,7 +2164,50 @@
     matchSpeed = parseFloat(chip.dataset.speed);
   });
 
+  // Cancha de la simulación: 11 + 11 puntos que se acomodan según dónde va la pelota.
+  var PITCH_BASE = [[6, 50], [20, 14], [20, 38], [20, 62], [20, 86], [36, 16], [36, 40], [36, 60], [36, 84], [48, 36], [48, 64]];
+  var pitchDots = [];
+  var pitchBall = [50, 50];
+  function buildPitch(youSide) {
+    var box = document.getElementById("match-pitch");
+    box.style.display = PITCH_ON ? "" : "none";
+    Array.prototype.forEach.call(box.querySelectorAll(".pl"), function (n) { n.remove(); });
+    pitchDots = [];
+    if (!PITCH_ON) return;
+    ["a", "b"].forEach(function (side) {
+      PITCH_BASE.forEach(function (b) {
+        var el = document.createElement("span");
+        el.className = "pl " + (youSide === side.toUpperCase() ? "you" : side);
+        box.appendChild(el);
+        pitchDots.push({ el: el, x: side === "a" ? b[0] : 100 - b[0], y: b[1] });
+      });
+    });
+    movePitch(50, 50);
+  }
+  function movePitch(bx, by) {
+    if (!PITCH_ON) return;
+    pitchBall = [bx, by];
+    var ball = document.getElementById("pitch-ball");
+    ball.style.left = bx + "%"; ball.style.top = by + "%";
+    pitchDots.forEach(function (d) {
+      var nx = d.x + (bx - d.x) * 0.22 + (Math.random() - 0.5) * 3;
+      var ny = d.y + (by - d.y) * 0.22 + (Math.random() - 0.5) * 3;
+      d.el.style.left = Math.max(2, Math.min(98, nx)) + "%";
+      d.el.style.top = Math.max(4, Math.min(96, ny)) + "%";
+    });
+  }
+  function wanderBall() {
+    var bx = pitchBall[0] + (Math.random() - 0.5) * 46;
+    movePitch(Math.max(10, Math.min(90, bx)), 14 + Math.random() * 72);
+  }
+  function pitchGoal(side) {
+    movePitch(side === "A" ? 96 : 4, 50);
+    var f = document.getElementById("pitch-flash");
+    f.classList.remove("show"); void f.offsetWidth; f.classList.add("show");
+  }
+
   function animateMatch(result, packA, packB, roundName, onDone) {
+    buildPitch(packA.isYou ? "A" : packB.isYou ? "B" : "");
     document.getElementById("cup-round-label").innerHTML = ROUND_LABEL[roundName].toUpperCase() +
       '<small id="cup-round-sub">' + (result.wentToPens ? "penales" : result.wentToExtra ? "prórroga" : "partido único") + "</small>";
     document.getElementById("sb-flag-a").textContent = packA.flag;
@@ -2114,6 +2249,7 @@
       ev._shown = true;
       if (ev.type === "goal") {
         if (ev.side === "A") runningA++; else runningB++;
+        pitchGoal(ev.side);
         document.getElementById("sb-score").textContent = runningA + " – " + runningB;
         var flash = document.getElementById("goal-flash");
         flash.classList.remove("show"); void flash.offsetWidth; flash.classList.add("show");
@@ -2136,6 +2272,7 @@
       document.getElementById("sb-score").textContent = result.scoreA + " – " + result.scoreB +
         (result.wentToPens ? " (pen " + result.penA + "-" + result.penB + ")" : "");
       renderMinute(maxMinute, true);
+      movePitch(50, 50);
       document.getElementById("btn-skip-match").style.display = "none";
       var contBtn = document.getElementById("btn-continue-match");
       contBtn.style.display = "";
@@ -2168,6 +2305,7 @@
       renderMinute(currentMinute, false);
       var evs = eventsByMinute[currentMinute] || [];
       var hadVisibleEvent = false;
+      if (PITCH_ON && currentMinute % 2 === 0) wanderBall();
       evs.forEach(function (ev) { applyEvent(ev); if (ev.type !== "sub") hadVisibleEvent = true; });
       matchTimer = setTimeout(tick, (hadVisibleEvent ? 700 : MINUTE_DELAY) / matchSpeed);
     }

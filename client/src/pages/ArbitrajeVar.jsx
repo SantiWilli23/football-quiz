@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Check, Gavel, X } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
@@ -14,6 +15,9 @@ const MAX_ROUNDS = 10; // tope; si hay menos jugadas en el banco, se juegan toda
 const SECONDS_PER_SITUATION = 30; // hay que mirar el clip (y quizás en cámara lenta) antes de decidir
 
 export default function ArbitrajeVar() {
+  // Entrando por el juego diario (?diario=1) solo está la partida con tiempo.
+  const fromDaily = useSearchParams()[0].get("diario") === "1";
+  const advanceRef = useRef(null); // pasa a la siguiente jugada cuando el jugador toca «Siguiente»
   const { activeGroupId: groupId } = useGroups();
   const [phase, setPhase] = useState("idle"); // idle | playing | done
   const [situation, setSituation] = useState(null);
@@ -102,14 +106,14 @@ export default function ArbitrajeVar() {
         const nextSeen = [...seenRef.current, current.id];
         seenRef.current = nextSeen;
         setSeenIds(nextSeen);
-        setTimeout(() => {
+        advanceRef.current = () => {
           setRound((r) => {
             const nextRound = r + 1;
             if (nextRound >= totalRef.current) finish(next);
             else fetchSituation(nextSeen);
             return nextRound;
           });
-        }, 4500);
+        };
         return next;
       });
     } catch {
@@ -172,7 +176,7 @@ export default function ArbitrajeVar() {
             >
               Con tiempo ({SECONDS_PER_SITUATION}s)
             </button>
-            {!dailyToday && <button
+            {!dailyToday && !fromDaily && <button
               onClick={() => start(false)}
               className="px-6 py-2.5 rounded-card border border-border text-sm text-gray-300 hover:text-white hover:border-white/30 transition-colors"
             >
@@ -242,6 +246,13 @@ export default function ArbitrajeVar() {
                     {feedback.correct ? "¡Decisión correcta!" : `El VAR dice: ${situation.options[feedback.correctIdx]}`}
                   </p>
                   {feedback.why && <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">{feedback.why}</p>}
+                  <button
+                    onClick={() => { const go = advanceRef.current; advanceRef.current = null; go?.(); }}
+                    className="btn btn-primary w-full mt-4"
+                    autoFocus
+                  >
+                    {round + 1 >= totalRounds ? "Ver resultado" : "¿Siguiente?"}
+                  </button>
                 </div>
               )}
             </Card>
