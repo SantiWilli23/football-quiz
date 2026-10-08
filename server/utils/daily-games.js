@@ -21,6 +21,7 @@ export const DAILY_GAMES = [
   { key: "tateti", label: "Tateti", to: "/tateti", level: null },
   { key: "piramide", label: "Pirámide", to: "/piramide", level: null },
   { key: "torta", label: "Torta de plantel", to: "/torta", level: null },
+  { key: "traspasos", label: "Traspasos a ciegas", to: "/traspasos", level: null },
 ];
 
 // El juego diario de una fecha: rota por los diez en orden, un día cada uno.
@@ -31,7 +32,7 @@ export function dailyGameKeyFor(dateStr) {
 }
 
 // Los que mandan su resultado desde el cliente (fichado y quiniela no).
-export const SUBMITTABLE_DAILY = new Set(["cotrero", "escudos", "draft_europeo", "un_minuto", "arbitraje_var", "tateti", "piramide", "torta"]);
+export const SUBMITTABLE_DAILY = new Set(["cotrero", "escudos", "draft_europeo", "un_minuto", "arbitraje_var", "tateti", "piramide", "torta", "traspasos"]);
 
 export function pointsFromFraction(fraction) {
   const f = Number(fraction);

@@ -3,6 +3,7 @@ import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { todayStr } from "../utils/points.js";
 import { ONLINE_POINTS_PER_OPPONENT } from "../utils/points-config.js";
+import { grantPack } from "../utils/rewards.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -27,7 +28,13 @@ router.post("/win", async (req, res) => {
       sql: "INSERT OR IGNORE INTO online_game_points (user_id, group_id, game_key, room, date, opponents, points) VALUES (?, ?, ?, ?, ?, ?, ?)",
       args: [req.userId, groupId, gameKey, room, todayStr(), opponents, points],
     });
-    res.status(201).json({ points, newly: ins.rowsAffected > 0 });
+    // Supervivencia (muerte súbita): quien queda en pie gana un sobre estrella.
+    let pack = null;
+    if (ins.rowsAffected > 0 && gameKey === "supervivencia") {
+      await grantPack(req.userId, todayStr(), "estrella", `supervivencia-${room.replace(/[^a-zA-Z0-9]/g, "").slice(0, 24)}`);
+      pack = "estrella";
+    }
+    res.status(201).json({ points, newly: ins.rowsAffected > 0, pack });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

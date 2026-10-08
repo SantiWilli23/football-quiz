@@ -228,6 +228,11 @@
     background: var(--accent); margin-left: 5px; vertical-align: middle;
   }
 
+  .transfer-panel { margin: 10px 0 14px; padding: 12px; border: 1px solid var(--line, rgba(255,255,255,0.14)); border-radius: 10px; display: grid; gap: 6px; }
+  .transfer-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .transfer-head span, .transfer-hint { font-size: 12px; opacity: 0.75; }
+  .transfer-opt { text-align: left; }
+  .swap-btn { margin-left: 8px; padding: 4px 10px; font-size: 12px; width: auto; }
   .result-row.gold { border-color: rgba(217,164,65,0.5); }
   .result-row.gold .rname, .result-row.gold .rrating { color: var(--gold2); }
   .result-row.idol { border-color: rgba(59,157,214,0.5); }
@@ -624,6 +629,7 @@
         <div class="stat-pill"><b id="stat-style">—</b><span>ESTILO</span></div>
         <div class="stat-pill"><b id="stat-rerolls">0</b><span>REROLLS USADOS</span></div>
       </div>
+      <div class="transfer-panel" id="transfer-panel" style="display:none"></div>
       <div class="result-list" id="result-list"></div>
       <button class="btn btn-holo btn-block" id="btn-play-champions">🏆 Jugar la Champions con este equipo</button>
       <button class="btn btn-ghost btn-block" id="btn-new-cup" style="margin-top:8px">Nueva copa</button>
@@ -1060,7 +1066,6 @@
 
   function modeLabel(mode) {
     if (mode === "almanaque") return "ALMANAQUE";
-    if (mode === "clasico_facil") return "CLÁSICO FÁCIL";
     if (mode === "bayern2020") return "SEMANAL · BAYERN 2020";
     return "CLÁSICO";
   }
@@ -1505,29 +1510,99 @@
       return;
     }
 
-    document.getElementById("final-avg").textContent = avg.toFixed(1);
+    // Ventana de fichajes: solo en "De almanaque" (ratings visibles), 3 cambios.
+    state.transfersLeft = state.mode === "almanaque" ? 3 : 0;
+    state.transferSlot = null;
+    state.transferOptions = null;
+    renderResultList();
     document.getElementById("stat-formation").textContent = state.formation;
     document.getElementById("stat-style").textContent =
       state.style === "equilibrado" ? "Equilibrado" : state.style === "defensivo" ? "Defensivo" : "Ofensivo";
     document.getElementById("stat-rerolls").textContent = rerollsTotal() + "/3";
+    showScreen("result");
+  }
+
+  function renderResultList() {
+    var total = 0;
+    state.slots.forEach(function (sl) { total += sl.filled.eff; });
+    document.getElementById("final-avg").textContent = (total / state.slots.length).toFixed(1);
+
+    var panel = document.getElementById("transfer-panel");
+    if (panel) {
+      if (state.mode !== "almanaque") { panel.style.display = "none"; }
+      else {
+        panel.style.display = "";
+        var left = state.transfersLeft || 0;
+        var html = '<div class="transfer-head"><b>Ventana de fichajes</b><span>' + left + (left === 1 ? " cambio" : " cambios") + " disponibles</span></div>";
+        if (left > 0 && state.transferSlot === null) html += '<div class="transfer-hint">Tocá «Cambiar» en un jugador y elegí entre 3 opciones de su puesto.</div>';
+        if (state.transferSlot !== null && state.transferOptions) {
+          html += '<div class="transfer-hint">Elegí el reemplazo para ' + state.slots[state.transferSlot].filled.n + ":</div>";
+          state.transferOptions.forEach(function (o, i) {
+            html += '<button class="btn btn-ghost btn-block transfer-opt" data-opt="' + i + '">' + o.n + " · " + o.club + " " + o.season + " · <b>" + o.eff + "</b></button>";
+          });
+          html += '<button class="btn btn-ghost btn-block" id="transfer-cancel" style="margin-top:6px">Mantener al actual</button>';
+        }
+        panel.innerHTML = html;
+        Array.prototype.forEach.call(panel.querySelectorAll(".transfer-opt"), function (btn) {
+          btn.addEventListener("click", function () { applyTransfer(Number(btn.getAttribute("data-opt"))); });
+        });
+        var cancel = document.getElementById("transfer-cancel");
+        if (cancel) cancel.addEventListener("click", function () { state.transferSlot = null; state.transferOptions = null; renderResultList(); });
+      }
+    }
 
     var list = document.getElementById("result-list");
     list.innerHTML = "";
-    state.slots.forEach(function (s) {
-      var gold = s.filled.r >= GOLD_MIN;
-      var idol = isIdol(s.filled.club, s.filled.n);
+    state.slots.forEach(function (sl, idx) {
+      var gold = sl.filled.r >= GOLD_MIN;
+      var idol = isIdol(sl.filled.club, sl.filled.n);
       var row = document.createElement("div");
       row.className = "result-row" + (gold ? " gold" : "") + (idol ? " idol" : "");
-      var bonusTag = s.filled.eff > s.filled.r ? ' <span style="color:var(--ok)">+3</span>' : "";
+      var bonusTag = sl.filled.eff > sl.filled.r ? ' <span style="color:var(--ok)">+3</span>' : "";
+      var canSwap = state.mode === "almanaque" && state.transfersLeft > 0 && state.transferSlot === null;
       row.innerHTML =
-        '<div class="pos-badge">' + s.type + '</div>' +
-        '<div style="flex:1"><div class="rname">' + s.filled.n + (idol ? '<span class="idol-dot"></span>' : "") + '</div>' +
-        '<div class="rmeta">' + s.filled.club + " " + s.filled.season + '</div></div>' +
-        '<div class="rrating">' + s.filled.eff + bonusTag + '</div>';
+        '<div class="pos-badge">' + sl.type + '</div>' +
+        '<div style="flex:1"><div class="rname">' + sl.filled.n + (idol ? '<span class="idol-dot"></span>' : "") + '</div>' +
+        '<div class="rmeta">' + sl.filled.club + " " + sl.filled.season + '</div></div>' +
+        '<div class="rrating">' + sl.filled.eff + bonusTag + '</div>' +
+        (canSwap ? '<button class="btn btn-ghost swap-btn" data-slot="' + idx + '">Cambiar</button>' : "");
       list.appendChild(row);
     });
+    Array.prototype.forEach.call(list.querySelectorAll(".swap-btn"), function (btn) {
+      btn.addEventListener("click", function () { openTransfer(Number(btn.getAttribute("data-slot"))); });
+    });
+  }
 
-    showScreen("result");
+  // 3 candidatos al azar del puesto del jugador elegido (de cualquier plantel, sin repetir los del once).
+  function openTransfer(slotIdx) {
+    var type = state.slots[slotIdx].type;
+    var inXI = {};
+    state.slots.forEach(function (sl) { inXI[sl.filled.n + "|" + sl.filled.club + "|" + sl.filled.season] = true; });
+    var options = [], seen = {}, tries = 0;
+    while (options.length < 3 && tries < 600) {
+      tries++;
+      var team = TEAMS[Math.floor(Math.random() * TEAMS.length)];
+      var pl = team.players[Math.floor(Math.random() * team.players.length)];
+      var key = pl.n + "|" + team.club + "|" + team.season;
+      if (inXI[key] || seen[pl.n]) continue;
+      if (normalizePositions(pl.p).indexOf(type) === -1) continue;
+      seen[pl.n] = true;
+      options.push({ n: pl.n, p: pl.p, r: pl.r, eff: effectiveRating(pl, pl.p), club: team.club, season: team.season });
+    }
+    if (!options.length) return;
+    state.transferSlot = slotIdx;
+    state.transferOptions = options;
+    renderResultList();
+  }
+
+  function applyTransfer(optIdx) {
+    var o = state.transferOptions && state.transferOptions[optIdx];
+    if (!o || state.transferSlot === null) return;
+    state.slots[state.transferSlot].filled = { n: o.n, p: o.p, r: o.r, eff: o.eff, club: o.club, season: o.season };
+    state.transfersLeft--;
+    state.transferSlot = null;
+    state.transferOptions = null;
+    renderResultList();
   }
 
   var lastVsR1 = null, lastVsR2 = null, lastVsLabel1 = "Jugador 1", lastVsLabel2 = "Jugador 2";
@@ -1642,12 +1717,6 @@
       var out = [];
       while (out.length < n) out = out.concat(shuffleArr(fixed));
       return out.slice(0, n);
-    }
-    if (state.mode === "clasico_facil") {
-      // Clásico Fácil: solo equipos con promedio >= 82 (plantillas de élite)
-      var elite = TEAMS.filter(function (t) { return teamAvgRating(t) >= 82; });
-      var pool = elite.length >= n ? elite : TEAMS;
-      return shuffleArr(pool).slice(0, n);
     }
     return shuffleArr(TEAMS).slice(0, n);
   }
@@ -1773,7 +1842,7 @@
   }
 
   function subsPerTeam() {
-    return state.mode === "clasico_facil" ? 6 : 4;
+    return 4;
   }
 
   function pickSubMinutes() {

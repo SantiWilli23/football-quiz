@@ -6,7 +6,7 @@ import { computeRating, GAME_LABELS } from "../utils/game-rating.js";
 const router = Router();
 router.use(requireAuth);
 
-const CLIENT_GAMES = new Set(["escudos", "arbitraje_var", "un_minuto", "quien_es", "tateti", "piramide", "torta"]);
+const CLIENT_GAMES = new Set(["escudos", "arbitraje_var", "un_minuto", "quien_es", "tateti", "piramide", "torta", "traspasos"]);
 const PAGE_SIZE = 20;
 
 // El cliente avisa que terminó una partida con dificultad (1-5) y rendimiento

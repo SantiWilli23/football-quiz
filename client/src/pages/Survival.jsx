@@ -11,6 +11,9 @@ import useRoomRelay from "../hooks/useRoomRelay.js";
 
 const GAME = "survival";
 const ROUND_SECONDS = 12;
+const MIN_ROUND_SECONDS = 3;
+// Muerte súbita: cada ronda dura 1 segundo menos que la anterior (hasta un piso de 3 s).
+const secondsFor = (round) => Math.max(MIN_ROUND_SECONDS, ROUND_SECONDS - round);
 const DIFFICULTIES = [
   ["dificil", "Difícil"],
   ["ultra", "Ultra difícil"],
@@ -89,7 +92,7 @@ export default function Survival() {
       setCurrentQuestion(msg.question);
       setSelected(null);
       setReveal(null);
-      setTimeLeft(ROUND_SECONDS);
+      setTimeLeft(secondsFor(msg.round));
     } else if (msg.type === "answer" && isHost) {
       answersRef.current[msg.round] = answersRef.current[msg.round] || {};
       answersRef.current[msg.round][msg.id] = msg.answer;
@@ -165,7 +168,7 @@ export default function Survival() {
     setSelected(null);
     setReveal(null);
     setPhase("question");
-    setTimeLeft(ROUND_SECONDS);
+    setTimeLeft(secondsFor(index));
     roundsPlayedRef.current = index + 1;
     send({ type: "question", round: index, total: qList.length, question: publicQ, difficulty: difficultyRef.current });
   }

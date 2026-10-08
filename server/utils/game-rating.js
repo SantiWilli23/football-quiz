@@ -19,4 +19,5 @@ export const GAME_LABELS = {
   tateti: "Tateti",
   piramide: "Pirámide",
   torta: "Torta de plantel",
+  traspasos: "Traspasos a ciegas",
 };
