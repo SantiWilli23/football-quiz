@@ -6,6 +6,7 @@ import { formatRange, reportFor } from "../engine/scouting.js";
 import { HINT_LABEL } from "../engine/transferMarket.js";
 import Scouts from "./Scouts.jsx";
 import ComparePlayers from "./ComparePlayers.jsx";
+import PlayerInfoModal from "./PlayerInfoModal.jsx";
 
 function findAnyPlayer(state, playerId) {
   return state.squad.find((p) => p.id === playerId) || allPlayers.find((p) => p.id === playerId);
@@ -32,6 +33,7 @@ export default function Transfers() {
   const [availability, setAvailability] = useState(""); // "" | contract | scouted
   const [target, setTarget] = useState(null);
   const [compareTarget, setCompareTarget] = useState(null);
+  const [infoPlayer, setInfoPlayer] = useState(null); // ficha completa abierta desde la Central
 
   const windowOpen = isTransferWindowOpen();
   const ownedIds      = new Set([
@@ -287,6 +289,7 @@ export default function Transfers() {
           onUnwatch={toggleWatchlist}
           onOffer={(p) => setTarget(p)}
           onRespond={respondToIncomingOffer}
+          onInfo={setInfoPlayer}
         />
       )}
 
@@ -295,6 +298,17 @@ export default function Transfers() {
           target={compareTarget}
           mine={[...state.squad].filter((p) => p.position === compareTarget.position).sort((a, b) => b.ovr - a.ovr)[0] || null}
           onClose={() => setCompareTarget(null)}
+        />
+      )}
+
+      {infoPlayer && (
+        <PlayerInfoModal
+          player={infoPlayer}
+          state={state}
+          watched={watchlist.includes(infoPlayer.id)}
+          onClose={() => setInfoPlayer(null)}
+          onOffer={(p) => setTarget(p)}
+          onUnwatch={toggleWatchlist}
         />
       )}
 
@@ -317,7 +331,7 @@ export default function Transfers() {
   );
 }
 
-function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, onOffer, onRespond }) {
+function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, onOffer, onRespond, onInfo }) {
   const pending  = incomingOffers.filter((o) => o.status === "pending");
   const resolved = incomingOffers.filter((o) => o.status !== "pending");
 
@@ -329,8 +343,8 @@ function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, 
         <div className="space-y-2">
           {pending.map((o) => (
             <div key={o.id} className="flex items-center justify-between gap-3 bg-panel border border-border rounded-2xl px-4 py-3">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold truncate">{o.playerName}</p>
+              <div className="min-w-0 cursor-pointer" onClick={() => { const pl = findAnyPlayer(state, o.playerId); if (pl) onInfo(pl); }}>
+                <p className="text-sm font-semibold truncate hover:text-accent">{o.playerName}</p>
                 <p className="text-xs text-gray-500">{o.teamName} ofrece {o.isLoan ? "un préstamo" : `€${o.amount}M por el pase`}</p>
               </div>
               <div className="flex gap-1.5 shrink-0">
@@ -367,8 +381,8 @@ function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, 
             if (!p) return null;
             return (
               <div key={id} className="flex items-center justify-between gap-2 bg-panel border border-border rounded-2xl px-4 py-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold truncate">{p.name}</p>
+                <div className="min-w-0 flex-1 cursor-pointer" onClick={() => onInfo(p)} title="Ver toda su información">
+                  <p className="text-sm font-semibold truncate hover:text-accent">{p.name}</p>
                   <p className="text-xs text-gray-500">{p.position} · {p.age} años · €{p.value}M · {teamById(p.teamId)?.name}</p>
                 </div>
                 <div className="flex gap-1.5 shrink-0">
