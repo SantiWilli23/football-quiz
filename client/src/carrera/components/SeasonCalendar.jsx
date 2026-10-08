@@ -62,15 +62,16 @@ export default function SeasonCalendar() {
             return <span key={c.week} title={`J${c.week}`} className={`shrink-0 w-2.5 h-2.5 rounded-full ${color}`} />;
           })}
         </div>
-        <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 max-h-[28rem] overflow-y-auto pr-1">
           {state.calendar.map((c) => {
             const rival = teamById(c.opponentTeamId);
+            const tone = !c.played ? "tone-blue" : c.result.myGoals > c.result.rivalGoals ? "tone-emerald" : c.result.myGoals === c.result.rivalGoals ? "tone-amber" : "tone-red";
             return (
-              <div key={c.week} className={`flex items-center justify-between text-sm px-3 py-2 rounded-card border ${c.played ? "border-border bg-panel/50" : "border-border bg-panel"}`}>
-                <span className="text-gray-500 w-16 shrink-0">J{c.week}</span>
-                <span className="flex-1 truncate">{c.home ? `vs ${rival?.name} (L)` : `vs ${rival?.name} (V)`}</span>
-                <span className="shrink-0 font-medium">
-                  {c.played ? `${c.result.myGoals}-${c.result.rivalGoals}` : "—"}
+              <div key={c.week} className={`${tone} tile-b rounded-card px-3 py-2.5 flex flex-col gap-1`}>
+                <span className="text-[11px] uppercase tracking-wider text-gray-300">J{c.week} · {c.home ? "Local" : "Visitante"}</span>
+                <span className="text-sm font-semibold truncate">{rival?.name}</span>
+                <span className="text-lg font-bold tabular-nums text-tone">
+                  {c.played ? `${c.result.myGoals} - ${c.result.rivalGoals}` : "—"}
                 </span>
               </div>
             );

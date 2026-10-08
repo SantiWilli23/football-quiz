@@ -26,6 +26,13 @@ const TABS = [
   ["calendar", "Calendario", CalendarDays],
   ["history", "Historial", History],
 ];
+// Menú lateral del Modo DT: las secciones agrupadas por para qué sirven.
+const MENU = [
+  { group: "Club", tone: "accent", items: [["dashboard", "Panel", LayoutDashboard], ["finances", "Finanzas", Wallet], ["history", "Historial", History]] },
+  { group: "Equipo", tone: "blue", items: [["pizarra", "Formación y tácticas", Shuffle], ["squad", "Plantilla", Users]] },
+  { group: "Mercado", tone: "amber", items: [["transfers", "Fichajes", ArrowLeftRight]] },
+  { group: "Partidos", tone: "pink", items: [["calendar", "Calendario y tabla", CalendarDays]] },
+];
 
 function CareerApp() {
   const { state, saveSlots, exitToMenu } = useCareer();
@@ -72,8 +79,8 @@ function CareerApp() {
             <Shuffle size={16} />
           </button>
         </div>
-        <div className="flex items-center gap-1 overflow-x-auto px-2 pb-1 pt-1.5">
-          {TABS.map(([id, label, Icon]) => {
+        <div className="flex md:hidden items-center gap-1 overflow-x-auto px-2 pb-1 pt-1.5">
+          {[...TABS.slice(0, 1), ["pizarra", "Formación", Shuffle], ...TABS.slice(1)].map(([id, label, Icon]) => {
             const active = screen === id;
             return (
               <button
@@ -90,16 +97,40 @@ function CareerApp() {
           })}
         </div>
       </nav>
-      <main className="max-w-5xl mx-auto p-4">
+      <div className="md:flex md:max-w-6xl md:mx-auto">
+      <aside className="hidden md:block w-56 shrink-0 p-4 pr-0">
+        <div className="sticky top-24 space-y-5">
+          {MENU.map((g) => (
+            <div key={g.group} className={`tone-${g.tone}`}>
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-tone mb-1.5 px-2">{g.group}</p>
+              <div className="space-y-1">
+                {g.items.map(([id, label, Icon]) => (
+                  <button
+                    key={id}
+                    onClick={() => setScreen(id)}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-card text-sm text-left border transition-colors ${screen === id ? "tile-b text-white font-semibold" : "border-transparent text-gray-400 hover:text-white hover:bg-white/5"}`}
+                  >
+                    <Icon size={16} className="text-tone shrink-0" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </aside>
+      <main className="flex-1 min-w-0 max-w-5xl mx-auto md:mx-0 p-4 w-full">
         {screen === "dashboard" && (
           <Dashboard onPlayMatch={(result) => { setMatchResult(result); setScreen("match"); }} />
         )}
-        {screen === "squad" && <Squad />}
+        {screen === "pizarra" && <Squad key="pizarra" initialTab="formacion" />}
+        {screen === "squad" && <Squad key="plantilla" initialTab="plantilla" />}
         {screen === "transfers" && <Transfers />}
         {screen === "finances" && <Finances />}
         {screen === "calendar" && <SeasonCalendar />}
         {screen === "history" && <CareerHistory />}
       </main>
+      </div>
     </div>
   );
 }

@@ -24,7 +24,7 @@ export default function CareerHistory() {
         <p className="text-sm text-gray-500">Todavía no completaste ninguna temporada. Volvé cuando termine la primera.</p>
       )}
 
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {[...history].reverse().map((h, i) => {
           if (h.note) {
             return (
@@ -39,7 +39,7 @@ export default function CareerHistory() {
           }
           const t = teamById(h.teamId) || team;
           return (
-            <div key={i} className="bg-panel border border-border rounded-2xl p-4">
+            <div key={i} className={`${h.copaChampion || h.continentalChampion || h.position === 1 ? "tone-amber" : h.objectiveMet ? "tone-emerald" : "tone-red"} tile-b rounded-2xl p-4`}>
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
                   <p className="font-semibold">
@@ -49,7 +49,7 @@ export default function CareerHistory() {
                   <p className="text-xs text-gray-500 mt-0.5">{h.points} puntos</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold text-accent">{h.position}°</span>
+                  <span className="text-3xl font-extrabold text-tone">{h.position}°</span>
                   <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${h.objectiveMet ? "bg-emerald/15 text-emerald border-emerald/30" : "bg-red-500/10 text-red-400 border-red-500/30"}`}>
                     {h.objectiveMet ? "Objetivo cumplido" : "Objetivo fallado"}
                   </span>
@@ -58,10 +58,10 @@ export default function CareerHistory() {
               {(h.copaChampion || h.continentalChampion) && (
                 <div className="flex gap-2 mt-3">
                   {h.copaChampion && (
-                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber/15 text-amber border border-amber/30">Copa del Rey</span>
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber/15 text-amber border border-amber/30">🏆 Copa del Rey</span>
                   )}
                   {h.continentalChampion && (
-                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue/15 text-blue border border-blue/30">Título continental</span>
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue/15 text-blue border border-blue/30">🏆 Título continental</span>
                   )}
                 </div>
               )}

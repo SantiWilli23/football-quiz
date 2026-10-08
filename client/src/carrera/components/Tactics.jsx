@@ -144,8 +144,8 @@ export default function Tactics() {
         )}
       </div>
 
-      <div className="bg-panel border border-border rounded-card p-4">
-        <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Formación</p>
+      <div className="tone-blue tile-b rounded-card p-4">
+        <p className="text-xs text-gray-300 uppercase tracking-wide mb-2">Formación</p>
         <select
           value={state.formation}
           onChange={(e) => setFormation(e.target.value)}
@@ -156,8 +156,8 @@ export default function Tactics() {
         <p className="text-xs text-gray-500 mt-2">Cambiar formación reubica automáticamente a la plantilla en la pantalla de Plantilla.</p>
       </div>
 
-      <div className="bg-panel border border-border rounded-card p-4">
-        <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Mentalidad — {MENTALITY_LABELS[state.mentality - 1]}</p>
+      <div className="tone-accent tile-b rounded-card p-4">
+        <p className="text-xs text-gray-300 uppercase tracking-wide mb-2">Mentalidad — {MENTALITY_LABELS[state.mentality - 1]}</p>
         <input
           type="range" min={1} max={5} step={1} value={state.mentality}
           onChange={(e) => setMentality(Number(e.target.value))}
@@ -169,8 +169,17 @@ export default function Tactics() {
       </div>
 
       {/* Foco de entrenamiento semanal */}
-      <div className="bg-panel border border-border rounded-card p-4">
-        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Foco de entrenamiento semanal</p>
+      <div className="grid grid-cols-3 gap-3 text-center">
+        {[["Ataque", (state.mentality - 3) * 4, "tone-emerald"], ["Defensa", -(state.mentality - 3) * 3, "tone-blue"], ["Cansancio", (state.mentality - 3) * 3, "tone-red"]].map(([l, v, t]) => (
+          <div key={l} className={`${t} tile-b rounded-card py-3`}>
+            <p className="text-xs text-gray-300 uppercase tracking-wide">{l}</p>
+            <p className="text-2xl font-bold tabular-nums text-tone">{v > 0 ? "+" : ""}{v}%</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="tone-amber tile-b rounded-card p-4">
+        <p className="text-xs text-gray-300 uppercase tracking-wide mb-1">Foco de entrenamiento semanal</p>
         <p className="text-xs text-gray-600 mb-3">El foco elegido aplica un modificador en el próximo partido.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {FOCUS_OPTIONS.map(opt => (
@@ -193,8 +202,8 @@ export default function Tactics() {
         </div>
       </div>
 
-      <div className="bg-panel border border-border rounded-card p-4">
-        <p className="text-xs text-gray-500 uppercase tracking-wide mb-3">Instrucciones de equipo</p>
+      <div className="tone-pink tile-b rounded-card p-4">
+        <p className="text-xs text-gray-300 uppercase tracking-wide mb-3">Instrucciones de equipo</p>
         <div className="space-y-4">
           {SLIDER_DEFS.map(([key, label, lo, hi]) => (
             <div key={key}>

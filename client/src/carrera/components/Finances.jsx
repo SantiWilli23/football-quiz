@@ -27,19 +27,19 @@ export default function Finances() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-panel border border-border rounded-2xl p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Presupuesto de fichajes</p>
+        <div className="tone-accent tile-b rounded-2xl p-5">
+          <p className="text-xs text-gray-300 uppercase tracking-wide mb-1">Presupuesto de fichajes</p>
           <p className="text-3xl font-bold text-accent leading-none">€{state.budget}M</p>
           <p className="text-xs text-gray-500 mt-2">Disponible para ofertas y sueldos nuevos</p>
         </div>
-        <div className="bg-panel border border-border rounded-2xl p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Masa salarial semanal</p>
-          <p className="text-3xl font-bold leading-none">€{weeklyWages}k</p>
+        <div className="tone-amber tile-b rounded-2xl p-5">
+          <p className="text-xs text-gray-300 uppercase tracking-wide mb-1">Masa salarial semanal</p>
+          <p className="text-3xl font-bold leading-none text-tone">€{weeklyWages}k</p>
           <p className="text-xs text-gray-500 mt-2">≈ €{annualWagesM}M al año</p>
         </div>
-        <div className="bg-panel border border-border rounded-2xl p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Gastado en fichajes</p>
-          <p className="text-3xl font-bold leading-none">€{totalSpent}M</p>
+        <div className="tone-pink tile-b rounded-2xl p-5">
+          <p className="text-xs text-gray-300 uppercase tracking-wide mb-1">Gastado en fichajes</p>
+          <p className="text-3xl font-bold leading-none text-tone">€{totalSpent}M</p>
           <p className="text-xs text-gray-500 mt-2">Acumulado en esta carrera{feesSpentClause > 0 ? ` (€${feesSpentClause}M por cláusulas)` : ""}</p>
         </div>
       </div>
@@ -62,17 +62,17 @@ export default function Finances() {
         <p className="text-xs text-gray-500 uppercase tracking-wide mb-3">Ingresos de la última temporada</p>
         {income ? (
           <div className="grid grid-cols-3 gap-3 text-center">
-            <div>
-              <p className="text-lg font-bold">€{income.tvMoney}M</p>
-              <p className="text-xs text-gray-500 mt-0.5">Derechos de TV</p>
+            <div className="tone-blue tile-b rounded-xl py-3">
+              <p className="text-xl font-bold text-tone">€{income.tvMoney}M</p>
+              <p className="text-xs text-gray-300 mt-0.5">Derechos de TV</p>
             </div>
-            <div>
-              <p className="text-lg font-bold">€{income.taquilla}M</p>
-              <p className="text-xs text-gray-500 mt-0.5">Taquilla</p>
+            <div className="tone-emerald tile-b rounded-xl py-3">
+              <p className="text-xl font-bold text-tone">€{income.taquilla}M</p>
+              <p className="text-xs text-gray-300 mt-0.5">Taquilla</p>
             </div>
-            <div>
-              <p className="text-lg font-bold">€{income.premio}M</p>
-              <p className="text-xs text-gray-500 mt-0.5">Premios</p>
+            <div className="tone-purple tile-b rounded-xl py-3">
+              <p className="text-xl font-bold text-tone">€{income.premio}M</p>
+              <p className="text-xs text-gray-300 mt-0.5">Premios</p>
             </div>
           </div>
         ) : (

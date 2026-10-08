@@ -16,7 +16,7 @@ export default function NationalTeamCard() {
   if (!pending && !nt?.active) return null;
 
   return (
-    <div className="bg-panel border border-blue-500/30 rounded-2xl p-4">
+    <div className="tone-blue tile-b rounded-2xl p-4">
       <div className="flex items-center gap-2 mb-3">
         <Globe2 size={16} className="text-blue-400" />
         <h3 className="font-semibold text-sm">Selección Nacional</h3>

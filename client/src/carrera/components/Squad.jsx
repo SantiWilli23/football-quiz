@@ -47,9 +47,9 @@ const INSTRUCTION_OPTIONS = [
   { id: "conservador", label: "Conservador" },
 ];
 
-export default function Squad() {
+export default function Squad({ initialTab = "formacion" }) {
   const { state, moveToBench, moveToReserves, toggleTransferListed, toggleLoanListed, startPositionTraining, holdSquadMeeting, setCaptain, setPlayerInstruction } = useCareer();
-  const [tab, setTab] = useState("formacion");
+  const [tab, setTab] = useState(initialTab);
   const [groupFilter, setGroupFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("ovr");
 
@@ -136,13 +136,13 @@ export default function Squad() {
           <div className="space-y-6">
             {groupedList.map((g) => (
               g.players.length > 0 && (
-                <div key={g.id}>
+                <div key={g.id} className={`tone-${g.color === "red" ? "pink" : g.color}`}>
                   <div className="flex items-center gap-2 mb-2.5">
-                    <span className={`w-2 h-2 rounded-full ${DOT_CLASSES[g.color]}`} />
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">{g.label}</h3>
-                    <span className="text-xs text-gray-600">· {g.players.length}</span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-tone" />
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-tone">{g.label}</h3>
+                    <span className="text-xs text-gray-400">· {g.players.length}</span>
                   </div>
-                  <div className="rounded-card border border-border bg-panel divide-y divide-border overflow-hidden">
+                  <div className="tile-b rounded-card divide-y divide-white/10 overflow-hidden">
                     {g.players.map((p) => (
                       <PlayerRow
                         key={p.id}

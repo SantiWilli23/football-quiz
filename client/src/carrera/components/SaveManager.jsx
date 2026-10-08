@@ -23,14 +23,15 @@ export default function SaveManager({ onNewCareer }) {
               const t = teamById(slot.teamId);
               if (!t) return null;
               return (
-                <div key={slot.id} className="bg-panel border border-border rounded-2xl px-4 py-3 flex items-center gap-3">
-                  <TeamCrest team={t} size={40} />
+                <div key={slot.id} className="hero-b rounded-3xl px-5 py-4 flex items-center gap-4" style={{ "--hero-a": "var(--c-accent)", "--hero-b": "var(--c-blue)" }}>
+                  <TeamCrest team={t} size={56} />
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold truncate">{t.name}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="font-bold text-lg truncate">{t.name}</p>
+                    <p className="text-xs text-gray-300">
                       Temporada {slot.season} · Jornada {slot.week}
                       {slot.gameOver && <span className="text-red-400 ml-1.5">· Despedido</span>}
                     </p>
+                    <div className="h-1.5 rounded-full bg-white/15 overflow-hidden mt-2 max-w-xs"><div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(100, ((slot.week || 0) / 38) * 100)}%` }} /></div>
                   </div>
                   {confirmDelete === slot.id ? (
                     <div className="flex gap-1.5 shrink-0">

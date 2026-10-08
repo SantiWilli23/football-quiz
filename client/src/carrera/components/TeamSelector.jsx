@@ -58,17 +58,19 @@ export default function TeamSelector({ onBack }) {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
-          {list.map((t) => (
+          {list.map((t, i) => (
             <button
               key={t.id}
               onClick={() => setChosen(t)}
-              className={`text-left p-3 rounded-card border bg-panel transition-colors ${
-                chosen?.id === t.id ? "border-accent" : "border-border hover:border-white/20"
+              className={`${CLUB_TONES[i % CLUB_TONES.length]} tile-b text-left p-3.5 rounded-card transition-all ${
+                chosen?.id === t.id ? "ring-2 ring-white/70 scale-[1.02]" : "hover:brightness-110"
               }`}
             >
-              <TeamCrest team={t} size={32} className="mb-2" />
+              <TeamCrest team={t} size={36} className="mb-2" />
               <p className="text-sm font-semibold">{t.name}</p>
-              <p className="text-xs text-gray-500">Tier {t.tier} · €{t.budget}M</p>
+              <p className="text-xs text-gray-300">Nivel {t.prestige}/10 · €{t.budget}M</p>
+              <div className="h-1.5 rounded-full bg-white/15 overflow-hidden mt-2"><div className="h-full rounded-full bg-tone" style={{ width: `${(t.prestige ?? 5) * 10}%` }} /></div>
+              <p className="text-[11px] text-gray-400 mt-1.5">Dificultad: {t.tier <= 2 ? "baja" : t.tier <= 4 ? "media" : "alta"}</p>
             </button>
           ))}
         </div>
@@ -97,6 +99,8 @@ export default function TeamSelector({ onBack }) {
     </div>
   );
 }
+
+const CLUB_TONES = ["tone-accent", "tone-blue", "tone-purple", "tone-amber", "tone-pink", "tone-cyan"];
 
 function objectiveLabel(o) {
   const map = {
