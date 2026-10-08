@@ -90,8 +90,6 @@ function shareText(game) {
   return `${title} · ${result} · ${game.points} pts\n${rows.join("\n")}`;
 }
 
-const TIME_LIMIT = 180; // segundos de la Contrarreloj
-
 export default function Wordle() {
   const { activeGroupId: groupId } = useGroups();
   const [meta, setMeta] = useState({ leagues: [], difficulties: [], maxAttempts: 8, hintCost: 3 });
@@ -109,23 +107,6 @@ export default function Wordle() {
   const [groupSave, setGroupSave] = useState(null);
   const [copied, setCopied] = useState(false);
   const submittedRef = useRef(new Set());
-  // Modo contra reloj (opcional): el servidor mide el tiempo desde que se creó la
-  // partida y da +20/+10/+5 pts si se gana en 1/2/3 minutos.
-  const [timed, setTimed] = useState(() => {
-    try { return localStorage.getItem("fq_fichado_timed") === "on"; } catch { return false; }
-  });
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (!timed) return undefined;
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, [timed]);
-  function toggleTimed() {
-    const next = !timed;
-    setTimed(next);
-    try { localStorage.setItem("fq_fichado_timed", next ? "on" : "off"); } catch { /* sin storage */ }
-  }
-
   useEffect(() => {
     api.get("/wordle/leagues").then((r) => setMeta(r.data)).catch(() => {});
   }, []);
@@ -187,7 +168,7 @@ export default function Wordle() {
   }
 
   const guess = (name) => name && act(async () => {
-    const { data } = await api.post("/wordle/guess", { gameId: game.id, name, timed });
+    const { data } = await api.post("/wordle/guess", { gameId: game.id, name });
     applyGame(data.game, true);
     playSfx(data.game.status === "won" ? "win" : data.game.status === "lost" ? "bad" : "tick");
     setQuery("");
@@ -223,13 +204,6 @@ export default function Wordle() {
   }, [statsOpen, stats]);
 
   const playing = game?.status === "playing";
-  // Contrarreloj: cuenta regresiva de 3 minutos desde que arrancó la partida.
-  const elapsed = game?.startedAt ? Math.max(0, Math.floor((now - Date.parse(String(game.startedAt).replace(" ", "T") + "Z")) / 1000)) : 0;
-  const timeLeft = Math.max(0, TIME_LIMIT - elapsed);
-  useEffect(() => {
-    if (timed && playing && game?.startedAt && timeLeft === 0 && !busy) giveUp();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timed, playing, timeLeft]);
   const attemptsLeft = game ? Math.max(0, game.maxAttempts - game.attemptsUsed) : 0;
   const canHint = playing && game.hintsUsed < 5 && attemptsLeft >= meta.hintCost;
   const [wildcards, setWildcards] = useState({ available: 0, streak: 0, step: 5 });
@@ -254,28 +228,6 @@ export default function Wordle() {
       <div className="mb-3">
         <span className="text-xs font-semibold uppercase tracking-wide text-accent">{MODE_INFO[mode].label}</span>
         <span className="text-xs text-gray-500 ml-2">{modeNote?.challenge?.label || MODE_INFO[mode].hint}</span>
-      </div>
-
-      <div className="flex items-center gap-3 mb-4 text-xs text-gray-400 flex-wrap">
-        <div className="inline-flex rounded-card border border-border overflow-hidden" role="group" aria-label="Modo de juego">
-          {[[false, "Clásico"], [true, "Contrarreloj"]].map(([on, label]) => (
-            <button
-              key={label}
-              onClick={() => { if (timed !== on) toggleTimed(); }}
-              disabled={playing}
-              aria-pressed={timed === on}
-              className={`px-3.5 py-1.5 font-medium transition-colors disabled:cursor-not-allowed ${timed === on ? "bg-accent/15 text-accent" : "hover:text-white"}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        {timed && playing && game.startedAt && (
-          <span className={`tabular-nums text-base font-bold ${timeLeft <= 30 ? "text-red-400" : "text-white"}`}>
-            {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
-          </span>
-        )}
-        <span>{timed ? "Tenés 3 minutos: si se acaba el tiempo, perdés. Ganando en 1, 2 o 3 minutos sumás +20, +10 o +5." : "Probá la Contrarreloj para sumar puntos extra por rapidez."}</span>
       </div>
 
       {loading && <p className="text-sm text-gray-500">Cargando...</p>}
