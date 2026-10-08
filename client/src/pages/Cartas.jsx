@@ -208,6 +208,7 @@ export default function Cartas() {
     try {
       const { data } = await api.post("/cards/open");
       setOpened(data.cards);
+      if (data.starBonus > 0) toast(`Sin estrella: el próximo sobre tiene +${data.starBonus}% de probabilidad de estrella`);
       playSfx(data.cards.some((c) => c.tier === "estrella" || c.tier === "oro") ? "win" : "ok");
       await load();
     } catch (err) {

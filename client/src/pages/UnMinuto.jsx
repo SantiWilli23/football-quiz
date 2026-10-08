@@ -22,14 +22,27 @@ const PENALTY_SECONDS = 3;
 const MAX_SECONDS = 60;
 // Cada 5 aciertos seguidos, el 5.º, 10.º, 15.º... vale un punto extra.
 const STREAK_STEP = 5;
+// Dificultad adaptativa: 3 aciertos seguidos suben un nivel, 2 errores seguidos bajan uno.
+const LEVELS = ["dificil", "ultra", "demonio"];
+const LEVEL_MULT = { dificil: 1, ultra: 1.5, demonio: 2 };
+const UP_AFTER = 3;
+const DOWN_AFTER = 2;
+const CATEGORY_LABELS = { todas: "Todas", mundiales: "Mundiales", champions: "Champions", chile: "Chile", premier: "Premier", laliga: "LaLiga" };
 
 export default function UnMinuto() {
   const { activeGroupId: groupId } = useGroups();
   const [difficulties, setDifficulties] = useState([]);
   const [difficulty, setDifficulty] = useState(DAILY_DIFFICULTY);
   const [dailyMsg, setDailyMsg] = useState("");
+  const [category, setCategory] = useState("todas");
+  const [level, setLevel] = useState(1); // nivel actual en el modo adaptativo (arranca en Ultra)
+  const [wrongStreak, setWrongStreak] = useState(0);
+  const [weighted, setWeighted] = useState(0); // puntos ya multiplicados por el nivel de cada pregunta
+  const [fiftyUsed, setFiftyUsed] = useState(false);
+  const [hidden, setHidden] = useState([]); // opciones ocultas por el 50/50 en la pregunta actual
+  const adaptive = difficulty === "adaptativo";
   useEffect(() => { api.get("/un-minuto/difficulties").then((r) => setDifficulties(r.data.difficulties)).catch(() => {}); }, []);
-  const multiplier = difficulties.find((d) => d.id === difficulty)?.multiplier ?? 1;
+  const multiplier = adaptive ? LEVEL_MULT[LEVELS[level]] : difficulties.find((d) => d.id === difficulty)?.multiplier ?? 1;
   const [phase, setPhase] = useState("idle"); // idle | playing | done
   const [question, setQuestion] = useState(null);
   const [seenIds, setSeenIds] = useState([]);
@@ -45,27 +58,28 @@ export default function UnMinuto() {
   const timerRef = useRef(null);
   const endedRef = useRef(false);
 
-  const fetchQuestion = useCallback(async (exclude) => {
+  const fetchQuestion = useCallback(async (exclude, diff) => {
     setLoadingQuestion(true);
     setFeedback(null);
+    setHidden([]);
     try {
-      const { data } = await api.get("/un-minuto/question", { params: { exclude: exclude.join(","), difficulty } });
+      const { data } = await api.get("/un-minuto/question", { params: { exclude: exclude.join(","), difficulty: diff || (difficulty === "adaptativo" ? "ultra" : difficulty), category: category === "todas" ? undefined : category } });
       setQuestion(data.question);
     } catch {
       setQuestion(null);
     } finally {
       setLoadingQuestion(false);
     }
-  }, [difficulty]);
+  }, [difficulty, category]);
 
   const finish = useCallback(async () => {
     if (endedRef.current) return;
     endedRef.current = true;
     clearInterval(timerRef.current);
     setPhase("done");
-    const finalScore = Math.round(points * multiplier);
+    const finalScore = Math.round(weighted);
     // Rendimiento: precisión, pero solo vale entero si contestaste bastantes (12+).
-    logGame("un_minuto", { dificil: 3, ultra: 4, demonio: 5 }[difficulty] || 3, answeredCount ? (correctCount / answeredCount) * Math.min(1, correctCount / 12) : 0, correctCount + " aciertos de " + answeredCount);
+    logGame("un_minuto", { dificil: 3, ultra: 4, demonio: 5, adaptativo: 4 }[difficulty] || 3, answeredCount ? (correctCount / answeredCount) * Math.min(1, correctCount / 12) : 0, correctCount + " aciertos de " + answeredCount);
     if (difficulty === DAILY_DIFFICULTY) {
       submitDaily("un_minuto", finalScore / DAILY_TARGET, finalScore).then((r) => setDailyMsg(dailyMessage(r)));
     } else {
@@ -77,13 +91,13 @@ export default function UnMinuto() {
       const { data } = await api.post("/challenges/submit", {
         gameKey: "un_minuto",
         groupId,
-        score: Math.round(points * multiplier),
+        score: Math.round(weighted),
       });
       setSaveState({ improved: data.improved });
     } catch {
       setSaveState(null);
     }
-  }, [groupId, points, multiplier, difficulty, difficulties, correctCount, answeredCount]);
+  }, [groupId, weighted, difficulty, difficulties, correctCount, answeredCount]);
 
   function start() {
     endedRef.current = false;
@@ -91,13 +105,18 @@ export default function UnMinuto() {
     setPhase("playing");
     setCorrectCount(0);
     setPoints(0);
+    setWeighted(0);
+    setLevel(1);
+    setWrongStreak(0);
+    setFiftyUsed(false);
+    setHidden([]);
     setStreak(0);
     setAnsweredCount(0);
     setSeenIds([]);
     setSecondsLeft(ROUND_SECONDS);
     setDelta(null);
     setSaveState(null);
-    fetchQuestion([]);
+    fetchQuestion([], adaptive ? "ultra" : undefined);
     timerRef.current = setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
@@ -115,30 +134,47 @@ export default function UnMinuto() {
 
   useEffect(() => () => clearInterval(timerRef.current), []);
 
+  // Comodín 50/50: una vez por partida, saca dos opciones incorrectas.
+  async function useFifty() {
+    if (!question || feedback || fiftyUsed) return;
+    try {
+      const { data } = await api.post("/un-minuto/fifty", { questionId: question.id });
+      setHidden(data.remove || []);
+      setFiftyUsed(true);
+    } catch { /* si falla, no se gasta el comodín */ }
+  }
+
   async function answer(letter) {
     if (!question || feedback) return;
     try {
       const { data } = await api.post("/un-minuto/answer", { questionId: question.id, answer: letter });
       setFeedback(data.correct ? "correct" : "wrong");
       setAnsweredCount((c) => c + 1);
+      let nextLevel = level;
       if (data.correct) {
         const nextStreak = streak + 1;
         const bonus = nextStreak % STREAK_STEP === 0;
         setStreak(nextStreak);
         setCorrectCount((c) => c + 1);
         setPoints((p) => p + (1 + (bonus ? 1 : 0)));
+        setWeighted((w) => w + (1 + (bonus ? 1 : 0)) * multiplier);
+        setWrongStreak(0);
+        if (adaptive && nextStreak % UP_AFTER === 0) nextLevel = Math.min(LEVELS.length - 1, level + 1);
         playSfx(bonus ? "win" : "ok");
       } else {
         setStreak(0);
+        const nextWrong = wrongStreak + 1;
+        if (adaptive && nextWrong >= DOWN_AFTER) { nextLevel = Math.max(0, level - 1); setWrongStreak(0); } else setWrongStreak(nextWrong);
         playSfx("bad");
       }
+      if (nextLevel !== level) setLevel(nextLevel);
       const change = data.correct ? BONUS_SECONDS : -PENALTY_SECONDS;
       setDelta({ n: change, key: Date.now() });
       setSecondsLeft((s) => Math.max(0, Math.min(MAX_SECONDS, s + change)));
       const nextSeen = [...seenIds, question.id];
       setSeenIds(nextSeen);
       setTimeout(() => {
-        if (!endedRef.current) fetchQuestion(nextSeen);
+        if (!endedRef.current) fetchQuestion(nextSeen, adaptive ? LEVELS[nextLevel] : undefined);
       }, 350);
     } catch {
       // ignora un fallo de red puntual, el usuario puede reintentar la misma pregunta
@@ -159,6 +195,18 @@ export default function UnMinuto() {
           <Timer size={32} className="mx-auto text-accent mb-3" />
           <p className="text-sm text-gray-400 mb-2">Arrancás ya, sin vueltas: preguntas de a una hasta que se acabe el reloj.</p>
           <p className="text-xs text-gray-500 mb-5">Juego diario: la primera partida del día en Ultra difícil (la dificultad media) te da un puntaje de hasta 20 (de referencia) y un sobre de cartas; el podio del día del grupo suma 5 / 3 / 3 puntos.</p>
+          <div className="flex gap-1.5 justify-center mb-3 flex-wrap" role="group" aria-label="Categoría">
+            {Object.entries(CATEGORY_LABELS).map(([id, label]) => (
+              <button
+                key={id}
+                onClick={() => setCategory(id)}
+                aria-pressed={category === id}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${category === id ? "border-accent/40 bg-accent/10 text-accent" : "border-border text-gray-400 hover:text-white"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           {difficulties.length > 0 && (
             <div className="flex gap-2 justify-center mb-6 flex-wrap">
               {difficulties.map((d) => (
@@ -173,6 +221,14 @@ export default function UnMinuto() {
                   {d.label} <span className="text-gray-500">×{d.multiplier}</span>
                 </button>
               ))}
+              <button
+                onClick={() => setDifficulty("adaptativo")}
+                aria-pressed={adaptive}
+                title="3 aciertos seguidos suben el nivel y 2 errores seguidos lo bajan"
+                className={`px-3 py-2 rounded-card text-sm font-medium border transition-colors ${adaptive ? "border-accent/40 bg-accent/10 text-accent" : "border-border text-gray-400 hover:text-white"}`}
+              >
+                Adaptativo <span className="text-gray-500">×1–2</span>
+              </button>
             </div>
           )}
           <button
@@ -197,7 +253,8 @@ export default function UnMinuto() {
             </span>
             <span className="text-sm text-gray-400">
               {streak >= 2 && <span className="text-amber-500 font-medium mr-3">Racha {streak}</span>}
-              {points} pts{multiplier !== 1 ? ` ×${multiplier}` : ""} · {correctCount} / {answeredCount} correctas
+              {adaptive && <span className="text-accent font-medium mr-3">Nivel {["Difícil", "Ultra", "Demonio"][level]}</span>}
+              {Math.round(weighted)} pts{!adaptive && multiplier !== 1 ? ` ×${multiplier}` : ""} · {correctCount} / {answeredCount} correctas
             </span>
           </div>
 
@@ -218,13 +275,18 @@ export default function UnMinuto() {
                   <button
                     key={letter}
                     onClick={() => answer(letter)}
-                    disabled={!!feedback}
-                    className="text-left px-3 py-2.5 rounded-card border border-border text-sm hover:border-accent/40 hover:bg-accent/5 disabled:opacity-60 transition-colors"
+                    disabled={!!feedback || hidden.includes(letter)}
+                    className={`text-left px-3 py-2.5 rounded-card border border-border text-sm hover:border-accent/40 hover:bg-accent/5 disabled:opacity-60 transition-colors ${hidden.includes(letter) ? "invisible" : ""}`}
                   >
                     {question[`option_${letter}`]}
                   </button>
                 ))}
               </div>
+              {!feedback && (
+                <button onClick={useFifty} disabled={fiftyUsed} className="mt-3 text-xs px-3 py-1.5 rounded-card border border-border text-gray-400 hover:text-white hover:border-white/30 disabled:opacity-40">
+                  {fiftyUsed ? "50/50 usado" : "Comodín 50/50 (una vez)"}
+                </button>
+              )}
               {feedback && (
                 <p className={`mt-3 text-sm font-medium flex items-center gap-1.5 ${feedback === "correct" ? "text-emerald" : "text-red-400"}`}>
                   {feedback === "correct" ? <Check size={15} /> : <X size={15} />}
@@ -238,8 +300,8 @@ export default function UnMinuto() {
 
       {phase === "done" && (
         <ResultScreen
-          score={Math.round(points * multiplier)}
-          unit={`puntos (${correctCount} aciertos${multiplier !== 1 ? `, ×${multiplier}` : ""})`}
+          score={Math.round(weighted)}
+          unit={`puntos (${correctCount} aciertos${adaptive ? ", adaptativo" : multiplier !== 1 ? `, ×${multiplier}` : ""})`}
           groupId={groupId}
           saveState={saveState}
           highlight={dailyMsg || undefined}

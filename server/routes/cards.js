@@ -263,14 +263,15 @@ const pickOf = (pool) => pool[Math.floor(Math.random() * pool.length)];
 
 // `index` es la posición de la carta dentro del sobre (0 a 4): la carta
 // asegurada de un sobre estrella es la primera.
-function drawCard(type = "normal", index = 1) {
+function drawCard(type = "normal", index = 1, pityBonus = 0) {
   const def = PACKS[type] || PACKS.normal;
   const extra = drawExtra(type, index, def); // Ícono, Momento o entrenador
   if (extra) return extra;
   const special = def.special && SPECIAL_CARDS.length > 0 && Math.random() < def.special;
   if (special) return pickOf(SPECIAL_CARDS);
   if (def.guarantee && index === 0) return pickOf(poolFor(type, def.guarantee));
-  const weights = def.weights;
+  // Garantía de estrella: cada sobre sin estrella suma 3 puntos a su probabilidad.
+  const weights = pityBonus > 0 ? { ...def.weights, estrella: (def.weights.estrella ?? 0) + pityBonus } : def.weights;
   let r = Math.random() * TIERS.reduce((sum, t) => sum + (weights[t.key] ?? t.weight), 0);
   for (const t of TIERS) {
     r -= weights[t.key] ?? t.weight;
@@ -377,7 +378,14 @@ router.post("/open", async (req, res) => {
     const quality = qualityOf(pack.source);
     // Una lectura de lo que ya tenés + una escritura en lote (antes eran 2 idas
     // a la base por carta, 10 en total, y abrir un sobre se sentía lento).
-    const drawn = Array.from({ length: 5 }, (_, i) => drawCard(quality, i));
+    const misses = Number((await db.execute({ sql: "SELECT misses FROM card_pity WHERE user_id = ?", args: [req.userId] })).rows[0]?.misses || 0);
+    const drawn = Array.from({ length: 5 }, (_, i) => drawCard(quality, i, misses * 3));
+    // Salió una estrella (o una carta especial): se reinicia. Si no, el próximo sobre tiene 3 puntos más.
+    const gotStar = drawn.some((c) => c.tier === "estrella" || c.special);
+    await db.execute({
+      sql: "INSERT INTO card_pity (user_id, misses) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET misses = excluded.misses",
+      args: [req.userId, gotStar ? 0 : misses + 1],
+    });
     const owned = new Set((await db.execute({ sql: "SELECT player_name FROM user_cards WHERE user_id = ?", args: [req.userId] })).rows.map((r) => r.player_name));
     const cards = drawn.map((c) => {
       const isNew = !owned.has(c.name);
@@ -388,7 +396,7 @@ router.post("/open", async (req, res) => {
       sql: "INSERT INTO user_cards (user_id, player_name, count) VALUES (?, ?, 1) ON CONFLICT(user_id, player_name) DO UPDATE SET count = count + 1",
       args: [req.userId, c.name],
     })), "write");
-    res.json({ cards, quality });
+    res.json({ cards, quality, pity: gotStar ? 0 : misses + 1, starBonus: gotStar ? 0 : (misses + 1) * 3 });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

@@ -8,15 +8,30 @@ import GroupSelector from "../components/GroupSelector.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import { logGame } from "../utils/logGame.js";
 import { teams, badgeFor } from "../carrera/data/teams.js";
+import { EXTRA_CRESTS } from "../data/extraCrests.js";
 import { submitDaily, dailyMessage } from "../utils/dailyGames.js";
 
 const ROUNDS = 10;
-const BLUR_STEPS = [14, 9, 5, 2]; // se va destapando con cada pista, si el usuario la pide
+const BLUR_STEPS = [14, 9, 5, 2]; // se va destapando solo con el tiempo (y con la pista, en práctica)
+// Los primeros 3 segundos el escudo no cambia; después se aclara un paso cada 3 s.
+const GRACE_MS = 3000;
+const STEP_MS = 3000;
+// Cuanto más nítido estaba el escudo al acertar, menos vale el acierto.
+const LEVEL_VALUE = [1, 0.85, 0.7, 0.55];
 
 // Solo clubes con escudo real cargado (ver CLUB_LOGOS en carrera/data/teams.js)
 // — ya están en el bundle porque los usa Carrera DT, así que este modo no
 // necesita ningún asset nuevo.
-const POOL = teams.filter((t) => badgeFor(t.id));
+const BASE_POOL = teams.filter((t) => badgeFor(t.id));
+// Clubes grandes de otras ligas (Ajax, Boca, Benfica...) y clubes de ascenso: no son
+// equipos jugables de Carrera DT, traen su escudo directo (ver data/extraCrests.js).
+const asTeam = (e) => ({ id: e.id, name: e.name, league: e.league, prestige: e.prestige, badge: e.badge, colors: null });
+const BIG_EXTRAS = EXTRA_CRESTS.filter((e) => e.kind === "grande").map(asTeam);
+const ASCENSO_EXTRAS = EXTRA_CRESTS.filter((e) => e.kind === "ascenso").map(asTeam);
+const POOL = [...BASE_POOL, ...BIG_EXTRAS];
+// Nivel Experto: clubes de ascenso y los más oscuros de todo el pool.
+const EXPERT_POOL = [...ASCENSO_EXTRAS, ...POOL.filter((t) => (t.prestige ?? 5) <= 4)];
+const crestSrc = (team) => team.badge || badgeFor(team.id);
 
 function shuffle(arr) {
   const a = [...arr];
@@ -66,10 +81,11 @@ function pickDecoys(team, pool) {
 // 4 a 7), ni los gigantes que se adivinan solos ni los escudos más obscuros.
 const MID_POOL = POOL.filter((t) => (t.prestige ?? 5) >= 4 && (t.prestige ?? 5) <= 7);
 
-function buildRounds(mid = false) {
-  const base = mid && MID_POOL.length >= ROUNDS ? MID_POOL : POOL;
+function buildRounds(mid = false, expert = false) {
+  const base = expert ? EXPERT_POOL : mid && MID_POOL.length >= ROUNDS ? MID_POOL : POOL;
   const chosen = shuffle(base).slice(0, ROUNDS);
-  return chosen.map((team) => ({ team, options: shuffle([team, ...pickDecoys(team, POOL)]) }));
+  // En Experto las opciones falsas también son clubes oscuros: no hay nombres famosos que descartar.
+  return chosen.map((team) => ({ team, options: shuffle([team, ...pickDecoys(team, expert ? EXPERT_POOL : POOL)]) }));
 }
 
 // Puntaje del reto semanal: rendimiento (aciertos) × dificultad (cuánto
@@ -79,12 +95,12 @@ function buildRounds(mid = false) {
 // segundo de más no debería arruinar la marca).
 const IDEAL_SECONDS_PER_ROUND = 8;
 
-function computeWeeklyScore(rounds, results, elapsedMs) {
+function computeWeeklyScore(rounds, results, elapsedMs, levels = []) {
   let raw = 0;
   rounds.forEach((r, i) => {
     if (!results[i]) return;
     const difficulty = 11 - (r.team.prestige ?? 5); // 1 (muy famoso) a 10 (muy obscuro)
-    raw += 10 + difficulty * 2; // 12 a 30 puntos por acierto según qué tan reconocible es
+    raw += (10 + difficulty * 2) * (LEVEL_VALUE[levels[i] ?? 0] ?? 0.55); // 12 a 30 puntos por acierto según qué tan reconocible era, y qué tan borroso estaba
   });
   const idealMs = IDEAL_SECONDS_PER_ROUND * rounds.length * 1000;
   const timeFactor = Math.min(1.3, Math.max(0.7, idealMs / Math.max(1, elapsedMs)));
@@ -96,6 +112,7 @@ export default function CrestQuiz() {
   const [phase, setPhase] = useState("idle"); // idle | playing | done
   const [weekly, setWeekly] = useState(true); // reto semanal: sin pistas, suma al grupo
   const [isDaily, setIsDaily] = useState(false); // juego diario: sin pistas, dificultad media
+  const [isExpert, setIsExpert] = useState(false); // nivel Experto: clubes de ascenso y oscuros, sin pistas
   const [dailyMsg, setDailyMsg] = useState("");
   const [rounds, setRounds] = useState([]);
   const [index, setIndex] = useState(0);
@@ -105,6 +122,7 @@ export default function CrestQuiz() {
   const [feedback, setFeedback] = useState(null); // "correct" | "wrong"
   const [saveState, setSaveState] = useState(null);
   const [startedAt, setStartedAt] = useState(null);
+  const [levels, setLevels] = useState([]); // nivel de desenfoque al responder cada escudo
   const [weeklyStatus, setWeeklyStatus] = useState(undefined); // undefined mientras carga | { played, score }
   const [lockedMsg, setLockedMsg] = useState("");
 
@@ -123,18 +141,31 @@ export default function CrestQuiz() {
     if (kind === "weekly" && weeklyStatus?.locked) return;
     setWeekly(kind === "weekly");
     setIsDaily(kind === "daily");
+    setIsExpert(kind === "expert");
     setDailyMsg("");
-    setRounds(buildRounds(kind === "daily"));
+    setRounds(buildRounds(kind === "daily", kind === "expert"));
     setIndex(0);
     setCorrectCount(0);
     setResults([]);
     setBlurLevel(0);
+    setLevels([]);
     setFeedback(null);
     setSaveState(null);
     setLockedMsg("");
     setStartedAt(Date.now());
     setPhase("playing");
   }
+
+  // El escudo se aclara solo: 3 segundos sin cambios y después un paso cada 3 s.
+  useEffect(() => {
+    if (phase !== "playing" || feedback) return undefined;
+    let interval;
+    const timeout = setTimeout(() => {
+      setBlurLevel((b) => Math.min(b + 1, BLUR_STEPS.length - 1));
+      interval = setInterval(() => setBlurLevel((b) => Math.min(b + 1, BLUR_STEPS.length - 1)), STEP_MS);
+    }, GRACE_MS);
+    return () => { clearTimeout(timeout); clearInterval(interval); };
+  }, [phase, index, feedback]);
 
   function revealMore() {
     setBlurLevel((b) => Math.min(b + 1, BLUR_STEPS.length - 1));
@@ -146,7 +177,9 @@ export default function CrestQuiz() {
     setFeedback(correct ? "correct" : "wrong");
     if (correct) setCorrectCount((c) => c + 1);
     const nextResults = [...results, correct];
+    const nextLevels = [...levels, blurLevel];
     setResults(nextResults);
+    setLevels(nextLevels);
 
     setTimeout(async () => {
       if (index + 1 < rounds.length) {
@@ -158,13 +191,14 @@ export default function CrestQuiz() {
         logGame("escudos", weekly ? 4 : isDaily ? 3 : 2, nextResults.filter(Boolean).length / ROUNDS, nextResults.filter(Boolean).length + "/" + ROUNDS + " escudos" + (weekly ? " · reto semanal" : isDaily ? " · diario" : " · práctica"));
         if (isDaily) {
           const hits = nextResults.filter(Boolean).length;
-          submitDaily("escudos", hits / ROUNDS, hits).then((r) => setDailyMsg(dailyMessage(r)));
+          const weighted = nextResults.reduce((sum, ok, i) => sum + (ok ? (LEVEL_VALUE[nextLevels[i] ?? 0] ?? 0.55) : 0), 0);
+          submitDaily("escudos", weighted / ROUNDS, hits).then((r) => setDailyMsg(dailyMessage(r)));
         }
         if (groupId && weekly) {
           setSaveState("saving");
           try {
             const elapsedMs = Date.now() - startedAt;
-            const score = computeWeeklyScore(rounds, nextResults, elapsedMs);
+            const score = computeWeeklyScore(rounds, nextResults, elapsedMs, nextLevels);
             const { data } = await api.post("/challenges/submit", { gameKey: "escudos", groupId, score });
             setSaveState({ improved: data.improved });
           } catch (err) {
@@ -184,7 +218,7 @@ export default function CrestQuiz() {
     <Layout focus={phase === "playing"}>
       <h1 className="text-xl sm:text-2xl font-bold mb-1">Escudos a ciegas</h1>
       <p className="text-gray-400 text-sm mb-4">
-        {ROUNDS} escudos reales, muy borrosos. En práctica podés pedir pistas para verlos más nítidos; el reto semanal es a ciegas, sin pistas, un solo intento por semana, y el puntaje pondera cuántos acertaste, qué tan reconocibles eran y qué tan rápido respondiste.
+        {ROUNDS} escudos reales, muy borrosos, que se aclaran solos (los primeros 3 segundos no cambian: acertar antes vale más). En práctica podés pedir pistas para verlos más nítidos; el reto semanal es a ciegas, sin pistas, un solo intento por semana, y el puntaje pondera cuántos acertaste, qué tan reconocibles eran y qué tan rápido respondiste.
       </p>
 
       <GroupSelector />
@@ -213,6 +247,12 @@ export default function CrestQuiz() {
               {alreadyPlayed ? "Reto semanal jugado" : "Reto semanal (sin pistas)"}
             </button>
             <button
+              onClick={() => start("expert")}
+              className="px-6 py-2.5 rounded-card border border-border text-sm text-gray-300 hover:text-white hover:border-white/30 transition-colors"
+            >
+              Experto (ascenso y clubes oscuros)
+            </button>
+            <button
               onClick={() => start("practice")}
               className="px-6 py-2.5 rounded-card border border-border text-sm text-gray-300 hover:text-white hover:border-white/30 transition-colors"
             >
@@ -236,7 +276,7 @@ export default function CrestQuiz() {
               ))}
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">Escudo {index + 1} / {rounds.length}{isDaily ? " · diario, sin pistas" : weekly ? " · sin pistas" : " · práctica"}</span>
+              <span className="text-gray-400">Escudo {index + 1} / {rounds.length}{isDaily ? " · diario, sin pistas" : isExpert ? " · experto, sin pistas" : weekly ? " · sin pistas" : " · práctica"}</span>
               <span className="text-gray-400">
                 {correctCount} correctas
                 {(() => { let n = 0; for (let i = results.length - 1; i >= 0 && results[i]; i--) n++; return n >= 2 ? ` · racha de ${n}` : ""; })()}
@@ -247,13 +287,13 @@ export default function CrestQuiz() {
           <Card>
             <div className="flex flex-col items-center gap-4">
               <img
-                src={badgeFor(current.team.id)}
+                src={crestSrc(current.team)}
                 alt="Escudo a adivinar"
                 className="w-32 h-32 object-contain transition-[filter]"
                 style={{ filter: `blur(${blur}px)` }}
               />
 
-              {!weekly && !isDaily && !feedback && blurLevel < BLUR_STEPS.length - 1 && (
+              {!weekly && !isDaily && !isExpert && !feedback && blurLevel < BLUR_STEPS.length - 1 && (
                 <button
                   onClick={revealMore}
                   className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors"

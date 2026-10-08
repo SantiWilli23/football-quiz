@@ -952,3 +952,10 @@ CREATE TABLE IF NOT EXISTS online_game_points (
   UNIQUE(user_id, game_key, room)
 );
 CREATE INDEX IF NOT EXISTS idx_online_game_points_group ON online_game_points(group_id, date);
+
+-- Garantía de estrella de las Cartas: sobres seguidos sin una estrella. Cada uno
+-- suma 3 puntos a la probabilidad de estrella del siguiente, hasta que salga una.
+CREATE TABLE IF NOT EXISTS card_pity (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id),
+  misses INTEGER NOT NULL DEFAULT 0
+);
