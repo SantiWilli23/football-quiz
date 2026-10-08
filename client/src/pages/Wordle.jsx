@@ -8,7 +8,6 @@ import { useGroups } from "../context/GroupContext.jsx";
 import { playSfx } from "../utils/sfx.js";
 import { celebrateScore } from "../utils/celebrate.js";
 
-const GLOBAL_TAB = { key: "global", label: "Todos" };
 const HINT_ORDER_LABELS = ["Posición", "Liga", "Nacionalidad", "Nacimiento", "Club"];
 // Fichado se juega según por dónde entrás: desde "Juego diario" (?diario=1) es UN
 // solo jugador y no se repite; desde el reto del día (?reto=1) el secreto sale de
@@ -91,13 +90,15 @@ function shareText(game) {
   return `${title} · ${result} · ${game.points} pts\n${rows.join("\n")}`;
 }
 
+const TIME_LIMIT = 180; // segundos de la Contrarreloj
+
 export default function Wordle() {
   const { activeGroupId: groupId } = useGroups();
   const [meta, setMeta] = useState({ leagues: [], difficulties: [], maxAttempts: 8, hintCost: 3 });
   const [params] = useSearchParams();
   const mode = params.get("reto") ? "reto" : params.get("diario") ? "daily" : "random";
   const [modeNote, setModeNote] = useState(null); // { notToday, notFichado, challenge }
-  const [league, setLeague] = useState("global");
+  const league = "global"; // Fichado se juega siempre con todos los jugadores (sin elegir liga)
   const [difficulty, setDifficulty] = useState("normal");
   const [players, setPlayers] = useState([]);
   const [game, setGame] = useState(null);
@@ -221,8 +222,14 @@ export default function Wordle() {
     api.get("/wordle/stats").then((r) => setStats(r.data)).catch(() => setStats({ played: 0 }));
   }, [statsOpen, stats]);
 
-  const tabs = [GLOBAL_TAB, ...meta.leagues];
   const playing = game?.status === "playing";
+  // Contrarreloj: cuenta regresiva de 3 minutos desde que arrancó la partida.
+  const elapsed = game?.startedAt ? Math.max(0, Math.floor((now - Date.parse(String(game.startedAt).replace(" ", "T") + "Z")) / 1000)) : 0;
+  const timeLeft = Math.max(0, TIME_LIMIT - elapsed);
+  useEffect(() => {
+    if (timed && playing && game?.startedAt && timeLeft === 0 && !busy) giveUp();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timed, playing, timeLeft]);
   const attemptsLeft = game ? Math.max(0, game.maxAttempts - game.attemptsUsed) : 0;
   const canHint = playing && game.hintsUsed < 5 && attemptsLeft >= meta.hintCost;
   const [wildcards, setWildcards] = useState({ available: 0, streak: 0, step: 5 });
@@ -249,50 +256,26 @@ export default function Wordle() {
         <span className="text-xs text-gray-500 ml-2">{modeNote?.challenge?.label || MODE_INFO[mode].hint}</span>
       </div>
 
-      {mode === "random" && (<>
-      <select
-        value={league}
-        onChange={(e) => setLeague(e.target.value)}
-        aria-label="Liga"
-        className="sm:hidden w-full mb-6 bg-panel border border-border rounded-card px-3 py-2.5 text-sm"
-      >
-        {tabs.map((l) => <option key={l.key} value={l.key}>Liga: {l.label}</option>)}
-      </select>
-      <div className="hidden sm:flex gap-1.5 flex-wrap mb-6">
-        {tabs.map((l) => (
-          <button
-            key={l.key}
-            onClick={() => setLeague(l.key)}
-            className={`px-3 py-1.5 rounded-card text-xs font-medium border transition-colors ${
-              league === l.key
-                ? "border-accent/40 bg-accent/10 text-accent"
-                : "border-border text-gray-400 hover:text-white hover:border-white/30"
-            }`}
-          >
-            {l.label}
-          </button>
-        ))}
-      </div>
-      </>)}
-
       <div className="flex items-center gap-3 mb-4 text-xs text-gray-400 flex-wrap">
-        <button
-          onClick={toggleTimed}
-          role="switch"
-          aria-checked={timed}
-          className={`px-3 py-1.5 rounded-card border transition-colors ${timed ? "border-accent/40 bg-accent/10 text-accent" : "border-border hover:text-white"}`}
-        >
-          {timed ? "Contra reloj: sí" : "Contra reloj: no"}
-        </button>
-        {timed && game?.status === "playing" && game.startedAt && (
-          <span className="tabular-nums font-medium text-white">
-            {(() => {
-              const s = Math.max(0, Math.floor((now - Date.parse(String(game.startedAt).replace(" ", "T") + "Z")) / 1000));
-              return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-            })()}
+        <div className="inline-flex rounded-card border border-border overflow-hidden" role="group" aria-label="Modo de juego">
+          {[[false, "Clásico"], [true, "Contrarreloj"]].map(([on, label]) => (
+            <button
+              key={label}
+              onClick={() => { if (timed !== on) toggleTimed(); }}
+              disabled={playing}
+              aria-pressed={timed === on}
+              className={`px-3.5 py-1.5 font-medium transition-colors disabled:cursor-not-allowed ${timed === on ? "bg-accent/15 text-accent" : "hover:text-white"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {timed && playing && game.startedAt && (
+          <span className={`tabular-nums text-base font-bold ${timeLeft <= 30 ? "text-red-400" : "text-white"}`}>
+            {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
           </span>
         )}
-        <span>{timed ? "Ganando en 1, 2 o 3 minutos sumás +20, +10 o +5." : "Activalo para sumar puntos extra por rapidez."}</span>
+        <span>{timed ? "Tenés 3 minutos: si se acaba el tiempo, perdés. Ganando en 1, 2 o 3 minutos sumás +20, +10 o +5." : "Probá la Contrarreloj para sumar puntos extra por rapidez."}</span>
       </div>
 
       {loading && <p className="text-sm text-gray-500">Cargando...</p>}

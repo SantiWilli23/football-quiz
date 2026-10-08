@@ -60,6 +60,7 @@ export const HELP = [
   { match: "/fulbodle", ...H("Fichado", "Adiviná al futbolista secreto.", [
     "Cada intento te da colores y un número de parecido: verde es acierto exacto, amarillo está cerca.",
     "Según por dónde entres: como juego diario es UN solo jugador y no se repite; como reto del día, el secreto sale de un grupo restringido (jóvenes, leyendas, porteros…); desde Juegos es partida libre, sin límite. Es un juego semanal: su rendimiento de la semana se premia los domingos.",
+    "Modos: Clásico o Contrarreloj (3 minutos: si se acaba el tiempo, perdés; ganando en 1, 2 o 3 minutos sumás +20, +10 o +5).",
     WEEKLY,
   ]) },
   { match: "/copa-semanal", ...H("Copa semanal", "Un torneo del grupo cada semana.", [
