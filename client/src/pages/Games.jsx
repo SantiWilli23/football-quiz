@@ -37,7 +37,8 @@ function DailyFeatured({ today, visits }) {
   const base = GAMES.find((g) => (g.to || g.href) === daily.to);
   if (!base) return null;
   // Fichado como juego diario es otra cosa que la partida libre: un solo jugador.
-  const game = base.to === "/fulbodle" ? { ...base, to: "/fulbodle?diario=1" } : base.href === "/draft-europeo.html" ? { ...base, href: "/draft-europeo.html?diario=1" } : base;
+  // Entrando por el juego diario, cada juego muestra solo su versión diaria (?diario=1).
+  const game = base.to ? { ...base, to: `${base.to}?diario=1` } : { ...base, href: `${base.href}?diario=1` };
   const fam = FAMILIES[game.family];
   const style = FAMILY_STYLE[fam.tw];
   const Icon = game.icon;

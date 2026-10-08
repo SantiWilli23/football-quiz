@@ -972,3 +972,15 @@ CREATE TABLE IF NOT EXISTS var_votes (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE(group_id, situation_id, user_id)
 );
+
+-- Cache de fotos de futbolistas (se busca una vez por nombre; url vacía = no hay foto).
+CREATE TABLE IF NOT EXISTS player_photos (
+  name_key TEXT PRIMARY KEY,
+  url TEXT NOT NULL DEFAULT ''
+);
+
+-- Cache de escudos de clubes por nombre (url vacía = no hay escudo).
+CREATE TABLE IF NOT EXISTS club_crests (
+  name_key TEXT PRIMARY KEY,
+  url TEXT NOT NULL DEFAULT ''
+);

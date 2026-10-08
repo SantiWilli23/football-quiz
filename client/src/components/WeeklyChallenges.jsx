@@ -18,7 +18,6 @@ const GAMES = [
   { key: "fichado", label: "Fichado · Más puntos gana", endpoint: "leaderboard" },
   { key: "equipo_jugador", label: "Equipo-Jugador · Eliminación de a hartos (4+)", endpoint: "leaderboard" },
   { key: "un_minuto", label: "Un Minuto · Trivia contrarreloj", endpoint: "leaderboard" },
-  { key: "escudos", label: "Escudos a ciegas · Semanal sin pistas", endpoint: "leaderboard" },
   { key: "arbitraje_var", label: "Arbitraje/VAR · Mejor árbitro", endpoint: "leaderboard" },
 ];
 

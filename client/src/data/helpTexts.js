@@ -83,8 +83,9 @@ export const HELP = [
     "Tu mejor victoria de la semana suma al grupo: cuenta la diferencia de goles y si el rival era más fuerte. Ganarle a una persona vale más.",
   ]) },
   { match: "/escudos", ...H("Escudos a ciegas", "Adiviná el club solo por su escudo borroso.", [
-    "Práctica: con pistas y las veces que quieras.",
-    "Reto semanal: una sola vez por semana, sin pistas. Vale más acertar clubes difíciles y rápido, y las opciones falsas se parecen al escudo real.",
+    "Fácil: con pistas y las veces que quieras (da un sobre normal por día).",
+    "Experto: clubes de ascenso y los más oscuros, sin pistas.",
+    "Juego diario: solo aparece si entrás desde el juego diario; el escudo no cambia los primeros 3 segundos.",
   ]) },
   { match: "/quien-sabe-mas", ...H("¿Quién sabe más de fútbol?", "Cinco formas de medirte: Duelos, Mentiroso, Equipo-Jugador, ¿Quién es? y Supervivencia.", [
     "Elegí el modo según el tiempo y con quién juegues. Cada uno tiene su «?».",

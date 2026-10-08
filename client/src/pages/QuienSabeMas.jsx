@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Brain, Gavel, Link2, Radio, Skull, Zap, Swords } from "lucide-react";
+import { Brain, Gavel, Hash, Link2, Radio, Skull, Zap, Swords } from "lucide-react";
 import Layout from "../components/Layout.jsx";
 
 // Antes Duelos, Mentiroso, Equipo-Jugador y ¿Quién es? eran 4 entradas
@@ -36,6 +36,12 @@ const MODES = [
     label: "Votación del VAR",
     icon: Gavel,
     description: "Una jugada polémica por día: votá qué cobrarías y mirá cómo votó el grupo antes de ver el fallo real.",
+  },
+  {
+    to: "/dorsal-historico",
+    label: "Dorsal histórico",
+    icon: Hash,
+    description: "Online, quién dice más: un club y un número, 60 segundos para nombrar a todos los que lo usaron.",
   },
   {
     to: "/supervivencia",

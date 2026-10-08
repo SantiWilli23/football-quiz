@@ -16,7 +16,7 @@ export const GAME_LABELS = {
   quien_es: "¿Quién es?",
   fichado: "Fichado",
   duelos: "Duelos",
-  tateti: "Tateti",
+  tateti: "Bingo",
   piramide: "Pirámide",
   torta: "Torta de plantel",
   traspasos: "Traspasos a ciegas",

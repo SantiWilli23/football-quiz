@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { ArrowLeftRight, SkipForward, User } from "lucide-react";
+import { ArrowLeftRight, Flag, Globe2, Cake, SkipForward, User } from "lucide-react";
 import api from "../api.js";
 import Card from "../components/Card.jsx";
+import { ClubCrest } from "../components/PlayerFace.jsx";
 import Autocomplete from "../futgames/Autocomplete.jsx";
-import { GameHeader, Layout, PreGame, ShareResult } from "../futgames/Shell.jsx";
+import { GameHeader, Layout, ShareResult } from "../futgames/Shell.jsx";
 import { loadGame, recordResult, saveGame } from "../futgames/storage.js";
 import { reportResult } from "../futgames/report.js";
 import { playSfx } from "../utils/sfx.js";
@@ -14,6 +15,9 @@ import { playSfx } from "../utils/sfx.js";
 const GAME = "traspasos";
 const today = () => new Date().toISOString().slice(0, 10);
 const MAX = 5;
+
+// Qué pista llega con cada intento fallido (la 1ª es solo un club más).
+const NEXT_HINT = ["otro club", "la posición", "la nacionalidad", "el año de nacimiento", null];
 
 const years = (s) => `${s.from}${s.to === null ? " – hoy" : s.to === s.from ? "" : ` – ${s.to}`}`;
 
@@ -120,43 +124,68 @@ export default function Traspasos() {
       <GameHeader game={GAME} title="Traspasos a ciegas" subtitle="Adiviná al jugador por sus clubes." icon={ArrowLeftRight} distLabel="intentos usados" />
 
       {!state && (
-        <PreGame
-          busy={busy}
-          onStart={start}
-          how={[
-            "Ves la línea de clubes de un jugador, en orden, sin su nombre.",
-            "Tenés 5 intentos. Arrancás con 2 clubes; cada fallo o salto suma uno más.",
-            "Desde el 3º intento aparece la posición, después la nacionalidad y al final el año de nacimiento.",
-          ]}
-        >
-          {error && <p className="text-sm text-red-400">{error}</p>}
-        </PreGame>
+        <div className="space-y-4">
+          <div className="hero-b rounded-3xl p-5 sm:p-7 overflow-hidden" style={{ "--hero-a": "var(--c-blue)", "--hero-b": "var(--c-emerald)" }}>
+            <p className="t-eyebrow mb-3">La carrera, sin nombre</p>
+            <ul className="space-y-0" aria-hidden="true">
+              {[["Club de origen", "2011 – 2016", true], ["Primer salto", "2016 – 2019", true], ["???", "2019 – ???", false]].map(([c, y, open], i) => (
+                <li key={c} className="flex items-center gap-3 py-2">
+                  <span className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${open ? "bg-accent/25 border border-accent/60" : "border border-dashed border-border text-gray-500"}`}>{open ? i + 1 : "?"}</span>
+                  <span className={`flex-1 text-sm ${open ? "text-gray-200" : "text-gray-500"}`}>{c}</span>
+                  <span className="text-xs text-gray-500 tabular-nums">{y}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <Card className="space-y-4">
+            <ul className="text-sm text-gray-300 space-y-2">
+              <li className="flex gap-2"><ArrowLeftRight size={16} className="text-accent shrink-0 mt-0.5" />Ves los clubes de un jugador, en orden y con años. Adiviná quién es.</li>
+              <li className="flex gap-2"><Flag size={16} className="text-accent shrink-0 mt-0.5" />Tenés 5 intentos. Arrancás con 2 clubes; cada fallo o salto destapa uno más.</li>
+              <li className="flex gap-2"><Globe2 size={16} className="text-accent shrink-0 mt-0.5" />Después llegan las pistas: posición, nacionalidad y año de nacimiento.</li>
+            </ul>
+            {error && <p className="text-sm text-red-400">{error}</p>}
+            <button onClick={start} disabled={busy} className="btn btn-primary w-full">Empezar</button>
+            <p className="text-xs text-gray-500 text-center">Un jugador por día, igual para todos.</p>
+          </Card>
+        </div>
       )}
 
       {state && puzzle && (
         <div className="space-y-4">
           <Card>
-            <ol className="space-y-2" aria-label="Clubes del jugador">
-              {steps.map((s, i) => (
-                <li key={`${s.club}-${s.from}-${i}`} className="flex items-baseline justify-between gap-3 border-b border-border/60 pb-2 last:border-0 last:pb-0">
-                  <span className="font-medium">
-                    {s.club}
-                    {s.tag && <span className="ml-2 text-[11px] uppercase tracking-wide text-gray-500">{s.tag}</span>}
-                  </span>
-                  <span className="text-xs text-gray-500 tabular-nums shrink-0">{years(s)}</span>
+            <ol className="relative" aria-label="Clubes del jugador">
+              {steps.map((s, i) => {
+                const last = i === steps.length - 1 && (over || steps.length >= puzzle.total);
+                return (
+                  <li key={`${s.club}-${s.from}-${i}`} className="relative flex items-center gap-3 pb-4 last:pb-0">
+                    {!last && <span className="absolute left-[19px] top-10 bottom-0 w-px bg-border" aria-hidden="true" />}
+                    <span className="w-10 h-10 shrink-0 rounded-full bg-panel border border-border flex items-center justify-center">
+                      <ClubCrest name={s.club} size={28} />
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block font-medium leading-tight truncate">{s.club}</span>
+                      {s.tag && <span className="text-[11px] uppercase tracking-wide text-gray-500">{s.tag}</span>}
+                    </span>
+                    <span className="text-xs text-gray-400 tabular-nums shrink-0">{years(s)}</span>
+                  </li>
+                );
+              })}
+              {!over && steps.length < puzzle.total && Array.from({ length: Math.min(3, puzzle.total - steps.length) }).map((_, i) => (
+                <li key={`hidden-${i}`} className="relative flex items-center gap-3 pt-4">
+                  <span className="w-10 h-10 shrink-0 rounded-full border border-dashed border-border text-gray-600 flex items-center justify-center text-sm font-bold">?</span>
+                  <span className="flex-1 text-sm text-gray-600">{i === 0 ? "Club oculto" : ""}</span>
+                  {i === 2 && puzzle.total - steps.length > 3 && <span className="text-xs text-gray-600">+ {puzzle.total - steps.length - 3} más</span>}
                 </li>
               ))}
-              {!over && steps.length < puzzle.total && (
-                <li className="text-xs text-gray-600 pt-1">+ {puzzle.total - steps.length} club{puzzle.total - steps.length === 1 ? "" : "es"} más sin mostrar</li>
-              )}
             </ol>
             {!over && (puzzle.hints.position || puzzle.hints.nationality || puzzle.hints.born) && (
-              <p className="flex flex-wrap gap-2 mt-4">
-                {puzzle.hints.position && <span className="px-2.5 py-1 rounded-full border border-border text-xs"><User size={11} className="inline mr-1" />{puzzle.hints.position}</span>}
-                {puzzle.hints.nationality && <span className="px-2.5 py-1 rounded-full border border-border text-xs">{puzzle.hints.nationality}</span>}
-                {puzzle.hints.born && <span className="px-2.5 py-1 rounded-full border border-border text-xs">Nació en {puzzle.hints.born}</span>}
+              <p className="flex flex-wrap gap-2 mt-5">
+                {puzzle.hints.position && <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-accent/40 bg-accent/10 text-xs"><User size={12} />{puzzle.hints.position}</span>}
+                {puzzle.hints.nationality && <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-accent/40 bg-accent/10 text-xs"><Globe2 size={12} />{puzzle.hints.nationality}</span>}
+                {puzzle.hints.born && <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-accent/40 bg-accent/10 text-xs"><Cake size={12} />Nació en {puzzle.hints.born}</span>}
               </p>
             )}
+            {!over && NEXT_HINT[attempts] && <p className="text-xs text-gray-500 mt-4 text-center">Si fallás, se destapa {NEXT_HINT[attempts]}.</p>}
             <div className="flex justify-center items-center gap-2 mt-4" aria-label={`Intentos: ${attempts} de ${MAX}`}>
               {Array.from({ length: MAX }).map((_, i) => {
                 const used = i < attempts;

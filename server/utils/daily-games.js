@@ -18,7 +18,7 @@ export const DAILY_GAMES = [
   { key: "draft_europeo", label: "8a2", to: "/draft-europeo.html", level: "Clásico" },
   { key: "un_minuto", label: "Un Minuto", to: "/un-minuto", level: "Ultra difícil" },
   { key: "arbitraje_var", label: "Arbitraje / VAR", to: "/arbitraje-var", level: null },
-  { key: "tateti", label: "Tateti", to: "/tateti", level: null },
+  { key: "tateti", label: "Bingo", to: "/bingo", level: null },
   { key: "piramide", label: "Pirámide", to: "/piramide", level: null },
   { key: "torta", label: "Torta de plantel", to: "/torta", level: null },
   { key: "traspasos", label: "Traspasos a ciegas", to: "/traspasos", level: null },

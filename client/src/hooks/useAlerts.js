@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { HelpCircle, Swords, Target, Timer, ShieldCheck } from "lucide-react";
+import { HelpCircle, Swords, Target, Timer } from "lucide-react";
 import api from "../api.js";
 import { useGroups } from "../context/GroupContext.jsx";
 import { daysSince, readVisits } from "../utils/visits.js";
@@ -8,7 +8,6 @@ import { daysSince, readVisits } from "../utils/visits.js";
 // jugás uno, aparece en los avisos.
 const WEEKLY = [
   { route: "/fulbodle", label: "Reto semanal de Fichado sin jugar", icon: Target },
-  { route: "/escudos", label: "Reto semanal de Escudos a ciegas sin jugar", icon: ShieldCheck },
   { route: "/un-minuto", label: "Reto semanal de Un Minuto sin jugar", icon: Timer },
 ];
 

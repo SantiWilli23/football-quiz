@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Flag, Grid3x3, Heart, Timer } from "lucide-react";
 import api from "../api.js";
 import Card from "../components/Card.jsx";
+import PlayerFace from "../components/PlayerFace.jsx";
 import Autocomplete from "../futgames/Autocomplete.jsx";
-import { GameHeader, Layout, OptionRow, PreGame, ShareResult } from "../futgames/Shell.jsx";
+import { GameHeader, Layout, ShareResult } from "../futgames/Shell.jsx";
 import { loadGame, recordResult, saveGame } from "../futgames/storage.js";
 import { reportResult } from "../futgames/report.js";
 import { playSfx } from "../utils/sfx.js";
 
-// Tateti futbolero: tablero 3x3 con clubes/selecciones en filas y columnas;
+// Bingo futbolero (antes Tateti): tablero 3x3 con clubes/selecciones en filas y columnas;
 // hay que llenar cada casilla con un jugador que cumpla las dos cosas. El
 // reto es el mismo para todos en el día (lo arma el server según la fecha).
 const GAME = "tateti";
@@ -16,9 +18,68 @@ const today = () => new Date().toISOString().slice(0, 10);
 const COL_TONES = ["accent", "blue", "purple"];
 const ROW_TONES = ["amber", "pink", "cyan"];
 const TIMERS = [["0", "Sin tiempo"], ["90", "90 s"], ["60", "60 s"], ["40", "40 s"]];
+const MODES = {
+  facil: { title: "Fácil", text: "Sin límite de errores. Ideal para calentar.", hearts: 0 },
+  medio: { title: "Medio", text: "Clubes menos conocidos y 3 errores como máximo.", hearts: 3 },
+};
 
-function initials(name) {
-  return name.split(" ").filter(Boolean).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+// Pantalla previa: un tablero de muestra, los tres pasos y la elección de dificultad.
+function BingoIntro({ fromDaily, mode, setMode, timer, setTimer, busy, onStart, error }) {
+  const demo = [1, 0, 1, 0, 1, 0, 1, 0, 0];
+  return (
+    <div className="space-y-4">
+      <div className="hero-b rounded-3xl p-5 sm:p-7 overflow-hidden" style={{ "--hero-a": "var(--c-accent)", "--hero-b": "var(--c-purple)" }}>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+          <div className="grid grid-cols-3 gap-1.5 w-32 shrink-0 mx-auto sm:mx-0" aria-hidden="true">
+            {demo.map((on, i) => (
+              <span key={i} className={`aspect-square rounded-lg border ${on ? "bg-accent/30 border-accent/60" : "bg-bg/40 border-border"}`} />
+            ))}
+          </div>
+          <ol className="space-y-3 text-sm text-gray-200">
+            <li className="flex gap-3"><span className="w-6 h-6 shrink-0 rounded-full bg-accent text-onaccent text-xs font-bold flex items-center justify-center">1</span>Cada casilla cruza una fila (club o selección) con una columna (club).</li>
+            <li className="flex gap-3"><span className="w-6 h-6 shrink-0 rounded-full bg-accent text-onaccent text-xs font-bold flex items-center justify-center">2</span>Escribí un futbolista que cumpla las dos cosas: si encaja en varias casillas, elegís dónde va.</li>
+            <li className="flex gap-3"><span className="w-6 h-6 shrink-0 rounded-full bg-accent text-onaccent text-xs font-bold flex items-center justify-center">3</span>Llená las 9 casillas. Cada jugador se usa una sola vez.</li>
+          </ol>
+        </div>
+      </div>
+
+      <Card className="space-y-5">
+        <div>
+          <p className="t-eyebrow mb-2">{fromDaily ? "Dificultad del juego diario" : "Dificultad"}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {Object.entries(MODES).filter(([k]) => !fromDaily || k === "medio").map(([k, m]) => (
+              <button
+                key={k}
+                onClick={() => setMode(k)}
+                className={`text-left rounded-2xl border p-4 transition-colors ${mode === k ? "border-accent bg-accent/10" : "border-border hover:border-white/30"}`}
+              >
+                <span className="flex items-center justify-between">
+                  <span className="font-semibold">{m.title}</span>
+                  <span className="inline-flex gap-0.5" aria-hidden="true">
+                    {m.hearts ? Array.from({ length: m.hearts }).map((_, i) => <Heart key={i} size={13} className="text-red-500 fill-red-500" />) : <span className="text-xs text-gray-500">sin límite</span>}
+                  </span>
+                </span>
+                <span className="block text-xs text-gray-400 mt-1">{m.text}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        {!fromDaily && (
+          <div>
+            <p className="t-eyebrow mb-2">Tiempo</p>
+            <div className="flex gap-1.5 flex-wrap">
+              {TIMERS.map(([k, l]) => (
+                <button key={k} onClick={() => setTimer(k)} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${timer === k ? "border-accent/40 bg-accent/10 text-accent" : "border-border text-gray-400 hover:text-white"}`}>{l}</button>
+              ))}
+            </div>
+          </div>
+        )}
+        {error && <p className="text-sm text-red-400">{error}</p>}
+        <button onClick={onStart} disabled={busy} className="btn btn-primary w-full">Empezar</button>
+        <p className="text-xs text-gray-500 text-center">Un tablero por día, igual para todos.</p>
+      </Card>
+    </div>
+  );
 }
 
 function CritLabel({ c }) {
@@ -34,9 +95,11 @@ function CritLabel({ c }) {
   );
 }
 
-export default function Tateti() {
+export default function Bingo() {
+  const [params] = useSearchParams();
+  const fromDaily = params.get("diario") === "1";
   const [saved, setSaved] = useState(() => loadGame(GAME, today()));
-  const [mode, setMode] = useState(saved?.mode || "facil");
+  const [mode, setMode] = useState(saved?.mode || (fromDaily ? "medio" : "facil"));
   const [timer, setTimer] = useState(saved?.timer || "0");
   const [grid, setGrid] = useState(null);
   const [state, setState] = useState(saved); // { mode, timer, cells, errors, status, left }
@@ -124,7 +187,7 @@ export default function Tateti() {
   async function start() {
     const data = await load(mode);
     if (!data) return;
-    const secs = Number(timer);
+    const secs = fromDaily ? 0 : Number(timer);
     const next = { mode, timer, cells: Array(9).fill(null), errors: 0, status: "playing", left: secs || null, maxErrors: data.maxErrors };
     setSaved(next);
     persist(next);
@@ -179,30 +242,17 @@ export default function Tateti() {
 
   const score = state ? state.cells.filter(Boolean).length : 0;
   const shareText = state
-    ? `⚽ Futotal · Tateti ${today()} (${state.mode === "medio" ? "medio" : "fácil"})\n` +
+    ? `⚽ Futotal · Bingo ${today()} (${state.mode === "medio" ? "medio" : "fácil"})\n` +
       [0, 1, 2].map((r) => [0, 1, 2].map((c) => (state.cells[r * 3 + c] ? "🟩" : "⬜")).join("")).join("\n") +
       `\n${score}/9`
     : "";
 
   return (
     <Layout>
-      <GameHeader game={GAME} title="Tateti" subtitle="Un jugador que cumpla la fila y la columna." icon={Grid3x3} distLabel="casillas llenas" />
+      <GameHeader game={GAME} title="Bingo" subtitle="Un jugador que cumpla la fila y la columna." icon={Grid3x3} distLabel="casillas llenas" />
 
       {!state && (
-        <PreGame
-          busy={busy}
-          onStart={start}
-          how={[
-            "Cada casilla cruza un club o selección (fila) con un club (columna).",
-            "Escribí un futbolista: si encaja en una sola casilla libre se coloca solo; si encaja en varias, elegís.",
-            "Cada jugador se usa una sola vez. Vale cualquier jugador, actual o retirado.",
-            "Un reto por día, igual para todos.",
-          ]}
-        >
-          <OptionRow label="Dificultad" value={mode} onChange={setMode} options={[["facil", "Fácil · sin límite de errores"], ["medio", "Medio · 3 errores"]]} />
-          <OptionRow label="Tiempo" value={timer} onChange={setTimer} options={TIMERS} />
-          {error && <p className="text-sm text-red-400">{error}</p>}
-        </PreGame>
+        <BingoIntro fromDaily={fromDaily} mode={mode} setMode={setMode} timer={timer} setTimer={setTimer} busy={busy} onStart={start} error={error} />
       )}
 
       {state && grid && (
@@ -249,7 +299,7 @@ export default function Tateti() {
                     >
                       {name ? (
                         <>
-                          <span className="w-8 h-8 rounded-full bg-black/25 text-white text-xs font-bold flex items-center justify-center mb-1">{initials(name)}</span>
+                          <PlayerFace name={name} size={34} className="mb-1 text-white" />
                           <span className="text-[10px] leading-tight font-medium line-clamp-2">{name}</span>
                         </>
                       ) : hint ? (
