@@ -1,5 +1,7 @@
 import { Router } from "express";
+import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
+import { todayStr } from "../utils/points.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -91,6 +93,65 @@ router.post("/decide", (req, res) => {
     return res.status(400).json({ error: "Datos inválidos" });
   }
   res.json({ correct: situation.correct === decisionIdx, correctIdx: situation.correct, why: situation.why });
+});
+
+// ---- Votación del grupo ("¿Quién sabe más de fútbol?") ----
+// Una jugada por día (rota por el banco), igual para todos los grupos. Cada
+// miembro vota qué cobraría y RECIÉN después ve cómo votó el grupo y el fallo real.
+function situationOfDay(date) {
+  const day = Math.floor(Date.parse(date + "T00:00:00Z") / 86400000);
+  return SITUATIONS[((day % SITUATIONS.length) + SITUATIONS.length) % SITUATIONS.length];
+}
+
+async function isMember(userId, groupId) {
+  return !!(await db.execute({ sql: "SELECT 1 FROM group_members WHERE group_id = ? AND user_id = ?", args: [groupId, userId] })).rows[0];
+}
+
+async function votePayload(userId, groupId, situation) {
+  const rows = (await db.execute({
+    sql: `SELECT v.user_id, v.option_idx, u.username FROM var_votes v JOIN users u ON u.id = v.user_id
+          WHERE v.group_id = ? AND v.situation_id = ?`,
+    args: [groupId, situation.id],
+  })).rows;
+  const members = Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM group_members WHERE group_id = ?", args: [groupId] })).rows[0].n);
+  const mine = rows.find((r) => r.user_id === userId);
+  const base = { situation: publicSituation(situation), members, voted: rows.length, myVote: mine ? Number(mine.option_idx) : null };
+  if (!mine) return base; // sin haber votado no se ve nada del grupo ni el fallo
+  const counts = situation.options.map((_, i) => rows.filter((r) => Number(r.option_idx) === i).length);
+  const voters = situation.options.map((_, i) => rows.filter((r) => Number(r.option_idx) === i).map((r) => r.username));
+  return { ...base, counts, voters, correctIdx: situation.correct, why: situation.why };
+}
+
+router.get("/vote/today", async (req, res) => {
+  const groupId = Number(req.query.groupId);
+  if (!Number.isInteger(groupId)) return res.status(400).json({ error: "groupId requerido" });
+  try {
+    if (!(await isMember(req.userId, groupId))) return res.status(403).json({ error: "No pertenecés a ese grupo" });
+    res.json(await votePayload(req.userId, groupId, situationOfDay(todayStr())));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+router.post("/vote", async (req, res) => {
+  const groupId = Number(req.body?.groupId);
+  const optionIdx = Number(req.body?.optionIdx);
+  const situation = situationOfDay(todayStr());
+  if (!Number.isInteger(groupId) || !Number.isInteger(optionIdx) || optionIdx < 0 || optionIdx >= situation.options.length) {
+    return res.status(400).json({ error: "Datos inválidos" });
+  }
+  try {
+    if (!(await isMember(req.userId, groupId))) return res.status(403).json({ error: "No pertenecés a ese grupo" });
+    await db.execute({
+      sql: "INSERT OR IGNORE INTO var_votes (group_id, situation_id, user_id, option_idx) VALUES (?, ?, ?, ?)",
+      args: [groupId, situation.id, req.userId, optionIdx],
+    });
+    res.status(201).json(await votePayload(req.userId, groupId, situation));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
 });
 
 export default router;

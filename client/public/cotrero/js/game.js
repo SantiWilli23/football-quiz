@@ -606,12 +606,19 @@ const MATCH_SITUATIONS = [
 ];
 
 const INJURY_TYPES = [
-  { name: "Golpe leve", weeks: 1, prob: 0.50 },
-  { name: "Sobrecarga muscular", weeks: 2, prob: 0.25 },
-  { name: "Desgarro", weeks: 4, prob: 0.15 },
+  { name: "Golpe leve", weeks: 1, prob: 0.46 },
+  { name: "Sobrecarga muscular", weeks: 2, prob: 0.24 },
+  { name: "Desgarro", weeks: 4, prob: 0.14 },
   { name: "Esguince", weeks: 6, prob: 0.07 },
   { name: "Fractura", weeks: 10, prob: 0.03 },
+  // Lesiones largas: meses afuera y secuelas en el nivel.
+  { name: "Lesión de rodilla grave", weeks: 20, prob: 0.04, severe: true, ovrLoss: [1, 3] },
+  { name: "Rotura de ligamento cruzado", weeks: 32, prob: 0.02, severe: true, ovrLoss: [2, 4] },
 ];
+
+// Presión por no jugar: tras tantas semanas seguidas lesionado o en el banco, el
+// club te plantea una cláusula de salida (ver CLAUSE_DECISION).
+const SIDELINED_WEEKS_FOR_CLAUSE = 6;
 
 const INTL_WINDOWS = [11, 28];
 
@@ -804,6 +811,22 @@ function tickLifeEvent() {
 // Cuando el "calor" de prensa (pressHeat) se acumula demasiado por varias
 // decisiones polémicas seguidas, se dispara una de estas en vez de una
 // decisión normal — la crisis mediática tiene más en juego que el resto.
+// Cláusula de salida: aparece tras SIDELINED_WEEKS_FOR_CLAUSE semanas seguidas sin jugar.
+const CLAUSE_DECISION = {
+  id: "clausula01",
+  context: "Llevás semanas sin jugar y el club te lo hace notar: tu agente te recuerda que tenés una cláusula de salida y que hay equipos que preguntaron por vos. El técnico quiere saber qué vas a hacer.",
+  options: [
+    { text: "Activás la cláusula y pedís que te dejen salir: querés jugar." },
+    { text: "Te quedás a pelear el puesto, con la cabeza gacha pero firme." },
+    { text: "Pedís que te presten un tiempo, sin cortar el vínculo." },
+  ],
+  effects: [
+    { dt: -15, forma: 3, special: "pedir_salida" },
+    { dt: 6, forma: -3, p: { profesional: 1 } },
+    { dt: -4, special: "interes_mercado" },
+  ],
+};
+
 const CRISIS_DECISIONS = [
   {
     id: "crisis01",
@@ -1509,6 +1532,17 @@ function applySpecial(id) {
     case "interes_mercado":
       state._marketInterest = true;
       break;
+    case "pedir_salida": {
+      // Activaste la cláusula: sí o sí llega una oferta, si hay algún club interesado.
+      if (!state.pendingOffer) {
+        const offerClub = pickOfferClub(state.club);
+        if (offerClub) {
+          state.pendingOffer = { club: offerClub };
+          addNews(`📩 Con tu cláusula activada, ${offerClub.name} presentó una oferta por vos.`, true);
+        }
+      }
+      break;
+    }
     case "arenga_lider":
       if ((state.player.personality.lider || 0) >= 5) {
         state.player.forma = Math.min(100, state.player.forma + 8);
@@ -1718,6 +1752,14 @@ function advanceWeek() {
       const type = pickInjuryType();
       state.player.injuryStatus = { name: type.name, weeksLeft: type.weeks };
       state.player.forma = Math.max(10, state.player.forma - 6);
+      if (type.severe) {
+        // Una lesión larga deja secuelas: baja el nivel de forma permanente.
+        const loss = type.ovrLoss[0] + Math.floor(Math.random() * (type.ovrLoss[1] - type.ovrLoss[0] + 1));
+        // Se descuenta de las estadísticas (el nivel se recalcula a partir de ellas), así no se "cura" solo.
+        POSITIONS[state.player.position].stats.forEach((st) => { state.player.stats[st] = Math.max(40, (state.player.stats[st] || 60) - loss); });
+        state.player.ovr = calcOvr(state.player.stats, state.player.position);
+        addNews(`🚑 Una lesión muy larga: ${type.name.toLowerCase()}. Vas a perderte ${type.weeks} semanas y vas a volver con secuelas (-${loss} de nivel).`, true);
+      }
       addNews(`🩹 Sufriste ${type.name.toLowerCase()}. Vas a estar afuera ${type.weeks} semana${type.weeks === 1 ? "" : "s"}.`, true);
 
       // Lesión crónica: si te repetís el mismo tipo de lesión una segunda vez,
@@ -1809,6 +1851,15 @@ function advanceWeek() {
   if (state.player.dtRelation < 15 && Math.random() < 0.25) {
     state.player.forma = Math.max(10, state.player.forma - 4);
     addNews("El cuerpo técnico no te tiene confianza. Se nota en cómo te tratan día a día.", true);
+  }
+
+  // ── Presión por no jugar: semanas seguidas lesionado o en el banco ──
+  const sidelinedNow = !!state.player.injuryStatus || !!state._benchedNextMatch;
+  state.player.sidelinedWeeks = sidelinedNow ? (state.player.sidelinedWeeks || 0) + 1 : 0;
+  if (!forcedDecision && state.player.sidelinedWeeks >= SIDELINED_WEEKS_FOR_CLAUSE && !state.pendingOffer) {
+    addNews("⏳ Tus semanas sin jugar ya son un tema: el club te plantea tu futuro.", true);
+    forcedDecision = CLAUSE_DECISION;
+    state.player.sidelinedWeeks = 0;
   }
 
   // New decision for this week

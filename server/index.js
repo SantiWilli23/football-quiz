@@ -44,6 +44,7 @@ import onlineGamesRoutes from "./routes/online-games.js";
 import gameHistoryRoutes from "./routes/game-history.js";
 import futgamesRoutes from "./routes/futgames.js";
 import traspasosRoutes from "./routes/traspasos.js";
+import dorsalRoutes from "./routes/dorsal.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -94,6 +95,7 @@ app.use("/api/online-games", onlineGamesRoutes);
 app.use("/api/game-history", gameHistoryRoutes);
 app.use("/api/futgames", futgamesRoutes);
 app.use("/api/traspasos", traspasosRoutes);
+app.use("/api/dorsal", dorsalRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 

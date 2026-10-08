@@ -1,6 +1,6 @@
 import {
   Brain, Building2, Grid3x3, PieChart, Triangle, CalendarDays, Crown, Gavel, Shield, ShieldCheck, Sparkles,
-  Layers, Repeat, Star, Target, Timer, Trophy, TrendingUp, Users, ArrowLeftRight,
+  Layers, Repeat, Star, Target, Timer, Trophy, TrendingUp, Users, ArrowLeftRight, Hash,
 } from "lucide-react";
 import { isEnabled } from "./features.js";
 
@@ -44,6 +44,7 @@ const ALL_GAMES = [
   // ---- Contrarreloj ----
   { to: "/un-minuto", label: "Un Minuto", icon: Timer, description: "Trivia contrarreloj: respondé todas las que puedas antes de que se acabe el reloj.", family: "reloj", daily: true, available: true },
   { to: "/arbitraje-var", label: "Arbitraje / VAR", icon: Gavel, description: "Jugadas polémicas reales en video: decidí como el árbitro contra reloj y comparate con el VAR.", family: "reloj", daily: true, available: true },
+  { to: "/dorsal-historico", label: "Dorsal histórico", icon: Hash, description: "Online, quién dice más: un club y un número, 60 segundos para nombrar a todos los que lo usaron. Dorsales fáciles.", family: "reloj", available: true },
 
   // ---- Pronóstico ----
   { to: "/quiniela", label: "Quiniela", icon: CalendarDays, description: "Predecí el marcador exacto de los partidos de hoy antes de que arranquen.", family: "pronostico", feature: "pronosticos", daily: true, weekly: true, available: true },
@@ -62,7 +63,7 @@ export const FAMILY_ORDER = ALL_FAMILY_ORDER.filter((k) => GAMES.some((g) => g.f
 
 // Duración aproximada de una partida, en minutos. Sirve para filtrar en /juegos.
 const MINUTES = {
-  Fichado: 5, Fulbodle: 5, Tateti: 5, "Pirámide": 3, "Torta de plantel": 3, "Traspasos a ciegas": 3, "¿Quién es?": 3, Cartas: 10, "Copa semanal": 5, "¿Quién es? en vivo": 4, "Mercado de pases": 5, "Escudos a ciegas": 5, Supervivencia: 10, "8a2": 15,
+  Fichado: 5, Fulbodle: 5, Tateti: 5, "Pirámide": 3, "Torta de plantel": 3, "Traspasos a ciegas": 3, "Dorsal histórico": 2, "¿Quién es?": 3, Cartas: 10, "Copa semanal": 5, "¿Quién es? en vivo": 4, "Mercado de pases": 5, "Escudos a ciegas": 5, Supervivencia: 10, "8a2": 15,
   "¿Quién sabe más de fútbol?": 10, "Copa 8a2": 30, FantasyFiction: 10, "Modo DT Online": 60,
   "Un Minuto": 1, "Arbitraje / VAR": 3, "Quiniela": 5, "Campeón y descenso": 5,
   "Cotrero simple": 60, "Modo DT": 120, "Modo Presidente": 120, "Vida FUT": 240,

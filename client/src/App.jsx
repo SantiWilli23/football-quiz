@@ -50,11 +50,13 @@ const Presidente = lazy(() => import("./pages/Presidente.jsx"));
 const ArbitrajeVar = lazy(() => import("./pages/ArbitrajeVar.jsx"));
 const GlobalRanking = lazy(() => import("./pages/GlobalRanking.jsx"));
 const QuienSabeMas = lazy(() => import("./pages/QuienSabeMas.jsx"));
+const VarVotacion = lazy(() => import("./pages/VarVotacion.jsx"));
 const VidaFut = lazy(() => import("./pages/VidaFut.jsx"));
 const Tateti = lazy(() => import("./pages/Tateti.jsx"));
 const Piramide = lazy(() => import("./pages/Piramide.jsx"));
 const Torta = lazy(() => import("./pages/Torta.jsx"));
 const Traspasos = lazy(() => import("./pages/Traspasos.jsx"));
+const DorsalHistorico = lazy(() => import("./pages/DorsalHistorico.jsx"));
 
 function RouteFallback() {
   return (
@@ -221,6 +223,14 @@ export default function App() {
         }
       />
       <Route
+        path="/var-votacion"
+        element={
+          <PrivateRoute>
+            <VarVotacion />
+          </PrivateRoute>
+        }
+      />
+      <Route
         path="/quien-sabe-mas"
         element={
           <PrivateRoute>
@@ -341,6 +351,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <Piramide />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/dorsal-historico"
+        element={
+          <PrivateRoute>
+            <DorsalHistorico />
           </PrivateRoute>
         }
       />

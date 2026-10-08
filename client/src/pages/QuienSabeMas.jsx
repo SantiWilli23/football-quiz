@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Brain, Link2, Radio, Skull, Zap, Swords } from "lucide-react";
+import { Brain, Gavel, Link2, Radio, Skull, Zap, Swords } from "lucide-react";
 import Layout from "../components/Layout.jsx";
 
 // Antes Duelos, Mentiroso, Equipo-Jugador y ¿Quién es? eran 4 entradas
@@ -30,6 +30,12 @@ const MODES = [
     label: "¿Quién es?",
     icon: Radio,
     description: "Su carrera club por club, con años: adivinalo solo con las menos pistas, o en vivo 1 contra 1 con las mismas pistas para los dos.",
+  },
+  {
+    to: "/var-votacion",
+    label: "Votación del VAR",
+    icon: Gavel,
+    description: "Una jugada polémica por día: votá qué cobrarías y mirá cómo votó el grupo antes de ver el fallo real.",
   },
   {
     to: "/supervivencia",

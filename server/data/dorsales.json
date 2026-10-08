@@ -1,0 +1,17 @@
+{
+  "_nota": "Dorsales fáciles para 'Dorsal histórico': club (o selección) + número, con quienes lo usaron. Solo casos muy conocidos.",
+  "prompts": [
+    { "id": "bar10", "club": "Barcelona", "number": 10, "players": ["Diego Maradona", "Ronaldinho", "Lionel Messi", "Ansu Fati", "Lamine Yamal"] },
+    { "id": "bar9", "club": "Barcelona", "number": 9, "players": ["Luis Suárez", "Samuel Eto'o", "Ronaldo Nazário", "Zlatan Ibrahimović", "Robert Lewandowski"] },
+    { "id": "rma7", "club": "Real Madrid", "number": 7, "players": ["Emilio Butragueño", "Raúl", "Cristiano Ronaldo", "Eden Hazard", "Vinícius Júnior"] },
+    { "id": "rma9", "club": "Real Madrid", "number": 9, "players": ["Alfredo Di Stéfano", "Hugo Sánchez", "Ronaldo Nazário", "Karim Benzema"] },
+    { "id": "rma10", "club": "Real Madrid", "number": 10, "players": ["Luís Figo", "Mesut Özil", "James Rodríguez", "Luka Modrić"] },
+    { "id": "mun7", "club": "Manchester United", "number": 7, "players": ["George Best", "Eric Cantona", "David Beckham", "Cristiano Ronaldo", "Ángel Di María", "Memphis Depay", "Alexis Sánchez", "Mason Mount"] },
+    { "id": "mil9", "club": "AC Milan", "number": 9, "players": ["Marco van Basten", "Filippo Inzaghi", "Fernando Torres", "Gonzalo Higuaín", "Olivier Giroud"] },
+    { "id": "liv7", "club": "Liverpool", "number": 7, "players": ["Kenny Dalglish", "Luis Suárez", "Luis Díaz", "James Milner"] },
+    { "id": "juv10", "club": "Juventus", "number": 10, "players": ["Michel Platini", "Roberto Baggio", "Alessandro Del Piero", "Carlos Tevez", "Paulo Dybala"] },
+    { "id": "ars14", "club": "Arsenal", "number": 14, "players": ["Thierry Henry", "Theo Walcott", "Pierre-Emerick Aubameyang", "Eddie Nketiah"] },
+    { "id": "arg10", "club": "Argentina", "number": 10, "players": ["Mario Kempes", "Diego Maradona", "Juan Román Riquelme", "Lionel Messi"] },
+    { "id": "bra10", "club": "Brasil", "number": 10, "players": ["Pelé", "Zico", "Rivaldo", "Ronaldinho", "Kaká", "Neymar"] }
+  ]
+}

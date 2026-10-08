@@ -959,3 +959,15 @@ CREATE TABLE IF NOT EXISTS card_pity (
   user_id INTEGER PRIMARY KEY REFERENCES users(id),
   misses INTEGER NOT NULL DEFAULT 0
 );
+
+-- Votación del grupo sobre una jugada del VAR (dentro de "¿Quién sabe más de
+-- fútbol?"): cada miembro vota qué cobraría ANTES de ver el fallo real.
+CREATE TABLE IF NOT EXISTS var_votes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  situation_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  option_idx INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(group_id, situation_id, user_id)
+);
