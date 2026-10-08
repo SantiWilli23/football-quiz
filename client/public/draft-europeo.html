@@ -485,10 +485,9 @@
 
       <h2>Modo</h2>
       <div class="chiprow" id="mode-row">
-        <div class="chip active" data-mode="clasico">Clásico<small>ratings ocultos · cuenta para el diario</small></div>
+        <div class="chip active" data-mode="clasico">Clásico<small>ratings ocultos</small></div>
         <div class="chip" data-mode="almanaque">De almanaque<small>ratings visibles</small></div>
-        <div class="chip" data-mode="clasico_facil">Clásico Fácil<small>6 cambios · rivales duros</small></div>
-        <div class="chip weekly" data-mode="bayern2020">🔥 Semanal: Bayern 2020<small>rivales fijos · ranking de grupo</small></div>
+        <div class="chip weekly" data-mode="bayern2020">🔥 Diario: Bayern 2020<small>rivales fijos · mismo reto para todos</small></div>
       </div>
 
       <h2>Estilo táctico</h2>
@@ -1070,6 +1069,21 @@
   var selectedMode = "clasico";
   var selectedStyle = "equilibrado";
   var selectedPlayers = "1";
+
+  // Los modos dependen de por dónde se entra: desde el juego diario (?diario=1)
+  // solo está el reto diario (Bayern 2020); desde Fútbol 12, Clásico o Almanaque.
+  var FROM_DAILY = /[?&]diario=1/.test(location.search);
+  (function () {
+    var row = document.getElementById("mode-row");
+    row.querySelectorAll(".chip").forEach(function (c) {
+      var m = c.dataset.mode;
+      var keep = FROM_DAILY ? m === "bayern2020" : (m === "clasico" || m === "almanaque");
+      if (!keep) c.remove();
+    });
+    row.querySelectorAll(".chip").forEach(function (c) { c.classList.remove("active"); });
+    var first = row.querySelector(".chip");
+    if (first) { first.classList.add("active"); selectedMode = first.dataset.mode; }
+  })();
 
   document.getElementById("mode-row").addEventListener("click", function (e) {
     var chip = e.target.closest(".chip");
@@ -2169,13 +2183,13 @@
     } catch (e) {}
   }
 
-  // Juego diario: la primera copa del día en modo Clásico (la dificultad media)
+  // Juego diario: la primera copa del día en el modo diario (Bayern 2020)
   // da hasta 20 puntos y un sobre de cartas según qué tan lejos llegaste. El servidor se queda con
   // la primera partida del día, así que repetir no cambia nada.
   var DAILY_DRAFT_FRACTION = { octavos: 0.2, cuartos: 0.45, semis: 0.7, final: 0.85 };
 
   function submitDailyDraft(isChampion) {
-    if (state.mode !== "clasico") return;
+    if (state.mode !== "bayern2020") return;
     try {
       var token = localStorage.getItem("fq_token");
       if (!token) return;

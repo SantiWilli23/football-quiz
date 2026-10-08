@@ -36,7 +36,7 @@ export const HELP = [
   ]) },
   { match: "/juegos", ...H("Juegos", "Arriba, el juego diario de hoy; después «Con amigos» y «Fútbol 12» (todos los demás, incluido el diario).", [
     "El juego diario cambia cada día (rota entre diez): tu partida da un puntaje de 0 a 20 (solo de referencia) y un sobre de cartas (normal, bueno o top según tu rendimiento). Con ese puntaje se ordena al grupo ese día: el 1° suma 5 puntos, el 2° 3 y el 3° 3. Los demás juegos dan un sobre normal por jugar. Los demás juegos se juegan libres ese día.",
-    "La semana se suma: los diarios de la semana dan sobres al podio del grupo (top, bueno y normal). Los «Juegos semanales» (Fichado, Quiniela y Modo DT Online) pagan sus puntos los domingos, solo en grupos que los activaron.",
+    "La semana se suma: los diarios de la semana dan sobres al podio del grupo (top, bueno y normal). Los «Juegos semanales» (Copa semanal, FantasyFiction, Quiniela y Modo DT Online) pagan sus puntos los domingos, solo en grupos que los activaron.",
     "Cada juego tiene su propio «?» con las reglas y cómo puntúa.",
   ]) },
   { match: "/futbol", ...H("En vivo", "Partidos, tablas y goleadores reales de las 5 grandes de Europa y de Chile.", [

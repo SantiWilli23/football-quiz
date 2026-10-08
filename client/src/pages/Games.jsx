@@ -37,7 +37,7 @@ function DailyFeatured({ today, visits }) {
   const base = GAMES.find((g) => (g.to || g.href) === daily.to);
   if (!base) return null;
   // Fichado como juego diario es otra cosa que la partida libre: un solo jugador.
-  const game = base.to === "/fulbodle" ? { ...base, to: "/fulbodle?diario=1" } : base;
+  const game = base.to === "/fulbodle" ? { ...base, to: "/fulbodle?diario=1" } : base.href === "/draft-europeo.html" ? { ...base, href: "/draft-europeo.html?diario=1" } : base;
   const fam = FAMILIES[game.family];
   const style = FAMILY_STYLE[fam.tw];
   const Icon = game.icon;
@@ -212,7 +212,21 @@ export default function Games() {
       {FUTBOL12_GAMES.length > 0 && (
         <section>
           <SectionTitle hint="Partidas libres: dan un sobre normal por jugar (uno por juego y día).">Fútbol 12</SectionTitle>
-          <CircleRow games={FUTBOL12_GAMES} visits={visits} />
+          {["solo", "reloj", "pronostico", "carrera"].map((k) => {
+            const list = FUTBOL12_GAMES.filter((g) => g.family === k);
+            if (list.length === 0) return null;
+            const st = FAMILY_STYLE[FAMILIES[k].tw];
+            return (
+              <div key={k} className={`${st.tone} mb-6`}>
+                <p className="flex items-center gap-2 text-sm font-semibold text-tone mb-2.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-tone" />
+                  {FAMILIES[k].label}
+                  <span className="text-xs font-normal text-gray-500">· {FAMILIES[k].subtitle}</span>
+                </p>
+                <CircleRow games={list} visits={visits} />
+              </div>
+            );
+          })}
         </section>
       )}
     </Layout>

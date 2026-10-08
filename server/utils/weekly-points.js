@@ -64,7 +64,7 @@ export async function weeklyGamesEnabled(groupId) {
 
 // Juegos semanales: se reparten los domingos y SOLO si el grupo los activó.
 //  - quiniela: el puntaje que ya tiene (5 exacto / 2 resultado), suma de la semana
-//  - fichado: podio por el rendimiento de la semana (suma de sus partidas)
+//  - fichado: ya no se paga (pasó a Fútbol 12)
 //  - dt: podio por el rendimiento de la semana en el Modo DT Online
 export async function weeklyGamePointsByUser(groupId, memberIds, from, to) {
   const out = { quiniela: new Map(), fichado: new Map(), dt: new Map() };
@@ -91,7 +91,8 @@ export async function weeklyGamePointsByUser(groupId, memberIds, from, to) {
       }),
     ]);
     for (const r of q.rows) addTo(out.quiniela, r.user_id, Number(r.s));
-    for (const p of podiumPoints(f.rows.map((r) => ({ user_id: r.user_id, score: Number(r.s) })), WEEKLY_GAME_PODIUM_POINTS)) addTo(out.fichado, p.user_id, p.points);
+    // Fichado ya no es semanal (pasó a Fútbol 12): no paga podio; `out.fichado` queda vacío.
+    void f;
     for (const p of podiumPoints(d.rows.map((r) => ({ user_id: r.user_id, score: Number(r.s) })), WEEKLY_GAME_PODIUM_POINTS)) addTo(out.dt, p.user_id, p.points);
   }
   return out;
