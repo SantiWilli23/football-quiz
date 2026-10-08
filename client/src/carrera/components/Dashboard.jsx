@@ -302,11 +302,11 @@ export default function Dashboard({ onPlayMatch }) {
       <NationalTeamCard />
 
       {/* Club header */}
-      <div className="bg-panel border border-border rounded-2xl p-5">
+      <div className="hero-b rounded-3xl p-5 sm:p-6" style={{ "--hero-a": "var(--c-emerald)", "--hero-b": "var(--c-blue)" }}>
         <div className="flex items-center gap-4 flex-wrap">
-          <TeamCrest team={team} size={60} />
+          <TeamCrest team={team} size={72} />
           <div className="min-w-0 flex-1">
-            <p className="font-bold text-xl truncate">{team.name}</p>
+            <p className="font-bold text-2xl sm:text-3xl tracking-tight truncate">{team.name}</p>
             <p className="text-sm text-gray-500">{LEAGUE_LABELS[team.league] || team.league} · Temporada {state.season}</p>
           </div>
         </div>

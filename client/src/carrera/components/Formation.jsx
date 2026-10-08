@@ -22,6 +22,15 @@ function nearestPositionForDrop(x, y) {
   return "ST";
 }
 
+// Color del halo según la línea del puesto: arco, defensa, mediocampo y ataque.
+function lineTone(slot) {
+  const x = String(slot || "").toUpperCase();
+  if (/^(GK|G|POR|ARQ)/.test(x)) return "amber";
+  if (/(CB|LB|RB|WB|DEF|DFC|LI|LD)/.test(x)) return "blue";
+  if (/(ST|CF|LW|RW|FW|DEL|SS)/.test(x)) return "pink";
+  return "emerald";
+}
+
 export default function Formation() {
   const { state, formations, setFormation, assignSlot, setSlotPosition, resetLineupPositions, moveToBench, moveToReserves } = useCareer();
   // Intercambio de dos toques: primero tocás un titular (queda resaltado),
@@ -132,7 +141,7 @@ export default function Formation() {
       <div
         ref={pitchRef}
         className="relative w-full rounded-card overflow-hidden border border-border select-none"
-        style={{ aspectRatio: "0.95", background: "linear-gradient(180deg,#1f4d33,#255c3d 50%,#1f4d33)", touchAction: "none" }}
+        style={{ aspectRatio: "0.95", background: "radial-gradient(90% 80% at 50% 45%, #2f7a50, #1f4d33 70%, #14301f)", boxShadow: "0 0 36px -12px rgb(var(--c-emerald))", touchAction: "none" }}
       >
         <div className="absolute inset-2 border border-white/25 rounded-md" />
         <div className="absolute left-2 right-2 top-1/2 border-t border-white/25" />
@@ -155,13 +164,14 @@ export default function Formation() {
               style={{ left: `${pos.x}%`, top: `${pos.y}%`, transition: dragging ? "none" : "left 0.15s ease, top 0.15s ease" }}
             >
               <div
-                className={`w-20 h-20 rounded-full flex items-center justify-center text-lg font-extrabold border-2 shadow-lg pointer-events-none transition-all ${
+                className={`tone-${lineTone(slot.slot)} w-20 h-20 rounded-full flex items-center justify-center text-lg font-extrabold border-2 shadow-lg pointer-events-none transition-all ${
                   selected
                     ? "bg-white border-white text-onaccent ring-4 ring-white/50 scale-110"
                     : p
-                    ? (penalty > 0 ? "bg-amber/90 border-amber text-onaccent" : "bg-accent border-accent-light text-white")
+                    ? (penalty > 0 ? "bg-amber/90 border-amber text-onaccent" : "bg-tone border-white/70 text-onaccent")
                     : "bg-panel border-dashed border-gray-500 text-gray-400 text-sm"
                 }`}
+                style={p && !selected && penalty === 0 ? { boxShadow: "0 0 20px rgb(var(--tone) / 0.8)" } : undefined}
               >
                 {p ? effectiveOvr(p, slot.slot) : slot.slot}
               </div>

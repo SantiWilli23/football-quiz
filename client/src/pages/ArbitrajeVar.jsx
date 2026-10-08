@@ -182,11 +182,19 @@ export default function ArbitrajeVar() {
 
       {phase === "playing" && (
         <div className="mt-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <span className={`text-2xl font-bold tabular-nums ${timed && secondsLeft <= 3 ? "text-red-400" : ""}`}>
-              {timed ? `${secondsLeft}s` : "Sin tiempo"}
-            </span>
-            <span className="text-sm text-gray-400">
+          <div className="flex items-center justify-between gap-4">
+            {timed ? (
+              <span
+                className={`relative w-20 h-20 rounded-full flex items-center justify-center shrink-0 ${secondsLeft <= 3 ? "tone-red" : secondsLeft <= 10 ? "tone-amber" : "tone-emerald"}`}
+                style={{ background: `conic-gradient(rgb(var(--tone)) ${(secondsLeft / SECONDS_PER_SITUATION) * 100}%, rgb(var(--c-border)) 0)`, boxShadow: "0 0 22px -6px rgb(var(--tone))" }}
+              >
+                <span className="absolute inset-[7px] rounded-full bg-bg" />
+                <span className="relative text-2xl font-bold tabular-nums text-tone">{secondsLeft}</span>
+              </span>
+            ) : (
+              <span className="text-2xl font-bold">Sin tiempo</span>
+            )}
+            <span className="text-sm text-gray-400 text-right">
               Jugada {Math.min(round + 1, totalRounds)}/{totalRounds} · {correctCount} correctas
             </span>
           </div>
@@ -197,7 +205,7 @@ export default function ArbitrajeVar() {
             <Card>
               {situation.video && <VarClip video={situation.video} />}
               <p className="font-medium mb-4">{situation.text}</p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {situation.options.map((opt, idx) => {
                   const isPicked = feedback?.pickedIdx === idx;
                   const isCorrectOpt = feedback && feedback.correctIdx === idx;
@@ -212,9 +220,10 @@ export default function ArbitrajeVar() {
                       key={idx}
                       onClick={() => decide(idx)}
                       disabled={!!feedback}
-                      className={`text-left px-3 py-2.5 rounded-card border text-sm transition-colors disabled:cursor-default ${cls}`}
+                      className={`${["tone-accent", "tone-blue", "tone-purple", "tone-pink", "tone-amber"][idx % 5]} text-left px-3 py-2.5 rounded-2xl border text-sm transition-colors disabled:cursor-default flex items-center gap-2.5 ${cls}`}
                     >
-                      {opt}
+                      <span className="w-7 h-7 shrink-0 rounded-full bg-tone text-onaccent flex items-center justify-center text-xs font-bold">{"ABCDE"[idx]}</span>
+                      <span>{opt}</span>
                     </button>
                   );
                 })}

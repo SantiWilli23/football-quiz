@@ -203,7 +203,7 @@ export default function UnMinuto() {
 
           <div className="h-3 rounded-full bg-white/10 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={MAX_SECONDS} aria-valuenow={secondsLeft} aria-label="Tiempo restante">
             <div
-              className={`h-full rounded-full transition-[width] duration-300 ease-out ${secondsLeft <= 5 ? "bg-bad" : "bg-accent"}`}
+              className={`h-full rounded-full transition-[width] duration-300 ease-out ${secondsLeft <= 5 ? "bg-bad" : secondsLeft <= 15 ? "bg-amber" : "bg-accent"}`}
               style={{ width: `${Math.min(100, (secondsLeft / 40) * 100)}%` }}
             />
           </div>

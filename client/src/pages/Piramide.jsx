@@ -13,6 +13,7 @@ import { playSfx } from "../utils/sfx.js";
 const GAME = "piramide";
 const today = () => new Date().toISOString().slice(0, 10);
 const ROWS = [[0], [1, 2], [3, 4, 5], [6, 7, 8, 9]];
+const ROW_TONES = ["amber", "accent", "blue", "purple"];
 const TIER_LABEL = { 1: "la fila de arriba (puesto 1)", 2: "la 2ª fila (puestos 2-3)", 3: "la 3ª fila (puestos 4-6)", 4: "la fila de abajo (puestos 7-10)" };
 
 export default function Piramide() {
@@ -152,9 +153,9 @@ export default function Piramide() {
             </Card>
           )}
 
-          <div className="space-y-2" aria-label="Pirámide">
+          <div className="hero-b rounded-3xl p-4 sm:p-6 space-y-2.5" style={{ "--hero-a": "var(--c-amber)", "--hero-b": "var(--c-purple)" }} aria-label="Pirámide">
             {ROWS.map((row, r) => (
-              <div key={r} className="flex justify-center gap-2">
+              <div key={r} className={`tone-${ROW_TONES[r]} flex justify-center gap-2.5`}>
                 {row.map((i) => {
                   const id = state.slots[i];
                   const p = id ? byId[id] : null;
@@ -169,11 +170,11 @@ export default function Piramide() {
                       onDrop={() => { if (drag != null && drag !== i) move(drag, i); setDrag(null); }}
                       onClick={() => clickSlot(i)}
                       aria-label={p ? `Casilla ${i + 1}: ${p.name}` : `Casilla ${i + 1}: vacía`}
-                      className={`w-[23%] max-w-[120px] min-h-[76px] rounded-xl border p-1.5 flex flex-col items-center justify-center text-center transition-colors ${
+                      className={`w-[23%] max-w-[130px] min-h-[84px] rounded-2xl border p-1.5 flex flex-col items-center justify-center text-center transition-colors ${
                         res ? (res.correct ? "border-emerald-500/60 bg-emerald-500/15" : "border-red-500/60 bg-red-500/15")
                           : selected ? "border-accent bg-accent/20"
-                          : p ? "border-border bg-panel hover:border-white/30"
-                          : "border-dashed border-border bg-bg hover:border-accent/50"
+                          : p ? "border-tone bg-tone-soft hover:brightness-110"
+                          : "border-dashed border-tone bg-bg/60 hover:bg-tone-soft"
                       }`}
                     >
                       <span className="text-[10px] text-gray-500 tabular-nums">{i + 1}</span>
