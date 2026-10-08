@@ -43,13 +43,13 @@ export function pointsFromFraction(fraction) {
 
 // Solo cuenta la primera partida del día de cada juego (INSERT OR IGNORE).
 // Devuelve { points, already }.
-export async function recordDailyResult(userId, date, gameKey, fraction, score = 0) {
+export async function recordDailyResult(userId, date, gameKey, fraction, score = 0, play = {}) {
   // Solo el juego diario de HOY suma; jugar otro es práctica libre.
   if (dailyGameKeyFor(date) !== gameKey) {
-    // Práctica libre: no suma puntos, pero da un sobre normal (uno por juego y día).
-    const pack = fraction > 0 ? "normal" : null;
-    const fresh = await grantPack(userId, date, pack, `juego-${gameKey}`);
-    return { points: 0, already: !fresh && !!pack, notToday: true, practice: true, pack: fresh ? pack : null, today: dailyGameKeyFor(date) };
+    // Práctica libre: no suma puntos. El sobre depende del rendimiento, la dificultad
+    // y la duración, con tope de sobres de práctica por día.
+    const got = await practicePack(userId, date, gameKey, fraction, play);
+    return { points: 0, already: false, notToday: true, practice: true, pack: got?.quality ?? null, packsLeft: got?.left ?? 0, today: dailyGameKeyFor(date) };
   }
   const points = pointsFromFraction(fraction);
   const res = await db.execute({
@@ -68,6 +68,32 @@ export async function recordDailyResult(userId, date, gameKey, fraction, score =
     args: [userId, date, gameKey],
   })).rows[0];
   return { points: Number(prev?.points || 0), already: true };
+}
+
+export const PRACTICE_PACKS_PER_DAY = 3;
+const PACK_TIERS = ["normal", "bueno", "top"];
+const LEVEL_BUMP = { facil: 0, normal: 0, dificil: 1, demonio: 2 };
+
+// Sobre de una partida de práctica. Base = rendimiento (dailyPackQuality). Sube un
+// nivel si la dificultad es difícil/demonio, y otro si se resolvió rápido (menos de
+// 60 s con buen rendimiento). Máximo PRACTICE_PACKS_PER_DAY por día y usuario.
+export async function practicePack(userId, date, gameKey, fraction, play = {}) {
+  const base = dailyPackQuality(fraction);
+  if (!base) return null;
+  const used = Number((await db.execute({
+    sql: "SELECT COUNT(*) AS n FROM card_packs WHERE user_id = ? AND date = ? AND source LIKE '%practica-%'",
+    args: [userId, date],
+  })).rows[0].n);
+  if (used >= PRACTICE_PACKS_PER_DAY) return { quality: null, left: 0 };
+  let idx = PACK_TIERS.indexOf(base) + (LEVEL_BUMP[play.level] || 0);
+  const seconds = Number(play.seconds);
+  if (Number.isFinite(seconds) && seconds > 0 && seconds < 60 && Number(fraction) >= 0.85) idx += 1;
+  const quality = PACK_TIERS[Math.min(idx, PACK_TIERS.length - 1)];
+  await db.execute({
+    sql: "INSERT OR IGNORE INTO card_packs (user_id, date, source) VALUES (?, ?, ?)",
+    args: [userId, date, `${quality}-practica-${gameKey}${used + 1}`],
+  });
+  return { quality, left: PRACTICE_PACKS_PER_DAY - used - 1 };
 }
 
 const inList = (ids) => ids.map(() => "?").join(",");
