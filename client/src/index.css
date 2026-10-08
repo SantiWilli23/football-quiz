@@ -270,6 +270,12 @@ body {
 .strip-cell { position: relative; padding: 0.25rem 1.1rem; border-left: 1px solid rgb(var(--c-border)); }
 .strip-cell:first-child { border-left: 0; padding-left: 0.25rem; }
 .strip-cell::after { content: ""; display: block; width: 34px; height: 3px; border-radius: 2px; margin-top: 6px; background: rgb(var(--tone, var(--c-accent))); }
+/* Cuadrado con el color de B: degradado translúcido, borde y brillo (no relleno liso). */
+.tile-b {
+  background: linear-gradient(150deg, rgb(var(--tone, var(--c-accent)) / 0.34), rgb(var(--tone, var(--c-accent)) / 0.08));
+  border: 1px solid rgb(var(--tone, var(--c-accent)) / 0.65);
+  box-shadow: 0 0 18px -8px rgb(var(--tone, var(--c-accent)));
+}
 .tone-accent { --tone: var(--c-accent); } .tone-blue { --tone: var(--c-blue); } .tone-purple { --tone: var(--c-purple); }
 .tone-emerald { --tone: var(--c-emerald); } .tone-amber { --tone: var(--c-amber); } .tone-red { --tone: var(--c-red); }
 .tone-pink { --tone: var(--c-pink); } .tone-cyan { --tone: var(--c-cyan); }

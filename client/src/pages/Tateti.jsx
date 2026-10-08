@@ -226,10 +226,10 @@ export default function Tateti() {
 
           <div className="grid grid-cols-4 gap-1.5 max-w-md mx-auto">
             <div />
-            {grid.cols.map((c, ci) => <div key={c.name} className={`tone-${COL_TONES[ci]} rounded-xl border border-tone bg-tone-soft p-1`}><CritLabel c={c} /></div>)}
+            {grid.cols.map((c, ci) => <div key={c.name} className={`tone-${COL_TONES[ci]} tile-b rounded-xl p-1`}><CritLabel c={c} /></div>)}
             {grid.rows.map((r, ri) => (
               <div key={r.name} className="contents">
-                <div className={`tone-${ROW_TONES[ri]} rounded-xl border border-tone bg-tone-soft p-1`}><CritLabel c={r} /></div>
+                <div className={`tone-${ROW_TONES[ri]} tile-b rounded-xl p-1`}><CritLabel c={r} /></div>
                 {grid.cols.map((c, ci) => {
                   const i = ri * 3 + ci;
                   const name = state.cells[i];
@@ -242,7 +242,7 @@ export default function Tateti() {
                       onClick={() => selectable && place(choices.name, i)}
                       aria-label={name ? `${r.name} y ${c.name}: ${name}` : `${r.name} y ${c.name}: vacía`}
                       className={`tone-${COL_TONES[ci]} aspect-square rounded-xl border flex flex-col items-center justify-center p-1 text-center transition-colors ${
-                        name ? "border-tone bg-tone text-onaccent"
+                        name ? "tile-b text-white"
                           : selectable ? "border-accent bg-accent/15 animate-pulse cursor-pointer"
                           : "border-border bg-panel"
                       }`}

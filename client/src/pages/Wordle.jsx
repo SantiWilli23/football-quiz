@@ -20,9 +20,9 @@ const MODE_INFO = {
 
 function Cell({ label, children, tone }) {
   const toneClass =
-    tone === "good" ? "bg-emerald border-emerald text-onaccent shadow-[0_0_14px_-4px_rgb(var(--c-emerald))]"
+    tone === "good" ? "tone-emerald tile-b text-white"
     : tone === "bad" ? "bg-white/5 border-border text-gray-500"
-    : "tone-blue bg-tone-soft border-tone text-gray-100";
+    : "tone-blue tile-b text-gray-100";
   return (
     <div className={`rounded-card border px-2 py-2.5 text-center ${toneClass}`}>
       <p className="text-xs uppercase tracking-wide opacity-70 mb-0.5">{label}</p>

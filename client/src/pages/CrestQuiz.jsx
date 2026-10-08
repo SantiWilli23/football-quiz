@@ -32,6 +32,8 @@ const POOL = [...BASE_POOL, ...BIG_EXTRAS];
 // Nivel Experto: clubes de ascenso y los más oscuros de todo el pool.
 const EXPERT_POOL = [...ASCENSO_EXTRAS, ...POOL.filter((t) => (t.prestige ?? 5) <= 4)];
 const crestSrc = (team) => team.badge || badgeFor(team.id);
+const OPT_TONES = ["tone-accent", "tone-blue", "tone-purple", "tone-pink"];
+const SAMPLE_CREST = POOL[Math.floor(Math.random() * Math.max(1, POOL.length))];
 
 function shuffle(arr) {
   const a = [...arr];
@@ -224,9 +226,12 @@ export default function CrestQuiz() {
       <GroupSelector />
 
       {phase === "idle" && (
-        <Card className="mt-4 text-center py-10">
-          <Trophy size={32} className="mx-auto text-accent mb-3" />
-          <p className="text-sm text-gray-400 mb-5">¿Cuántos clubes reconocés solo por el escudo, bien borroso?</p>
+        <div className="mt-4 space-y-4">
+        <div className="hero-b rounded-3xl p-6 sm:p-8 overflow-hidden relative" style={{ "--hero-a": "var(--c-blue)", "--hero-b": "var(--c-pink)" }}>
+          {SAMPLE_CREST && <img src={crestSrc(SAMPLE_CREST)} alt="" aria-hidden="true" className="absolute -right-6 top-1/2 -translate-y-1/2 w-56 h-56 sm:w-72 sm:h-72 object-contain opacity-90 pointer-events-none" style={{ filter: "blur(10px)" }} />}
+          <div className="relative max-w-xl">
+          <Trophy size={28} className="text-accent mb-3" />
+          <p className="text-lg text-gray-200 mb-5">¿Cuántos clubes reconocés solo por el escudo, bien borroso?</p>
 
           {alreadyPlayed && (
             <p className="flex items-center justify-center gap-1.5 text-xs text-amber-500 mb-4">
@@ -234,7 +239,7 @@ export default function CrestQuiz() {
             </p>
           )}
 
-          <div className="flex flex-wrap gap-3 justify-center">
+          <div className="flex flex-wrap gap-3">
             <button onClick={() => start("daily")} className="btn btn-primary">
               Juego diario (media)
             </button>
@@ -259,7 +264,16 @@ export default function CrestQuiz() {
               Práctica (con pistas)
             </button>
           </div>
-        </Card>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-border bg-panel p-4 sm:p-5">
+          <div className="grid grid-cols-3 gap-y-3">
+            <div className="strip-cell tone-blue"><p className="text-xs uppercase tracking-wider text-gray-500">Reto semanal</p><p className="text-xl sm:text-2xl font-bold text-tone mt-1">{alreadyPlayed ? `${weeklyStatus.score} pts` : "Disponible"}</p></div>
+            <div className="strip-cell tone-amber"><p className="text-xs uppercase tracking-wider text-gray-500">Juego diario</p><p className="text-xl sm:text-2xl font-bold text-tone mt-1">hasta 20 pts</p></div>
+            <div className="strip-cell tone-pink"><p className="text-xs uppercase tracking-wider text-gray-500">Cada partida</p><p className="text-xl sm:text-2xl font-bold text-tone mt-1">{ROUNDS} escudos</p></div>
+          </div>
+        </div>
+        </div>
       )}
 
       {phase === "playing" && current && (
@@ -284,14 +298,21 @@ export default function CrestQuiz() {
             </div>
           </div>
 
-          <Card>
+          <div className="hero-b rounded-3xl p-5 sm:p-7" style={{ "--hero-a": "var(--c-blue)", "--hero-b": "var(--c-purple)" }}>
             <div className="flex flex-col items-center gap-4">
-              <img
-                src={crestSrc(current.team)}
-                alt="Escudo a adivinar"
-                className="w-32 h-32 object-contain transition-[filter]"
-                style={{ filter: `blur(${blur}px)` }}
-              />
+              <span
+                className="relative w-52 h-52 sm:w-60 sm:h-60 rounded-full flex items-center justify-center tone-blue"
+                style={{ background: `conic-gradient(rgb(var(--tone)) ${((blurLevel + 1) / BLUR_STEPS.length) * 100}%, rgb(var(--c-border)) 0)`, boxShadow: "0 0 30px -8px rgb(var(--tone))" }}
+              >
+                <span className="absolute inset-2 rounded-full bg-bg" />
+                <img
+                  src={crestSrc(current.team)}
+                  alt="Escudo a adivinar"
+                  className="relative w-32 h-32 sm:w-40 sm:h-40 object-contain transition-[filter]"
+                  style={{ filter: `blur(${blur}px)` }}
+                />
+              </span>
+              <p className="text-xs uppercase tracking-wider text-gray-400">Claridad {Math.round(((blurLevel + 1) / BLUR_STEPS.length) * 100)}% · vale ×{LEVEL_VALUE[Math.min(blurLevel, LEVEL_VALUE.length - 1)]}</p>
 
               {!weekly && !isDaily && !isExpert && !feedback && blurLevel < BLUR_STEPS.length - 1 && (
                 <button
@@ -302,8 +323,8 @@ export default function CrestQuiz() {
                 </button>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
-                {current.options.map((opt) => {
+              <div className="flex flex-col gap-2 w-full max-w-xl">
+                {current.options.map((opt, oi) => {
                   const isCorrectOpt = feedback && opt.id === current.team.id;
                   const isWrongPick = feedback === "wrong" && opt.id === current.team.id;
                   return (
@@ -311,12 +332,13 @@ export default function CrestQuiz() {
                       key={opt.id}
                       onClick={() => answer(opt.id)}
                       disabled={!!feedback}
-                      className={`text-left px-3 py-2.5 rounded-card border text-sm transition-colors disabled:opacity-70 ${
+                      className={`${OPT_TONES[oi % 4]} flex items-center gap-3 text-left px-4 py-3 rounded-2xl border text-sm transition-colors disabled:opacity-70 ${
                         isCorrectOpt
                           ? "border-emerald/50 bg-emerald/10 text-emerald"
                           : "border-border hover:border-accent/40 hover:bg-accent/5"
                       } ${isWrongPick ? "border-emerald/50 bg-emerald/10 text-emerald" : ""}`}
                     >
+                      <span className="w-7 h-7 shrink-0 rounded-full bg-tone text-onaccent flex items-center justify-center text-xs font-bold">{"ABCD"[oi]}</span>
                       {opt.name}
                     </button>
                   );
@@ -329,11 +351,23 @@ export default function CrestQuiz() {
                 </p>
               )}
             </div>
-          </Card>
+          </div>
         </div>
       )}
 
       {phase === "done" && (
+        <div className="space-y-4">
+        <div className="hero-b rounded-3xl p-5 sm:p-6" style={{ "--hero-a": "var(--c-blue)", "--hero-b": "var(--c-amber)" }}>
+          <p className="t-eyebrow mb-3">Ronda por ronda</p>
+          <div className="flex flex-wrap gap-3">
+            {rounds.map((r, i) => (
+              <span key={i} className={`relative w-14 h-14 rounded-2xl border-2 flex items-center justify-center bg-bg/60 ${results[i] ? "border-emerald/70" : "border-red-500/70"}`}>
+                <img src={crestSrc(r.team)} alt={r.team.name} title={r.team.name} className="w-9 h-9 object-contain" />
+                <span className={`absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-[11px] font-bold flex items-center justify-center ${results[i] ? "bg-emerald text-onaccent" : "bg-red-500 text-white"}`}>{results[i] ? "✓" : "✗"}</span>
+              </span>
+            ))}
+          </div>
+        </div>
         <ResultScreen
           score={`${correctCount} / ${ROUNDS}`}
           unit="escudos acertados"
@@ -349,6 +383,7 @@ export default function CrestQuiz() {
           onAgain={() => setPhase("idle")}
           shareText={`⚽ Futotal · Escudos a ciegas: ${correctCount}/${ROUNDS} — ¿me ganás?`}
         />
+        </div>
       )}
     </Layout>
   );
