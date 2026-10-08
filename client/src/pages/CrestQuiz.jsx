@@ -176,7 +176,7 @@ export default function CrestQuiz() {
           {SAMPLE_CREST && <img src={crestSrc(SAMPLE_CREST)} alt="" aria-hidden="true" className="absolute -right-6 top-1/2 -translate-y-1/2 w-56 h-56 sm:w-72 sm:h-72 object-contain opacity-90 pointer-events-none" style={{ filter: "blur(10px)" }} />}
           <div className="relative max-w-xl">
           <Trophy size={28} className="text-accent mb-3" />
-          <p className="text-lg text-gray-200 mb-5">¿Cuántos clubes reconocés solo por el escudo, bien borroso?</p>
+          <p className="text-lg text-gray-300 mb-5">¿Cuántos clubes reconocés solo por el escudo, bien borroso?</p>
 
           <div className="flex flex-wrap gap-3">
             {fromDaily ? (

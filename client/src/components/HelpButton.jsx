@@ -47,7 +47,7 @@ export default function HelpButton({ inline = false }) {
             </div>
             <p className="text-sm text-gray-400 mb-4">{help.intro}</p>
             {help.points.length > 0 && (
-              <ul className="space-y-2.5 text-sm text-gray-200 mb-5">
+              <ul className="space-y-2.5 text-sm text-gray-300 mb-5">
                 {help.points.map((p) => (
                   <li key={p} className="flex gap-2"><span className="text-accent shrink-0">•</span><span>{p}</span></li>
                 ))}

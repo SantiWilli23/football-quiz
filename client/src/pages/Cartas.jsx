@@ -463,7 +463,7 @@ export default function Cartas() {
                 <option value="cpu">Contra la CPU</option>
                 {rivals.map((r) => <option key={r.id} value={r.id}>Contra {r.username}</option>)}
               </select>
-              <button onClick={play} disabled={busy || !strength} className="px-4 py-2 rounded-card border border-border text-xs font-semibold text-gray-200 hover:text-white inline-flex items-center gap-1.5 disabled:opacity-40">
+              <button onClick={play} disabled={busy || !strength} className="px-4 py-2 rounded-card border border-border text-xs font-semibold text-gray-300 hover:text-white inline-flex items-center gap-1.5 disabled:opacity-40">
                 <Swords size={13} /> Jugar
               </button>
             </div>

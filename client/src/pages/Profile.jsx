@@ -88,7 +88,7 @@ export default function Profile() {
               role="tab"
               aria-selected={tab === k}
               onClick={() => setTab(k)}
-              className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${tab === k ? "bg-white text-black border-white" : "border-white/25 text-gray-200 hover:border-white/60"}`}
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${tab === k ? "bg-white text-black border-white" : "border-white/25 text-gray-300 hover:border-white/60"}`}
             >
               {label}
             </button>

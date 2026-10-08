@@ -52,7 +52,7 @@ export default function TutorialModal({ onDone }) {
             <h2 className="text-lg font-bold mb-2">{s.title}</h2>
             {s.body && <p className="text-sm text-gray-400 mb-4">{s.body}</p>}
             {s.points && (
-              <ul className="space-y-2 text-sm text-gray-200 mb-5">
+              <ul className="space-y-2 text-sm text-gray-300 mb-5">
                 {s.points.map((p) => (
                   <li key={p} className="flex gap-2"><span className="text-accent shrink-0">•</span><span>{p}</span></li>
                 ))}

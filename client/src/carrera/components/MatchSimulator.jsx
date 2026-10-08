@@ -70,7 +70,7 @@ function LivePitch({ myColor, starters, byId, lastEvent }) {
       {rivalCoords.map((pos, i) => (
         <div
           key={`riv-${i}`}
-          className="absolute -translate-x-1/2 -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-xs sm:text-xs font-bold bg-gray-700 text-gray-200 border border-gray-500"
+          className="absolute -translate-x-1/2 -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-xs sm:text-xs font-bold bg-gray-700 text-gray-300 border border-gray-500"
           style={{ left: `${pos.x}%`, top: `${clampY(pos.y + shift)}%`, transition: "left 0.4s ease, top 0.5s ease" }}
         >
           {i + 1}

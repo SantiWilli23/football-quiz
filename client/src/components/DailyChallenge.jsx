@@ -42,7 +42,7 @@ export default function DailyChallenge({ standalone = false }) {
       </span>
       <span className="flex-1 min-w-0">
         <span className="t-eyebrow block mb-0.5">Reto del día · +{challenge.points} pts{streak > 1 ? ` · racha ${streak}` : ""}</span>
-        <span className={`text-sm ${done ? "text-gray-500 line-through" : "text-gray-200"}`}>{challenge.label}</span>
+        <span className={`text-sm ${done ? "text-gray-500 line-through" : "text-gray-300"}`}>{challenge.label}</span>
       </span>
     </>
   );

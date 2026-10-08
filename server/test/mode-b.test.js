@@ -133,8 +133,9 @@ describe("liquidación de un día de Modo B", () => {
       args: [groupId, date],
     });
     assert.equal(scores.rows.length, 3, "los tres miembros quedan registrados");
+    // El Modo B ya no da puntos (se quitó la puntuación): los tres quedan en cero, pero registrados.
     const sinJugar = scores.rows.filter((r) => Number(r.points) === 0);
-    assert.equal(sinJugar.length, 2);
+    assert.equal(sinJugar.length, 3);
   });
 });
 
