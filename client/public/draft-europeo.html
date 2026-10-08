@@ -1212,6 +1212,20 @@
   var onlineMode = false;
   var onlineRelay = null;
   var onlineMyResult = null;
+  // Online: el que gana por promedio suma 3 puntos por el rival vencido (el servidor no repite la misma sala).
+  var onlineRoomId = null;
+  function reportOnlineWin(opponents) {
+    try {
+      var token = localStorage.getItem("fq_token");
+      var groupId = localStorage.getItem("fq_active_group");
+      if (!token || !groupId || !onlineRoomId) return;
+      fetch("/api/online-games/win", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ gameKey: "draft_europeo", groupId: Number(groupId), opponents: opponents, room: onlineRoomId })
+      }).catch(function () {});
+    } catch (e) {}
+  }
   var onlineOpponentResult = null;
 
   function closeOnlineRelay() {
@@ -1254,6 +1268,7 @@
 
   function beginOnlineDraft() {
     onlineMode = true;
+    onlineRoomId = "d8-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
     onlineMyResult = null;
     onlineOpponentResult = null;
     state = freshState();
@@ -1734,6 +1749,7 @@
     renderList("vs-list-1", r1);
     renderList("vs-list-2", r2);
 
+    if (onlineMode && betterAvg === 1) reportOnlineWin(1);
     showScreen("vs-result");
   }
 

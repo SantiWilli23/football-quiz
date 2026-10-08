@@ -24,6 +24,13 @@ import {
 import { clubDecision, playerDecision } from "../engine/transferMarket.js";
 import { rollMatchInjuries, recoverInjuries, forceInjury } from "../engine/injuryEngine.js";
 import { rollEvent } from "../engine/eventEngine.js";
+import { ACTIVITIES, DEFAULT_ACTIVITY, MATCH_DAY, applyDayActivity, currentDate, formScoreFromSharpness, monthKey } from "../engine/energy.js";
+import { applyMeeting } from "../engine/meetings.js";
+import {
+  emptyCantera, ensureCantera, rollMonthlyProspects, growYouthMonthly, announceDepartures, seasonRollCantera,
+  hireCanteraScout, buildNetwork, signProspect, releaseYouth, youthValue,
+} from "../engine/cantera.js";
+import { DIFFICULTIES, difficultyOf } from "../engine/difficulty.js";
 import { INTERNATIONAL_WINDOW_WEEKS, NATIONAL_TEAM_PRESTIGE_MIN, countryForLeague, simulateNationalMatch } from "../engine/nationalTeam.js";
 
 const CareerContext = createContext(null);
@@ -314,11 +321,66 @@ function buildInitialState(teamId) {
     scoutCooldowns: {},
     nationalTeam: null,
     pendingNationalOffer: false,
+    day: 0,
+    sharpness: 50,
+    dayLog: [],
+    difficulty: "media",
+    cantera: emptyCantera(),
   };
 }
 
+// Los guardados viejos no traen los campos nuevos (días, energía, cantera, dificultad).
+function normalizeState(s) {
+  if (!s) return s;
+  const withCantera = ensureCantera(s);
+  return { day: 0, sharpness: 50, dayLog: [], difficulty: "media", ...withCantera };
+}
+
+// Avanza los días que faltan hasta el sábado con trabajo liviano (cuando se juega el
+// partido sin simular los días de a uno).
+function autoDaysToMatch(s) {
+  let cur = s;
+  while ((cur.day || 0) < MATCH_DAY) cur = { ...cur, ...applyDayActivity(cur, DEFAULT_ACTIVITY) };
+  return cur;
+}
+
+// Cada mes cambia la lista de jóvenes para la cantera y los chicos fichados crecen un poco.
+function monthlyTick(s) {
+  if (!s.cantera) return s;
+  const key = monthKey(currentDate(s));
+  const c = s.cantera;
+  if (c.lastMonth === key) return s;
+  if (c.lastMonth === null) return { ...s, cantera: { ...c, lastMonth: key } };
+  const rolled = rollMonthlyProspects(c, key);
+  const cantera = { ...rolled.cantera, youth: growYouthMonthly(rolled.cantera.youth) };
+  return {
+    ...s,
+    cantera,
+    news: rolled.found ? [`🌱 Nuevo mes: tus redes encontraron ${rolled.found} jóvenes para la cantera.`, ...s.news].slice(0, 8) : s.news,
+  };
+}
+
+// Fin de semana: el domingo se descansa, empieza una semana nueva y se revisa la cantera.
+function endOfWeek(s) {
+  const fatigue = { ...(s.fatigue || {}) };
+  (s.squad || []).forEach((p) => { fatigue[p.id] = Math.min(100, (fatigue[p.id] ?? 100) + 8); });
+  let next = monthlyTick({ ...s, fatigue, day: 0 });
+  if (next.cantera?.youth?.length) {
+    const clubNames = teams.filter((t) => t.id !== next.teamId).map((t) => t.name);
+    const { cantera, announced } = announceDepartures(next.cantera, next.week, clubNames);
+    if (announced.length) {
+      next = {
+        ...next,
+        cantera,
+        news: [`📨 ${announced.map((a) => `${a.name} (lo quiere ${a.club})`).join(", ")}: si no lo subís al primer equipo, se va al terminar la temporada.`, ...next.news].slice(0, 8),
+      };
+    }
+  }
+  return next;
+}
+
 export function CareerProvider({ children }) {
-  const [state, setState] = useState(() => loadCareer());
+  const [state, setState] = useState(() => normalizeState(loadCareer()));
   const [saveSlots, setSaveSlots] = useState(() => listSaveSlots());
 
   useEffect(() => {
@@ -366,7 +428,7 @@ export function CareerProvider({ children }) {
     const data = loadCareer(slotId);
     if (!data) return;
     setActiveSlotId(slotId);
-    setState(data);
+    setState(normalizeState(data));
   }
 
   // Borra una carrera guardada por completo (no puede deshacerse).
@@ -828,9 +890,10 @@ export function CareerProvider({ children }) {
   function playNextMatchFirstHalf() {
     const fixture = currentFixture();
     if (!fixture || !team) return null;
+    const base = autoDaysToMatch(state);
     const rival = teamById(fixture.opponentTeamId);
     const rivalSquad = playersByTeam(rival.id).filter((p) => !(state.acquired || []).includes(p.id));
-    const rivalOvr = rivalSquad.length ? rivalSquad.reduce((s, p) => s + p.ovr, 0) / rivalSquad.length : rival.tier === 1 ? 82 : rival.tier === 2 ? 76 : 70;
+    const rivalOvr = (rivalSquad.length ? rivalSquad.reduce((s, p) => s + p.ovr, 0) / rivalSquad.length : rival.tier === 1 ? 82 : rival.tier === 2 ? 76 : 70) + difficultyOf(state).rivalOvr;
     const rivalFormScore = 60;
     const myDay = dayFormFactor();
     const rivalDay = dayFormFactor();
@@ -840,12 +903,12 @@ export function CareerProvider({ children }) {
       lineup: state.lineup.starters,
       myMentality: state.mentality,
       mySliders: state.sliders,
-      myFormScore: 65,
+      myFormScore: formScoreFromSharpness(base.sharpness),
       rivalOvr,
       rivalFormScore,
       isHome: fixture.home,
       morale: state.morale || {},
-      fatigue: state.fatigue || {},
+      fatigue: base.fatigue || {},
       instructions: state.playerInstructions || {},
       trainingFocus: state.trainingFocus || "balanced",
       myDay, rivalDay, half: 1,
@@ -855,6 +918,7 @@ export function CareerProvider({ children }) {
 
     setState((s) => ({
       ...s,
+      fatigue: base.fatigue, sharpness: base.sharpness, day: base.day, dayLog: base.dayLog,
       pendingMatch: {
         fixtureWeek: fixture.week,
         rivalId: rival.id,
@@ -906,7 +970,7 @@ export function CareerProvider({ children }) {
       lineup: lineup2,
       myMentality: nextMentality,
       mySliders: nextSliders,
-      myFormScore: 65,
+      myFormScore: formScoreFromSharpness(state.sharpness),
       rivalOvr: pm.rivalOvr,
       rivalFormScore: pm.rivalFormScore,
       isHome: pm.isHome,
@@ -1094,6 +1158,7 @@ export function CareerProvider({ children }) {
         };
       }
 
+      next = endOfWeek(next);
       if (allPlayed) next = finishSeason(next);
       return next;
     });
@@ -1126,26 +1191,66 @@ export function CareerProvider({ children }) {
   function holdSquadMeeting(type) {
     setState((s) => {
       if (s.lastMeetingWeek === s.week) return s;
-      const morale = { ...(s.morale || {}) };
-      let boardConfidence = s.boardConfidence;
-      let newsLine = "";
-
-      if (type === "motivate") {
-        s.squad.forEach((p) => { morale[p.id] = Math.min(100, (morale[p.id] ?? 70) + 8); });
-        newsLine = "🗣️ Diste una charla motivadora al plantel. La moral general sube.";
-      } else if (type === "demand") {
-        s.squad.forEach((p) => { morale[p.id] = Math.max(0, (morale[p.id] ?? 70) - 3); });
-        boardConfidence = Math.min(100, boardConfidence + 3);
-        newsLine = "📢 Exigiste más nivel al plantel. La directiva valora tu carácter, aunque genera algo de tensión.";
-      } else if (type === "rest") {
-        s.squad.forEach((p) => { morale[p.id] = Math.min(100, (morale[p.id] ?? 70) + 12); });
-        newsLine = "🌴 Le diste un día libre al plantel. La moral sube notablemente.";
-      } else {
-        return s;
-      }
-
-      return { ...s, morale, boardConfidence, lastMeetingWeek: s.week, news: [newsLine, ...s.news].slice(0, 8) };
+      const res = applyMeeting(s, type);
+      if (!res) return s;
+      return { ...s, ...res.patch, news: [res.news, ...s.news].slice(0, 8) };
     });
+  }
+
+  // ===== Días, energía, dificultad y cantera =====
+
+  // Simula un día de la semana con la actividad elegida (el sábado es el partido).
+  function simulateDay(activityId) {
+    setState((s) => {
+      if ((s.day || 0) >= MATCH_DAY || s.pendingMatch) return s;
+      return monthlyTick({ ...s, ...applyDayActivity(s, activityId) });
+    });
+  }
+
+  // Pasa todos los días que faltan hasta el sábado con la misma actividad.
+  function simulateToMatchDay(activityId) {
+    setState((s) => {
+      if (s.pendingMatch) return s;
+      let cur = s;
+      while ((cur.day || 0) < MATCH_DAY) cur = monthlyTick({ ...cur, ...applyDayActivity(cur, activityId) });
+      return cur;
+    });
+  }
+
+  function setDifficulty(id) {
+    if (!DIFFICULTIES[id]) return;
+    setState((s) => ({ ...s, difficulty: id }));
+  }
+
+  function runCanteraAction(fn) {
+    const res = fn(state);
+    if (res.error) return res;
+    setState(res.state);
+    return { success: true, cost: res.cost };
+  }
+  const hireCanteraScoutAction = (specialty, seasons) => runCanteraAction((s) => hireCanteraScout(s, specialty, seasons));
+  const buildCanteraNetwork = (country) => runCanteraAction((s) => buildNetwork(s, country));
+  const signCanteraProspect = (id) => runCanteraAction((s) => signProspect(s, id));
+  const releaseCanteraYouth = (id) => runCanteraAction((s) => releaseYouth(s, id));
+
+  // Sube a un chico de la cantera al plantel profesional (queda en reservas).
+  function promoteYouth(id) {
+    const y = state.cantera?.youth.find((x) => x.id === id);
+    if (!y) return { error: "not_found" };
+    setState((s) => {
+      const youth = s.cantera.youth.find((x) => x.id === id);
+      if (!youth) return s;
+      const { leaving, signedWeek, signedSeason, scoutSpecialty, signCost, foundMonth, foundBy, ...rest } = youth;
+      const pro = { ...rest, teamId: s.teamId, number: nextAvailableNumber(s.squad), value: youthValue(youth), wage: 1, contractYears: 3, isYouth: true, fromCantera: true };
+      return {
+        ...s,
+        squad: [...s.squad, pro],
+        lineup: { ...s.lineup, reserves: [...s.lineup.reserves, pro.id] },
+        cantera: { ...s.cantera, youth: s.cantera.youth.filter((x) => x.id !== id) },
+        news: [`⬆️ Subiste a ${youth.name} (${youth.age} años) al primer equipo.`, ...s.news].slice(0, 8),
+      };
+    });
+    return { success: true };
   }
 
   function playCopaMatch() {
@@ -1158,14 +1263,14 @@ export function CareerProvider({ children }) {
     if (!opponent) return null;
 
     const rivalTeam = teamById(opponent.id);
-    const rivalOvr = rivalTeam?.tier === 1 ? 83 : rivalTeam?.tier === 2 ? 76 : 70;
+    const rivalOvr = (rivalTeam?.tier === 1 ? 83 : rivalTeam?.tier === 2 ? 76 : 70) + difficultyOf(state).rivalOvr;
 
     const result = simulateUserMatch({
       myPlayers: state.squad,
       myLineup: state.lineup.starters,
       myMentality: state.mentality,
       mySliders: state.sliders,
-      myFormScore: 65,
+      myFormScore: formScoreFromSharpness(state.sharpness),
       rivalOvr,
       rivalFormScore: 60,
       isHome: true,
@@ -1233,7 +1338,7 @@ export function CareerProvider({ children }) {
     if (!opponent) return null;
 
     const rivalTeam = teamById(opponent.id);
-    const rivalOvr = rivalTeam?.tier === 1 ? 86 : rivalTeam?.tier === 2 ? 79 : 72;
+    const rivalOvr = (rivalTeam?.tier === 1 ? 86 : rivalTeam?.tier === 2 ? 79 : 72) + difficultyOf(state).rivalOvr;
     const prizes = CONTINENTAL_PRIZES[continental.competition] || CONTINENTAL_PRIZES.europa;
     const compLabel = CONTINENTAL_LABELS[continental.competition] || "Copa Europea";
 
@@ -1242,7 +1347,7 @@ export function CareerProvider({ children }) {
       myLineup: state.lineup.starters,
       myMentality: state.mentality,
       mySliders: state.sliders,
-      myFormScore: 65,
+      myFormScore: formScoreFromSharpness(state.sharpness),
       rivalOvr,
       rivalFormScore: 63,
       isHome: true,
@@ -1308,7 +1413,7 @@ export function CareerProvider({ children }) {
     if (!opponent) return null;
 
     const rivalTeam = teamById(opponent.id);
-    const rivalOvr = rivalTeam?.tier === 1 ? 80 : rivalTeam?.tier === 2 ? 73 : 66;
+    const rivalOvr = (rivalTeam?.tier === 1 ? 80 : rivalTeam?.tier === 2 ? 73 : 66) + difficultyOf(state).rivalOvr;
 
     const result = simulateUserMatch({
       myPlayers: state.squad,
@@ -1388,7 +1493,7 @@ export function CareerProvider({ children }) {
     const income = seasonIncome(team, position);
     // Club reputation alta → más presupuesto (hasta +20%)
     const repBonus = clubReputation >= 75 ? 1.2 : clubReputation >= 50 ? 1.0 : 0.85;
-    const budget = Math.round((transferBudgetFor(team, position) + Math.round(income.total * 0.3)) * repBonus);
+    const budget = Math.round((transferBudgetFor(team, position) + Math.round(income.total * 0.3)) * repBonus * difficultyOf(s).budget);
 
     const leagueTeamIds = leagueTeams.map((t) => t.id);
     const { calendar } = roundRobinCalendar(leagueTeamIds, s.teamId);
@@ -1438,10 +1543,14 @@ export function CareerProvider({ children }) {
       .map((a) => ({ ...a, seasonsLeft: a.seasonsLeft - 1 }))
       .filter((a) => a.seasonsLeft > 0);
 
+    const canteraRoll = s.cantera ? seasonRollCantera(s.cantera) : null;
+
     return {
       ...s,
       season: s.season + 1,
       week: 0,
+      day: 0,
+      cantera: canteraRoll ? canteraRoll.cantera : s.cantera,
       hiredScouts,
       academyAgents,
       squad,
@@ -1466,6 +1575,7 @@ export function CareerProvider({ children }) {
       seasonName: null,
       news: [
         ...(continentalNewsLine ? [continentalNewsLine] : []),
+        ...(canteraRoll?.left.length ? [`👋 Se fueron de la cantera a otros clubes: ${canteraRoll.left.map((y) => y.name).join(", ")}.`] : []),
         ...offerNews,
         ...renewalNews,
         objectiveMet ? `¡Objetivo cumplido! Terminaste ${position}° — la directiva confía en el proyecto.` : `No se cumplió el objetivo (terminaste ${position}°). La directiva está molesta.`,
@@ -1631,6 +1741,14 @@ export function CareerProvider({ children }) {
       renewContract,
       releasePlayer,
       holdSquadMeeting,
+      simulateDay,
+      simulateToMatchDay,
+      setDifficulty,
+      hireCanteraScoutAction,
+      buildCanteraNetwork,
+      signCanteraProspect,
+      releaseCanteraYouth,
+      promoteYouth,
       answerPressConference,
       maybeOfferNationalTeam,
       acceptNationalTeamJob,

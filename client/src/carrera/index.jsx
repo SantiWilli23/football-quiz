@@ -2,14 +2,18 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import VidaFutBanner from "../components/VidaFutBanner.jsx";
 import {
-  Home, Shuffle, LayoutDashboard, Users, ArrowLeftRight,
-  Wallet, CalendarDays, History,
+  Home, Shuffle, LayoutDashboard, Users, ArrowLeftRight, LayoutGrid, SlidersHorizontal, Sprout,
+  Wallet, CalendarDays, History, Settings as SettingsIcon,
 } from "lucide-react";
 import { CareerProvider, useCareer } from "./context/CareerContext.jsx";
 import TeamSelector from "./components/TeamSelector.jsx";
 import SaveManager from "./components/SaveManager.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import Squad from "./components/Squad.jsx";
+import Formation from "./components/Formation.jsx";
+import Tactics from "./components/Tactics.jsx";
+import Cantera from "./components/Cantera.jsx";
+import Settings from "./components/Settings.jsx";
 import MatchSimulator from "./components/MatchSimulator.jsx";
 import SeasonCalendar from "./components/SeasonCalendar.jsx";
 import Transfers from "./components/Transfers.jsx";
@@ -18,20 +22,18 @@ import Finances from "./components/Finances.jsx";
 import TeamCrest from "./components/TeamCrest.jsx";
 import { teamById } from "./data/teams.js";
 
-const TABS = [
-  ["dashboard", "Panel", LayoutDashboard],
-  ["squad", "Plantilla", Users],
+// Menú del Modo DT, en este orden (Configuración siempre al final).
+const MENU = [
+  ["dashboard", "Inicio", LayoutDashboard],
+  ["squad", "Plantel", Users],
+  ["formations", "Formaciones", LayoutGrid],
+  ["tactics", "Tácticas", SlidersHorizontal],
   ["transfers", "Fichajes", ArrowLeftRight],
+  ["cantera", "Cantera", Sprout],
   ["finances", "Finanzas", Wallet],
   ["calendar", "Calendario", CalendarDays],
   ["history", "Historial", History],
-];
-// Menú lateral del Modo DT: las secciones agrupadas por para qué sirven.
-const MENU = [
-  { group: "Club", tone: "accent", items: [["dashboard", "Panel", LayoutDashboard], ["finances", "Finanzas", Wallet], ["history", "Historial", History]] },
-  { group: "Equipo", tone: "blue", items: [["pizarra", "Formación y tácticas", Shuffle], ["squad", "Plantilla", Users]] },
-  { group: "Mercado", tone: "amber", items: [["transfers", "Fichajes", ArrowLeftRight]] },
-  { group: "Partidos", tone: "pink", items: [["calendar", "Calendario y tabla", CalendarDays]] },
+  ["settings", "Configuración", SettingsIcon],
 ];
 
 function CareerApp() {
@@ -80,7 +82,7 @@ function CareerApp() {
           </button>
         </div>
         <div className="flex md:hidden items-center gap-1 overflow-x-auto px-2 pb-1 pt-1.5">
-          {[...TABS.slice(0, 1), ["pizarra", "Formación", Shuffle], ...TABS.slice(1)].map(([id, label, Icon]) => {
+          {MENU.map(([id, label, Icon]) => {
             const active = screen === id;
             return (
               <button
@@ -99,23 +101,16 @@ function CareerApp() {
       </nav>
       <div className="md:flex md:max-w-6xl md:mx-auto">
       <aside className="hidden md:block w-56 shrink-0 p-4 pr-0">
-        <div className="sticky top-24 space-y-5">
-          {MENU.map((g) => (
-            <div key={g.group} className={`tone-${g.tone}`}>
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-tone mb-1.5 px-2">{g.group}</p>
-              <div className="space-y-1">
-                {g.items.map(([id, label, Icon]) => (
-                  <button
-                    key={id}
-                    onClick={() => setScreen(id)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-card text-sm text-left border transition-colors ${screen === id ? "tile-b text-white font-semibold" : "border-transparent text-gray-400 hover:text-white hover:bg-white/5"}`}
-                  >
-                    <Icon size={16} className="text-tone shrink-0" />
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
+        <div className="sticky top-24 space-y-1">
+          {MENU.map(([id, label, Icon]) => (
+            <button
+              key={id}
+              onClick={() => setScreen(id)}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-card text-sm text-left border transition-colors ${screen === id ? "tone-accent tile-b text-white font-semibold" : "border-transparent text-gray-400 hover:text-white hover:bg-white/5"}`}
+            >
+              <Icon size={16} className={screen === id ? "text-tone shrink-0" : "shrink-0"} />
+              {label}
+            </button>
           ))}
         </div>
       </aside>
@@ -123,8 +118,11 @@ function CareerApp() {
         {screen === "dashboard" && (
           <Dashboard onPlayMatch={(result) => { setMatchResult(result); setScreen("match"); }} />
         )}
-        {screen === "pizarra" && <Squad key="pizarra" initialTab="formacion" />}
-        {screen === "squad" && <Squad key="plantilla" initialTab="plantilla" />}
+        {screen === "squad" && <Squad />}
+        {screen === "formations" && <Formation />}
+        {screen === "tactics" && <div className="max-w-xl"><Tactics /></div>}
+        {screen === "cantera" && <Cantera />}
+        {screen === "settings" && <Settings />}
         {screen === "transfers" && <Transfers />}
         {screen === "finances" && <Finances />}
         {screen === "calendar" && <SeasonCalendar />}

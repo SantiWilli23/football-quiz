@@ -42,13 +42,13 @@ const LAST_BY_NAT = {
   BEL: ["Van Damme", "Peeters", "Willems", "Maes"],
 };
 
-const POSITIONS = ["GK", "CB", "LB", "RB", "CDM", "CM", "CAM", "LW", "RW", "ST"];
+export const POSITIONS = ["GK", "CB", "LB", "RB", "CDM", "CM", "CAM", "LW", "RW", "ST"];
 
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function rnd(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-function youthName(nat) {
+export function youthName(nat) {
   const first = FIRST_BY_NAT[nat] || FIRST_BY_NAT.ESP;
   const last = LAST_BY_NAT[nat] || LAST_BY_NAT.ESP;
   return `${pick(first)} ${pick(last)}`;

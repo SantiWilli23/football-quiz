@@ -177,17 +177,7 @@ export default function Transfers() {
             <p className="text-xs text-gray-600">{totalMatches} jugador{totalMatches === 1 ? "" : "es"} — mostrando los {filtered.length} de mayor OVR.</p>
           </div>
 
-          <div className="hidden md:flex items-center gap-3 px-4 text-xs uppercase tracking-wide text-gray-600">
-            <span className="w-5" />
-            <span className="w-9" />
-            <span className="flex-1">Jugador</span>
-            <span className="w-16 text-center">OVR act.</span>
-            <span className="w-16 text-center">OVR pot.</span>
-            <span className="w-20 text-center">Valor</span>
-            <span className="w-[170px]" />
-          </div>
-
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {filtered.map((p) => {
               const report = reportFor(scoutReports, p);
               const cooling = isOnOfferCooldown(p.id);
@@ -195,51 +185,51 @@ export default function Transfers() {
               const clause = releaseClauses[p.id];
               const scouting = scoutMissions.some((m) => m.playerIds.includes(p.id));
               return (
-                <div key={p.id} className={`${/^(GK)$/.test(p.position) ? "tone-amber" : /^(CB|LB|RB)$/.test(p.position) ? "tone-blue" : /^(CDM|CM|CAM)$/.test(p.position) ? "tone-emerald" : "tone-pink"} bg-panel border border-border border-l-4 border-l-tone rounded-2xl px-4 py-3 flex items-center gap-3 flex-wrap sm:flex-nowrap`}>
-                  <button
-                    onClick={() => toggleWatchlist(p.id)}
-                    title={watched ? "Quitar de la Central de Transferencias" : "Poner en la Central de Transferencias"}
-                    className={`text-lg leading-none shrink-0 w-5 ${watched ? "text-amber" : "text-gray-600 hover:text-gray-300"}`}
-                  >
-                    {watched ? "★" : "☆"}
-                  </button>
-
-                  <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-xs font-bold text-gray-400">
-                    {p.position}
+                <div key={p.id} className={`${/^(GK)$/.test(p.position) ? "tone-amber" : /^(CB|LB|RB)$/.test(p.position) ? "tone-blue" : /^(CDM|CM|CAM)$/.test(p.position) ? "tone-emerald" : "tone-pink"} bg-panel border border-border border-l-4 border-l-tone rounded-2xl p-3 flex flex-col gap-2.5 min-w-0`}>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <button
+                      onClick={() => toggleWatchlist(p.id)}
+                      title={watched ? "Quitar de la Central de Transferencias" : "Poner en la Central de Transferencias"}
+                      className={`text-lg leading-none shrink-0 ${watched ? "text-amber" : "text-gray-600 hover:text-gray-300"}`}
+                    >
+                      {watched ? "★" : "☆"}
+                    </button>
+                    <div className="w-8 h-8 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-[11px] font-bold text-gray-400">
+                      {p.position}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold truncate">{p.name}{report?.isPublic && <span className="ml-1.5 text-xs text-accent" title="Figura mundial: ya viene scouteado">●</span>}</p>
+                      <p className="text-[11px] text-gray-500 truncate">
+                        {teamById(p.teamId)?.name} · {p.age} años
+                        {clause != null && <span className="text-amber ml-1.5">· cláusula €{clause}M</span>}
+                        {p.contractYears <= 1 && <span className="text-amber ml-1.5">· último año</span>}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="min-w-0 flex-1 basis-full sm:basis-auto">
-                    <p className="text-sm font-semibold truncate">{p.name}{report?.isPublic && <span className="ml-1.5 text-xs text-accent" title="Figura mundial: ya viene scouteado">● conocido</span>}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {teamById(p.teamId)?.name} · {p.age} años
-                      {clause != null && <span className="text-amber ml-1.5">· cláusula €{clause}M</span>}
-                      {p.contractYears <= 1 && <span className="text-amber ml-1.5">· último año de contrato</span>}
-                    </p>
+                  <div className="grid grid-cols-3 gap-1.5 text-center">
+                    <div className="bg-bg/60 border border-border rounded-xl py-1.5">
+                      <p className="text-[10px] uppercase tracking-wide text-gray-600">OVR act.</p>
+                      <p className="text-sm font-semibold">{report ? formatRange(report.ovrRange) : <span className="text-gray-600">—</span>}</p>
+                    </div>
+                    <div className="bg-bg/60 border border-border rounded-xl py-1.5">
+                      <p className="text-[10px] uppercase tracking-wide text-gray-600">OVR pot.</p>
+                      <p className="text-sm text-gray-300">{report?.potentialEstimate != null ? `~${report.potentialEstimate}` : <span className="text-gray-600">—</span>}</p>
+                    </div>
+                    <div className="bg-bg/60 border border-border rounded-xl py-1.5">
+                      <p className="text-[10px] uppercase tracking-wide text-gray-600">Valor</p>
+                      <p className="text-sm font-semibold">€{p.value}M</p>
+                    </div>
                   </div>
 
-                  <div className="flex flex-col items-center w-16 shrink-0">
-                    <span className="md:hidden text-xs uppercase tracking-wide text-gray-600">OVR act.</span>
-                    <span className="text-sm font-semibold">{report ? formatRange(report.ovrRange) : <span className="text-gray-600">—</span>}</span>
-                  </div>
-
-                  <div className="flex flex-col items-center w-16 shrink-0">
-                    <span className="md:hidden text-xs uppercase tracking-wide text-gray-600">OVR pot.</span>
-                    <span className="text-sm text-gray-300">{report?.potentialEstimate != null ? `~${report.potentialEstimate}` : <span className="text-gray-600">—</span>}</span>
-                  </div>
-
-                  <div className="flex flex-col items-center w-20 shrink-0">
-                    <span className="md:hidden text-xs uppercase tracking-wide text-gray-600">Valor</span>
-                    <span className="text-sm font-semibold">€{p.value}M</span>
-                  </div>
-
-                  <div className="shrink-0 ml-auto sm:ml-0 flex items-center gap-1.5 sm:w-[170px] justify-end">
+                  <div className="flex items-center gap-1.5 justify-end flex-wrap">
                     {!report && !scouting && (
                       hiredScouts.length ? (
                         <select
                           defaultValue=""
                           onChange={(e) => { if (e.target.value) sendScoutMission(e.target.value, p.id); e.target.value = ""; }}
                           title="Mandar a un ojeador a la liga de este jugador"
-                          className="text-sm font-medium px-3 py-2.5 rounded-2xl bg-panel border border-border text-gray-300 hover:border-gray-500 transition-colors"
+                          className="text-xs font-medium px-2.5 py-2 rounded-xl bg-panel border border-border text-gray-300 hover:border-gray-500 transition-colors"
                         >
                           <option value="">Scoutear…</option>
                           {hiredScouts.map((sc) => (
@@ -247,36 +237,36 @@ export default function Transfers() {
                           ))}
                         </select>
                       ) : (
-                        <span className="text-xs text-gray-600" title="Contratá un ojeador en la pestaña Scouting">sin ojeadores</span>
+                        <span className="text-[11px] text-gray-600" title="Contratá un ojeador en la pestaña Scouting">sin ojeadores</span>
                       )
                     )}
-                    {scouting && <span className="text-xs text-gray-600 px-2">en camino…</span>}
+                    {scouting && <span className="text-[11px] text-gray-600 px-1">en camino…</span>}
                     {cooling ? (
-                      <span className="text-xs text-gray-600 px-3 py-2.5 inline-block" title="Te rechazaron hace poco">
+                      <span className="text-[11px] text-gray-600 px-2 py-2 inline-block" title="Te rechazaron hace poco">
                         Esperá {weeksUntilCanOffer(p.id)} sem.
                       </span>
                     ) : (
-                      <button
-                        onClick={() => setCompareTarget(p)}
-                        className="text-sm font-medium px-3 py-2.5 rounded-2xl border border-border text-gray-300 hover:text-white hover:border-white/30 transition-colors whitespace-nowrap"
-                      >
-                        Comparar
-                      </button>
-                    )}
-                    {!cooling && (
-                      <button
-                        onClick={() => setTarget(p)}
-                        className="text-sm font-medium px-4 py-2.5 rounded-2xl bg-accent/10 text-accent border border-accent/40 hover:bg-accent/20 transition-colors whitespace-nowrap"
-                      >
-                        Fichar
-                      </button>
+                      <>
+                        <button
+                          onClick={() => setCompareTarget(p)}
+                          className="text-xs font-medium px-3 py-2 rounded-xl border border-border text-gray-300 hover:text-white hover:border-white/30 transition-colors whitespace-nowrap"
+                        >
+                          Comparar
+                        </button>
+                        <button
+                          onClick={() => setTarget(p)}
+                          className="text-xs font-medium px-3.5 py-2 rounded-xl bg-accent/10 text-accent border border-accent/40 hover:bg-accent/20 transition-colors whitespace-nowrap"
+                        >
+                          Fichar
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
               );
             })}
-            {!filtered.length && (
-              <p className="px-4 py-6 text-center text-gray-600 text-sm bg-panel border border-border rounded-2xl">Sin resultados con esos filtros.</p>
+                        {!filtered.length && (
+              <p className="col-span-full px-4 py-6 text-center text-gray-600 text-sm bg-panel border border-border rounded-2xl">Sin resultados con esos filtros.</p>
             )}
           </div>
 

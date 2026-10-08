@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useCareer } from "../context/CareerContext.jsx";
-import Formation from "./Formation.jsx";
-import Tactics from "./Tactics.jsx";
+import { meetingsForWeek } from "../engine/meetings.js";
+import { ATTR_LABELS, playerTacticNotes } from "../engine/attributeEffects.js";
 import { ALL_POSITIONS, trainingTier, trainingTierLabel } from "../engine/positions.js";
 import { getInjury } from "../engine/injuryEngine.js";
 import { reportFor } from "../engine/scouting.js";
@@ -35,21 +35,14 @@ function fatigueColor(f) {
   return "text-red-400";
 }
 
-const MEETING_OPTIONS = [
-  { id: "motivate", label: "Charla motivadora", emoji: "", desc: "+8 moral a todo el plantel" },
-  { id: "demand", label: "Exigir más nivel", emoji: "", desc: "+3 confianza directiva, -3 moral" },
-  { id: "rest", label: "Día libre", emoji: "", desc: "+12 moral a todo el plantel" },
-];
-
 const INSTRUCTION_OPTIONS = [
   { id: "libre", label: "Libre" },
   { id: "ofensivo", label: "Ofensivo" },
   { id: "conservador", label: "Conservador" },
 ];
 
-export default function Squad({ initialTab = "formacion" }) {
+export default function Squad() {
   const { state, moveToBench, moveToReserves, toggleTransferListed, toggleLoanListed, startPositionTraining, holdSquadMeeting, setCaptain, setPlayerInstruction } = useCareer();
-  const [tab, setTab] = useState(initialTab);
   const [groupFilter, setGroupFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("ovr");
 
@@ -72,28 +65,9 @@ export default function Squad({ initialTab = "formacion" }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-1">
-        {[["formacion", "Pizarra (formación y tácticas)"], ["plantilla", "Plantilla"]].map(([id, label]) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            className={`px-3 py-1.5 rounded-card text-sm font-medium ${tab === id ? "bg-accent/15 text-accent border border-accent/30" : "text-gray-400 border border-transparent hover:text-white"}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {tab === "formacion" && (
-        <div className="grid lg:grid-cols-[minmax(0,1fr)_380px] gap-5 items-start">
-          <Formation />
-          <Tactics />
-        </div>
-      )}
-
-      {tab === "plantilla" && (
-        <div className="space-y-6">
+      <div className="space-y-6">
           <SquadMeeting
+            options={meetingsForWeek(state)}
             onMeet={holdSquadMeeting}
             usedThisWeek={state.lastMeetingWeek === state.week}
           />
@@ -154,6 +128,7 @@ export default function Squad({ initialTab = "formacion" }) {
                         morale={(state.morale || {})[p.id] ?? 70}
                         fatigue={(state.fatigue || {})[p.id] ?? 100}
                         seasonStats={(state.playerStats || {})[p.id]}
+                        sliders={state.sliders}
                         isCaptain={state.captainId === p.id}
                         instruction={(state.playerInstructions || {})[p.id] || "libre"}
                         onBench={() => moveToBench(p.id)}
@@ -171,14 +146,27 @@ export default function Squad({ initialTab = "formacion" }) {
             ))}
           </div>
 
-          <p className="text-xs text-gray-600">El potencial (POT) es una estimación de tus reclutadores — mandá uno a verlo en la pestaña Scouting para afinar el rango.</p>
-        </div>
-      )}
+          <p className="text-xs text-gray-600">Tocá a un jugador para ver sus estadísticas. El potencial (POT) es una estimación de tus reclutadores — mandá uno a verlo en la pestaña Scouting para afinar el rango.</p>
+      </div>
     </div>
   );
 }
 
-function SquadMeeting({ onMeet, usedThisWeek }) {
+const FX_LABELS = [
+  ["morale", "Moral"], ["moraleStarters", "Moral titulares"], ["moraleBench", "Moral suplentes"], ["moraleStar", "Moral figura"],
+  ["energy", "Energía"], ["sharpness", "Ritmo"], ["board", "Directiva"], ["reputation", "Reputación"], ["budget", "Presupuesto"], ["youth", "Cantera"],
+];
+
+function effectChips(effects) {
+  return FX_LABELS.filter(([k]) => effects[k]).map(([k, label]) => {
+    const v = effects[k];
+    const shown = k === "youth" ? "suben" : k === "budget" ? `${v > 0 ? "+" : ""}€${v}M` : `${v > 0 ? "+" : ""}${v}`;
+    return { key: k, label, shown, good: k === "youth" ? true : v > 0 };
+  });
+}
+
+// Una reunión por semana: cada semana se ofrecen 3 distintas del catálogo, al azar.
+function SquadMeeting({ options, onMeet, usedThisWeek }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -188,30 +176,28 @@ function SquadMeeting({ onMeet, usedThisWeek }) {
         onClick={() => setOpen((v) => !v)}
       >
         <div>
-          <p className="text-sm font-semibold">Reunión con el plantel</p>
+          <p className="text-sm font-semibold">Reunión de la semana</p>
           <p className="text-xs text-gray-500 mt-0.5">
-            {usedThisWeek ? "Ya hablaste con el equipo esta semana." : "Una vez por semana podés dirigirte al vestuario."}
+            {usedThisWeek ? "Ya tuviste tu reunión esta semana." : "Elegí una de las 3 reuniones que se pueden hacer esta semana."}
           </p>
         </div>
         <span className="text-gray-500 text-sm ml-4">{open ? "▲" : "▼"}</span>
       </button>
       {open && (
-        <div className="border-t border-border px-4 py-3 flex flex-wrap gap-2">
-          {MEETING_OPTIONS.map((opt) => (
+        <div className="border-t border-border p-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {options.map((opt) => (
             <button
               key={opt.id}
               disabled={usedThisWeek}
               onClick={() => onMeet(opt.id)}
-              className={`flex items-center gap-2 text-left px-3 py-2 rounded-card border text-xs transition-colors ${
-                usedThisWeek
-                  ? "border-border text-gray-600 cursor-not-allowed opacity-50"
-                  : "border-accent/30 text-accent hover:bg-accent/10"
-              }`}
+              className={`tone-${opt.tone} text-left rounded-xl border p-3 transition-colors ${usedThisWeek ? "border-border text-gray-600 cursor-not-allowed opacity-50" : "border-tone bg-tone-soft hover:brightness-110"}`}
             >
-              <span className="text-base leading-none">{opt.emoji}</span>
-              <span>
-                <span className="block font-semibold">{opt.label}</span>
-                <span className="block opacity-70">{opt.desc}</span>
+              <span className="block text-sm font-semibold">{opt.label}</span>
+              <span className="block text-xs text-gray-400 mt-0.5">{opt.desc}</span>
+              <span className="flex flex-wrap gap-1 mt-2">
+                {effectChips(opt.effects).map((c) => (
+                  <span key={c.key} className={`text-[10px] px-1.5 py-0.5 rounded-full border ${c.good ? "border-emerald/40 text-emerald" : "border-red-500/40 text-red-400"}`}>{c.label} {c.shown}</span>
+                ))}
               </span>
             </button>
           ))}
@@ -227,9 +213,11 @@ const LEVEL_STYLE = {
   Reserva: "text-gray-500 border-border",
 };
 
-function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, seasonStats, isCaptain, instruction, onBench, onReserves, onToggleTransferListed, onToggleLoanListed, onStartTraining, onSetCaptain, onSetInstruction }) {
+function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, seasonStats, sliders, isCaptain, instruction, onBench, onReserves, onToggleTransferListed, onToggleLoanListed, onStartTraining, onSetCaptain, onSetInstruction }) {
+  const [showStats, setShowStats] = useState(false);
   const isInjured = injury && injury.returnWeek > week;
   const weeksLeft = isInjured ? Math.max(0, injury.returnWeek - week) : 0;
+  const notes = showStats ? playerTacticNotes(p, sliders || {}) : [];
 
   return (
     <div className={`px-4 py-3.5 hover:bg-white/[0.03] transition-colors space-y-2.5 ${isInjured ? "opacity-75" : ""}`}>
@@ -241,7 +229,7 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
         </div>
       )}
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 cursor-pointer" onClick={() => setShowStats((v) => !v)} aria-expanded={showStats}>
         <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-xs font-bold text-gray-400">
           {p.position}
         </div>
@@ -262,7 +250,7 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
 
         {/* Físico */}
         <div className="hidden sm:flex flex-col items-center w-14 shrink-0">
-          <span className="text-xs uppercase tracking-wide text-gray-600">Físico</span>
+          <span className="text-xs uppercase tracking-wide text-gray-600">Energía</span>
           <span className={`text-sm font-semibold ${fatigueColor(fatigue)}`}>{fatigue}</span>
         </div>
 
@@ -292,7 +280,7 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
           {level}
         </span>
 
-        <div className="hidden lg:flex gap-1.5 shrink-0">
+        <div className="hidden lg:flex gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
           <button onClick={onBench} className="text-xs px-2.5 py-1 rounded-card border border-border text-gray-400 hover:text-white hover:border-gray-500 transition-colors">
             Banca
           </button>
@@ -301,6 +289,27 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
           </button>
         </div>
       </div>
+
+      {showStats && (
+        <div className="pl-[52px] space-y-2.5">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+            {Object.entries(ATTR_LABELS).map(([key, label]) => {
+              const v = p.attributes?.[key];
+              return (
+                <div key={key} className="bg-bg border border-border rounded-xl px-2 py-1.5 text-center">
+                  <p className="text-[10px] uppercase tracking-wide text-gray-600">{label}</p>
+                  <p className={`text-sm font-bold ${v >= 80 ? "text-emerald" : v >= 65 ? "text-white" : "text-red-400"}`}>{v ?? "—"}</p>
+                </div>
+              );
+            })}
+          </div>
+          <ul className="space-y-1">
+            {notes.map((n, i) => (
+              <li key={i} className={`text-xs ${n.tone === "good" ? "text-emerald" : n.tone === "bad" ? "text-red-400" : "text-gray-400"}`}>• {n.text}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Estadísticas de temporada */}
       {seasonStats && (

@@ -1,5 +1,6 @@
 import { effectiveOvr } from "./positions.js";
 import { layoutSlots } from "./pitchLayout.js";
+import { attributeEffects } from "./attributeEffects.js";
 
 // Carriles genéricos para ubicar al rival en la cancha — no tenemos su XI
 // real (solo un OVR agregado), así que en vez de mandar todo al centro
@@ -92,9 +93,11 @@ function computeRates({
   const ss = slidersScore(mySliders || { pressing: 50, tempo: 50 });
   const tm = trainingMods(trainingFocus);
   const homeBonus = isHome ? 2.2 : 0;
+  // Las estadísticas del XI (y la línea defensiva) mueven ataque y defensa.
+  const fx = attributeEffects(myPlayers, lineup, mySliders || {});
 
-  const attackingPower = ((myOvr + homeBonus) * 0.4 + ms.attack * 20 + (myFormScore || 60) * 0.15 + tm.atkMod + ss.atkAdj) * myDay;
-  const defensivePower = ((myOvr + homeBonus) * 0.4 + ms.defense * 15 + (myFormScore || 60) * 0.1 + tm.defMod + ss.defAdj) * myDay;
+  const attackingPower = ((myOvr + homeBonus) * 0.4 + ms.attack * 20 + (myFormScore || 60) * 0.15 + tm.atkMod + ss.atkAdj + fx.atk) * myDay;
+  const defensivePower = ((myOvr + homeBonus) * 0.4 + ms.defense * 15 + (myFormScore || 60) * 0.1 + tm.defMod + ss.defAdj + fx.def) * myDay;
   const rivalAttack = (rivalOvr * 0.4 + rms.attack * 20 + (rivalFormScore || 60) * 0.15 + 6) * rivalDay;
   const rivalDefense = (rivalOvr * 0.4 + rms.defense * 15 + (rivalFormScore || 60) * 0.1 + 4) * rivalDay;
 

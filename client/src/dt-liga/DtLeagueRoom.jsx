@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Check, Copy } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import {
   getLeague, pickTeam, startLeague,
   getMyTactics, setMyTactics, getFixtures, getStandings, advanceWeek, playFixtureSolo,
@@ -243,11 +243,11 @@ export default function DtLeagueRoom() {
         {(league.status === "in_progress" || league.status === "finished") && (
           <>
             <div className="flex gap-1">
-              {[["fixtures", "Jornada"], ["standings", "Tabla"], ["tactics", "Mi táctica"], ["market", "Mercado"]].map(([id, label]) => (
+              {[["fixtures", "Jornada"], ["calendar", "Calendario"], ["standings", "Tabla"], ["tactics", "Mi táctica"], ["market", "Mercado"]].map(([id, label]) => (
                 <button
                   key={id}
                   onClick={() => setTab(id)}
-                  className={`${{ fixtures: "tone-accent", standings: "tone-blue", tactics: "tone-amber", market: "tone-pink" }[id]} px-4 py-2 rounded-full text-sm font-semibold ${
+                  className={`${{ fixtures: "tone-accent", calendar: "tone-purple", standings: "tone-blue", tactics: "tone-amber", market: "tone-pink" }[id]} px-4 py-2 rounded-full text-sm font-semibold ${
                     tab === id ? "tile-b text-white" : "text-gray-400 border border-border hover:text-white"
                   }`}
                 >
@@ -259,6 +259,7 @@ export default function DtLeagueRoom() {
             {tab === "fixtures" && (
               <FixturesTab code={code} league={league} myTeamId={myTeamId} onAdvanced={setLeague} />
             )}
+            {tab === "calendar" && <CalendarTab code={code} myTeamId={myTeamId} />}
             {tab === "standings" && <StandingsTab code={code} myTeamId={myTeamId} />}
             {tab === "tactics" && <TacticsTab code={code} myTeamId={myTeamId} teamName={teamName} />}
             {tab === "market" && <MarketTab code={code} league={league} />}
@@ -408,6 +409,83 @@ function FixturesTab({ code, league, myTeamId, onAdvanced }) {
         <p className="text-xs text-gray-600 text-center">
           Jugá tus partidos contra la CPU cuando quieras. Los que son contra otro jugador se juegan en vivo, los dos conectados a la vez.
         </p>
+      )}
+    </div>
+  );
+}
+
+const DAY_LABELS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+const MATCH_DAY = 5; // los partidos caen el sábado, igual que en el Modo DT solo
+
+// Calendario del mes de la liga: todos los días de cada jornada, con los partidos el sábado.
+function CalendarTab({ code, myTeamId }) {
+  const [data, setData] = useState(null);
+  const [month, setMonth] = useState(null);
+  const [openWeek, setOpenWeek] = useState(null);
+
+  useEffect(() => {
+    getFixtures(code, month || undefined).then((d) => {
+      setData(d);
+      if (month == null) setMonth(d.month);
+    }).catch(() => setData(null));
+  }, [code, month]);
+
+  if (!data) return <p className="text-sm text-gray-500 text-center py-6">Cargando…</p>;
+
+  const weeks = [...new Set(data.fixtures.map((f) => f.week))].sort((a, b) => a - b);
+  const byWeek = (w) => data.fixtures.filter((f) => f.week === w);
+  const nextWeek = weeks.find((w) => byWeek(w).some((f) => !f.played));
+  const shown = openWeek ?? nextWeek ?? weeks[0];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-bold">Mes {data.month} de {data.totalMonths}</h3>
+        <div className="flex gap-1">
+          <button onClick={() => { setOpenWeek(null); setMonth(Math.max(1, data.month - 1)); }} disabled={data.month <= 1} aria-label="Mes anterior" className="p-2 rounded-card border border-border text-gray-400 hover:text-white disabled:opacity-30"><ChevronLeft size={16} /></button>
+          <button onClick={() => { setOpenWeek(null); setMonth(data.activeMonth); }} className="px-3 py-2 rounded-card border border-border text-xs text-gray-300 hover:text-white">Mes actual</button>
+          <button onClick={() => { setOpenWeek(null); setMonth(Math.min(data.totalMonths, data.month + 1)); }} disabled={data.month >= data.totalMonths} aria-label="Mes siguiente" className="p-2 rounded-card border border-border text-gray-400 hover:text-white disabled:opacity-30"><ChevronRight size={16} /></button>
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <div className="grid grid-cols-[64px_repeat(7,minmax(0,1fr))] gap-1 text-center text-[11px] uppercase tracking-wide text-gray-500">
+          <span />{DAY_LABELS.map((l) => <span key={l}>{l}</span>)}
+        </div>
+        {weeks.map((w) => {
+          const list = byWeek(w);
+          const mine = list.find((f) => f.involvesMe);
+          const done = list.every((f) => f.played);
+          return (
+            <div key={w} className="grid grid-cols-[64px_repeat(7,minmax(0,1fr))] gap-1 items-stretch">
+              <button onClick={() => setOpenWeek(w)} className={`text-xs font-semibold rounded-xl border px-1 py-2 ${shown === w ? "border-accent bg-accent/15 text-accent" : "border-border text-gray-400 hover:text-white"}`}>J{w}</button>
+              {DAY_LABELS.map((l, i) => (
+                <div key={l} className={`min-h-[48px] rounded-xl border p-1 text-center text-[10px] leading-tight flex flex-col items-center justify-center gap-0.5 ${i === MATCH_DAY ? (done ? "border-border bg-panel text-gray-400" : w === nextWeek ? "border-accent bg-accent/10" : "border-amber/40 bg-amber/5") : "border-border bg-panel/50 text-gray-600"}`}>
+                  {i === MATCH_DAY && (
+                    <>
+                      <span className="font-semibold text-gray-300">{list.length} partido{list.length === 1 ? "" : "s"}</span>
+                      {mine && <span className={mine.played ? (mine.homeTeamId === myTeamId ? mine.homeGoals > mine.awayGoals : mine.awayGoals > mine.homeGoals) ? "text-good" : mine.homeGoals === mine.awayGoals ? "text-amber" : "text-bad" : "text-accent"}>{mine.played ? `${mine.homeGoals}-${mine.awayGoals}` : "el tuyo"}</span>}
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+
+      {shown != null && (
+        <div className="bg-panel border border-border rounded-2xl p-4">
+          <p className="text-xs uppercase tracking-wide font-semibold text-gray-400 mb-3">Jornada {shown}</p>
+          <ul className="space-y-1.5">
+            {byWeek(shown).map((f) => (
+              <li key={f.id} className={`flex items-center justify-between gap-3 text-sm ${f.involvesMe ? "text-white font-semibold" : "text-gray-300"}`}>
+                <span className="truncate">{f.homeTeamName} <span className="text-gray-600">vs</span> {f.awayTeamName}</span>
+                <span className="tabular-nums shrink-0 text-gray-400">{f.played ? `${f.homeGoals} - ${f.awayGoals}` : "—"}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );

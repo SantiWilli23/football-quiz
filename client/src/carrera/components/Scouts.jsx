@@ -3,20 +3,18 @@ import { useCareer } from "../context/CareerContext.jsx";
 import { teams, teamById } from "../data/teams.js";
 import { players as allPlayers } from "../data/players.js";
 import { SCOUT_SPECIALTIES, MAX_SCOUTS, formatRange, reportFor, isFamous } from "../engine/scouting.js";
-import { ACADEMY_COUNTRIES, MAX_ACADEMY_AGENTS } from "../engine/academy.js";
 
 const SPECIALTY_LIST = Object.values(SCOUT_SPECIALTIES);
 const LEAGUE_LABEL = { premier: "Premier", laliga: "La Liga", seriea: "Serie A", bundesliga: "Bundesliga" };
 const ATTR_LABELS = [["pace", "RIT"], ["shooting", "TIR"], ["passing", "PAS"], ["dribbling", "REG"], ["defending", "DEF"], ["physical", "FIS"]];
 
-function HireAgentCard({ title, description, onHire, cost, disabled, extraField }) {
+function HireAgentCard({ title, description, onHire, disabled }) {
   const [specialty, setSpecialty] = useState("ovr");
   const [seasons, setSeasons] = useState(1);
-  const [country, setCountry] = useState(ACADEMY_COUNTRIES[0]);
   const [feedback, setFeedback] = useState(null);
 
   function handleHire() {
-    const res = extraField ? onHire(specialty, seasons, country) : onHire(specialty, seasons);
+    const res = onHire(specialty, seasons);
     if (res?.error === "insufficient_budget") setFeedback(`No te alcanza el presupuesto (cuesta €${res.cost}M).`);
     else if (res?.error === "max_scouts" || res?.error === "max_agents") setFeedback("Ya tenés el máximo de 3 contratados.");
     else if (res?.success) setFeedback(`✅ Contratado por €${res.scout?.cost ?? res.agent?.cost}M.`);
@@ -49,11 +47,6 @@ function HireAgentCard({ title, description, onHire, cost, disabled, extraField 
           <option value={1}>1 temporada</option>
           <option value={2}>2 temporadas</option>
         </select>
-        {extraField && (
-          <select value={country} onChange={(e) => setCountry(e.target.value)} className="bg-bg border border-border rounded-xl px-3 py-2 text-xs">
-            {ACADEMY_COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        )}
         <button
           onClick={handleHire}
           disabled={disabled}
@@ -81,16 +74,15 @@ function WatchButton({ watched, onToggle }) {
 
 export default function Scouts() {
   const {
-    state, team, hireScout, sendScoutMission, hireAcademyAgent, signAcademyProspect, toggleWatchlist,
+    state, team, hireScout, sendScoutMission, toggleWatchlist,
   } = useCareer();
   const [teamId, setTeamId] = useState(team.id);
   const [query, setQuery] = useState("");
-  const [section, setSection] = useState("scouting"); // scouting | reports | academy
+  const [section, setSection] = useState("scouting"); // scouting | reports
+  const [openId, setOpenId] = useState(null); // jugador con las estadísticas desplegadas
 
   const hiredScouts = state.hiredScouts || [];
   const scoutMissions = state.scoutMissions || [];
-  const academyAgents = state.academyAgents || [];
-  const academyPool = state.academyPool || [];
   const scoutReports = state.scoutReports || {};
   const watchlist = state.watchlist || [];
   const ownSquadIds = new Set(state.squad.map((p) => p.id));
@@ -129,7 +121,6 @@ export default function Scouts() {
         {[
           ["scouting", "Contratar / Pedir informe"],
           ["reports", `Scouteados (${scoutedPlayers.length})`],
-          ["academy", `Inferiores (${academyPool.length})`],
         ].map(([id, label]) => (
           <button
             key={id}
@@ -199,10 +190,11 @@ export default function Scouts() {
                 const report = reportFor(scoutReports, p);
                 const pending = scoutMissions.some((m) => m.playerIds.includes(p.id));
                 const isOwn = ownSquadIds.has(p.id);
+                const open = openId === p.id;
                 return (
                   <div key={p.id} className="bg-panel border border-border rounded-2xl overflow-hidden">
-                    <div className="flex items-center gap-3 px-4 py-3">
-                      {!isOwn && <WatchButton watched={watchlist.includes(p.id)} onToggle={() => toggleWatchlist(p.id)} />}
+                    <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/[0.03]" onClick={() => setOpenId(open ? null : p.id)}>
+                      {!isOwn && <span onClick={(e) => e.stopPropagation()}><WatchButton watched={watchlist.includes(p.id)} onToggle={() => toggleWatchlist(p.id)} /></span>}
                       <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-xs font-bold text-gray-400">
                         {p.position}
                       </div>
@@ -210,15 +202,7 @@ export default function Scouts() {
                         <p className="text-sm font-semibold truncate">{p.name}</p>
                         <p className="text-xs text-gray-500 mt-0.5">{p.age} años</p>
                       </div>
-                      <div className="hidden sm:flex flex-col items-center w-20 shrink-0">
-                        <span className="text-xs uppercase tracking-wide text-gray-600">OVR est.</span>
-                        <span className="text-sm font-semibold">{report ? formatRange(report.ovrRange) : "—"}</span>
-                      </div>
-                      <div className="hidden sm:flex flex-col items-center w-20 shrink-0">
-                        <span className="text-xs uppercase tracking-wide text-gray-600">Potencial</span>
-                        <span className="text-sm text-gray-300">{report?.potentialEstimate != null ? `~${report.potentialEstimate}` : "—"}</span>
-                      </div>
-                      <div className="shrink-0">
+                      <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
                         {pending ? (
                           <span className="text-xs text-gray-600 px-3 py-2.5 inline-block">En camino…</span>
                         ) : !hiredScouts.length ? (
@@ -237,6 +221,27 @@ export default function Scouts() {
                         )}
                       </div>
                     </div>
+                    {open && (
+                      <div className="border-t border-border px-4 py-3 space-y-2.5 bg-bg/40">
+                        <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-400">
+                          <span>OVR est. <b className="text-white">{report ? formatRange(report.ovrRange) : "—"}</b></span>
+                          <span>Potencial <b className="text-white">{report?.potentialEstimate != null ? `~${report.potentialEstimate}` : "—"}</b></span>
+                          <span>Valor <b className="text-white">€{p.value}M</b></span>
+                        </div>
+                        {report ? (
+                          <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                            {ATTR_LABELS.map(([key, label]) => (
+                              <div key={key} className="bg-bg border border-border rounded-xl px-2 py-1.5 text-center">
+                                <p className="text-xs uppercase tracking-wide text-gray-600">{label}</p>
+                                <p className="text-sm font-semibold">{p.attributes?.[key] ?? "—"}</p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-600">Sin scoutear: mandá un ojeador para conocer sus estadísticas.</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -267,9 +272,10 @@ export default function Scouts() {
             if (!report) return null;
             const t = teamById(p.teamId);
             const inCentral = watchlist.includes(p.id);
+            const open = openId === p.id;
             return (
               <div key={p.id} className="bg-panel border border-border rounded-2xl px-4 py-3 space-y-2.5">
-                <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-3 flex-wrap cursor-pointer" onClick={() => setOpenId(open ? null : p.id)}>
                   <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-xs font-bold text-gray-400">
                     {p.position}
                   </div>
@@ -280,24 +286,8 @@ export default function Scouts() {
                     </p>
                     <p className="text-xs text-gray-500 mt-0.5">{t?.name} · {LEAGUE_LABEL[t?.league] || ""} · {p.age} años · {p.nationality}</p>
                   </div>
-                  <div className="flex flex-col items-center w-16 shrink-0">
-                    <span className="text-xs uppercase tracking-wide text-gray-600">OVR act.</span>
-                    <span className="text-sm font-semibold">{formatRange(report.ovrRange)}</span>
-                  </div>
-                  <div className="flex flex-col items-center w-16 shrink-0">
-                    <span className="text-xs uppercase tracking-wide text-gray-600">OVR pot.</span>
-                    <span className="text-sm text-gray-300">~{report.potentialEstimate}</span>
-                  </div>
-                  <div className="flex flex-col items-center w-20 shrink-0">
-                    <span className="text-xs uppercase tracking-wide text-gray-600">Valor</span>
-                    <span className="text-sm text-gray-300">€{p.value}M</span>
-                  </div>
-                  <div className="flex flex-col items-center w-24 shrink-0">
-                    <span className="text-xs uppercase tracking-wide text-gray-600">Oferta sugerida</span>
-                    <span className="text-sm text-gray-300">€{report.suggestedOffer}M</span>
-                  </div>
                   <button
-                    onClick={() => toggleWatchlist(p.id)}
+                    onClick={(e) => { e.stopPropagation(); toggleWatchlist(p.id); }}
                     className={`shrink-0 text-xs font-medium px-3 py-2 rounded-full border transition-colors ${
                       inCentral
                         ? "bg-amber/10 text-amber border-amber/40 hover:bg-amber/20"
@@ -307,81 +297,30 @@ export default function Scouts() {
                     {inCentral ? "★ En la Central (quitar)" : "☆ Poner en la Central"}
                   </button>
                 </div>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                  {ATTR_LABELS.map(([key, label]) => (
-                    <div key={key} className="bg-bg border border-border rounded-xl px-2 py-1.5 text-center">
-                      <p className="text-xs uppercase tracking-wide text-gray-600">{label}</p>
-                      <p className="text-sm font-semibold">{p.attributes?.[key] ?? "—"}</p>
+                {open && (
+                  <>
+                    <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-400">
+                      <span>OVR act. <b className="text-white">{formatRange(report.ovrRange)}</b></span>
+                      <span>OVR pot. <b className="text-white">~{report.potentialEstimate}</b></span>
+                      <span>Valor <b className="text-white">€{p.value}M</b></span>
+                      <span>Oferta sugerida <b className="text-white">€{report.suggestedOffer}M</b></span>
                     </div>
-                  ))}
-                </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                      {ATTR_LABELS.map(([key, label]) => (
+                        <div key={key} className="bg-bg border border-border rounded-xl px-2 py-1.5 text-center">
+                          <p className="text-xs uppercase tracking-wide text-gray-600">{label}</p>
+                          <p className="text-sm font-semibold">{p.attributes?.[key] ?? "—"}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             );
           })}
         </div>
       )}
 
-      {section === "academy" && (
-        <div className="space-y-5">
-          <HireAgentCard
-            title={`Contratar agente de inferiores (${academyAgents.length}/${MAX_ACADEMY_AGENTS})`}
-            description="Lo mandás a recorrer un país: cada 4 semanas trae ~7 chicos nuevos de 15-18 años ya tasados."
-            onHire={hireAcademyAgent}
-            disabled={academyAgents.length >= MAX_ACADEMY_AGENTS}
-            extraField
-          />
-
-          {!!academyAgents.length && (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Tus agentes activos</p>
-              <div className="grid sm:grid-cols-2 gap-2">
-                {academyAgents.map((a) => (
-                  <div key={a.id} className="bg-panel border border-border rounded-2xl px-4 py-3">
-                    <p className="text-sm font-semibold">{SCOUT_SPECIALTIES[a.specialty]?.label} · {a.country}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Quedan {a.seasonsLeft} temporada{a.seasonsLeft === 1 ? "" : "s"} de contrato</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Chicos disponibles para sumar</p>
-            <div className="space-y-2">
-              {academyPool.map((p) => (
-                <div key={p.id} className="bg-panel border border-border rounded-2xl px-4 py-3 flex items-center gap-3 flex-wrap">
-                  <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-xs font-bold text-gray-400">
-                    {p.position}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold truncate">{p.name}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{p.age} años · {p.nationality} · desde {p.country}</p>
-                  </div>
-                  <div className="flex flex-col items-center w-16 shrink-0">
-                    <span className="text-xs uppercase tracking-wide text-gray-600">OVR</span>
-                    <span className="text-sm font-semibold">{p.ovr}</span>
-                  </div>
-                  <div className="flex flex-col items-center w-20 shrink-0">
-                    <span className="text-xs uppercase tracking-wide text-gray-600">Potencial</span>
-                    <span className="text-sm text-gray-300">{p.potential}</span>
-                  </div>
-                  <button
-                    onClick={() => signAcademyProspect(p.id)}
-                    className="text-sm font-medium px-4 py-2.5 rounded-2xl bg-accent/10 text-accent border border-accent/40 hover:bg-accent/20 transition-colors whitespace-nowrap"
-                  >
-                    Sumar al plantel
-                  </button>
-                </div>
-              ))}
-              {!academyPool.length && (
-                <p className="px-4 py-6 text-center text-gray-600 text-sm bg-panel border border-border rounded-2xl">
-                  Todavía no llegó nadie de la cantera — contratá un agente arriba.
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
