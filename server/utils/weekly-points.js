@@ -26,7 +26,7 @@ function podiumPoints(entries, table) {
 const addTo = (map, userId, pts) => { if (pts) map.set(userId, (map.get(userId) || 0) + pts); };
 
 // Juego diario: cada día YA TERMINADO se ordena al grupo por su puntaje de
-// referencia (0-20) y el podio suma 5 / 3 / 3.
+// referencia (0-20) y el podio suma 5 / 3 / 1.
 export async function dailyPlacementPointsByUser(memberIds, from, to) {
   const out = new Map();
   const lastDay = to < todayStr() ? to : addDays(todayStr(), -1);

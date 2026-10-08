@@ -30,7 +30,7 @@ function GameLink({ game, className, children }) {
 
 // La casilla grande: el juego diario de hoy. Rota solo (lo decide el servidor,
 // así que todos juegan el mismo). El puntaje 0-20 es solo de referencia: ordena al
-// grupo ese día y el podio suma 5 / 3 / 3 puntos.
+// grupo ese día y el podio suma 5 / 3 / 1 puntos.
 function DailyFeatured({ today, visits }) {
   if (!today) return null;
   const daily = today.game;
@@ -49,7 +49,7 @@ function DailyFeatured({ today, visits }) {
     >
       <Icon size={26} className={`absolute top-5 right-5 ${style.text}`} />
       <span className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider ${style.text}`}>
-        <CalendarCheck size={13} /> Juego diario · puntaje de {today.max} y sobre · podio del día: 5 / 3 / 3 pts
+        <CalendarCheck size={13} /> Juego diario · puntaje de {today.max} y sobre · podio del día: 5 / 3 / 1 pts
       </span>
       <span className="t-title block text-2xl leading-tight mt-2">{game.label}</span>
       <span className="text-sm text-gray-400 leading-snug block mt-1.5 max-w-xl">{game.description}</span>

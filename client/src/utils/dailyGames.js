@@ -21,6 +21,6 @@ export function dailyMessage(res) {
   if (!res || res.notToday) return ""; // hoy el diario es otro juego: esta partida es práctica
   if (res.already) return "Ya jugaste el diario de hoy: tu puntaje y tu sobre ya están. Esta partida no da más.";
   return res.pack
-    ? `Juego diario: puntaje ${res.points}/${res.max} y un sobre ${res.pack} de cartas. El podio del día suma 5 / 3 / 3 puntos.`
+    ? `Juego diario: puntaje ${res.points}/${res.max} y un sobre ${res.pack} de cartas. El podio del día suma 5 / 3 / 1 puntos.`
     : `Juego diario: puntaje ${res.points}/${res.max}. Esta vez no alcanzó para sobre.`;
 }

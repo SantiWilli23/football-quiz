@@ -57,7 +57,7 @@ export const SEASON_RELEGATED_POINTS = 7; // por cada equipo que sí bajó, hast
 // ---- Sistema vigente (reemplaza lo anterior de arriba donde se contradiga) ----
 // Juego diario: el puntaje 0-20 (DAILY_GAME_MAX_POINTS) es solo de referencia y
 // ordena a los del grupo ese día; el podio del día suma estos puntos.
-export const DAILY_GAME_PLACEMENT_POINTS = { 1: 5, 2: 3, 3: 3 };
+export const DAILY_GAME_PLACEMENT_POINTS = { 1: 5, 2: 3, 3: 1 };
 // Juegos semanales (Fichado y DT Online por rendimiento de la semana): el podio
 // se reparte los domingos, solo en grupos que activaron los juegos semanales. La
 // Quiniela mantiene su propio puntaje (5 exacto / 2 resultado), que también se
