@@ -175,14 +175,20 @@ export default function MatchSimulator({ matchResult, onFinish }) {
   return (
     <div className="min-h-screen bg-bg text-white p-4">
       <div className="max-w-2xl mx-auto">
-        <div className="bg-panel border border-border rounded-card p-5 text-center mb-4">
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">{data.competitionLabel || "Liga"}</p>
-          <div className="flex items-center justify-center gap-4">
-            <span className="flex items-center gap-2 font-semibold text-lg"><TeamCrest team={team} size={24} />{team.name}</span>
-            <span className="text-3xl font-bold tabular-nums">{myGoalsSoFar} - {rivalGoalsSoFar}</span>
-            <span className="flex items-center gap-2 font-semibold text-lg">{rival?.name}{rival && <TeamCrest team={rival} size={24} />}</span>
+        <div className="hero-b rounded-3xl p-6 text-center mb-4" style={{ "--hero-a": "var(--c-accent)", "--hero-b": "var(--c-red)" }}>
+          <p className="text-xs text-gray-300 uppercase tracking-wide mb-3 flex items-center justify-center gap-2">
+            {!eventsDone && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
+            {data.competitionLabel || "Liga"}{!eventsDone ? " · en vivo" : " · final"}
+          </p>
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            <span className="flex items-center gap-2 font-bold text-lg"><TeamCrest team={team} size={36} />{team.name}</span>
+            <span className="text-5xl font-extrabold tabular-nums tracking-tight">{myGoalsSoFar} - {rivalGoalsSoFar}</span>
+            <span className="flex items-center gap-2 font-bold text-lg">{rival?.name}{rival && <TeamCrest team={rival} size={36} />}</span>
           </div>
-          {!eventsDone && <p className="text-xs text-gray-500 mt-2">Min {shown.length ? shown[shown.length - 1].min : 0}'</p>}
+          <div className="h-1.5 rounded-full bg-white/15 overflow-hidden mt-4 max-w-md mx-auto">
+            <div className="h-full rounded-full bg-accent transition-[width]" style={{ width: `${Math.min(100, ((shown.length ? shown[shown.length - 1].min : 0) / 90) * 100)}%` }} />
+          </div>
+          {!eventsDone && <p className="text-xs text-gray-300 mt-2">Min {shown.length ? shown[shown.length - 1].min : 0}'</p>}
         </div>
 
         {/* En móvil la cancha ocupa todo el ancho de la pantalla. */}
@@ -201,7 +207,7 @@ export default function MatchSimulator({ matchResult, onFinish }) {
         <div className="bg-panel border border-border p-4 mb-4 overflow-y-auto space-y-2 rounded-card max-h-72 max-sm:sticky max-sm:bottom-0 max-sm:z-10 max-sm:-mx-4 max-sm:rounded-none max-sm:rounded-t-xl max-sm:max-h-40 max-sm:shadow-[0_-8px_20px_rgba(0,0,0,0.35)]">
           {shown.length === 0 && <p className="text-sm text-gray-500">El partido está por comenzar...</p>}
           {shown.map((e, i) => (
-            <p key={i} className="text-sm">
+            <p key={i} className={`text-sm border-l-4 pl-3 py-0.5 ${/gol/i.test(e.text) ? "border-emerald bg-emerald/10" : /amarilla|roja|lesi/i.test(e.text) ? "border-amber" : "border-border"}`}>
               <span className="text-gray-500">Min {e.min}'</span> — {e.text}
             </p>
           ))}

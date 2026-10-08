@@ -97,10 +97,10 @@ export default function DtLeagueRoom() {
   return (
     <div className="min-h-screen bg-bg text-white p-4">
       <div className="max-w-2xl mx-auto space-y-5">
-        <div className="flex items-center justify-between">
+        <div className="hero-b rounded-3xl p-5 sm:p-6 flex items-center justify-between gap-3" style={{ "--hero-a": "var(--c-accent)", "--hero-b": "var(--c-purple)" }}>
           <div>
-            <h1 className="text-2xl font-bold">{league.name}</h1>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <h1 className="text-3xl font-extrabold tracking-tight">{league.name}</h1>
+            <p className="text-sm text-gray-300 mt-1">
               {league.leagueKey === "premier" ? "Premier League" : "La Liga"}
               {league.status === "in_progress" && ` · ${league.weeksPerMonth} jornada${league.weeksPerMonth === 1 ? "" : "s"} por mes`}
               {league.status === "finished" && " · Temporada terminada"}
@@ -247,8 +247,8 @@ export default function DtLeagueRoom() {
                 <button
                   key={id}
                   onClick={() => setTab(id)}
-                  className={`px-3 py-1.5 rounded-card text-sm font-medium ${
-                    tab === id ? "bg-accent/15 text-accent border border-accent/30" : "text-gray-400 border border-transparent hover:text-white"
+                  className={`${{ fixtures: "tone-accent", standings: "tone-blue", tactics: "tone-amber", market: "tone-pink" }[id]} px-4 py-2 rounded-full text-sm font-semibold ${
+                    tab === id ? "tile-b text-white" : "text-gray-400 border border-border hover:text-white"
                   }`}
                 >
                   {label}

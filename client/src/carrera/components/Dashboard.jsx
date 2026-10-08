@@ -330,7 +330,7 @@ export default function Dashboard({ onPlayMatch }) {
       </div>
 
       {/* Próximo partido — la acción principal de la pantalla, ocupa todo el ancho */}
-      <div className={`rounded-2xl p-5 border ${fixtureIsDerby ? "bg-gradient-to-br from-red-500/10 to-transparent border-red-500/30" : "bg-gradient-to-br from-accent/10 to-transparent border-accent/25"}`}>
+      <div className="hero-b rounded-3xl p-5 sm:p-6" style={fixtureIsDerby ? { "--hero-a": "var(--c-red)", "--hero-b": "var(--c-amber)" } : { "--hero-a": "var(--c-accent)", "--hero-b": "var(--c-purple)" }}>
         {fixture ? (
           <div className="flex items-center gap-4 flex-wrap sm:flex-nowrap">
             <div className="flex-1 min-w-0">

@@ -281,6 +281,7 @@ body {
 .tone-pink { --tone: var(--c-pink); } .tone-cyan { --tone: var(--c-cyan); }
 .text-tone { color: rgb(var(--tone, var(--c-accent))); }
 .bg-tone { background-color: rgb(var(--tone, var(--c-accent))); }
+.border-l-tone { border-left-color: rgb(var(--tone, var(--c-accent))); }
 .bg-tone-soft { background-color: rgb(var(--tone, var(--c-accent)) / 0.16); }
 .border-tone { border-color: rgb(var(--tone, var(--c-accent)) / 0.5); }
 

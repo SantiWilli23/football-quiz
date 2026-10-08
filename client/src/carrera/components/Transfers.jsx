@@ -109,9 +109,9 @@ export default function Transfers() {
             Primero le ofertás al club por el pase. Si acepta, recién ahí le ofrecés contrato al jugador.
           </p>
         </div>
-        <div className="bg-panel border border-border rounded-2xl px-4 py-2.5 text-right shrink-0">
-          <p className="text-xs uppercase tracking-wide text-gray-500">Presupuesto</p>
-          <p className="text-lg font-bold text-accent leading-none">€{state.budget}M</p>
+        <div className="tone-accent tile-b rounded-2xl px-5 py-3 text-right shrink-0">
+          <p className="text-xs uppercase tracking-wide text-gray-300">Presupuesto</p>
+          <p className="text-2xl font-extrabold text-tone leading-none">€{state.budget}M</p>
         </div>
       </div>
 
@@ -133,8 +133,8 @@ export default function Transfers() {
 
       {subTab === "mercado" && (
         <>
-          <div className="bg-panel border border-border rounded-2xl p-4 space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Buscar jugadores</p>
+          <div className="hero-b rounded-3xl p-4 sm:p-5 space-y-3" style={{ "--hero-a": "var(--c-amber)", "--hero-b": "var(--c-blue)" }}>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-300">Buscar jugadores</p>
             <div className="flex flex-wrap gap-3 items-center">
               <input
                 value={query}
@@ -195,7 +195,7 @@ export default function Transfers() {
               const clause = releaseClauses[p.id];
               const scouting = scoutMissions.some((m) => m.playerIds.includes(p.id));
               return (
-                <div key={p.id} className="bg-panel border border-border rounded-2xl px-4 py-3 flex items-center gap-3 flex-wrap sm:flex-nowrap">
+                <div key={p.id} className={`${/^(GK)$/.test(p.position) ? "tone-amber" : /^(CB|LB|RB)$/.test(p.position) ? "tone-blue" : /^(CDM|CM|CAM)$/.test(p.position) ? "tone-emerald" : "tone-pink"} bg-panel border border-border border-l-4 border-l-tone rounded-2xl px-4 py-3 flex items-center gap-3 flex-wrap sm:flex-nowrap`}>
                   <button
                     onClick={() => toggleWatchlist(p.id)}
                     title={watched ? "Quitar de la Central de Transferencias" : "Poner en la Central de Transferencias"}
