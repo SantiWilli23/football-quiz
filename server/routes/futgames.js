@@ -128,6 +128,15 @@ router.post("/pyramid/help", (req, res) => {
   res.json({ correct: scorePyramid(p.entries, placementFrom(req.body)).correct });
 });
 
+// Espiada: dice si el jugador va en la mitad de arriba (puestos 1-5) o de abajo (6-10), sin dar la casilla.
+router.post("/pyramid/peek", (req, res) => {
+  const p = pyramidFor(todayStr());
+  const id = String(req.body?.playerId || "");
+  const range = rankRanges(p.entries)[id];
+  if (!range) return res.status(400).json({ error: "Jugador desconocido" });
+  res.json({ half: range.last <= 5 ? "arriba" : range.first >= 6 ? "abajo" : "el medio" });
+});
+
 router.post("/pyramid/submit", (req, res) => {
   const p = pyramidFor(todayStr());
   const placement = placementFrom(req.body);

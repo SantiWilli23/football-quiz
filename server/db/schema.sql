@@ -772,6 +772,7 @@ CREATE TABLE IF NOT EXISTS fichado_games (
   max_attempts INTEGER NOT NULL DEFAULT 8,
   hints_used INTEGER NOT NULL DEFAULT 0,
   bonus_hints INTEGER NOT NULL DEFAULT 0,
+  fail_hints INTEGER NOT NULL DEFAULT 0,
   status TEXT NOT NULL DEFAULT 'playing',
   points INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))

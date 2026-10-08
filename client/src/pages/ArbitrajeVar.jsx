@@ -59,7 +59,7 @@ export default function ArbitrajeVar() {
     logGame("arbitraje_var", timedRef.current ? 4 : 2, finalCorrect / Math.max(1, totalRef.current), finalCorrect + "/" + totalRef.current + " decisiones" + (timedRef.current ? " · con reloj" : " · práctica"));
     // Juego diario: la primera partida CON TIEMPO del día te da un puntaje de hasta 20 (de referencia) y un sobre de cartas; el podio del día del grupo suma 5 / 3 / 3 puntos.
     if (timedRef.current) {
-      submitDaily("arbitraje_var", finalCorrect / Math.max(1, totalRef.current), finalCorrect).then((r) => setDailyMsg(dailyMessage(r)));
+      submitDaily("arbitraje_var", Math.min(1, finalCorrect / Math.max(1, totalRef.current)), finalCorrect).then((r) => setDailyMsg(dailyMessage(r)));
     }
     if (!groupId || !timedRef.current) return;
     setSaveState("saving");
@@ -95,8 +95,10 @@ export default function ArbitrajeVar() {
     try {
       const { data } = await api.post("/arbitraje-var/decide", { situationId: current.id, decisionIdx: idx });
       setFeedback({ correct: data.correct, correctIdx: data.correctIdx, pickedIdx: idx, why: data.why });
+      // Última jugada con reloj: «doble o nada». Acertar vale +2 y fallar resta 1.
+      const finalRound = timedRef.current && seenRef.current.length + 1 >= totalRef.current;
       setCorrectCount((c) => {
-        const next = data.correct ? c + 1 : c;
+        const next = finalRound ? Math.max(0, c + (data.correct ? 2 : -1)) : data.correct ? c + 1 : c;
         const nextSeen = [...seenRef.current, current.id];
         seenRef.current = nextSeen;
         setSeenIds(nextSeen);
@@ -199,6 +201,11 @@ export default function ArbitrajeVar() {
             </span>
           </div>
 
+          {timed && round + 1 >= totalRounds && !feedback && (
+            <p className="rounded-2xl border border-amber/40 bg-amber/10 text-amber text-sm font-semibold px-4 py-2.5">
+              Última jugada: doble o nada. Acertar suma 2 y fallar resta 1.
+            </p>
+          )}
           {loading && !situation && <p className="text-sm text-gray-500 py-8 text-center">Cargando...</p>}
 
           {situation && (

@@ -191,8 +191,8 @@ export default function Wordle() {
     playSfx(data.game.status === "won" ? "win" : data.game.status === "lost" ? "bad" : "tick");
     setQuery("");
   });
-  const useHint = (free) => act(async () => {
-    const { data } = await api.post("/wordle/hint", { gameId: game.id, free });
+  const useHint = (free, earned = false) => act(async () => {
+    const { data } = await api.post("/wordle/hint", { gameId: game.id, free, earned });
     applyGame(data.game, true);
     if (free) refreshWildcards();
   });
@@ -381,6 +381,16 @@ export default function Wordle() {
                         <span key={i} className={`w-1.5 h-1.5 rounded-full ${i < revealed ? "bg-good" : "bg-white/15"}`} />
                       ))}
                     </span>
+                    {game.failHintsAvailable > 0 && revealed < HINT_ORDER_LABELS.length && (
+                      <button
+                        onClick={() => useHint(false, true)}
+                        disabled={busy}
+                        title="Ganaste una pista por cada 2 intentos fallidos: no gasta intentos"
+                        className="tone-pink tile-b flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-1.5 text-white"
+                      >
+                        <Lightbulb size={12} /> Pista por fallos ({game.failHintsAvailable})
+                      </button>
+                    )}
                     {wildcards.available > 0 && (
                       <button
                         onClick={() => useHint(true)}

@@ -257,6 +257,8 @@ function serialize({ game, guessNames }) {
     maxAttempts: game.max_attempts,
     hintsUsed: game.hints_used,
     bonusHintsUsed: game.bonus_hints || 0,
+    // Pistas gratis ganadas por fallar: una cada 2 intentos fallidos.
+    failHintsAvailable: Math.max(0, Math.floor(guessNames.length / 2) - (game.fail_hints || 0)),
     hints,
     attemptsUsed: guesses.length + game.hints_used * HINT_COST,
     status: game.status,
@@ -502,6 +504,7 @@ router.post("/guess", async (req, res) => {
 router.post("/hint", async (req, res) => {
   const gameId = Number(req.body?.gameId);
   const wantFree = !!req.body?.free;
+  const wantEarned = !!req.body?.earned;
   if (!Number.isInteger(gameId)) return res.status(400).json({ error: "Falta la partida" });
   try {
     const loaded = await loadGame(gameId, req.userId);
@@ -511,7 +514,10 @@ router.post("/hint", async (req, res) => {
     const revealed = game.hints_used + (game.bonus_hints || 0);
     if (revealed >= HINT_ORDER.length) return res.status(400).json({ error: "Ya usaste todas las pistas" });
 
-    if (wantFree) {
+    if (wantEarned) {
+      if (Math.floor(guessNames.length / 2) - (game.fail_hints || 0) <= 0) return res.status(400).json({ error: "Todavía no ganaste una pista por fallos" });
+      await db.execute({ sql: "UPDATE fichado_games SET fail_hints = fail_hints + 1, bonus_hints = bonus_hints + 1 WHERE id = ?", args: [game.id] });
+    } else if (wantFree) {
       const row = (await db.execute({ sql: "SELECT available FROM fichado_wildcards WHERE user_id = ?", args: [req.userId] })).rows[0];
       if (!row || row.available <= 0) return res.status(400).json({ error: "No tenés comodines disponibles" });
       await db.execute({ sql: "UPDATE fichado_wildcards SET available = available - 1 WHERE user_id = ?", args: [req.userId] });

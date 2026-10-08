@@ -85,6 +85,17 @@ export default function Piramide() {
     if (state.slots[i]) persist({ ...state, selected: i });
   }
 
+  // Espiada (una sola vez por partida): si el jugador que viene va en la mitad de arriba o de abajo.
+  async function usePeek() {
+    if (state.peekUsed || !current) return;
+    try {
+      const { data } = await api.post("/futgames/pyramid/peek", { playerId: current.id });
+      persist({ ...state, peekUsed: true, peekInfo: { id: current.id, half: data.half } });
+    } catch {
+      setError("No se pudo espiar.");
+    }
+  }
+
   async function useHelp() {
     if (state.helpUsed) return;
     try {
@@ -149,6 +160,12 @@ export default function Piramide() {
               <p className="text-xl font-bold">{current.name}</p>
               {current.detail && <p className="text-xs text-gray-400">{current.detail}</p>}
               {current.tier && <p className="text-xs text-accent mt-1">Va en {TIER_LABEL[current.tier]}</p>}
+              {state.peekInfo?.id === current.id && <p className="text-xs text-amber mt-1">Espiada: va en la mitad de {state.peekInfo.half}.</p>}
+              {playing && !current.tier && !state.peekUsed && (
+                <button onClick={usePeek} className="mt-2 text-xs font-medium px-3 py-1 rounded-full border border-amber/40 text-amber bg-amber/10 hover:bg-amber/20 transition-colors">
+                  Espiar este jugador (1 vez)
+                </button>
+              )}
               <p className="text-xs text-gray-500 mt-2">Tocá una casilla libre para ubicarlo.</p>
             </Card>
           )}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, Radio, Timer } from "lucide-react";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -44,6 +44,15 @@ function savePowerupUsage(usage) {
   localStorage.setItem("fq_powerups", JSON.stringify({ date: todayKey(), ...usage }));
 }
 
+function loadEarned() {
+  try {
+    const raw = JSON.parse(localStorage.getItem("fq_earned_fifty") || "{}");
+    return raw.date === todayKey() ? raw.n || 0 : 0;
+  } catch {
+    return 0;
+  }
+}
+
 export default function Trivia() {
   const { stats, refreshMe } = useAuth();
   const { groups, activeGroupId: groupId } = useGroups();
@@ -51,13 +60,16 @@ export default function Trivia() {
   const [modeBData, setModeBData] = useState(null);
   const [mode, setMode] = useState("a");
   const [powerupUsage, setPowerupUsage] = useState(loadPowerupUsage);
+  const [earnedFifty, setEarnedFifty] = useState(loadEarned); // 50/50 ganados por racha de aciertos
+  const [earnMsg, setEarnMsg] = useState("");
+  const runRef = useRef(0); // aciertos seguidos en esta sesión
   // Una pregunta a la vez: se contesta y "Siguiente" pasa a la próxima.
   // Arranca en la primera sin responder (si ya respondiste alguna hoy).
   const [current, setCurrent] = useState(0);
   const [skippedIds, setSkippedIds] = useState([]);
 
   const budget = powerupBudget(stats?.current_streak ?? 0);
-  const powerupsLeft = { fifty: Math.max(0, budget.fifty - powerupUsage.fifty), skip: Math.max(0, budget.skip - powerupUsage.skip) };
+  const powerupsLeft = { fifty: Math.max(0, budget.fifty + earnedFifty - powerupUsage.fifty), skip: Math.max(0, budget.skip - powerupUsage.skip) };
 
   const handleUsePowerup = (type) => {
     if (type === "skip" && questions?.[current]) setSkippedIds((ids) => [...ids, questions[current].question.id]);
@@ -109,6 +121,17 @@ export default function Trivia() {
   }, [mode, groupId, loadModeB]);
 
   const handleAnswered = (index, result) => {
+    runRef.current = result?.is_correct ? runRef.current + 1 : 0;
+    if (runRef.current > 0 && runRef.current % 3 === 0) {
+      setEarnedFifty((n) => {
+        const next = n + 1;
+        try { localStorage.setItem("fq_earned_fifty", JSON.stringify({ date: todayKey(), n: next })); } catch { /* sin storage */ }
+        return next;
+      });
+      setEarnMsg("¡3 aciertos seguidos! Ganaste un 50/50 gratis.");
+    } else {
+      setEarnMsg("");
+    }
     setQuestions((prev) =>
       prev.map((item, i) => (i === index ? { ...item, answered: true, result } : item))
     );
@@ -238,6 +261,7 @@ export default function Trivia() {
           <div className="space-y-6">
             {mode === "a" ? (
               <>
+                {earnMsg && <p className="text-sm font-semibold text-accent">{earnMsg}</p>}
                 {currentItem && (
                   <>
                     <QuestionCard

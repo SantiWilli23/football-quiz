@@ -46,6 +46,15 @@ export async function initSchema() {
   await migrateFichadoBonusHints();
   await migrateCupMatchEvents();
   await migrateSeasonPredictionPhase();
+  await migrateFichadoFailHints();
+}
+
+// Fichado: pistas gratis ganadas por intentos fallidos (cada 2 fallos, una).
+async function migrateFichadoFailHints() {
+  const info = await db.execute("PRAGMA table_info(fichado_games)");
+  if (info.rows.length === 0) return; // instalación nueva: ya sale del schema.sql
+  if (info.rows.some((r) => r.name === "fail_hints")) return;
+  await db.execute("ALTER TABLE fichado_games ADD COLUMN fail_hints INTEGER NOT NULL DEFAULT 0");
 }
 
 // Campeón y descenso: en qué ventana se hizo la predicción ("inicio" o
