@@ -119,9 +119,9 @@ function fillerPool(league) {
 }
 
 function tierRange(tier) {
-  if (tier === 1) return { starter: [80, 88], bench: [76, 83], reserve: [68, 79] };
-  if (tier === 2) return { starter: [75, 82], bench: [70, 78], reserve: [63, 73] };
-  return { starter: [70, 78], bench: [65, 74], reserve: [60, 70] };
+  if (tier === 1) return { starter: [80, 88], bench: [76, 83], reserve: [70, 80] };
+  if (tier === 2) return { starter: [76, 84], bench: [72, 80], reserve: [66, 75] };
+  return { starter: [74, 82], bench: [70, 78], reserve: [64, 73] };
 }
 
 const POSITIONS_ALL = ["GK", "CB", "LB", "RB", "CDM", "CM", "CAM", "LW", "RW", "ST"];
