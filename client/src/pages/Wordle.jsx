@@ -6,6 +6,7 @@ import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import { playSfx } from "../utils/sfx.js";
+import { celebrateScore } from "../utils/celebrate.js";
 
 const GLOBAL_TAB = { key: "global", label: "Todos" };
 const HINT_ORDER_LABELS = ["Posición", "Liga", "Nacionalidad", "Nacimiento", "Club"];
@@ -160,6 +161,7 @@ export default function Wordle() {
     setGame(next);
     if (wasPlaying && next.status !== "playing") {
       reportToGroup(next);
+      celebrateScore({ points: next.points, unit: "puntos en Fichado", detail: next.status === "won" ? `Lo adivinaste en ${next.attemptsUsed} de ${next.maxAttempts} intentos` : "" });
       setStats(null); // que el historial se vuelva a pedir con la partida recién terminada
     }
   }
