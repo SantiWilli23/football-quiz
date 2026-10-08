@@ -46,14 +46,14 @@ function FixtureList({ byLeague, leagues, grouped, empty }) {
   const keys = leagues.map((l) => l.key).filter((k) => (byLeague[k] || []).length > 0);
   if (keys.length === 0) return <p className="text-sm text-gray-500">{empty}</p>;
   if (!grouped) {
-    return <div className="space-y-2">{sortFixtures(byLeague[keys[0]]).map((f) => <FixtureCard key={f.id} fixture={f} />)}</div>;
+    return <div className="space-y-2">{sortFixtures(byLeague[keys[0]]).map((f) => <FixtureCard key={f.id} fixture={f} league={keys[0]} />)}</div>;
   }
   return (
     <div className="space-y-5">
       {keys.map((k) => (
         <div key={k}>
           <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{leagues.find((l) => l.key === k)?.name}</h3>
-          <div className="space-y-2">{sortFixtures(byLeague[k]).map((f) => <FixtureCard key={f.id} fixture={f} />)}</div>
+          <div className="space-y-2">{sortFixtures(byLeague[k]).map((f) => <FixtureCard key={f.id} fixture={f} league={k} />)}</div>
         </div>
       ))}
     </div>

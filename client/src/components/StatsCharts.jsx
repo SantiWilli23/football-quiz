@@ -6,6 +6,7 @@ import { SkeletonCard } from "./Skeleton.jsx";
 import EmptyState from "./EmptyState.jsx";
 
 const DAY_LETTERS = ["D", "L", "M", "M", "J", "V", "S"];
+const BAR_TONES = ["accent", "blue", "purple", "amber", "pink", "cyan", "red"];
 
 // Aciertos de los últimos 7 días (barras) + puntos acumulados del mes (línea
 // con área). Los datos son personales: /stats/my-daily no pide grupo.
@@ -44,14 +45,31 @@ export default function StatsCharts() {
   const [ex, ey] = pts[pts.length - 1];
 
   return (
-    <div className="grid md:grid-cols-2 gap-3 mb-6">
+    <div className="grid gap-4 mb-6">
+      <div className="hero-b rounded-3xl p-5 sm:p-6" style={{ "--hero-a": "var(--c-accent)", "--hero-b": "var(--c-purple)" }}>
+        <div className="flex items-baseline justify-between gap-3 flex-wrap">
+          <p className="t-eyebrow">Puntos · último mes</p>
+          <p className="text-3xl font-bold tabular-nums text-accent">+{acc} <span className="text-sm font-medium text-gray-400">pts en 30 días</span></p>
+        </div>
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full h-40 mt-3" role="img" aria-label="Puntos acumulados del mes">
+          <defs>
+            <linearGradient id="ptsFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="rgb(var(--c-accent))" stopOpacity="0.55" />
+              <stop offset="1" stopColor="rgb(var(--c-accent))" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d={`${line} V${H} H0Z`} fill="url(#ptsFill)" />
+          <path d={line} fill="none" stroke="rgb(var(--c-accent))" strokeWidth="3" vectorEffect="non-scaling-stroke" />
+          <circle cx={ex} cy={ey} r="5" fill="rgb(var(--c-amber))" />
+        </svg>
+      </div>
       <Card>
         <p className="t-eyebrow mb-4">Aciertos · últimos 7 días</p>
         <div className="flex items-end gap-2 h-24">
-          {week.map((d) => (
-            <div key={d.date} className="flex-1 flex flex-col justify-end h-full" title={`${d.correct} de ${d.total}`}>
-              <div className="w-full rounded-t bg-blue-500/20" style={{ height: `${(d.total / maxTotal) * 100}%` }}>
-                <div className="w-full rounded-t bg-blue-500" style={{ height: d.total ? `${(d.correct / d.total) * 100}%` : 0 }} />
+          {week.map((d, i) => (
+            <div key={d.date} className={`tone-${BAR_TONES[i % BAR_TONES.length]} flex-1 flex flex-col justify-end h-full`} title={`${d.correct} de ${d.total}`}>
+              <div className="w-full rounded-t bg-tone-soft" style={{ height: `${(d.total / maxTotal) * 100}%` }}>
+                <div className="w-full rounded-t bg-tone" style={{ height: d.total ? `${(d.correct / d.total) * 100}%` : 0 }} />
               </div>
             </div>
           ))}
@@ -61,21 +79,6 @@ export default function StatsCharts() {
             <span key={d.date} className="flex-1 text-center">{DAY_LETTERS[new Date(`${d.date}T12:00:00`).getDay()]}</span>
           ))}
         </div>
-      </Card>
-      <Card>
-        <p className="t-eyebrow mb-4">Puntos · último mes</p>
-        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full h-24" role="img" aria-label="Puntos acumulados del mes">
-          <defs>
-            <linearGradient id="ptsFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="rgb(var(--c-accent))" stopOpacity="0.35" />
-              <stop offset="1" stopColor="rgb(var(--c-accent))" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <path d={`${line} V${H} H0Z`} fill="url(#ptsFill)" />
-          <path d={line} fill="none" stroke="rgb(var(--c-accent))" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-          <circle cx={ex} cy={ey} r="3.5" fill="rgb(var(--c-accent))" />
-        </svg>
-        <p className="t-meta mt-2">+{acc} pts en 30 días</p>
       </Card>
     </div>
   );

@@ -33,12 +33,14 @@ function SectionTitle({ icon: Icon, children, hint }) {
   );
 }
 
-function Stat({ label, value, sub, accent }) {
+const CAT_TONES = ["accent", "blue", "purple", "amber", "pink", "cyan"];
+
+function Stat({ label, value, sub, tone = "accent" }) {
   return (
-    <div>
-      <p className="text-xs text-gray-500 mb-1">{label}</p>
-      <p className={`text-2xl font-bold ${accent || ""}`}>{value}</p>
-      {sub && <p className="text-xs text-gray-600 mt-0.5">{sub}</p>}
+    <div className={`strip-cell tone-${tone}`}>
+      <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">{label}</p>
+      <p className="text-2xl font-bold text-tone truncate">{value}</p>
+      {sub && <p className="text-xs text-gray-500 mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -191,15 +193,16 @@ export default function Stats() {
                     label="Más puntos"
                     value={summary.top_scorer?.username ?? "—"}
                     sub={summary.top_scorer ? `${summary.top_scorer.points} pts` : null}
-                    accent="text-accent"
+                    tone="accent"
                   />
                   <Stat
                     label="Más votado"
                     value={summary.most_voted?.username ?? "—"}
                     sub={summary.most_voted ? `${summary.most_voted.votes} votos` : null}
+                    tone="purple"
                   />
-                  <Stat label="Participación" value={`${summary.participation}%`} sub={`${summary.answers_total} respuestas`} />
-                  <Stat label="Días jugados" value={weekly.days} />
+                  <Stat label="Participación" value={`${summary.participation}%`} sub={`${summary.answers_total} respuestas`} tone="blue" />
+                  <Stat label="Días jugados" value={weekly.days} tone="amber" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -337,8 +340,8 @@ export default function Stats() {
               <p className="text-sm text-gray-500">Todavía no hay suficientes respuestas para armar el ranking por categoría.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {categories.map((c) => (
-                  <div key={c.category} className="rounded-xl border border-border bg-bg px-4 py-3">
+                {categories.map((c, ci) => (
+                  <div key={c.category} className={`tone-${CAT_TONES[ci % CAT_TONES.length]} rounded-xl border border-border bg-bg px-4 py-3`}>
                     <p className="text-xs text-gray-500 mb-2">{c.category}</p>
                     <div className="flex items-center gap-2.5 mb-2">
                       <Avatar user={c.leader} size={28} />
@@ -346,7 +349,13 @@ export default function Stats() {
                         <p className="text-sm font-semibold truncate">{c.leader.username}</p>
                         <p className="text-xs text-gray-600">{c.leader.correct}/{c.leader.total} correctas</p>
                       </div>
-                      <span className="ml-auto text-lg font-bold text-accent shrink-0">{c.leader.accuracy}%</span>
+                      <span
+                        className="ml-auto shrink-0 relative w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold"
+                        style={{ background: `conic-gradient(rgb(var(--tone)) ${c.leader.accuracy}%, rgb(var(--c-border)) 0)` }}
+                      >
+                        <span className="absolute inset-1 rounded-full bg-bg" />
+                        <span className="relative text-tone">{c.leader.accuracy}%</span>
+                      </span>
                     </div>
                     {c.breakdown.length > 1 && (
                       <div className="space-y-1 mt-2 pt-2 border-t border-border">

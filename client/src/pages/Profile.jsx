@@ -20,6 +20,7 @@ export default function Profile() {
   const [position, setPosition] = useState(null);
   const [ranking, setRanking] = useState([]);
   const [compareId, setCompareId] = useState("");
+  const [tab, setTab] = useState("resumen");
 
   useEffect(() => {
     const loadGroup = async () => {
@@ -50,89 +51,82 @@ export default function Profile() {
   const favTeam = user.profile?.favTeam ? teamById(user.profile.favTeam) : null;
 
   const items = [
-    { label: "Puntos totales", value: stats.total_points },
-    { label: "Puntos de trivia", value: stats.trivia_points ?? 0 },
-    { label: "Puntos del modo especial", value: stats.mode_b_points ?? 0 },
-    { label: "% de aciertos", value: `${stats.accuracy}%` },
-    { label: "Respondidas", value: stats.answered },
-    { label: "Racha actual", value: `${stats.current_streak} días` },
-    { label: "Mejor racha", value: `${stats.best_streak} días` },
-    {
-      label: activeGroup ? `Posición en ${activeGroup.name}` : "Posición en grupo",
-      value: position ? `#${position}` : "—",
-    },
+    { label: "Puntos totales", value: stats.total_points, tone: "accent" },
+    { label: "% de aciertos", value: `${stats.accuracy}%`, tone: "blue" },
+    { label: "Racha actual", value: `${stats.current_streak} días`, tone: "amber" },
+    { label: "Mejor racha", value: `${stats.best_streak} días`, tone: "purple" },
+    { label: "Puntos de trivia", value: stats.trivia_points ?? 0, tone: "emerald" },
+    { label: "Modo especial", value: stats.mode_b_points ?? 0, tone: "pink" },
   ];
+  const TABS = [["resumen", "Resumen"], ["vitrina", "Vitrina"], ["ajustes", "Ajustes"]];
 
   return (
     <Layout>
-      <h1 className="text-2xl font-bold mb-6">Mi perfil</h1>
-
-      <Card className="mb-6 !p-0 overflow-hidden">
-        <div className="h-24" style={{ background: PROFILE_BANNERS[user.profile?.banner] || PROFILE_BANNERS.verde }} />
-        <div className="px-5 pb-5 -mt-10">
-          <div className="flex items-end gap-4">
-            <span className="rounded-full ring-4 ring-panel inline-flex">
-              <Avatar user={user} size={88} />
-            </span>
-            {favTeam && (
-              <div className="ml-auto flex items-center gap-2 pb-1 text-xs text-gray-400">
-                {badgeFor(favTeam.id) && <img src={badgeFor(favTeam.id)} alt="" className="w-7 h-7 object-contain" />}
-                <span>{favTeam.name}</span>
-              </div>
-            )}
+      <div className="hero-b rounded-3xl p-6 sm:p-8 mb-6" style={{ "--hero-a": "var(--c-pink)", "--hero-b": "var(--c-accent)" }}>
+        <div className="flex items-center gap-5 flex-wrap">
+          <span className="rounded-full ring-4 ring-panel inline-flex">
+            <Avatar user={user} size={96} />
+          </span>
+          <div className="flex-1 min-w-[200px]">
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{user.username}</h1>
+            <p className="text-sm text-gray-300 mt-1">
+              {user.profile?.bio || `Miembro desde ${new Date(user.created_at).toLocaleDateString("es-ES", { month: "long", year: "numeric" })}`}
+            </p>
+            {activeGroup && <p className="text-sm text-gray-400 mt-1">{position ? `#${position} en ${activeGroup.name}` : activeGroup.name}</p>}
           </div>
-          <p className="text-lg font-semibold mt-3">{user.username}</p>
-          {user.profile?.bio && <p className="text-sm text-gray-300 mt-0.5">{user.profile.bio}</p>}
-          <p className="text-sm text-gray-500 mt-1">{user.email}</p>
-          <p className="text-xs text-gray-600 mt-1">
-            Miembro desde{" "}
-            {new Date(user.created_at).toLocaleDateString("es-ES", {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}
-          </p>
+          {favTeam && (
+            <div className="flex items-center gap-2 text-sm text-gray-300">
+              {badgeFor(favTeam.id) && <img src={badgeFor(favTeam.id)} alt="" className="w-9 h-9 object-contain" />}
+              <span>{favTeam.name}</span>
+            </div>
+          )}
         </div>
-      </Card>
-
-      <div className="mb-6">
-        <PlayerCard user={user} stats={stats} activeGroup={activeGroup} position={position} />
+        <div className="flex gap-2 mt-6 flex-wrap" role="tablist">
+          {TABS.map(([k, label], i) => (
+            <button
+              key={k}
+              role="tab"
+              aria-selected={tab === k}
+              onClick={() => setTab(k)}
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${tab === k ? "bg-white text-black border-white" : "border-white/25 text-gray-200 hover:border-white/60"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="mb-6">
-        <AvatarEditor user={user} onSaved={refreshMe} />
-      </div>
+      {tab === "resumen" && (
+        <>
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_1fr] items-start mb-6">
+            <PlayerCard user={user} stats={stats} activeGroup={activeGroup} position={position} />
+            <div className="rounded-2xl border border-border bg-panel p-5 sm:p-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6">
+                {items.map((item) => (
+                  <div key={item.label} className={`strip-cell tone-${item.tone}`}>
+                    <p className="text-xs uppercase tracking-wider text-gray-500">{item.label}</p>
+                    <p className="text-2xl sm:text-3xl font-bold tabular-nums text-tone mt-1">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
-      <div className="mb-6">
-        <ProfileEditor user={user} onSaved={refreshMe} />
-      </div>
+      {tab === "vitrina" && <div className="mb-6"><Vitrina /></div>}
 
-      <div className="mb-6">
-        <Vitrina />
-      </div>
+      {tab === "ajustes" && (
+        <>
+          <div className="mb-6"><AvatarEditor user={user} onSaved={refreshMe} /></div>
+          <div className="mb-6"><ProfileEditor user={user} onSaved={refreshMe} /></div>
+          <div className="mb-6"><ThemeSettings /></div>
+          <div className="mb-6"><PushToggle /></div>
+          <div className="mb-6"><AccountSettings user={user} onUpdated={refreshMe} /></div>
+        </>
+      )}
 
-      <div className="mb-6">
-        <ThemeSettings />
-      </div>
-
-      <div className="mb-6">
-        <PushToggle />
-      </div>
-
-      <div className="mb-6">
-        <AccountSettings user={user} onUpdated={refreshMe} />
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {items.map((item) => (
-          <Card key={item.label}>
-            <p className="text-xs text-gray-500 mb-2">{item.label}</p>
-            <p className="text-2xl font-bold">{item.value}</p>
-          </Card>
-        ))}
-      </div>
-
-      {others.length > 0 && me && (
+      {tab === "resumen" && others.length > 0 && me && (
         <Card className="mt-6">
           <h2 className="font-semibold mb-3">Comparar perfiles</h2>
           <select

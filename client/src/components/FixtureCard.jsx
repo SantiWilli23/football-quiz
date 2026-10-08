@@ -21,16 +21,14 @@ const STATUS_LABEL = {
 
 const LIVE_STATUSES = new Set(["1H", "HT", "2H", "ET", "P"]);
 
-function TeamRow({ team, score, isWinner }) {
+const LEAGUE_TONE = { premier: "purple", laliga: "red", serie_a: "blue", bundesliga: "amber", ligue1: "cyan", chile: "emerald" };
+
+function Side({ team, isWinner, align }) {
+  const right = align === "right";
   return (
-    <div className="flex items-center gap-2.5 min-w-0">
-      {team.logo && (
-        <img src={team.logo} alt="" className="w-5 h-5 shrink-0" loading="lazy" />
-      )}
-      <span className={`text-sm truncate ${isWinner ? "font-semibold" : ""}`}>{team.name}</span>
-      <span className={`ml-auto text-sm font-semibold tabular-nums ${isWinner ? "" : "text-gray-500"}`}>
-        {score ?? "-"}
-      </span>
+    <div className={`flex items-center gap-2.5 min-w-0 ${right ? "flex-row-reverse text-right" : ""}`}>
+      {team.logo ? <img src={team.logo} alt="" className="w-8 h-8 shrink-0 object-contain" loading="lazy" /> : <span className="w-8 h-8 shrink-0 rounded-full bg-white/10" />}
+      <span className={`text-sm truncate ${isWinner ? "font-bold" : "font-medium"}`}>{team.name}</span>
     </div>
   );
 }
@@ -60,7 +58,8 @@ function LineupSide({ side }) {
 // Una fila de partido. Si está en vivo o terminado, se puede desplegar para
 // ver la alineación de los dos equipos (la API sólo la tiene disponible una
 // vez que el partido arrancó, así que no tiene sentido ofrecerla antes).
-export default function FixtureCard({ fixture }) {
+export default function FixtureCard({ fixture, league }) {
+  const tone = LEAGUE_TONE[league || fixture.leagueKey] || "accent";
   const [open, setOpen] = useState(false);
   const [lineups, setLineups] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -91,34 +90,29 @@ export default function FixtureCard({ fixture }) {
   };
 
   return (
-    <div className="rounded-card border border-border bg-bg overflow-hidden">
+    <div className={`tone-${tone} rounded-card border border-border bg-bg overflow-hidden`} style={{ borderLeft: "4px solid rgb(var(--tone))" }}>
       <button
         onClick={toggle}
         disabled={!canShowLineup}
-        className={`w-full text-left px-4 py-3 flex items-center gap-4 ${
+        className={`w-full text-left px-4 py-3.5 grid grid-cols-[1fr_auto_1fr] items-center gap-3 ${
           canShowLineup ? "cursor-pointer hover:bg-white/5" : "cursor-default"
         } transition-colors`}
       >
-        <div className="flex-1 min-w-0 space-y-1.5">
-          <TeamRow team={fixture.home} score={fixture.score.home} isWinner={fixture.home.winner === true} />
-          <TeamRow team={fixture.away} score={fixture.score.away} isWinner={fixture.away.winner === true} />
-        </div>
-        <div className="shrink-0 text-right">
-          <span
-            className="text-xs font-semibold px-2 py-1 rounded-full border inline-block"
-            style={
-              isLive
-                ? { color: CHALK.red, borderColor: `${CHALK.red}66`, background: `${CHALK.red}1a` }
-                : { color: "#9aa3b2", borderColor: "transparent" }
-            }
-          >
-            {isLive && fixture.minute ? `${fixture.minute}'` : STATUS_LABEL[fixture.status] ?? fixture.status}
-          </span>
-          {canShowLineup && (
-            <div className="mt-1 flex justify-end text-gray-500">
-              {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </div>
+        <Side team={fixture.home} isWinner={fixture.home.winner === true} />
+        <div className="text-center min-w-[84px]">
+          {fixture.score.home == null ? (
+            <p className="text-lg font-bold tabular-nums leading-none">{new Date(fixture.date).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}</p>
+          ) : (
+            <p className="text-2xl font-bold tabular-nums leading-none tracking-tight">{fixture.score.home} - {fixture.score.away}</p>
           )}
+          <p className="mt-1.5 text-[11px] font-semibold flex items-center justify-center gap-1.5" style={isLive ? { color: CHALK.red } : { color: "#9aa3b2" }}>
+            {isLive && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: CHALK.red }} />}
+            {isLive && fixture.minute ? `${fixture.minute}'` : STATUS_LABEL[fixture.status] ?? fixture.status}
+          </p>
+        </div>
+        <div className="flex items-center justify-end gap-2 min-w-0">
+          <Side team={fixture.away} isWinner={fixture.away.winner === true} align="right" />
+          {canShowLineup && <span className="text-gray-500 shrink-0">{open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</span>}
         </div>
       </button>
 
