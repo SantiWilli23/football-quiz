@@ -24,8 +24,7 @@ export default function SeasonWindowNotice({ status }) {
       <div className="flex items-start gap-3">
         <CalendarClock size={18} className="text-amber shrink-0 mt-0.5" />
         <p className="text-sm text-gray-400">
-          Cerrado por ahora. {status.label} abre solo al inicio y al final de la temporada: la próxima ventana
-          ({status.next.phase === "inicio" ? "inicio de temporada" : "final de temporada"}) abre el {fmt(status.next.date)}.
+          Cerrado por ahora. {status.label} abre solo en las vacaciones de verano: la próxima ventana abre el {fmt(status.next.date)}.
         </p>
       </div>
     </Card>

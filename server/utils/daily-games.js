@@ -3,7 +3,7 @@ import { addDays, mondayOf } from "./points.js";
 import { DAILY_GAME_MAX_POINTS, WEEKLY_GAME_RANK_POINTS } from "./points-config.js";
 import { WEEKLY_PODIUM_PACKS, dailyPackQuality, grantPack } from "./rewards.js";
 
-// Los diez juegos que se turnan como "juego diario": cada día es UNO solo (ver
+// Los doce juegos que se turnan como "juego diario": cada día es UNO solo (ver
 // dailyGameKeyFor), y ese paga hasta DAILY_GAME_MAX_POINTS. Los otros nueve ese
 // día se juegan igual, pero no suman al juego diario.
 // "level" es la dificultad en la que cuenta el puntaje del día (todos en la
@@ -22,9 +22,10 @@ export const DAILY_GAMES = [
   { key: "piramide", label: "Pirámide", to: "/piramide", level: null },
   { key: "torta", label: "Torta de plantel", to: "/torta", level: null },
   { key: "traspasos", label: "Traspasos a ciegas", to: "/traspasos", level: null },
+  { key: "a_quien_me_compro", label: "¿A quién me compro?", to: "/a-quien-me-compro", level: "Difícil" },
 ];
 
-// El juego diario de una fecha: rota por los diez en orden, un día cada uno.
+// El juego diario de una fecha: rota por todos en orden, un día cada uno.
 // Lo decide el servidor, así que todos los miembros juegan el mismo.
 export function dailyGameKeyFor(dateStr) {
   const day = Math.floor(Date.parse(dateStr + "T00:00:00Z") / 86400000);
@@ -32,7 +33,7 @@ export function dailyGameKeyFor(dateStr) {
 }
 
 // Los que mandan su resultado desde el cliente (fichado y quiniela no).
-export const SUBMITTABLE_DAILY = new Set(["cotrero", "escudos", "draft_europeo", "un_minuto", "arbitraje_var", "tateti", "piramide", "torta", "traspasos"]);
+export const SUBMITTABLE_DAILY = new Set(["cotrero", "escudos", "draft_europeo", "un_minuto", "arbitraje_var", "tateti", "piramide", "torta", "traspasos", "a_quien_me_compro"]);
 
 export function pointsFromFraction(fraction) {
   const f = Number(fraction);

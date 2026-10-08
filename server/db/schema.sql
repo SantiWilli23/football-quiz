@@ -973,7 +973,7 @@ CREATE TABLE IF NOT EXISTS var_votes (
   UNIQUE(group_id, situation_id, user_id)
 );
 
--- Cache de fotos de futbolistas (se busca una vez por nombre; url vacía = no hay foto).
+-- Cache de fotos de futbolistas (se busca una vez por nombre, url vacía = no hay foto).
 CREATE TABLE IF NOT EXISTS player_photos (
   name_key TEXT PRIMARY KEY,
   url TEXT NOT NULL DEFAULT ''

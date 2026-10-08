@@ -3,14 +3,14 @@ import { requireAuth } from "../middleware/auth.js";
 import { db } from "../db/client.js";
 import { normalize } from "../utils/futgames.js";
 
-// Imágenes que la base de Futotal no trae: la cara de un futbolista y el escudo de un
-// club, ambos por nombre. Se buscan una vez en el buscador público de ESPN y el
-// resultado (también si no hay) se guarda para no volver a preguntar.
+// Imágenes que la base de Futotal no trae: la cara de un futbolista (TheSportsDB) y el
+// escudo de un club (ESPN), ambos por nombre. Se buscan una vez y el resultado (también
+// si no hay) se guarda para no volver a preguntar.
 const router = Router();
 router.use(requireAuth);
 
 const SEARCH = "https://site.web.api.espn.com/apis/common/v3/search";
-const headshot = (id) => `https://a.espncdn.com/i/headshots/soccer/players/full/${id}.png`;
+const PLAYERS_DB = "https://www.thesportsdb.com/api/v1/json/3/searchplayers.php";
 const teamLogo = (id) => `https://a.espncdn.com/i/teamlogos/soccer/500/${id}.png`;
 
 async function search(name, type) {
@@ -21,10 +21,13 @@ async function search(name, type) {
 }
 
 async function findPlayer(name) {
+  const res = await fetch(`${PLAYERS_DB}?p=${encodeURIComponent(name)}`, { signal: AbortSignal.timeout(6000) });
+  if (!res.ok) throw new Error(`TheSportsDB ${res.status}`);
+  const data = await res.json();
   const wanted = normalize(name);
-  const items = await search(name, "player");
-  const hit = items.find((p) => normalize(p.displayName) === wanted) || (items.length === 1 ? items[0] : null);
-  return hit ? headshot(hit.id) : null;
+  const soccer = (data.player || []).filter((p) => p.strSport === "Soccer");
+  const hit = soccer.find((p) => normalize(p.strPlayer) === wanted) || (soccer.length === 1 ? soccer[0] : null);
+  return hit ? hit.strCutout || hit.strThumb || null : null;
 }
 
 async function findClub(name) {

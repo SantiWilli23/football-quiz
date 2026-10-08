@@ -4,8 +4,8 @@
 export const FEATURES = {
   // Pronóstico: Quiniela semanal, Campeón y descenso, Mercado de pases.
   pronosticos: false,
-  // Campeón y descenso y Mercado de pases: abren solo al inicio y al final de
-  // cada temporada (Europa y Chile por separado; lo decide el servidor).
+  // Campeón y descenso y Mercado de pases: abren solo en las vacaciones de
+  // verano (Europa y Chile por separado; lo decide el servidor).
   temporada: true,
 };
 
@@ -13,8 +13,8 @@ export const FEATURES = {
 // descenso y Mercado de pases solo aparecen cuando alguna región está abierta.
 // [mes, día] inclusivos; una ventana puede cruzar el año.
 const SEASON_WINDOWS = [
-  [[7, 1], [8, 31]], [[4, 1], [5, 31]], // Europa: inicio y final
-  [[1, 1], [2, 28]], [[10, 1], [12, 15]], // Chile: inicio y final
+  [[7, 1], [8, 31]], // Europa: vacaciones de verano
+  [[12, 15], [2, 15]], // Chile: vacaciones de verano
 ];
 
 export function seasonWindowOpen(now = new Date()) {

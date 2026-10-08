@@ -67,7 +67,7 @@ export const HELP = [
     "Te anotás una vez y se arma sola; no necesitás jugar un partido aparte.",
   ]) },
   { match: "/mercado", ...H("Mercado de pases", "Predecí a dónde se va cada figura. Hay un mercado de Europa y otro de Chile.", [
-    "Solo abre al inicio y al final de cada temporada. Europa: julio–agosto y abril–mayo. Chile: enero–febrero y octubre–15 de diciembre.",
+    "Solo abre en las vacaciones de verano. Europa: julio–agosto. Chile: 15 de diciembre–15 de febrero.",
     "Fuera de esas fechas podés ver el último mercado, pero no elegir.",
     "Cada acierto suma puntos cuando se resuelve el mercado.",
   ]) },
@@ -135,7 +135,7 @@ export const HELP = [
     "Exacto suma 5; acertar solo el ganador o el empate suma 2. Es un juego semanal: esos puntos se pagan los domingos si tu grupo activó los juegos semanales. Cada día que jugás te da un sobre de cartas.",
   ]) },
   { match: "/pronosticos", ...H("Campeón y descenso", "Predecí quién sale campeón y quiénes bajan esta temporada, en las 5 grandes de Europa y en Chile.", [
-    "Solo abre al inicio y al final de cada temporada. Europa: julio–agosto y abril–mayo. Chile: enero–febrero y octubre–15 de diciembre.",
+    "Solo abre en las vacaciones de verano. Europa: julio–agosto. Chile: 15 de diciembre–15 de febrero.",
     "Se paga cuando termina la temporada real: 20 puntos por el campeón y 7 por cada descenso acertado (en Chile bajan 2, en Europa se eligen 3).",
     "Lo que predecís al final de temporada vale la mitad, porque ya se sabe mucho más.",
   ]) },

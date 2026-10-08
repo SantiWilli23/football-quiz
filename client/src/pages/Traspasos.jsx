@@ -126,12 +126,12 @@ export default function Traspasos() {
       {!state && (
         <div className="space-y-4">
           <div className="hero-b rounded-3xl p-5 sm:p-7 overflow-hidden" style={{ "--hero-a": "var(--c-blue)", "--hero-b": "var(--c-emerald)" }}>
-            <p className="t-eyebrow mb-3">La carrera, sin nombre</p>
-            <ul className="space-y-0" aria-hidden="true">
+            <p className="relative t-eyebrow mb-3">La carrera, sin nombre</p>
+            <ul className="relative space-y-0" aria-hidden="true">
               {[["Club de origen", "2011 – 2016", true], ["Primer salto", "2016 – 2019", true], ["???", "2019 – ???", false]].map(([c, y, open], i) => (
                 <li key={c} className="flex items-center gap-3 py-2">
                   <span className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${open ? "bg-accent/25 border border-accent/60" : "border border-dashed border-border text-gray-500"}`}>{open ? i + 1 : "?"}</span>
-                  <span className={`flex-1 text-sm ${open ? "text-gray-200" : "text-gray-500"}`}>{c}</span>
+                  <span className={`flex-1 text-sm ${open ? "text-gray-300" : "text-gray-500"}`}>{c}</span>
                   <span className="text-xs text-gray-500 tabular-nums">{y}</span>
                 </li>
               ))}

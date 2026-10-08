@@ -25,7 +25,7 @@ function PyramidIntro({ fromDaily, mode, setMode, busy, onStart, error }) {
   return (
     <div className="space-y-4">
       <div className="hero-b rounded-3xl p-5 sm:p-7 overflow-hidden" style={{ "--hero-a": "var(--c-amber)", "--hero-b": "var(--c-purple)" }}>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+        <div className="relative flex flex-col sm:flex-row sm:items-center gap-6">
           <div className="space-y-1.5 shrink-0 mx-auto sm:mx-0" aria-hidden="true">
             {rows.map((n, r) => (
               <div key={r} className="flex justify-center gap-1.5">

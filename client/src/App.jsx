@@ -53,6 +53,7 @@ const QuienSabeMas = lazy(() => import("./pages/QuienSabeMas.jsx"));
 const VarVotacion = lazy(() => import("./pages/VarVotacion.jsx"));
 const VidaFut = lazy(() => import("./pages/VidaFut.jsx"));
 const Bingo = lazy(() => import("./pages/Bingo.jsx"));
+const AQuienMeCompro = lazy(() => import("./pages/AQuienMeCompro.jsx"));
 const Piramide = lazy(() => import("./pages/Piramide.jsx"));
 const Torta = lazy(() => import("./pages/Torta.jsx"));
 const Traspasos = lazy(() => import("./pages/Traspasos.jsx"));
@@ -347,6 +348,14 @@ export default function App() {
         }
       />
       <Route path="/tateti" element={<Navigate to="/bingo" replace />} />
+      <Route
+        path="/a-quien-me-compro"
+        element={
+          <PrivateRoute>
+            <AQuienMeCompro />
+          </PrivateRoute>
+        }
+      />
       <Route
         path="/piramide"
         element={

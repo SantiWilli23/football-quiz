@@ -20,4 +20,5 @@ export const GAME_LABELS = {
   piramide: "Pirámide",
   torta: "Torta de plantel",
   traspasos: "Traspasos a ciegas",
+  a_quien_me_compro: "¿A quién me compro?",
 };

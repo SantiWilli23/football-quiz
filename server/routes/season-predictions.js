@@ -53,7 +53,7 @@ router.post("/:league/predict", async (req, res) => {
 
   const win = windowStatus(regionOfLeague(league));
   if (!win.open) {
-    return res.status(403).json({ error: `Las predicciones de ${win.label} abren al inicio y al final de la temporada (próxima: ${win.next.date})` });
+    return res.status(403).json({ error: `Las predicciones de ${win.label} abren solo en las vacaciones de verano (próxima: ${win.next.date})` });
   }
 
   const count = RELEGATED_COUNT(league);

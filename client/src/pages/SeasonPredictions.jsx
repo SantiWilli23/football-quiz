@@ -81,9 +81,9 @@ export default function SeasonPredictions() {
     <Layout>
       <h1 className="text-xl sm:text-2xl font-bold mb-1">Campeón y descenso</h1>
       <p className="text-gray-400 text-sm mb-6">
-        Predecí quién sale campeón y qué equipos bajan esta temporada. Abre solo al inicio y al final de cada
-        temporada (Europa y Chile por separado). Se resuelve solo cuando casi no queden partidos: 20 puntos por el
-        campeón y 7 por cada equipo que sí descendió. Lo que predecís al final de temporada vale la mitad.
+        Predecí quién sale campeón y qué equipos bajan esta temporada. Abre solo en las vacaciones de verano
+        (Europa y Chile por separado). Se resuelve solo cuando casi no queden partidos: 20 puntos por el
+        campeón y 7 por cada equipo que sí descendió.
       </p>
 
       {leagues.length > 0 && league && <LeagueTabs leagues={leagues} active={league} onChange={setLeague} />}

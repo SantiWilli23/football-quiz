@@ -34,7 +34,7 @@ export default function Mercado() {
         <Repeat size={22} className="text-accent shrink-0" />
         <div>
           <h1 className="t-title">Mercado de pases</h1>
-          <p className="text-gray-400 text-sm">Elegí el destino de cada figura. Abre solo al inicio y al final de cada temporada; cuando se resuelve, cada acierto suma {data?.points ?? 10} puntos.</p>
+          <p className="text-gray-400 text-sm">Elegí el destino de cada figura. Abre solo en las vacaciones de verano; cuando se resuelve, cada acierto suma {data?.points ?? 10} puntos.</p>
         </div>
       </div>
 

@@ -29,13 +29,13 @@ function BingoIntro({ fromDaily, mode, setMode, timer, setTimer, busy, onStart, 
   return (
     <div className="space-y-4">
       <div className="hero-b rounded-3xl p-5 sm:p-7 overflow-hidden" style={{ "--hero-a": "var(--c-accent)", "--hero-b": "var(--c-purple)" }}>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+        <div className="relative flex flex-col sm:flex-row sm:items-center gap-6">
           <div className="grid grid-cols-3 gap-1.5 w-32 shrink-0 mx-auto sm:mx-0" aria-hidden="true">
             {demo.map((on, i) => (
               <span key={i} className={`aspect-square rounded-lg border ${on ? "bg-accent/30 border-accent/60" : "bg-bg/40 border-border"}`} />
             ))}
           </div>
-          <ol className="space-y-3 text-sm text-gray-200">
+          <ol className="space-y-3 text-sm text-gray-300">
             <li className="flex gap-3"><span className="w-6 h-6 shrink-0 rounded-full bg-accent text-onaccent text-xs font-bold flex items-center justify-center">1</span>Cada casilla cruza una fila (club o selección) con una columna (club).</li>
             <li className="flex gap-3"><span className="w-6 h-6 shrink-0 rounded-full bg-accent text-onaccent text-xs font-bold flex items-center justify-center">2</span>Escribí un futbolista que cumpla las dos cosas: si encaja en varias casillas, elegís dónde va.</li>
             <li className="flex gap-3"><span className="w-6 h-6 shrink-0 rounded-full bg-accent text-onaccent text-xs font-bold flex items-center justify-center">3</span>Llená las 9 casillas. Cada jugador se usa una sola vez.</li>

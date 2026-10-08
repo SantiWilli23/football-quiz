@@ -22,7 +22,7 @@ const router = Router();
 // cada acierto suma 10 puntos. Los puntos se guardan en wordle_results con
 // league 'tp<id>' para que sumen al total del perfil y al ranking sin tocar
 // la suma de puntos de stats.js.
-// Hay dos mercados, Europa y Chile, y cada uno abre solo al inicio y al final
+// Hay dos mercados, Europa y Chile, y cada uno abre solo en las vacaciones de verano
 // de su temporada (ver utils/season-windows.js). Fuera de la ventana se ve el
 // último mercado de esa región, pero ya no se puede elegir.
 const RUMORS_PER_WINDOW = 12;
@@ -124,7 +124,7 @@ router.post("/predict", requireAuth, predictLimiter, async (req, res) => {
     if (!r) return res.status(404).json({ error: "Rumor inexistente" });
     if (r.answer) return res.status(400).json({ error: "Este mercado ya se resolvió" });
     const region = String(r.window).includes("-chile-") ? "chile" : "europa";
-    if (windowFor(region).key !== r.window) return res.status(403).json({ error: "Este mercado está cerrado: abre al inicio y al final de la temporada" });
+    if (windowFor(region).key !== r.window) return res.status(403).json({ error: "Este mercado está cerrado: abre solo en las vacaciones de verano" });
     if (!JSON.parse(r.options).includes(pick)) return res.status(400).json({ error: "Opción inválida" });
     await db.execute({
       sql: "INSERT INTO transfer_predictions (user_id, rumor_id, pick) VALUES (?, ?, ?) ON CONFLICT(user_id, rumor_id) DO UPDATE SET pick = excluded.pick",

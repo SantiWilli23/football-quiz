@@ -46,6 +46,7 @@ import futgamesRoutes from "./routes/futgames.js";
 import traspasosRoutes from "./routes/traspasos.js";
 import dorsalRoutes from "./routes/dorsal.js";
 import mediaRoutes from "./routes/media.js";
+import aQuienMeComproRoutes from "./routes/a-quien-me-compro.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -98,6 +99,7 @@ app.use("/api/futgames", futgamesRoutes);
 app.use("/api/traspasos", traspasosRoutes);
 app.use("/api/dorsal", dorsalRoutes);
 app.use("/api/media", mediaRoutes);
+app.use("/api/a-quien-me-compro", aQuienMeComproRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
