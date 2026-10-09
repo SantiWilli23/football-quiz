@@ -26,10 +26,10 @@ const MODES = [
     description: "Cadena de conexiones futbolísticas: jugador → equipo → jugador. El que falla, queda eliminado.",
   },
   {
-    to: "/quien-es",
-    label: "¿Quién es?",
+    to: "/quien-es-vivo",
+    label: "¿Quién es? en vivo",
     icon: Radio,
-    description: "Su carrera club por club, con años: adivinalo solo con las menos pistas, o en vivo 1 contra 1 con las mismas pistas para los dos.",
+    description: "1 contra 1 en tiempo real, en dos versiones: Clubes (las mismas pistas de carrera para los dos) y Preguntas (cada uno elige un jugador y se turnan preguntas de sí o no).",
   },
   {
     to: "/var-votacion",

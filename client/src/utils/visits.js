@@ -6,7 +6,7 @@ const KEY = "fq_game_visits";
 // Rutas de juegos de la app (las páginas estáticas de Cotrero/Draft/Mentiroso
 // no pasan por Layout, así que quedan afuera).
 export const GAME_ROUTES = [
-  "/fulbodle", "/escudos", "/supervivencia", "/duelos", "/copa-8a2", "/equipo-jugador", "/fantasyfiction",
+  "/fulbodle", "/escudos", "/supervivencia", "/duelos", "/copa-8a2", "/equipo-jugador", "/fantasy",
   "/dt-liga", "/un-minuto", "/arbitraje-var", "/quiniela", "/pronosticos", "/carrera-dt", "/presidente", "/vida-fut",
 ];
 

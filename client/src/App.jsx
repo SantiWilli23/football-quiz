@@ -45,7 +45,7 @@ const DtLeagueHome = lazy(() => import("./dt-liga/DtLeagueHome.jsx"));
 const DtLeagueRoom = lazy(() => import("./dt-liga/DtLeagueRoom.jsx"));
 const LiveMatch = lazy(() => import("./dt-liga/LiveMatch.jsx"));
 const Copa8a2 = lazy(() => import("./pages/Copa8a2.jsx"));
-const FantasyFiction = lazy(() => import("./pages/FantasyFiction.jsx"));
+const Fantasy = lazy(() => import("./pages/Fantasy.jsx"));
 const Presidente = lazy(() => import("./pages/Presidente.jsx"));
 const ArbitrajeVar = lazy(() => import("./pages/ArbitrajeVar.jsx"));
 const GlobalRanking = lazy(() => import("./pages/GlobalRanking.jsx"));
@@ -316,11 +316,20 @@ export default function App() {
           </PrivateRoute>
         }
       />
+      <Route path="/fantasyfiction" element={<Navigate to="/fantasy" replace />} />
       <Route
-        path="/fantasyfiction"
+        path="/fantasy"
         element={
           <PrivateRoute>
-            <FantasyFiction />
+            <Fantasy />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/fantasy/:id"
+        element={
+          <PrivateRoute>
+            <Fantasy />
           </PrivateRoute>
         }
       />

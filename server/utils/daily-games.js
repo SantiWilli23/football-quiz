@@ -25,6 +25,7 @@ export const DAILY_GAMES = [
   { key: "traspasos", label: "Traspasos a ciegas", to: "/traspasos", level: null },
   { key: "a_quien_me_compro", label: "¿A quién me compro?", to: "/a-quien-me-compro", level: "Difícil" },
   { key: "trivia", label: "Trivia del día", to: "/trivia", level: "20 s por pregunta" },
+  { key: "quien_es", label: "¿Quién es?", to: "/quien-es", level: "Conocidos" },
 ];
 
 // El juego diario de una fecha: rota por todos en orden, un día cada uno.
@@ -52,7 +53,7 @@ export function dailyGameKeyFor(dateStr) {
 }
 
 // Los que mandan su resultado desde el cliente (fichado y quiniela no).
-export const SUBMITTABLE_DAILY = new Set(["cotrero", "escudos", "draft_europeo", "un_minuto", "arbitraje_var", "tateti", "piramide", "torta", "traspasos", "a_quien_me_compro", "trivia"]);
+export const SUBMITTABLE_DAILY = new Set(["cotrero", "escudos", "draft_europeo", "un_minuto", "arbitraje_var", "tateti", "piramide", "torta", "traspasos", "a_quien_me_compro", "trivia", "quien_es"]);
 
 export function pointsFromFraction(fraction) {
   const f = Number(fraction);

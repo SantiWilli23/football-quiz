@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Radio, Search } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { HelpCircle, Radio, Search } from "lucide-react";
+import QuienEsPreguntasBody from "./QuienEsPreguntas.jsx";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
@@ -235,10 +237,30 @@ export function QuienEsVivoBody() {
   );
 }
 
+// En vivo tiene dos versiones: Clubes (la de las pistas de carrera, 1 contra 1) y Preguntas (cada uno
+// elige un jugador de la misma dificultad y se hacen preguntas de sí o no).
+const VERSIONS = [
+  { key: "clubes", label: "Clubes", icon: Radio },
+  { key: "preguntas", label: "Preguntas", icon: HelpCircle },
+];
+
 export default function QuienEsVivo() {
+  const [params, setParams] = useSearchParams();
+  const version = params.get("version") === "preguntas" ? "preguntas" : "clubes";
   return (
     <Layout>
-      <QuienEsVivoBody />
+      <div className="flex gap-1.5 mb-6">
+        {VERSIONS.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setParams(key === "clubes" ? {} : { version: key }, { replace: true })}
+            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-card text-sm font-semibold border transition-colors ${version === key ? "border-accent bg-accent text-bg" : "border-border text-gray-400 hover:text-white"}`}
+          >
+            <Icon size={14} /> {label}
+          </button>
+        ))}
+      </div>
+      {version === "preguntas" ? <QuienEsPreguntasBody /> : <QuienEsVivoBody />}
     </Layout>
   );
 }

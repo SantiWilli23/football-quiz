@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import PlayerFace from "./PlayerFace.jsx";
 
 // Cancha vertical con los once de un equipo según su formación. Cada puesto (slot) es una
 // ficha con la foto, el nivel y el apellido; los puestos vacíos se ven punteados. Si se pasa
@@ -19,7 +20,9 @@ export function layoutFor(slots) {
 
 const surname = (name) => String(name || "").split(" ").slice(-1)[0];
 
-export default function FormationPitch({ slots, picks = [], selected = null, onSelect = null, className = "" }) {
+// `faces`: si una ficha no trae foto propia, se pide la cara del jugador por su nombre.
+// `onEmptyClick`: tocar un puesto vacío (para elegir quién lo ocupa).
+export default function FormationPitch({ slots, picks = [], selected = null, onSelect = null, onEmptyClick = null, faces = false, className = "" }) {
   const pts = useMemo(() => layoutFor(slots), [slots]);
   return (
     <div className={`relative w-full aspect-[3/4] rounded-2xl overflow-hidden border border-white/15 ${className}`} style={{ background: "linear-gradient(180deg, rgb(6 78 59), rgb(4 60 45))" }}>
@@ -39,18 +42,20 @@ export default function FormationPitch({ slots, picks = [], selected = null, onS
         const pick = picks[i];
         const p = pts[i];
         const isSel = selected === i;
-        const can = !!onSelect && !!pick;
+        const can = (!!onSelect && !!pick) || (!!onEmptyClick && !pick);
         const Tag = can ? "button" : "div";
         return (
           <Tag
             key={i}
-            {...(can ? { type: "button", onClick: () => onSelect(i), "aria-label": `${pick.name}, ${POS_SHORT[pos]}. Tocá para cambiarlo de lugar` } : {})}
+            {...(can ? { type: "button", onClick: () => (pick ? onSelect(i) : onEmptyClick(i)), "aria-label": pick ? `${pick.name}, ${POS_SHORT[pos]}. Tocá para cambiarlo` : `Puesto vacío de ${POS_SHORT[pos]}. Tocá para elegir un jugador` } : {})}
             className={`absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center w-[19%] ${can ? "cursor-pointer" : ""}`}
             style={{ left: `${p.x}%`, top: `${p.y}%` }}
           >
             <span className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center overflow-hidden transition-all ${pick ? "bg-white/90 border-2 border-white" : "border-2 border-dashed border-white/40 bg-black/15"} ${isSel ? "ring-4 ring-amber-400 scale-110" : ""}`}>
               {pick?.photo
                 ? <img src={pick.photo} alt="" draggable={false} className="h-full w-auto object-cover object-top select-none pointer-events-none" />
+                : pick && faces
+                ? <PlayerFace name={pick.name} size={44} className="!bg-transparent" />
                 : <span className={`text-[10px] font-bold ${pick ? "text-gray-700" : "text-white/70"}`}>{pick ? (pick.name || "?")[0] : POS_SHORT[pos]}</span>}
               {pick && <span className="absolute -bottom-0.5 -right-0.5 text-[9px] font-extrabold leading-none rounded-full bg-emerald-700 text-white px-1 py-0.5">{pick.ovr}</span>}
             </span>

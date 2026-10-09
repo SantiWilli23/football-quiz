@@ -1062,4 +1062,125 @@ CREATE TABLE IF NOT EXISTS dt_league_history (
   details TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (league_id, season, user_id)
-)
+);
+
+-- Fantasy: liga de fantasy sobre una liga real (Premier o LaLiga) para un grupo. Cada participante
+-- arma su plantel con un banco, una tienda de pujas ciegas los primeros 3 dias de cada temporada y
+-- fichajes entre ellos. Cada jornada de la liga real se simula (una por dia) y los puntos salen de la
+-- calificacion de 1 a 10 de cada jugador del once. Hasta 3 temporadas.
+CREATE TABLE IF NOT EXISTS fx_leagues (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  name TEXT NOT NULL,
+  league_key TEXT NOT NULL,
+  mode TEXT NOT NULL DEFAULT 'actual',
+  created_by INTEGER NOT NULL REFERENCES users(id),
+  status TEXT NOT NULL DEFAULT 'lobby',
+  season INTEGER NOT NULL DEFAULT 1,
+  phase_started_at INTEGER,
+  round INTEGER NOT NULL DEFAULT 0,
+  seed INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_fx_leagues_group ON fx_leagues(group_id);
+
+CREATE TABLE IF NOT EXISTS fx_members (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES fx_leagues(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  cash REAL NOT NULL DEFAULT 0,
+  formation TEXT NOT NULL DEFAULT '4-3-3',
+  lineup TEXT NOT NULL DEFAULT '[]',
+  mentality TEXT NOT NULL DEFAULT 'equilibrada',
+  season_points REAL NOT NULL DEFAULT 0,
+  UNIQUE(league_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS fx_players (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES fx_leagues(id),
+  pid TEXT NOT NULL,
+  name TEXT NOT NULL,
+  pos TEXT NOT NULL,
+  ovr INTEGER NOT NULL,
+  age INTEGER NOT NULL DEFAULT 26,
+  club TEXT NOT NULL,
+  nat TEXT NOT NULL DEFAULT '',
+  value REAL NOT NULL,
+  legend INTEGER NOT NULL DEFAULT 0,
+  owner_id INTEGER REFERENCES users(id),
+  form REAL NOT NULL DEFAULT 6.5,
+  played INTEGER NOT NULL DEFAULT 0,
+  points REAL NOT NULL DEFAULT 0,
+  goals INTEGER NOT NULL DEFAULT 0,
+  assists INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_fx_players_league ON fx_players(league_id, owner_id);
+CREATE INDEX IF NOT EXISTS idx_fx_players_club ON fx_players(league_id, club);
+
+CREATE TABLE IF NOT EXISTS fx_shop (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES fx_leagues(id),
+  season INTEGER NOT NULL,
+  day INTEGER NOT NULL,
+  slot INTEGER NOT NULL,
+  player_id INTEGER NOT NULL REFERENCES fx_players(id),
+  resolved INTEGER NOT NULL DEFAULT 0,
+  sold_to INTEGER REFERENCES users(id),
+  price REAL
+);
+CREATE INDEX IF NOT EXISTS idx_fx_shop_league ON fx_shop(league_id, season, day);
+
+CREATE TABLE IF NOT EXISTS fx_bids (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  shop_id INTEGER NOT NULL REFERENCES fx_shop(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  amount REAL NOT NULL,
+  created_at INTEGER NOT NULL,
+  UNIQUE(shop_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS fx_matches (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES fx_leagues(id),
+  season INTEGER NOT NULL,
+  round INTEGER NOT NULL,
+  home TEXT NOT NULL,
+  away TEXT NOT NULL,
+  hg INTEGER NOT NULL,
+  ag INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_fx_matches_league ON fx_matches(league_id, season, round);
+
+CREATE TABLE IF NOT EXISTS fx_scores (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES fx_leagues(id),
+  season INTEGER NOT NULL,
+  round INTEGER NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  points REAL NOT NULL,
+  detail TEXT,
+  UNIQUE(league_id, season, round, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS fx_offers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES fx_leagues(id),
+  player_id INTEGER NOT NULL REFERENCES fx_players(id),
+  from_user INTEGER NOT NULL REFERENCES users(id),
+  to_user INTEGER NOT NULL REFERENCES users(id),
+  amount REAL NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_fx_offers_league ON fx_offers(league_id, status);
+
+CREATE TABLE IF NOT EXISTS fx_awards (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES fx_leagues(id),
+  season INTEGER NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  position INTEGER NOT NULL,
+  points INTEGER NOT NULL,
+  UNIQUE(league_id, season, user_id)
+);

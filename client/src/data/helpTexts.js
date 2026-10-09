@@ -98,13 +98,21 @@ export const HELP = [
     "Si fallás, quedás eliminado. Gana quien llegue más lejos.",
     WEEKLY,
   ]) },
-  { match: "/quien-es-vivo", ...H("¿Quién es? en vivo", "Uno contra uno con las mismas pistas para los dos.", [
-    "Crean una sala y pasan el código. Sale una pista nueva cada 12 segundos; gana quien adivine primero.",
+  { match: "/quien-es-vivo", ...H("¿Quién es? en vivo", "Uno contra uno, con dos versiones: Clubes y Preguntas.", [
+    "Clubes: crean una sala y pasan el código. Sale una pista de su carrera cada 12 segundos; gana quien adivine primero.",
+    "Preguntas: cada uno elige en secreto un jugador de la misma dificultad (si no es de esa dificultad, hay que cambiarlo). Se turnan: una pregunta de sí o no (posición, país, liga, club, edad) o arriesgar un nombre. Gana quien adivina primero.",
     "Cuantas menos pistas necesites, más puntos. " + WEEKLY,
   ]) },
   { match: "/quien-es", ...H("¿Quién es?", "Adiviná al jugador por su carrera: clubes y años, de a una pista.", [
     "Menos pistas usadas = más puntos.",
-    "También podés jugarlo en vivo contra una persona.",
+    "Desde Fútbol 12 son partidas libres (infinitas, dan sobre y no suman puntos). Desde el juego diario es el jugador del día, igual para todos y una sola vez, y da puntos.",
+    "El 1 contra 1 en vivo está en ¿Quién sabe más de fútbol?.",
+  ]) },
+  { match: "/subasta", ...H("Subasta · Draft", "Armá tu once pujando por jugadores que aparecen en silueta negra.", [
+    "Cada uno tiene 1000 M. Por cada puesto se subasta un jugador: quien tiene el turno abre sí o sí con la puja mínima (la mitad de su valor) y los demás pueden subirla.",
+    "Podés adivinar quién es la silueta para ver su ficha antes que el resto. Las pistas de nacionalidad y club aparecen con el reloj.",
+    "Tu equipo se arma en la cancha: tocá dos jugadores para cambiarlos de lugar.",
+    "Al final se juega una copa entre los equipos armados, minuto a minuto, con la cancha para ver hacia qué arco hay peligro.",
   ]) },
   { match: "/supervivencia", ...H("Supervivencia", "Trivia sin margen de error: una vida.", [
     "En cuanto fallás, se termina. Cuantas más rondas aguantes y más difícil el nivel, más puntos.",
@@ -114,9 +122,11 @@ export const HELP = [
     "Cada uno arma su equipo draftando jugadores reales y se cruzan por rondas.",
     "Sumás puntos por anotarte y por cada ronda que ganás, más cuanto más avanzás.",
   ]) },
-  { match: "/fantasyfiction", ...H("FantasyFiction", "Liga simulada con todo tu grupo.", [
-    "Hay jornadas semanales y dos mercados de pases por semana.",
-    "En cada jornada el top 3 del grupo suma 8, 5 y 3 puntos, y el resto 1.",
+  { match: "/fantasy", ...H("Fantasy", "Una liga de fantasy de la Premier o LaLiga para tu grupo, hasta 3 temporadas.", [
+    "Al arrancar, cada uno recibe un plantel de 18 jugadores de valor parecido y plata para la tienda. Podés elegir jugadores actuales o la versión histórica, con leyendas en su mejor momento.",
+    "Inicio: la fecha de la liga. Plantilla: armás tu once con formación y táctica, y podés vender al banco (te paga el 90% del valor). Tienda: 7 jugadores cada día durante los primeros 3 días de cada temporada, con pujas a ciegas (la mínima es la mitad del valor). Ligas: el ranking del grupo y la tabla de la liga real.",
+    "Se juega una fecha por día y tus puntos son la calificación de 1 a 10 de cada jugador de tu once. Los jugadores suben o bajan de nivel y de precio según rinden.",
+    "Al final de cada temporada el 1° suma 60 puntos para el grupo, el 2° 40, el 3° 20 y el 4° 10, y cada temporada que pasa suma 5 más por puesto.",
   ]) },
   { match: "/dt-liga", ...H("Modo DT Online", "Una liga con amigos: cada uno elige un club real y compite temporada a temporada.", [
     "Los partidos entre ustedes se pueden seguir en vivo.",

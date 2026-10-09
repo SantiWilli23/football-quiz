@@ -11,7 +11,7 @@ router.use(requireAuth);
 // Las partidas online se juegan por un relay que no conoce las reglas: el
 // cliente del ganador avisa acá, igual que con los retos. Una partida (sala o
 // token) cuenta una sola vez por jugador.
-const ONLINE_GAMES = new Set(["quien_es_vivo", "supervivencia", "equipo_jugador", "mentiroso", "draft_europeo", "dorsal_historico", "subasta"]);
+const ONLINE_GAMES = new Set(["quien_es_vivo", "supervivencia", "equipo_jugador", "mentiroso", "draft_europeo", "dorsal_historico", "subasta", "quien_es_preguntas"]);
 
 router.post("/win", async (req, res) => {
   const gameKey = String(req.body?.gameKey || "");

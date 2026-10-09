@@ -1,50 +1,38 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Eye, Radio, Search, Tv, User } from "lucide-react";
+import { Eye, Search, Tv } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
-import { logGame } from "../utils/logGame.js";
+import { reportResult } from "../futgames/report.js";
 import ResultScreen from "../components/ResultScreen.jsx";
-import { QuienEsVivoBody } from "./QuienEsVivo.jsx";
 import { playSfx } from "../utils/sfx.js";
 
-// "¿Quién es?" tiene dos modos en una sola pantalla: Solo (carrera club por
-// club, adivinarlo con las menos pistas posibles) y En vivo (1 contra 1 con
-// las mismas pistas en tiempo real). Antes eran dos entradas separadas.
-const MODES = [
-  { key: "solo", label: "Solo", icon: User },
-  { key: "vivo", label: "En vivo · 1 vs 1", icon: Radio },
-];
+// "¿Quién es?" solo. Desde Fútbol 12 son partidas libres (infinitas, dan sobre y no suman puntos);
+// desde "Juego diario" (?diario=1) es el jugador del día, igual para todos, una sola vez y con puntos.
+// El modo En vivo (1 contra 1) vive aparte, dentro de ¿Quién sabe más de fútbol?.
+const today = () => new Date().toISOString().slice(0, 10);
+const DAILY_KEY = "quien_es_diario";
 
 export default function QuienEs() {
-  const [params, setParams] = useSearchParams();
-  const mode = params.get("modo") === "vivo" ? "vivo" : "solo";
-
+  const fromDaily = useSearchParams()[0].get("diario") === "1";
   return (
     <Layout>
-      <div className="flex gap-1.5 mb-6">
-        {MODES.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setParams(key === "solo" ? {} : { modo: key }, { replace: true })}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-card text-sm font-semibold border transition-colors ${
-              mode === key ? "border-accent bg-accent text-bg" : "border-border text-gray-400 hover:text-white"
-            }`}
-          >
-            <Icon size={14} /> {label}
-          </button>
-        ))}
-      </div>
-      {mode === "vivo" ? <QuienEsVivoBody /> : <QuienEsSolo />}
+      <QuienEsSolo fromDaily={fromDaily} />
     </Layout>
   );
 }
 
 // "¿Quién es?" solo: aparece la carrera del jugador club por club y hay que
 // adivinarlo con la menor cantidad de pistas. Cada pista extra resta 10 puntos.
-function QuienEsSolo() {
+function QuienEsSolo({ fromDaily }) {
   const [difficulty, setDifficulty] = useState("facil");
+  const [dailyMsg, setDailyMsg] = useState("");
+  // Diario ya jugado hoy: se muestra el resultado guardado y no se puede volver a jugar.
+  const [dailyDone] = useState(() => {
+    if (!fromDaily) return null;
+    try { const s = JSON.parse(localStorage.getItem(DAILY_KEY) || "null"); return s && s.date === today() ? s : null; } catch { return null; }
+  });
   const [game, setGame] = useState(null); // { token, total, clues: [] }
   const [names, setNames] = useState([]);
   const [query, setQuery] = useState("");
@@ -61,7 +49,7 @@ function QuienEsSolo() {
     setBusy(true);
     setError("");
     try {
-      const { data } = await api.get("/quien-es/new", { params: { difficulty } });
+      const { data } = await api.get("/quien-es/new", { params: fromDaily ? { mode: "daily" } : { difficulty } });
       setGame({ token: data.token, total: data.total, clues: [data.first] });
       setWrong([]);
       setResult(null);
@@ -96,7 +84,7 @@ function QuienEsSolo() {
       if (data.correct) {
         playSfx("win");
         setResult({ won: true, name: data.name, points: data.points });
-        logGame("quien_es", difficulty === "dificil" ? 4 : 2, data.points / 100, "Adivinado con " + game.clues.length + " pista" + (game.clues.length === 1 ? "" : "s") + ": " + data.name);
+        finishGame(data.points, "Adivinado con " + game.clues.length + " pista" + (game.clues.length === 1 ? "" : "s") + ": " + data.name, data.name);
       } else {
         playSfx("bad");
         setWrong((w) => [...w, name]);
@@ -113,7 +101,20 @@ function QuienEsSolo() {
   async function giveUp() {
     const { data } = await api.post("/quien-es/reveal", { token: game.token });
     setResult({ won: false, name: data.name, points: 0 });
-    logGame("quien_es", difficulty === "dificil" ? 4 : 2, 0, "Te rendiste: " + data.name);
+    finishGame(0, "Te rendiste: " + data.name, data.name);
+  }
+
+  // Manda el resultado al historial y al juego diario (solo suma puntos si se entró por el diario).
+  function finishGame(points, detail, name) {
+    if (fromDaily) { try { localStorage.setItem(DAILY_KEY, JSON.stringify({ date: today(), points, name })); } catch { /* sin storage */ } }
+    reportResult("quien_es", {
+      fraction: points / 100,
+      score: points,
+      difficulty: fromDaily ? 2 : difficulty === "dificil" ? 4 : 2,
+      detail,
+      mode: fromDaily ? "daily" : "fun",
+      level: fromDaily ? "normal" : difficulty === "dificil" ? "dificil" : "facil",
+    }).then(setDailyMsg);
   }
 
   const suggestions = query.trim().length >= 2
@@ -130,10 +131,21 @@ function QuienEsSolo() {
         </div>
       </div>
 
-      {!game && (
+      {fromDaily && dailyDone && !game && (
         <Card className="text-center py-8">
-          <p className="text-sm text-gray-400 mb-4">Cada pista extra resta 10 puntos. Si fallás, se revela otra.</p>
-          <div className="flex gap-2 justify-center mb-5">
+          <p className="text-sm text-gray-400 mb-1">Ya jugaste el diario de hoy. Era</p>
+          <p className="text-2xl font-bold mb-2">{dailyDone.name}</p>
+          <p className="text-sm text-gray-300">Sacaste {dailyDone.points} de 100. Mañana hay otro jugador.</p>
+        </Card>
+      )}
+
+      {!game && !(fromDaily && dailyDone) && (
+        <Card className="text-center py-8">
+          <p className="text-sm text-gray-400 mb-4">
+            Cada pista extra resta 10 puntos. Si fallás, se revela otra.
+            {fromDaily ? " Juego diario: el mismo jugador para todos, una sola vez al día." : " Partida libre: las veces que quieras, da un sobre y no suma puntos al grupo."}
+          </p>
+          {!fromDaily && <div className="flex gap-2 justify-center mb-5">
             {[["facil", "Conocidos"], ["dificil", "Todos"]].map(([k, label]) => (
               <button
                 key={k}
@@ -145,7 +157,7 @@ function QuienEsSolo() {
                 {label}
               </button>
             ))}
-          </div>
+          </div>}
           <button onClick={start} disabled={busy} className="px-6 py-2.5 rounded-card bg-accent text-onaccent font-semibold text-sm hover:opacity-90">
             Empezar
           </button>
@@ -240,16 +252,18 @@ function QuienEsSolo() {
             <ResultScreen
               score={result.points}
               unit={`puntos · era ${result.name}`}
-              onAgain={start}
+              onAgain={fromDaily ? undefined : start}
+              highlight={dailyMsg || undefined}
               shareText={`⚽ Futotal · ¿Quién es?: adiviné a ${result.name} con ${game.clues.length} pista${game.clues.length === 1 ? "" : "s"} (${result.points} pts) — ¿podés vos?`}
             />
           ) : (
             <Card className="text-center py-8">
               <p className="text-sm text-gray-400 mb-1">Era</p>
               <p className="text-2xl font-bold mb-5">{result.name}</p>
-              <button onClick={start} className="px-6 py-2.5 rounded-card bg-accent text-onaccent font-semibold text-sm hover:opacity-90">
+              {dailyMsg && <p className="text-sm text-accent mb-3">{dailyMsg}</p>}
+              {!fromDaily && <button onClick={start} className="px-6 py-2.5 rounded-card bg-accent text-onaccent font-semibold text-sm hover:opacity-90">
                 Jugar de nuevo
-              </button>
+              </button>}
             </Card>
           )}
         </>

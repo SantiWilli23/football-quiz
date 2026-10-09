@@ -523,6 +523,22 @@ export default function Group() {
               <>
               {/* La temporada del mes es la que se mira día a día: el histórico
                   lo gana siempre el que arrancó primero. */}
+              {scope === "mes" && (() => {
+                const [cy, cm] = currentMonth.split("-").map(Number);
+                const now = new Date();
+                const daysLeft = Math.max(0, Math.round((Date.UTC(cy, cm, 0) - Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000));
+                const [py, pm] = cm === 1 ? [cy - 1, 12] : [cy, cm - 1];
+                const lastChamp = champions.find((c) => c.month === `${py}-${String(pm).padStart(2, "0")}`);
+                return (
+                  <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 mb-4 text-sm space-y-1">
+                    <p className="font-semibold flex items-center gap-2"><Trophy size={15} className="text-amber-400" /> Temporada de {monthLabel(currentMonth)}</p>
+                    <p className="text-gray-300">
+                      {daysLeft === 0 ? "Hoy termina la temporada." : `Termina en ${daysLeft} día${daysLeft === 1 ? "" : "s"}.`} Al cerrar se corona al campeón y los puntos de la temporada arrancan de cero.
+                    </p>
+                    {lastChamp && <p className="text-gray-300">Campeón de la temporada pasada: <b>{lastChamp.username}</b> ({lastChamp.points} pts){lastChamp.tied ? " · empatado" : ""}.</p>}
+                  </div>
+                );
+              })()}
               <div className="flex items-center gap-2 mb-4 flex-wrap">
                 <button
                   onClick={() => setScope("mes")}
