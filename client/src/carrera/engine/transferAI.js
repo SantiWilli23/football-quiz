@@ -5,7 +5,8 @@ const VERBS = ["ficha a", "se interesa en", "sondea a", "negocia con"];
 // Ofertas que llegan de otros clubes por jugadores propios: mucho más
 // probables si el jugador está listado como transferible o a préstamo,
 // pero también puede pasar (rara vez) con una figura del plantel sin listar.
-export function generateIncomingOffers(squad, teams, myTeamId, week) {
+export function generateIncomingOffers(squad, teams, myTeamId, week, morale = {}) {
+  const myPrestige = teams.find((t) => t.id === myTeamId)?.prestige ?? 5;
   const offers = [];
   const buyers = teams.filter((t) => t.id !== myTeamId);
   if (!buyers.length) return offers;
@@ -24,6 +25,15 @@ export function generateIncomingOffers(squad, teams, myTeamId, week) {
     const factor = p.transferListed ? 0.75 + Math.random() * 0.35 : 0.7 + Math.random() * 0.3;
     const amount = isLoan ? 0 : Math.round(p.value * factor * 20) / 20;
 
+    // El jugador también opina: si está feliz y el destino es un paso atrás, no se quiere ir.
+    const m = morale[p.id] ?? 70;
+    const step = (buyer.prestige ?? 5) - myPrestige;
+    const chanceWilling = clamp(0.55 + step * 0.12 + (70 - m) * 0.012, 0.05, 0.97);
+    const playerWilling = Math.random() < chanceWilling;
+    const playerReason = playerWilling
+      ? (step > 0 ? "Quiere el salto: es un club más grande." : m < 55 ? "Está a disgusto y escucha la oferta." : "No le molesta el cambio.")
+      : (step < 0 ? "No quiere irse a un club más chico." : "Está cómodo y prefiere quedarse.");
+
     offers.push({
       id: `off_${p.id}_${week}_${Math.floor(Math.random() * 1e6)}`,
       playerId: p.id,
@@ -34,6 +44,8 @@ export function generateIncomingOffers(squad, teams, myTeamId, week) {
       isLoan,
       week,
       status: "pending",
+      playerWilling,
+      playerReason,
     });
   });
   return offers;

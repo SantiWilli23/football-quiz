@@ -2,17 +2,11 @@ import { resolveTrainingDelta } from "./positions.js";
 
 function rndInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
 
+// La subida de OVR ahora pasa de a poco cada semana (ver playerForm.js → progressSquad).
+// Al cerrar la temporada solo queda el desgaste fuerte de los veteranos (+34), porque la
+// bajada semanal ya cubre buena parte; así no se cuenta dos veces.
 function growthPerSeason(player) {
-  const { age, ovr, potential } = player;
-  const gap = potential - ovr;
-  if (gap <= 0) return age < 28 ? 0 : -rndInt(1, 3);
-  if (age <= 21) return Math.min(gap, rndInt(2, 5));
-  if (age < 28) return Math.min(gap, rndInt(1, 3));
-  if (age <= 32) {
-    if (gap >= 3 && Math.random() < 0.5) return Math.min(gap, rndInt(1, 3));
-    return -rndInt(1, 3);
-  }
-  return -rndInt(1, 3);
+  return player.age >= 34 ? -rndInt(0, 1) : 0;
 }
 
 // Bonus para jóvenes titulares habituales: si un jugador <= 21 años jugó
@@ -25,7 +19,7 @@ export function ageSquad(squad, playerStats = {}) {
       const appearances = playerStats[p.id]?.appearances || 0;
       const youthBonus = p.age <= 21 && appearances >= 18 ? 1 : 0;
       const delta = base + youthBonus;
-      const ovr = Math.max(35, Math.min(p.potential, p.ovr + delta));
+      const ovr = Math.max(35, Math.min(99, p.ovr + delta));
       const contractYears = Math.max(0, p.contractYears - 1);
       // Evolución del valor de mercado: sube o baja según el progreso de OVR de la temporada.
       const prevValue = p.value;

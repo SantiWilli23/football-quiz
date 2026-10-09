@@ -4,6 +4,7 @@ import { teams, teamById } from "../data/teams.js";
 import { players as allPlayers } from "../data/players.js";
 import { formatRange, reportFor } from "../engine/scouting.js";
 import { HINT_LABEL } from "../engine/transferMarket.js";
+import { ROLES, expectedRole } from "../engine/playerForm.js";
 import Scouts from "./Scouts.jsx";
 import ComparePlayers from "./ComparePlayers.jsx";
 import PlayerInfoModal from "./PlayerInfoModal.jsx";
@@ -314,6 +315,7 @@ export default function Transfers() {
 
       {target && (
         <OfferFlow
+          squad={state.squad}
           player={target}
           budget={state.budget}
           report={reportFor(state.scoutReports, target)}
@@ -346,9 +348,11 @@ function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, 
               <div className="min-w-0 cursor-pointer" onClick={() => { const pl = findAnyPlayer(state, o.playerId); if (pl) onInfo(pl); }}>
                 <p className="text-sm font-semibold truncate hover:text-accent">{o.playerName}</p>
                 <p className="text-xs text-gray-500">{o.teamName} ofrece {o.isLoan ? "un préstamo" : `€${o.amount}M por el pase`}</p>
+                {o.playerReason && <p className={`text-xs mt-0.5 ${o.playerWilling === false ? "text-red-400" : "text-gray-400"}`}>{o.playerWilling === false ? "✋ " : "💬 "}{o.playerReason}</p>}
+                {pending.filter((x) => x.playerId === o.playerId).length > 1 && <p className="text-[11px] text-amber mt-0.5">Hay más ofertas por este jugador: aceptar una cancela las demás.</p>}
               </div>
               <div className="flex gap-1.5 shrink-0">
-                <button onClick={() => onRespond(o.id, true)} className="text-xs font-medium px-3 py-1.5 rounded-full bg-emerald/15 text-emerald border border-emerald/40 hover:bg-emerald/25 transition-colors">
+                <button onClick={() => onRespond(o.id, true)} disabled={o.playerWilling === false} title={o.playerWilling === false ? "El jugador no quiere irse" : undefined} className="text-xs font-medium px-3 py-1.5 rounded-full bg-emerald/15 text-emerald border border-emerald/40 hover:bg-emerald/25 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                   Aceptar
                 </button>
                 <button onClick={() => onRespond(o.id, false)} className="text-xs font-medium px-3 py-1.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition-colors">
@@ -364,7 +368,7 @@ function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, 
             <div className="mt-2 space-y-1.5">
               {resolved.slice(0, 10).map((o) => (
                 <p key={o.id} className="text-xs text-gray-500">
-                  {o.teamName} por {o.playerName} — {o.isLoan ? "préstamo" : `€${o.amount}M`} · <span className={o.status === "accepted" ? "text-emerald" : "text-red-400"}>{o.status === "accepted" ? "aceptada" : "rechazada"}</span>
+                  {o.teamName} por {o.playerName} — {o.isLoan ? "préstamo" : `€${o.amount}M`} · <span className={o.status === "accepted" ? "text-emerald" : o.status === "withdrawn" ? "text-gray-500" : "text-red-400"}>{o.status === "accepted" ? "aceptada" : o.status === "withdrawn" ? "retirada" : "rechazada"}</span>
                 </p>
               ))}
             </div>
@@ -436,7 +440,7 @@ function StepIndicator({ stage }) {
   );
 }
 
-function OfferFlow({ player, budget, report, releaseClause, windowOpen, isOnOfferCooldown, weeksUntilCanOffer, onOfferForPlayer, onOfferContractTo, onComplete, onClose }) {
+function OfferFlow({ squad, player, budget, report, releaseClause, windowOpen, isOnOfferCooldown, weeksUntilCanOffer, onOfferForPlayer, onOfferContractTo, onComplete, onClose }) {
   const sellerTeam = teamById(player.teamId);
   const [stage, setStage] = useState("fee");
   const [feeInput, setFeeInput] = useState(report?.suggestedOffer ?? player.value);
@@ -444,6 +448,8 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, isOnOffe
   const [feeResult, setFeeResult] = useState(null);
   const [wageInput, setWageInput] = useState(player.wage + Math.round(player.wage * 0.2));
   const [years, setYears] = useState(3);
+  const wantedRole = expectedRole(player, squad || []);
+  const [role, setRole] = useState(wantedRole.id);
   const [wageResult, setWageResult] = useState(null);
   const [completeError, setCompleteError] = useState(null);
 
@@ -465,11 +471,11 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, isOnOffe
   }
 
   function submitWage() {
-    const res = onOfferContractTo(player, wageInput, years);
+    const res = onOfferContractTo(player, wageInput, years, role);
     setWageResult(res);
     if (res.expectedWageHint != null) setWageInput(res.expectedWageHint);
     if (res.accepted) {
-      const completed = onComplete(player, feeAgreed, wageInput, years);
+      const completed = onComplete(player, feeAgreed, wageInput, years, role);
       if (completed?.success === false) {
         if (completed.reason === "window_closed") setStage("window-closed");
         else { setCompleteError(completed.reason); setStage("complete-error"); }
@@ -563,7 +569,11 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, isOnOffe
             <>
               <p className="text-sm text-emerald font-medium">✅ El club aceptó €{feeAgreed}M por el pase.</p>
               <p className="text-sm text-gray-400">Sueldo actual: <span className="text-white font-semibold">€{player.wage}k/sem</span></p>
-              <p className="text-xs text-gray-500">Si igualás o superás lo que pide, firma seguro. Contratos de 1 año piden un plus.</p>
+              <p className="text-xs text-gray-500">Hablá con el jugador: sueldo y relevancia. Si igualás o superás lo que pide, firma seguro. Contratos de 1 año piden un plus.</p>
+              <div className="bg-bg border border-border rounded-xl p-3 text-sm">
+                <p className="text-[11px] uppercase tracking-wide text-gray-600 mb-1">{player.name} dice</p>
+                <p className="text-gray-300">{wageResult?.roleTalk || `Para venir quiero tener un lugar de ${wantedRole.label.toLowerCase()} en tu equipo.`}</p>
+              </div>
 
               {wageResult && !wageResult.accepted && (
                 <div className="bg-red-500/10 border border-red-500/25 rounded-xl p-3 space-y-1">
@@ -580,6 +590,11 @@ function OfferFlow({ player, budget, report, releaseClause, windowOpen, isOnOffe
                 onChange={(e) => setWageInput(Number(e.target.value))}
                 className="w-full bg-bg border border-border rounded-2xl px-4 py-3 text-sm"
               />
+              <label className="block text-xs text-gray-500 uppercase tracking-wide">Relevancia que le prometés</label>
+              <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full bg-bg border border-border rounded-2xl px-4 py-3 text-sm">
+                {Object.values(ROLES).map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
+              </select>
+              <p className="text-[11px] text-gray-600">Si después no la cumplís, su moral baja de a poco. Prometer más de lo que vas a dar sale caro.</p>
               <label className="block text-xs text-gray-500 uppercase tracking-wide">Años de contrato</label>
               <select value={years} onChange={(e) => setYears(Number(e.target.value))} className="w-full bg-bg border border-border rounded-2xl px-4 py-3 text-sm">
                 {[1, 2, 3, 4, 5].map((y) => <option key={y} value={y}>{y} año{y === 1 ? "" : "s"}</option>)}

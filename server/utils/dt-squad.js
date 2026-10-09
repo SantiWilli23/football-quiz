@@ -19,7 +19,7 @@ export function squadPower(state) {
     const f = Number(fatigue[p.id] ?? 100);
     const mBonus = m >= 85 ? 2 : m <= 35 ? -4 : 0;
     const fBonus = f <= 30 ? -6 : f <= 55 ? -2.5 : 0;
-    return sum + (Number(p.ovr) || 60) + mBonus + fBonus;
+    return sum + (Number(p.ovr) || 60) + mBonus + fBonus + clamp(Number(state.form?.[p.id] ?? 0), -2, 2);
   }, 0);
   // El ritmo de competencia (0-100) suma o resta hasta ~2 puntos.
   const sharp = (clamp(Number(state.sharpness ?? 50), 0, 100) - 50) / 25;

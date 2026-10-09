@@ -9,6 +9,7 @@ import { buildLegacy } from "../utils/legacy.js";
 import api from "../../api.js";
 import { simulateUserMatch, simulateQuickMatch, simulateHalf, combineHalves, dayFormFactor } from "../engine/matchEngine.js";
 import { ageSquad, generateYouthProspects, applyPositionTrainings } from "../engine/playerGrowth.js";
+import { expectedRole, stepForm, stepContracts, progressSquad, applyStyleChanges, STYLE_CHANGE_WEEKS, stylesFor, formOf } from "../engine/playerForm.js";
 import { assignInitialNumbers, nextAvailableNumber } from "../engine/squadNumbers.js";
 import { getPressQuestion } from "../engine/pressEngine.js";
 import { transferBudgetFor, weeklyWageBill, seasonIncome } from "../engine/financeEngine.js";
@@ -365,6 +366,13 @@ function endOfWeek(s) {
   const fatigue = { ...(s.fatigue || {}) };
   (s.squad || []).forEach((p) => { fatigue[p.id] = Math.min(100, (fatigue[p.id] ?? 100) + 8); });
   let next = monthlyTick({ ...s, fatigue, day: 0 });
+  // Contratos (moral por sueldo y relevancia), forma del plantel, cambios de estilo y progresión semanal.
+  const contracts = stepContracts(next);
+  next = { ...next, ...contracts };
+  next = { ...next, form: stepForm(next) };
+  const styled = applyStyleChanges(next.squad, next.week);
+  const grown = progressSquad(styled.squad, next);
+  next = { ...next, squad: grown.squad, news: [...styled.news, ...grown.news, ...next.news].slice(0, 8) };
   if (next.cantera?.youth?.length) {
     const clubNames = teams.filter((t) => t.id !== next.teamId).map((t) => t.name);
     const { cantera, announced } = announceDepartures(next.cantera, next.week, clubNames);
@@ -657,22 +665,22 @@ export function CareerProvider({ children, online = null }) {
     return { ...result, player, sellerTeam, offerAmount };
   }
 
-  function offerContractTo(player, wageOffered, years) {
+  function offerContractTo(player, wageOffered, years, role = null) {
     const sellerTeam = teamById(player.teamId);
-    const result = playerDecision(player, sellerTeam, team, wageOffered, years);
+    const result = playerDecision(player, sellerTeam, team, wageOffered, years, role, state.squad);
     const shouldCooldown = !result.accepted && result.hint === "muy_lejos";
     setState((s) => ({
       ...s,
       offerCooldowns: shouldCooldown ? { ...(s.offerCooldowns || {}), [player.id]: s.week + OFFER_COOLDOWN_WEEKS } : s.offerCooldowns,
       sentOffers: [
-        { id: `wage_${player.id}_${s.week}_${Date.now()}`, type: "wage", playerId: player.id, playerName: player.name, teamId: player.teamId, amount: wageOffered, years, accepted: result.accepted, week: s.week },
+        { id: `wage_${player.id}_${s.week}_${Date.now()}`, type: "wage", playerId: player.id, playerName: player.name, teamId: player.teamId, amount: wageOffered, years, role, accepted: result.accepted, week: s.week },
         ...(s.sentOffers || []),
       ].slice(0, 30),
     }));
     return { ...result, player, wageOffered, years };
   }
 
-  function completeTransfer(player, feeAgreed, wageAgreed, yearsAgreed) {
+  function completeTransfer(player, feeAgreed, wageAgreed, yearsAgreed, roleAgreed = null) {
     if (!isTransferWindowOpen()) return { success: false, reason: "window_closed" };
     if (state.budget < feeAgreed) return { success: false, reason: "insufficient_budget" };
     setState((s) => {
@@ -682,6 +690,8 @@ export function CareerProvider({ children, online = null }) {
         teamId: s.teamId,
         wage: wageAgreed,
         contractYears: yearsAgreed,
+        role: roleAgreed || expectedRole(player, s.squad).id,
+        xp: 0,
         isYouth: false,
         academyProduct: false,
         transferListed: false,
@@ -742,6 +752,18 @@ export function CareerProvider({ children, online = null }) {
       squad: s.squad.map((p) =>
         p.id === playerId && !p.training && p.position !== targetPos
           ? { ...p, training: { targetPos, endWeek: s.week + TRAINING_WEEKS } }
+          : p
+      ),
+    }));
+  }
+
+  // Cambiar el estilo de juego: demora unas semanas y, al terminar, el estilo se cambia y ya.
+  function startStyleChange(playerId, styleId) {
+    setState((s) => ({
+      ...s,
+      squad: s.squad.map((p) =>
+        p.id === playerId && !p.styleChange && stylesFor(p.position).some((x) => x.id === styleId) && (p.style || null) !== styleId
+          ? { ...p, styleChange: { target: styleId, endWeek: s.week + STYLE_CHANGE_WEEKS } }
           : p
       ),
     }));
@@ -808,7 +830,18 @@ export function CareerProvider({ children, online = null }) {
     setState((s) => {
       const offer = (s.incomingOffers || []).find((o) => o.id === offerId);
       if (!offer || offer.status !== "pending") return s;
-      const incomingOffers = s.incomingOffers.map((o) => (o.id === offerId ? { ...o, status: accept ? "accepted" : "rejected" } : o));
+      // Solo se puede aceptar UNA oferta por jugador: si ya no está en el plantel (porque se
+      // aceptó otra) esta queda retirada, y al aceptar una se retiran las demás por el mismo jugador.
+      if (accept && !s.squad.some((p) => p.id === offer.playerId)) {
+        return { ...s, incomingOffers: s.incomingOffers.map((o) => (o.id === offerId ? { ...o, status: "withdrawn" } : o)) };
+      }
+      // Si el jugador no quiere irse, no se lo puede vender contra su voluntad.
+      if (accept && offer.playerWilling === false) return s;
+      const incomingOffers = s.incomingOffers.map((o) => {
+        if (o.id === offerId) return { ...o, status: accept ? "accepted" : "rejected" };
+        if (accept && o.playerId === offer.playerId && o.status === "pending") return { ...o, status: "withdrawn" };
+        return o;
+      });
       if (!accept) return { ...s, incomingOffers };
 
       const squad = s.squad.filter((p) => p.id !== offer.playerId);
@@ -933,6 +966,7 @@ export function CareerProvider({ children, online = null }) {
       rivalFormScore,
       isHome: fixture.home,
       morale: state.morale || {},
+      form: state.form || {},
       fatigue: base.fatigue || {},
       instructions: state.playerInstructions || {},
       trainingFocus: state.trainingFocus || "balanced",
@@ -1000,6 +1034,7 @@ export function CareerProvider({ children, online = null }) {
       rivalFormScore: pm.rivalFormScore,
       isHome: pm.isHome,
       morale: state.morale || {},
+      form: state.form || {},
       fatigue: state.fatigue || {},
       instructions: state.playerInstructions || {},
       trainingFocus: state.trainingFocus || "balanced",
@@ -1101,7 +1136,7 @@ export function CareerProvider({ children, online = null }) {
         next = { ...next, squad: trainingResult.squad, news: [...trainingResult.news, ...next.news].slice(0, 8) };
       }
 
-      const newOffers = generateIncomingOffers(next.squad, teams, next.teamId, next.week);
+      const newOffers = generateIncomingOffers(next.squad, teams, next.teamId, next.week, next.morale || {});
       if (newOffers.length) {
         next = {
           ...next,
@@ -1300,6 +1335,7 @@ export function CareerProvider({ children, online = null }) {
       rivalFormScore: 60,
       isHome: true,
       morale: state.morale || {},
+      form: state.form || {},
       fatigue: state.fatigue || {},
       instructions: state.playerInstructions || {},
       trainingFocus: state.trainingFocus || "balanced",
@@ -1377,6 +1413,7 @@ export function CareerProvider({ children, online = null }) {
       rivalFormScore: 63,
       isHome: true,
       morale: state.morale || {},
+      form: state.form || {},
       fatigue: state.fatigue || {},
       instructions: state.playerInstructions || {},
       trainingFocus: state.trainingFocus || "balanced",
@@ -1450,6 +1487,7 @@ export function CareerProvider({ children, online = null }) {
       rivalFormScore: 55,
       isHome: true,
       morale: state.morale || {},
+      form: state.form || {},
       fatigue: state.fatigue || {},
       instructions: state.playerInstructions || {},
       trainingFocus: state.trainingFocus || "balanced",
@@ -1749,6 +1787,7 @@ export function CareerProvider({ children, online = null }) {
       toggleTransferListed,
       toggleLoanListed,
       startPositionTraining,
+      startStyleChange,
       setCaptain,
       setPlayerInstruction,
       preseasonAvailable,

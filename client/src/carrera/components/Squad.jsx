@@ -5,6 +5,7 @@ import { ATTR_LABELS, playerTacticNotes } from "../engine/attributeEffects.js";
 import { ALL_POSITIONS, trainingTier, trainingTierLabel } from "../engine/positions.js";
 import { getInjury } from "../engine/injuryEngine.js";
 import { reportFor } from "../engine/scouting.js";
+import { contractSummary, formArrow, formOf, styleOf, stylesFor } from "../engine/playerForm.js";
 
 const GROUPS = [
   { id: "GK",  label: "Arqueros",    positions: ["GK"],             color: "amber"   },
@@ -42,7 +43,7 @@ const INSTRUCTION_OPTIONS = [
 ];
 
 export default function Squad() {
-  const { state, moveToBench, moveToReserves, toggleTransferListed, toggleLoanListed, startPositionTraining, holdSquadMeeting, setCaptain, setPlayerInstruction } = useCareer();
+  const { state, moveToBench, moveToReserves, toggleTransferListed, toggleLoanListed, startPositionTraining, startStyleChange, holdSquadMeeting, setCaptain, setPlayerInstruction } = useCareer();
   const [groupFilter, setGroupFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("ovr");
 
@@ -121,6 +122,8 @@ export default function Squad() {
                       <PlayerRow
                         key={p.id}
                         player={p}
+                        state={state}
+                        onStartStyle={(id) => startStyleChange(p.id, id)}
                         level={levelOf(p.id)}
                         report={reportFor(state.scoutReports, p)}
                         week={state.week}
@@ -213,11 +216,15 @@ const LEVEL_STYLE = {
   Reserva: "text-gray-500 border-border",
 };
 
-function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, seasonStats, sliders, isCaptain, instruction, onBench, onReserves, onToggleTransferListed, onToggleLoanListed, onStartTraining, onSetCaptain, onSetInstruction }) {
+function PlayerRow({ player: p, state, onStartStyle, level, report, week, injury, morale, fatigue, seasonStats, sliders, isCaptain, instruction, onBench, onReserves, onToggleTransferListed, onToggleLoanListed, onStartTraining, onSetCaptain, onSetInstruction }) {
   const [showStats, setShowStats] = useState(false);
   const isInjured = injury && injury.returnWeek > week;
   const weeksLeft = isInjured ? Math.max(0, injury.returnWeek - week) : 0;
   const notes = showStats ? playerTacticNotes(p, sliders || {}) : [];
+  const form = formOf(state, p.id);
+  const fa = formArrow(form);
+  const style = styleOf(p);
+  const contract = showStats ? contractSummary(p, state) : null;
 
   return (
     <div className={`px-4 py-3.5 hover:bg-white/[0.03] transition-colors space-y-2.5 ${isInjured ? "opacity-75" : ""}`}>
@@ -274,6 +281,7 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
         <div className="flex flex-col items-center w-11 shrink-0">
           <span className="text-xs uppercase tracking-wide text-gray-600">OVR</span>
           <span className="text-base font-bold">{p.ovr}</span>
+          <span className={`text-xs font-bold leading-none ${FORM_TONE[fa.tone]}`} title={`${fa.label} (${form > 0 ? "+" : ""}${form.toFixed(1)} OVR en partido)`}>{fa.arrow}</span>
         </div>
 
         <span className={`hidden md:inline-flex shrink-0 text-xs font-medium px-2.5 py-1 rounded-full border ${LEVEL_STYLE[level]}`}>
@@ -302,6 +310,12 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
                 </div>
               );
             })}
+          </div>
+          <div className="text-xs space-y-1 bg-bg border border-border rounded-xl px-3 py-2">
+            <p><span className="text-gray-500">Estilo:</span> <span className="text-white font-medium">{style.label}</span> <span className="text-gray-500">— {style.desc}</span></p>
+            <p><span className="text-gray-500">Forma:</span> <span className={`font-semibold ${FORM_TONE[fa.tone]}`}>{fa.arrow} {fa.label}</span></p>
+            <p className={contract.wageTone === "bad" ? "text-red-400" : contract.wageTone === "good" ? "text-emerald" : "text-gray-400"}>Contrato: {contract.wageText} (€{p.wage}k/sem)</p>
+            <p className={contract.roleTone === "bad" ? "text-red-400" : "text-gray-400"}>{contract.roleText}</p>
           </div>
           <ul className="space-y-1">
             {notes.map((n, i) => (
@@ -359,7 +373,37 @@ function PlayerRow({ player: p, level, report, week, injury, morale, fatigue, se
           {p.loanListed ? "✓ A préstamo" : "Ofrecer a préstamo"}
         </button>
         <PositionTraining player={p} week={week} onStart={onStartTraining} />
+        <StyleChange player={p} week={week} onStart={onStartStyle} />
       </div>
+    </div>
+  );
+}
+
+const FORM_TONE = { good: "text-emerald", bad: "text-red-400", neutral: "text-gray-500" };
+
+function StyleChange({ player: p, week, onStart }) {
+  const [target, setTarget] = useState("");
+  const styles = stylesFor(p.position);
+  const current = styleOf(p);
+  if (p.styleChange) {
+    const st = styles.find((x) => x.id === p.styleChange.target);
+    return (
+      <span className="text-xs px-2.5 py-1 rounded-full border border-amber/30 bg-amber/10 text-amber">
+        Cambiando a {st?.label} ({Math.max(0, p.styleChange.endWeek - week)} sem.)
+      </span>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1.5">
+      <select value={target} onChange={(e) => setTarget(e.target.value)} className="bg-bg border border-border rounded-full px-2.5 py-1 text-xs text-gray-300">
+        <option value="">Cambiar estilo…</option>
+        {styles.filter((x) => x.id !== current.id).map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}
+      </select>
+      {target && (
+        <button onClick={() => { onStart(target); setTarget(""); }} className="text-xs px-2.5 py-1 rounded-full border border-accent/40 bg-accent/10 text-accent hover:bg-accent/20 transition-colors">
+          Cambiar
+        </button>
+      )}
     </div>
   );
 }

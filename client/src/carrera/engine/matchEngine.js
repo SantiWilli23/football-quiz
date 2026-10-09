@@ -11,7 +11,7 @@ function rivalLaneX() {
   return RIVAL_LANES[Math.floor(Math.random() * RIVAL_LANES.length)];
 }
 
-function squadOvr(players, lineupSlots, morale = {}, fatigue = {}) {
+function squadOvr(players, lineupSlots, morale = {}, fatigue = {}, form = {}) {
   const xi = (lineupSlots || [])
     .map((slot) => ({ p: players.find((pl) => pl.id === slot.playerId), pos: slot.slot }))
     .filter((x) => x.p);
@@ -22,7 +22,7 @@ function squadOvr(players, lineupSlots, morale = {}, fatigue = {}) {
     const mBonus = m >= 85 ? 2 : m <= 35 ? -4 : 0;
     const f = fatigue[x.p.id] ?? 100;
     const fBonus = f <= 30 ? -6 : f <= 55 ? -2.5 : 0;
-    return s + eff + mBonus + fBonus;
+    return s + eff + mBonus + fBonus + (form[x.p.id] || 0);
   }, 0) / xi.length;
 }
 
@@ -85,9 +85,9 @@ export function dayFormFactor() {
 function computeRates({
   myPlayers, lineup, myMentality, mySliders, myFormScore,
   rivalOvr, rivalFormScore, isHome, rivalMentality = 3,
-  morale, fatigue, trainingFocus, myDay, rivalDay,
+  morale, fatigue, form, trainingFocus, myDay, rivalDay,
 }) {
-  const myOvr = squadOvr(myPlayers, lineup, morale, fatigue);
+  const myOvr = squadOvr(myPlayers, lineup, morale, fatigue, form);
   const ms = mentalityScore(myMentality);
   const rms = mentalityScore(rivalMentality);
   const ss = slidersScore(mySliders || { pressing: 50, tempo: 50 });
@@ -114,11 +114,11 @@ function computeRates({
 export function simulateHalf({
   myPlayers, lineup, myMentality, mySliders, myFormScore,
   rivalOvr, rivalFormScore, isHome, rivalMentality = 3,
-  morale = {}, fatigue = {}, instructions = {}, trainingFocus = "balanced", myDay, rivalDay, half,
+  morale = {}, fatigue = {}, form = {}, instructions = {}, trainingFocus = "balanced", myDay, rivalDay, half,
 }) {
   const rates = computeRates({
     myPlayers, lineup, myMentality, mySliders, myFormScore,
-    rivalOvr, rivalFormScore, isHome, rivalMentality, morale, fatigue, trainingFocus, myDay, rivalDay,
+    rivalOvr, rivalFormScore, isHome, rivalMentality, morale, fatigue, form, trainingFocus, myDay, rivalDay,
   });
   const { goalChancePerMin, concededChancePerMin, effectivePressBoost, tm, foulAdj, cornerAdj } = rates;
 
@@ -265,21 +265,21 @@ export function combineHalves(h1, h2) {
 export function simulateUserMatch({
   myPlayers, myLineup, myMentality, mySliders, myFormScore,
   rivalOvr, rivalFormScore, isHome, rivalMentality = 3,
-  morale = {}, fatigue = {}, instructions = {}, trainingFocus = "balanced",
+  morale = {}, fatigue = {}, form = {}, instructions = {}, trainingFocus = "balanced",
 }) {
   const myDay = dayFormFactor();
   const rivalDay = dayFormFactor();
 
   const sharedArgs = {
     myPlayers, lineup: myLineup, myMentality, mySliders, myFormScore,
-    rivalOvr, rivalFormScore, isHome, rivalMentality, morale, fatigue, instructions, trainingFocus, myDay, rivalDay,
+    rivalOvr, rivalFormScore, isHome, rivalMentality, morale, fatigue, form, instructions, trainingFocus, myDay, rivalDay,
   };
 
   const h1 = simulateHalf({ ...sharedArgs, half: 1 });
   const h2 = simulateHalf({ ...sharedArgs, half: 2 });
   const combined = combineHalves(h1, h2);
 
-  return { ...combined, myOvr: squadOvr(myPlayers, myLineup, morale, fatigue), rivalOvr, myDay, rivalDay };
+  return { ...combined, myOvr: squadOvr(myPlayers, myLineup, morale, fatigue, form), rivalOvr, myDay, rivalDay };
 }
 
 function pickWeightedScorers(players, lineup, instructions = {}) {

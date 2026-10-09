@@ -1,6 +1,8 @@
 // Motor de fichajes: primero se le oferta al CLUB (por el pase), y sólo si
 // acepta se pasa a ofertarle un contrato al JUGADOR. Cada lado decide según
 // reglas propias, no simplemente "si tenés la plata, listo".
+import { ROLES, expectedRole } from "./playerForm.js";
+
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
 // Cuánto pide realmente el club por el jugador, más allá del valor de
@@ -52,19 +54,29 @@ export function expectedWage(player, sellerTeam, buyerTeam) {
 // criterio que el club: si el sueldo iguala o supera lo que el jugador
 // necesita para mudarse, acepta siempre — ofertas por debajo son un riesgo,
 // no una moneda al aire incluso cumpliendo el número.
-export function playerDecision(player, sellerTeam, buyerTeam, wageOffered, yearsOffered) {
+export function playerDecision(player, sellerTeam, buyerTeam, wageOffered, yearsOffered, roleOffered = null, buyerSquad = null) {
   let expected = expectedWage(player, sellerTeam, buyerTeam);
+  // Relevancia: el jugador también pide un lugar. Si le prometen menos de lo que espera,
+  // exige más plata; si le prometen más, se conforma con menos.
+  const wantedRole = buyerSquad ? expectedRole(player, buyerSquad) : ROLES.rotacion;
+  const offeredRole = ROLES[roleOffered] || wantedRole;
+  const roleGap = wantedRole.rank - offeredRole.rank; // positivo = le ofrecen menos de lo que quiere
+  expected = Math.round(expected * (roleGap > 0 ? 1 + 0.22 * roleGap : 1 + 0.06 * roleGap));
   if (yearsOffered <= 1) expected = Math.round(expected * 1.15); // contrato corto, pide más para compensar
   if (buyerTeam.prestige > sellerTeam.prestige) expected = Math.round(expected * 0.92); // el ascenso deportivo pesa
 
   const ratio = wageOffered / expected;
   const hint = ratio < 0.7 ? "muy_lejos" : ratio < 0.95 ? "lejos" : ratio < 1 ? "cerca" : "alcanzado";
+  const roleTalk = roleGap > 0
+    ? `Quiero ser ${wantedRole.label.toLowerCase()} y me ofrecés ${offeredRole.label.toLowerCase()}.`
+    : roleGap < 0 ? `Me gusta que me ofrezcas ser ${offeredRole.label.toLowerCase()}.` : `Ser ${offeredRole.label.toLowerCase()} me parece bien.`;
+  const extra = { wantedRole: wantedRole.id, offeredRole: offeredRole.id, roleTalk };
   if (ratio >= 1) {
-    return { accepted: true, hint, ratio, expectedWageHint: expected };
+    return { accepted: true, hint, ratio, expectedWageHint: expected, ...extra };
   }
   const acceptChance = clamp((ratio - 0.5) * 1.4, 0.02, 0.9);
   const accepted = Math.random() < acceptChance;
-  return { accepted, hint, ratio, expectedWageHint: expected };
+  return { accepted, hint, ratio, expectedWageHint: expected, ...extra };
 }
 
 export const HINT_LABEL = {
