@@ -80,7 +80,8 @@ describe("llaves de copa", () => {
   });
 
   it("nombres de rondas", () => {
-    assert.equal(season.roundName(32, 4), "Final");
+    assert.equal(season.roundName(20, 4), "Final");
+    assert.equal(season.roundName(20, 0), "Ronda de 32");
     assert.equal(season.roundName(32, 3), "Semifinal");
     assert.equal(season.roundName(16, 0), "Octavos de final");
   });

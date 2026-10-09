@@ -472,6 +472,68 @@ export function CareerProvider({ children, online = null }) {
     });
   }
 
+  // Liga Online DT: cuando arranca una temporada nueva el club cierra la anterior (los jugadores
+  // envejecen, los contratos vencen, llegan promesas de la cantera) y la semana vuelve a 0.
+  function syncOnlineSeason(season) {
+    if (!online || !season) return;
+    setState((st) => {
+      if (!st || (st.onlineSeason || 1) >= season) return st;
+      let squad = ageSquad(st.squad, st.playerStats || {});
+      generateYouthProspects(team, 3).forEach((y) => { squad = [...squad, { ...y, number: nextAvailableNumber(squad) }]; });
+      const renewalOffers = squad
+        .filter((p) => p.contractYears <= 0 && !p.isYouth)
+        .map((p) => ({ playerId: p.id, name: p.name, position: p.position, age: p.age, ovr: p.ovr, suggestedWage: Math.max(1, Math.round(p.wage * 1.15 * 10) / 10), suggestedYears: p.age <= 30 ? 3 : p.age <= 33 ? 2 : 1 }));
+      const canteraRoll = st.cantera ? seasonRollCantera(st.cantera) : null;
+      return {
+        ...st,
+        onlineSeason: season,
+        season: st.season + 1,
+        week: 0,
+        day: 0,
+        squad,
+        renewalOffers,
+        lineup: defaultLineup(squad, st.formation),
+        cantera: canteraRoll ? canteraRoll.cantera : st.cantera,
+        budget: Math.round((st.budget + Math.round(seasonIncome(team, 10).total * 0.3)) * 10) / 10,
+        playerStats: {},
+        injuries: [],
+        fatigue: {},
+        roleMisses: {},
+        minutes: {},
+        preseason: generatePreseason(st.teamId),
+        news: ["Nueva temporada: llegan 3 promesas de la cantera y cambian los contratos.", ...st.news].slice(0, 8),
+      };
+    });
+  }
+
+  // Multas o ajustes de presupuesto que decidió el servidor (en M€): positivo resta, negativo suma.
+  function applyBudgetAdjustment(amount) {
+    if (!amount) return;
+    setState((st) => st && ({
+      ...st,
+      budget: Math.round((st.budget - amount) * 10) / 10,
+      news: [amount > 0 ? `⚠️ Multa de la liga: €${amount}M por demorar el cierre del mes.` : `💶 Ajuste de presupuesto de la liga: +€${-amount}M por tu rendimiento.`, ...st.news].slice(0, 8),
+    }));
+  }
+
+  // Ofertas de clubes CPU por tus jugadores en los mercados (llegan desde el servidor).
+  function injectCpuOffers(list) {
+    if (!online || !list?.length) return;
+    setState((st) => {
+      if (!st) return st;
+      const known = new Set((st.incomingOffers || []).map((o) => o.id));
+      const fresh = list
+        .filter((o) => !known.has(`cpu_${o.id}`) && st.squad.some((p) => String(p.id) === String(o.playerId)))
+        .map((o) => ({
+          id: `cpu_${o.id}`, cpuOfferId: o.id, playerId: o.playerId, playerName: o.playerName, teamId: o.teamId, teamName: o.teamName,
+          amount: o.amount, isLoan: false, week: st.week, status: "pending", playerWilling: true,
+          playerReason: `${o.windowLabel || "Mercado"}: el club quiere llevárselo.`,
+        }));
+      if (!fresh.length) return st;
+      return { ...st, incomingOffers: [...fresh, ...(st.incomingOffers || [])].slice(0, 40), news: [`📨 ${fresh.length} oferta${fresh.length === 1 ? "" : "s"} de clubes por tus jugadores.`, ...st.news].slice(0, 8) };
+    });
+  }
+
   // Compat: algunos componentes todavía llaman resetCareer() para "salir".
   function resetCareer() { exitToMenu(); }
 
@@ -827,6 +889,12 @@ export function CareerProvider({ children, online = null }) {
   }
 
   function respondToIncomingOffer(offerId, accept) {
+    // Las ofertas que vienen de la liga online se confirman también en el servidor.
+    const picked = (state?.incomingOffers || []).find((o) => o.id === offerId && o.status === "pending");
+    if (picked && online?.onCpuOfferResponse) {
+      if (picked.cpuOfferId) online.onCpuOfferResponse(picked.cpuOfferId, accept);
+      if (accept) (state.incomingOffers || []).filter((o) => o.cpuOfferId && o.id !== offerId && o.status === "pending" && o.playerId === picked.playerId).forEach((o) => online.onCpuOfferResponse(o.cpuOfferId, false));
+    }
     setState((s) => {
       const offer = (s.incomingOffers || []).find((o) => o.id === offerId);
       if (!offer || offer.status !== "pending") return s;
@@ -1465,12 +1533,13 @@ export function CareerProvider({ children, online = null }) {
   }
 
   function preseasonAvailable() {
-    return !!state?.preseason && !state.preseason.done;
+    // Los amistosos son solo de pretemporada: antes de que arranque la liga (semana 0).
+    return !!state?.preseason && !state.preseason.done && (state.week ?? 0) === 0;
   }
 
   function playPreseasonMatch() {
     const preseason = state?.preseason;
-    if (!preseason || preseason.done) return null;
+    if (!preseason || preseason.done || (state.week ?? 0) !== 0) return null;
     const opponent = preseason.opponents[preseason.matchesPlayed];
     if (!opponent) return null;
 
@@ -1500,13 +1569,19 @@ export function CareerProvider({ children, online = null }) {
       const matchesPlayed = s.preseason.matchesPlayed + 1;
       const done = matchesPlayed >= s.preseason.total;
       const morale = applyMatchMorale(s.morale || {}, s.squad, s.lineup, isWin, isLoss);
+      // Los amistosos no puntúan: sirven para ganar forma (los titulares) y moral.
+      const form = { ...(s.form || {}) };
+      (s.lineup.starters || []).forEach((slot) => {
+        if (!slot.playerId) return;
+        form[slot.playerId] = Math.min(2, Math.round(((form[slot.playerId] ?? 0) + 0.15 + (isWin ? 0.1 : 0)) * 100) / 100);
+      });
       const news = [
         isWin ? `Amistoso: victoria ${result.myGoals}-${result.rivalGoals} vs ${opponent.name}.`
           : isLoss ? `Amistoso: derrota ${result.myGoals}-${result.rivalGoals} vs ${opponent.name}.`
           : `Amistoso: empate ${result.myGoals}-${result.rivalGoals} vs ${opponent.name}.`,
         ...s.news,
       ].slice(0, 8);
-      return { ...s, preseason: { ...s.preseason, matchesPlayed, done }, morale, news };
+      return { ...s, preseason: { ...s.preseason, matchesPlayed, done }, morale, form, news };
     });
 
     return { ...result, rival: rivalTeam, competitionLabel: "Amistoso de pretemporada" };
@@ -1758,6 +1833,9 @@ export function CareerProvider({ children, online = null }) {
       saveSlots,
       isOnline: !!online,
       syncOnlineWeek,
+      syncOnlineSeason,
+      applyBudgetAdjustment,
+      injectCpuOffers,
       setFormation,
       setMentality,
       setSlider,

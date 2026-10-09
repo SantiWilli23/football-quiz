@@ -252,7 +252,7 @@ function PlayerRow({ player: p, state, onStartStyle, level, report, week, injury
         {/* Moral */}
         <div className="hidden sm:flex flex-col items-center w-14 shrink-0">
           <span className="text-xs uppercase tracking-wide text-gray-600">Moral</span>
-          <span className={`text-sm font-semibold ${moraleColor(morale)}`}>{morale}</span>
+          <span className={`text-sm font-semibold ${moraleColor(morale)}`}>{Math.round(morale)}</span>
         </div>
 
         {/* Físico */}

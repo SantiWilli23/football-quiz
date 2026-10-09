@@ -116,8 +116,10 @@ export const EURO_COMPS = [
 ];
 
 export function roundName(teams, roundIdx) {
-  // teams = equipos que arrancan la competición; cada ronda divide por 2.
-  const left = teams / Math.pow(2, roundIdx);
+  // La llave se completa hasta la potencia de 2 (los mejores sembrados pasan libres), y cada ronda divide por 2.
+  let size = 1;
+  while (size < teams) size *= 2;
+  const left = size / Math.pow(2, roundIdx);
   if (left <= 2) return "Final";
   if (left === 4) return "Semifinal";
   if (left === 8) return "Cuartos de final";
@@ -149,7 +151,7 @@ export function nextRoundPairs(winners) {
 // ---------- Mercados ----------
 // Mercado de verano: las primeras 8 jornadas (julio-agosto). De invierno: 4 jornadas (enero).
 export const SUMMER_WINDOW = [0, 7];
-export const WINTER_WINDOW = [20, 23];
+export const WINTER_WINDOW = [20, 24];
 
 export function windowAt(week) {
   if (week >= SUMMER_WINDOW[0] && week <= SUMMER_WINDOW[1]) return "summer";

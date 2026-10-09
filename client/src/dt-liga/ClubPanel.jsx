@@ -8,10 +8,31 @@ import Transfers from "../carrera/components/Transfers.jsx";
 import Cantera from "../carrera/components/Cantera.jsx";
 import Finances from "../carrera/components/Finances.jsx";
 import { DaysSection } from "../carrera/components/SeasonCalendar.jsx";
-import { getSquad, saveSquad } from "./api.js";
+import { ackBudgetAdjustments, getBudgetAdjustments, getCpuOffers, getSquad, respondCpuOffer, saveSquad } from "./api.js";
 
 // Lo mismo que el Modo DT solo, para el club del manager en la liga online (sin Inicio ni
 // Historial, que la liga cubre con Jornada, Calendario y Tabla).
+// Amistosos de pretemporada (solo antes de que empiece la liga): dan forma y moral, no puntos.
+function Preseason() {
+  const { state, preseasonAvailable, playPreseasonMatch } = useCareer();
+  const [last, setLast] = useState(null);
+  const pre = state.preseason;
+  if (!pre) return null;
+  const available = preseasonAvailable();
+  const next = pre.opponents[pre.matchesPlayed];
+  return (
+    <div className="space-y-3 max-w-xl">
+      <p className="text-sm text-gray-400">Los amistosos solo se juegan en la pretemporada, antes de que arranque la liga. No suman puntos ni cuentan en la tabla: sirven para que los titulares ganen forma y para levantar la moral.</p>
+      {last && <p className="text-sm rounded-card border border-border bg-panel px-3 py-2">Último amistoso: {last.myGoals} - {last.rivalGoals} vs {last.rival?.name}</p>}
+      {available && next ? (
+        <button onClick={() => setLast(playPreseasonMatch())} className="btn btn-primary">Jugar amistoso {pre.matchesPlayed + 1}/{pre.total} vs {next.name}</button>
+      ) : (
+        <p className="text-sm text-gray-500">{(state.week ?? 0) > 0 ? "La pretemporada ya terminó: ahora hay liga." : "Ya jugaste todos los amistosos de la pretemporada."}</p>
+      )}
+    </div>
+  );
+}
+
 const SECTIONS = [
   ["squad", "Plantel", Users],
   ["formations", "Formaciones", LayoutGrid],
@@ -20,17 +41,37 @@ const SECTIONS = [
   ["cantera", "Cantera", Sprout],
   ["finances", "Finanzas", Wallet],
   ["week", "Semana", CalendarDays],
+  ["preseason", "Pretemporada", CalendarDays],
 ];
 
-function Sections({ leagueWeek }) {
-  const { syncOnlineWeek } = useCareer();
+function Sections({ code, leagueWeek, season, marketLabel }) {
+  const { syncOnlineWeek, syncOnlineSeason, applyBudgetAdjustment, injectCpuOffers } = useCareer();
   const [screen, setScreen] = useState("squad");
 
-  // Cada jornada nueva de la liga hace pasar una semana en el club (energía, cantera, lesiones).
-  useEffect(() => { syncOnlineWeek(leagueWeek); }, [leagueWeek]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Temporada nueva: el club cierra la anterior. Después, cada jornada de la liga hace pasar una
+  // semana en el club (energía, cantera, lesiones, forma y progresión de los jugadores).
+  useEffect(() => { syncOnlineSeason(season); }, [season]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { syncOnlineWeek(leagueWeek); }, [leagueWeek, season]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Multas y premios de la liga se aplican al presupuesto del club, y llegan las ofertas de la CPU.
+  useEffect(() => {
+    let alive = true;
+    getBudgetAdjustments(code).then(async (adj) => {
+      if (!alive || !adj.count) return;
+      applyBudgetAdjustment(adj.total);
+      await ackBudgetAdjustments(code).catch(() => {});
+    }).catch(() => {});
+    getCpuOffers(code).then((offers) => { if (alive) injectCpuOffers(offers); }).catch(() => {});
+    return () => { alive = false; };
+  }, [code, leagueWeek, season]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-4">
+      {marketLabel && (
+        <p className="text-xs rounded-card border border-accent/30 bg-accent/10 text-accent px-3 py-2">
+          {marketLabel} abierto: podés fichar y vender. Los clubes de la CPU también hacen movimientos y te pueden mandar ofertas.
+        </p>
+      )}
       <div className="flex gap-1 overflow-x-auto pb-1" role="tablist" aria-label="Mi club">
         {SECTIONS.map(([id, label, Icon]) => (
           <button
@@ -51,6 +92,7 @@ function Sections({ leagueWeek }) {
       {screen === "cantera" && <Cantera />}
       {screen === "finances" && <Finances />}
       {screen === "week" && <DaysSection />}
+      {screen === "preseason" && <Preseason />}
     </div>
   );
 }
@@ -115,8 +157,8 @@ export default function ClubPanel({ code, league, myTeamId }) {
           {status === "error" && <button onClick={flush} className="text-red-300 hover:underline">No se guardó, reintentar</button>}
         </span>
       </div>
-      <CareerProvider online={{ state: boot.state, teamId: myTeamId, onChange }}>
-        <Sections leagueWeek={league.currentWeek} />
+      <CareerProvider online={{ state: boot.state, teamId: myTeamId, onChange, onCpuOfferResponse: (id, accept) => respondCpuOffer(code, id, accept).catch(() => {}) }}>
+        <Sections code={code} leagueWeek={league.currentWeek} season={league.season || 1} marketLabel={league.marketLabel} />
       </CareerProvider>
     </div>
   );

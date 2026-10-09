@@ -7,6 +7,7 @@ import {
   getFixtures, getStandings, advanceWeek, playFixtureSolo,
   proposeTrade, getTrades, respondTrade,
 } from "./api.js";
+import { MonthPanel, NextSeasonButton, ScoreTab } from "./SeasonPanels.jsx";
 
 const POLL_MS = 4000;
 const CPU_DIFFICULTIES = [
@@ -266,11 +267,11 @@ export default function DtLeagueRoom() {
         {(league.status === "in_progress" || league.status === "finished") && (
           <>
             <div className="flex gap-1">
-              {[["fixtures", "Jornada"], ["club", "Mi club"], ["calendar", "Calendario"], ["standings", "Tabla"], ["market", "Mercado"]].map(([id, label]) => (
+              {[["fixtures", "Jornada"], ["club", "Mi club"], ["calendar", "Calendario"], ["standings", "Tabla"], ["score", "Puntaje"], ["market", "Mercado"]].map(([id, label]) => (
                 <button
                   key={id}
                   onClick={() => setTab(id)}
-                  className={`${{ fixtures: "tone-accent", club: "tone-emerald", calendar: "tone-purple", standings: "tone-blue", market: "tone-pink" }[id]} px-4 py-2 rounded-full text-sm font-semibold ${
+                  className={`${{ fixtures: "tone-accent", club: "tone-emerald", calendar: "tone-purple", standings: "tone-blue", score: "tone-amber", market: "tone-pink" }[id]} px-4 py-2 rounded-full text-sm font-semibold ${
                     tab === id ? "tile-b text-white" : "text-gray-400 border border-border hover:text-white"
                   }`}
                 >
@@ -280,10 +281,11 @@ export default function DtLeagueRoom() {
             </div>
 
             {tab === "fixtures" && (
-              <FixturesTab code={code} league={league} myTeamId={myTeamId} onAdvanced={setLeague} />
+              <FixturesTab code={code} league={league} myTeamId={myTeamId} onAdvanced={setLeague} onReload={load} />
             )}
             {tab === "calendar" && <CalendarTab code={code} myTeamId={myTeamId} />}
             {tab === "standings" && <StandingsTab code={code} myTeamId={myTeamId} />}
+            {tab === "score" && <ScoreTab code={code} league={league} onReload={load} />}
             {tab === "club" && (myTeamId ? <ClubPanel code={code} league={league} myTeamId={myTeamId} /> : <p className="text-sm text-gray-500">Todavía no tenés club en esta liga.</p>)}
             {tab === "market" && <MarketTab code={code} league={league} />}
           </>
@@ -293,7 +295,7 @@ export default function DtLeagueRoom() {
   );
 }
 
-function FixturesTab({ code, league, myTeamId, onAdvanced }) {
+function FixturesTab({ code, league, myTeamId, onAdvanced, onReload }) {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [busyId, setBusyId] = useState(null);
@@ -317,6 +319,7 @@ function FixturesTab({ code, league, myTeamId, onAdvanced }) {
     try {
       await playFixtureSolo(code, fixtureId);
       await load();
+      onReload?.();
     } catch (err) {
       setError(err.response?.data?.error || "No se pudo jugar ese partido");
     } finally {
@@ -352,9 +355,11 @@ function FixturesTab({ code, league, myTeamId, onAdvanced }) {
     <div className="space-y-4">
       {error && <div className="bg-red-500/10 border border-red-500/30 rounded-2xl px-4 py-2.5 text-sm text-red-300">{error}</div>}
 
+      {league.status === "in_progress" && <MonthPanel code={code} onChanged={() => { load(); onReload?.(); }} />}
+
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-          Mes {data.month} / {data.totalMonths}
+          Mes {data.month} / {data.totalMonths}{data.season > 1 ? " · Temporada " + data.season : ""}
         </p>
         {!seasonOver && (
           <button
@@ -370,7 +375,7 @@ function FixturesTab({ code, league, myTeamId, onAdvanced }) {
       {Object.entries(byWeek).map(([week, fixtures]) => (
         <div key={week} className="space-y-1.5">
           <p className="text-xs text-gray-600 uppercase tracking-wide">Jornada {week}</p>
-          {fixtures.map((f) => (
+          {fixtures.filter((f) => !f.bye).map((f) => (
             <div
               key={f.id}
               className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl border text-sm ${
@@ -378,15 +383,22 @@ function FixturesTab({ code, league, myTeamId, onAdvanced }) {
               }`}
             >
               {f.isClasico && <span title="El clásico de la jornada" className="shrink-0">⭐</span>}
+              {f.comp !== "liga" && (
+                <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-full border border-accent/30 text-accent" title={f.compLabel}>{f.compLabel} · {f.roundLabel}</span>
+              )}
               <span className={`flex-1 text-right ${f.homeTeamId === myTeamId ? "font-semibold text-accent" : ""}`}>{f.homeTeamName}</span>
               <span className="w-16 text-center font-bold tabular-nums shrink-0">
                 {f.played ? `${f.homeGoals} - ${f.awayGoals}` : "vs"}
+                {f.played && f.winner && f.homeGoals === f.awayGoals && <span className="block text-[10px] font-normal text-amber">pen. {f.winner === f.homeTeamId ? f.homeTeamName : f.awayTeamName}</span>}
               </span>
               <span className={`flex-1 ${f.awayTeamId === myTeamId ? "font-semibold text-accent" : ""}`}>{f.awayTeamName}</span>
 
               <span className="shrink-0 w-32 text-right">
                 {f.played && f.walkover && (
                   <span className="text-xs text-amber">walkover</span>
+                )}
+                {!f.played && f.locked && f.involvesMe && (
+                  <span className="text-xs text-gray-600">Mes cerrado</span>
                 )}
                 {!f.played && f.canPlaySolo && (
                   <button
@@ -417,17 +429,17 @@ function FixturesTab({ code, league, myTeamId, onAdvanced }) {
               </span>
             </div>
           ))}
+          <ByesLine fixtures={fixtures.filter((f) => f.bye)} myTeamId={myTeamId} />
         </div>
       ))}
 
       {seasonOver ? (
-        <p className="text-sm text-emerald text-center font-medium py-2">🏆 La temporada terminó — mirá la tabla final.</p>
+        <div className="text-center space-y-2 py-2">
+          <p className="text-sm text-emerald font-medium">🏆 La temporada terminó — mirá la tabla final y el puntaje.</p>
+          {league.isMine && <NextSeasonButton code={code} league={league} onStarted={() => { load(); onReload?.(); }} />}
+        </div>
       ) : monthDone ? (
-        <p className="text-sm text-gray-500 text-center py-2">
-          Terminaste tus partidos de este mes. {pendingOthers.length > 0
-            ? `Esperando a que ${pendingOthers.length === 1 ? "otro jugador termine el suyo" : "los demás terminen los suyos"}…`
-            : "El próximo mes ya está disponible."}
-        </p>
+        <p className="text-sm text-gray-500 text-center py-2">Se jugaron todos los partidos de este mes. Para pasar al siguiente, todos los jugadores tienen que dar "Listo".</p>
       ) : (
         <p className="text-xs text-gray-600 text-center">
           Jugá tus partidos contra la CPU cuando quieras. Los que son contra otro jugador se juegan en vivo, los dos conectados a la vez.
@@ -435,6 +447,24 @@ function FixturesTab({ code, league, myTeamId, onAdvanced }) {
       )}
     </div>
   );
+}
+
+// Clubes que pasan de ronda sin jugar (los mejores sembrados de las copas con llave incompleta).
+function ByesLine({ fixtures, myTeamId }) {
+  if (!fixtures.length) return null;
+  const groups = {};
+  fixtures.forEach((f) => { (groups[f.compLabel + " · " + f.roundLabel] ||= []).push(f); });
+  return Object.entries(groups).map(([label, list]) => {
+    const mine = list.find((f) => f.homeTeamId === myTeamId);
+    return (
+      <details key={label} className="text-xs text-gray-500 px-1">
+        <summary className="cursor-pointer select-none">
+          {label}: {mine ? "tu club pasa directo" : list.length + " clubes pasan directo"}
+        </summary>
+        <p className="mt-1 leading-relaxed">{list.map((f) => f.homeTeamName).join(", ")}</p>
+      </details>
+    );
+  });
 }
 
 const DAY_LABELS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
@@ -535,6 +565,7 @@ function StandingsTab({ code, myTeamId }) {
             <th className="px-2 py-2.5">E</th>
             <th className="px-2 py-2.5">P</th>
             <th className="px-2 py-2.5">DG</th>
+            <th className="px-2 py-2.5" title="Tier del club (1 = el más fuerte)">Tier</th>
             <th className="px-2 py-2.5">Pts</th>
           </tr>
         </thead>
@@ -551,6 +582,7 @@ function StandingsTab({ code, myTeamId }) {
               <td className="px-2 py-2 text-center tabular-nums">{s.drawn}</td>
               <td className="px-2 py-2 text-center tabular-nums">{s.lost}</td>
               <td className="px-2 py-2 text-center tabular-nums">{s.gf - s.ga}</td>
+              <td className="px-2 py-2 text-center tabular-nums text-gray-400" title={`Se esperaba el ${s.expectedPosition}°`}>{s.tier}</td>
               <td className="px-2 py-2 text-center font-bold tabular-nums">{s.pts}</td>
             </tr>
           ))}

@@ -108,3 +108,44 @@ export function dtLiveWsUrl(fixtureId) {
   const token = localStorage.getItem("fq_token") || "";
   return `${proto}//${window.location.host}/ws/dt-live?fixtureId=${fixtureId}&token=${encodeURIComponent(token)}`;
 }
+
+// ---- Mes con "Listo", multas, ofertas de clubes CPU y liga de puntaje ----
+export async function getMonth(code) {
+  const { data } = await api.get(`/dt-league/${code}/month`);
+  return data;
+}
+
+export async function setReady(code, ready) {
+  const { data } = await api.post(`/dt-league/${code}/ready`, { ready });
+  return data;
+}
+
+export async function getScore(code) {
+  const { data } = await api.get(`/dt-league/${code}/score`);
+  return data;
+}
+
+export async function startNextSeason(code) {
+  const { data } = await api.post(`/dt-league/${code}/next-season`);
+  return data.league;
+}
+
+export async function getBudgetAdjustments(code) {
+  const { data } = await api.get(`/dt-league/${code}/budget-adjustments`);
+  return data;
+}
+
+export async function ackBudgetAdjustments(code) {
+  const { data } = await api.post(`/dt-league/${code}/budget-adjustments/ack`);
+  return data;
+}
+
+export async function getCpuOffers(code) {
+  const { data } = await api.get(`/dt-league/${code}/cpu-offers`);
+  return data.offers;
+}
+
+export async function respondCpuOffer(code, offerId, accept) {
+  const { data } = await api.post(`/dt-league/${code}/cpu-offers/${offerId}/respond`, { accept });
+  return data;
+}

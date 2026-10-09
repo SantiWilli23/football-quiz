@@ -82,7 +82,7 @@ export default function PlayerInfoModal({ player: p, state, watched, onClose, on
 
         {own && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <Stat label="Moral" value={(state.morale || {})[p.id] ?? 70} />
+            <Stat label="Moral" value={Math.round((state.morale || {})[p.id] ?? 70)} />
             <Stat label="Energía" value={energyOf(state, p.id)} />
             <Stat label="Goles" value={stats?.goals ?? 0} />
             <Stat label="Asistencias" value={stats?.assists ?? 0} />
