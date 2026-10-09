@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, FastForward, Play, Zap } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, FastForward, Zap } from "lucide-react";
 import { useCareer } from "../context/CareerContext.jsx";
 import { teamById } from "../data/teams.js";
 import {
@@ -136,7 +136,7 @@ function Meter({ label, value, tone }) {
 
 // Días de la semana (con el partido el sábado) y calendario del mes para ir simulando.
 export function DaysSection() {
-  const { state, simulateDay, simulateToMatchDay, isOnline } = useCareer();
+  const { state, simulateToMatchDay, isOnline } = useCareer();
   const [activity, setActivity] = useState(DEFAULT_ACTIVITY);
   const day = state.day || 0;
   // En la liga online los partidos los juega la liga (pestañas Jornada y Calendario).
@@ -216,7 +216,10 @@ export function DaysSection() {
 
       {!matchDay && (
         <div className="space-y-3">
-          <p className="text-sm font-semibold">¿Qué hace el plantel hoy?</p>
+          <div>
+            <p className="text-sm font-semibold">Plan de la semana</p>
+            <p className="text-xs text-gray-500">Elegís una sola vez cómo trabaja el plantel hasta el partido: el plan se aplica a todos los días de la semana.</p>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {Object.entries(ACTIVITIES).map(([id, a]) => (
               <button
@@ -233,10 +236,7 @@ export function DaysSection() {
             ))}
           </div>
           <div className="flex gap-2 flex-wrap">
-            <button onClick={() => simulateDay(activity)} className="btn btn-primary inline-flex items-center gap-2"><Play size={15} /> Simular el día</button>
-            <button onClick={() => simulateToMatchDay(activity)} className="px-5 py-2.5 rounded-card border border-border text-sm text-gray-300 hover:text-white hover:border-white/30 inline-flex items-center gap-2">
-              <FastForward size={15} /> Simular hasta el partido
-            </button>
+            <button onClick={() => simulateToMatchDay(activity)} className="btn btn-primary inline-flex items-center gap-2"><FastForward size={15} /> Simular la semana</button>
           </div>
         </div>
       )}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowUpCircle, Globe2, Sprout, UserMinus, Users } from "lucide-react";
 import { useCareer } from "../context/CareerContext.jsx";
 import {
@@ -15,6 +15,10 @@ const ERRORS = {
   max_networks: () => `Ya tenés redes en ${MAX_NETWORKS} países.`,
   max_level: () => "Esa red ya está al nivel máximo.",
   no_scouts: () => "Contratá un ojeador de cantera para poder fichar chicos.",
+  need_scout: () => "Para abrir una red hay que mandar a un ojeador libre a ese país: elegí uno.",
+  expired: () => "Ese joven ya no está: pasó la semana del informe.",
+  taken: (r) => `${r.takenBy} se lo llevó antes: lo fichó primero.`,
+  network: () => "No se pudo confirmar con la liga. Probá de nuevo.",
   full: () => `La cantera está llena (${MAX_YOUTH} chicos).`,
 };
 
@@ -42,12 +46,21 @@ function RangeBadge({ player, specialty }) {
 }
 
 export default function Cantera() {
-  const { state, hireCanteraScoutAction, buildCanteraNetwork, signCanteraProspect, promoteYouth, releaseCanteraYouth } = useCareer();
+  const { state, hireCanteraScoutAction, buildCanteraNetwork, signCanteraProspect, promoteYouth, releaseCanteraYouth, isOnline, claims, refreshClaims } = useCareer();
   const cantera = state.cantera;
   const [section, setSection] = useState("jovenes");
   const [specialty, setSpecialty] = useState("potential");
   const [seasons, setSeasons] = useState(1);
   const [feedback, setFeedback] = useState("");
+  const [chosenScout, setChosenScout] = useState("");
+
+  // En la liga online se ve qué jóvenes ya se llevó otro manager con red en el mismo país.
+  useEffect(() => {
+    if (!isOnline) return undefined;
+    refreshClaims();
+    const t = setInterval(refreshClaims, 20000);
+    return () => clearInterval(t);
+  }, [isOnline]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const scouts = cantera.scouts;
   const hasScouts = scouts.length > 0;
@@ -57,9 +70,15 @@ export default function Cantera() {
   const specialtyOf = (id) => SCOUT_SPECIALTIES[id]?.id;
 
   function report(res, okText) {
+    if (res?.then) { res.then((r) => report(r, okText)); return; }
     if (res?.error) setFeedback(ERRORS[res.error]?.(res) || "No se pudo completar.");
     else setFeedback(okText(res));
   }
+  const today = state.week * 7 + (state.day || 0);
+  // ojeadores libres (sin red asignada) y a qué país está asignado cada uno
+  const countryOfScout = Object.fromEntries(cantera.networks.map((n) => [n.scoutId, n.country]));
+  const freeScouts = scouts.filter((sc) => !countryOfScout[sc.id]);
+  const scoutToSend = freeScouts.some((sc) => sc.id === chosenScout) ? chosenScout : freeScouts[0]?.id || "";
 
   return (
     <div className="space-y-5">
@@ -118,6 +137,9 @@ export default function Cantera() {
           {cantera.prospects.length > 0 && (
             <p className="text-xs text-gray-500">El potencial es un rango: cuanto más joven el chico, más ancho y más alto lo estiman. Se afina a medida que crece.</p>
           )}
+          {cantera.prospects.length > 0 && (
+            <p className="text-xs text-amber">Informe del mes: cada joven se puede fichar durante una semana. Si pasa ese plazo sin ficharlo, desaparece y no vuelve{isOnline ? "; y si otro manager con red en su país lo ficha antes, se lo lleva" : ""}.</p>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {cantera.prospects.map((p) => (
               <div key={p.id} className="bg-panel border border-border border-l-4 border-l-emerald rounded-2xl p-3 flex flex-col gap-2.5 min-w-0">
@@ -139,9 +161,13 @@ export default function Cantera() {
                     <p className="text-sm font-semibold">€{p.signCost}M</p>
                   </div>
                 </div>
+                <p className={`text-[11px] ${p.expiresDay != null && p.expiresDay - today <= 2 ? "text-red-300" : "text-gray-500"}`}>
+                  {p.expiresDay == null ? "" : p.expiresDay - today <= 0 ? "Último día para ficharlo" : `Te quedan ${p.expiresDay - today} día${p.expiresDay - today === 1 ? "" : "s"} para ficharlo`}
+                  {claims?.[p.id] ? ` · ${claims[p.id]} ya lo fichó` : ""}
+                </p>
                 <button
                   onClick={() => report(signCanteraProspect(p.id), () => `Sumaste a ${p.name} a la cantera.`)}
-                  disabled={!hasScouts}
+                  disabled={!hasScouts || !!claims?.[p.id]}
                   title={hasScouts ? "" : "Necesitás un ojeador de cantera contratado"}
                   className="self-end text-xs font-medium px-3.5 py-2 rounded-xl bg-accent/10 text-accent border border-accent/40 hover:bg-accent/20 disabled:opacity-40 transition-colors"
                 >
@@ -238,6 +264,7 @@ export default function Cantera() {
                   <div key={sc.id} className="bg-bg/60 border border-border rounded-xl px-3 py-2">
                     <p className="text-sm font-semibold">{SCOUT_SPECIALTIES[sc.specialty]?.label}</p>
                     <p className="text-xs text-gray-500">Quedan {sc.seasonsLeft} temporada{sc.seasonsLeft === 1 ? "" : "s"}</p>
+                    <p className={`text-xs mt-0.5 ${countryOfScout[sc.id] ? "text-emerald" : "text-amber"}`}>{countryOfScout[sc.id] ? `Asignado a la red de ${countryOfScout[sc.id]}` : "Libre: mandalo a un país para abrir una red"}</p>
                   </div>
                 ))}
               </div>
@@ -246,7 +273,14 @@ export default function Cantera() {
 
           <div>
             <p className="text-sm font-semibold mb-1">Redes en países ({cantera.networks.length}/{MAX_NETWORKS})</p>
-            <p className="text-xs text-gray-500 mb-3">Cada red nivel 1 a {MAX_NETWORK_LEVEL}. Más nivel, más chicos por mes y mejores.</p>
+            <p className="text-xs text-gray-500 mb-2">Para abrir una red mandás a un ojeador libre a ese país (queda asignado a esa red). Después podés subirla de nivel (1 a {MAX_NETWORK_LEVEL}): más nivel, más jóvenes en el informe de cada mes.</p>
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+              <label className="text-xs text-gray-400" htmlFor="cantera-scout">Ojeador a mandar:</label>
+              <select id="cantera-scout" value={scoutToSend} onChange={(e) => setChosenScout(e.target.value)} disabled={!freeScouts.length} className="bg-bg border border-border rounded-xl px-3 py-1.5 text-xs disabled:opacity-50">
+                {freeScouts.length === 0 && <option value="">No tenés ojeadores libres</option>}
+                {freeScouts.map((sc) => <option key={sc.id} value={sc.id}>{SCOUT_SPECIALTIES[sc.specialty]?.label} ({sc.seasonsLeft} temp.)</option>)}
+              </select>
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
               {ACADEMY_COUNTRIES.map((country) => {
                 const net = cantera.networks.find((n) => n.country === country);
@@ -262,7 +296,7 @@ export default function Cantera() {
                     </div>
                     {next != null ? (
                       <button
-                        onClick={() => report(buildCanteraNetwork(country), () => (level ? `Ampliaste la red en ${country}.` : `Abriste una red en ${country}.`))}
+                        onClick={() => report(buildCanteraNetwork(country, scoutToSend), () => (level ? `Ampliaste la red en ${country}.` : `Mandaste un ojeador y abriste una red en ${country}.`))}
                         className="w-full text-xs font-medium px-2 py-1.5 rounded-xl bg-accent/10 text-accent border border-accent/40 hover:bg-accent/20"
                       >
                         {level ? `Subir a nivel ${level + 1}` : "Abrir red"} · €{next}M

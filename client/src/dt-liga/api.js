@@ -30,6 +30,23 @@ export async function startLeague(code) {
   return data.league;
 }
 
+// Jóvenes de la cantera: en la liga online el primero que ficha a uno se lo lleva (los demás con red en ese
+// país ya no pueden). claimYouth devuelve { ok, takenBy } y getYouthClaims { id: username }.
+export async function claimYouth(code, prospectId) {
+  try {
+    const { data } = await api.post(`/dt-league/${code}/cantera/claim`, { prospectId });
+    return { ok: true, ...data };
+  } catch (err) {
+    if (err.response?.status === 409) return { ok: false, takenBy: err.response.data?.takenBy || "otro manager" };
+    throw err;
+  }
+}
+
+export async function getYouthClaims(code) {
+  const { data } = await api.get(`/dt-league/${code}/cantera/claims`);
+  return data.claims || {};
+}
+
 // Carrera del manager (plantel, formación, energía, cantera, tácticas) guardada en el servidor.
 export async function getSquad(code) {
   const { data } = await api.get(`/dt-league/${code}/squad`);

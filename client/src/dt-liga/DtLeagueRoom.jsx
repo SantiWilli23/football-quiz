@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Check, ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import ClubPanel from "./ClubPanel.jsx";
+import { dateOfDay, MONTH_NAMES } from "../carrera/engine/energy.js";
 import {
   getLeague, pickTeam, startLeague, setCpuDifficulty,
   getFixtures, getStandings, advanceWeek, playFixtureSolo,
@@ -102,7 +103,7 @@ export default function DtLeagueRoom() {
 
   return (
     <div className="min-h-screen bg-bg text-white p-4">
-      <div className="max-w-2xl mx-auto space-y-5">
+      <div className="w-full max-w-[1500px] mx-auto space-y-5">
         <div className="hero-b rounded-3xl p-5 sm:p-6 flex items-center justify-between gap-3" style={{ "--hero-a": "var(--c-accent)", "--hero-b": "var(--c-purple)" }}>
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight">{league.name}</h1>
@@ -267,7 +268,7 @@ export default function DtLeagueRoom() {
         {(league.status === "in_progress" || league.status === "finished") && (
           <>
             <div className="flex gap-1">
-              {[["fixtures", "Jornada"], ["club", "Mi club"], ["calendar", "Calendario"], ["standings", "Tabla"], ["score", "Puntaje"], ["market", "Mercado"]].map(([id, label]) => (
+              {[["fixtures", "Jornada"], ["club", "Mi club"], ["calendar", "Calendario"], ["standings", "Tabla"], ["score", "Puntaje"], ["market", "Mercado"], ["config", "Configuración"]].map(([id, label]) => (
                 <button
                   key={id}
                   onClick={() => setTab(id)}
@@ -288,6 +289,7 @@ export default function DtLeagueRoom() {
             {tab === "score" && <ScoreTab code={code} league={league} onReload={load} />}
             {tab === "club" && (myTeamId ? <ClubPanel code={code} league={league} myTeamId={myTeamId} /> : <p className="text-sm text-gray-500">Todavía no tenés club en esta liga.</p>)}
             {tab === "market" && <MarketTab code={code} league={league} />}
+            {tab === "config" && <ConfigTab league={league} />}
           </>
         )}
       </div>
@@ -295,21 +297,28 @@ export default function DtLeagueRoom() {
   );
 }
 
+// Configuración de la pantalla de la liga (se guarda en este dispositivo).
+const SHOW_OTHERS_KEY = "dt_liga_show_others";
+const readShowOthers = () => { try { return localStorage.getItem(SHOW_OTHERS_KEY) === "1"; } catch { return false; } };
+
 function FixturesTab({ code, league, myTeamId, onAdvanced, onReload }) {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [month, setMonth] = useState(null); // mes de la liga que se muestra (null = el activo)
+  const [selWeek, setSelWeek] = useState(null); // jornada elegida en el calendario
+  const showOthers = readShowOthers();
   const [busyId, setBusyId] = useState(null);
   const [resolving, setResolving] = useState(false);
   const [error, setError] = useState(null);
 
   const load = useCallback(async () => {
     try {
-      const result = await getFixtures(code);
+      const result = await getFixtures(code, month || undefined);
       setData(result);
     } catch {
       setData(null);
     }
-  }, [code]);
+  }, [code, month]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -348,8 +357,13 @@ function FixturesTab({ code, league, myTeamId, onAdvanced, onReload }) {
   const seasonOver = league.status === "finished";
   const monthDone = data.fixtures.length > 0 && data.fixtures.every((f) => f.played);
   const pendingOthers = data.fixtures.filter((f) => !f.played && !f.involvesMe);
-  const byWeek = {};
-  data.fixtures.forEach((f) => { (byWeek[f.week] ||= []).push(f); });
+  // El calendario muestra por defecto solo tus partidos; los del resto se activan en Configuración.
+  const weeks = [...new Set(data.fixtures.map((f) => f.week))].sort((a, b) => a - b);
+  const mineOf = (w) => data.fixtures.filter((f) => f.week === w && f.involvesMe && !f.bye);
+  const defaultWeek = weeks.find((w) => mineOf(w).some((f) => !f.played)) ?? weeks[0];
+  const activeWeek = weeks.includes(selWeek) ? selWeek : defaultWeek;
+  const visible = {};
+  if (activeWeek != null) visible[activeWeek] = data.fixtures.filter((f) => f.week === activeWeek && (showOthers || f.involvesMe || f.bye));
 
   return (
     <div className="space-y-4">
@@ -372,7 +386,19 @@ function FixturesTab({ code, league, myTeamId, onAdvanced, onReload }) {
         )}
       </div>
 
-      {Object.entries(byWeek).map(([week, fixtures]) => (
+      <MonthGrid
+        data={data}
+        weeks={weeks}
+        activeWeek={activeWeek}
+        onSelect={setSelWeek}
+        mineOf={mineOf}
+        onMonth={(delta) => { setSelWeek(null); setMonth(Math.min(data.totalMonths, Math.max(1, data.month + delta))); }}
+        showOthers={showOthers}
+        fixtures={data.fixtures}
+        myTeamId={myTeamId}
+      />
+
+      {Object.entries(visible).map(([week, fixtures]) => (
         <div key={week} className="space-y-1.5">
           <p className="text-xs text-gray-600 uppercase tracking-wide">Jornada {week}</p>
           {fixtures.filter((f) => !f.bye).map((f) => (
@@ -445,6 +471,96 @@ function FixturesTab({ code, league, myTeamId, onAdvanced, onReload }) {
           Jugá tus partidos contra la CPU cuando quieras. Los que son contra otro jugador se juegan en vivo, los dos conectados a la vez.
         </p>
       )}
+    </div>
+  );
+}
+
+// Configuración de la liga para este dispositivo.
+function ConfigTab({ league }) {
+  const [showOthers, setShowOthers] = useState(readShowOthers);
+  function toggle(v) {
+    setShowOthers(v);
+    try { localStorage.setItem(SHOW_OTHERS_KEY, v ? "1" : "0"); } catch { /* sin storage */ }
+  }
+  const DIFF = { facil: "Fácil", media: "Media", dificil: "Difícil" };
+  return (
+    <div className="space-y-3">
+      <label className="flex items-start gap-3 bg-panel border border-border rounded-2xl p-4 cursor-pointer">
+        <input type="checkbox" checked={showOthers} onChange={(e) => toggle(e.target.checked)} className="mt-1 accent-[rgb(var(--c-accent))]" />
+        <span>
+          <span className="block text-sm font-semibold">Ver los partidos del resto en el calendario</span>
+          <span className="block text-xs text-gray-500 mt-0.5">Por defecto la Jornada solo muestra tus partidos. Activalo para ver también los de los demás clubes de la liga.</span>
+        </span>
+      </label>
+      <div className="bg-panel border border-border rounded-2xl p-4 text-sm">
+        <p className="font-semibold">Dificultad de los clubes CPU</p>
+        <p className="text-xs text-gray-500 mt-0.5">Se elige al crear la liga y no cambia una vez que arranca.</p>
+        <p className="mt-2">{DIFF[league.cpuDifficulty] || "Media"}</p>
+      </div>
+    </div>
+  );
+}
+
+const GRID_DAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+// Calendario del mes: cada jornada cae en su sábado. En cada sábado se ven tus partidos (y los del resto si lo
+// activaste en Configuración). Tocar un sábado elige esa jornada y abajo aparecen sus partidos.
+function MonthGrid({ data, weeks, activeWeek, onSelect, mineOf, onMonth, showOthers, fixtures, myTeamId }) {
+  if (!weeks.length) return null;
+  const saturday = (w) => dateOfDay(data.season || 1, w - 1, 5);
+  const shown = saturday(activeWeek ?? weeks[0]);
+  const year = shown.getUTCFullYear();
+  const mon = shown.getUTCMonth();
+  const first = new Date(Date.UTC(year, mon, 1));
+  const daysInMonth = new Date(Date.UTC(year, mon + 1, 0)).getUTCDate();
+  const lead = (first.getUTCDay() + 6) % 7;
+  const weekOfDay = new Map();
+  weeks.forEach((w) => { const d = saturday(w); if (d.getUTCFullYear() === year && d.getUTCMonth() === mon) weekOfDay.set(d.getUTCDate(), w); });
+  const cells = [...Array(lead).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+  const title = MONTH_NAMES[mon][0].toUpperCase() + MONTH_NAMES[mon].slice(1);
+
+  return (
+    <div className="bg-panel border border-border rounded-2xl p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold">{title} {year}</h3>
+        <div className="flex gap-1">
+          <button onClick={() => onMonth(-1)} disabled={data.month <= 1} aria-label="Mes anterior" className="p-1.5 rounded-card border border-border text-gray-400 hover:text-white disabled:opacity-30"><ChevronLeft size={15} /></button>
+          <button onClick={() => onMonth(data.activeMonth - data.month)} className="px-2.5 py-1.5 rounded-card border border-border text-xs text-gray-300 hover:text-white">Mes actual</button>
+          <button onClick={() => onMonth(1)} disabled={data.month >= data.totalMonths} aria-label="Mes siguiente" className="p-1.5 rounded-card border border-border text-gray-400 hover:text-white disabled:opacity-30"><ChevronRight size={15} /></button>
+        </div>
+      </div>
+      <div className="grid grid-cols-7 gap-1 text-center text-[11px] uppercase tracking-wide text-gray-500">{GRID_DAYS.map((d) => <span key={d}>{d}</span>)}</div>
+      <div className="grid grid-cols-7 gap-1">
+        {cells.map((d, i) => {
+          if (d == null) return <span key={"e" + i} />;
+          const w = weekOfDay.get(d);
+          const mine = w ? mineOf(w) : [];
+          const othersCount = w && showOthers ? fixtures.filter((f) => f.week === w && !f.involvesMe && !f.bye).length : 0;
+          const m = mine[0];
+          const selected = w != null && w === activeWeek;
+          const body = m ? (
+            <>
+              <span className="block truncate text-[10px] text-gray-300">vs {m.homeTeamId === myTeamId ? m.awayTeamName : m.homeTeamName}</span>
+              <span className={"block text-[11px] font-bold " + (m.played ? "text-white" : "text-accent")}>{m.played ? m.homeGoals + "-" + m.awayGoals : "Jugar"}</span>
+            </>
+          ) : w ? <span className="block text-[10px] text-gray-500">J{w}</span> : null;
+          return (
+            <button
+              key={d}
+              type="button"
+              disabled={!w}
+              onClick={() => w && onSelect(w)}
+              aria-label={w ? "Jornada " + w + ", " + d + " de " + MONTH_NAMES[mon] : String(d)}
+              className={"min-h-[56px] rounded-xl border p-1 text-center flex flex-col items-center justify-start gap-0.5 " + (selected ? "border-accent bg-accent/15" : w ? (m && !m.played ? "border-accent/40 bg-accent/5" : "border-border bg-bg/40 hover:border-white/30") : "border-border/50 bg-panel/40 text-gray-600")}
+            >
+              <span className={"text-[11px] " + (w ? "text-white font-semibold" : "")}>{d}</span>
+              {body}
+              {othersCount > 0 && <span className="text-[9px] text-gray-500">+{othersCount} más</span>}
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-[11px] text-gray-500">{showOthers ? "Se ven tus partidos y los del resto de la liga." : "Se ven tus partidos. Para ver también los del resto, activalo en Configuración."}</p>
     </div>
   );
 }

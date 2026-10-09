@@ -8,7 +8,7 @@ import Transfers from "../carrera/components/Transfers.jsx";
 import Cantera from "../carrera/components/Cantera.jsx";
 import Finances from "../carrera/components/Finances.jsx";
 import { DaysSection } from "../carrera/components/SeasonCalendar.jsx";
-import { ackBudgetAdjustments, getBudgetAdjustments, getCpuOffers, getSquad, respondCpuOffer, saveSquad } from "./api.js";
+import { ackBudgetAdjustments, claimYouth, getBudgetAdjustments, getCpuOffers, getSquad, getYouthClaims, respondCpuOffer, saveSquad } from "./api.js";
 
 // Lo mismo que el Modo DT solo, para el club del manager en la liga online (sin Inicio ni
 // Historial, que la liga cubre con Jornada, Calendario y Tabla).
@@ -157,7 +157,7 @@ export default function ClubPanel({ code, league, myTeamId }) {
           {status === "error" && <button onClick={flush} className="text-red-300 hover:underline">No se guardó, reintentar</button>}
         </span>
       </div>
-      <CareerProvider online={{ state: boot.state, teamId: myTeamId, onChange, onCpuOfferResponse: (id, accept) => respondCpuOffer(code, id, accept).catch(() => {}) }}>
+      <CareerProvider online={{ state: boot.state, teamId: myTeamId, code, onChange, onCpuOfferResponse: (id, accept) => respondCpuOffer(code, id, accept).catch(() => {}), claim: (id) => claimYouth(code, id), fetchClaims: () => getYouthClaims(code) }}>
         <Sections code={code} leagueWeek={league.currentWeek} season={league.season || 1} marketLabel={league.marketLabel} />
       </CareerProvider>
     </div>

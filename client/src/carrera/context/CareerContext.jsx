@@ -28,8 +28,8 @@ import { rollEvent } from "../engine/eventEngine.js";
 import { ACTIVITIES, DEFAULT_ACTIVITY, MATCH_DAY, applyDayActivity, currentDate, formScoreFromSharpness, monthKey } from "../engine/energy.js";
 import { applyMeeting } from "../engine/meetings.js";
 import {
-  emptyCantera, ensureCantera, rollMonthlyProspects, growYouthMonthly, announceDepartures, seasonRollCantera,
-  hireCanteraScout, buildNetwork, signProspect, releaseYouth, youthValue,
+  emptyCantera, ensureCantera, rollMonthlyProspects, expireProspects, growYouthMonthly, announceDepartures, seasonRollCantera,
+  hireCanteraScout, buildNetwork, signProspect, releaseYouth, youthValue, shared as canteraShared,
 } from "../engine/cantera.js";
 import { DIFFICULTIES, difficultyOf } from "../engine/difficulty.js";
 import { INTERNATIONAL_WINDOW_WEEKS, NATIONAL_TEAM_PRESTIGE_MIN, countryForLeague, simulateNationalMatch } from "../engine/nationalTeam.js";
@@ -348,16 +348,20 @@ function autoDaysToMatch(s) {
 // Cada mes cambia la lista de jóvenes para la cantera y los chicos fichados crecen un poco.
 function monthlyTick(s) {
   if (!s.cantera) return s;
-  const key = monthKey(currentDate(s));
-  const c = s.cantera;
-  if (c.lastMonth === key) return s;
-  if (c.lastMonth === null) return { ...s, cantera: { ...c, lastMonth: key } };
-  const rolled = rollMonthlyProspects(c, key);
+  const day = s.week * 7 + (s.day || 0);
+  // los jóvenes del informe que pasaron su semana sin fichar desaparecen para siempre
+  const expired = expireProspects(s.cantera, day);
+  const base = expired === s.cantera ? s : { ...s, cantera: expired };
+  const key = monthKey(currentDate(base));
+  const c = base.cantera;
+  if (c.lastMonth === key) return base;
+  if (c.lastMonth === null) return { ...base, cantera: { ...c, lastMonth: key } };
+  const rolled = rollMonthlyProspects(c, key, day);
   const cantera = { ...rolled.cantera, youth: growYouthMonthly(rolled.cantera.youth) };
   return {
-    ...s,
+    ...base,
     cantera,
-    news: rolled.found ? [`🌱 Nuevo mes: tus redes encontraron ${rolled.found} jóvenes para la cantera.`, ...s.news].slice(0, 8) : s.news,
+    news: rolled.found ? [`🌱 Nuevo mes: tus redes mandaron un informe con ${rolled.found} jóvenes. Tenés una semana para fichar a cada uno o se pierden.`, ...base.news].slice(0, 8) : base.news,
   };
 }
 
@@ -391,6 +395,9 @@ function endOfWeek(s) {
 // los slots locales se parte del plantel guardado en el servidor (o uno nuevo del club que eligió)
 // y cada cambio se devuelve por onChange para guardarlo allá.
 export function CareerProvider({ children, online = null }) {
+  // En la liga online los informes de cantera se arman con la semilla de la liga: todos ven los mismos jóvenes.
+  canteraShared.seed = online?.code ? String(online.code) : null;
+  const [claims, setClaims] = useState({}); // jóvenes de la cantera que ya se llevó otro manager: { id: username }
   const [state, setState] = useState(() => (online ? normalizeState(online.state || buildInitialState(online.teamId)) : normalizeState(loadCareer())));
   const [saveSlots, setSaveSlots] = useState(() => (online ? [] : listSaveSlots()));
 
@@ -1357,8 +1364,21 @@ export function CareerProvider({ children, online = null }) {
     return { success: true, cost: res.cost };
   }
   const hireCanteraScoutAction = (specialty, seasons) => runCanteraAction((s) => hireCanteraScout(s, specialty, seasons));
-  const buildCanteraNetwork = (country) => runCanteraAction((s) => buildNetwork(s, country));
-  const signCanteraProspect = (id) => runCanteraAction((s) => signProspect(s, id));
+  const buildCanteraNetwork = (country, scoutId = null) => runCanteraAction((s) => buildNetwork(s, country, scoutId));
+  // En la liga online el primero que ficha se lleva al joven: antes de sumarlo se lo reclama al servidor.
+  async function refreshClaims() {
+    if (!online?.fetchClaims) return;
+    try { setClaims(await online.fetchClaims()); } catch { /* sin red: se muestra lo que había */ }
+  }
+  const signCanteraProspect = (id) => {
+    if (!online?.claim) return runCanteraAction((s) => signProspect(s, id));
+    const dry = signProspect(state, id);
+    if (dry.error) return dry;
+    return online.claim(id).then((r) => {
+      if (!r.ok) { setClaims((c) => ({ ...c, [id]: r.takenBy })); return { error: "taken", takenBy: r.takenBy }; }
+      return runCanteraAction((s) => signProspect(s, id));
+    }).catch(() => ({ error: "network" }));
+  };
   const releaseCanteraYouth = (id) => runCanteraAction((s) => releaseYouth(s, id));
 
   // Sube a un chico de la cantera al plantel profesional (queda en reservas).
@@ -1832,6 +1852,8 @@ export function CareerProvider({ children, online = null }) {
       deleteCareer,
       saveSlots,
       isOnline: !!online,
+      claims,
+      refreshClaims,
       syncOnlineWeek,
       syncOnlineSeason,
       applyBudgetAdjustment,

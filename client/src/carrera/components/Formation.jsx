@@ -85,6 +85,7 @@ export default function Formation() {
     const rect = pitchRef.current.getBoundingClientRect();
     const x = clampPct(((e.clientX - rect.left) / rect.width) * 100);
     const y = clampPct(((e.clientY - rect.top) / rect.height) * 100);
+    d.pos = { x, y }; // la última posición real (el estado de React puede ir un render atrás al soltar rápido)
     setDragPos({ index: i, x, y });
   }
 
@@ -92,7 +93,7 @@ export default function Formation() {
     const d = dragRef.current;
     dragRef.current = null;
     if (d && d.moved) {
-      const final = dragPos && dragPos.index === i ? dragPos : null;
+      const final = d.pos || (dragPos && dragPos.index === i ? dragPos : null);
       if (final) setSlotPosition(i, final.x, final.y, nearestPositionForDrop(final.x, final.y));
       setDragPos(null);
     } else {

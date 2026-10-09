@@ -1,4 +1,5 @@
 import { teams } from "./teams.js";
+import ROSTERS from "./rosters.js";
 
 // ============ HELPERS DE GENERACIÓN ============
 let uid = 0;
@@ -69,10 +70,10 @@ function wageFor(ovr, age = 26) {
   return Math.max(1, Math.round(base * ageMult));
 }
 
-function buildPlayer(team, { name, pos, age, nat, ovr, pot, homegrown }, isYouth = false) {
+function buildPlayer(team, { name, pos, age, nat, ovr, pot, homegrown, id }, isYouth = false) {
   const potential = clamp(pot ?? ovr + rnd(0, 6), ovr, 99);
   return {
-    id: nextId(team.id),
+    id: id || nextId(team.id),
     name,
     age,
     nationality: nat,
@@ -743,9 +744,21 @@ const NAMED = {
   ],
 };
 
-function squadFor(team) {
+function legacySquadFor(team) {
   const named = (NAMED[team.id] || []).map((tuple) => buildPlayer(team, tuple));
   return fillSquad(team, named, 24);
+}
+
+const slug = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+// Plantel de un club. Si hay plantel actual (ver rosters.js, armado con ESPN) se usa ese, con nombres reales; los
+// jugadores que ya estaban conservan su id (así no se rompen carreras guardadas) y los fichajes traen un id nuevo.
+// Primero se arma el plantel anterior igual, para que el contador de ids siga igual para el resto de los clubes.
+function squadFor(team) {
+  const legacy = legacySquadFor(team);
+  const roster = ROSTERS[team.id];
+  if (!roster) return legacy;
+  return roster.map((r) => buildPlayer(team, { name: r.name, pos: r.pos, age: r.age, nat: r.nat, ovr: r.ovr, pot: r.pot, id: r.id || `${team.id}_r_${slug(r.name)}` }));
 }
 
 export const players = teams.flatMap((team) => squadFor(team));

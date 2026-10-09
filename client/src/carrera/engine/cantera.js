@@ -8,16 +8,22 @@ import { SCOUT_SPECIALTIES } from "./scouting.js";
 //
 //  - Ojeadores de cantera: gente contratada por temporadas. Sin al menos uno no se puede
 //    fichar a ningún chico.
-//  - Redes en países: cada país tiene una red con nivel 1 a 3. Cada mes, cada red (con
-//    ojeadores contratados) te muestra posibles jóvenes de ese país; a más nivel, más
-//    chicos y mejores.
+//  - Redes en países: abrir una red exige mandar un ojeador a ese país (queda asignado) y
+//    cada red tiene nivel 1 a 3. Cada mes, cada red te entrega un informe con jóvenes de ese
+//    país; a más nivel, más chicos y mejores. Tenés una semana para fichar a cada uno: el que
+//    no ficha en ese plazo desaparece y no vuelve.
 //  - Rango de potencial: lo que se ve del potencial de un chico es un rango. De joven es
 //    muy ancho y optimista (alto); a medida que crece se achica y baja hacia su potencial
 //    real.
 //  - Salida: un chico de 20 años o más que no subís al primer equipo se puede ir a otro
 //    club. Se avisa varios meses antes de que termine la temporada.
 
-export const MAX_CANTERA_SCOUTS = 4;
+export const MAX_CANTERA_SCOUTS = 6;
+// Cada informe mensual de una red vale 7 días: el joven que no se ficha en ese plazo desaparece.
+export const PROSPECT_WINDOW_DAYS = 7;
+// En la liga online todos los managers con red en el mismo país ven los mismos jóvenes del mes (misma semilla)
+// y el primero que ficha se lo lleva. El contexto fija acá el código de la liga.
+export const shared = { seed: null };
 export const MAX_NETWORKS = 6;
 export const MAX_NETWORK_LEVEL = 3;
 export const NETWORK_COSTS = [3, 6, 10]; // costo (M€) de pasar a nivel 1, 2 y 3
@@ -39,8 +45,24 @@ export function emptyCantera() {
 
 // Guardados anteriores al sistema: pasan los agentes de inferiores y los chicos ya
 // encontrados a la cantera nueva. Nada se pierde.
+// Las redes viejas no tenían ojeador asignado: se reparten entre los que ya hay.
+function withScoutIds(cantera) {
+  if (!cantera.networks.some((n) => !n.scoutId) || !cantera.scouts.length) return cantera;
+  const taken = new Set(cantera.networks.map((n) => n.scoutId).filter(Boolean));
+  const free = cantera.scouts.filter((sc) => !taken.has(sc.id));
+  const networks = cantera.networks.map((n) => {
+    if (n.scoutId) return n;
+    const sc = free.shift() || cantera.scouts[0];
+    return { ...n, scoutId: sc.id };
+  });
+  return { ...cantera, networks };
+}
+
 export function ensureCantera(s) {
-  if (s.cantera) return s;
+  if (s.cantera) {
+    const fixed = withScoutIds(s.cantera);
+    return fixed === s.cantera ? s : { ...s, cantera: fixed };
+  }
   const cantera = emptyCantera();
   (s.academyAgents || []).forEach((a) => {
     cantera.scouts.push({ id: a.id, specialty: a.specialty, seasonsLeft: a.seasonsLeft, cost: a.cost, hiredWeek: a.hiredWeek || 0 });
@@ -49,7 +71,7 @@ export function ensureCantera(s) {
     }
   });
   cantera.prospects = (s.academyPool || []).map((p) => ({ ...p, signCost: signCostOf(p), foundMonth: null }));
-  return { ...s, cantera, academyAgents: [], academyPool: [] };
+  return { ...s, cantera: withScoutIds(cantera), academyAgents: [], academyPool: [] };
 }
 
 export function signCostOf(p) {
@@ -88,22 +110,29 @@ export function formatPotentialRange(range) {
 }
 
 // ---------- Generación mensual ----------
-function generateProspect({ scout, network, monthKey, i }) {
+// `rand`: en la liga online es un generador con semilla compartida, así todos los managers con red en el
+// país ven a los mismos chicos (y con el mismo id, para que el primero que ficha se lo lleve).
+function generateProspect({ scout, network, monthKey, i, day, rand = null }) {
+  const R = rand || Math.random;
+  const rn = (a, b) => a + Math.floor(R() * (b - a + 1));
   const nat = countryNationality(network.country);
-  const age = rnd(15, 18);
+  const age = rn(15, 18);
   const lvl = network.level;
-  let ovr = rnd(42, 58) + lvl * 2;
-  let potential = clamp(ovr + rnd(14, 28) + lvl * 2, ovr + 6, 97);
-  if (scout.specialty === "ovr") {
-    ovr = clamp(ovr + rnd(3, 6), 40, 72);
+  let ovr = rn(42, 58) + lvl * 2;
+  let potential = clamp(ovr + rn(14, 28) + lvl * 2, ovr + 6, 97);
+  // la especialidad del ojeador solo cambia al chico en el modo solo (compartido, todos ven lo mismo)
+  if (!rand && scout.specialty === "ovr") {
+    ovr = clamp(ovr + rn(3, 6), 40, 72);
     potential = clamp(potential - SPECIALTY_GAP, ovr + 2, 97);
-  } else if (scout.specialty === "potential") {
+  } else if (!rand && scout.specialty === "potential") {
     potential = clamp(potential + SPECIALTY_GAP, ovr + 2, 99);
   }
-  const position = pick(POSITIONS);
+  const position = POSITIONS[Math.floor(R() * POSITIONS.length)];
   const p = {
-    id: `cantera_${network.id}_${monthKey}_${scout.id.slice(-4)}_${i}_${Math.floor(Math.random() * 9999)}`,
-    name: youthName(nat),
+    id: rand ? `cantera_${network.country}_${monthKey}_${i}` : `cantera_${network.id}_${monthKey}_${scout.id.slice(-4)}_${i}_${Math.floor(Math.random() * 9999)}`,
+    foundDay: day,
+    expiresDay: day + PROSPECT_WINDOW_DAYS,
+    name: youthName(nat, R),
     age, position, nationality: nat, country: network.country,
     ovr, potential,
     value: 0, wage: 1, contractYears: 3,
@@ -115,18 +144,39 @@ function generateProspect({ scout, network, monthKey, i }) {
   return { ...p, signCost: signCostOf(p) };
 }
 
-// Trae los chicos del mes: una tanda por red, repartida entre los ojeadores contratados.
-export function rollMonthlyProspects(cantera, monthKey) {
-  if (!cantera.scouts.length || !cantera.networks.length) return { cantera: { ...cantera, lastMonth: monthKey }, found: 0 };
+// Semilla estable a partir de un texto (para los jóvenes compartidos).
+function seededRand(text) {
+  let h = 2166136261;
+  for (const ch of String(text)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+  let a = h >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Trae el informe del mes: una tanda por red, armada por el ojeador que mandaste a ese país. Reemplaza a los
+// chicos del informe anterior que no se ficharon. `day` es el día de la carrera (semana * 7 + día).
+export function rollMonthlyProspects(cantera, monthKey, day = 0) {
+  const active = cantera.networks.filter((n) => cantera.scouts.some((sc) => sc.id === n.scoutId));
+  if (!active.length) return { cantera: { ...cantera, prospects: [], lastMonth: monthKey }, found: 0 };
   const fresh = [];
-  cantera.networks.forEach((network, idx) => {
-    const scout = cantera.scouts[idx % cantera.scouts.length];
+  active.forEach((network) => {
+    const scout = cantera.scouts.find((sc) => sc.id === network.scoutId);
+    const rand = shared.seed ? seededRand(`${shared.seed}|${monthKey}|${network.country}`) : null;
     const count = 2 + network.level;
-    for (let i = 0; i < count; i++) fresh.push(generateProspect({ scout, network, monthKey, i }));
+    for (let i = 0; i < count; i++) fresh.push(generateProspect({ scout, network, monthKey, i, day, rand }));
   });
-  // Los más viejos se van yendo para que la lista no crezca sin fin.
-  const prospects = [...fresh, ...cantera.prospects].slice(0, MAX_PROSPECTS);
-  return { cantera: { ...cantera, prospects, lastMonth: monthKey }, found: fresh.length };
+  return { cantera: { ...cantera, prospects: fresh.slice(0, MAX_PROSPECTS), lastMonth: monthKey }, found: fresh.length };
+}
+
+// Los jóvenes que no se ficharon en el plazo de una semana desaparecen y no vuelven.
+export function expireProspects(cantera, day) {
+  const keep = cantera.prospects.filter((p) => p.expiresDay == null || p.expiresDay >= day);
+  return keep.length === cantera.prospects.length ? cantera : { ...cantera, prospects: keep };
 }
 
 // Crecimiento mensual de los chicos ya fichados: se acercan de a poco a su potencial.
@@ -195,17 +245,27 @@ export function hireCanteraScout(s, specialty, seasons) {
   };
 }
 
-export function buildNetwork(s, country) {
+// Abrir una red exige mandar un ojeador libre a ese país (queda asignado). Subir de nivel una red ya
+// abierta usa a su ojeador. Más nivel = más jóvenes en el informe de cada mes.
+export function buildNetwork(s, country, scoutId = null) {
   const c = s.cantera;
   const existing = c.networks.find((n) => n.country === country);
   if (!existing && c.networks.length >= MAX_NETWORKS) return { error: "max_networks" };
   const level = (existing?.level || 0) + 1;
   if (level > MAX_NETWORK_LEVEL) return { error: "max_level" };
+  const assigned = existing && c.scouts.some((sc) => sc.id === existing.scoutId);
+  let sendScout = existing?.scoutId || null;
+  if (!assigned) {
+    const busy = new Set(c.networks.filter((n) => n.country !== country).map((n) => n.scoutId));
+    const scout = c.scouts.find((sc) => sc.id === scoutId && !busy.has(sc.id));
+    if (!scout) return { error: "need_scout" };
+    sendScout = scout.id;
+  }
   const cost = NETWORK_COSTS[level - 1];
   if (s.budget < cost) return { error: "insufficient_budget", cost };
   const networks = existing
-    ? c.networks.map((n) => (n.country === country ? { ...n, level } : n))
-    : [...c.networks, { id: `net_${country}`, country, level }];
+    ? c.networks.map((n) => (n.country === country ? { ...n, level, scoutId: sendScout } : n))
+    : [...c.networks, { id: `net_${country}`, country, level, scoutId: sendScout }];
   return {
     state: {
       ...s,
@@ -221,6 +281,7 @@ export function signProspect(s, id) {
   const c = s.cantera;
   const p = c.prospects.find((x) => x.id === id);
   if (!p) return { error: "not_found" };
+  if (p.expiresDay != null && p.expiresDay < s.week * 7 + (s.day || 0)) return { error: "expired" };
   if (!c.scouts.length) return { error: "no_scouts" };
   if (c.youth.length >= MAX_YOUTH) return { error: "full" };
   if (s.budget < p.signCost) return { error: "insufficient_budget", cost: p.signCost };

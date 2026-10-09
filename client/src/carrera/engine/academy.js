@@ -14,13 +14,13 @@ export const ACADEMY_SPECIALTY_GAP = 10;
 
 export const ACADEMY_COUNTRIES = [
   "España", "Argentina", "Brasil", "Francia", "Inglaterra", "Portugal",
-  "Países Bajos", "Alemania", "Italia", "Uruguay", "Colombia", "Croacia", "Bélgica",
+  "Países Bajos", "Alemania", "Italia", "Uruguay", "Colombia", "Croacia", "Bélgica", "Chile",
 ];
 
 const NAT_BY_COUNTRY = {
   "España": "ESP", "Argentina": "ARG", "Brasil": "BRA", "Francia": "FRA",
   "Inglaterra": "ENG", "Portugal": "POR", "Países Bajos": "NED", "Alemania": "GER",
-  "Italia": "ITA", "Uruguay": "URU", "Colombia": "COL", "Croacia": "CRO", "Bélgica": "BEL",
+  "Italia": "ITA", "Uruguay": "URU", "Colombia": "COL", "Croacia": "CRO", "Bélgica": "BEL", "Chile": "CHI",
 };
 
 const FIRST_BY_NAT = {
@@ -30,7 +30,7 @@ const FIRST_BY_NAT = {
   NED: ["Sven", "Daan", "Bram", "Milan"], GER: ["Finn", "Luca", "Noah", "Elias"],
   ITA: ["Gianluca", "Samuele", "Pietro", "Cristian"], URU: ["Facundo", "Agustín", "Bruno", "Nahuel"],
   COL: ["Santiago", "Juan José", "Kevin", "Yeison"], CRO: ["Luka", "Josip", "Ante", "Marko"],
-  BEL: ["Loïc", "Thibo", "Amir", "Noa"],
+  BEL: ["Loïc", "Thibo", "Amir", "Noa"], CHI: ["Benjamín", "Matías", "Vicente", "Cristóbal", "Maximiliano"],
 };
 const LAST_BY_NAT = {
   ESP: ["Ferrán", "Roig", "Camps", "Solé"], ARG: ["Ibarra", "Coria", "Funes", "Ledesma"],
@@ -39,7 +39,7 @@ const LAST_BY_NAT = {
   NED: ["de Boer", "Bakker", "Visser", "Mulder"], GER: ["Richter", "Neumann", "Schwarz", "Vogt"],
   ITA: ["Esposito", "Romano", "Ferrari", "Colombo"], URU: ["Silveira", "Techera", "Recoba", "Pintos"],
   COL: ["Muriel", "Zapata", "Restrepo", "Cárdenas"], CRO: ["Kramarić", "Vrsaljko", "Pašalić", "Šimić"],
-  BEL: ["Van Damme", "Peeters", "Willems", "Maes"],
+  BEL: ["Van Damme", "Peeters", "Willems", "Maes"], CHI: ["Pizarro", "Carvajal", "Fuentes", "Contreras", "Tapia"],
 };
 
 export const POSITIONS = ["GK", "CB", "LB", "RB", "CDM", "CM", "CAM", "LW", "RW", "ST"];
@@ -48,10 +48,11 @@ function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function rnd(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-export function youthName(nat) {
+// `rand` (opcional) permite armar el mismo nombre para todos (ver los jóvenes compartidos del DT Online).
+export function youthName(nat, rand = Math.random) {
   const first = FIRST_BY_NAT[nat] || FIRST_BY_NAT.ESP;
   const last = LAST_BY_NAT[nat] || LAST_BY_NAT.ESP;
-  return `${pick(first)} ${pick(last)}`;
+  return `${first[Math.floor(rand() * first.length)]} ${last[Math.floor(rand() * last.length)]}`;
 }
 
 export function countryNationality(country) {

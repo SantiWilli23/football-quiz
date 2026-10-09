@@ -1184,3 +1184,14 @@ CREATE TABLE IF NOT EXISTS fx_awards (
   points INTEGER NOT NULL,
   UNIQUE(league_id, season, user_id)
 );
+
+-- Jovenes de la cantera de la Liga Online DT: todos los managers con red en el mismo pais ven a los mismos
+-- chicos del mes y el primero que ficha a uno se lo lleva. prospect_id es el id compartido del joven.
+CREATE TABLE IF NOT EXISTS dt_league_claims (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES dt_leagues(id),
+  prospect_id TEXT NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  claimed_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(league_id, prospect_id)
+);

@@ -406,6 +406,41 @@ router.get("/:code/tactics", async (req, res) => {
 // Carrera del manager (plantel, formación, energía, cantera y tácticas). El cliente la guarda
 // y el servidor conserva el JSON; de acá sale la fuerza real del once con la que se juegan
 // sus partidos. Solo la ve y la edita el propio manager.
+// Cantera online: el primero que ficha a un joven del informe del mes se lo lleva. Todos los managers con red en
+// el mismo país ven a los mismos chicos (misma semilla), así que el reclamo es por id del joven.
+router.get("/:code/cantera/claims", async (req, res) => {
+  const league = await loadLeagueByCode(req.params.code);
+  if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  const { me } = await requireMembership(league, req.userId);
+  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  const rows = (await db.execute({
+    sql: "SELECT c.prospect_id, c.user_id, u.username FROM dt_league_claims c JOIN users u ON u.id = c.user_id WHERE c.league_id = ?",
+    args: [league.id],
+  })).rows;
+  // lo que ficharon los demás se ve como "se lo llevó X"; lo mío ya no hace falta marcarlo
+  res.json({ claims: Object.fromEntries(rows.filter((r) => r.user_id !== req.userId).map((r) => [r.prospect_id, r.username])) });
+});
+
+router.post("/:code/cantera/claim", async (req, res) => {
+  const league = await loadLeagueByCode(req.params.code);
+  if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  const { me } = await requireMembership(league, req.userId);
+  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  const prospectId = String(req.body?.prospectId || "");
+  if (!/^cantera_[\w .áéíóúñÁÉÍÓÚÑ-]{3,80}$/.test(prospectId)) return res.status(400).json({ error: "Joven inválido" });
+  const r = await db.execute({
+    sql: "INSERT OR IGNORE INTO dt_league_claims (league_id, prospect_id, user_id) VALUES (?, ?, ?)",
+    args: [league.id, prospectId, req.userId],
+  });
+  if (r.rowsAffected > 0) return res.json({ ok: true });
+  const row = (await db.execute({
+    sql: "SELECT c.user_id, u.username FROM dt_league_claims c JOIN users u ON u.id = c.user_id WHERE c.league_id = ? AND c.prospect_id = ?",
+    args: [league.id, prospectId],
+  })).rows[0];
+  if (row && row.user_id === req.userId) return res.json({ ok: true });
+  res.status(409).json({ error: "Otro manager ya fichó a ese joven", takenBy: row?.username || "otro manager" });
+});
+
 router.get("/:code/squad", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
