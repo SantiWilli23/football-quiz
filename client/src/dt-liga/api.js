@@ -30,6 +30,12 @@ export async function startLeague(code) {
   return data.league;
 }
 
+// Pretemporada: avisa que terminé mis amistosos. Cuando todos los managers terminan, arranca la liga.
+export async function markPreseasonReady(code) {
+  const { data } = await api.post(`/dt-league/${code}/preseason/ready`);
+  return data;
+}
+
 // Jóvenes de la cantera: en la liga online el primero que ficha a uno se lo lleva (los demás con red en ese
 // país ya no pueden). claimYouth devuelve { ok, takenBy } y getYouthClaims { id: username }.
 export async function claimYouth(code, prospectId) {

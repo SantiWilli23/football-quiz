@@ -281,7 +281,17 @@ export default function DtLeagueRoom() {
               ))}
             </div>
 
-            {tab === "fixtures" && (
+            {league.preseasonOpen && tab === "fixtures" && (
+              <div className="bg-panel border border-border rounded-2xl p-5 space-y-2">
+                <p className="font-semibold">Pretemporada en curso</p>
+                <p className="text-sm text-gray-400">La liga todavía no arrancó: cada manager juega sus amistosos en Mi club → Pretemporada. Cuando todos terminan, empiezan los partidos de liga.</p>
+                <ul className="text-sm space-y-1">
+                  {league.members.map((m) => <li key={m.userId} className="flex items-center gap-2"><span className={m.preseasonReady ? "text-emerald" : "text-gray-500"}>{m.preseasonReady ? "✓" : "…"}</span>{m.username}{m.isMe ? " (vos)" : ""}</li>)}
+                </ul>
+                <button onClick={() => setTab("club")} className="btn btn-primary btn-sm">Ir a Mi club</button>
+              </div>
+            )}
+            {!league.preseasonOpen && tab === "fixtures" && (
               <FixturesTab code={code} league={league} myTeamId={myTeamId} onAdvanced={setLeague} onReload={load} />
             )}
             {tab === "calendar" && <CalendarTab code={code} myTeamId={myTeamId} />}

@@ -38,6 +38,7 @@ export async function initSchema() {
   await migrateGameHistoryScore();
   await migrateDtTacticsPower();
   await migrateDtCpuDifficulty();
+  await migrateDtPreseason();
   await migrateDuelTournamentMatch();
   await migrateGroupMemberRival();
   await migrateGroupCards();
@@ -242,6 +243,19 @@ async function migrateDtTacticsPower() {
   if (info.rows.length === 0) return;
   if (info.rows.some((r) => r.name === "power")) return;
   await db.execute("ALTER TABLE dt_league_tactics ADD COLUMN power REAL");
+}
+
+// Pretemporada de la Liga Online DT: la liga solo arranca cuando todos los managers terminaron la suya.
+// Las ligas viejas quedan sin pretemporada pendiente.
+async function migrateDtPreseason() {
+  const leagues = await db.execute("PRAGMA table_info(dt_leagues)");
+  if (leagues.rows.length && !leagues.rows.some((r) => r.name === "preseason_open")) {
+    await db.execute("ALTER TABLE dt_leagues ADD COLUMN preseason_open INTEGER NOT NULL DEFAULT 0");
+  }
+  const members = await db.execute("PRAGMA table_info(dt_league_members)");
+  if (members.rows.length && !members.rows.some((r) => r.name === "preseason_ready")) {
+    await db.execute("ALTER TABLE dt_league_members ADD COLUMN preseason_ready INTEGER NOT NULL DEFAULT 1");
+  }
 }
 
 // Dificultad de los clubes CPU de la Liga Online DT (facil, media o dificil).

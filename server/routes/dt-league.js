@@ -53,7 +53,7 @@ async function loadLeagueByCode(code) {
 
 async function loadMembers(leagueId) {
   const result = await db.execute({
-    sql: `SELECT m.id, m.user_id, m.team_id, m.joined_at, m.ready_month, m.ready_at, m.last_active_at, m.expelled_at, u.username
+    sql: `SELECT m.id, m.user_id, m.team_id, m.joined_at, m.ready_month, m.ready_at, m.last_active_at, m.expelled_at, m.preseason_ready, u.username
           FROM dt_league_members m JOIN users u ON u.id = m.user_id
           WHERE m.league_id = ? ORDER BY m.joined_at ASC`,
     args: [leagueId],
@@ -171,7 +171,9 @@ function serializeLeague(league, members, userId) {
       teamId: m.team_id,
       isMe: m.user_id === userId,
       expelled: !!m.expelled_at,
+      preseasonReady: !!m.preseason_ready,
     })),
+    preseasonOpen: !!league.preseason_open,
     availableTeams: league_teams.filter((t) => !takenIds.has(t.id)),
     allTeams: league_teams,
   };
@@ -383,9 +385,12 @@ router.post("/:code/start", async (req, res) => {
   }
 
   await startSeason(league, members);
+  // Antes de la primera fecha hay pretemporada: la liga arranca cuando todos los managers terminaron la suya.
+  await db.execute({ sql: "UPDATE dt_leagues SET preseason_open = 1 WHERE id = ?", args: [league.id] });
+  await db.execute({ sql: "UPDATE dt_league_members SET preseason_ready = 0 WHERE league_id = ?", args: [league.id] });
 
   const updated = await loadLeagueByCode(req.params.code);
-  res.json({ league: serializeLeague(updated, members, req.userId) });
+  res.json({ league: serializeLeague(updated, await loadMembers(league.id), req.userId) });
 });
 
 // Táctica del club que dirige el usuario (mentalidad/pressing/tempo).
@@ -531,6 +536,8 @@ router.get("/:code/fixtures", async (req, res) => {
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   let { members, me } = await requireMembership(league, req.userId);
   if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  // En la pretemporada no se juega ni se resuelve nada de la liga: solo se ven los amistosos de Mi club.
+  if (league.preseason_open) return res.json({ preseason: true, month: 1, activeMonth: 1, totalMonths: await totalMonthsOf(league), season: Number(league.season || 1), fixtures: [] });
   if (league.status === "in_progress") ({ league, members } = await refreshLeague(league));
   me = members.find((m) => m.user_id === req.userId) || me;
 
@@ -617,9 +624,24 @@ router.get("/:code/fixtures", async (req, res) => {
 
 // Resuelve al instante un partido humano-vs-CPU: no hace falta esperar a nadie, así que el humano lo
 // juega cuando quiera (dentro del mes actual). Si el rival también es humano, va por /live.
+// Un manager avisa que terminó su pretemporada (jugó sus amistosos). Cuando todos terminaron, arranca la liga.
+router.post("/:code/preseason/ready", async (req, res) => {
+  const league = await loadLeagueByCode(req.params.code);
+  if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  const { members, me } = await requireMembership(league, req.userId);
+  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!league.preseason_open) return res.json({ ok: true, started: true });
+  await db.execute({ sql: "UPDATE dt_league_members SET preseason_ready = 1 WHERE league_id = ? AND user_id = ?", args: [league.id, req.userId] });
+  const fresh = await loadMembers(league.id);
+  const pending = fresh.filter((m) => !m.expelled_at && !m.preseason_ready);
+  if (!pending.length) await db.execute({ sql: "UPDATE dt_leagues SET preseason_open = 0 WHERE id = ?", args: [league.id] });
+  res.json({ ok: true, started: !pending.length, pending: pending.map((m) => m.username), members: members.length });
+});
+
 router.post("/:code/fixtures/:fixtureId/play", async (req, res) => {
   let league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  if (league.preseason_open) return res.status(400).json({ error: "La liga arranca cuando todos terminen la pretemporada" });
   let { members, me } = await requireMembership(league, req.userId);
   if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
   if (!me.team_id) return res.status(400).json({ error: "Todavía no elegiste equipo" });
@@ -676,6 +698,7 @@ router.post("/:code/fixtures/:fixtureId/play", async (req, res) => {
 router.get("/:code/fixtures/:fixtureId/live", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  if (league.preseason_open) return res.status(400).json({ error: "La liga arranca cuando todos terminen la pretemporada" });
   const { members, me } = await requireMembership(league, req.userId);
   if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
 
@@ -730,6 +753,7 @@ router.get("/:code/standings", async (req, res) => {
 router.post("/:code/advance", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  if (league.preseason_open) return res.status(400).json({ error: "La liga arranca cuando todos terminen la pretemporada" });
   const { me } = await requireMembership(league, req.userId);
   if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
   if (league.status !== "in_progress") return res.status(400).json({ error: "La liga no está en curso" });
