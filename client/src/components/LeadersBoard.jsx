@@ -3,7 +3,7 @@ import { Target, HandHelping, Gauge } from "lucide-react";
 const BOARDS = [
   { key: "goals", title: "Goleadores", icon: Target, tone: "#22c55e", unit: (p) => `${p.goals}`, sub: (p) => `${p.assists} asist.`, label: "goles" },
   { key: "assists", title: "Asistidores", icon: HandHelping, tone: "#38bdf8", unit: (p) => `${p.assists}`, sub: (p) => `${p.goals} goles`, label: "asist." },
-  { key: "perGame", title: "Mejor promedio por partido", icon: Gauge, tone: "#f59e0b", unit: (p) => p.value.toFixed(2), sub: (p) => `${p.goals}G + ${p.assists}A en ${p.matches} PJ`, label: "G+A / PJ" },
+  { key: "ratings", title: "Mejor calificación por partido", icon: Gauge, tone: "#f59e0b", unit: (p) => p.value.toFixed(1), sub: (p) => `${p.position} · ${p.matches} PJ`, label: "calificación" },
 ];
 
 function Row({ p, i, board, onPick }) {
@@ -48,8 +48,8 @@ export default function LeadersBoard({ data, onPick }) {
               {list.length === 0 && <p className="text-sm text-gray-500">Sin datos todavía.</p>}
               {list.map((p, i) => <Row key={p.id} p={p} i={i} board={b} onPick={onPick} />)}
             </div>
-            {b.key === "perGame" && list.length > 0 && (
-              <p className="text-[11px] text-gray-600 mt-2">Goles + asistencias por partido, con al menos {data.minMatches} partidos jugados.</p>
+            {b.key === "ratings" && list.length > 0 && (
+              <p className="text-[11px] text-gray-600 mt-2">Nota de 1 a 10 por partido según la posición (goles, asistencias, atajadas, valla invicta, tarjetas y resultado), promedio de los últimos partidos con al menos {data.ratingsMinMatches} jugados.</p>
             )}
           </section>
         );

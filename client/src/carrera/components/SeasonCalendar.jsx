@@ -135,11 +135,12 @@ function Meter({ label, value, tone }) {
 }
 
 // Días de la semana (con el partido el sábado) y calendario del mes para ir simulando.
-function DaysSection() {
-  const { state, simulateDay, simulateToMatchDay } = useCareer();
+export function DaysSection() {
+  const { state, simulateDay, simulateToMatchDay, isOnline } = useCareer();
   const [activity, setActivity] = useState(DEFAULT_ACTIVITY);
   const day = state.day || 0;
-  const fixture = state.calendar.find((c) => !c.played) || null;
+  // En la liga online los partidos los juega la liga (pestañas Jornada y Calendario).
+  const fixture = isOnline ? null : state.calendar.find((c) => !c.played) || null;
   const rival = fixture ? teamById(fixture.opponentTeamId) : null;
   const matchDay = day >= MATCH_DAY;
   const readiness = matchReadiness(state);
@@ -156,12 +157,12 @@ function DaysSection() {
   // Cada fecha de partido de la temporada cae en su sábado.
   const matchByDate = useMemo(() => {
     const map = {};
-    state.calendar.forEach((c) => {
+    (isOnline ? [] : state.calendar).forEach((c) => {
       const d = dateOfDay(state.season, c.week - 1, MATCH_DAY); // la fecha 1 se juega en la semana 0
       map[d.toISOString().slice(0, 10)] = c;
     });
     return map;
-  }, [state.calendar, state.season]);
+  }, [state.calendar, state.season, isOnline]);
 
   const tiredPlayers = [...state.squad].sort((a, b) => energyOf(state, a.id) - energyOf(state, b.id)).slice(0, 5);
   const todayIso = today.toISOString().slice(0, 10);
@@ -239,7 +240,7 @@ function DaysSection() {
           </div>
         </div>
       )}
-      {matchDay && <p className="text-sm text-gray-400">Ya es sábado: jugá el partido desde el Inicio. Después de jugar arranca la semana siguiente.</p>}
+      {matchDay && <p className="text-sm text-gray-400">{isOnline ? "Ya es sábado: tu partido se juega desde la pestaña Jornada de la liga." : "Ya es sábado: jugá el partido desde el Inicio. Después de jugar arranca la semana siguiente."}</p>}
 
       <div className="grid lg:grid-cols-[minmax(0,1fr)_260px] gap-5 items-start">
         <div>

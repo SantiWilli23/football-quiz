@@ -12,6 +12,7 @@ import {
   isConfigured,
 } from "../utils/football-api.js";
 import { getLeaders, getPlayer } from "../utils/espn-players.js";
+import { getRatedLeaders } from "../utils/match-ratings.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -69,7 +70,10 @@ router.get("/:league/leaders", async (req, res) => {
   const league = requireLeague(req, res);
   if (!league) return;
   try {
-    res.json(await getLeaders(league));
+    const leaders = await getLeaders(league);
+    // La calificación por partido es opcional: si ESPN no responde se sigue con goles y asistencias.
+    const rated = await getRatedLeaders(league).catch(() => null);
+    res.json({ ...leaders, ratings: rated?.ratings || [], ratingsMinMatches: rated?.minMatches ?? null });
   } catch {
     res.status(502).json({ error: "No se pudieron cargar los líderes" });
   }

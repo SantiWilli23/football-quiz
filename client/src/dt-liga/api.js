@@ -30,6 +30,23 @@ export async function startLeague(code) {
   return data.league;
 }
 
+// Carrera del manager (plantel, formación, energía, cantera, tácticas) guardada en el servidor.
+export async function getSquad(code) {
+  const { data } = await api.get(`/dt-league/${code}/squad`);
+  return data;
+}
+
+export async function saveSquad(code, state) {
+  const { data } = await api.put(`/dt-league/${code}/squad`, { state });
+  return data;
+}
+
+// Dificultad de los clubes CPU: facil, media o dificil (solo quien creó la liga, antes de arrancar).
+export async function setCpuDifficulty(code, difficulty) {
+  const { data } = await api.post(`/dt-league/${code}/difficulty`, { difficulty });
+  return data;
+}
+
 export async function getMyTactics(code) {
   const { data } = await api.get(`/dt-league/${code}/tactics`);
   return data.tactics;

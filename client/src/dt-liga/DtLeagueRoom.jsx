@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Check, ChevronLeft, ChevronRight, Copy } from "lucide-react";
+import ClubPanel from "./ClubPanel.jsx";
 import {
-  getLeague, pickTeam, startLeague,
-  getMyTactics, setMyTactics, getFixtures, getStandings, advanceWeek, playFixtureSolo,
+  getLeague, pickTeam, startLeague, setCpuDifficulty,
+  getFixtures, getStandings, advanceWeek, playFixtureSolo,
   proposeTrade, getTrades, respondTrade,
 } from "./api.js";
 
 const POLL_MS = 4000;
-const MENTALITY_LABELS = ["Muy defensivo", "Defensivo", "Equilibrado", "Ofensivo", "Muy ofensivo"];
+const CPU_DIFFICULTIES = [
+  ["facil", "Fácil", "Los clubes CPU rinden un poco menos."],
+  ["media", "Media", "Sin ajustes."],
+  ["dificil", "Difícil", "Los clubes CPU rinden más."],
+];
 
 export default function DtLeagueRoom() {
   const { code } = useParams();
@@ -222,6 +227,24 @@ export default function DtLeagueRoom() {
             </div>
 
             {league.isMine && (
+              <div className="bg-panel border border-border rounded-2xl p-4">
+                <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Dificultad de los clubes CPU</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {CPU_DIFFICULTIES.map(([id, label, hint]) => (
+                    <button
+                      key={id}
+                      onClick={async () => { try { await setCpuDifficulty(code, id); load(); } catch (err) { setError(err.response?.data?.error || "No se pudo cambiar la dificultad"); } }}
+                      aria-pressed={league.cpuDifficulty === id}
+                      className={`text-left px-3 py-2 rounded-2xl border text-sm transition-colors ${league.cpuDifficulty === id ? "border-accent bg-accent/10 text-accent" : "border-border text-gray-300 hover:border-white/30"}`}
+                    >
+                      <span className="font-semibold">{label}</span>
+                      <span className="block text-[11px] text-gray-500 mt-0.5">{hint}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {league.isMine && (
               <button
                 onClick={handleStart}
                 disabled={!everyoneReady || starting}
@@ -243,11 +266,11 @@ export default function DtLeagueRoom() {
         {(league.status === "in_progress" || league.status === "finished") && (
           <>
             <div className="flex gap-1">
-              {[["fixtures", "Jornada"], ["calendar", "Calendario"], ["standings", "Tabla"], ["tactics", "Mi táctica"], ["market", "Mercado"]].map(([id, label]) => (
+              {[["fixtures", "Jornada"], ["club", "Mi club"], ["calendar", "Calendario"], ["standings", "Tabla"], ["market", "Mercado"]].map(([id, label]) => (
                 <button
                   key={id}
                   onClick={() => setTab(id)}
-                  className={`${{ fixtures: "tone-accent", calendar: "tone-purple", standings: "tone-blue", tactics: "tone-amber", market: "tone-pink" }[id]} px-4 py-2 rounded-full text-sm font-semibold ${
+                  className={`${{ fixtures: "tone-accent", club: "tone-emerald", calendar: "tone-purple", standings: "tone-blue", market: "tone-pink" }[id]} px-4 py-2 rounded-full text-sm font-semibold ${
                     tab === id ? "tile-b text-white" : "text-gray-400 border border-border hover:text-white"
                   }`}
                 >
@@ -261,7 +284,7 @@ export default function DtLeagueRoom() {
             )}
             {tab === "calendar" && <CalendarTab code={code} myTeamId={myTeamId} />}
             {tab === "standings" && <StandingsTab code={code} myTeamId={myTeamId} />}
-            {tab === "tactics" && <TacticsTab code={code} myTeamId={myTeamId} teamName={teamName} />}
+            {tab === "club" && (myTeamId ? <ClubPanel code={code} league={league} myTeamId={myTeamId} /> : <p className="text-sm text-gray-500">Todavía no tenés club en esta liga.</p>)}
             {tab === "market" && <MarketTab code={code} league={league} />}
           </>
         )}
@@ -537,80 +560,6 @@ function StandingsTab({ code, myTeamId }) {
   );
 }
 
-function TacticsTab({ code, myTeamId, teamName }) {
-  const [tactics, setTactics] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    getMyTactics(code).then(setTactics).catch(() => setTactics(null));
-  }, [code]);
-
-  if (!myTeamId) {
-    return <p className="text-sm text-gray-500 text-center py-6">No dirigís ningún equipo en esta liga.</p>;
-  }
-  if (!tactics) return <p className="text-sm text-gray-500 text-center py-6">Cargando…</p>;
-
-  async function save(next) {
-    setTactics(next);
-    setSaving(true);
-    setSaved(false);
-    try {
-      await setMyTactics(code, next);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 1200);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <div className="bg-panel border border-border rounded-2xl p-5 space-y-5">
-      <p className="text-sm text-gray-400">
-        Dirigís <span className="text-white font-semibold">{teamName(myTeamId)}</span>. Esta táctica se usa cada vez que se resuelve tu partido.
-      </p>
-
-      <div>
-        <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">
-          Mentalidad — {MENTALITY_LABELS[tactics.mentality - 1]}
-        </p>
-        <input
-          type="range" min={1} max={5} step={1} value={tactics.mentality}
-          onChange={(e) => save({ ...tactics, mentality: Number(e.target.value) })}
-          className="w-full accent-accent"
-        />
-      </div>
-
-      <div>
-        <div className="flex justify-between text-xs text-gray-500 uppercase tracking-wide mb-2">
-          <span>Pressing</span><span>{tactics.pressing}</span>
-        </div>
-        <input
-          type="range" min={0} max={100} step={5} value={tactics.pressing}
-          onChange={(e) => save({ ...tactics, pressing: Number(e.target.value) })}
-          className="w-full accent-accent"
-        />
-      </div>
-
-      <div>
-        <div className="flex justify-between text-xs text-gray-500 uppercase tracking-wide mb-2">
-          <span>Tempo</span><span>{tactics.tempo}</span>
-        </div>
-        <input
-          type="range" min={0} max={100} step={5} value={tactics.tempo}
-          onChange={(e) => save({ ...tactics, tempo: Number(e.target.value) })}
-          className="w-full accent-accent"
-        />
-      </div>
-
-      <p className="text-xs text-gray-600 h-4">{saving ? "Guardando…" : saved ? "✓ Guardado" : ""}</p>
-    </div>
-  );
-}
-
-// Mercado de pases entre DTs: como acá cada uno dirige un club entero (no hay
-// plantilla jugador a jugador), "fichar" es proponerle a otro manager
-// intercambiar los clubes que dirigen de ahí en más.
 function MarketTab({ code, league }) {
   const [trades, setTrades] = useState([]);
   const [proposingTo, setProposingTo] = useState(null);

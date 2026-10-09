@@ -36,6 +36,8 @@ export async function initSchema() {
   await migrateDuelDifficulty();
   await migrateDuelWildcard();
   await migrateGameHistoryScore();
+  await migrateDtTacticsPower();
+  await migrateDtCpuDifficulty();
   await migrateDuelTournamentMatch();
   await migrateGroupMemberRival();
   await migrateGroupCards();
@@ -196,6 +198,22 @@ async function migrateDuelWildcard() {
   const names = new Set(info.rows.map((r) => r.name));
   if (!names.has("challenger_wildcard")) await db.execute("ALTER TABLE duels ADD COLUMN challenger_wildcard INTEGER NOT NULL DEFAULT 0");
   if (!names.has("opponent_wildcard")) await db.execute("ALTER TABLE duels ADD COLUMN opponent_wildcard INTEGER NOT NULL DEFAULT 0");
+}
+
+// Fuerza del plantel real de cada manager (ver dt-squad.js), guardada junto a su táctica.
+async function migrateDtTacticsPower() {
+  const info = await db.execute("PRAGMA table_info(dt_league_tactics)");
+  if (info.rows.length === 0) return;
+  if (info.rows.some((r) => r.name === "power")) return;
+  await db.execute("ALTER TABLE dt_league_tactics ADD COLUMN power REAL");
+}
+
+// Dificultad de los clubes CPU de la Liga Online DT (facil, media o dificil).
+async function migrateDtCpuDifficulty() {
+  const info = await db.execute("PRAGMA table_info(dt_leagues)");
+  if (info.rows.length === 0) return;
+  if (info.rows.some((r) => r.name === "cpu_difficulty")) return;
+  await db.execute("ALTER TABLE dt_leagues ADD COLUMN cpu_difficulty TEXT NOT NULL DEFAULT 'media'");
 }
 
 // Historial de juegos: puntuación 1-1000, duración y si fue un pleno (rendimiento máximo).

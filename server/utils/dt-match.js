@@ -31,15 +31,20 @@ export function dtWeeklyPoints(myTier, oppTier, outcome) {
   return gap < 0 ? gap * 4 : 0;
 }
 
+// Dificultad de los clubes CPU de la liga: cuánto suben o bajan su nivel (igual que el Modo DT solo).
+export const CPU_DIFFICULTY_BIAS = { facil: -3, media: 0, dificil: 3 };
+export const cpuBiasOf = (league) => CPU_DIFFICULTY_BIAS[league?.cpu_difficulty] ?? 0;
+
 export function dtOutcomeFor(myGoals, oppGoals) {
   if (myGoals > oppGoals) return "win";
   if (myGoals < oppGoals) return "loss";
   return "draw";
 }
 
-// tactics: { mentality: 1-5, pressing: 0-100, tempo: 0-100 } o null (default).
+// tactics: { mentality: 1-5, pressing: 0-100, tempo: 0-100, power?: fuerza del plantel } o null.
+// Si el manager guardó su plantel (Mi club), manda la fuerza real del once; si no, el nivel del club.
 function effectiveRating(tier, tactics) {
-  const base = tierToOvr(tier);
+  const base = tactics?.power != null ? Number(tactics.power) : tierToOvr(tier);
   if (!tactics) return base;
   const mentalityMod = (tactics.mentality - 3) * 1.2;
   const pressMod = ((tactics.pressing ?? 50) - 50) / 100 * 2;
@@ -58,9 +63,10 @@ export function simulateFixtureEvents({ homeTier, awayTier, homeTactics, awayTac
   return simulateMatchEvents({ ovrHome, ovrAway, homeAdvantage: 2.2 });
 }
 
-export function simulateFixture({ homeTier, awayTier, homeTactics, awayTactics }) {
-  const ovrHome = effectiveRating(homeTier, homeTactics);
-  const ovrAway = effectiveRating(awayTier, awayTactics);
+// homeBias / awayBias: ajuste de nivel de un lado (la dificultad de la liga se aplica a los clubes CPU).
+export function simulateFixture({ homeTier, awayTier, homeTactics, awayTactics, homeBias = 0, awayBias = 0 }) {
+  const ovrHome = effectiveRating(homeTier, homeTactics) + homeBias;
+  const ovrAway = effectiveRating(awayTier, awayTactics) + awayBias;
   return simulateMatchScore({ ovrHome, ovrAway, homeAdvantage: 2.2 });
 }
 

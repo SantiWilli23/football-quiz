@@ -379,15 +379,22 @@ function endOfWeek(s) {
   return next;
 }
 
-export function CareerProvider({ children }) {
-  const [state, setState] = useState(() => normalizeState(loadCareer()));
-  const [saveSlots, setSaveSlots] = useState(() => listSaveSlots());
+// `online` = { state, teamId, onChange }: la carrera de un manager de la Liga Online DT. En vez de
+// los slots locales se parte del plantel guardado en el servidor (o uno nuevo del club que eligió)
+// y cada cambio se devuelve por onChange para guardarlo allá.
+export function CareerProvider({ children, online = null }) {
+  const [state, setState] = useState(() => (online ? normalizeState(online.state || buildInitialState(online.teamId)) : normalizeState(loadCareer())));
+  const [saveSlots, setSaveSlots] = useState(() => (online ? [] : listSaveSlots()));
 
   useEffect(() => {
-    if (state) {
-      saveCareer(state);
-      setSaveSlots(listSaveSlots());
+    if (!state) return;
+    if (online) {
+      online.onChange?.(state);
+      return;
     }
+    saveCareer(state);
+    setSaveSlots(listSaveSlots());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   // Puntaje semanal de Modo DT: cada vez que cerrás una temporada se manda
@@ -397,7 +404,7 @@ export function CareerProvider({ children }) {
   // jugar más temporadas esta semana es lo que sube el número.
   const seasonsDone = state ? state.history.filter((h) => !h.note).length : 0;
   useEffect(() => {
-    if (!state || seasonsDone === 0) return;
+    if (online || !state || seasonsDone === 0) return;
     const groupId = Number(localStorage.getItem("fq_active_group"));
     if (!groupId) return;
     const l = buildLegacy(state.history, null);
@@ -437,6 +444,24 @@ export function CareerProvider({ children }) {
     deleteSaveSlot(slotId);
     setSaveSlots(listSaveSlots());
     if (wasActive) setState(null);
+  }
+
+  // Liga Online DT: los partidos los juega la liga, así que acá solo pasan las semanas. Por cada
+  // jornada nueva los días pasan con trabajo liviano, los titulares se cansan, los demás recuperan,
+  // se revisa la cantera y arranca la semana siguiente.
+  function syncOnlineWeek(toWeek) {
+    if (!online) return;
+    setState((s) => {
+      if (!s || s.week >= toWeek) return s;
+      let cur = s;
+      while (cur.week < toWeek) {
+        cur = autoDaysToMatch(cur);
+        const starters = (cur.lineup?.starters || []).map((x) => x.playerId).filter(Boolean);
+        cur = { ...cur, fatigue: applyMatchFatigue(cur.fatigue, cur.squad, starters, cur.trainingFocus) };
+        cur = endOfWeek({ ...cur, week: cur.week + 1 });
+      }
+      return cur;
+    });
   }
 
   // Compat: algunos componentes todavía llaman resetCareer() para "salir".
@@ -1693,6 +1718,8 @@ export function CareerProvider({ children }) {
       resumeCareer,
       deleteCareer,
       saveSlots,
+      isOnline: !!online,
+      syncOnlineWeek,
       setFormation,
       setMentality,
       setSlider,

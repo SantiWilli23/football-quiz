@@ -555,6 +555,20 @@ CREATE TABLE IF NOT EXISTS dt_league_tactics (
   UNIQUE(league_id, team_id)
 );
 
+-- Carrera de cada manager de la Liga Online DT: plantel, formacion, energia, cantera y
+-- tacticas, guardada como JSON por liga y usuario. power es la fuerza del once titular
+-- calculada en el servidor y es lo que se usa para resolver sus partidos.
+CREATE TABLE IF NOT EXISTS dt_league_squads (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES dt_leagues(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  team_id TEXT NOT NULL,
+  state TEXT NOT NULL,
+  power REAL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(league_id, user_id)
+);
+
 -- Puntos semanales de la Liga Online DT hacia el ranking general del grupo
 -- (mismo ranking que trivia/duelos/Modo B, ver rankingBetween en stats.js).
 -- Se suma UNA fila por jornada jugada por cada usuario — no por partido de

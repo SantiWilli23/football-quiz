@@ -4,7 +4,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
-import { simulateFixture, generateRoundRobin, dtWeeklyPoints, dtOutcomeFor } from "../utils/dt-match.js";
+import { simulateFixture, generateRoundRobin, dtWeeklyPoints, dtOutcomeFor, cpuBiasOf, CPU_DIFFICULTY_BIAS } from "../utils/dt-match.js";
+import { squadPower, tacticsOf, isValidSquadState, MAX_SQUAD_STATE_BYTES } from "../utils/dt-squad.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TEAMS_PATH = path.join(__dirname, "../data/dt-teams.json");
@@ -119,7 +120,7 @@ async function resolvePendingFixtures(league, members) {
   if (!pending.rows.length) return;
 
   const tacticsResult = await db.execute({
-    sql: "SELECT team_id, mentality, pressing, tempo FROM dt_league_tactics WHERE league_id = ?",
+    sql: "SELECT team_id, mentality, pressing, tempo, power FROM dt_league_tactics WHERE league_id = ?",
     args: [league.id],
   });
   const tacticsByTeam = Object.fromEntries(tacticsResult.rows.map((r) => [r.team_id, r]));
@@ -233,6 +234,7 @@ function serializeLeague(league, members, userId) {
     currentWeek: league.current_week,
     totalWeeks: league.total_weeks,
     weeksPerMonth: league.weeks_per_month,
+    cpuDifficulty: league.cpu_difficulty || "media",
     createdBy: league.created_by,
     isMine: league.created_by === userId,
     draftMode: !!league.draft_mode,
@@ -501,6 +503,68 @@ router.get("/:code/tactics", async (req, res) => {
   res.json({ tactics: result.rows[0] || { mentality: 3, pressing: 50, tempo: 50 } });
 });
 
+// Carrera del manager (plantel, formación, energía, cantera y tácticas). El cliente la guarda
+// y el servidor conserva el JSON; de acá sale la fuerza real del once con la que se juegan
+// sus partidos. Solo la ve y la edita el propio manager.
+router.get("/:code/squad", async (req, res) => {
+  const league = await loadLeagueByCode(req.params.code);
+  if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  const { me } = await requireMembership(league, req.userId);
+  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me.team_id) return res.json({ teamId: null, state: null, week: league.current_week });
+  const row = (await db.execute({
+    sql: "SELECT state, power FROM dt_league_squads WHERE league_id = ? AND user_id = ? AND team_id = ?",
+    args: [league.id, req.userId, me.team_id],
+  })).rows[0];
+  let state = null;
+  try { state = row ? JSON.parse(row.state) : null; } catch { state = null; }
+  res.json({ teamId: me.team_id, state, power: row?.power ?? null, week: league.current_week, cpuDifficulty: league.cpu_difficulty || "media" });
+});
+
+router.put("/:code/squad", async (req, res) => {
+  const league = await loadLeagueByCode(req.params.code);
+  if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  const { me } = await requireMembership(league, req.userId);
+  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me.team_id) return res.status(400).json({ error: "Todavía no elegiste equipo" });
+  const state = req.body?.state;
+  if (!isValidSquadState(state) || state.teamId !== me.team_id) return res.status(400).json({ error: "El plantel enviado no es válido" });
+  const json = JSON.stringify(state);
+  if (json.length > MAX_SQUAD_STATE_BYTES) return res.status(413).json({ error: "El plantel es demasiado grande" });
+
+  const power = squadPower(state);
+  await db.execute({
+    sql: `INSERT INTO dt_league_squads (league_id, user_id, team_id, state, power)
+          VALUES (?, ?, ?, ?, ?)
+          ON CONFLICT(league_id, user_id) DO UPDATE SET
+            team_id = excluded.team_id, state = excluded.state, power = excluded.power, updated_at = datetime('now')`,
+    args: [league.id, req.userId, me.team_id, json, power],
+  });
+  // La táctica de la carrera y la fuerza del once pasan a la liga: es lo que usa el resultado de sus partidos.
+  const t = tacticsOf(state);
+  await db.execute({
+    sql: `INSERT INTO dt_league_tactics (league_id, team_id, mentality, pressing, tempo, power)
+          VALUES (?, ?, ?, ?, ?, ?)
+          ON CONFLICT(league_id, team_id) DO UPDATE SET
+            mentality = excluded.mentality, pressing = excluded.pressing, tempo = excluded.tempo,
+            power = excluded.power, updated_at = datetime('now')`,
+    args: [league.id, me.team_id, t.mentality, t.pressing, t.tempo, power],
+  });
+  res.json({ ok: true, power });
+});
+
+// Dificultad de los clubes CPU: la cambia quien creó la liga, antes de que arranque.
+router.post("/:code/difficulty", async (req, res) => {
+  const league = await loadLeagueByCode(req.params.code);
+  if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  if (league.created_by !== req.userId) return res.status(403).json({ error: "Solo quien creó la liga puede cambiar la dificultad" });
+  if (league.status !== "lobby") return res.status(400).json({ error: "La liga ya arrancó, no se puede cambiar la dificultad" });
+  const id = String(req.body?.difficulty || "");
+  if (!(id in CPU_DIFFICULTY_BIAS)) return res.status(400).json({ error: "Dificultad inválida" });
+  await db.execute({ sql: "UPDATE dt_leagues SET cpu_difficulty = ? WHERE id = ?", args: [id, league.id] });
+  res.json({ ok: true, cpuDifficulty: id });
+});
+
 router.post("/:code/tactics", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
@@ -642,16 +706,20 @@ router.post("/:code/fixtures/:fixtureId/play", async (req, res) => {
   const teams = teamsForLeague(league.league_key);
   const tierByTeam = Object.fromEntries(teams.map((t) => [t.id, t.tier]));
   const tacticsResult = await db.execute({
-    sql: "SELECT team_id, mentality, pressing, tempo FROM dt_league_tactics WHERE league_id = ? AND team_id IN (?, ?)",
+    sql: "SELECT team_id, mentality, pressing, tempo, power FROM dt_league_tactics WHERE league_id = ? AND team_id IN (?, ?)",
     args: [league.id, fx.home_team_id, fx.away_team_id],
   });
   const tacticsByTeam = Object.fromEntries(tacticsResult.rows.map((r) => [r.team_id, r]));
 
+  // El rival es un club CPU: la dificultad de la liga le ajusta el nivel.
+  const cpuBias = cpuBiasOf(league);
   const { homeGoals, awayGoals } = simulateFixture({
     homeTier: tierByTeam[fx.home_team_id] || 2,
     awayTier: tierByTeam[fx.away_team_id] || 2,
     homeTactics: tacticsByTeam[fx.home_team_id] || null,
     awayTactics: tacticsByTeam[fx.away_team_id] || null,
+    homeBias: opponentTeamId === fx.home_team_id ? cpuBias : 0,
+    awayBias: opponentTeamId === fx.away_team_id ? cpuBias : 0,
   });
   await db.execute({
     sql: "UPDATE dt_league_fixtures SET home_goals = ?, away_goals = ?, played = 1 WHERE id = ?",

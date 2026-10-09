@@ -190,7 +190,7 @@ async function startRoom(room) {
   const awayTier = TEAM_BY_ID[room.fx.away_team_id]?.tier || 2;
 
   const tacticsResult = await db.execute({
-    sql: "SELECT team_id, mentality, pressing, tempo FROM dt_league_tactics WHERE league_id = ? AND team_id IN (?, ?)",
+    sql: "SELECT team_id, mentality, pressing, tempo, power FROM dt_league_tactics WHERE league_id = ? AND team_id IN (?, ?)",
     args: [room.leagueId, room.fx.home_team_id, room.fx.away_team_id],
   });
   const tacticsByTeam = Object.fromEntries(tacticsResult.rows.map((r) => [r.team_id, r]));
