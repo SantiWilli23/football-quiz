@@ -21,6 +21,8 @@ const myId = () => {
   } catch { return Math.random().toString(36).slice(2, 10); }
 };
 
+const normalizeText = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+
 export default function DorsalHistorico() {
   const { user } = useAuth();
   const { status, roomCode, role, error, lastMessage, createRoom, joinRoom, send, leave } = useRoomRelay(GAME);
@@ -34,6 +36,8 @@ export default function DorsalHistorico() {
   const [feedback, setFeedback] = useState("");
   const [scores, setScores] = useState({}); // id -> { username, names }
   const [answers, setAnswers] = useState(null);
+  const [allNames, setAllNames] = useState([]); // para sugerir mientras se escribe
+  const [hints, setHints] = useState(null); // iniciales de quienes usaron el dorsal
   const startedRef = useRef(null);
   const sentRef = useRef(false);
   const reportedRef = useRef(false);
@@ -48,6 +52,16 @@ export default function DorsalHistorico() {
     send({ type: "intro", ...me });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
+
+  useEffect(() => {
+    api.get("/dorsal/names").then((r) => setAllNames(r.data.names || [])).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (phase !== "playing" || !prompt) return;
+    setHints(null);
+    api.get("/dorsal/hints", { params: { promptId: prompt.id } }).then((r) => setHints(r.data.initials)).catch(() => {});
+  }, [phase, prompt?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!lastMessage || lastMessage.type !== "relay") return;
@@ -131,9 +145,28 @@ export default function DorsalHistorico() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
-  async function submit(e) {
+  // Sugerencias: jugadores de la base cuyo nombre contiene lo que escribís (los que empiezan igual, primero).
+  const suggestions = useMemo(() => {
+    const q = normalizeText(text);
+    if (q.length < 2) return [];
+    const starts = [];
+    const contains = [];
+    for (const n of allNames) {
+      const k = normalizeText(n);
+      if (k.startsWith(q) || k.split(" ").some((w) => w.startsWith(q))) starts.push(n);
+      else if (k.includes(q)) contains.push(n);
+      if (starts.length >= 6) break;
+    }
+    return [...starts, ...contains].slice(0, 6);
+  }, [text, allNames]);
+
+  function submit(e) {
     e.preventDefault();
-    const typed = text.trim();
+    say(text);
+  }
+
+  async function say(raw) {
+    const typed = String(raw || "").trim();
     if (!typed || phase !== "playing") return;
     setText("");
     try {
@@ -201,6 +234,7 @@ export default function DorsalHistorico() {
             <p className="text-lg text-gray-300">del {prompt.club}?</p>
           </div>
           {phase === "playing" ? (
+            <div className="space-y-2">
             <form onSubmit={submit} className="flex gap-2">
               <input
                 id="dorsal-answer"
@@ -213,6 +247,19 @@ export default function DorsalHistorico() {
               />
               <button type="submit" className="btn btn-primary">Decir</button>
             </form>
+            {suggestions.length > 0 && (
+              <ul className="rounded-card border border-border bg-bg divide-y divide-border/60 overflow-hidden" aria-label="Sugerencias de jugadores">
+                {suggestions.map((n) => (
+                  <li key={n}>
+                    <button type="button" onClick={() => say(n)} className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white">{n}</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {hints && timeLeft <= SECONDS / 2 && (
+              <p className="text-xs text-gray-500 text-center">Pista: {hints.join(" · ")}</p>
+            )}
+            </div>
           ) : (
             <p className="text-sm text-gray-400 text-center">Se acabó el tiempo. Esperando a los demás…</p>
           )}

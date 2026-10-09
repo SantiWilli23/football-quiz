@@ -4,6 +4,7 @@ import { Search, Volume2, VolumeX, BarChart3, Flame, Gamepad2, History, Home, He
 import { useAuth } from "../context/AuthContext.jsx";
 import Avatar from "./Avatar.jsx";
 import AlertsBell from "./AlertsBell.jsx";
+import HelpButton from "./HelpButton.jsx";
 import { isSfxOn, setSfxOn } from "../utils/sfx.js";
 
 // Cuatro accesos fijos y «Más» con el resto — antes eran cinco pestañas de
@@ -49,6 +50,7 @@ export default function MobileNav() {
         <button onClick={toggleSound} aria-label={sound ? "Silenciar sonidos" : "Activar sonidos"} aria-pressed={sound} className="p-1.5 text-gray-400">
           {sound ? <Volume2 size={17} /> : <VolumeX size={17} />}
         </button>
+        <HelpButton inline />
         <AlertsBell align="right" />
         <Avatar user={user} size={32} />
       </header>

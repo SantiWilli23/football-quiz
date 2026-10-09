@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import api from "../api.js";
 import { CHALK } from "../theme.js";
+import LineupPitch from "./LineupPitch.jsx";
 
 const STATUS_LABEL = {
   NS: "Por jugar",
@@ -121,10 +122,7 @@ export default function FixtureCard({ fixture, league }) {
           {loading && <p className="text-xs text-gray-500">Cargando alineación...</p>}
           {error && <p className="text-xs text-red-400">{error}</p>}
           {lineups && lineups.length === 2 && (
-            <div className="flex gap-4">
-              <LineupSide side={lineups[0]} />
-              <LineupSide side={lineups[1]} />
-            </div>
+            <LineupPitch lineups={lineups} />
           )}
           {lineups && lineups.length === 0 && (
             <p className="text-xs text-gray-500">Todavía no hay alineación confirmada para este partido.</p>

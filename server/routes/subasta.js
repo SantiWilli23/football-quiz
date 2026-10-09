@@ -12,6 +12,13 @@ import { simulateMatchScore, clamp } from "../utils/match-engine.js";
 // client/src/pages/Subasta.jsx) usando el relay de salas.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CUTOUTS_FILE = path.join(__dirname, "../data/player-cutouts.json");
+const readJson = (f) => JSON.parse(fs.readFileSync(path.join(__dirname, "../data", f), "utf8"));
+// Valores de mercado reales (Transfermarkt, ver data/valores-mercado-tm.json) y la base de jugadores,
+// para saber quién no tiene club (retirado o libre) y mostrarlo como "Sin club".
+const VALORES_TM = readJson("valores-mercado-tm.json");
+const NO_CLUB = new Set(readJson("equipo-jugador-players.json").jugadores
+  .filter((p) => !(p.carrera || []).some((c) => c.fin === null || c.fin === undefined))
+  .map((p) => p.nombre));
 
 const router = Router();
 router.use(requireAuth);
@@ -33,7 +40,10 @@ export function valueOf(ovr) {
   if (ovr >= 76) return 18;
   return 10;
 }
-const minBidOf = (ovr) => Math.max(5, Math.round((valueOf(ovr) * 0.3) / 5) * 5);
+// Valor del jugador: el de Transfermarkt si lo tenemos, si no el orientativo por nivel.
+const valueFor = (name, ovr) => VALORES_TM[name] ?? valueOf(ovr);
+// La puja mínima es la mitad de su valor (de a 5 M, nunca menos de 5).
+const minBidOf = (value) => Math.max(5, Math.round((value * 0.5) / 5) * 5);
 
 function shuffle(arr) {
   const a = [...arr];
@@ -53,7 +63,8 @@ router.get("/pool", (req, res) => {
   for (const pos of Object.keys(want)) {
     const list = shuffle(have.filter((p) => p.pos === pos)).slice(0, Math.min(want[pos], 120));
     for (const p of list) {
-      lots.push({ name: p.name, pos: p.pos, ovr: p.ovr, club: p.club, nationality: p.nationality, photo: cut[p.name], minBid: minBidOf(p.ovr), value: valueOf(p.ovr) });
+      const value = valueFor(p.name, p.ovr);
+      lots.push({ name: p.name, pos: p.pos, ovr: p.ovr, club: NO_CLUB.has(p.name) ? "Sin club" : p.club, nationality: p.nationality, photo: cut[p.name], minBid: minBidOf(value), value });
     }
   }
   res.json({ lots, available: have.length });
@@ -88,7 +99,10 @@ router.post("/cup", (req, res) => {
       winner = Math.random() < pa ? a : b;
       penalties = winner === a ? "a" : "b";
     }
-    return { a: a.id, b: b.id, goalsA: homeGoals, goalsB: awayGoals, scorersA: scorersFor(a, homeGoals), scorersB: scorersFor(b, awayGoals), penalties, winner: winner.id };
+    // Minutos de cada gol y ocasiones sin gol: sirven para reproducir el partido minuto a minuto en la cancha.
+    const minutes = (n) => Array.from({ length: n }, () => 2 + Math.floor(Math.random() * 87)).sort((x, y) => x - y);
+    const chances = Array.from({ length: 4 + Math.floor(Math.random() * 6) }, () => ({ min: 3 + Math.floor(Math.random() * 85), team: Math.random() < 0.5 ? a.id : b.id }));
+    return { a: a.id, b: b.id, goalsA: homeGoals, goalsB: awayGoals, scorersA: scorersFor(a, homeGoals), scorersB: scorersFor(b, awayGoals), minsA: minutes(homeGoals), minsB: minutes(awayGoals), chances, penalties, winner: winner.id };
   }
 
   const byId = Object.fromEntries(teams.map((t) => [t.id, t]));

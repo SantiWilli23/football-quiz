@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ChevronRight, Search, Volume2, VolumeX } from "lucide-react";
+import HelpButton from "./HelpButton.jsx";
 import { GAMES } from "../data/gameCatalog.js";
 import { isSfxOn, setSfxOn, playSfx } from "../utils/sfx.js";
 
@@ -69,6 +70,7 @@ export default function TopBar() {
       >
         {sound ? <Volume2 size={17} /> : <VolumeX size={17} />}
       </button>
+      <HelpButton inline />
     </div>
   );
 }

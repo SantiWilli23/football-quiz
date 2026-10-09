@@ -25,7 +25,7 @@ export default function Layout({ children, focus = false, exitTo = "/juegos", wi
             <X size={14} /> Salir
           </Link>
         </div>
-        <main className="px-4 py-3 pb-10 sm:px-6 lg:px-8 max-w-3xl mx-auto">{children}</main>
+        <main className={`px-4 py-3 pb-10 sm:px-6 lg:px-8 mx-auto ${wide ? "max-w-7xl" : "max-w-3xl"}`}>{children}</main>
       </div>
     );
   }
@@ -41,7 +41,6 @@ export default function Layout({ children, focus = false, exitTo = "/juegos", wi
           <PlenoStreak />
           {children}
         </main>
-        <HelpButton />
       </div>
     </div>
   );

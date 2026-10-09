@@ -43,7 +43,7 @@ const ALL_GAMES = [
   { to: "/dt-liga", label: "Modo DT Online", icon: Users, description: "Armá una liga con amigos: cada uno elige un club real y compite temporada a temporada.", family: "grupo", weekly: true, available: true },
 
   // ---- Contrarreloj ----
-  { to: "/trivia", label: "Trivia del día", icon: Brain, description: "Las preguntas del día, 20 segundos por pregunta: las mismas para todo el grupo.", family: "solo", daily: true, available: true },
+  { to: "/trivia", label: "Trivia del día", icon: Brain, description: "Las preguntas del día, 20 segundos por pregunta: las mismas para todo el grupo.", family: "solo", daily: true, dailyOnly: true, available: true },
   { to: "/un-minuto", label: "Un Minuto", icon: Timer, description: "Trivia contrarreloj: respondé todas las que puedas antes de que se acabe el reloj.", family: "solo", daily: true, available: true },
   { to: "/arbitraje-var", label: "Arbitraje / VAR", icon: Gavel, description: "Jugadas polémicas reales en video: decidí como el árbitro contra reloj y comparate con el VAR.", family: "solo", daily: true, available: true },
 
@@ -94,4 +94,5 @@ export const DAILY_GAMES = GAMES.filter((g) => g.daily);
 // grupos que los activaron. Salen de las otras listas para no repetirse.
 export const JUEGOS_SEMANALES = GAMES.filter((g) => g.weekly);
 export const CON_AMIGOS_GAMES = GAMES.filter((g) => g.family === "grupo" && !g.weekly);
-export const FUTBOL12_GAMES = GAMES.filter((g) => g.family !== "grupo" && !g.weekly);
+// dailyOnly: juegos que solo salen como juego diario cuando les toca (no en Fútbol 12).
+export const FUTBOL12_GAMES = GAMES.filter((g) => g.family !== "grupo" && !g.weekly && !g.dailyOnly);

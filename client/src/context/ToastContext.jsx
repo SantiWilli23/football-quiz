@@ -36,7 +36,7 @@ export function ToastProvider({ children }) {
       {children}
 
       {celebration && (
-        <div className="fixed inset-x-0 top-24 z-[60] flex justify-center pointer-events-none px-4" aria-live="polite">
+        <div className="fixed inset-x-0 top-24 z-[10001] flex justify-center pointer-events-none px-4" aria-live="polite">
           <div className="celebrate-pop relative overflow-hidden flex items-center gap-2.5 bg-panel border border-accent/40 rounded-card px-5 py-3 shadow-lg">
             <div className="celebrate-confetti absolute inset-x-0 top-0 h-0 pointer-events-none" aria-hidden="true">
               {Array.from({ length: 7 }).map((_, i) => <span key={i} />)}
@@ -48,7 +48,7 @@ export function ToastProvider({ children }) {
       )}
 
       <div
-        className="fixed top-16 lg:top-auto lg:bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-[min(92vw,360px)] pointer-events-none"
+        className="fixed top-16 lg:top-auto lg:bottom-6 left-1/2 -translate-x-1/2 z-[10001] flex flex-col gap-2 w-[min(92vw,360px)] pointer-events-none"
         aria-live="polite"
       >
         {items.map((t) => (

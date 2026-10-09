@@ -210,6 +210,7 @@ router.get("/fixtures/:id/lineups", async (req, res) => {
           number: p.player.number,
           name: p.player.name,
           position: p.player.pos,
+          grid: p.player.grid ?? null,
         })),
         substitutes: team.substitutes.map((p) => ({
           number: p.player.number,

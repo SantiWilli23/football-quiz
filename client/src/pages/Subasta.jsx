@@ -7,6 +7,8 @@ import useRoomRelay from "../hooks/useRoomRelay.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { reportOnlineWin } from "../utils/onlineWin.js";
 import { playSfx } from "../utils/sfx.js";
+import FormationPitch from "../components/FormationPitch.jsx";
+import LivePitch from "../components/LivePitch.jsx";
 
 // Subasta: 2, 4 u 8 DTs con 1000 M cada uno arman su once pujando por jugadores que salen
 // en silueta negra. Por cada puesto se subasta hasta que todos tengan uno; al final se juega
@@ -42,6 +44,34 @@ const myId = () => {
     return id;
   } catch { return Math.random().toString(36).slice(2, 10); }
 };
+// La silueta se dibuja en un canvas (no hay <img> que arrastrar, abrir ni guardar) y la foto en color
+// solo existe en pantalla cuando se revela quién es.
+function Silhouette({ src, color = false, className = "" }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!src || color) return undefined;
+    let alive = true;
+    const img = new Image();
+    img.onload = () => {
+      const c = ref.current;
+      if (!alive || !c) return;
+      c.width = img.naturalWidth;
+      c.height = img.naturalHeight;
+      const g = c.getContext("2d");
+      g.clearRect(0, 0, c.width, c.height);
+      g.drawImage(img, 0, 0);
+      g.globalCompositeOperation = "source-in";
+      g.fillStyle = "#000";
+      g.fillRect(0, 0, c.width, c.height);
+    };
+    img.src = src;
+    return () => { alive = false; };
+  }, [src, color]);
+  if (!src) return null;
+  if (color) return <img src={src} alt="" draggable={false} onContextMenu={(e) => e.preventDefault()} className={`${className} select-none pointer-events-none`} />;
+  return <canvas ref={ref} aria-hidden="true" onContextMenu={(e) => e.preventDefault()} className={`${className} select-none pointer-events-none`} />;
+}
+
 const slotsOf = (formation) => Object.entries(FORMATIONS[formation]).flatMap(([pos, n]) => Array.from({ length: n }, () => pos));
 const spent = (p) => p.picks.reduce((s, x) => s + (x?.price || 0), 0);
 const maxBidFor = (p, slots) => p.budget - STEP * (p.picks.filter((x, i) => !x).length - 1);
@@ -63,6 +93,9 @@ export default function Subasta() {
   const [bidText, setBidText] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [sel, setSel] = useState(null); // ficha elegida en la cancha para cambiarla de lugar
+  const [watch, setWatch] = useState(null); // partido de la copa que se está viendo: null, un número o "fin"
+  const [matchDone, setMatchDone] = useState(false);
 
   // ---- estado del anfitrión (no se comparte entero) ----
   const S = useRef(null); // estado público
@@ -119,6 +152,7 @@ export default function Subasta() {
       }
     } else if (m.type === "bid") hostBid(String(m.id), Number(m.amount));
     else if (m.type === "guess") hostGuess(String(m.id), String(m.text || ""));
+    else if (m.type === "swap") hostSwap(String(m.id), Number(m.i), Number(m.j));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastMessage]);
 
@@ -143,6 +177,15 @@ export default function Subasta() {
     lot.best = { id, amount };
     const left = host.current.deadline - Date.now();
     if (left < EXT_MS) host.current.deadline = Date.now() + EXT_MS;
+    commit();
+  }
+
+  // Intercambia dos jugadores ya ganados de un participante (solo fichas llenas, así no se rompe la subasta).
+  function hostSwap(id, i, j) {
+    const st = S.current;
+    const p = st?.players.find((x) => x.id === id);
+    if (!p || !Number.isInteger(i) || !Number.isInteger(j) || i === j || !p.picks[i] || !p.picks[j]) return;
+    [p.picks[i], p.picks[j]] = [p.picks[j], p.picks[i]];
     commit();
   }
 
@@ -205,7 +248,17 @@ export default function Subasta() {
     h.cur = lot;
     h.counter += 1;
     h.deadline = Date.now() + LOT_MS;
-    st.lot = { n: h.counter, pos, minBid: lot.minBid, photo: lot.photo, eligible, best: null, guessed: [], hint: null, rev: null, msLeft: LOT_MS, total: LOT_MS };
+    st.lot = { n: h.counter, pos, minBid: lot.minBid, photo: lot.photo, eligible, best: null, turn: null, guessed: [], hint: null, rev: null, msLeft: LOT_MS, total: LOT_MS };
+    // Turnos: cada lote le toca a uno (van rotando) y quien tiene el turno abre sí o sí con la puja mínima.
+    for (let k = 0; k < eligible.length; k++) {
+      const pid = eligible[(h.counter - 1 + k) % eligible.length];
+      const tp = st.players.find((x) => x.id === pid);
+      if (tp && maxBidFor(tp, st.slots) >= lot.minBid) {
+        st.lot.turn = pid;
+        st.lot.best = { id: pid, amount: lot.minBid };
+        break;
+      }
+    }
     commit();
   }
 
@@ -297,6 +350,15 @@ export default function Subasta() {
   function bid(amount) {
     if (!canBid) return;
     if (isHost) hostBid(me.id, amount); else send({ type: "bid", id: me.id, amount });
+  }
+  function swapPicks(i, j) {
+    if (isHost) hostSwap(me.id, i, j); else send({ type: "swap", id: me.id, i, j });
+  }
+  function pickSlot(i) {
+    if (sel === null) { setSel(i); return; }
+    if (sel === i) { setSel(null); return; }
+    swapPicks(sel, i);
+    setSel(null);
   }
   function submitGuess(e) {
     e.preventDefault();
@@ -399,7 +461,7 @@ export default function Subasta() {
   const unmasked = !!(lot?.rev || iGuessed);
 
   return (
-    <Layout focus={playing}>
+    <Layout focus={playing} wide>
       {playing && lot && (
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-3 flex-wrap text-sm">
@@ -413,7 +475,7 @@ export default function Subasta() {
             <div className="hero-b rounded-3xl p-4 sm:p-6" style={{ "--hero-a": "var(--c-amber)", "--hero-b": "var(--c-blue)" }}>
               <div className="flex flex-col items-center gap-4">
                 <div className="relative w-56 h-64 sm:w-64 sm:h-72 rounded-3xl flex items-end justify-center overflow-hidden" style={{ background: "radial-gradient(circle at 50% 35%, #fbfcfd, #c9d1d8)" }}>
-                  {showPhoto && <img src={showPhoto} alt="" className="h-full w-auto object-contain" style={unmasked ? undefined : { filter: "brightness(0)" }} />}
+                  {showPhoto && <Silhouette src={showPhoto} color={unmasked} className="h-full w-auto object-contain" />}
                   <span className="absolute top-2 right-2 text-xs font-bold rounded-full bg-black/70 text-white px-2.5 py-1 tabular-nums">{lot.rev ? "Vendido" : `${secs}s`}</span>
                 </div>
                 {unmasked ? (
@@ -428,6 +490,11 @@ export default function Subasta() {
                   </div>
                 )}
 
+                {lot.turn && !lot.rev && (
+                  <p className="text-sm text-center text-amber-200">
+                    Turno de <b>{view.players.find((p) => p.id === lot.turn)?.name}{lot.turn === me.id ? " (vos)" : ""}</b>: abrió con la mínima ({lot.minBid} M).
+                  </p>
+                )}
                 <div className="w-full max-w-md rounded-2xl border border-white/15 bg-black/25 p-4 text-center">
                   <p className="text-xs uppercase tracking-wide text-gray-300">Puja más alta</p>
                   <p className="text-3xl font-extrabold tabular-nums">{lot.best ? `${price} M` : "—"}</p>
@@ -465,6 +532,12 @@ export default function Subasta() {
             </div>
 
             <div className="space-y-3">
+              {meP && (
+                <div>
+                  <p className="t-eyebrow mb-2">Tu equipo · tocá dos jugadores para cambiarlos de lugar</p>
+                  <FormationPitch slots={view.slots} picks={meP.picks} selected={sel} onSelect={pickSlot} />
+                </div>
+              )}
               {view.players.map((p, i) => {
                 const filled = p.picks.filter(Boolean).length;
                 return (
@@ -489,64 +562,97 @@ export default function Subasta() {
         <Card className="text-center py-10"><Trophy size={30} className="mx-auto text-accent mb-3" /><p className="font-semibold">Subasta terminada</p><p className="text-sm text-gray-400 mt-1">Armando los partidos de la copa…</p></Card>
       )}
 
-      {view.phase === "done" && (
-        <div className="space-y-5">
-          {view.cup ? (
-            <div className="hero-b rounded-3xl p-6 text-center" style={{ "--hero-a": "var(--c-amber)", "--hero-b": "var(--c-accent)" }}>
-              <Trophy size={34} className="mx-auto text-amber mb-2" />
-              <p className="text-xs uppercase tracking-wide text-gray-300">Campeón de la copa</p>
-              <p className="text-3xl font-extrabold">{view.players.find((p) => p.id === view.cup.champion)?.name}</p>
-              {view.cup.champion === me.id && <p className="text-sm text-accent mt-1">¡Ganaste!</p>}
-            </div>
-          ) : <p className="text-sm text-red-400">{view.log}</p>}
-
-          {view.cup?.rounds.map((r) => (
-            <div key={r.name}>
-              <h2 className="t-eyebrow mb-2">{r.name}</h2>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {r.matches.map((m, i) => {
-                  const A = view.players.find((p) => p.id === m.a), B = view.players.find((p) => p.id === m.b);
-                  return (
-                    <Card key={i}>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className={`font-semibold ${m.winner === m.a ? "text-accent" : ""}`}>{A?.name}</span>
-                        <span className="text-2xl font-extrabold tabular-nums">{m.goalsA} - {m.goalsB}</span>
-                        <span className={`font-semibold ${m.winner === m.b ? "text-accent" : ""}`}>{B?.name}</span>
-                      </div>
-                      {m.penalties && <p className="text-xs text-gray-400 text-center mt-1">Definió por penales: {m.penalties === "a" ? A?.name : B?.name}</p>}
-                      {(m.scorersA.length > 0 || m.scorersB.length > 0) && (
-                        <p className="text-xs text-gray-400 mt-2">⚽ {[...m.scorersA, ...m.scorersB].join(", ")}</p>
-                      )}
-                    </Card>
-                  );
-                })}
+      {view.phase === "done" && (() => {
+        const rounds = view.cup?.rounds || [];
+        const flat = rounds.flatMap((r) => r.matches.map((m) => ({ r, m })));
+        const lineup = (id) => {
+          const p = view.players.find((x) => x.id === id);
+          return { name: p?.name || "—", xi: (p?.picks || []).map((x) => ({ name: x?.name, pos: x?.pos })) };
+        };
+        const cur = typeof watch === "number" ? flat[watch] : null;
+        const showResults = !view.cup || watch === "fin";
+        return (
+          <div className="space-y-5">
+            {view.cup && watch === null && (
+              <div className="hero-b rounded-3xl p-6 text-center space-y-3" style={{ "--hero-a": "var(--c-amber)", "--hero-b": "var(--c-accent)" }}>
+                <Trophy size={34} className="mx-auto text-amber" />
+                <p className="text-xl font-extrabold">¡Empieza la copa!</p>
+                <p className="text-sm text-gray-200">{flat.length} partido{flat.length === 1 ? "" : "s"}, minuto a minuto, con la cancha para ver hacia qué arco hay peligro.</p>
+                <div className="flex gap-2 justify-center flex-wrap">
+                  <button onClick={() => { setWatch(0); setMatchDone(false); }} className="btn btn-primary">Ver los partidos</button>
+                  <button onClick={() => setWatch("fin")} className="btn btn-secondary">Saltar a los resultados</button>
+                </div>
               </div>
-            </div>
-          ))}
+            )}
 
-          <div>
-            <h2 className="t-eyebrow mb-2">Los equipos</h2>
-            <div className="grid gap-3 md:grid-cols-2">
-              {view.players.map((p) => (
-                <Card key={p.id}>
-                  <div className="flex items-center justify-between mb-2"><b>{p.name}</b><span className="text-xs text-gray-400">Fuerza {view.cup?.strengths?.[p.id] ?? "—"} · sobran {p.budget} M</span></div>
-                  <div className="grid grid-cols-1 gap-1 text-sm">
-                    {p.picks.map((x, k) => (
-                      <div key={k} className={`${TONE[x?.pos]} flex items-center gap-2`}>
-                        <span className="w-9 text-[10px] uppercase text-tone font-bold">{x?.pos}</span>
-                        <span className="flex-1 truncate">{x?.name}</span>
-                        <span className="tabular-nums text-gray-400 text-xs">{x?.price ? `${x.price} M` : ""}</span>
-                        <b className="tabular-nums w-7 text-right">{x?.ovr}</b>
-                      </div>
+            {cur && (
+              <div className="space-y-3 max-w-3xl mx-auto">
+                <p className="t-eyebrow">{cur.r.name} · partido {watch + 1} de {flat.length}</p>
+                <LivePitch key={watch} home={lineup(cur.m.a)} away={lineup(cur.m.b)} match={cur.m} onDone={() => setMatchDone(true)} />
+                {matchDone && cur.m.penalties && <p className="text-sm text-center text-gray-300">Empate: definió por penales {view.players.find((p) => p.id === cur.m.winner)?.name}.</p>}
+                <div className="flex gap-2 justify-center">
+                  {matchDone && (
+                    <button onClick={() => { setMatchDone(false); setWatch(watch + 1 < flat.length ? watch + 1 : "fin"); }} className="btn btn-primary">
+                      {watch + 1 < flat.length ? "Siguiente partido" : "Ver resultados"}
+                    </button>
+                  )}
+                  <button onClick={() => setWatch("fin")} className="btn btn-secondary">Saltar a los resultados</button>
+                </div>
+              </div>
+            )}
+
+            {showResults && (
+              <>
+                {view.cup ? (
+                  <div className="hero-b rounded-3xl p-6 text-center" style={{ "--hero-a": "var(--c-amber)", "--hero-b": "var(--c-accent)" }}>
+                    <Trophy size={34} className="mx-auto text-amber mb-2" />
+                    <p className="text-xs uppercase tracking-wide text-gray-300">Campeón de la copa</p>
+                    <p className="text-3xl font-extrabold">{view.players.find((p) => p.id === view.cup.champion)?.name}</p>
+                    {view.cup.champion === me.id && <p className="text-sm text-accent mt-1">¡Ganaste!</p>}
+                  </div>
+                ) : <p className="text-sm text-red-400">{view.log}</p>}
+
+                {view.cup?.rounds.map((r) => (
+                  <div key={r.name}>
+                    <h2 className="t-eyebrow mb-2">{r.name}</h2>
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                      {r.matches.map((m, i) => {
+                        const A = view.players.find((p) => p.id === m.a), B = view.players.find((p) => p.id === m.b);
+                        return (
+                          <Card key={i}>
+                            <div className="flex items-center justify-between gap-3">
+                              <span className={`font-semibold truncate ${m.winner === m.a ? "text-accent" : ""}`}>{A?.name}</span>
+                              <span className="text-2xl font-extrabold tabular-nums shrink-0">{m.goalsA} - {m.goalsB}</span>
+                              <span className={`font-semibold truncate text-right ${m.winner === m.b ? "text-accent" : ""}`}>{B?.name}</span>
+                            </div>
+                            {m.penalties && <p className="text-xs text-gray-400 text-center mt-1">Definió por penales: {m.penalties === "a" ? A?.name : B?.name}</p>}
+                            {(m.scorersA.length > 0 || m.scorersB.length > 0) && (
+                              <p className="text-xs text-gray-400 mt-2">⚽ {[...m.minsA.map((mn, k) => `${mn}' ${m.scorersA[k]}`), ...m.minsB.map((mn, k) => `${mn}' ${m.scorersB[k]}`)].join(", ")}</p>
+                            )}
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+
+                <div>
+                  <h2 className="t-eyebrow mb-2">Los equipos</h2>
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    {view.players.map((p) => (
+                      <Card key={p.id}>
+                        <div className="flex items-center justify-between mb-2 gap-2"><b className="truncate">{p.name}</b><span className="text-xs text-gray-400 shrink-0">Fuerza {view.cup?.strengths?.[p.id] ?? "—"} · sobran {p.budget} M</span></div>
+                        <FormationPitch slots={view.slots} picks={p.picks} />
+                      </Card>
                     ))}
                   </div>
-                </Card>
-              ))}
-            </div>
+                </div>
+                <button onClick={leave} className="btn btn-secondary">Salir de la sala</button>
+              </>
+            )}
           </div>
-          <button onClick={leave} className="btn btn-secondary">Salir de la sala</button>
-        </div>
-      )}
+        );
+      })()}
     </Layout>
   );
 }

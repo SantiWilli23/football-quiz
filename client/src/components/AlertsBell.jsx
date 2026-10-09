@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { Bell } from "lucide-react";
 import useAlerts from "../hooks/useAlerts.js";
@@ -9,10 +10,24 @@ export default function AlertsBell({ align = "left", className = "" }) {
   const items = useAlerts();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const panelRef = useRef(null);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+
+  // El panel se dibuja en el body, fuera del menú, para que siempre quede en la capa más alta.
+  useEffect(() => {
+    if (!open || !ref.current) return;
+    const r = ref.current.getBoundingClientRect();
+    const width = Math.min(288, window.innerWidth * 0.85);
+    const left = align === "right" ? r.right - width : r.left;
+    setPos({ top: r.bottom + 8, left: Math.max(8, Math.min(left, window.innerWidth - width - 8)) });
+  }, [open, align]);
 
   useEffect(() => {
     if (!open) return undefined;
-    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const close = (e) => {
+      if (ref.current?.contains(e.target) || panelRef.current?.contains(e.target)) return;
+      setOpen(false);
+    };
     const esc = (e) => { if (e.key === "Escape") setOpen(false); };
     document.addEventListener("mousedown", close);
     document.addEventListener("keydown", esc);
@@ -34,8 +49,8 @@ export default function AlertsBell({ align = "left", className = "" }) {
           </span>
         )}
       </button>
-      {open && (
-        <div className={`absolute z-40 mt-2 w-72 max-w-[85vw] rounded-xl border border-border bg-panel shadow-xl p-2 ${align === "right" ? "right-0" : "left-0"}`}>
+      {open && createPortal(
+        <div ref={panelRef} style={{ top: pos.top, left: pos.left }} className="fixed z-[10000] w-72 max-w-[85vw] rounded-xl border border-border bg-panel shadow-xl p-2">
           <p className="t-eyebrow px-2 pt-1 pb-2">Avisos</p>
           {items.length === 0 ? (
             <p className="text-sm text-gray-400 px-2 pb-2">No te falta nada por hoy.</p>
@@ -52,7 +67,8 @@ export default function AlertsBell({ align = "left", className = "" }) {
               </Link>
             ))
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
