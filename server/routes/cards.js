@@ -734,3 +734,9 @@ router.post("/match", async (req, res) => {
 });
 
 export default router;
+
+// Pool de jugadores reales (con su OVR y puesto) para otros juegos que necesiten
+// "jugadores con nivel", como la Subasta (server/routes/subasta.js).
+export function draftPool() {
+  return BASE_CARDS.map((c) => ({ name: c.name, ovr: c.ovr, pos: c.pos, nationality: c.nationality, club: c.club }));
+}

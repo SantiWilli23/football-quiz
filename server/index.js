@@ -45,6 +45,7 @@ import gameHistoryRoutes from "./routes/game-history.js";
 import futgamesRoutes from "./routes/futgames.js";
 import traspasosRoutes from "./routes/traspasos.js";
 import dorsalRoutes from "./routes/dorsal.js";
+import subastaRoutes from "./routes/subasta.js";
 import mediaRoutes from "./routes/media.js";
 import aQuienMeComproRoutes from "./routes/a-quien-me-compro.js";
 
@@ -98,6 +99,7 @@ app.use("/api/game-history", gameHistoryRoutes);
 app.use("/api/futgames", futgamesRoutes);
 app.use("/api/traspasos", traspasosRoutes);
 app.use("/api/dorsal", dorsalRoutes);
+app.use("/api/subasta", subastaRoutes);
 app.use("/api/media", mediaRoutes);
 app.use("/api/a-quien-me-compro", aQuienMeComproRoutes);
 
