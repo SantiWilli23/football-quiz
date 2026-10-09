@@ -45,7 +45,8 @@ export function pointsFromFraction(fraction) {
 // Devuelve { points, already }.
 export async function recordDailyResult(userId, date, gameKey, fraction, score = 0, play = {}) {
   // Solo el juego diario de HOY suma; jugar otro es práctica libre.
-  if (dailyGameKeyFor(date) !== gameKey) {
+  // Modo diversión: nunca suma puntos, aunque hoy sea el diario de este juego.
+  if (play.mode === "fun" || dailyGameKeyFor(date) !== gameKey) {
     // Práctica libre: no suma puntos. El sobre depende del rendimiento, la dificultad
     // y la duración, con tope de sobres de práctica por día.
     const got = await practicePack(userId, date, gameKey, fraction, play);

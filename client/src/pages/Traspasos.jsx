@@ -11,7 +11,11 @@ import { playSfx } from "../utils/sfx.js";
 
 // Traspasos a ciegas: la línea de clubes de un jugador, sin nombre. 5 intentos;
 // arranca con 2 clubes y cada fallo o salto suma uno más (y después, posición,
-// nacionalidad y año de nacimiento). El jugador sale de la fecha, igual para todos.
+// nacionalidad y año de nacimiento).
+// Dos mundos separados:
+//  - Diario: un jugador por día, igual para todos. Da puntos y entra al podio.
+//  - Diversión: partida nueva con semilla propia. Da sobres según rendimiento y
+//    tiempo de juego, y nunca suma puntos ni toca el diario.
 const GAME = "traspasos";
 const today = () => new Date().toISOString().slice(0, 10);
 const MAX = 5;
@@ -21,7 +25,11 @@ const NEXT_HINT = ["otro club", "la posición", "la nacionalidad", "el año de n
 
 const years = (s) => `${s.from}${s.to === null ? " – hoy" : s.to === s.from ? "" : ` – ${s.to}`}`;
 
+const newSeed = () => Math.random().toString(36).slice(2, 10);
+
 export default function Traspasos() {
+  const [mode, setMode] = useState("daily"); // "daily" | "fun"
+  const [seed, setSeed] = useState("");
   const [state, setState] = useState(() => loadGame(GAME, today())); // { guesses, status }
   const [puzzle, setPuzzle] = useState(null);
   const [reveal, setReveal] = useState(null);
@@ -29,12 +37,17 @@ export default function Traspasos() {
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
   const [dailyMsg, setDailyMsg] = useState("");
+  const [startedAt, setStartedAt] = useState(0);
+
+  const isFun = mode === "fun";
+  const sessionKey = isFun ? `fun-${seed}` : today();
+  const q = isFun ? { mode: "fun", seed } : {};
 
   const over = state && state.status !== "playing";
   const attempts = state ? state.guesses.length : 0;
 
   async function fetchPuzzle(n) {
-    const { data } = await api.get("/traspasos/puzzle", { params: { attempts: n } });
+    const { data } = await api.get("/traspasos/puzzle", { params: { attempts: n, ...q } });
     setPuzzle(data);
   }
 
@@ -43,38 +56,63 @@ export default function Traspasos() {
     if (!state) return;
     fetchPuzzle(over ? MAX - 1 : attempts).catch(() => setError("No se pudo cargar el juego."));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state?.guesses.length, state?.status]);
+  }, [state?.guesses.length, state?.status, seed]);
 
   useEffect(() => {
-    if (over && !reveal) api.get("/traspasos/reveal").then((r) => setReveal(r.data)).catch(() => {});
+    if (over && !reveal) api.get("/traspasos/reveal", { params: q }).then((r) => setReveal(r.data)).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [over, reveal]);
 
-  // Al terminar (una sola vez): puntos/sobre del juego diario + Historial.
+  // Al terminar (una sola vez): puntos/sobre del diario, o sobre de diversión.
   useEffect(() => {
     if (!state || state.status === "playing" || state.reported) return;
     const next = { ...state, reported: true };
     setState(next);
-    saveGame(GAME, today(), next);
+    saveGame(GAME, sessionKey, next);
     const won = state.status === "win";
+    const seconds = startedAt ? Math.round((Date.now() - startedAt) / 1000) : 0;
     reportResult("traspasos", {
       // Acertar al 1º = 1; 2º = 0.8; 3º = 0.6; 4º = 0.4; 5º = 0.2; no acertar = 0.
       fraction: won ? (MAX + 1 - state.guesses.length) / MAX : 0,
       score: won ? MAX + 1 - state.guesses.length : 0,
       difficulty: 3,
       detail: won ? `Acertado en ${state.guesses.length}/${MAX}` : "No salió",
-    }).then(setDailyMsg);
+      mode,
+      seconds,
+    }).then((m) => setDailyMsg(isFun ? (m || "Partida de diversión: sin puntos. Te toca un sobre según cómo te fue.") : m));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.status]);
 
   function persist(next) {
     setState(next);
-    saveGame(GAME, today(), next);
-    if (next.status !== "playing") recordResult(GAME, today(), { won: next.status === "win", bucket: next.status === "win" ? next.guesses.length : "X" });
+    saveGame(GAME, sessionKey, next);
+    if (!isFun && next.status !== "playing") recordResult(GAME, today(), { won: next.status === "win", bucket: next.status === "win" ? next.guesses.length : "X" });
+  }
+
+  // Cambia de mundo: el diario o una partida de diversión nueva.
+  function chooseMode(next) {
+    setError("");
+    setMsg("");
+    setDailyMsg("");
+    setPuzzle(null);
+    setReveal(null);
+    setMode(next);
+    if (next === "fun") {
+      const s = newSeed();
+      setSeed(s);
+      setState(null);
+    } else {
+      setSeed("");
+      setState(loadGame(GAME, today()));
+    }
   }
 
   function start() {
     setError("");
-    persist({ guesses: [], status: "playing" });
+    setStartedAt(Date.now());
+    const next = { guesses: [], status: "playing" };
+    setState(next);
+    saveGame(GAME, sessionKey, next);
   }
 
   function miss(guess) {
@@ -87,7 +125,7 @@ export default function Traspasos() {
     if (busy || over) return;
     setBusy(true);
     try {
-      const { data } = await api.post("/traspasos/guess", { name });
+      const { data } = await api.post("/traspasos/guess", { name, ...q });
       if (data.correct) {
         persist({ ...state, guesses: [...state.guesses, name], status: "win" });
         setMsg("");
@@ -109,7 +147,7 @@ export default function Traspasos() {
   }
 
   const shareText = state && over
-    ? `⚽ Futotal · Traspasos a ciegas ${today()}\n` +
+    ? `⚽ Futotal · Traspasos a ciegas ${isFun ? "(diversión)" : today()}\n` +
       Array.from({ length: MAX }).map((_, i) => {
         if (i >= state.guesses.length) return "⬜";
         return state.status === "win" && i === state.guesses.length - 1 ? "🟩" : state.guesses[i] === null ? "⏭️" : "🟥";
@@ -119,9 +157,26 @@ export default function Traspasos() {
 
   const steps = over && reveal ? reveal.career : puzzle?.steps || [];
 
+  const modeSwitch = (
+    <div className="flex gap-2 mb-4" role="group" aria-label="Modo de juego">
+      {[["daily", "Diario · igual para todos"], ["fun", "Diversión · partida nueva"]].map(([k, label]) => (
+        <button
+          key={k}
+          onClick={() => chooseMode(k)}
+          aria-pressed={mode === k}
+          className={`btn btn-sm flex-1 ${mode === k ? "btn-primary" : "btn-secondary"}`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <Layout>
       <GameHeader game={GAME} title="Traspasos a ciegas" subtitle="Adiviná al jugador por sus clubes." icon={ArrowLeftRight} distLabel="intentos usados" />
+
+      {modeSwitch}
 
       {!state && (
         <div className="space-y-4">
@@ -144,8 +199,12 @@ export default function Traspasos() {
               <li className="flex gap-2"><Globe2 size={16} className="text-accent shrink-0 mt-0.5" />Después llegan las pistas: posición, nacionalidad y año de nacimiento.</li>
             </ul>
             {error && <p className="text-sm text-red-400">{error}</p>}
-            <button onClick={start} disabled={busy} className="btn btn-primary w-full">Empezar</button>
-            <p className="text-xs text-gray-500 text-center">Un jugador por día, igual para todos.</p>
+            <button onClick={start} disabled={busy || (isFun && !seed)} className="btn btn-primary w-full">
+              {isFun ? "Empezar partida de diversión" : "Empezar"}
+            </button>
+            <p className="text-xs text-gray-500 text-center">
+              {isFun ? "Partida nueva, sin puntos. Te da un sobre según cómo te fue, la dificultad y el tiempo que jugaste." : "Un jugador por día, igual para todos. Da puntos y entra al podio del día."}
+            </p>
           </Card>
         </div>
       )}
@@ -216,7 +275,9 @@ export default function Traspasos() {
               <p className="text-gray-400 text-sm">Era <span className="text-white font-semibold">{reveal?.name || "…"}</span>{reveal ? ` · ${reveal.position} · ${reveal.nationality}` : ""}</p>
               {dailyMsg && <p className="text-sm text-accent">{dailyMsg}</p>}
               <ShareResult text={shareText} />
-              <p className="text-xs text-gray-500">Mañana hay otro jugador.</p>
+              {isFun
+                ? <button onClick={() => chooseMode("fun")} className="btn btn-secondary btn-sm">Otra partida de diversión</button>
+                : <p className="text-xs text-gray-500">Mañana hay otro jugador.</p>}
             </Card>
           )}
         </div>

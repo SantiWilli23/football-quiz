@@ -15,7 +15,7 @@ router.post("/submit", async (req, res) => {
   const gameKey = String(req.body?.gameKey || "");
   if (!SUBMITTABLE_DAILY.has(gameKey)) return res.status(400).json({ error: "Juego diario desconocido" });
   try {
-    const play = { level: String(req.body?.level || ""), seconds: req.body?.seconds };
+    const play = { mode: req.body?.mode === "fun" ? "fun" : "daily", level: String(req.body?.level || ""), seconds: req.body?.seconds };
     const out = await recordDailyResult(req.userId, todayStr(), gameKey, req.body?.fraction, req.body?.score, play);
     res.status(201).json({ ...out, max: DAILY_GAME_MAX_POINTS });
   } catch (err) {
