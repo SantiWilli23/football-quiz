@@ -43,8 +43,8 @@ export function dtOutcomeFor(myGoals, oppGoals) {
 
 // tactics: { mentality: 1-5, pressing: 0-100, tempo: 0-100, power?: fuerza del plantel } o null.
 // Si el manager guardó su plantel (Mi club), manda la fuerza real del once; si no, el nivel del club.
-function effectiveRating(tier, tactics) {
-  const base = tactics?.power != null ? Number(tactics.power) : tierToOvr(tier);
+function effectiveRating(tier, tactics, rating = null) {
+  const base = tactics?.power != null ? Number(tactics.power) : rating != null ? Number(rating) : tierToOvr(tier);
   if (!tactics) return base;
   const mentalityMod = (tactics.mentality - 3) * 1.2;
   const pressMod = ((tactics.pressing ?? 50) - 50) / 100 * 2;
@@ -57,16 +57,16 @@ function effectiveRating(tier, tactics) {
 // resultado — lo único que cambia es que a cada gol se le asigna un minuto
 // al azar, para poder reproducir el partido en tiempo real entre los dos DTs
 // conectados en vez de tirar el marcador final de una.
-export function simulateFixtureEvents({ homeTier, awayTier, homeTactics, awayTactics }) {
-  const ovrHome = effectiveRating(homeTier, homeTactics);
-  const ovrAway = effectiveRating(awayTier, awayTactics);
+export function simulateFixtureEvents({ homeTier, awayTier, homeTactics, awayTactics, homeRating = null, awayRating = null }) {
+  const ovrHome = effectiveRating(homeTier, homeTactics, homeRating);
+  const ovrAway = effectiveRating(awayTier, awayTactics, awayRating);
   return simulateMatchEvents({ ovrHome, ovrAway, homeAdvantage: 2.2 });
 }
 
 // homeBias / awayBias: ajuste de nivel de un lado (la dificultad de la liga se aplica a los clubes CPU).
-export function simulateFixture({ homeTier, awayTier, homeTactics, awayTactics, homeBias = 0, awayBias = 0 }) {
-  const ovrHome = effectiveRating(homeTier, homeTactics) + homeBias;
-  const ovrAway = effectiveRating(awayTier, awayTactics) + awayBias;
+export function simulateFixture({ homeTier, awayTier, homeTactics, awayTactics, homeBias = 0, awayBias = 0, homeRating = null, awayRating = null }) {
+  const ovrHome = effectiveRating(homeTier, homeTactics, homeRating) + homeBias;
+  const ovrAway = effectiveRating(awayTier, awayTactics, awayRating) + awayBias;
   return simulateMatchScore({ ovrHome, ovrAway, homeAdvantage: 2.2 });
 }
 

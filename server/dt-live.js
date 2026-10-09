@@ -4,7 +4,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { db } from "./db/client.js";
-import { simulateFixtureEvents, dtWeeklyPoints, dtOutcomeFor } from "./utils/dt-match.js";
+import { simulateFixtureEvents } from "./utils/dt-match.js";
+import { clubInfo, humansOf, infoOf, recordResult, refreshLeagueWeek, resolveAuto, touchMember } from "./utils/dt-league-core.js";
 
 // Partidos en vivo de la Liga Online DT: cuando un fixture es entre dos
 // managers humanos, ninguno lo resuelve con un click — los dos tienen que
@@ -75,11 +76,16 @@ export function attachDtLiveWs(httpServer) {
       const fx = fxResult.rows[0];
       if (!fx) { send(ws, { type: "error", message: "Partido no encontrado" }); return ws.close(); }
       if (fx.played) { send(ws, { type: "error", message: "Este partido ya se jugó" }); return ws.close(); }
+      const leagueRow = (await db.execute({ sql: "SELECT * FROM dt_leagues WHERE id = ?", args: [fx.league_id] })).rows[0];
+      if (leagueRow && fx.month > Number(leagueRow.current_month || 1)) {
+        send(ws, { type: "error", message: "Ese mes todavía no empezó: primero tienen que cerrar el mes actual todos los jugadores." });
+        return ws.close();
+      }
 
       const membersResult = await db.execute({
         sql: `SELECT m.user_id, m.team_id, u.username FROM dt_league_members m
               JOIN users u ON u.id = m.user_id
-              WHERE m.league_id = ? AND m.team_id IN (?, ?)`,
+              WHERE m.league_id = ? AND m.expelled_at IS NULL AND m.team_id IN (?, ?)`,
         args: [fx.league_id, fx.home_team_id, fx.away_team_id],
       });
       const homeMember = membersResult.rows.find((m) => m.team_id === fx.home_team_id);
@@ -137,6 +143,7 @@ export function attachDtLiveWs(httpServer) {
           await db.execute({ sql: "UPDATE dt_league_fixtures SET live_started_at = datetime('now') WHERE id = ?", args: [fixtureId] });
         }
         await db.execute({ sql: `UPDATE dt_league_fixtures SET ${joinedCol} = 1 WHERE id = ?`, args: [fixtureId] });
+        await touchMember(fx.league_id, userId);
       }
 
       send(ws, {
@@ -186,8 +193,14 @@ export function attachDtLiveWs(httpServer) {
 
 async function startRoom(room) {
   room.started = true;
-  const homeTier = TEAM_BY_ID[room.fx.home_team_id]?.tier || 2;
-  const awayTier = TEAM_BY_ID[room.fx.away_team_id]?.tier || 2;
+  const leagueRow = (await db.execute({ sql: "SELECT * FROM dt_leagues WHERE id = ?", args: [room.leagueId] })).rows[0];
+  const members = (await db.execute({ sql: "SELECT m.user_id, m.team_id, m.expelled_at FROM dt_league_members m WHERE m.league_id = ?", args: [room.leagueId] })).rows;
+  const info = await clubInfo(leagueRow, members);
+  room.clubInfo = info;
+  room.homeRating = infoOf(info, room.fx.home_team_id).rating;
+  room.awayRating = infoOf(info, room.fx.away_team_id).rating;
+  const homeTier = infoOf(info, room.fx.home_team_id).tier;
+  const awayTier = infoOf(info, room.fx.away_team_id).tier;
 
   const tacticsResult = await db.execute({
     sql: "SELECT team_id, mentality, pressing, tempo, power FROM dt_league_tactics WHERE league_id = ? AND team_id IN (?, ?)",
@@ -200,6 +213,8 @@ async function startRoom(room) {
     awayTier,
     homeTactics: tacticsByTeam[room.fx.home_team_id] || null,
     awayTactics: tacticsByTeam[room.fx.away_team_id] || null,
+    homeRating: room.homeRating ?? null,
+    awayRating: room.awayRating ?? null,
   });
   room.events = events;
   room.finalScore = { homeGoals, awayGoals };
@@ -226,23 +241,18 @@ async function finishRoom(room) {
   if (room.finished) return;
   room.finished = true;
   try {
-    await db.execute({
-      sql: "UPDATE dt_league_fixtures SET home_goals = ?, away_goals = ?, played = 1 WHERE id = ?",
-      args: [room.finalScore.homeGoals, room.finalScore.awayGoals, room.fixtureId],
-    });
-    if (room.groupId) {
-      const { homeGoals, awayGoals } = room.finalScore;
-      const homePoints = dtWeeklyPoints(room.homeTier, room.awayTier, dtOutcomeFor(homeGoals, awayGoals));
-      const awayPoints = dtWeeklyPoints(room.awayTier, room.homeTier, dtOutcomeFor(awayGoals, homeGoals));
-      for (const [userId, points] of [[room.homeMember.user_id, homePoints], [room.awayMember.user_id, awayPoints]]) {
-        await db.execute({
-          sql: `INSERT INTO dt_league_weekly_scores (league_id, group_id, user_id, week, points)
-                VALUES (?, ?, ?, ?, ?)
-                ON CONFLICT(league_id, user_id, week) DO NOTHING`,
-          args: [room.leagueId, room.groupId, userId, room.fx.week, points],
-        });
-      }
-    }
+    const leagueRow = (await db.execute({ sql: "SELECT * FROM dt_leagues WHERE id = ?", args: [room.leagueId] })).rows[0];
+    // El resultado se guarda con el mismo camino que cualquier partido (en copas, empate = penales);
+    // los puntos se suman cuando se cierra la jornada completa.
+    await recordResult(leagueRow, room.fx, room.finalScore.homeGoals, room.finalScore.awayGoals, { info: room.clubInfo || {} });
+    await touchMember(room.leagueId, room.homeMember.user_id);
+    await touchMember(room.leagueId, room.awayMember.user_id);
+    const members = (await db.execute({
+      sql: `SELECT m.id, m.user_id, m.team_id, m.joined_at, m.ready_month, m.ready_at, m.last_active_at, m.expelled_at, u.username
+            FROM dt_league_members m JOIN users u ON u.id = m.user_id WHERE m.league_id = ? ORDER BY m.joined_at ASC`,
+      args: [room.leagueId],
+    })).rows;
+    await resolveAuto(leagueRow, members);
   } catch (err) {
     console.error("dt-live: no se pudo guardar el resultado final", err);
   }

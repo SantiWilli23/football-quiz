@@ -998,3 +998,68 @@ CREATE TABLE IF NOT EXISTS club_crests (
   name_key TEXT PRIMARY KEY,
   url TEXT NOT NULL DEFAULT ''
 );
+
+-- Temporada de la Liga Online DT (meses con "Listo", multas, niveles, mercados, copas y puntaje).
+-- Rating y presupuesto de cada club de la liga: el rating es el promedio de OVR del once y
+-- de ahí sale el nivel (1-10) y el tier que se muestra (1-3). Para los clubes manejados por
+-- humanos manda el plantel real que guardan, acá queda el valor de los clubes CPU.
+CREATE TABLE IF NOT EXISTS dt_league_clubs (
+  league_id INTEGER NOT NULL REFERENCES dt_leagues(id),
+  team_id TEXT NOT NULL,
+  rating REAL NOT NULL,
+  budget REAL NOT NULL,
+  PRIMARY KEY (league_id, team_id)
+);
+
+-- Multas por demorar el cierre del mes: 5 M€ por día de atraso, y al tercer día se expulsa.
+CREATE TABLE IF NOT EXISTS dt_league_fines (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES dt_leagues(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  month INTEGER NOT NULL,
+  day INTEGER NOT NULL,
+  amount REAL NOT NULL,
+  applied INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(league_id, user_id, month, day)
+);
+
+-- Ofertas de clubes CPU por jugadores de un manager humano en los mercados (el humano acepta o no).
+CREATE TABLE IF NOT EXISTS dt_league_cpu_offers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES dt_leagues(id),
+  season INTEGER NOT NULL DEFAULT 1,
+  team_id TEXT NOT NULL,
+  to_user_id INTEGER NOT NULL REFERENCES users(id),
+  player_id TEXT NOT NULL,
+  player_name TEXT NOT NULL,
+  ovr INTEGER NOT NULL,
+  amount REAL NOT NULL,
+  window TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_dt_cpu_offers_user ON dt_league_cpu_offers(league_id, to_user_id, status);
+
+-- Jornadas ya cerradas (todos los partidos de esa semana jugados) para no sumar el puntaje dos veces.
+CREATE TABLE IF NOT EXISTS dt_league_week_settled (
+  league_id INTEGER NOT NULL REFERENCES dt_leagues(id),
+  season INTEGER NOT NULL,
+  week INTEGER NOT NULL,
+  settled_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (league_id, season, week)
+);
+
+-- Historial de temporadas: el puntaje se reinicia cada temporada pero acá queda lo que hizo cada uno.
+CREATE TABLE IF NOT EXISTS dt_league_history (
+  league_id INTEGER NOT NULL REFERENCES dt_leagues(id),
+  season INTEGER NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  team_id TEXT,
+  position INTEGER,
+  points INTEGER NOT NULL DEFAULT 0,
+  details TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (league_id, season, user_id)
+)

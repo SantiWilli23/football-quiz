@@ -45,6 +45,7 @@ export async function initSchema() {
   await migrateGroupLeague();
   await migrateDtLeagueColumns();
   await migrateDtLeagueDraft();
+  await migrateDtSeason();
   await migrateWordleLeague();
   await migrateFichadoBonusHints();
   await migrateCupMatchEvents();
@@ -140,6 +141,41 @@ async function migrateWordleLeague() {
   await db.execute("PRAGMA foreign_keys = ON");
   await db.execute("CREATE INDEX IF NOT EXISTS idx_wordle_guesses_user_date ON wordle_guesses(user_id, date)");
   await db.execute("CREATE INDEX IF NOT EXISTS idx_wordle_results_date ON wordle_results(date)");
+}
+
+// Temporada online: mes actual con "Listo", temporada, actividad de cada manager y copas en el calendario.
+async function migrateDtSeason() {
+  const leagues = await db.execute("PRAGMA table_info(dt_leagues)");
+  if (leagues.rows.length) {
+    const names = new Set(leagues.rows.map((r) => r.name));
+    if (!names.has("current_month")) {
+      await db.execute("ALTER TABLE dt_leagues ADD COLUMN current_month INTEGER NOT NULL DEFAULT 1");
+      // Ligas que ya venían jugándose: el mes actual es el primero con algo sin jugar.
+      await db.execute("UPDATE dt_leagues SET current_month = COALESCE((SELECT MIN(month) FROM dt_league_fixtures f WHERE f.league_id = dt_leagues.id AND f.played = 0), (SELECT MAX(month) FROM dt_league_fixtures f WHERE f.league_id = dt_leagues.id), 1)");
+    }
+    if (!names.has("season")) await db.execute("ALTER TABLE dt_leagues ADD COLUMN season INTEGER NOT NULL DEFAULT 1");
+    if (!names.has("month_started_at")) await db.execute("ALTER TABLE dt_leagues ADD COLUMN month_started_at TEXT");
+  }
+  const members = await db.execute("PRAGMA table_info(dt_league_members)");
+  if (members.rows.length) {
+    const names = new Set(members.rows.map((r) => r.name));
+    if (!names.has("ready_month")) await db.execute("ALTER TABLE dt_league_members ADD COLUMN ready_month INTEGER NOT NULL DEFAULT 0");
+    if (!names.has("ready_at")) await db.execute("ALTER TABLE dt_league_members ADD COLUMN ready_at TEXT");
+    if (!names.has("last_active_at")) await db.execute("ALTER TABLE dt_league_members ADD COLUMN last_active_at TEXT");
+    if (!names.has("expelled_at")) await db.execute("ALTER TABLE dt_league_members ADD COLUMN expelled_at TEXT");
+  }
+  const fixtures = await db.execute("PRAGMA table_info(dt_league_fixtures)");
+  if (fixtures.rows.length) {
+    const names = new Set(fixtures.rows.map((r) => r.name));
+    if (!names.has("comp")) await db.execute("ALTER TABLE dt_league_fixtures ADD COLUMN comp TEXT NOT NULL DEFAULT 'liga'");
+    if (!names.has("round")) await db.execute("ALTER TABLE dt_league_fixtures ADD COLUMN round INTEGER NOT NULL DEFAULT 0");
+    if (!names.has("season")) await db.execute("ALTER TABLE dt_league_fixtures ADD COLUMN season INTEGER NOT NULL DEFAULT 1");
+    if (!names.has("winner")) await db.execute("ALTER TABLE dt_league_fixtures ADD COLUMN winner TEXT");
+    if (!names.has("scored")) {
+      await db.execute("ALTER TABLE dt_league_fixtures ADD COLUMN scored INTEGER NOT NULL DEFAULT 0");
+      await db.execute("UPDATE dt_league_fixtures SET scored = 1 WHERE played = 1");
+    }
+  }
 }
 
 // Draft de liga: orden de turnos para elegir equipo, opcional por liga.
