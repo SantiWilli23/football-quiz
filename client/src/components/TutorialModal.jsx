@@ -36,7 +36,7 @@ const STEPS = [
 const OPTIONS = [
   { label: "Algo rápido", hint: "Trivia, Un Minuto, Fichado", to: "/trivia", favorites: ["/trivia", "/juegos"] },
   { label: "Contra amigos", hint: "Duelos, grupo y retos semanales", to: "/grupo", favorites: ["/grupo", "/trivia"] },
-  { label: "Una carrera larga", hint: "Modo DT, Presidente, Cotrero", to: "/juegos", favorites: ["/juegos", "/vida-fut"] },
+  { label: "Vida FUT", hint: "Modo DT, Presidente, Cotrero", to: "/juegos", favorites: ["/juegos", "/vida-fut"] },
 ];
 
 export default function TutorialModal({ onDone }) {

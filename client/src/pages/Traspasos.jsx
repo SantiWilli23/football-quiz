@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ArrowLeftRight, Flag, Globe2, Cake, SkipForward, User } from "lucide-react";
 import api from "../api.js";
 import Card from "../components/Card.jsx";
@@ -28,9 +29,12 @@ const years = (s) => `${s.from}${s.to === null ? " – hoy" : s.to === s.from ? 
 const newSeed = () => Math.random().toString(36).slice(2, 10);
 
 export default function Traspasos() {
-  const [mode, setMode] = useState("daily"); // "daily" | "fun"
-  const [seed, setSeed] = useState("");
-  const [state, setState] = useState(() => loadGame(GAME, today())); // { guesses, status }
+  // Desde "Juego diario" (?diario=1): solo el diario, una vez, igual para todos y con puntos.
+  // Desde Fútbol 12: solo partidas de diversión, infinitas y con sobre (sin puntos).
+  const fromDaily = useSearchParams()[0].get("diario") === "1";
+  const [mode, setMode] = useState(fromDaily ? "daily" : "fun"); // "daily" | "fun"
+  const [seed, setSeed] = useState(() => (fromDaily ? "" : newSeed()));
+  const [state, setState] = useState(() => (fromDaily ? loadGame(GAME, today()) : null)); // { guesses, status }
   const [puzzle, setPuzzle] = useState(null);
   const [reveal, setReveal] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -157,26 +161,10 @@ export default function Traspasos() {
 
   const steps = over && reveal ? reveal.career : puzzle?.steps || [];
 
-  const modeSwitch = (
-    <div className="flex gap-2 mb-4" role="group" aria-label="Modo de juego">
-      {[["daily", "Diario · igual para todos"], ["fun", "Diversión · partida nueva"]].map(([k, label]) => (
-        <button
-          key={k}
-          onClick={() => chooseMode(k)}
-          aria-pressed={mode === k}
-          className={`btn btn-sm flex-1 ${mode === k ? "btn-primary" : "btn-secondary"}`}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
-  );
-
   return (
     <Layout>
       <GameHeader game={GAME} title="Traspasos a ciegas" subtitle="Adiviná al jugador por sus clubes." icon={ArrowLeftRight} distLabel="intentos usados" />
 
-      {modeSwitch}
 
       {!state && (
         <div className="space-y-4">

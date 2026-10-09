@@ -15,16 +15,21 @@ import { VALORES_MERCADO } from "../data/valores-mercado.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BASE = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/equipo-jugador-players.json"), "utf-8")).jugadores;
 
+// Valores del Modo DT (fórmula por nivel, edad y potencial) para los jugadores que no están
+// en la lista curada a mano: ampliaron el pool de ~250 a más de 600 jugadores.
+const VALORES_DT = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/valores-mercado-dt.json"), "utf-8"));
+const valueOf = (name) => VALORES_MERCADO[name] ?? VALORES_DT[name];
+
 const ROUNDS = 10;
 const POOL = BASE
-  .filter((p) => VALORES_MERCADO[p.nombre] != null)
+  .filter((p) => valueOf(p.nombre) != null && (p.carrera || []).some((c) => c.fin === null || c.fin === undefined))
   .map((p) => {
     const current = (p.carrera || []).find((c) => c.fin === null || c.fin === undefined);
     return {
       name: p.nombre,
       position: p.posicion,
       club: (current?.club || "").replace(/\s*\((cedido|cantera)\)\s*$/i, ""),
-      value: VALORES_MERCADO[p.nombre],
+      value: valueOf(p.nombre),
     };
   });
 

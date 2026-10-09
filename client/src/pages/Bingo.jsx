@@ -127,6 +127,8 @@ export default function Bingo() {
       score: state.cells.filter(Boolean).length,
       difficulty: state.mode === "medio" ? 4 : 2,
       detail: `${state.cells.filter(Boolean).length}/9 casillas · ${state.mode === "medio" ? "medio" : "fácil"}`,
+      mode: fromDaily ? "daily" : "fun",
+      level: state.mode === "medio" ? "normal" : "facil",
     }).then(setDailyMsg);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.status]);

@@ -116,6 +116,8 @@ export default function Piramide() {
       score: state.result?.correct || 0,
       difficulty: state.mode === "facil" ? 2 : 3,
       detail: `${state.result?.correct || 0}/10 · ${state.category}`,
+      mode: fromDaily ? "daily" : "fun",
+      level: state.mode === "facil" ? "facil" : "normal",
     }).then(setDailyMsg);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.status]);

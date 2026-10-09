@@ -143,7 +143,7 @@ export default function VidaFut() {
         Modo Vida FUT
       </h1>
       <p className="text-gray-400 text-sm mb-6">
-        Una carrera larga en tres etapas: arrancás jugando como futbolista en Cotrero Especialista, después colgás los
+        Vida FUT en tres etapas: arrancás jugando como futbolista en Cotrero Especialista, después colgás los
         botines y dirigís 3 temporadas como DT, y terminás presidiendo el club otras 3 temporadas.
       </p>
       <p className="text-xs text-gray-500 -mt-4 mb-6">

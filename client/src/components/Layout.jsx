@@ -5,6 +5,7 @@ import Sidebar from "./Sidebar.jsx";
 import MobileNav from "./MobileNav.jsx";
 import TopBar from "./TopBar.jsx";
 import HelpButton from "./HelpButton.jsx";
+import PlenoStreak from "./PlenoStreak.jsx";
 import { markVisit } from "../utils/visits.js";
 
 // `focus` = modo enfoque: durante una partida se esconden el menú y la barra
@@ -37,6 +38,7 @@ export default function Layout({ children, focus = false, exitTo = "/juegos", wi
         <TopBar />
         {/* pb-24 deja lugar para la barra de navegación fija del teléfono. */}
         <main className={`flex-1 px-4 py-5 pb-24 sm:px-6 lg:px-8 lg:py-8 lg:pb-8 ${wide ? "" : "max-w-[1400px]"} page-fade`}>
+          <PlenoStreak />
           {children}
         </main>
         <HelpButton />

@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronRight, Rows3, Rows4, Search, Volume2, VolumeX } from "lucide-react";
+import { ChevronRight, Search, Volume2, VolumeX } from "lucide-react";
 import { GAMES } from "../data/gameCatalog.js";
-import { readDensity, setDensity } from "../utils/density.js";
 import { isSfxOn, setSfxOn, playSfx } from "../utils/sfx.js";
 
 // Nombres de las pantallas que no son juegos (los juegos salen del catálogo).
@@ -24,15 +23,9 @@ function crumbsFor(pathname) {
 export default function TopBar() {
   const { pathname } = useLocation();
   const crumbs = crumbsFor(pathname);
-  const [density, setD] = useState(readDensity);
   const [sound, setSound] = useState(isSfxOn);
 
   const openSearch = () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }));
-  const toggleDensity = () => {
-    const next = density === "compacta" ? "comoda" : "compacta";
-    setDensity(next);
-    setD(next);
-  };
   const toggleSound = () => {
     const next = !sound;
     setSfxOn(next);
@@ -67,14 +60,6 @@ export default function TopBar() {
         <kbd className="text-xs border border-border rounded px-1.5 py-0.5">Ctrl K</kbd>
       </button>
 
-      <button
-        onClick={toggleDensity}
-        className={iconBtn}
-        aria-label={density === "compacta" ? "Cambiar a densidad cómoda" : "Cambiar a densidad compacta"}
-        title={density === "compacta" ? "Densidad: compacta" : "Densidad: cómoda"}
-      >
-        {density === "compacta" ? <Rows4 size={17} /> : <Rows3 size={17} />}
-      </button>
       <button
         onClick={toggleSound}
         className={iconBtn}

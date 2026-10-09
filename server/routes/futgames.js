@@ -7,7 +7,7 @@ import { todayStr } from "../utils/points.js";
 import { flagOf } from "../data/country-flags.js";
 import { PYRAMID_PUZZLES } from "../data/pyramid-puzzles.js";
 import {
-  buildIndex, CATEGORIES, cellsForPlayer, dailySeed, generateGrid, GRID_MODES, normalize, pickSquadClub,
+  buildIndex, CATEGORIES, cellsForPlayer, dailySeed, generateGridSafe, GRID_MODES, normalize, pickSquadClub,
   pyramidOrder, rankRanges, scorePyramid, squadOf, squadRevealOrders, tierOfRank, validFor,
 } from "../utils/futgames.js";
 
@@ -28,7 +28,7 @@ router.use(requireAuth);
 const CREST_IDS = {"Real Madrid":86,"Barcelona":83,"Manchester United":360,"Manchester City":382,"Chelsea":363,"Arsenal":359,"Liverpool":364,"Juventus":111,"AC Milan":103,"Inter Milan":110,"Bayern Munich":132,"Paris Saint-Germain":160,"Atletico Madrid":1068,"Tottenham Hotspur":367,"Borussia Dortmund":124,"Roma":104,"Marseille":176,"Newcastle United":361,"Aston Villa":362,"Benfica":1929,"Fiorentina":109,"Ajax":139,"Monaco":174,"West Ham United":371,"Sevilla":243,"Lyon":167,"Valencia":94,"Everton":368,"Villarreal":102,"Napoli":114,"Lille":166,"Lazio":112,"Porto":437,"Bayer Leverkusen":131,"Sporting CP":2250,"Galatasaray":432,"Fenerbahce":436,"Atalanta":105,"Real Sociedad":89,"Real Betis":244,"Leicester City":375,"Southampton":376,"Crystal Palace":384,"Udinese":118,"Celtic":256};
 // Escudos de las ligas (ESPN) para las casillas de categoría.
 const CAT_LOGOS = { champions: 2, premier: 23, laliga: 15, seriea: 12, bundesliga: 10 };
-const CAT_ICONS = { champions: "🏆", premier: "🦁", laliga: "🇪🇸", seriea: "🇮🇹", bundesliga: "🇩🇪" };
+const CAT_ICONS = { champions: "🏆", premier: "🦁", laliga: "🇪🇸", seriea: "🇮🇹", bundesliga: "🇩🇪", balon: "⚽" };
 
 const withFlag = (c) => ({
   ...c,
@@ -46,7 +46,7 @@ const GRID_POOLS = {
   facil: {
     clubs: ["Real Madrid", "Barcelona", "Manchester United", "Manchester City", "Chelsea", "Arsenal", "Liverpool", "Juventus", "AC Milan", "Inter Milan", "Bayern Munich", "Paris Saint-Germain", "Atletico Madrid", "Tottenham Hotspur", "Borussia Dortmund"],
     countries: ["España", "Francia", "Argentina", "Brasil", "Alemania", "Italia", "Inglaterra", "Portugal", "Países Bajos"],
-    cats: ["champions", "premier", "laliga", "seriea", "bundesliga"],
+    cats: ["champions", "premier", "laliga", "seriea", "bundesliga", "balon"],
   },
   medio: {
     clubs: ["Roma", "Marseille", "Newcastle United", "Aston Villa", "Benfica", "Fiorentina", "Ajax", "Monaco", "West Ham United", "Sevilla", "Lyon", "Valencia", "Everton", "Villarreal", "Napoli", "Lille", "Lazio", "Porto", "Bayer Leverkusen", "Sporting CP", "Galatasaray", "Fenerbahce", "Atalanta", "Real Sociedad", "Real Betis", "Leicester City", "Southampton", "Crystal Palace", "Udinese", "Celtic"],
@@ -60,7 +60,7 @@ function gridFor(mode, date) {
   const key = `${mode}|${date}`;
   if (!gridCache.has(key)) {
     if (gridCache.size > 20) gridCache.clear();
-    gridCache.set(key, generateGrid({ index: INDEX, pools: GRID_POOLS, mode, date }));
+    gridCache.set(key, generateGridSafe({ index: INDEX, pools: GRID_POOLS, mode, date }));
   }
   return gridCache.get(key);
 }
@@ -176,8 +176,11 @@ function squadFor(date) {
   return { club, countries, reveal: squadRevealOrders(countries, date) };
 }
 
+// El diario usa la fecha. Las partidas libres traen una semilla propia y salen distintas cada vez.
+const squadSeed = (v) => { const sd = seedOf(v); return sd ? `${todayStr()}|${sd}` : todayStr(); };
+
 router.get("/squad", (req, res) => {
-  const date = todayStr();
+  const date = squadSeed(req.query.seed);
   const s = squadFor(date);
   res.json({
     date,
@@ -189,12 +192,12 @@ router.get("/squad", (req, res) => {
 });
 
 router.post("/squad/guess", (req, res) => {
-  const s = squadFor(todayStr());
+  const s = squadFor(squadSeed(req.body?.seed));
   res.json({ correct: normalize(req.body?.club) === normalize(s.club) });
 });
 
 router.get("/squad/reveal", (req, res) => {
-  const s = squadFor(todayStr());
+  const s = squadFor(squadSeed(req.query.seed));
   res.json({ club: s.club, countries: s.countries.map((c) => ({ country: c.country, players: c.players })) });
 });
 

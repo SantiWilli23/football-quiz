@@ -35,6 +35,7 @@ export async function initSchema() {
   await migrateAvatarConfig();
   await migrateDuelDifficulty();
   await migrateDuelWildcard();
+  await migrateGameHistoryScore();
   await migrateDuelTournamentMatch();
   await migrateGroupMemberRival();
   await migrateGroupCards();
@@ -195,6 +196,16 @@ async function migrateDuelWildcard() {
   const names = new Set(info.rows.map((r) => r.name));
   if (!names.has("challenger_wildcard")) await db.execute("ALTER TABLE duels ADD COLUMN challenger_wildcard INTEGER NOT NULL DEFAULT 0");
   if (!names.has("opponent_wildcard")) await db.execute("ALTER TABLE duels ADD COLUMN opponent_wildcard INTEGER NOT NULL DEFAULT 0");
+}
+
+// Historial de juegos: puntuación 1-1000, duración y si fue un pleno (rendimiento máximo).
+async function migrateGameHistoryScore() {
+  const info = await db.execute("PRAGMA table_info(game_history)");
+  if (info.rows.length === 0) return;
+  const names = new Set(info.rows.map((r) => r.name));
+  if (!names.has("score")) await db.execute("ALTER TABLE game_history ADD COLUMN score INTEGER");
+  if (!names.has("seconds")) await db.execute("ALTER TABLE game_history ADD COLUMN seconds INTEGER NOT NULL DEFAULT 0");
+  if (!names.has("pleno")) await db.execute("ALTER TABLE game_history ADD COLUMN pleno INTEGER NOT NULL DEFAULT 0");
 }
 
 // Torneo de duelos: cada cruce del bracket crea un duelo normal, marcado

@@ -53,7 +53,7 @@ export const HELP = [
     "Acá también cambiás el tema, el sonido y los avisos.",
   ]) },
   { match: "/pase", ...H("Pase de temporada", "Cada cosa que jugás suma experiencia; al subir de nivel desbloqueás recompensas hasta fin de temporada.") },
-  { match: "/vida-fut", ...H("Vida FUT", "Una carrera larga en tres etapas: jugador (Cotrero), 3 temporadas de DT y 3 de presidente.", [
+  { match: "/vida-fut", ...H("Vida FUT", "Vida FUT en tres etapas: jugador (Cotrero), 3 temporadas de DT y 3 de presidente.", [
     "Cada etapa se juega con su propio modo; lo que lográs en una pasa a la siguiente.",
   ]) },
 

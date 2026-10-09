@@ -17,6 +17,7 @@ import PlayerCard from "../components/PlayerCard.jsx";
 export default function Profile() {
   const { user, stats, refreshMe } = useAuth();
   const { activeGroupId, activeGroup } = useGroups();
+  const [editingProfile, setEditingProfile] = useState(false);
   const [position, setPosition] = useState(null);
   const [ranking, setRanking] = useState([]);
   const [compareId, setCompareId] = useState("");
@@ -118,8 +119,24 @@ export default function Profile() {
 
       {tab === "ajustes" && (
         <>
-          <div className="mb-6"><AvatarEditor user={user} onSaved={refreshMe} /></div>
-          <div className="mb-6"><ProfileEditor user={user} onSaved={refreshMe} /></div>
+          <Card className="mb-6">
+            <div className="flex items-center gap-4">
+              <Avatar user={user} size={56} />
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold truncate">{user?.username}</p>
+                {user?.email && <p className="text-xs text-gray-400 truncate">{user.email}</p>}
+              </div>
+              <button onClick={() => setEditingProfile((v) => !v)} aria-expanded={editingProfile} className="btn btn-secondary btn-sm shrink-0">
+                {editingProfile ? "Cerrar" : "Editar perfil"}
+              </button>
+            </div>
+          </Card>
+          {editingProfile && (
+            <>
+              <div className="mb-6"><AvatarEditor user={user} onSaved={refreshMe} /></div>
+              <div className="mb-6"><ProfileEditor user={user} onSaved={refreshMe} /></div>
+            </>
+          )}
           <div className="mb-6"><ThemeSettings /></div>
           <div className="mb-6"><PushToggle /></div>
           <div className="mb-6"><AccountSettings user={user} onUpdated={refreshMe} /></div>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, Radio, Timer } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import api from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
@@ -14,6 +15,7 @@ import ShareButton from "../components/ShareButton.jsx";
 import GroupStreakCard from "../components/GroupStreakCard.jsx";
 import EscudoQuiz from "../components/EscudoQuiz.jsx";
 import { celebrateScore } from "../utils/celebrate.js";
+import { submitDaily } from "../utils/dailyGames.js";
 
 const LIVE_REFRESH_MS = 15000;
 
@@ -67,6 +69,10 @@ export default function Trivia() {
   // Arranca en la primera sin responder (si ya respondiste alguna hoy).
   const [current, setCurrent] = useState(0);
   const [skippedIds, setSkippedIds] = useState([]);
+  const [started, setStarted] = useState(false); // la trivia no arranca (ni corre el reloj) hasta tocar Iniciar
+  // Entrando por "Juego diario" (?diario=1) la trivia cuenta como el juego del día (puntaje + sobre).
+  const fromDaily = useSearchParams()[0].get("diario") === "1";
+  const dailySentRef = useRef(false);
 
   const budget = powerupBudget(stats?.current_streak ?? 0);
   const powerupsLeft = { fifty: Math.max(0, budget.fifty + earnedFifty - powerupUsage.fifty), skip: Math.max(0, budget.skip - powerupUsage.skip) };
@@ -149,6 +155,13 @@ export default function Trivia() {
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  useEffect(() => {
+    if (!fromDaily || dailySentRef.current || !questions?.length || current < questions.length) return;
+    dailySentRef.current = true;
+    const ok = questions.filter((q) => q.result?.is_correct).length;
+    submitDaily("trivia", ok / questions.length, ok, { mode: "daily" });
+  }, [fromDaily, questions, current]);
 
   const currentItem = questions?.[current];
   const currentDone = currentItem && (currentItem.answered || skippedIds.includes(currentItem.question.id));
@@ -262,7 +275,20 @@ export default function Trivia() {
             {mode === "a" ? (
               <>
                 {earnMsg && <p className="text-sm font-semibold text-accent">{earnMsg}</p>}
-                {currentItem && (
+                {currentItem && !started && (
+                  <Card className="text-center py-10">
+                    <Timer size={32} className="mx-auto text-accent mb-3" />
+                    <p className="text-lg font-bold mb-1">Trivia del día</p>
+                    <p className="text-sm text-gray-400 mb-1">{questions.length} preguntas · 20 segundos por pregunta</p>
+                    <p className="text-xs text-gray-500 mb-5">
+                      {questions.some((q) => q.answered) ? `Ya respondiste ${questions.filter((q) => q.answered).length} de ${questions.length}. Seguís donde quedaste.` : "El reloj arranca cuando tocás Iniciar."}
+                    </p>
+                    <button onClick={() => setStarted(true)} className="btn btn-primary">
+                      {questions.some((q) => q.answered) ? "Continuar" : "Iniciar"}
+                    </button>
+                  </Card>
+                )}
+                {currentItem && started && (
                   <>
                     <QuestionCard
                       key={currentItem.question.id}

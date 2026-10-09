@@ -60,7 +60,18 @@ export const CATEGORIES = {
   laliga: "Jugó en LaLiga",
   seriea: "Jugó en la Serie A",
   bundesliga: "Jugó en la Bundesliga",
+  balon: "Ganó el Balón de Oro",
 };
+
+// Ganadores del Balón de Oro (con los nombres tal cual figuran en la base de jugadores).
+export const BALON_DE_ORO = [
+  "Lionel Messi", "Cristiano Ronaldo", "Karim Benzema", "Luka Modric", "Rodri", "Kaka", "Ronaldinho", "Zinedine Zidane",
+  "Ronaldo Nazário", "Fabio Cannavaro", "Pavel Nedved", "Andriy Shevchenko", "Michael Owen", "Luis Figo", "Rivaldo",
+  "George Weah", "Hristo Stoichkov", "Roberto Baggio", "Jean-Pierre Papin", "Ousmane Dembélé", "Ousmane Dembele",
+  "Lothar Matthaus", "Ruud Gullit", "Marco van Basten", "Michel Platini", "Gerd Muller", "Franz Beckenbauer",
+  "Johan Cruyff", "Alfredo Di Stefano", "Eusebio", "George Best", "Bobby Charlton", "Paolo Rossi", "Oleg Blokhin",
+  "Raymond Kopa",
+];
 
 // Campeones de Europa por año en que terminó la temporada (final en mayo).
 export const CHAMPIONS_WINNERS = {
@@ -96,6 +107,7 @@ export function buildIndex(players) {
       if (lg) add(`cat:${lg}`, p.nombre);
     }
     if (wonChampions(p)) add("cat:champions", p.nombre);
+    if (BALON_DE_ORO.includes(p.nombre)) add("cat:balon", p.nombre);
   }
   return index;
 }
@@ -119,15 +131,34 @@ export const GRID_MODES = {
 // Las columnas son siempre clubes; las filas mezclan 1-2 selecciones con
 // clubes. Dos selecciones nunca se cruzan porque la base guarda una sola
 // nacionalidad por jugador (esa casilla quedaría vacía siempre).
-export function generateGrid({ index, pools, mode, date, maxTries = 4000 }) {
-  const rules = GRID_MODES[mode];
+// Si con las reglas normales no sale un tablero (pasaba en el modo medio, donde casi toda casilla
+// con categoría tiene más de 3 respuestas), se reintenta sin categorías y, por último, con un
+// tope de respuestas más alto. Así el tablero del día nunca queda sin generar.
+export function generateGrid(args) {
+  return generateGridWith(args);
+}
+
+export function generateGridSafe(args) {
+  try {
+    return generateGridWith(args);
+  } catch {
+    try {
+      return generateGridWith({ ...args, noCats: true });
+    } catch {
+      return generateGridWith({ ...args, noCats: true, maxValidOverride: 8, maxTries: 8000 });
+    }
+  }
+}
+
+function generateGridWith({ index, pools, mode, date, maxTries = 4000, noCats = false, maxValidOverride = null }) {
+  const rules = { ...GRID_MODES[mode], ...(maxValidOverride ? { maxValid: maxValidOverride } : {}) };
   const pool = pools[mode];
   for (let attempt = 0; attempt < maxTries; attempt++) {
     const rand = rng(dailySeed(date, `grid-${mode}-${attempt}`));
     const clubs = shuffle(pool.clubs, rand);
     const countries = shuffle(pool.countries, rand);
     // Casi siempre una fila es una categoría (ganó la Champions, jugó en tal liga…).
-    const cats = shuffle(pool.cats || [], rand);
+    const cats = shuffle(noCats ? [] : pool.cats || [], rand);
     const nCats = cats.length && rand() < 0.85 ? 1 : 0;
     const nCountries = Math.min(1 + Math.floor(rand() * 2), 3 - nCats);
     const cols = clubs.slice(0, 3).map((name) => ({ type: "club", name }));

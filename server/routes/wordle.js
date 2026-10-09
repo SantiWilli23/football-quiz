@@ -74,8 +74,17 @@ const DIFFICULTIES = {
 
 // La base viene ordenada de más a menos conocido, así que el "pool" de
 // secretos de cada dificultad es un prefijo de la lista: fácil = solo cracks.
+// Retirado: sin club abierto y con la última salida en 2023 o antes. Esos jugadores
+// no pueden salir como secreto (sí se pueden probar como intento).
+function isRetired(player) {
+  const carrera = player.carrera || [];
+  if (carrera.some((c) => c.fin === null)) return false;
+  const lastEnd = Math.max(0, ...carrera.map((c) => c.fin || 0));
+  return lastEnd <= 2023;
+}
+
 function secretPool(leagueKey, difficulty) {
-  const players = playersFor(leagueKey);
+  const players = playersFor(leagueKey).filter((p) => !isRetired(p));
   const d = DIFFICULTIES[difficulty] || DIFFICULTIES.normal;
   if (d.poolMax == null) return players;
   const size = Math.max(Math.min(players.length, 12), Math.min(d.poolMax, Math.ceil(players.length * d.poolFraction)));
@@ -200,19 +209,9 @@ function hintText(secret, kind) {
 // unificaron). Ganada: 8-18 según eficiencia, multiplicado por dificultad
 // (igual franja de "sesión" que los duelos). Perdida: consuelo chico según
 // lo cerca que llegaste.
-// Bonus opcional del modo "contra reloj": el cliente avisa que jugó con reloj y el
-// tiempo lo mide el SERVIDOR (created_at de la partida), no el cliente.
-function speedBonus(game, timed) {
-  if (!timed) return 0;
-  const started = Date.parse(String(game.created_at).replace(" ", "T") + "Z");
-  if (!Number.isFinite(started)) return 0;
-  const secs = (Date.now() - started) / 1000;
-  return secs <= 60 ? 4 : secs <= 120 ? 2 : secs <= 180 ? 1 : 0;
-}
-
 // Mejor puntaje posible de la diaria (normal): ganar al primer intento,
-// round(18 × 1.3) = 23, más 4 de bonus por rapidez.
-const FICHADO_DAILY_BEST = 27;
+// round(18 × 1.3) = 23.
+const FICHADO_DAILY_BEST = 23;
 
 function finalPoints({ won, guessesUsed, hintsUsed, difficulty, bestSimilarity }) {
   const mult = (DIFFICULTIES[difficulty] || DIFFICULTIES.normal).multiplier;
@@ -328,7 +327,7 @@ async function closeGame(loaded, won, opts = {}) {
     difficulty: game.difficulty,
     bestSimilarity: won ? 0 : bestSimilarityOf(guessNames, byName(game.secret_name)),
   });
-  const total = points + (won ? speedBonus(game, opts.timed) : 0);
+  const total = points;
   await db.execute({ sql: "UPDATE fichado_games SET status = ?, points = ? WHERE id = ?", args: [won ? "won" : "lost", total, game.id] });
   // La diaria ganada suma al ranking global el MISMO puntaje que ve el
   // jugador en pantalla (antes era un número aparte, más chico y sin
@@ -494,7 +493,7 @@ router.post("/guess", async (req, res) => {
       sql: "INSERT INTO fichado_guesses (game_id, attempt_number, guess_name) VALUES (?, ?, ?)",
       args: [game.id, guessNames.length + 1, guess.nombre],
     });
-    res.status(201).json({ game: serialize(await settle(game.id, req.userId, { timed: !!req.body?.timed })) });
+    res.status(201).json({ game: serialize(await settle(game.id, req.userId)) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

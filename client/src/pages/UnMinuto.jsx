@@ -28,7 +28,7 @@ const LEVELS = ["dificil", "ultra", "demonio"];
 const LEVEL_MULT = { dificil: 1, ultra: 1.5, demonio: 2 };
 const UP_AFTER = 3;
 const DOWN_AFTER = 2;
-const CATEGORY_LABELS = { todas: "Todas", mundiales: "Mundiales", champions: "Champions", chile: "Chile", premier: "Premier", laliga: "LaLiga" };
+const CATEGORY_LABELS = { todas: "Todas", mundiales: "Mundiales", champions: "Champions" };
 
 export default function UnMinuto() {
   // Entrando por el juego diario (?diario=1) solo está la versión diaria: Ultra difícil, todas las categorías.
@@ -66,14 +66,14 @@ export default function UnMinuto() {
     setFeedback(null);
     setHidden([]);
     try {
-      const { data } = await api.get("/un-minuto/question", { params: { exclude: exclude.join(","), difficulty: diff || (difficulty === "adaptativo" ? "ultra" : difficulty), category: category === "todas" ? undefined : category } });
+      const { data } = await api.get("/un-minuto/question", { params: { exclude: exclude.join(","), difficulty: diff || (difficulty === "adaptativo" ? "ultra" : difficulty), category: category === "todas" ? undefined : category, mode: fromDaily ? "daily" : "fun" } });
       setQuestion(data.question);
     } catch {
       setQuestion(null);
     } finally {
       setLoadingQuestion(false);
     }
-  }, [difficulty, category]);
+  }, [difficulty, category, fromDaily]);
 
   const finish = useCallback(async () => {
     if (endedRef.current) return;
@@ -83,10 +83,14 @@ export default function UnMinuto() {
     const finalScore = Math.round(weighted);
     // Rendimiento: precisión, pero solo vale entero si contestaste bastantes (12+).
     logGame("un_minuto", { dificil: 3, ultra: 4, demonio: 5, adaptativo: 4 }[difficulty] || 3, answeredCount ? (correctCount / answeredCount) * Math.min(1, correctCount / 12) : 0, correctCount + " aciertos de " + answeredCount);
-    if (difficulty === DAILY_DIFFICULTY) {
-      submitDaily("un_minuto", finalScore / DAILY_TARGET, finalScore).then((r) => setDailyMsg(dailyMessage(r)));
+    // Solo el juego diario suma al grupo: la partida de diversión no manda nada.
+    if (fromDaily) {
+      submitDaily("un_minuto", finalScore / DAILY_TARGET, finalScore, { mode: "daily" }).then((r) => setDailyMsg(dailyMessage(r)));
     } else {
-      setDailyMsg(`El juego diario cuenta en ${difficulties.find((d) => d.id === DAILY_DIFFICULTY)?.label || "la dificultad media"}.`);
+      // Diversión: sobre según el rendimiento y la dificultad, pero nunca puntos para el grupo.
+      submitDaily("un_minuto", Math.min(1, finalScore / DAILY_TARGET), finalScore, { mode: "fun", level: { dificil: "facil", ultra: "normal", demonio: "demonio" }[difficulty] || "normal", seconds: 60 })
+        .then((r) => setDailyMsg(dailyMessage(r) || "Partida de diversión: no suma puntos al grupo."));
+      return;
     }
     if (!groupId) return;
     setSaveState("saving");
@@ -100,7 +104,7 @@ export default function UnMinuto() {
     } catch {
       setSaveState(null);
     }
-  }, [groupId, weighted, difficulty, difficulties, correctCount, answeredCount]);
+  }, [groupId, weighted, difficulty, fromDaily, correctCount, answeredCount]);
 
   function start() {
     endedRef.current = false;
@@ -197,7 +201,7 @@ export default function UnMinuto() {
         <Card className="mt-4 text-center py-10">
           <Timer size={32} className="mx-auto text-accent mb-3" />
           <p className="text-sm text-gray-400 mb-2">Arrancás ya, sin vueltas: preguntas de a una hasta que se acabe el reloj.</p>
-          <p className="text-xs text-gray-500 mb-5">Juego diario: la primera partida del día en Ultra difícil (la dificultad media) te da un puntaje de hasta 20 (de referencia) y un sobre de cartas; el podio del día del grupo suma 5 / 3 / 1 puntos.</p>
+          <p className="text-xs text-gray-500 mb-5">Juego diario: la primera partida del día en Difícil te da un puntaje de hasta 20 (de referencia) y un sobre de cartas; el podio del día del grupo suma 5 / 3 / 1 puntos.</p>
           {!fromDaily && <div className="flex gap-1.5 justify-center mb-3 flex-wrap" role="group" aria-label="Categoría">
             {Object.entries(CATEGORY_LABELS).map(([id, label]) => (
               <button
@@ -224,14 +228,6 @@ export default function UnMinuto() {
                   {d.label} <span className="text-gray-500">×{d.multiplier}</span>
                 </button>
               ))}
-              <button
-                onClick={() => setDifficulty("adaptativo")}
-                aria-pressed={adaptive}
-                title="3 aciertos seguidos suben el nivel y 2 errores seguidos lo bajan"
-                className={`px-3 py-2 rounded-card text-sm font-medium border transition-colors ${adaptive ? "border-accent/40 bg-accent/10 text-accent" : "border-border text-gray-400 hover:text-white"}`}
-              >
-                Adaptativo <span className="text-gray-500">×1–2</span>
-              </button>
             </div>
           )}
           <button

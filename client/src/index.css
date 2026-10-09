@@ -89,41 +89,6 @@
   --theme-color: #262b35;
 }
 
-[data-theme="bengala"] {
-  --c-bg: 246 246 248;
-  --c-panel: 255 255 255;
-  --c-panel-hi: 255 255 255;
-  --c-border: 226 228 233;
-
-  --c-white: 15 17 21;
-  --c-onaccent: 255 255 255;
-
-  --c-gray-200: 226 228 233;
-  --c-gray-300: 199 203 211;
-  --c-gray-400: 171 177 188;
-  --c-gray-500: 154 161 174;
-  --c-gray-600: 90 97 110;
-  --c-gray-700: 68 75 88;
-  --c-gray-800: 38 43 51;
-  --c-gray-900: 15 17 21;
-
-  --c-accent: 255 77 23;
-  --c-accent-dark: 204 61 18;
-  --c-accent-light: 255 138 94;
-
-  --c-blue: 59 130 246;
-  --c-purple: 139 127 232;
-  --c-emerald: 0 179 122;
-  --c-amber: 240 180 41;
-  --c-orange: 204 61 18;
-  --c-red: 229 72 77;
-  --c-pink: 232 64 138;
-  --c-cyan: 0 168 190;
-
-  --radius-card: 16px;
-  --theme-color: #f6f6f8;
-}
-
 /* Cancha de día (diseño B): fondo claro verdoso, esmeralda de marca y acentos azul, naranja, violeta y rosa. */
 [data-theme="cancha-dia"] {
   --c-bg: 238 243 241;
@@ -258,6 +223,54 @@ body {
   );
 }
 
+/* Esquina cortada con borde: el clip-path recorta el borde cuadrado y deja la diagonal
+   sin línea. Se dibuja con dos pseudo-elementos que heredan el color del borde. */
+[data-shape="cancha"] :is(.rounded-card, .rounded-2xl, .rounded-xl, .rounded, .rounded-md).border:not(.absolute, .fixed, .sticky) {
+  position: relative;
+}
+[data-shape="cancha"] :is(.rounded-card, .rounded-2xl, .rounded-xl).border::before,
+[data-shape="cancha"] :is(.rounded-card, .rounded-2xl, .rounded-xl).border::after {
+  content: "";
+  position: absolute;
+  width: calc(var(--cut-lg) * 1.4142);
+  height: 0;
+  border-top: 1px solid;
+  border-color: inherit;
+  pointer-events: none;
+  transform-origin: 0 0;
+}
+[data-shape="cancha"] :is(.rounded-card, .rounded-2xl, .rounded-xl).border::before {
+  left: calc(100% - var(--cut-lg));
+  top: 0;
+  transform: rotate(45deg);
+}
+[data-shape="cancha"] :is(.rounded-card, .rounded-2xl, .rounded-xl).border::after {
+  left: 0;
+  top: calc(100% - var(--cut-lg));
+  transform: translate(0.7px, -0.7px) rotate(45deg);
+}
+[data-shape="cancha"] :is(.rounded, .rounded-md).border::before,
+[data-shape="cancha"] :is(.rounded, .rounded-md).border::after {
+  content: "";
+  position: absolute;
+  width: calc(var(--cut-sm) * 1.4142);
+  height: 0;
+  border-top: 1px solid;
+  border-color: inherit;
+  pointer-events: none;
+  transform-origin: 0 0;
+}
+[data-shape="cancha"] :is(.rounded, .rounded-md).border::before {
+  left: calc(100% - var(--cut-sm));
+  top: 0;
+  transform: rotate(45deg);
+}
+[data-shape="cancha"] :is(.rounded, .rounded-md).border::after {
+  left: 0;
+  top: calc(100% - var(--cut-sm));
+  transform: translate(0.7px, -0.7px) rotate(45deg);
+}
+
 /* ---- Esqueletos de carga, animación de resultado y escala tipográfica ---- */
 .skeleton {
   background: linear-gradient(90deg, rgb(255 255 255 / 0.04) 25%, rgb(255 255 255 / 0.09) 50%, rgb(255 255 255 / 0.04) 75%);
@@ -291,12 +304,6 @@ body {
 @keyframes toast-in { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
 .toast-in { animation: toast-in 0.35s ease both; }
 @media (prefers-reduced-motion: reduce) { .toast-in { animation: none; } }
-
-/* Bengala: el naranja se reserva para lo que se toca. Los títulos van en tinta. */
-[data-theme="bengala"] :is(h1, h2, h3, h4).text-accent,
-[data-theme="bengala"] :is(h1, h2, h3, h4) .text-accent {
-  color: rgb(var(--c-white));
-}
 
 /* ---- Rediseño "Portada": portadas con degradado de dos colores, tiras de datos
    con subrayado de color y filas con franja. Usan los slots de color del tema,

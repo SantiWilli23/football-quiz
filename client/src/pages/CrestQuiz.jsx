@@ -157,7 +157,10 @@ export default function CrestQuiz() {
         if (isDaily) {
           const hits = nextResults.filter(Boolean).length;
           const weighted = nextResults.reduce((sum, ok, i) => sum + (ok ? (LEVEL_VALUE[nextLevels[i] ?? 0] ?? 0.55) : 0), 0);
-          submitDaily("escudos", weighted / ROUNDS, hits).then((r) => setDailyMsg(dailyMessage(r)));
+          submitDaily("escudos", weighted / ROUNDS, hits, { mode: "daily" }).then((r) => setDailyMsg(dailyMessage(r)));
+        } else {
+          const hits = nextResults.filter(Boolean).length;
+          submitDaily("escudos", hits / ROUNDS, hits, { mode: "fun", level: isExpert ? "dificil" : "facil", seconds: 120 }).then((r) => setDailyMsg(dailyMessage(r)));
         }
       }
     }, 700);

@@ -15,7 +15,7 @@ export const FAMILIES = {
   grupo: { label: "Con amigos", subtitle: "Se juegan o se compiten entre los miembros de tu grupo.", tw: "amber" },
   reloj: { label: "Contrarreloj", subtitle: "El reloj corre — respondé rápido o se acaba.", tw: "red" },
   pronostico: { label: "Pronóstico", subtitle: "Predecí resultados reales antes de que pasen.", tw: "blue" },
-  carrera: { label: "Carrera", subtitle: "Temporada a temporada, partidas de horas.", tw: "purple" },
+  carrera: { label: "Vida FUT", subtitle: "Temporada a temporada, partidas de horas.", tw: "purple" },
 };
 
 const ALL_FAMILY_ORDER = ["solo", "grupo", "reloj", "pronostico", "carrera"];
@@ -38,12 +38,12 @@ const ALL_GAMES = [
 
   // ---- Con amigos ----
   { to: "/quien-sabe-mas", label: "¿Quién sabe más de fútbol?", icon: Brain, description: "Elegí entre Duelos, Mentiroso, Equipo-Jugador, ¿Quién es? (solo o en vivo), Votación del VAR, Dorsal histórico y Supervivencia.", family: "grupo", available: true },
-  { to: "/subasta", label: "Subasta", icon: Gavel, description: "Con 2, 4 u 8 amigos: 1000 M cada uno para armar su once pujando por jugadores que salen en silueta negra. Al final, una copa con los equipos armados.", family: "grupo", available: true },
   { to: "/copa-8a2", label: "Copa 8a2", icon: Trophy, description: "Torneo de eliminación directa del grupo: cada uno arma su equipo draftando jugadores reales.", family: "grupo", available: true },
   { to: "/fantasyfiction", label: "FantasyFiction", icon: TrendingUp, description: "Liga simulada con todo tu grupo: jornadas semanales y dos mercados de pases por semana apenas se sumen todos.", family: "grupo", weekly: true, available: true },
   { to: "/dt-liga", label: "Modo DT Online", icon: Users, description: "Armá una liga con amigos: cada uno elige un club real y compite temporada a temporada.", family: "grupo", weekly: true, available: true },
 
   // ---- Contrarreloj ----
+  { to: "/trivia", label: "Trivia del día", icon: Brain, description: "Las preguntas del día, 20 segundos por pregunta: las mismas para todo el grupo.", family: "solo", daily: true, available: true },
   { to: "/un-minuto", label: "Un Minuto", icon: Timer, description: "Trivia contrarreloj: respondé todas las que puedas antes de que se acabe el reloj.", family: "solo", daily: true, available: true },
   { to: "/arbitraje-var", label: "Arbitraje / VAR", icon: Gavel, description: "Jugadas polémicas reales en video: decidí como el árbitro contra reloj y comparate con el VAR.", family: "solo", daily: true, available: true },
 
@@ -55,7 +55,7 @@ const ALL_GAMES = [
   { href: "/cotrero.html", label: "Cotrero simple", icon: Crown, description: "De potrero a leyenda: simulá toda la carrera de un jugador, temporada a temporada. Cada día, el primer bloque de temporadas da el sobre del juego diario.", family: "carrera", daily: true, available: true },
   { to: "/carrera-dt", label: "Modo DT", icon: Shield, description: "Dirigí un equipo de Premier League o La Liga: tácticas, fichajes, selección nacional y partidos en vivo.", family: "carrera", available: true },
   { to: "/presidente", label: "Modo Presidente", icon: Building2, description: "Tu historia como presidente: decisiones, prensa y presión de la directiva. Solo, a tu ritmo, sin depender del grupo.", family: "carrera", available: true },
-  { to: "/vida-fut", label: "Vida FUT", icon: Sparkles, description: "Jugador en Cotrero, después 3 temporadas de DT y 3 de presidente: una carrera larga en tres etapas.", family: "carrera", available: true },
+  { to: "/vida-fut", label: "Vida FUT", icon: Sparkles, description: "Jugador en Cotrero, después 3 temporadas de DT y 3 de presidente, en tres etapas.", family: "carrera", available: true },
 ];
 
 export const GAMES = ALL_GAMES.filter((g) => isEnabled(g.feature));
@@ -66,7 +66,7 @@ export const FAMILY_ORDER = ALL_FAMILY_ORDER.filter((k) => GAMES.some((g) => g.f
 const MINUTES = {
   Fichado: 5, Fulbodle: 5, Bingo: 5, "Pirámide": 3, "Torta de plantel": 3, "Traspasos a ciegas": 3, "¿A quién me compro?": 3, "¿Quién es?": 3, Cartas: 10, "Copa semanal": 5, "¿Quién es? en vivo": 4, "Mercado de pases": 5, "Escudos a ciegas": 5, Supervivencia: 10, "8a2": 15,
   "¿Quién sabe más de fútbol?": 10, "Copa 8a2": 30, Subasta: 25, FantasyFiction: 10, "Modo DT Online": 60,
-  "Un Minuto": 1, "Arbitraje / VAR": 3, "Quiniela": 5, "Campeón y descenso": 5,
+  "Trivia del día": 3, "Un Minuto": 1, "Arbitraje / VAR": 3, "Quiniela": 5, "Campeón y descenso": 5,
   "Cotrero simple": 60, "Modo DT": 120, "Modo Presidente": 120, "Vida FUT": 240,
 };
 export const minutesOf = (game) => MINUTES[game.label] ?? 15;

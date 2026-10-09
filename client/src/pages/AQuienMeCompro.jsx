@@ -162,6 +162,8 @@ export default function AQuienMeCompro() {
       score: hits,
       difficulty: game?.difficulty === "dificil" ? 4 : 2,
       detail: `${hits}/${total} · ${game?.difficulty === "dificil" ? "difícil" : "fácil"}`,
+      mode: fromDaily ? "daily" : "fun",
+      level: game?.difficulty === "dificil" ? "dificil" : "facil",
     }).then(setDailyMsg);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
@@ -320,9 +322,9 @@ export default function AQuienMeCompro() {
                 return (
                   <li key={r.i} className="flex items-center gap-3 text-sm border-b border-border/60 pb-2 last:border-0 last:pb-0">
                     <span className={`w-6 h-6 shrink-0 rounded-full text-xs font-bold flex items-center justify-center ${a.correct ? "bg-emerald text-onaccent" : "bg-red-500 text-white"}`}>{a.correct ? "✓" : "✗"}</span>
-                    <span className="flex-1 min-w-0 truncate">{r.left.name} <span className="text-gray-500">({money(a.leftValue)})</span></span>
+                    <span className="flex-1 min-w-0 flex items-center gap-1.5">{r.left.club && <ClubCrest name={r.left.club} size={18} />}<span className="truncate">{r.left.name} <span className="text-gray-500">({money(a.leftValue)})</span></span></span>
                     <span className="text-gray-600 text-xs shrink-0">{a.truth === "igual" ? "=" : a.truth === "mayor" ? "<" : ">"}</span>
-                    <span className="flex-1 min-w-0 truncate text-right">{r.right.name} <span className="text-gray-500">({money(a.rightValue)})</span></span>
+                    <span className="flex-1 min-w-0 flex items-center justify-end gap-1.5"><span className="truncate text-right">{r.right.name} <span className="text-gray-500">({money(a.rightValue)})</span></span>{r.right.club && <ClubCrest name={r.right.club} size={18} />}</span>
                   </li>
                 );
               })}

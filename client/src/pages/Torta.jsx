@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { PieChart, Shirt, SkipForward } from "lucide-react";
 import api from "../api.js";
 import Card from "../components/Card.jsx";
@@ -76,9 +77,13 @@ function Donut({ countries, visible, centerTop, centerBottom, onHover, hover }) 
 }
 
 export default function Torta() {
+  // Desde "Juego diario" (?diario=1): el club de hoy, igual para todos, una sola vez.
+  // Desde Fútbol 12: partidas libres con un club al azar, sin límite.
+  const fromDaily = useSearchParams()[0].get("diario") === "1";
+  const KEY = fromDaily ? GAME : `${GAME}-libre`;
   const [mode, setMode] = useState("clockwise");
   const [data, setData] = useState(null);
-  const [state, setState] = useState(() => loadGame(GAME, today())); // { mode, step, guesses, status }
+  const [state, setState] = useState(() => loadGame(KEY, today())); // { mode, step, guesses, status, seed }
   const [reveal, setReveal] = useState(null);
   const [hover, setHover] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -93,44 +98,48 @@ export default function Torta() {
     if (!state || state.status === "playing" || state.reported) return;
     const next = { ...state, reported: true };
     setState(next);
-    saveGame(GAME, today(), next);
+    saveGame(KEY, today(), next);
     reportResult("torta", {
       // Acertar en el 1º intento = 1; en el 2º = 2/3; en el 3º = 1/3; no acertar = 0.
       fraction: state.status === "win" ? (MAX + 1 - state.guesses.length) / MAX : 0,
       score: state.status === "win" ? MAX + 1 - state.guesses.length : 0,
       difficulty: state.mode === "random" ? 3 : 2,
       detail: state.status === "win" ? `Acertado en ${state.guesses.length}/${MAX}` : "No salió",
+      mode: fromDaily ? "daily" : "fun",
     }).then(setDailyMsg);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.status]);
 
-  async function fetchPuzzle() {
-    const { data: d } = await api.get("/futgames/squad");
+  async function fetchPuzzle(seed = state?.seed || "") {
+    const { data: d } = await api.get("/futgames/squad", { params: { seed } });
     setData(d);
     return d;
   }
 
   useEffect(() => {
-    if (state) fetchPuzzle().catch(() => setError("No se pudo cargar el juego."));
+    if (state) fetchPuzzle(state.seed).catch(() => setError("No se pudo cargar el juego."));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (over && !reveal) api.get("/futgames/squad/reveal").then((r) => setReveal(r.data)).catch(() => {});
+    if (over && !reveal) api.get("/futgames/squad/reveal", { params: { seed: state?.seed || "" } }).then((r) => setReveal(r.data)).catch(() => {});
   }, [over, reveal]);
 
   function persist(next) {
     setState(next);
-    saveGame(GAME, today(), next);
-    if (next.status !== "playing") recordResult(GAME, today(), { won: next.status === "win", bucket: next.status === "win" ? next.guesses.length : "X" });
+    saveGame(KEY, today(), next);
+    if (fromDaily && next.status !== "playing") recordResult(GAME, today(), { won: next.status === "win", bucket: next.status === "win" ? next.guesses.length : "X" });
   }
 
   async function start() {
     setBusy(true);
     setError("");
     try {
-      await fetchPuzzle();
-      persist({ mode, step: 0, guesses: [], status: "playing" });
+      const seed = fromDaily ? "" : Math.random().toString(36).slice(2, 10);
+      setReveal(null);
+      setData(null);
+      await fetchPuzzle(seed);
+      persist({ mode, step: 0, guesses: [], status: "playing", seed });
     } catch {
       setError("No se pudo cargar el juego. Probá de nuevo.");
     } finally {
@@ -149,7 +158,7 @@ export default function Torta() {
     if (busy || over) return;
     setBusy(true);
     try {
-      const { data: r } = await api.post("/futgames/squad/guess", { club });
+      const { data: r } = await api.post("/futgames/squad/guess", { club, seed: state.seed || "" });
       if (r.correct) {
         persist({ ...state, guesses: [...state.guesses, club], status: "win" });
         setMsg("");
@@ -253,7 +262,9 @@ export default function Torta() {
               <p className="text-gray-400 text-sm">Era <span className="text-white font-semibold">{reveal?.club || "…"}</span></p>
               {dailyMsg && <p className="text-sm text-accent">{dailyMsg}</p>}
               <ShareResult text={shareText} />
-              <p className="text-xs text-gray-500">Mañana hay otro club.</p>
+              {fromDaily
+                ? <p className="text-xs text-gray-500">Mañana hay otro club.</p>
+                : <button onClick={() => { setState(null); setMsg(""); setReveal(null); setData(null); setHover(null); }} className="btn btn-primary btn-sm">Otra partida</button>}
             </Card>
           )}
         </div>

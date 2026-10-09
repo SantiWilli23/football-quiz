@@ -44,6 +44,12 @@ const MODES = [
     description: "Online, quién dice más: un club y un número, 60 segundos para nombrar a todos los que lo usaron.",
   },
   {
+    to: "/subasta",
+    label: "Subasta · Draft",
+    icon: Gavel,
+    description: "Con 2, 4 u 8 amigos: 1000 M cada uno para armar su once pujando por jugadores en silueta negra. Al final, una copa con los equipos armados.",
+  },
+  {
     to: "/supervivencia",
     label: "Supervivencia",
     icon: Skull,

@@ -2,11 +2,10 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 // Nocturno es el tema por default para usuarios nuevos (y para cualquiera
 // que todavía no haya guardado una preferencia). Azul es la paleta que ya
-// tenía la app. Bengala es la opción clara.
+// tenía la app. Cancha de día es la opción clara.
 export const THEMES = [
   { id: "nocturno", label: "Nocturno", swatch: ["#0E1317", "#2FB673", "#F0A93E"] },
   { id: "azul", label: "Azul clásico", swatch: ["#262b35", "#3b9dd6", "#d9a441"] },
-  { id: "bengala", label: "Bengala", swatch: ["#F6F6F8", "#FF4D17", "#00B37A"] },
   { id: "cancha-dia", label: "Cancha de día", swatch: ["#EEF3F1", "#0B8F6A", "#F97316"] },
 ];
 const THEME_IDS = THEMES.map((t) => t.id);

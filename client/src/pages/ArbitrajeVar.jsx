@@ -62,8 +62,11 @@ export default function ArbitrajeVar() {
     setPhase("done");
     logGame("arbitraje_var", timedRef.current ? 4 : 2, finalCorrect / Math.max(1, totalRef.current), finalCorrect + "/" + totalRef.current + " decisiones" + (timedRef.current ? " · con reloj" : " · práctica"));
     // Juego diario: la primera partida CON TIEMPO del día te da un puntaje de hasta 20 (de referencia) y un sobre de cartas; el podio del día del grupo suma 5 / 3 / 1 puntos.
+    const fraction = Math.min(1, finalCorrect / Math.max(1, totalRef.current));
     if (timedRef.current) {
-      submitDaily("arbitraje_var", Math.min(1, finalCorrect / Math.max(1, totalRef.current)), finalCorrect).then((r) => setDailyMsg(dailyMessage(r)));
+      submitDaily("arbitraje_var", fraction, finalCorrect, { mode: "daily" }).then((r) => setDailyMsg(dailyMessage(r)));
+    } else {
+      submitDaily("arbitraje_var", fraction, finalCorrect, { mode: "fun", level: "normal", seconds: 120 }).then((r) => setDailyMsg(dailyMessage(r)));
     }
     if (!groupId || !timedRef.current) return;
     setSaveState("saving");
@@ -153,7 +156,7 @@ export default function ArbitrajeVar() {
         Arbitraje / VAR
       </h1>
       <p className="text-gray-400 text-sm mb-4">
-        Jugadas polémicas reales de LaLiga. Tu decisión contra la del VAR, con reloj de {SECONDS_PER_SITUATION} segundos por jugada (que suma al ranking semanal) o sin tiempo, para practicar tranquilo.
+        Jugadas polémicas reales de LaLiga. Tu decisión contra la del VAR{fromDaily ? `, con reloj de ${SECONDS_PER_SITUATION} segundos por jugada.` : ", sin apuro, para jugar tranquilo."}
       </p>
 
       <GroupSelector />
@@ -164,24 +167,15 @@ export default function ArbitrajeVar() {
           <p className="text-sm text-gray-400 mb-5">
             Jugadas polémicas reales revisadas por el VAR, en video y sin sonido. Pausalas o pasalas en cámara lenta y decidí qué cobrarías.
           </p>
-          {dailyToday ? (
-            <p className="text-xs text-amber-500 mb-5 -mt-2">Hoy es el juego diario: se juega con tiempo y suma puntos. Una sola vez al día.</p>
+          {fromDaily ? (
+            <p className="text-xs text-amber-500 mb-5 -mt-2">Juego diario: con reloj de {SECONDS_PER_SITUATION}s por jugada, una sola vez al día. Da puntos y un sobre de cartas.</p>
           ) : (
-            <p className="text-xs text-gray-500 mb-5 -mt-2">Juego diario: la primera partida con tiempo del día da un sobre de cartas (mejor cuanto mejor te va).</p>
+            <p className="text-xs text-gray-500 mb-5 -mt-2">Sin reloj y las veces que quieras. Cada partida da un sobre según cómo te fue (sin puntos para el grupo).</p>
           )}
           <div className="flex flex-wrap gap-3 justify-center">
-            <button
-              onClick={() => start(true)}
-              className="btn btn-primary"
-            >
-              Con tiempo ({SECONDS_PER_SITUATION}s)
+            <button onClick={() => start(fromDaily)} className="btn btn-primary">
+              {fromDaily ? `Jugar el diario (${SECONDS_PER_SITUATION}s por jugada)` : "Jugar"}
             </button>
-            {!dailyToday && !fromDaily && <button
-              onClick={() => start(false)}
-              className="px-6 py-2.5 rounded-card border border-border text-sm text-gray-300 hover:text-white hover:border-white/30 transition-colors"
-            >
-              Sin tiempo (práctica)
-            </button>}
           </div>
         </Card>
       )}

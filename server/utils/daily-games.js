@@ -1,6 +1,7 @@
 import { db } from "../db/client.js";
 import { addDays, mondayOf } from "./points.js";
 import { DAILY_GAME_MAX_POINTS, WEEKLY_GAME_RANK_POINTS } from "./points-config.js";
+import { dailySeed, rng, shuffle } from "./futgames.js";
 import { WEEKLY_PODIUM_PACKS, dailyPackQuality, grantPack } from "./rewards.js";
 
 // Los doce juegos que se turnan como "juego diario": cada día es UNO solo (ver
@@ -23,17 +24,35 @@ export const DAILY_GAMES = [
   { key: "torta", label: "Torta de plantel", to: "/torta", level: null },
   { key: "traspasos", label: "Traspasos a ciegas", to: "/traspasos", level: null },
   { key: "a_quien_me_compro", label: "¿A quién me compro?", to: "/a-quien-me-compro", level: "Difícil" },
+  { key: "trivia", label: "Trivia del día", to: "/trivia", level: "20 s por pregunta" },
 ];
 
 // El juego diario de una fecha: rota por todos en orden, un día cada uno.
 // Lo decide el servidor, así que todos los miembros juegan el mismo.
+// Hasta el 11/10/2026 rotó en orden fijo con los 12 juegos de entonces (se conserva para no
+// cambiar el "juego del día" de fechas pasadas). Desde el 12/10/2026 cada ciclo mezcla los juegos
+// al azar (igual para todos, sale de la fecha): todos salen una vez por ciclo y el último de un
+// ciclo nunca es el primero del siguiente.
+const LEGACY_KEYS = DAILY_GAMES.slice(0, 12).map((g) => g.key);
+const SHUFFLE_FROM_DAY = Math.floor(Date.parse("2026-10-12T00:00:00Z") / 86400000);
+
+function cycleOrder(cycle) {
+  return shuffle(DAILY_GAMES.map((g) => g.key), rng(dailySeed(String(cycle), "orden-diario")));
+}
+
 export function dailyGameKeyFor(dateStr) {
   const day = Math.floor(Date.parse(dateStr + "T00:00:00Z") / 86400000);
-  return DAILY_GAMES[((day % DAILY_GAMES.length) + DAILY_GAMES.length) % DAILY_GAMES.length].key;
+  if (day < SHUFFLE_FROM_DAY) return LEGACY_KEYS[((day % LEGACY_KEYS.length) + LEGACY_KEYS.length) % LEGACY_KEYS.length];
+  const n = DAILY_GAMES.length;
+  const offset = day - SHUFFLE_FROM_DAY;
+  const cycle = Math.floor(offset / n);
+  const order = cycleOrder(cycle);
+  if (cycle > 0 && order[0] === cycleOrder(cycle - 1)[n - 1]) order.push(order.shift()); // evita repetir el de ayer
+  return order[offset % n];
 }
 
 // Los que mandan su resultado desde el cliente (fichado y quiniela no).
-export const SUBMITTABLE_DAILY = new Set(["cotrero", "escudos", "draft_europeo", "un_minuto", "arbitraje_var", "tateti", "piramide", "torta", "traspasos", "a_quien_me_compro"]);
+export const SUBMITTABLE_DAILY = new Set(["cotrero", "escudos", "draft_europeo", "un_minuto", "arbitraje_var", "tateti", "piramide", "torta", "traspasos", "a_quien_me_compro", "trivia"]);
 
 export function pointsFromFraction(fraction) {
   const f = Number(fraction);

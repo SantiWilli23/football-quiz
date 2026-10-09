@@ -45,16 +45,20 @@ function DailyFeatured({ today, visits }) {
   return (
     <GameLink
       game={game}
-      className={`block min-h-[170px] rounded-2xl border bg-panel ${style.feat.split(" ")[1]} p-5 hover:opacity-90 transition-opacity relative mb-2`}
+      className={`flex items-center gap-4 min-h-[150px] rounded-2xl border bg-panel ${style.feat.split(" ")[1]} p-5 hover:opacity-90 transition-opacity mb-2`}
     >
-      <Icon size={26} className={`absolute top-5 right-5 ${style.text}`} />
-      <span className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider ${style.text}`}>
-        <CalendarCheck size={13} /> Juego diario · puntaje de {today.max} y sobre · podio del día: 5 / 3 / 1 pts
+      <span className="min-w-0 flex-1 block">
+        <span className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider ${style.text}`}>
+          <CalendarCheck size={13} /> Juego diario
+        </span>
+        <span className="t-title block text-2xl leading-tight mt-2">{game.label}</span>
+        <span className="text-sm text-gray-400 leading-snug block mt-1.5 max-w-xl line-clamp-2">{game.description}</span>
+        <span className={`inline-block mt-3 text-xs font-semibold tabular-nums ${daily.done ? "text-good" : "text-gray-500"}`}>
+          {daily.done ? `Hecho hoy · puntaje ${daily.points}/${today.max} y sobre` : `Puntaje de ${today.max} y sobre · todavía no lo jugaste`}
+        </span>
       </span>
-      <span className="t-title block text-2xl leading-tight mt-2">{game.label}</span>
-      <span className="text-sm text-gray-400 leading-snug block mt-1.5 max-w-xl">{game.description}</span>
-      <span className={`inline-block mt-3 text-xs font-semibold tabular-nums ${daily.done ? "text-good" : "text-gray-500"}`}>
-        {daily.done ? `Hecho hoy · puntaje ${daily.points}/${today.max} y sobre` : "Todavía no lo jugaste hoy"}
+      <span className={`shrink-0 w-24 h-24 sm:w-32 sm:h-32 rounded-3xl border-2 flex items-center justify-center ${style.ring}`} aria-hidden="true">
+        <Icon className="w-11 h-11 sm:w-16 sm:h-16" strokeWidth={1.6} />
       </span>
     </GameLink>
   );
@@ -74,11 +78,14 @@ function Circle({ game, style, visits }) {
   );
 }
 
-function CircleRow({ games, visits }) {
+// Con `distinct`, cada círculo de la fila lleva un color propio (sin repetir).
+const DISTINCT_TONES = ["purple", "blue", "emerald", "amber", "red"];
+
+function CircleRow({ games, visits, distinct = false }) {
   return (
     <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible">
-      {games.map((game) => (
-        <Circle key={game.to || game.href || game.label} game={game} style={FAMILY_STYLE[FAMILIES[game.family].tw]} visits={visits} />
+      {games.map((game, i) => (
+        <Circle key={game.to || game.href || game.label} game={game} style={FAMILY_STYLE[distinct ? DISTINCT_TONES[i % DISTINCT_TONES.length] : FAMILIES[game.family].tw]} visits={visits} />
       ))}
     </div>
   );
@@ -86,7 +93,7 @@ function CircleRow({ games, visits }) {
 
 function SectionTitle({ children, hint }) {
   return (
-    <div className="mb-4 border-b border-border pb-2">
+    <div className="mb-3 border-b border-border pb-1.5">
       <h2 className="t-title text-lg">{children}</h2>
       {hint && <p className="text-xs text-gray-500 mt-0.5">{hint}</p>}
     </div>
@@ -186,20 +193,20 @@ export default function Games() {
       <DailyFeatured today={today} visits={visits} />
       <WeeklyStandings groupId={activeGroupId} />
 
-      <div className="mt-6">
+      <div className="mt-4">
         <MyCardsTeam />
       </div>
 
       {CON_AMIGOS_GAMES.length > 0 && (
-        <section className="mb-10">
-          <SectionTitle hint={FAMILIES.grupo.subtitle}>Con amigos</SectionTitle>
+        <section className="mb-6">
+          <SectionTitle>Con amigos</SectionTitle>
           <CircleRow games={CON_AMIGOS_GAMES} visits={visits} />
         </section>
       )}
 
       {JUEGOS_SEMANALES.length > 0 && (
-        <section className="mb-10">
-          <SectionTitle hint="Sus puntos se reparten los domingos y solo cuentan en los grupos que los activaron.">Juegos semanales</SectionTitle>
+        <section className="mb-6">
+          <SectionTitle>Juegos semanales</SectionTitle>
           <WeeklyGamesToggle />
           <CircleRow games={JUEGOS_SEMANALES} visits={visits} />
         </section>
@@ -207,19 +214,18 @@ export default function Games() {
 
       {FUTBOL12_GAMES.length > 0 && (
         <section>
-          <SectionTitle hint="Partidas libres: dan un sobre normal por jugar (uno por juego y día).">Fútbol 12</SectionTitle>
+          <SectionTitle>Fútbol 12</SectionTitle>
           {["solo", "reloj", "pronostico", "carrera"].map((k) => {
             const list = FUTBOL12_GAMES.filter((g) => g.family === k);
             if (list.length === 0) return null;
             const st = FAMILY_STYLE[FAMILIES[k].tw];
             return (
-              <div key={k} className={`${st.tone} mb-6`}>
-                <p className="flex items-center gap-2 text-sm font-semibold text-tone mb-2.5">
+              <div key={k} className={`${st.tone} mb-3`}>
+                <p className="flex items-center gap-2 text-sm font-semibold text-tone mb-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-tone" />
                   {FAMILIES[k].label}
-                  <span className="text-xs font-normal text-gray-500">· {FAMILIES[k].subtitle}</span>
                 </p>
-                <CircleRow games={list} visits={visits} />
+                <CircleRow games={list} visits={visits} distinct={k === "carrera"} />
               </div>
             );
           })}

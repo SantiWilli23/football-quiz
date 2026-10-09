@@ -15,8 +15,8 @@ router.use(requireAuth);
 // puntaje final (aciertos × multiplicador) se manda al framework genérico de
 // "retos" (server/routes/challenges.js) como cualquier otro juego semanal.
 const DIFFICULTIES = {
-  dificil: { label: "Difícil", multiplier: 1 },
-  ultra: { label: "Ultra difícil", multiplier: 1.5 },
+  dificil: { label: "Fácil", multiplier: 1 },
+  ultra: { label: "Difícil", multiplier: 1.5 },
   demonio: { label: "Demonio", multiplier: 2 },
 };
 
@@ -34,9 +34,6 @@ router.get("/difficulties", (req, res) => {
 const CATEGORIES = {
   mundiales: ["Mundial", "Copa del Mundo"],
   champions: ["Champions", "Copa de Europa"],
-  chile: ["Chile", "Colo-Colo", "La Roja", "Universidad de Chile", "Universidad Católica"],
-  premier: ["Premier League", "Manchester", "Liverpool", "Arsenal", "Chelsea"],
-  laliga: ["LaLiga", "La Liga", "Real Madrid", "Barcelona", "Atlético de Madrid"],
 };
 
 router.get("/categories", (req, res) => {
