@@ -124,6 +124,50 @@
   --theme-color: #f6f6f8;
 }
 
+/* Cancha de día (diseño B): fondo claro verdoso, esmeralda de marca y acentos azul, naranja, violeta y rosa. */
+[data-theme="cancha-dia"] {
+  --c-bg: 238 243 241;
+  --c-panel: 255 255 255;
+  --c-panel-hi: 247 250 249;
+  --c-border: 207 220 215;
+
+  --c-white: 16 35 31;
+  --c-onaccent: 255 255 255;
+
+  --c-gray-200: 207 220 215;
+  --c-gray-300: 190 204 198;
+  --c-gray-400: 150 168 161;
+  --c-gray-500: 120 140 133;
+  --c-gray-600: 82 100 94;
+  --c-gray-700: 60 78 72;
+  --c-gray-800: 38 56 50;
+  --c-gray-900: 16 35 31;
+
+  --c-accent: 11 143 106;
+  --c-accent-dark: 8 106 78;
+  --c-accent-light: 52 190 150;
+
+  --c-blue: 37 99 235;
+  --c-purple: 124 58 237;
+  --c-emerald: 11 143 106;
+  --c-amber: 249 115 22;
+  --c-orange: 217 119 6;
+  --c-red: 220 38 38;
+  --c-pink: 225 29 116;
+  --c-cyan: 8 145 178;
+
+  --radius-card: 16px;
+  --theme-color: #eef3f1;
+}
+/* Relieve suave en capas y botones con degradado del color de la sección. */
+[data-theme="cancha-dia"] .bg-panel { box-shadow: 0 1px 2px rgb(16 35 31 / 0.06), 0 10px 28px -14px rgb(16 35 31 / 0.22); }
+:is(:root:not([data-theme]), [data-theme="nocturno"], [data-theme="azul"], [data-theme="cancha-dia"]) .btn-primary {
+  background-image: linear-gradient(135deg, rgb(var(--c-accent)), rgb(var(--c-blue)));
+  box-shadow: 0 8px 18px -8px rgb(var(--c-accent) / 0.65);
+}
+[data-theme="cancha-dia"] .hero-b { box-shadow: 0 14px 34px -18px rgb(var(--c-accent) / 0.55); }
+[data-theme="cancha-dia"] .tile-b { box-shadow: 0 10px 24px -14px rgb(var(--tone, var(--c-accent)) / 0.6); }
+
 html,
 body,
 #root {

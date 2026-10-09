@@ -60,9 +60,8 @@ export default function Dashboard() {
           hoy" de antes por un solo panel, con el mismo trato visual que la
           pizarra técnica de un vestuario — quién sos, qué día es, qué falta
           jugar hoy y cómo viene la racha, todo en un solo golpe de vista. */}
-      <div className="mb-8 rounded-2xl border border-border bg-panel overflow-hidden">
-        <div className="h-[3px] bg-gradient-to-r from-accent via-accent/40 to-transparent" aria-hidden="true" />
-        <div className="p-5 sm:p-6">
+      <div className="hero-b mb-8 rounded-3xl overflow-hidden" style={{ "--hero-a": "var(--c-accent)", "--hero-b": "var(--c-purple)" }}>
+        <div className="p-5 sm:p-7">
           <div className="flex items-center justify-between gap-4 flex-wrap mb-5">
             <p className="t-eyebrow flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_6px_currentColor] text-accent" />
@@ -88,19 +87,23 @@ export default function Dashboard() {
                 <p className="text-sm text-gray-400">No te falta nada por hoy: ya respondiste la trivia y no hay duelos esperándote.</p>
               )}
             </div>
-            <div className="min-w-[150px]">
-              <div className="flex items-center gap-2 mb-1.5">
-                <Flame size={14} className={current > 0 ? "text-orange-400" : "text-gray-500"} />
+            <div className="min-w-[150px] flex items-center gap-4">
+              <span
+                className="tone-amber relative w-24 h-24 rounded-full flex items-center justify-center shrink-0"
+                style={{ background: `conic-gradient(rgb(var(--tone)) ${streakPct}%, rgb(var(--c-border)) 0)`, boxShadow: "0 0 24px -8px rgb(var(--tone))" }}
+                role="img"
+                aria-label={`Racha de ${current} días, mejor ${best}`}
+              >
+                <span className="absolute inset-2 rounded-full bg-panel" />
+                <span className="relative text-center leading-none">
+                  <span className="flex items-center justify-center gap-1 text-3xl font-extrabold tabular-nums"><Flame size={16} className={current > 0 ? "text-tone" : "text-gray-500"} />{current}</span>
+                  <span className="text-[10px] uppercase tracking-wider text-gray-500">días</span>
+                </span>
+              </span>
+              <div>
                 <span className="t-eyebrow">Racha</span>
+                <p className="text-xs text-gray-500 mt-1">Mejor racha: {best} días</p>
               </div>
-              <p className="text-4xl font-bold tracking-tight tabular-nums">
-                {current}
-                <span className="text-sm font-normal text-gray-500 ml-2">días</span>
-              </p>
-              <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mt-2">
-                <div className="h-full bg-orange-400/70 transition-[width]" style={{ width: `${streakPct}%` }} />
-              </div>
-              <p className="text-xs text-gray-500 mt-1.5">Mejor racha: {best} días</p>
             </div>
           </div>
         </div>
