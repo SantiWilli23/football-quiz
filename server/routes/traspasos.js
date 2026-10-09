@@ -6,6 +6,14 @@ import { requireAuth } from "../middleware/auth.js";
 import { todayStr } from "../utils/points.js";
 import { normalize } from "../utils/futgames.js";
 
+// Dos mundos separados. "daily" = la partida fija del día, igual para todos. "fun" =
+// partidas sueltas: el cliente manda una semilla aleatoria y el jugador sale de ahí.
+const modeOf = (v) => (v === "fun" ? "fun" : "daily");
+const seedOf = (v) => String(v || "").replace(/[^a-z0-9-]/gi, "").slice(0, 24);
+const keyOf = (req) => (modeOf(req.query.mode ?? req.body?.mode) === "fun"
+  ? { mode: "fun", key: `fun:${seedOf(req.query.seed ?? req.body?.seed) || "libre"}` }
+  : { mode: "daily", key: todayStr() });
+
 // Traspasos a ciegas (juego diario, Fútbol 12): se muestra la línea de clubes de
 // un jugador, sin nombre, y hay que adivinar quién es en 5 intentos. Arranca con
 // los primeros 2 clubes de su carrera; cada fallo (o salto) suma uno más, y en los
@@ -34,13 +42,15 @@ const router = Router();
 router.use(requireAuth);
 
 router.get("/puzzle", (req, res) => {
-  const date = todayStr();
+  const { mode, key } = keyOf(req);
+  const date = key;
   const p = secretFor(date);
   const attempts = Math.max(0, Math.min(MAX - 1, Math.floor(Number(req.query.attempts) || 0)));
   const total = p.carrera.length;
   const shown = Math.min(total, START_STEPS + attempts);
   res.json({
     date,
+    mode,
     max: MAX,
     total,
     steps: p.carrera.slice(0, shown).map((c) => ({ club: clean(c.club), tag: tagOf(c.club), from: c.inicio, to: c.fin })),
@@ -54,12 +64,12 @@ router.get("/puzzle", (req, res) => {
 });
 
 router.post("/guess", (req, res) => {
-  const p = secretFor(todayStr());
+  const p = secretFor(keyOf(req).key);
   res.json({ correct: normalize(req.body?.name) === normalize(p.nombre) });
 });
 
 router.get("/reveal", (req, res) => {
-  const p = secretFor(todayStr());
+  const p = secretFor(keyOf(req).key);
   res.json({
     name: p.nombre,
     nationality: p.nacionalidad,

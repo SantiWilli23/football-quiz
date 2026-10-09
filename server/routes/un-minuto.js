@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
+import { todayStr } from "../utils/points.js";
+import { dailySeed } from "../utils/futgames.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -53,17 +55,25 @@ router.get("/question", async (req, res) => {
   const baseArgs = [difficulty, ...exclude];
   const select = "SELECT id, question, option_a, option_b, option_c, option_d FROM duel_questions WHERE difficulty = ?";
 
+  // Diario: el orden de las preguntas sale de la fecha, así todos ven la MISMA
+  // secuencia (el cliente va pidiendo las siguientes con `exclude`). Diversión: al azar.
+  const daily = req.query.mode !== "fun";
+  const seed = daily ? dailySeed(todayStr(), "unminuto") % 2147483647 : 0;
+  const order = daily
+    ? `ORDER BY ((id * 1103515245 + ${seed}) % 2147483647)`
+    : "ORDER BY RANDOM()";
+
   let row;
   let fallback = false;
   if (words) {
     const like = words.map(() => "(question LIKE ? OR option_a LIKE ? OR option_b LIKE ? OR option_c LIKE ? OR option_d LIKE ?)").join(" OR ");
     const likeArgs = words.flatMap((w) => Array(5).fill(`%${w}%`));
-    row = (await db.execute({ sql: `${select} ${excludeSql} AND (${like}) ORDER BY RANDOM() LIMIT 1`, args: [...baseArgs, ...likeArgs] })).rows[0];
+    row = (await db.execute({ sql: `${select} ${excludeSql} AND (${like}) ${order} LIMIT 1`, args: [...baseArgs, ...likeArgs] })).rows[0];
     if (!row) fallback = true;
   }
-  if (!row) row = (await db.execute({ sql: `${select} ${excludeSql} ORDER BY RANDOM() LIMIT 1`, args: baseArgs })).rows[0];
+  if (!row) row = (await db.execute({ sql: `${select} ${excludeSql} ${order} LIMIT 1`, args: baseArgs })).rows[0];
   if (!row) return res.status(404).json({ error: "No hay más preguntas disponibles en esta dificultad" });
-  res.json({ question: row, fallback });
+  res.json({ question: row, fallback, mode: daily ? "daily" : "fun" });
 });
 
 // Comodín 50/50: devuelve dos opciones incorrectas para ocultar. No revela cuál es la correcta.
