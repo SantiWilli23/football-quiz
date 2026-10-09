@@ -1,7 +1,6 @@
 // Valor de mercado aproximado (en millones de euros) de futbolistas en actividad, para
-// "¿A quién me compro?". Son cifras redondeadas en el orden de magnitud de las que
-// publica Transfermarkt; no se leen del sitio (sus términos prohíben el scraping), así
-// que se pueden ajustar a mano acá. Solo juegan los que figuran en esta lista.
+// "¿A quién me compro?". Es la lista curada a mano: los valores de Transfermarkt
+// (valores-mercado-tm.json) tienen prioridad y esta lista cubre a quienes ahí no figuran.
 export const VALORES_MERCADO = {
   "Lionel Messi": 15, "Cristiano Ronaldo": 12, "Neymar": 8, "Kylian Mbappé": 180, "Kevin De Bruyne": 25, "Erling Haaland": 200,
   "Robert Lewandowski": 10, "Luka Modric": 3, "Sergio Ramos": 3, "Karim Benzema": 8, "Mohamed Salah": 45, "Sadio Mané": 20,

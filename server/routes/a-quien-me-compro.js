@@ -18,7 +18,11 @@ const BASE = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/equipo-jug
 // Valores del Modo DT (fórmula por nivel, edad y potencial) para los jugadores que no están
 // en la lista curada a mano: ampliaron el pool de ~250 a más de 600 jugadores.
 const VALORES_DT = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/valores-mercado-dt.json"), "utf-8"));
-const valueOf = (name) => VALORES_MERCADO[name] ?? VALORES_DT[name];
+// Valores de mercado de Transfermarkt (top 250 general, por posición y mayores de 30, leídos de sus
+// rankings públicos y cruzados por nombre con la base): son los que mandan. Después la lista curada
+// a mano y, por último, la fórmula del Modo DT.
+const VALORES_TM = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/valores-mercado-tm.json"), "utf-8"));
+const valueOf = (name) => VALORES_TM[name] ?? VALORES_MERCADO[name] ?? VALORES_DT[name];
 
 const ROUNDS = 10;
 const POOL = BASE
