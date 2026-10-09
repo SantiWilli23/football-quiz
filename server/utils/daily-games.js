@@ -75,8 +75,8 @@ const PACK_TIERS = ["normal", "bueno", "top"];
 const LEVEL_BUMP = { facil: 0, normal: 0, dificil: 1, demonio: 2 };
 
 // Sobre de una partida de práctica. Base = rendimiento (dailyPackQuality). Sube un
-// nivel si la dificultad es difícil/demonio, y otro si se resolvió rápido (menos de
-// 60 s con buen rendimiento). Máximo PRACTICE_PACKS_PER_DAY por día y usuario.
+// nivel si la dificultad es difícil/demonio, y otro si el tiempo de juego es de 3
+// minutos o más (partida larga). Máximo PRACTICE_PACKS_PER_DAY por día y usuario.
 export async function practicePack(userId, date, gameKey, fraction, play = {}) {
   const base = dailyPackQuality(fraction);
   if (!base) return null;
@@ -87,7 +87,7 @@ export async function practicePack(userId, date, gameKey, fraction, play = {}) {
   if (used >= PRACTICE_PACKS_PER_DAY) return { quality: null, left: 0 };
   let idx = PACK_TIERS.indexOf(base) + (LEVEL_BUMP[play.level] || 0);
   const seconds = Number(play.seconds);
-  if (Number.isFinite(seconds) && seconds > 0 && seconds < 60 && Number(fraction) >= 0.85) idx += 1;
+  if (Number.isFinite(seconds) && seconds >= 180) idx += 1; // tiempo de juego: partida de 3 min o más
   const quality = PACK_TIERS[Math.min(idx, PACK_TIERS.length - 1)];
   await db.execute({
     sql: "INSERT OR IGNORE INTO card_packs (user_id, date, source) VALUES (?, ?, ?)",
