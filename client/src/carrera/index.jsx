@@ -99,7 +99,7 @@ function CareerApp() {
           })}
         </div>
       </nav>
-      <div className="md:flex md:max-w-6xl md:mx-auto">
+      <div className="md:flex w-full">
       <aside className="hidden md:block w-56 shrink-0 p-4 pr-0">
         <div className="sticky top-24 space-y-1">
           {MENU.map(([id, label, Icon]) => (
@@ -114,13 +114,13 @@ function CareerApp() {
           ))}
         </div>
       </aside>
-      <main className="flex-1 min-w-0 max-w-5xl mx-auto md:mx-0 p-4 w-full">
+      <main className="flex-1 min-w-0 p-4 w-full">
         {screen === "dashboard" && (
           <Dashboard onPlayMatch={(result) => { setMatchResult(result); setScreen("match"); }} />
         )}
         {screen === "squad" && <Squad />}
         {screen === "formations" && <Formation />}
-        {screen === "tactics" && <div className="max-w-xl"><Tactics /></div>}
+        {screen === "tactics" && <Tactics />}
         {screen === "cantera" && <Cantera />}
         {screen === "settings" && <Settings />}
         {screen === "transfers" && <Transfers />}
