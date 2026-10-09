@@ -1,3 +1,5 @@
+import plugin from "tailwindcss/plugin";
+
 /** @type {import('tailwindcss').Config} */
 
 // Sistema de temas: los mismos nombres de clase de siempre (bg-bg, bg-panel,
@@ -83,5 +85,11 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // Variantes del modo de pantalla: phone:... solo en modo teléfono, desk:... solo en modo computador.
+    plugin(({ addVariant }) => {
+      addVariant("phone", 'html[data-device="phone"] &');
+      addVariant("desk", 'html[data-device="desktop"] &');
+    }),
+  ],
 };

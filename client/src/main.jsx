@@ -8,11 +8,15 @@ import { GroupProvider } from "./context/GroupContext.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { ToastProvider } from "./context/ToastContext.jsx";
 import { applyStoredDensity } from "./utils/density.js";
+import { applyDevice, watchDevice } from "./utils/device.js";
+import DeviceShell from "./components/DeviceShell.jsx";
 import "./index.css";
 import { polyfillCountryFlagEmojis } from "country-flag-emoji-polyfill";
 import flagFontUrl from "country-flag-emoji-polyfill/dist/TwemojiCountryFlags.woff2?url";
 
 applyStoredDensity();
+applyDevice();
+watchDevice();
 
 // Windows no trae banderas emoji (muestra "AR", "NL"...): si el navegador no
 // las dibuja, se carga una fuente solo con banderas (servida desde la app).
@@ -31,6 +35,7 @@ if ("serviceWorker" in navigator) {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
+    <DeviceShell>
     <ThemeProvider>
       <BrowserRouter>
         <AuthProvider>
@@ -43,5 +48,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>
+    </DeviceShell>
   </React.StrictMode>
 );

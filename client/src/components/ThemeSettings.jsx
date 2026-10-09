@@ -3,16 +3,35 @@ import { useState } from "react";
 import Card from "./Card.jsx";
 import { isSfxOn, playSfx, setSfxOn } from "../utils/sfx.js";
 import { SIDEBAR_SIZES, readSidebarSize, setSidebarSize } from "../utils/sidebarSize.js";
+import { DEVICE_MODES, readDeviceMode, setDeviceMode } from "../utils/device.js";
 
 export default function ThemeSettings() {
   const { theme, setTheme, themes, shape, setShape, shapes } = useTheme();
   const [sfx, setSfxState] = useState(isSfxOn);
   const [sbSize, setSbSize] = useState(readSidebarSize);
+  const [device, setDevice] = useState(readDeviceMode);
 
   return (
     <Card>
       <h2 className="font-semibold mb-1">Diseño</h2>
       <p className="text-xs text-gray-500 mb-5">Elegí el diseño de color, la forma y el ancho del menú lateral. Cada elección se guarda en este dispositivo.</p>
+
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2.5">Modo de pantalla</p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        {DEVICE_MODES.map((m) => (
+          <button
+            key={m.id}
+            onClick={() => { setDeviceMode(m.id); setDevice(m.id); }}
+            className={`text-left p-3.5 rounded-card border transition-colors ${device === m.id ? "border-accent bg-accent/10" : "border-border hover:border-gray-500"}`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-medium">{m.label}</span>
+              {device === m.id && <span className="text-xs font-semibold text-accent uppercase tracking-wide">Activo</span>}
+            </div>
+            <p className="text-xs text-gray-500 mt-0.5">{m.hint}</p>
+          </button>
+        ))}
+      </div>
 
       <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2.5">Diseño de color</p>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">

@@ -394,3 +394,27 @@ body {
 
 /* Variante B2 elegida: números primero y sin subrayado (Inicio); portada diaria de un color. */
 .strip-flat::after { display: none; }
+
+/* ===== Modo teléfono (Configuración → Modo de pantalla) =====
+   El modo computador es el diseño de siempre (sin reglas acá). El modo teléfono se marca con
+   data-device="phone" en <html> (ver utils/device.js) y ajusta el diseño para tocar con el pulgar. */
+html[data-device="phone"] { -webkit-tap-highlight-color: transparent; }
+/* Zonas de toque cómodas: botones y campos más altos, y texto de 16px para que el teléfono no haga zoom al escribir. */
+html[data-device="phone"] .btn,
+html[data-device="phone"] select,
+html[data-device="phone"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+html[data-device="phone"] textarea { min-height: 44px; font-size: 16px; }
+html[data-device="phone"] .btn-sm { min-height: 38px; }
+html[data-device="phone"] main button:not(.btn) { min-height: 36px; }
+/* Una sola columna con márgenes chicos y tarjetas más compactas. */
+html[data-device="phone"] main { padding-left: 0.75rem; padding-right: 0.75rem; }
+html[data-device="phone"] .card-pad { padding: 1rem; }
+html[data-device="phone"] .t-title { font-size: 1.35rem; }
+/* Las tablas anchas se desplazan de costado en vez de romper la página. */
+html[data-device="phone"] main table { display: block; overflow-x: auto; white-space: nowrap; }
+/* Menú de abajo más alto y respetando la barra del teléfono. */
+html[data-device="phone"] nav.fixed a,
+html[data-device="phone"] nav.fixed button { min-height: 58px; }
+/* Cosas que solo tienen sentido con mouse o con pantalla grande. */
+html[data-device="phone"] .desktop-only { display: none !important; }
+html[data-device="desktop"] .phone-only { display: none !important; }

@@ -378,7 +378,7 @@ function FixturesTab({ code, league, myTeamId, onAdvanced, onReload }) {
           {fixtures.filter((f) => !f.bye).map((f) => (
             <div
               key={f.id}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl border text-sm ${
+              className={`flex items-center gap-3 px-4 phone:px-3 phone:flex-wrap py-2.5 rounded-2xl border text-sm ${
                 f.isClasico ? "border-amber/40 bg-amber/5" : f.involvesMe ? "border-accent/40 bg-accent/5" : "border-border bg-panel"
               }`}
             >
@@ -393,7 +393,7 @@ function FixturesTab({ code, league, myTeamId, onAdvanced, onReload }) {
               </span>
               <span className={`flex-1 ${f.awayTeamId === myTeamId ? "font-semibold text-accent" : ""}`}>{f.awayTeamName}</span>
 
-              <span className="shrink-0 w-32 text-right">
+              <span className="shrink-0 w-32 text-right phone:w-full phone:text-center">
                 {f.played && f.walkover && (
                   <span className="text-xs text-amber">walkover</span>
                 )}
