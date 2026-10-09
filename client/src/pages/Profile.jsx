@@ -62,7 +62,7 @@ export default function Profile() {
 
   return (
     <Layout>
-      <div className="hero-b rounded-3xl p-6 sm:p-8 mb-6" style={{ "--hero-a": "var(--c-pink)", "--hero-b": "var(--c-accent)" }}>
+      <div className="hero-b rounded-3xl p-6 sm:p-8 mb-6" style={{ "--hero-a": "var(--c-pink)", "--hero-b": "var(--c-pink)" }}>
         <div className="flex items-center gap-5 flex-wrap">
           <span className="rounded-full ring-4 ring-panel inline-flex">
             <Avatar user={user} size={96} />

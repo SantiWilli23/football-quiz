@@ -45,7 +45,7 @@ function DailyFeatured({ today, visits }) {
   return (
     <GameLink
       game={game}
-      className={`block min-h-[170px] rounded-2xl border bg-gradient-to-br ${style.feat} to-panel p-5 hover:opacity-90 transition-opacity relative mb-2`}
+      className={`block min-h-[170px] rounded-2xl border bg-panel ${style.feat.split(" ")[1]} p-5 hover:opacity-90 transition-opacity relative mb-2`}
     >
       <Icon size={26} className={`absolute top-5 right-5 ${style.text}`} />
       <span className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider ${style.text}`}>

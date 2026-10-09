@@ -105,8 +105,8 @@ export default function FixtureCard({ fixture, league }) {
           ) : (
             <p className="text-2xl font-bold tabular-nums leading-none tracking-tight">{fixture.score.home} - {fixture.score.away}</p>
           )}
-          <p className="mt-1.5 text-[11px] font-semibold flex items-center justify-center gap-1.5" style={isLive ? { color: CHALK.red } : { color: "#9aa3b2" }}>
-            {isLive && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: CHALK.red }} />}
+          <p className={`mt-1.5 text-[11px] font-semibold flex items-center justify-center gap-1.5 ${isLive ? "rounded-full px-2.5 py-0.5 mx-auto w-fit text-white" : ""}`} style={isLive ? { background: CHALK.red } : { color: "#9aa3b2" }}>
+            {isLive && <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-white" />}
             {isLive && fixture.minute ? `${fixture.minute}'` : STATUS_LABEL[fixture.status] ?? fixture.status}
           </p>
         </div>

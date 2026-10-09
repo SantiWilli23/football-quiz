@@ -384,3 +384,6 @@ body {
 :where(button, .btn, a.btn):active:not(:disabled) { transform: scale(0.98); }
 :where(button, .btn) { transition: transform 0.1s ease-out, background-color 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s; }
 @media (prefers-reduced-motion: reduce) { :where(button, .btn):active:not(:disabled) { transform: none; } }
+
+/* Variante B2 elegida: números primero y sin subrayado (Inicio); portada diaria de un color. */
+.strip-flat::after { display: none; }

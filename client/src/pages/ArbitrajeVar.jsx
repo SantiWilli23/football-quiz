@@ -192,9 +192,9 @@ export default function ArbitrajeVar() {
             {timed ? (
               <span
                 className={`relative w-20 h-20 rounded-full flex items-center justify-center shrink-0 ${secondsLeft <= 3 ? "tone-red" : secondsLeft <= 10 ? "tone-amber" : "tone-emerald"}`}
-                style={{ background: `conic-gradient(rgb(var(--tone)) ${(secondsLeft / SECONDS_PER_SITUATION) * 100}%, rgb(var(--c-border)) 0)`, boxShadow: "0 0 22px -6px rgb(var(--tone))" }}
+                style={{ background: `conic-gradient(rgb(var(--tone)) ${(secondsLeft / SECONDS_PER_SITUATION) * 100}%, rgb(var(--c-border)) 0)` }}
               >
-                <span className="absolute inset-[7px] rounded-full bg-bg" />
+                <span className="absolute inset-[4px] rounded-full bg-bg" />
                 <span className="relative text-2xl font-bold tabular-nums text-tone">{secondsLeft}</span>
               </span>
             ) : (

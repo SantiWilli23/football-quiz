@@ -38,12 +38,11 @@ function NavGroup({ items, collapsed }) {
           className={({ isActive }) =>
             `tone-${tone} flex items-center gap-3 py-2.5 rounded-card text-sm font-medium transition-colors border ${collapsed ? "justify-center px-0" : "px-3"} ${
               isActive
-                ? "text-white border-tone font-semibold"
+                ? "text-white border-transparent font-semibold bg-tone-soft shadow-[inset_3px_0_0_rgb(var(--tone))]"
                 : "text-gray-400 hover:text-white hover:bg-white/5 border-transparent"
             }`
           }
-          style={({ isActive }) => (isActive ? { backgroundImage: "linear-gradient(90deg, rgb(var(--tone) / 0.3), rgb(var(--tone) / 0.02))" } : undefined)}
-        >
+                  >
           <Icon size={18} className="text-tone" />
           {!collapsed && label}
         </NavLink>

@@ -164,9 +164,9 @@ export default function Dashboard() {
 
 function StatCell({ label, value, tone }) {
   return (
-    <div className={`strip-cell tone-${tone}`}>
-      <p className="text-xs uppercase tracking-wider text-gray-500">{label}</p>
-      <p className="text-3xl sm:text-4xl font-bold tabular-nums tracking-tight text-tone mt-1">{value}</p>
+    <div className={`strip-cell strip-flat tone-${tone}`}>
+      <p className="text-3xl sm:text-4xl font-bold tabular-nums tracking-tight text-tone">{value}</p>
+      <p className="text-[11px] uppercase tracking-wider text-gray-500 mt-1">{label}</p>
     </div>
   );
 }

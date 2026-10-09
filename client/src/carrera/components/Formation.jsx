@@ -141,7 +141,7 @@ export default function Formation() {
       <div
         ref={pitchRef}
         className="relative w-full rounded-card overflow-hidden border border-border select-none"
-        style={{ aspectRatio: "0.95", background: "radial-gradient(90% 80% at 50% 45%, #2f7a50, #1f4d33 70%, #14301f)", boxShadow: "0 0 36px -12px rgb(var(--c-emerald))", touchAction: "none" }}
+        style={{ aspectRatio: "0.95", background: "radial-gradient(90% 80% at 50% 45%, #2f7a50, #1f4d33 70%, #14301f)", touchAction: "none" }}
       >
         <div className="absolute inset-2 border border-white/25 rounded-md" />
         <div className="absolute left-2 right-2 top-1/2 border-t border-white/25" />
@@ -171,8 +171,7 @@ export default function Formation() {
                     ? (penalty > 0 ? "bg-amber/90 border-amber text-onaccent" : "bg-tone border-white/70 text-onaccent")
                     : "bg-panel border-dashed border-gray-500 text-gray-400 text-sm"
                 }`}
-                style={p && !selected && penalty === 0 ? { boxShadow: "0 0 20px rgb(var(--tone) / 0.8)" } : undefined}
-              >
+                              >
                 {p ? effectiveOvr(p, slot.slot) : slot.slot}
               </div>
               <span className="text-xs px-1.5 py-0.5 rounded bg-black/70 text-white whitespace-nowrap max-w-[100px] truncate pointer-events-none">
