@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -418,3 +418,26 @@ html[data-device="phone"] nav.fixed button { min-height: 58px; }
 /* Cosas que solo tienen sentido con mouse o con pantalla grande. */
 html[data-device="phone"] .desktop-only { display: none !important; }
 html[data-device="desktop"] .phone-only { display: none !important; }
+
+/* ---- Pro Max (guía UI UX Pro Max): un color por portada, contraste, 44px táctiles, foco visible ---- */
+.hero-b {
+  background: color-mix(in srgb, rgb(var(--hero-a)) 11%, rgb(var(--c-panel)));
+  border: 1px solid color-mix(in srgb, rgb(var(--hero-a)) 38%, rgb(var(--c-border)));
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 12px 24px -16px rgb(0 0 0 / 0.35);
+}
+.hero-b :is(h1, h2) { font-family: "Barlow Condensed", Archivo, system-ui, sans-serif; letter-spacing: 0.01em; }
+.strip-cell {
+  background: rgb(var(--c-panel)); border: 1px solid rgb(var(--c-border)); border-top: 4px solid rgb(var(--tone, var(--c-accent)));
+  border-radius: 12px; padding: 0.6rem 0.9rem; box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+}
+.strip-cell:first-child { padding-left: 0.9rem; border-left: 1px solid rgb(var(--c-border)); }
+.strip-cell::after { display: none; }
+.strip-cell .text-tone { color: rgb(var(--c-white)); font-family: "Barlow Condensed", Archivo, system-ui, sans-serif; }
+.btn { min-height: 44px; cursor: pointer; }
+:is(:root:not([data-theme]), [data-theme="nocturno"], [data-theme="azul"], [data-theme="cancha-dia"]) .btn-primary {
+  background-image: none; background-color: rgb(var(--c-accent)); border: 2px solid rgb(var(--c-accent)); box-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
+}
+:where(button, a, [role="button"], select, summary):not(:disabled) { cursor: pointer; }
+:where(button, a, input, select, textarea, [role="button"]):focus-visible { outline: 3px solid rgb(var(--c-accent)); outline-offset: 2px; }
+[data-theme="cancha-dia"] { --c-gray-500: 82 100 94; --c-gray-400: 100 118 111; }
+@media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }

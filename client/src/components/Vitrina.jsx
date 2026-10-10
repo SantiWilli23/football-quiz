@@ -49,7 +49,7 @@ export default function Vitrina() {
                 <div
                   key={a.id}
                   title={a.description}
-                  className={`rounded-lg border px-3 py-2.5 ${a.unlocked ? "border-transparent bg-accent/20" : "border-border opacity-60"}`}
+                  className={`rounded-lg border px-3 py-2.5 ${a.unlocked ? "border-accent/40 bg-accent/5" : "border-border opacity-60"}`}
                 >
                   <div className="flex items-center gap-2">
                     <span className={`text-lg ${a.unlocked ? "" : "grayscale"}`}>{a.emoji}</span>
