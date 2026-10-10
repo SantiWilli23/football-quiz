@@ -1,4 +1,4 @@
-import { teams } from "./teams.js";
+import { allTeams } from "./teams.js";
 import ROSTERS from "./rosters.js";
 
 // ============ HELPERS DE GENERACIÓN ============
@@ -761,12 +761,18 @@ function squadFor(team) {
   return roster.map((r) => buildPlayer(team, { name: r.name, pos: r.pos, age: r.age, nat: r.nat, ovr: r.ovr, pot: r.pot, id: r.id || `${team.id}_r_${slug(r.name)}` }));
 }
 
-export const players = teams.flatMap((team) => squadFor(team));
+// Se arman los planteles de TODOS los clubes (incluidos los que ya no están en la temporada) en el mismo orden de
+// siempre, para que los ids de los jugadores no cambien. Los de clubes que ya no están no entran al mercado.
+const GONE = new Set(allTeams.filter((t) => t.until).map((t) => t.id));
+const EVERYONE = allTeams.flatMap((team) => squadFor(team));
+export const players = EVERYONE.filter((p) => !GONE.has(p.teamId));
+// Jugadores de clubes que bajaron (para carreras viejas que los tengan en la lista de seguidos, etc.).
+export const legacyPlayers = EVERYONE.filter((p) => GONE.has(p.teamId));
 
 export function playersByTeam(teamId) {
   return players.filter((p) => p.teamId === teamId);
 }
 
 export function playerById(id) {
-  return players.find((p) => p.id === id) || null;
+  return players.find((p) => p.id === id) || legacyPlayers.find((p) => p.id === id) || null;
 }

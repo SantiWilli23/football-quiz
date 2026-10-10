@@ -7,7 +7,7 @@ import { requireAuth } from "../middleware/auth.js";
 import { simulateFixture, generateRoundRobin, dtWeeklyPoints, dtOutcomeFor, cpuBiasOf, CPU_DIFFICULTY_BIAS } from "../utils/dt-match.js";
 import { squadPower, tacticsOf, isValidSquadState, MAX_SQUAD_STATE_BYTES } from "../utils/dt-squad.js";
 import {
-  advanceCompetitions, applyOverdue, clubInfo, compInfo, humansOf, infoOf, labelForFixture, monthStatus, nowSql, parseSql,
+  leagueTeams, advanceCompetitions, applyOverdue, clubInfo, compInfo, humansOf, infoOf, labelForFixture, monthStatus, nowSql, parseSql,
   pendingBudgetAdjustment, recordResult, refreshLeagueWeek, resolveAuto, resolveCpuOffer, settleWeeks, standingsFrom, startSeason,
   totalMonthsOf, touchMember, weekCode,
 } from "../utils/dt-league-core.js";
@@ -39,9 +39,8 @@ function genInviteCode() {
   return code;
 }
 
-function teamsForLeague(leagueKey) {
-  return TEAMS.filter((t) => t.league === leagueKey);
-}
+// Clubes de la liga según la versión con la que arrancó (ver dt-league-core.js).
+const teamsForLeague = (league) => leagueTeams(league);
 
 async function loadLeagueByCode(code) {
   const result = await db.execute({
@@ -142,7 +141,7 @@ function currentDraftTurn(league, members) {
 }
 
 function serializeLeague(league, members, userId) {
-  const league_teams = teamsForLeague(league.league_key);
+  const league_teams = teamsForLeague(league);
   const takenIds = new Set(members.map((m) => m.team_id).filter(Boolean));
   const draftOrder = parseDraftOrder(league);
   return {
@@ -242,7 +241,7 @@ router.post("/", async (req, res) => {
   if (!inviteCode) return res.status(500).json({ error: "No se pudo generar un código, probá de nuevo" });
 
   const result = await db.execute({
-    sql: "INSERT INTO dt_leagues (name, league_key, invite_code, created_by, group_id, weeks_per_month, draft_mode) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    sql: "INSERT INTO dt_leagues (name, league_key, invite_code, created_by, group_id, weeks_per_month, draft_mode, team_version) VALUES (?, ?, ?, ?, ?, ?, ?, 2)",
     args: [name, leagueKey, inviteCode, req.userId, groupId, weeksPerMonth, draftMode ? 1 : 0],
   });
   await db.execute({
@@ -337,7 +336,7 @@ router.post("/:code/team", async (req, res) => {
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   if (league.status !== "lobby") return res.status(400).json({ error: "La liga ya arrancó, no podés cambiar de equipo" });
 
-  const validTeam = teamsForLeague(league.league_key).find((t) => t.id === teamId);
+  const validTeam = teamsForLeague(league).find((t) => t.id === teamId);
   if (!validTeam) return res.status(400).json({ error: "Ese equipo no pertenece a esta liga" });
 
   const { members, me } = await requireMembership(league, req.userId);
@@ -726,7 +725,7 @@ router.get("/:code/standings", async (req, res) => {
   if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
   if (league.status === "in_progress") ({ league, members } = await refreshLeague(league));
 
-  const teams = teamsForLeague(league.league_key);
+  const teams = teamsForLeague(league);
   const rows = (await db.execute({
     sql: "SELECT home_team_id, away_team_id, home_goals, away_goals FROM dt_league_fixtures WHERE league_id = ? AND season = ? AND comp = 'liga' AND played = 1",
     args: [league.id, Number(league.season || 1)],
@@ -883,7 +882,7 @@ router.get("/:code/score", async (req, res) => {
   if (league.status === "in_progress") ({ league, members } = await refreshLeague(league));
   const season = Number(league.season || 1);
   const info = await clubInfo(league, members);
-  const teams = teamsForLeague(league.league_key);
+  const teams = teamsForLeague(league);
   const rows = (await db.execute({
     sql: "SELECT home_team_id, away_team_id, home_goals, away_goals FROM dt_league_fixtures WHERE league_id = ? AND season = ? AND comp = 'liga' AND played = 1",
     args: [league.id, season],
@@ -984,7 +983,7 @@ router.get("/:code/trades", async (req, res) => {
     args: [league.id, req.userId, req.userId],
   });
 
-  const nameByTeam = Object.fromEntries(teamsForLeague(league.league_key).map((t) => [t.id, t.name]));
+  const nameByTeam = Object.fromEntries(teamsForLeague(league).map((t) => [t.id, t.name]));
   const { members } = await requireMembership(league, req.userId);
   const teamByUser = Object.fromEntries(members.map((m) => [m.user_id, m.team_id]));
 

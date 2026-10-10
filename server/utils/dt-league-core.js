@@ -17,7 +17,13 @@ const TEAMS_PATH = path.join(__dirname, "../data/dt-teams.json");
 export const TEAMS = fs.existsSync(TEAMS_PATH) ? JSON.parse(fs.readFileSync(TEAMS_PATH, "utf-8")) : [];
 export const TEAM_BY_ID = Object.fromEntries(TEAMS.map((t) => [t.id, t]));
 export const LEAGUE_KEYS = ["premier", "laliga", "seriea", "bundesliga"];
-export const teamsForLeague = (leagueKey) => TEAMS.filter((t) => t.league === leagueKey);
+// Los clubes de cada liga cambian con la temporada (ascensos y descensos). Cada liga guarda con qué
+// versión de clubes arrancó (team_version): las ligas viejas siguen con los clubes de siempre y las
+// nuevas usan los de 2026-27. En los datos, `until: 1` = ya no está en la versión 2 y `since: 2` = entró en la 2.
+export const CURRENT_TEAM_VERSION = 2;
+export const teamsForLeague = (leagueKey, version = CURRENT_TEAM_VERSION) =>
+  TEAMS.filter((t) => t.league === leagueKey && (t.since || 1) <= version && (!t.until || t.until >= version));
+export const leagueTeams = (league) => teamsForLeague(league.league_key, Number(league.team_version || 1));
 
 const DAY_MS = 86400000;
 export const parseSql = (s) => (s ? new Date(String(s).replace(" ", "T") + (String(s).endsWith("Z") ? "" : "Z")).getTime() : null);
@@ -39,7 +45,7 @@ export const humansOf = (members) => members.filter((m) => m.team_id && !m.expel
 // ---------- Clubes: rating, nivel, tier y presupuesto ----------
 export async function ensureClubs(league) {
   const have = new Set((await db.execute({ sql: "SELECT team_id FROM dt_league_clubs WHERE league_id = ?", args: [league.id] })).rows.map((r) => r.team_id));
-  for (const t of teamsForLeague(league.league_key)) {
+  for (const t of leagueTeams(league)) {
     if (have.has(t.id)) continue;
     const rating = baseRatingForTier(t.tier, t.id);
     await db.execute({
@@ -108,7 +114,7 @@ async function previousFinalOrder(league, season) {
     args: [league.id, season - 1],
   })).rows;
   if (!rows.length) return null;
-  return standingsFrom(teamsForLeague(league.league_key).map((t) => t.id), rows).map((s) => s.teamId);
+  return standingsFrom(leagueTeams(league).map((t) => t.id), rows).map((s) => s.teamId);
 }
 
 export function standingsFrom(teamIds, rows) {
@@ -131,7 +137,7 @@ export function standingsFrom(teamIds, rows) {
 export async function generateSeasonFixtures(league, members) {
   const season = Number(league.season || 1);
   const info = await clubInfo(league, members);
-  const ids = teamsForLeague(league.league_key).map((t) => t.id);
+  const ids = leagueTeams(league).map((t) => t.id);
   const ratingOf = (id) => infoOf(info, id).rating;
 
   const rounds = generateRoundRobin(ids);
@@ -222,7 +228,7 @@ async function ligaStandings(league, season) {
     sql: "SELECT home_team_id, away_team_id, home_goals, away_goals FROM dt_league_fixtures WHERE league_id = ? AND season = ? AND comp = 'liga' AND played = 1",
     args: [league.id, season],
   })).rows;
-  return standingsFrom(teamsForLeague(league.league_key).map((t) => t.id), rows);
+  return standingsFrom(leagueTeams(league).map((t) => t.id), rows);
 }
 
 // Cuando todos los partidos de una jornada (de todas las competencias) están jugados, se le
@@ -244,7 +250,7 @@ export async function settleWeeks(league, members) {
 
   const info = await clubInfo(league, members);
   const humanByTeam = Object.fromEntries(humansOf(members).map((m) => [m.team_id, m]));
-  const nTeams = teamsForLeague(league.league_key).length;
+  const nTeams = leagueTeams(league).length;
 
   for (const week of weeks) {
     const fx = (await db.execute({

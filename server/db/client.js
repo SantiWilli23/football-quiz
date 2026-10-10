@@ -155,6 +155,8 @@ async function migrateDtSeason() {
       await db.execute("UPDATE dt_leagues SET current_month = COALESCE((SELECT MIN(month) FROM dt_league_fixtures f WHERE f.league_id = dt_leagues.id AND f.played = 0), (SELECT MAX(month) FROM dt_league_fixtures f WHERE f.league_id = dt_leagues.id), 1)");
     }
     if (!names.has("season")) await db.execute("ALTER TABLE dt_leagues ADD COLUMN season INTEGER NOT NULL DEFAULT 1");
+    // Con qué clubes arrancó la liga (1 = temporada 2024-25, 2 = temporada 2026-27). Las ya creadas quedan en 1.
+    if (!names.has("team_version")) await db.execute("ALTER TABLE dt_leagues ADD COLUMN team_version INTEGER NOT NULL DEFAULT 1");
     if (!names.has("month_started_at")) await db.execute("ALTER TABLE dt_leagues ADD COLUMN month_started_at TEXT");
   }
   const members = await db.execute("PRAGMA table_info(dt_league_members)");

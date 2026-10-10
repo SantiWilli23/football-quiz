@@ -60,7 +60,8 @@
     "name": "West Ham United",
     "shortName": "WHU",
     "league": "premier",
-    "tier": 2
+    "tier": 2,
+    "until": 1
   },
   {
     "id": "brighton",
@@ -109,7 +110,8 @@
     "name": "Wolverhampton",
     "shortName": "WOL",
     "league": "premier",
-    "tier": 2
+    "tier": 2,
+    "until": 1
   },
   {
     "id": "bournemouth",
@@ -130,14 +132,16 @@
     "name": "Leicester City",
     "shortName": "LEI",
     "league": "premier",
-    "tier": 3
+    "tier": 3,
+    "until": 1
   },
   {
     "id": "southampton",
     "name": "Southampton",
     "shortName": "SOU",
     "league": "premier",
-    "tier": 3
+    "tier": 3,
+    "until": 1
   },
   {
     "id": "realmadrid",
@@ -200,7 +204,8 @@
     "name": "Girona",
     "shortName": "GIR",
     "league": "laliga",
-    "tier": 2
+    "tier": 2,
+    "until": 1
   },
   {
     "id": "valencia",
@@ -242,14 +247,16 @@
     "name": "Mallorca",
     "shortName": "MAL",
     "league": "laliga",
-    "tier": 3
+    "tier": 3,
+    "until": 1
   },
   {
     "id": "laspalmas",
     "name": "Las Palmas",
     "shortName": "LPA",
     "league": "laliga",
-    "tier": 3
+    "tier": 3,
+    "until": 1
   },
   {
     "id": "alaves",
@@ -263,7 +270,8 @@
     "name": "Leganés",
     "shortName": "LEG",
     "league": "laliga",
-    "tier": 3
+    "tier": 3,
+    "until": 1
   },
   {
     "id": "espanyol",
@@ -277,7 +285,8 @@
     "name": "Valladolid",
     "shortName": "VLL",
     "league": "laliga",
-    "tier": 3
+    "tier": 3,
+    "until": 1
   },
   {
     "id": "inter",
@@ -382,14 +391,16 @@
     "name": "Hellas Verona",
     "shortName": "VER",
     "league": "seriea",
-    "tier": 3
+    "tier": 3,
+    "until": 1
   },
   {
     "id": "empoli",
     "name": "Empoli",
     "shortName": "EMP",
     "league": "seriea",
-    "tier": 3
+    "tier": 3,
+    "until": 1
   },
   {
     "id": "lecce",
@@ -473,7 +484,8 @@
     "name": "VfL Wolfsburg",
     "shortName": "WOB",
     "league": "bundesliga",
-    "tier": 2
+    "tier": 2,
+    "until": 1
   },
   {
     "id": "freiburg",
@@ -522,27 +534,159 @@
     "name": "VfL Bochum",
     "shortName": "BOC",
     "league": "bundesliga",
-    "tier": 3
+    "tier": 3,
+    "until": 1
   },
   {
     "id": "heidenheim",
     "name": "Heidenheim",
     "shortName": "HDH",
     "league": "bundesliga",
-    "tier": 3
+    "tier": 3,
+    "until": 1
   },
   {
     "id": "stpauli",
     "name": "St. Pauli",
     "shortName": "STP",
     "league": "bundesliga",
-    "tier": 3
+    "tier": 3,
+    "until": 1
   },
   {
     "id": "kiel",
     "name": "Holstein Kiel",
     "shortName": "KIE",
     "league": "bundesliga",
-    "tier": 3
+    "tier": 3,
+    "until": 1
+  },
+  {
+    "id": "leeds",
+    "name": "Leeds United",
+    "shortName": "LEE",
+    "league": "premier",
+    "tier": 2,
+    "since": 2
+  },
+  {
+    "id": "sunderland",
+    "name": "Sunderland",
+    "shortName": "SUN",
+    "league": "premier",
+    "tier": 3,
+    "since": 2
+  },
+  {
+    "id": "coventry",
+    "name": "Coventry City",
+    "shortName": "COV",
+    "league": "premier",
+    "tier": 3,
+    "since": 2
+  },
+  {
+    "id": "hull",
+    "name": "Hull City",
+    "shortName": "HUL",
+    "league": "premier",
+    "tier": 3,
+    "since": 2
+  },
+  {
+    "id": "elche",
+    "name": "Elche",
+    "shortName": "ELC",
+    "league": "laliga",
+    "tier": 3,
+    "since": 2
+  },
+  {
+    "id": "levante",
+    "name": "Levante",
+    "shortName": "LEV",
+    "league": "laliga",
+    "tier": 3,
+    "since": 2
+  },
+  {
+    "id": "malaga",
+    "name": "Málaga",
+    "shortName": "MAL",
+    "league": "laliga",
+    "tier": 3,
+    "since": 2
+  },
+  {
+    "id": "racing",
+    "name": "Racing de Santander",
+    "shortName": "RAC",
+    "league": "laliga",
+    "tier": 3,
+    "since": 2
+  },
+  {
+    "id": "deportivo",
+    "name": "Deportivo La Coruña",
+    "shortName": "DEP",
+    "league": "laliga",
+    "tier": 3,
+    "since": 2
+  },
+  {
+    "id": "sassuolo",
+    "name": "Sassuolo",
+    "shortName": "SAS",
+    "league": "seriea",
+    "tier": 3,
+    "since": 2
+  },
+  {
+    "id": "frosinone",
+    "name": "Frosinone",
+    "shortName": "FRO",
+    "league": "seriea",
+    "tier": 3,
+    "since": 2
+  },
+  {
+    "id": "koln",
+    "name": "FC Colonia",
+    "shortName": "KOE",
+    "league": "bundesliga",
+    "tier": 3,
+    "since": 2
+  },
+  {
+    "id": "hamburg",
+    "name": "Hamburgo SV",
+    "shortName": "HSV",
+    "league": "bundesliga",
+    "tier": 3,
+    "since": 2
+  },
+  {
+    "id": "paderborn",
+    "name": "SC Paderborn",
+    "shortName": "PAD",
+    "league": "bundesliga",
+    "tier": 3,
+    "since": 2
+  },
+  {
+    "id": "elversberg",
+    "name": "SV Elversberg",
+    "shortName": "ELV",
+    "league": "bundesliga",
+    "tier": 3,
+    "since": 2
+  },
+  {
+    "id": "schalke",
+    "name": "Schalke 04",
+    "shortName": "S04",
+    "league": "bundesliga",
+    "tier": 3,
+    "since": 2
   }
 ]

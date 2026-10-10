@@ -67,6 +67,7 @@ const ALIAS = {
   "wolves": "wolverhamptonwanderers", "newcastle": "newcastleunited", "tottenham": "tottenhamhotspur", "brighton": "brightonhovealbion",
   "westham": "westhamunited", "leeds": "leedsunited", "forest": "nottinghamforest", "spurs": "tottenhamhotspur", "intermilan": "inter", "acmilan": "milan",
   "celta": "celtadevigo", "atleticodemadrid": "atleticomadrid", "interdemilan": "internazionale", "scfriburgo": "scfreiburg", "celtadevigo": "celtavigo", "betis": "realbetis", "realsociedad": "realsociedad", "colonia": "kolon", "friburgo": "freiburg",
+  "deportivoalaves": "alaves", "deportivolacoruna": "deportivo", "fccolonia": "fccologne", "hamburgosv": "hamburgsv", "racingdesantander": "racingsantander", "scpaderborn": "scpaderborn07",
 };
 const getJson = async (u) => { const r = await fetch(u, { headers: { "user-agent": "Mozilla/5.0" } }); if (!r.ok) throw new Error(`ESPN ${r.status} ${u}`); return r.json(); };
 
@@ -77,7 +78,7 @@ const oldByTeam = (id) => dt.players.filter((p) => p.teamId === id && !p.isYouth
 for (const [league, slug] of Object.entries(SLUGS)) {
   const list = (await getJson(`https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/teams`)).sports[0].leagues[0].teams.map((x) => x.team);
   const espnByNorm = new Map(list.map((t) => [norm(t.displayName), t]));
-  for (const team of teams.filter((t) => t.league === league)) {
+  for (const team of teams.filter((t) => t.league === league && !t.until)) {
     const n = norm(team.name);
     const cands = [n, ALIAS[n]].filter(Boolean);
     let match = cands.map((c) => espnByNorm.get(c)).find(Boolean);
@@ -87,7 +88,7 @@ for (const [league, slug] of Object.entries(SLUGS)) {
     try { roster = (await getJson(`https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/teams/${match.id}/roster`)).athletes || []; } catch { report.sinCoincidencia.push(`${team.name} (sin plantel)`); continue; }
     if (roster.length < 15) { report.sinCoincidencia.push(`${team.name} (plantel corto: ${roster.length})`); continue; }
     const oldMap = new Map(oldByTeam(team.id).map((p) => [norm(p.name), p]));
-    const allOld = new Map(dt.players.map((p) => [norm(p.name), p]));
+    const allOld = new Map([...(dt.legacyPlayers || []), ...dt.players].map((p) => [norm(p.name), p]));
     const base = team.tier === 1 ? 76 : team.tier === 2 ? 71 : 67;
     const counters = { D: 0, M: 0, F: 0 };
     const squad = roster.map((a) => {

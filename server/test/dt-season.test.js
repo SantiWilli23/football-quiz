@@ -238,4 +238,21 @@ describe("temporada online (con base de datos)", async () => {
   });
 });
 
+
+describe("clubes de la temporada 2026-27", async () => {
+  const core = await import("../utils/dt-league-core.js");
+  it("las ligas nuevas usan los clubes de 2026-27 y las viejas siguen con los de siempre", () => {
+    const viejaIds = core.teamsForLeague("premier", 1).map((t) => t.id);
+    const nuevaIds = core.teamsForLeague("premier", 2).map((t) => t.id);
+    assert.equal(viejaIds.length, 20);
+    assert.equal(nuevaIds.length, 20);
+    assert.ok(viejaIds.includes("westham") && !viejaIds.includes("leeds"));
+    assert.ok(nuevaIds.includes("leeds") && !nuevaIds.includes("westham"));
+  });
+  it("cada liga tiene la cantidad de clubes de la temporada actual", () => {
+    for (const [key, n] of [["premier", 20], ["laliga", 20], ["seriea", 20], ["bundesliga", 18]]) {
+      assert.equal(core.teamsForLeague(key).length, n, key);
+    }
+  });
+});
 cleanup();
