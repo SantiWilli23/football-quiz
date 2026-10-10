@@ -8,6 +8,8 @@ import { ROLES, expectedRole } from "../engine/playerForm.js";
 import Scouts from "./Scouts.jsx";
 import ComparePlayers from "./ComparePlayers.jsx";
 import PlayerInfoModal from "./PlayerInfoModal.jsx";
+import PlayerFace from "../../components/PlayerFace.jsx";
+import TeamCrest from "./TeamCrest.jsx";
 
 function findAnyPlayer(state, playerId) {
   return state.squad.find((p) => p.id === playerId) || allPlayers.find((p) => p.id === playerId);
@@ -197,12 +199,14 @@ export default function Transfers() {
                     >
                       {watched ? "★" : "☆"}
                     </button>
-                    <div className="w-8 h-8 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-[11px] font-bold text-gray-400">
-                      {p.position}
+                    <div className="relative shrink-0">
+                      <PlayerFace name={p.name} size={36} className="border border-border" />
+                      <span className="absolute -bottom-1 -right-1 rounded bg-bg border border-border px-1 text-[9px] font-bold text-gray-300 leading-4">{p.position}</span>
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold truncate">{p.name}{report?.isPublic && <span className="ml-1.5 text-xs text-accent" title="Figura mundial: ya viene scouteado">●</span>}</p>
-                      <p className="text-[11px] text-gray-500 truncate">
+                      <p className="text-[11px] text-gray-500 truncate flex items-center gap-1.5">
+                        {teamById(p.teamId) && <TeamCrest team={teamById(p.teamId)} size={14} />}
                         {teamById(p.teamId)?.name} · {p.age} años
                         {clause != null && <span className="text-amber ml-1.5">· cláusula €{clause}M</span>}
                         {p.contractYears <= 1 && <span className="text-amber ml-1.5">· último año</span>}
@@ -386,8 +390,13 @@ function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, 
             return (
               <div key={id} className="flex items-center justify-between gap-2 bg-panel border border-border rounded-2xl px-4 py-3">
                 <div className="min-w-0 flex-1 cursor-pointer" onClick={() => onInfo(p)} title="Ver toda su información">
-                  <p className="text-sm font-semibold truncate hover:text-accent">{p.name}</p>
-                  <p className="text-xs text-gray-500">{p.position} · {p.age} años · €{p.value}M · {teamById(p.teamId)?.name}</p>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <PlayerFace name={p.name} size={32} className="border border-border" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate hover:text-accent">{p.name}</p>
+                      <p className="text-xs text-gray-500 flex items-center gap-1.5">{teamById(p.teamId) && <TeamCrest team={teamById(p.teamId)} size={14} />}{p.position} · {p.age} años · €{p.value}M · {teamById(p.teamId)?.name}</p>
+                    </div>
+                  </div>
                 </div>
                 <div className="flex gap-1.5 shrink-0">
                   <button onClick={() => onOffer(p)} className="text-xs font-medium px-3 py-1.5 rounded-full bg-accent/10 text-accent border border-accent/40 hover:bg-accent/20 transition-colors">

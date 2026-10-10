@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { attrPairs, attrValuesOf } from "../engine/gkAttributes.js";
 import { useCareer } from "../context/CareerContext.jsx";
+import PlayerFace from "../../components/PlayerFace.jsx";
+import TeamCrest from "./TeamCrest.jsx";
 import { teams, teamById } from "../data/teams.js";
 import { players as allPlayers } from "../data/players.js";
 import { SCOUT_SPECIALTIES, MAX_SCOUTS, formatRange, reportFor, isFamous } from "../engine/scouting.js";
@@ -196,8 +198,9 @@ export default function Scouts() {
                   <div key={p.id} className="bg-panel border border-border rounded-2xl overflow-hidden">
                     <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/[0.03]" onClick={() => setOpenId(open ? null : p.id)}>
                       {!isOwn && <span onClick={(e) => e.stopPropagation()}><WatchButton watched={watchlist.includes(p.id)} onToggle={() => toggleWatchlist(p.id)} /></span>}
-                      <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-xs font-bold text-gray-400">
-                        {p.position}
+                      <div className="relative shrink-0">
+                        <PlayerFace name={p.name} size={40} className="border border-border" />
+                        <span className="absolute -bottom-1 -right-1 rounded bg-bg border border-border px-1 text-[9px] font-bold text-gray-300 leading-4">{p.position}</span>
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold truncate">{p.name}</p>
@@ -277,8 +280,9 @@ export default function Scouts() {
             return (
               <div key={p.id} className="bg-panel border border-border rounded-2xl px-4 py-3 space-y-2.5">
                 <div className="flex items-center gap-3 flex-wrap cursor-pointer" onClick={() => setOpenId(open ? null : p.id)}>
-                  <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-xs font-bold text-gray-400">
-                    {p.position}
+                  <div className="relative shrink-0">
+                    <PlayerFace name={p.name} size={40} className="border border-border" />
+                    <span className="absolute -bottom-1 -right-1 rounded bg-bg border border-border px-1 text-[9px] font-bold text-gray-300 leading-4">{p.position}</span>
                   </div>
                   <div className="min-w-0 flex-1 basis-40">
                     <p className="text-sm font-semibold truncate">

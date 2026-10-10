@@ -284,10 +284,11 @@ export default function DtLeagueRoom() {
             {league.preseasonOpen && tab === "fixtures" && (myTeamId
               ? <ClubPanel code={code} league={league} myTeamId={myTeamId} view="preseason" />
               : <p className="text-sm text-gray-500">Todavía no tenés club en esta liga.</p>)}
+            {!league.preseasonOpen && tab === "fixtures" && myTeamId && <ClubPanel code={code} league={league} myTeamId={myTeamId} view="preseasonCalendar" />}
             {!league.preseasonOpen && tab === "fixtures" && (
               <FixturesTab code={code} league={league} myTeamId={myTeamId} onAdvanced={setLeague} onReload={load} />
             )}
-            {tab === "calendar" && league.preseasonOpen && myTeamId && <ClubPanel code={code} league={league} myTeamId={myTeamId} view="preseasonCalendar" />}
+            {tab === "calendar" && myTeamId && <ClubPanel code={code} league={league} myTeamId={myTeamId} view="preseasonCalendar" />}
             {tab === "calendar" && <CalendarTab code={code} myTeamId={myTeamId} />}
             {tab === "standings" && <StandingsTab code={code} myTeamId={myTeamId} />}
             {tab === "score" && <ScoreTab code={code} league={league} onReload={load} />}

@@ -330,11 +330,62 @@ function buildInitialState(teamId) {
   };
 }
 
+// Los planteles se actualizan con la temporada actual: quien ya no está en el club sale del plantel (salvo
+// los que el DT fichó), entran los que llegaron, y los canteranos (jóvenes de la cantera del club que estaban
+// en el primer equipo) pasan a fuerzas básicas. Así las carreras empezadas también reflejan el plantel de hoy.
+const MAX_YOUTH_SLOTS = 25;
+function reconcileSquad(s) {
+  if (!s || !s.teamId || !Array.isArray(s.squad)) return s;
+  const current = playersByTeam(s.teamId);
+  const currentIds = new Set(current.map((p) => p.id));
+  const acquired = new Set(s.acquired || []);
+
+  // Canteranos: salen del primer equipo y van a la cantera (fuerzas básicas).
+  const youthOut = s.squad.filter((p) => p.isYouth && !p.fromCantera);
+  const youthOutIds = new Set(youthOut.map((p) => p.id));
+  let squad = s.squad.filter((p) => !youthOutIds.has(p.id) && (currentIds.has(p.id) || acquired.has(p.id)));
+
+  // Jugadores actuales del club que todavía no estaban en la carrera.
+  const have = new Set(squad.map((p) => p.id));
+  const arrivals = current.filter((p) => !p.isYouth && !have.has(p.id) && !youthOutIds.has(p.id)).map((p) => ({ ...p }));
+  arrivals.forEach((p) => { p.number = nextAvailableNumber(squad.concat(arrivals.filter((x) => x.number))); });
+  squad = [...squad, ...arrivals];
+
+  const cantera = s.cantera || emptyCantera();
+  const room = Math.max(0, MAX_YOUTH_SLOTS - (cantera.youth || []).length);
+  const movedYouth = youthOut.slice(0, room).map((p) => ({
+    ...p, number: undefined, isAcademyProspect: true, signedWeek: s.week || 0, signedSeason: s.season || 1, scoutSpecialty: null,
+  }));
+  const newCantera = movedYouth.length ? { ...cantera, youth: [...(cantera.youth || []), ...movedYouth] } : cantera;
+
+  if (squad.length === s.squad.length && !youthOut.length && arrivals.length === 0) return s;
+
+  const ids = new Set(squad.map((p) => p.id));
+  const lineup = s.lineup && {
+    ...s.lineup,
+    starters: (s.lineup.starters || []).map((sl) => (sl.playerId && !ids.has(sl.playerId) ? { ...sl, playerId: null } : sl)),
+    bench: (s.lineup.bench || []).filter((id) => ids.has(id)),
+    reserves: (s.lineup.reserves || []).filter((id) => ids.has(id)),
+  };
+  return {
+    ...s,
+    squad,
+    lineup,
+    cantera: newCantera,
+    captainId: ids.has(s.captainId) ? s.captainId : (squad.slice().sort((a, b) => b.ovr - a.ovr)[0]?.id || null),
+    news: [
+      ...arrivals.slice(0, 2).map((p) => `📋 ${p.name} ya figura en el plantel de ${teamById(s.teamId)?.name || "tu club"}.`),
+      ...(youthOut.length ? [`🌱 ${youthOut.length} canteranos pasaron a fuerzas básicas.`] : []),
+      ...(s.news || []),
+    ].slice(0, 8),
+  };
+}
+
 // Los guardados viejos no traen los campos nuevos (días, energía, cantera, dificultad).
 function normalizeState(s) {
   if (!s) return s;
   const withCantera = ensureCantera(s);
-  return { day: 0, sharpness: 50, dayLog: [], difficulty: "media", ...withCantera };
+  return reconcileSquad({ day: 0, sharpness: 50, dayLog: [], difficulty: "media", ...withCantera });
 }
 
 // Avanza los días que faltan hasta el sábado con trabajo liviano (cuando se juega el
