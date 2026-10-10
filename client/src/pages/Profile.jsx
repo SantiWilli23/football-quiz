@@ -13,6 +13,8 @@ import AccountSettings from "../components/AccountSettings.jsx";
 import ThemeSettings from "../components/ThemeSettings.jsx";
 import Vitrina from "../components/Vitrina.jsx";
 import PlayerCard from "../components/PlayerCard.jsx";
+import TutorialPlayer from "../tutorial/TutorialPlayer.jsx";
+import { GENERAL_TUTORIAL } from "../tutorial/steps.js";
 
 export default function Profile() {
   const { user, stats, refreshMe } = useAuth();
@@ -21,6 +23,7 @@ export default function Profile() {
   const [position, setPosition] = useState(null);
   const [ranking, setRanking] = useState([]);
   const [compareId, setCompareId] = useState("");
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   const [tab, setTab] = useState("resumen");
 
   useEffect(() => {
@@ -63,6 +66,9 @@ export default function Profile() {
 
   return (
     <Layout>
+      {tutorialOpen && (
+        <TutorialPlayer title={GENERAL_TUTORIAL.title} steps={GENERAL_TUTORIAL.steps} onClose={() => setTutorialOpen(false)} />
+      )}
       <div className="hero-b rounded-3xl p-6 sm:p-8 mb-6" style={{ "--hero-a": "var(--c-pink)", "--hero-b": "var(--c-pink)" }}>
         <div className="flex items-center gap-5 flex-wrap">
           <span className="rounded-full ring-4 ring-panel inline-flex">
@@ -119,6 +125,11 @@ export default function Profile() {
 
       {tab === "ajustes" && (
         <>
+          <Card className="mb-6">
+            <h2 className="font-semibold mb-1">Tutorial</h2>
+            <p className="text-sm text-gray-400 mb-3">Repasá cómo funciona Futotal cuando quieras. Cada juego tiene su propio tutorial en el botón «?».</p>
+            <button onClick={() => setTutorialOpen(true)} className="btn btn-secondary btn-sm">Ver tutorial general</button>
+          </Card>
           <Card className="mb-6">
             <div className="flex items-center gap-4">
               <Avatar user={user} size={56} />

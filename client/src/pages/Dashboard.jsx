@@ -5,7 +5,8 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import Layout from "../components/Layout.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
-import TutorialModal from "../components/TutorialModal.jsx";
+import TutorialPlayer from "../tutorial/TutorialPlayer.jsx";
+import { GENERAL_TUTORIAL } from "../tutorial/steps.js";
 import ContinuePlaying, { findSavedGames } from "../components/ContinuePlaying.jsx";
 import DailyChallenge from "../components/DailyChallenge.jsx";
 import WeeklyRankingHero from "../components/WeeklyRankingHero.jsx";
@@ -40,7 +41,7 @@ export default function Dashboard() {
     } catch { /* localStorage no disponible: se omite el tutorial sin romper nada */ }
   }, [user]);
 
-  function finishTutorial(picked) {
+  function finishTutorial(picked = []) {
     try {
       localStorage.setItem(FAVORITES_KEY, JSON.stringify(picked));
       if (user) localStorage.setItem(tutorialSeenKey(user.id), "1");
@@ -157,7 +158,7 @@ export default function Dashboard() {
           )}
       </div>
 
-      {showTutorial && <TutorialModal onDone={finishTutorial} />}
+      {showTutorial && <TutorialPlayer title={GENERAL_TUTORIAL.title} steps={GENERAL_TUTORIAL.steps} onClose={finishTutorial} />}
     </Layout>
   );
 }

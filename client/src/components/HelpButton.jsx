@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { CircleHelp, X } from "lucide-react";
 import { helpFor } from "../data/helpTexts.js";
+import { tutorialFor } from "../tutorial/steps.js";
+import TutorialPlayer from "../tutorial/TutorialPlayer.jsx";
 
 // Botón «?» de cada pantalla: abre un resumen de cómo se juega o de cómo
 // funciona. Los textos viven en data/helpTexts.js. `inline` = dentro de una
@@ -9,9 +11,11 @@ import { helpFor } from "../data/helpTexts.js";
 export default function HelpButton({ inline = false }) {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   const help = helpFor(pathname);
+  const tutorial = tutorialFor(pathname);
 
-  useEffect(() => { setOpen(false); }, [pathname]);
+  useEffect(() => { setOpen(false); setTutorialOpen(false); }, [pathname]);
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
@@ -53,9 +57,17 @@ export default function HelpButton({ inline = false }) {
                 ))}
               </ul>
             )}
-            <button onClick={() => setOpen(false)} className="btn btn-primary w-full">Entendido</button>
+            <div className="flex gap-2">
+              {tutorial && (
+                <button onClick={() => { setOpen(false); setTutorialOpen(true); }} className="btn btn-secondary flex-1">Ver tutorial</button>
+              )}
+              <button onClick={() => setOpen(false)} className="btn btn-primary flex-1">Entendido</button>
+            </div>
           </div>
         </div>
+      )}
+      {tutorialOpen && tutorial && (
+        <TutorialPlayer title={tutorial.title} steps={tutorial.steps} onClose={() => setTutorialOpen(false)} />
       )}
     </>
   );
