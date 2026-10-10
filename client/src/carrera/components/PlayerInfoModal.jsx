@@ -1,6 +1,6 @@
 import { teamById } from "../data/teams.js";
 import { formatRange, reportFor } from "../engine/scouting.js";
-import { ATTR_LABELS } from "../engine/attributeEffects.js";
+import { attrPairs, attrValuesOf } from "../engine/gkAttributes.js";
 import { energyOf } from "../engine/energy.js";
 import { getInjury } from "../engine/injuryEngine.js";
 import TeamCrest from "./TeamCrest.jsx";
@@ -65,8 +65,8 @@ export default function PlayerInfoModal({ player: p, state, watched, onClose, on
           <p className="text-xs uppercase tracking-wide font-semibold text-gray-400 mb-2">Estadísticas</p>
           {known ? (
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-              {Object.entries(ATTR_LABELS).map(([key, label]) => {
-                const v = p.attributes?.[key];
+              {attrPairs(p).map(([key, label]) => {
+                const v = attrValuesOf(p)[key];
                 return (
                   <div key={key} className="bg-bg border border-border rounded-xl px-2 py-2 text-center">
                     <p className="text-[10px] uppercase tracking-wide text-gray-600">{label}</p>

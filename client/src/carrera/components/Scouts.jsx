@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { attrPairs, attrValuesOf } from "../engine/gkAttributes.js";
 import { useCareer } from "../context/CareerContext.jsx";
 import { teams, teamById } from "../data/teams.js";
 import { players as allPlayers } from "../data/players.js";
@@ -230,10 +231,10 @@ export default function Scouts() {
                         </div>
                         {report ? (
                           <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                            {ATTR_LABELS.map(([key, label]) => (
+                            {attrPairs(p, true).map(([key, label]) => (
                               <div key={key} className="bg-bg border border-border rounded-xl px-2 py-1.5 text-center">
                                 <p className="text-xs uppercase tracking-wide text-gray-600">{label}</p>
-                                <p className="text-sm font-semibold">{p.attributes?.[key] ?? "—"}</p>
+                                <p className="text-sm font-semibold">{attrValuesOf(p)[key] ?? "—"}</p>
                               </div>
                             ))}
                           </div>
@@ -306,10 +307,10 @@ export default function Scouts() {
                       <span>Oferta sugerida <b className="text-white">€{report.suggestedOffer}M</b></span>
                     </div>
                     <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                      {ATTR_LABELS.map(([key, label]) => (
+                      {attrPairs(p, true).map(([key, label]) => (
                         <div key={key} className="bg-bg border border-border rounded-xl px-2 py-1.5 text-center">
                           <p className="text-xs uppercase tracking-wide text-gray-600">{label}</p>
-                          <p className="text-sm font-semibold">{p.attributes?.[key] ?? "—"}</p>
+                          <p className="text-sm font-semibold">{attrValuesOf(p)[key] ?? "—"}</p>
                         </div>
                       ))}
                     </div>

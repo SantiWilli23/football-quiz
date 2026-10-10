@@ -8,54 +8,11 @@ import Transfers from "../carrera/components/Transfers.jsx";
 import Cantera from "../carrera/components/Cantera.jsx";
 import Finances from "../carrera/components/Finances.jsx";
 import { DaysSection } from "../carrera/components/SeasonCalendar.jsx";
-import { ackBudgetAdjustments, markPreseasonReady, claimYouth, getBudgetAdjustments, getCpuOffers, getSquad, getYouthClaims, respondCpuOffer, saveSquad } from "./api.js";
+import PreseasonPanel from "./PreseasonPanel.jsx";
+import { ackBudgetAdjustments, claimYouth, getBudgetAdjustments, getCpuOffers, getSquad, getYouthClaims, respondCpuOffer, saveSquad } from "./api.js";
 
 // Lo mismo que el Modo DT solo, para el club del manager en la liga online (sin Inicio ni
 // Historial, que la liga cubre con Jornada, Calendario y Tabla).
-// Amistosos de pretemporada (solo antes de que empiece la liga): dan forma y moral, no puntos.
-function Preseason({ code, league }) {
-  const { state, preseasonAvailable, playPreseasonMatch } = useCareer();
-  const [last, setLast] = useState(null);
-  const [marked, setMarked] = useState(false);
-  const [wait, setWait] = useState("");
-  const pre = state.preseason;
-  if (!pre) return null;
-  const available = preseasonAvailable();
-  const next = pre.opponents[pre.matchesPlayed];
-  const finished = pre.matchesPlayed >= pre.total;
-  const me = league?.members?.find((m) => m.isMe);
-  const done = marked || !!me?.preseasonReady;
-  async function markReady() {
-    try {
-      const r = await markPreseasonReady(code);
-      setMarked(true);
-      setWait(r.started ? "¡Arrancó la liga!" : `Falta que terminen: ${(r.pending || []).join(", ")}`);
-    } catch { setWait("No se pudo avisar. Probá de nuevo."); }
-  }
-  return (
-    <div className="space-y-3 max-w-xl">
-      <p className="text-sm text-gray-400">Los amistosos solo se juegan en la pretemporada, antes de que arranque la liga. No suman puntos ni cuentan en la tabla: sirven para que los titulares ganen forma y para levantar la moral.</p>
-      {last && <p className="text-sm rounded-card border border-border bg-panel px-3 py-2">Último amistoso: {last.myGoals} - {last.rivalGoals} vs {last.rival?.name}</p>}
-      {league?.preseasonOpen && (
-        <div className="rounded-card border border-accent/30 bg-accent/5 px-3 py-2 text-sm space-y-2">
-          <p>La liga arranca cuando <b>todos</b> los managers terminen su pretemporada. Hasta entonces no se juega ningún partido de liga.</p>
-          {done ? (
-            <p className="text-emerald">Ya avisaste que terminaste. {wait || "Esperando a los demás managers."}</p>
-          ) : (
-            <button onClick={markReady} disabled={!finished} className="btn btn-primary btn-sm disabled:opacity-40">{finished ? "Terminé mi pretemporada" : `Jugá tus ${pre.total} amistosos para poder terminar (${pre.matchesPlayed}/${pre.total})`}</button>
-          )}
-          {wait && !done && <p className="text-xs text-gray-400">{wait}</p>}
-        </div>
-      )}
-      {available && next ? (
-        <button onClick={() => setLast(playPreseasonMatch())} className="btn btn-primary">Jugar amistoso {pre.matchesPlayed + 1}/{pre.total} vs {next.name}</button>
-      ) : (
-        <p className="text-sm text-gray-500">{(state.week ?? 0) > 0 ? "La pretemporada ya terminó: ahora hay liga." : "Ya jugaste todos los amistosos de la pretemporada."}</p>
-      )}
-    </div>
-  );
-}
-
 const SECTIONS = [
   ["squad", "Plantel", Users],
   ["formations", "Formaciones", LayoutGrid],
@@ -64,7 +21,6 @@ const SECTIONS = [
   ["cantera", "Cantera", Sprout],
   ["finances", "Finanzas", Wallet],
   ["week", "Semana", CalendarDays],
-  ["preseason", "Pretemporada", CalendarDays],
 ];
 
 function Sections({ code, league, leagueWeek, season, marketLabel }) {
@@ -110,19 +66,19 @@ function Sections({ code, league, leagueWeek, season, marketLabel }) {
       </div>
       {screen === "squad" && <Squad />}
       {screen === "formations" && <Formation />}
-      {screen === "tactics" && <div className="max-w-xl"><Tactics /></div>}
+      {screen === "tactics" && <Tactics />}
       {screen === "transfers" && <Transfers />}
       {screen === "cantera" && <Cantera />}
       {screen === "finances" && <Finances />}
       {screen === "week" && <DaysSection />}
-      {screen === "preseason" && <Preseason code={code} league={league} />}
     </div>
   );
 }
 
 // "Mi club": la carrera del manager (plantel, formación, tácticas, fichajes, cantera, finanzas
 // y energía) guardada en el servidor. De ahí sale la fuerza real con la que juega la liga.
-export default function ClubPanel({ code, league, myTeamId }) {
+// view: "club" (Mi club completo), "preseason" (amistosos para jugar, en Jornada) o "preseasonCalendar" (solo el calendario).
+export default function ClubPanel({ code, league, myTeamId, view = "club" }) {
   const [boot, setBoot] = useState(null); // { state } cuando ya se cargó
   const [error, setError] = useState(null);
   const [status, setStatus] = useState("saved"); // saved | saving | error
@@ -172,7 +128,7 @@ export default function ClubPanel({ code, league, myTeamId }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-3 text-xs text-gray-500">
+      <div className={`flex items-center justify-between gap-3 text-xs text-gray-500 ${view !== "club" ? "hidden" : ""}`}>
         <p>Tu plantel define cómo rinde tu club en la liga: el once titular, la energía y las tácticas cuentan en cada partido.</p>
         <span className="inline-flex items-center gap-1 shrink-0" aria-live="polite">
           {status === "saving" && <><Loader2 size={12} className="animate-spin" /> Guardando</>}
@@ -181,7 +137,9 @@ export default function ClubPanel({ code, league, myTeamId }) {
         </span>
       </div>
       <CareerProvider online={{ state: boot.state, teamId: myTeamId, code, onChange, onCpuOfferResponse: (id, accept) => respondCpuOffer(code, id, accept).catch(() => {}), claim: (id) => claimYouth(code, id), fetchClaims: () => getYouthClaims(code) }}>
-        <Sections code={code} league={league} leagueWeek={league.currentWeek} season={league.season || 1} marketLabel={league.marketLabel} />
+        {view === "club"
+          ? <Sections code={code} league={league} leagueWeek={league.currentWeek} season={league.season || 1} marketLabel={league.marketLabel} />
+          : <PreseasonPanel code={code} league={league} variant={view === "preseason" ? "play" : "calendar"} />}
       </CareerProvider>
     </div>
   );

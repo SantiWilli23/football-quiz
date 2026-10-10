@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { layoutSlots } from "../engine/pitchLayout.js";
 import { Crosshair, Dumbbell, Flame, Scale, Shield, Swords, Zap, Castle, Target, Users } from "lucide-react";
 import { useCareer } from "../context/CareerContext.jsx";
 
@@ -95,13 +96,38 @@ const PRESETS = [
   },
 ];
 
+// Cancha chica con los titulares ubicados como en la formación elegida.
+function PitchPreview({ starters }) {
+  const coords = useMemo(() => layoutSlots(starters), [starters]);
+  return (
+    <svg viewBox="0 0 100 130" className="w-full max-w-[260px] mx-auto rounded-card bg-emerald-950/50 border border-border" role="img" aria-label="Formación elegida">
+      <rect x="2" y="2" width="96" height="126" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="0.8" />
+      <line x1="2" y1="65" x2="98" y2="65" stroke="rgba(255,255,255,0.3)" strokeWidth="0.8" />
+      <circle cx="50" cy="65" r="10" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="0.8" />
+      <rect x="28" y="2" width="44" height="18" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="0.8" />
+      <rect x="28" y="110" width="44" height="18" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="0.8" />
+      {starters.map((sl, i) => {
+        const c = coords[i] || { x: 50, y: 50 };
+        const x = sl.x != null ? sl.x : c.x;
+        const y = sl.y != null ? sl.y : c.y;
+        return (
+          <g key={i} transform={`translate(${2 + (x / 100) * 96} ${2 + (y / 100) * 126})`}>
+            <circle r="5" className="fill-accent" stroke="rgba(255,255,255,0.8)" strokeWidth="0.6" />
+            <text y="1.8" textAnchor="middle" fontSize="4.2" fontWeight="700" fill="#0b1220">{sl.slot}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 export default function Tactics() {
   const { state, formations, setFormation, setMentality, setSlider, setTrainingFocus, applyTacticsPreset } = useCareer();
   const focus = state.trainingFocus || "balanced";
   const [showPresets, setShowPresets] = useState(false);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Tácticas preestablecidas */}
       <div className="bg-panel border border-border rounded-card overflow-hidden">
         <button
@@ -116,9 +142,9 @@ export default function Tactics() {
         </button>
 
         {showPresets && (
-          <div className="border-t border-border divide-y divide-border">
+          <div className="border-t border-border grid md:grid-cols-2 xl:grid-cols-3 divide-y md:divide-y-0 md:gap-px bg-border">
             {PRESETS.map((preset) => (
-              <div key={preset.id} className="flex items-start gap-3 px-4 py-3 hover:bg-white/[0.02]">
+              <div key={preset.id} className="flex items-start gap-3 px-4 py-3 bg-panel hover:bg-white/[0.02]">
                 <preset.badge size={22} className="mt-0.5 shrink-0 text-accent" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold">{preset.name}</p>
@@ -144,6 +170,8 @@ export default function Tactics() {
         )}
       </div>
 
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] items-start">
+      <div className="space-y-4">
       <div className="tone-blue tile-b rounded-card p-4">
         <p className="text-xs text-gray-300 uppercase tracking-wide mb-2">Formación</p>
         <select
@@ -153,6 +181,7 @@ export default function Tactics() {
         >
           {formations.map((f) => <option key={f} value={f}>{f}</option>)}
         </select>
+        <div className="mt-3"><PitchPreview starters={state.lineup.starters} /></div>
         <p className="text-xs text-gray-500 mt-2">Cambiar formación reubica automáticamente a la plantilla en la pantalla de Plantilla.</p>
       </div>
 
@@ -178,10 +207,12 @@ export default function Tactics() {
         ))}
       </div>
 
+      </div>
+      <div className="space-y-4">
       <div className="tone-amber tile-b rounded-card p-4">
         <p className="text-xs text-gray-300 uppercase tracking-wide mb-1">Foco de entrenamiento semanal</p>
         <p className="text-xs text-gray-600 mb-3">El foco elegido aplica un modificador en el próximo partido.</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
           {FOCUS_OPTIONS.map(opt => (
             <button
               key={opt.id}
@@ -204,7 +235,7 @@ export default function Tactics() {
 
       <div className="tone-pink tile-b rounded-card p-4">
         <p className="text-xs text-gray-300 uppercase tracking-wide mb-3">Instrucciones de equipo</p>
-        <div className="space-y-4">
+        <div className="grid sm:grid-cols-2 gap-x-6 gap-y-4">
           {SLIDER_DEFS.map(([key, label, lo, hi]) => (
             <div key={key}>
               <div className="flex justify-between text-xs text-gray-400 mb-1">
@@ -222,6 +253,8 @@ export default function Tactics() {
             </div>
           ))}
         </div>
+      </div>
+      </div>
       </div>
     </div>
   );

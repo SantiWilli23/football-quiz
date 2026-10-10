@@ -1,4 +1,5 @@
-const ATTR_LABELS = [["pace", "RIT"], ["shooting", "TIR"], ["passing", "PAS"], ["dribbling", "REG"], ["defending", "DEF"], ["physical", "FIS"]];
+import { attrPairs, attrValuesOf } from "../engine/gkAttributes.js";
+
 
 function Bar({ value, align }) {
   return (
@@ -36,9 +37,9 @@ export default function ComparePlayers({ target, mine, onClose }) {
         </div>
 
         <div className="space-y-3">
-          {ATTR_LABELS.map(([key, label]) => {
-            const a = mine?.attributes?.[key] ?? 0;
-            const b = target.attributes?.[key] ?? 0;
+          {attrPairs(target, true).map(([key, label]) => {
+            const a = (mine && attrValuesOf(mine)[key]) ?? 0;
+            const b = attrValuesOf(target)[key] ?? 0;
             return (
               <div key={key} className="flex items-center gap-2">
                 <span className="w-8 text-right text-xs text-gray-400 tabular-nums shrink-0">{mine ? a : "—"}</span>

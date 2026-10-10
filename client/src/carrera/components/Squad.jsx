@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { useCareer } from "../context/CareerContext.jsx";
 import { meetingsForWeek } from "../engine/meetings.js";
-import { ATTR_LABELS, playerTacticNotes } from "../engine/attributeEffects.js";
+import { playerTacticNotes } from "../engine/attributeEffects.js";
+import { attrPairs, attrValuesOf } from "../engine/gkAttributes.js";
+import PlayerFace from "../../components/PlayerFace.jsx";
 import { ALL_POSITIONS, trainingTier, trainingTierLabel } from "../engine/positions.js";
 import { getInjury } from "../engine/injuryEngine.js";
 import { reportFor } from "../engine/scouting.js";
@@ -237,8 +239,9 @@ function PlayerRow({ player: p, state, onStartStyle, level, report, week, injury
       )}
 
       <div className="flex items-center gap-4 cursor-pointer" onClick={() => setShowStats((v) => !v)} aria-expanded={showStats}>
-        <div className="w-9 h-9 shrink-0 rounded-card bg-bg border border-border flex items-center justify-center text-xs font-bold text-gray-400">
-          {p.position}
+        <div className="relative shrink-0">
+          <PlayerFace name={p.name} size={44} className="border border-border" />
+          <span className="absolute -bottom-1 -right-1 rounded bg-bg border border-border px-1 text-[10px] font-bold text-gray-300 leading-4">{p.position}</span>
         </div>
 
         <div className="min-w-0 flex-1">
@@ -301,8 +304,8 @@ function PlayerRow({ player: p, state, onStartStyle, level, report, week, injury
       {showStats && (
         <div className="pl-[52px] space-y-2.5">
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-            {Object.entries(ATTR_LABELS).map(([key, label]) => {
-              const v = p.attributes?.[key];
+            {attrPairs(p).map(([key, label]) => {
+              const v = attrValuesOf(p)[key];
               return (
                 <div key={key} className="bg-bg border border-border rounded-xl px-2 py-1.5 text-center">
                   <p className="text-[10px] uppercase tracking-wide text-gray-600">{label}</p>

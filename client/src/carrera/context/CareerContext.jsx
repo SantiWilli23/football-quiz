@@ -1601,7 +1601,7 @@ export function CareerProvider({ children, online = null }) {
           : `Amistoso: empate ${result.myGoals}-${result.rivalGoals} vs ${opponent.name}.`,
         ...s.news,
       ].slice(0, 8);
-      return { ...s, preseason: { ...s.preseason, matchesPlayed, done }, morale, form, news };
+      return { ...s, preseason: { ...s.preseason, matchesPlayed, done, results: [...(s.preseason.results || []), { myGoals: result.myGoals, rivalGoals: result.rivalGoals }] }, morale, form, news };
     });
 
     return { ...result, rival: rivalTeam, competitionLabel: "Amistoso de pretemporada" };

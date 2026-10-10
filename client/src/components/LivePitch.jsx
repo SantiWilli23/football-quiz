@@ -11,8 +11,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 //  onDone: se llama al llegar al minuto 90 (o al saltar el partido)
 const W = 600;
 const H = 380;
-const LINE_X = { GK: 7, DEF: 19, MID: 33, FWD: 45 }; // % de la cancha, para el local; el visitante se espeja
-const PULL = { GK: 0.03, DEF: 0.12, MID: 0.24, FWD: 0.34 }; // cuánto sigue cada línea a la pelota
+const LINE_X = { GK: 6, DEF: 20, MID: 34, FWD: 46 }; // % de la cancha, para el local; el visitante se espeja
+const PULL = { GK: 0.02, DEF: 0.1, MID: 0.2, FWD: 0.3 }; // cuánto sigue cada línea a la pelota
+// Velocidades en % de la cancha por segundo REAL: no dependen de la velocidad del reloj (×1/×2/×4), así
+// los jugadores corren siempre igual y solo el minuto del partido pasa más rápido.
+const PLAYER_SPEED = 13;
+const BALL_SPEED = 140;
 const surname = (n) => String(n || "").split(" ").slice(-1)[0];
 
 function dotsFor(xi, side) {
@@ -22,7 +26,9 @@ function dotsFor(xi, side) {
   for (const [pos, list] of Object.entries(rows)) {
     list.forEach((p, k) => {
       const x = LINE_X[pos];
-      out.push({ name: p.name, pos, x: side === "home" ? x : 100 - x, y: ((k + 1) / (list.length + 1)) * 100 });
+      // Los jugadores de una línea se reparten en el ancho (de 12% a 88%); el arquero va al centro.
+      const y = list.length === 1 ? 50 : 12 + ((k + 0.5) / list.length) * 76;
+      out.push({ key: `${side}-${pos}-${k}`, name: p.name, pos, side, x: side === "home" ? x : 100 - x, y });
     });
   }
   return out;
@@ -31,7 +37,11 @@ function dotsFor(xi, side) {
 export default function LivePitch({ home, away, match, onDone, speed = 1 }) {
   const [minute, setMinute] = useState(0);
   const [rate, setRate] = useState(speed);
+  const [holder, setHolder] = useState(null); // key del jugador que tiene la pelota
   const doneRef = useRef(false);
+  const minuteRef = useRef(0);
+  const nodes = useRef({}); // key -> <g> de cada jugador
+  const ballNode = useRef(null);
 
   // Eventos del partido: goles (con minuto y goleador) y ocasiones sin gol.
   const events = useMemo(() => {
@@ -66,10 +76,16 @@ export default function LivePitch({ home, away, match, onDone, speed = 1 }) {
     return out;
   }, [events, match]);
 
+  const homeDots = useMemo(() => dotsFor(home.xi, "home"), [home]);
+  const awayDots = useMemo(() => dotsFor(away.xi, "away"), [away]);
+  const all = useMemo(() => [...homeDots, ...awayDots], [homeDots, awayDots]);
+
   useEffect(() => {
     doneRef.current = false;
     setMinute(0);
   }, [match]);
+
+  useEffect(() => { minuteRef.current = minute; }, [minute]);
 
   useEffect(() => {
     if (minute >= 90) {
@@ -80,24 +96,61 @@ export default function LivePitch({ home, away, match, onDone, speed = 1 }) {
     return () => clearTimeout(id);
   }, [minute, rate]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Movimiento: en cada cuadro, jugadores y pelota avanzan hacia su objetivo a velocidad propia. El objetivo
+  // sale del minuto actual, pero la velocidad no depende de él.
+  useEffect(() => {
+    const cur = {};
+    all.forEach((d) => { cur[d.key] = { x: d.x, y: d.y }; });
+    const ball = { x: 50, y: 50 };
+    let last = performance.now();
+    let raf = 0;
+    let holderKey = null;
+    const step = (c, tx, ty, max) => {
+      const dx = tx - c.x, dy = ty - c.y, dist = Math.hypot(dx, dy);
+      if (dist <= max) { c.x = tx; c.y = ty; } else { c.x += (dx / dist) * max; c.y += (dy / dist) * max; }
+    };
+    const frame = (now) => {
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      const t = track[Math.min(90, minuteRef.current)];
+      step(ball, t.x, t.y, BALL_SPEED * dt);
+      let best = null, bestD = Infinity;
+      for (const d of all) {
+        const c = cur[d.key];
+        const pull = PULL[d.pos];
+        let tx = d.x + (t.x - d.x) * pull;
+        const ty = d.y + (t.y - d.y) * pull * 0.8;
+        tx = d.side === "home" ? Math.min(72, tx) : Math.max(28, tx);
+        step(c, tx, ty, PLAYER_SPEED * dt);
+        const node = nodes.current[d.key];
+        if (node) node.setAttribute("transform", `translate(${(c.x / 100) * W} ${(c.y / 100) * H})`);
+        if (d.side === t.attacker && d.pos !== "GK") {
+          const dd = Math.hypot(c.x - ball.x, c.y - ball.y);
+          if (dd < bestD) { bestD = dd; best = d.key; }
+        }
+      }
+      if (best !== holderKey) { holderKey = best; setHolder(best); }
+      if (ballNode.current) ballNode.current.setAttribute("transform", `translate(${(ball.x / 100) * W} ${(ball.y / 100) * H})`);
+      raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
+  }, [all, track]);
+
   const t = track[minute];
   const shown = events.filter((e) => e.min <= minute);
   const goalsHome = shown.filter((e) => e.type === "goal" && e.team === "home").length;
   const goalsAway = shown.filter((e) => e.type === "goal" && e.team === "away").length;
   const last = shown[shown.length - 1];
   const justNow = last && minute - last.min <= 2 ? last : null;
-  const homeDots = useMemo(() => dotsFor(home.xi, "home"), [home]);
-  const awayDots = useMemo(() => dotsFor(away.xi, "away"), [away]);
-  const bx = (t.x / 100) * W;
-  const by = (t.y / 100) * H;
+  const GOLD = "rgb(253 224 71)";
   const place = (d, color) => {
-    const pull = PULL[d.pos];
-    const px = ((d.x + (t.x - d.x) * pull) / 100) * W;
-    const py = ((d.y + (t.y - d.y) * pull * 0.8) / 100) * H;
+    const has = holder === d.key;
     return (
-      <g key={`${color}-${d.name}-${d.pos}-${d.x}-${d.y}`} style={{ transform: `translate(${px}px, ${py}px)`, transition: "transform 0.6s ease-out" }}>
-        <circle r="9" fill={color} stroke="rgba(255,255,255,0.85)" strokeWidth="1.5" />
-        <text y="19" textAnchor="middle" fontSize="8" fill="rgba(255,255,255,0.85)">{surname(d.name).slice(0, 9)}</text>
+      <g key={d.key} ref={(el) => { nodes.current[d.key] = el; }} transform={`translate(${(d.x / 100) * W} ${(d.y / 100) * H})`}>
+        {has && <circle r="17" fill={GOLD} className="live-glow" />}
+        <circle r="9" fill={color} stroke={has ? GOLD : "rgba(255,255,255,0.85)"} strokeWidth={has ? 3 : 1.5} />
+        <text y="19" textAnchor="middle" fontSize="8" fill={has ? GOLD : "rgba(255,255,255,0.85)"} fontWeight={has ? 700 : 400}>{surname(d.name).slice(0, 9)}</text>
       </g>
     );
   };
@@ -109,6 +162,7 @@ export default function LivePitch({ home, away, match, onDone, speed = 1 }) {
         <span className="font-extrabold tabular-nums text-xl px-3">{goalsHome} – {goalsAway}</span>
         <span className="font-semibold truncate text-right flex items-center gap-1.5 justify-end">{away.name}<span className="inline-block w-2.5 h-2.5 rounded-full bg-rose-400" /></span>
       </div>
+      <style>{".live-glow{transform-box:fill-box;transform-origin:center;animation:live-glow 1s ease-in-out infinite}@keyframes live-glow{0%,100%{transform:scale(.8);opacity:.25}50%{transform:scale(1.4);opacity:.65}}"}</style>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto block" role="img" aria-label="Cancha del partido en vivo">
         <rect width={W} height={H} fill="rgb(6 78 59)" />
         {Array.from({ length: 8 }).map((_, i) => <rect key={i} x={i * (W / 8)} width={W / 8} height={H} fill={i % 2 === 0 ? "rgba(255,255,255,0.035)" : "transparent"} />)}
@@ -121,7 +175,7 @@ export default function LivePitch({ home, away, match, onDone, speed = 1 }) {
         <rect x={W - 6} y={H / 2 - 26} width="10" height="52" fill={justNow?.type === "goal" && justNow.team === "home" ? "rgb(251 191 36)" : "rgba(255,255,255,0.6)"} />
         {homeDots.map((d) => place(d, "rgb(56 189 248)"))}
         {awayDots.map((d) => place(d, "rgb(251 113 133)"))}
-        <g style={{ transform: `translate(${bx}px, ${by}px)`, transition: "transform 0.5s cubic-bezier(.3,.8,.4,1)" }}>
+        <g ref={ballNode} transform={`translate(${W / 2} ${H / 2})`}>
           <circle r="7" fill="white" stroke="rgba(0,0,0,0.5)" strokeWidth="1.2" />
         </g>
         {justNow?.type === "goal" && minute - justNow.min <= 1 && (
