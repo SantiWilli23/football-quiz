@@ -230,8 +230,13 @@ export function monthOf(dateStr) {
 
 // Límites de un mes como texto: las fechas se guardan en ISO (YYYY-MM-DD), así
 // que comparar strings alcanza y evita hacer cuentas de calendario.
+// Reinicio del ranking del mes: el mes en curso cuenta solo desde esta fecha.
+// No se borra nada; los puntos totales y el historial quedan intactos.
+const MONTH_RESET_FROM = "2026-10-15";
+
 function monthBounds(month) {
-  return { from: `${month}-01`, to: `${month}-31` };
+  const from = month === MONTH_RESET_FROM.slice(0, 7) ? MONTH_RESET_FROM : `${month}-01`;
+  return { from, to: `${month}-31` };
 }
 
 // Puntos ganados en duelos terminados dentro del rango. Se cuentan por la
