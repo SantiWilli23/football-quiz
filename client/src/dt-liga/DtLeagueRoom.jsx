@@ -267,12 +267,12 @@ export default function DtLeagueRoom() {
 
         {(league.status === "in_progress" || league.status === "finished") && (
           <>
-            <div className="flex gap-1">
+            <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none]">
               {[["fixtures", "Jornada"], ["club", "Mi club"], ["calendar", "Calendario"], ["standings", "Tabla"], ["score", "Puntaje"], ["market", "Mercado"], ["config", "Configuración"]].map(([id, label]) => (
                 <button
                   key={id}
                   onClick={() => setTab(id)}
-                  className={`${{ fixtures: "tone-accent", club: "tone-emerald", calendar: "tone-purple", standings: "tone-blue", score: "tone-amber", market: "tone-pink" }[id]} px-4 py-2 rounded-full text-sm font-semibold ${
+                  className={`${{ fixtures: "tone-accent", club: "tone-emerald", calendar: "tone-purple", standings: "tone-blue", score: "tone-amber", market: "tone-pink", config: "tone-cyan" }[id]} shrink-0 whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold ${
                     tab === id ? "tile-b text-white" : "text-gray-400 border border-border hover:text-white"
                   }`}
                 >
