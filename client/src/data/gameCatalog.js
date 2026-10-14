@@ -44,7 +44,6 @@ const ALL_GAMES = [
 
   // ---- Contrarreloj ----
   { to: "/quien-es", label: "¿Quién es?", icon: Users, description: "Te mostramos la carrera de un jugador club por club: adivinalo con las menos pistas. Libre, o el jugador del día igual para todos.", family: "solo", daily: true, available: true },
-  { to: "/trivia", label: "Trivia del día", icon: Brain, description: "Las preguntas del día, 20 segundos por pregunta: las mismas para todo el grupo.", family: "solo", daily: true, dailyOnly: true, available: true },
   { to: "/un-minuto", label: "Un Minuto", icon: Timer, description: "Trivia contrarreloj: respondé todas las que puedas antes de que se acabe el reloj.", family: "solo", daily: true, available: true },
   { to: "/arbitraje-var", label: "Arbitraje / VAR", icon: Gavel, description: "Jugadas polémicas reales en video: decidí como el árbitro contra reloj y comparate con el VAR.", family: "solo", daily: true, available: true },
 

@@ -17,7 +17,6 @@ const links = [
 ];
 
 const moreLinks = [
-  { to: "/trivia", label: "Trivia", icon: HelpCircle },
   { to: "/futbol", label: "En vivo", icon: Radio },
   { to: "/estadisticas", label: "Estadísticas", icon: BarChart3 },
   { to: "/historial", label: "Historial", icon: History },

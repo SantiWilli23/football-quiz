@@ -13,7 +13,6 @@ import { SIDEBAR_SIZES, readSidebarSize, setSidebarSize } from "../utils/sidebar
 // lo que antes vivía junto en una sola pantalla de Fútbol.
 const links = [
   { to: "/panel", label: "Inicio", icon: Home, end: true, tone: "accent" },
-  { to: "/trivia", label: "Trivia", icon: HelpCircle, tone: "amber" },
   { to: "/juegos", label: "Juegos", icon: Gamepad2, tone: "purple" },
   { to: "/futbol", label: "En vivo", icon: Radio, tone: "red" },
   { to: "/grupo", label: "Mi grupo", icon: Users, tone: "blue" },

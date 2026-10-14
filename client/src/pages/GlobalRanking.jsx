@@ -69,7 +69,7 @@ export default function GlobalRanking() {
             icon={Trophy}
             title="La tabla está en cero"
             hint="Respondé la trivia de hoy y abrís el ranking."
-            actions={[{ label: "Jugar trivia", to: "/trivia" }, { label: "Invitar amigos", to: "/grupo", ghost: true }]}
+            actions={[{ label: "Ir a los juegos", to: "/juegos" }, { label: "Invitar amigos", to: "/grupo", ghost: true }]}
           />
         </Card>
       )}

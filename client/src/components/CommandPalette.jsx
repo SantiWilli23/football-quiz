@@ -5,7 +5,6 @@ import { GAMES } from "../data/gameCatalog.js";
 
 const PAGES = [
   { label: "Inicio", to: "/panel" },
-  { label: "Trivia", to: "/trivia" },
   { label: "Juegos", to: "/juegos" },
   { label: "En vivo", to: "/futbol" },
   { label: "Mi grupo", to: "/grupo" },

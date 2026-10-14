@@ -19,7 +19,6 @@ function FeatureGate({ flag, children }) {
 // separa en su propio chunk — el bundle venía creciendo con cada juego nuevo
 // (ya pasaba los 750kb) y la enorme mayoría de una sesión nunca visita, por
 // ejemplo, Carrera DT o Equipo-Jugador.
-const Trivia = lazy(() => import("./pages/Trivia.jsx"));
 const Group = lazy(() => import("./pages/Group.jsx"));
 const History = lazy(() => import("./pages/History.jsx"));
 const Profile = lazy(() => import("./pages/Profile.jsx"));
@@ -128,11 +127,7 @@ export default function App() {
       />
       <Route
         path="/trivia"
-        element={
-          <PrivateRoute>
-            <Trivia />
-          </PrivateRoute>
-        }
+        element={<Navigate to="/panel" replace />}
       />
       <Route
         path="/grupo"

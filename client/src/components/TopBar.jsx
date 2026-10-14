@@ -7,7 +7,7 @@ import { isSfxOn, setSfxOn, playSfx } from "../utils/sfx.js";
 
 // Nombres de las pantallas que no son juegos (los juegos salen del catálogo).
 const PAGE_NAMES = {
-  "/panel": "Inicio", "/trivia": "Trivia", "/juegos": "Juegos", "/futbol": "En vivo", "/grupo": "Mi grupo",
+  "/panel": "Inicio", "/juegos": "Juegos", "/futbol": "En vivo", "/grupo": "Mi grupo",
   "/estadisticas": "Estadísticas", "/historial": "Historial", "/ranking-global": "Ranking global", "/perfil": "Mi perfil",
   "/vida-fut": "Vida FUT",
 };

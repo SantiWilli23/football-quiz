@@ -15,14 +15,7 @@ const WEEKLY = [
 // campana de avisos del menú.
 export default function useAlerts() {
   const { activeGroupId: groupId } = useGroups();
-  const [trivia, setTrivia] = useState(0);
   const [duels, setDuels] = useState(0);
-
-  useEffect(() => {
-    api.get("/questions/today")
-      .then(({ data }) => setTrivia((data.questions || []).filter((q) => !q.answered).length))
-      .catch(() => setTrivia(0));
-  }, []);
 
   useEffect(() => {
     if (!groupId) { setDuels(0); return; }
@@ -33,7 +26,6 @@ export default function useAlerts() {
 
   const visits = readVisits();
   const items = [];
-  if (trivia > 0) items.push({ key: "trivia", to: "/trivia", short: "Trivia", label: `Trivia del día: ${trivia} pregunta${trivia === 1 ? "" : "s"} sin responder`, icon: HelpCircle });
   if (duels > 0) items.push({ key: "duelos", to: "/duelos", short: `Duelo${duels === 1 ? "" : "s"} (${duels})`, label: `${duels} duelo${duels === 1 ? "" : "s"} esperando tu turno`, icon: Swords });
   if (groupId) {
     for (const w of WEEKLY) {

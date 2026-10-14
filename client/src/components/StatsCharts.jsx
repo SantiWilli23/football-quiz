@@ -26,8 +26,8 @@ export default function StatsCharts() {
         <EmptyState
           icon={LineChart}
           title="Todavía no hay gráficos"
-          hint="Respondé la trivia unos días y acá vas a ver tus aciertos y tus puntos."
-          actions={[{ label: "Ir a la trivia", to: "/trivia" }]}
+          hint="Jugá unos días y acá vas a ver tus aciertos y tus puntos."
+          actions={[{ label: "Ir a los juegos", to: "/juegos" }]}
         />
       </Card>
     );

@@ -571,8 +571,8 @@ export default function Group() {
                   <EmptyState
                     icon={Trophy}
                     title={`Nadie sumó puntos ${scope === "mes" ? "este mes" : "todavía"}`}
-                    hint="Respondé la trivia de hoy y abrís el ranking del grupo."
-                    actions={[{ label: "Jugar trivia", to: "/trivia" }]}
+                    hint="Jugá hoy y abrís el ranking del grupo."
+                    actions={[{ label: "Ir a los juegos", to: "/juegos" }]}
                   />
                 )}
                 {shownRanking.slice(shownRanking.length >= 3 ? 3 : 0).map((r) => (

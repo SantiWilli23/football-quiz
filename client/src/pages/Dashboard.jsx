@@ -85,7 +85,7 @@ export default function Dashboard() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-400">No te falta nada por hoy: ya respondiste la trivia y no hay duelos esperándote.</p>
+                <p className="text-sm text-gray-400">No te falta nada por hoy: no hay duelos esperándote.</p>
               )}
             </div>
             <div className="min-w-[150px] flex items-center gap-4">
@@ -122,10 +122,9 @@ export default function Dashboard() {
 
       <div className="mb-8 rounded-2xl border border-border bg-panel p-5 sm:p-6">
         <p className="t-eyebrow mb-4">Mis stats</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-5">
+        <div className="grid grid-cols-3 gap-y-5">
           <StatCell tone="accent" label="Puntos" value={stats?.total_points ?? 0} />
           <StatCell tone="blue" label="Aciertos" value={`${stats?.accuracy ?? 0}%`} />
-          <StatCell tone="purple" label="Trivia" value={stats?.trivia_points ?? 0} />
           <StatCell tone="pink" label="Especial" value={stats?.mode_b_points ?? 0} />
         </div>
       </div>
