@@ -6,7 +6,7 @@ import FloatField from "../components/FloatField.jsx";
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,14 +15,14 @@ export default function Login() {
     e.preventDefault();
     setError("");
 
-    if (!email.trim() || !password) {
+    if (!identifier.trim() || !password) {
       setError("Completá todos los campos");
       return;
     }
 
     setLoading(true);
     try {
-      await login(email.trim(), password);
+      await login(identifier.trim(), password);
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.error || "No se pudo iniciar sesión");
@@ -83,7 +83,7 @@ export default function Login() {
           <p className="text-gray-400 text-sm mb-8">Ingresá a tu cuenta para continuar</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <FloatField label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <FloatField label="Email o usuario" type="text" autoComplete="username" value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
             <FloatField label="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
 
             {error && <p className="text-sm text-red-400">{error}</p>}

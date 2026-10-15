@@ -263,13 +263,19 @@ router.post("/register", authLimiter, async (req, res) => {
 });
 
 router.post("/login", authLimiter, async (req, res) => {
-  const { email, password } = req.body || {};
-  if (!email || !password) {
+  // El campo acepta email o nombre de usuario; "email" se mantiene por compatibilidad.
+  const identifier = String(req.body?.identifier ?? req.body?.email ?? "").trim();
+  const { password } = req.body || {};
+  if (!identifier || !password) {
     return res.status(400).json({ error: "Faltan campos requeridos" });
   }
 
   try {
-    const result = await db.execute({ sql: "SELECT * FROM users WHERE email = ?", args: [email] });
+    // Si un email coincide con el usuario de otra cuenta, gana el match por email.
+    const result = await db.execute({
+      sql: "SELECT * FROM users WHERE email = ? OR username = ? ORDER BY (email = ?) DESC LIMIT 1",
+      args: [identifier, identifier, identifier],
+    });
     const user = result.rows[0];
     if (!user) {
       return res.status(401).json({ error: "Credenciales inválidas" });

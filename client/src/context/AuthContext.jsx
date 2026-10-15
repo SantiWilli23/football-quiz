@@ -47,8 +47,8 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const login = async (email, password) => {
-    const { data } = await api.post("/auth/login", { email, password });
+  const login = async (identifier, password) => {
+    const { data } = await api.post("/auth/login", { identifier, password });
     localStorage.setItem("fq_token", data.token);
     setUser(data.user);
     await joinPendingInviteIfAny();
