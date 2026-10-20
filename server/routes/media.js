@@ -1,4 +1,7 @@
 import { Router } from "express";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { requireAuth } from "../middleware/auth.js";
 import { db } from "../db/client.js";
 import { normalize } from "../utils/futgames.js";
@@ -10,7 +13,7 @@ const router = Router();
 router.use(requireAuth);
 
 const SEARCH = "https://site.web.api.espn.com/apis/common/v3/search";
-const PLAYERS_DB = "https://www.thesportsdb.com/api/v1/json/3/searchplayers.php";
+const PLAYERS_DB = "https://www.thesportsdb.com/api/v1/json/123/searchplayers.php";
 const teamLogo = (id) => `https://a.espncdn.com/i/teamlogos/soccer/500/${id}.png`;
 
 async function search(name, type) {
@@ -63,10 +66,20 @@ async function cachedLookup(table, name, finder) {
 
 const nameOf = (req) => String(req.query.name || "").trim().slice(0, 80);
 
+// Recortes ya resueltos (data/player-cutouts.json): si el buscador no encuentra la cara,
+// se usa esta foto.
+const CUTOUTS = (() => {
+  try {
+    const raw = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), "../data/player-cutouts.json"), "utf-8"));
+    return new Map(Object.entries(raw).filter(([, url]) => url).map(([n, url]) => [normalize(n), url]));
+  } catch { return new Map(); }
+})();
+
 router.get("/player", async (req, res) => {
   const name = nameOf(req);
   if (!name) return res.status(400).json({ error: "Falta el nombre" });
-  res.json({ url: await cachedLookup("player_photos", name, findPlayer) });
+  const url = await cachedLookup("player_photos", name, findPlayer);
+  res.json({ url: url || CUTOUTS.get(normalize(name)) || null });
 });
 
 router.get("/club", async (req, res) => {

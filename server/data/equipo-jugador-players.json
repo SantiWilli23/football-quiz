@@ -795,12 +795,12 @@
         {
           "club": "Udinese",
           "inicio": 2013,
-          "fin": 2017
+          "fin": 2016
         },
         {
           "club": "Sampdoria",
-          "inicio": 2017,
-          "fin": 2020
+          "inicio": 2016,
+          "fin": 2017
         },
         {
           "club": "Sporting CP",
@@ -2712,11 +2712,6 @@
           "fin": 2015
         },
         {
-          "club": "VfB Stuttgart",
-          "inicio": 2013,
-          "fin": 2015
-        },
-        {
           "club": "Bayern Munich",
           "inicio": 2015,
           "fin": null
@@ -3857,54 +3852,54 @@
       "nacimiento": 1989,
       "carrera": [
         {
-          "club": "Universidad Catolica",
-          "inicio": 2007,
-          "fin": 2011
+          "club": "Cobreloa",
+          "inicio": 2006,
+          "fin": 2010
         },
         {
           "club": "Universidad de Chile",
-          "inicio": 2007,
+          "inicio": 2010,
           "fin": 2011
         },
         {
           "club": "Napoli",
           "inicio": 2011,
+          "fin": 2015
+        },
+        {
+          "club": "Gremio (cedido)",
+          "inicio": 2013,
           "fin": 2013
         },
         {
-          "club": "Valencia",
-          "inicio": 2013,
+          "club": "Valencia (cedido)",
+          "inicio": 2014,
           "fin": 2014
         },
         {
-          "club": "Queens Park Rangers",
+          "club": "Queens Park Rangers (cedido)",
           "inicio": 2014,
           "fin": 2015
         },
         {
           "club": "Hoffenheim",
           "inicio": 2015,
-          "fin": 2016
+          "fin": 2017
         },
         {
           "club": "Tigres UANL",
-          "inicio": 2016,
+          "inicio": 2017,
           "fin": 2020
         },
         {
-          "club": "Athletico Paranaense",
-          "inicio": 2020,
-          "fin": 2021
-        },
-        {
-          "club": "Cruz Azul",
+          "club": "Atletico Mineiro",
           "inicio": 2021,
-          "fin": 2022
+          "fin": 2023
         },
         {
-          "club": "Mineros de Zacatecas",
-          "inicio": 2023,
-          "fin": 2023
+          "club": "Nacional",
+          "inicio": 2024,
+          "fin": 2024
         }
       ]
     },
@@ -5477,9 +5472,14 @@
           "fin": 2000
         },
         {
-          "club": "Espanyol",
-          "inicio": 2000,
-          "fin": 2004
+          "club": "Leganes (cedido)",
+          "inicio": 1997,
+          "fin": 1998
+        },
+        {
+          "club": "Espanyol (cedido)",
+          "inicio": 1999,
+          "fin": 1999
         },
         {
           "club": "Mallorca",
@@ -5502,11 +5502,6 @@
           "fin": 2013
         },
         {
-          "club": "Anzhi",
-          "inicio": 2011,
-          "fin": 2013
-        },
-        {
           "club": "Chelsea",
           "inicio": 2013,
           "fin": 2014
@@ -5519,15 +5514,20 @@
         {
           "club": "Sampdoria",
           "inicio": 2015,
-          "fin": 2017
+          "fin": 2015
         },
         {
           "club": "Antalyaspor",
-          "inicio": 2017,
+          "inicio": 2015,
           "fin": 2018
         },
         {
           "club": "Konyaspor",
+          "inicio": 2018,
+          "fin": 2018
+        },
+        {
+          "club": "Qatar SC",
           "inicio": 2018,
           "fin": 2019
         }
@@ -5593,19 +5593,9 @@
       "nacimiento": 1983,
       "carrera": [
         {
-          "club": "ASEC Mimosas",
-          "inicio": 2001,
-          "fin": 2003
-        },
-        {
           "club": "Beveren",
           "inicio": 2001,
           "fin": 2003
-        },
-        {
-          "club": "Beveren",
-          "inicio": 2003,
-          "fin": 2005
         },
         {
           "club": "Metalurh Donetsk",
@@ -5613,33 +5603,18 @@
           "fin": 2005
         },
         {
-          "club": "Metalurh Donetsk",
+          "club": "Olympiacos",
           "inicio": 2005,
           "fin": 2006
         },
         {
           "club": "Monaco",
-          "inicio": 2005,
-          "fin": 2006
-        },
-        {
-          "club": "Olympiacos",
           "inicio": 2006,
           "fin": 2007
         },
         {
-          "club": "Monaco",
-          "inicio": 2007,
-          "fin": 2009
-        },
-        {
           "club": "Barcelona",
           "inicio": 2007,
-          "fin": 2010
-        },
-        {
-          "club": "Barcelona",
-          "inicio": 2009,
           "fin": 2010
         },
         {
@@ -5649,18 +5624,13 @@
         },
         {
           "club": "Olympiacos",
-          "inicio": 2019,
-          "fin": 2019
+          "inicio": 2018,
+          "fin": 2018
         },
         {
           "club": "Qingdao Huanghai",
           "inicio": 2019,
-          "fin": 2020
-        },
-        {
-          "club": "Newcastle United",
-          "inicio": 2026,
-          "fin": null
+          "fin": 2019
         }
       ]
     },
@@ -6182,11 +6152,6 @@
           "fin": 2007
         },
         {
-          "club": "Basel",
-          "inicio": 2007,
-          "fin": 2011
-        },
-        {
           "club": "Schalke 04",
           "inicio": 2007,
           "fin": 2011
@@ -6207,14 +6172,14 @@
           "fin": 2023
         },
         {
-          "club": "Hajduk Split",
-          "inicio": 2023,
-          "fin": null
-        },
-        {
           "club": "Al Shabab",
           "inicio": 2023,
           "fin": 2024
+        },
+        {
+          "club": "Hajduk Split",
+          "inicio": 2024,
+          "fin": 2025
         }
       ]
     },
@@ -6397,17 +6362,7 @@
         {
           "club": "Ferro Carril Oeste",
           "inicio": 2011,
-          "fin": 2013
-        },
-        {
-          "club": "Arsenal de Sarandi",
-          "inicio": 2013,
           "fin": 2014
-        },
-        {
-          "club": "River Plate",
-          "inicio": 2014,
-          "fin": 2016
         },
         {
           "club": "Racing Club",
@@ -6422,6 +6377,11 @@
         {
           "club": "Sevilla",
           "inicio": 2020,
+          "fin": 2024
+        },
+        {
+          "club": "River Plate",
+          "inicio": 2024,
           "fin": null
         }
       ]
@@ -8673,29 +8633,29 @@
       "nacimiento": 1996,
       "carrera": [
         {
-          "club": "Lyon",
-          "inicio": 2015,
-          "fin": 2017
+          "club": "Laval",
+          "inicio": 2013,
+          "fin": 2015
         },
         {
-          "club": "Auxerre",
+          "club": "Lille",
           "inicio": 2015,
-          "fin": 2017
+          "fin": 2016
         },
         {
           "club": "Colonia",
-          "inicio": 2017,
-          "fin": 2019
-        },
-        {
-          "club": "Rennes",
-          "inicio": 2018,
+          "inicio": 2016,
           "fin": 2019
         },
         {
           "club": "Amiens",
           "inicio": 2019,
-          "fin": 2020
+          "fin": 2019
+        },
+        {
+          "club": "Rennes",
+          "inicio": 2019,
+          "fin": 2022
         },
         {
           "club": "VfB Stuttgart",
@@ -8810,28 +8770,23 @@
       "nacimiento": 1992,
       "carrera": [
         {
-          "club": "Borussia Monchengladbach",
-          "inicio": 2011,
-          "fin": 2015
-        },
-        {
           "club": "Borussia Dortmund",
           "inicio": 2011,
-          "fin": 2015
+          "fin": 2016
         },
         {
           "club": "Mainz 05 (cedido)",
-          "inicio": 2015,
-          "fin": 2016
+          "inicio": 2013,
+          "fin": 2014
         },
         {
           "club": "Borussia Monchengladbach",
           "inicio": 2016,
-          "fin": 2022
+          "fin": 2023
         },
         {
           "club": "Bayer Leverkusen",
-          "inicio": 2022,
+          "inicio": 2023,
           "fin": null
         }
       ]
@@ -9454,12 +9409,12 @@
         {
           "club": "Estudiantes",
           "inicio": 2009,
-          "fin": 2012
+          "fin": 2011
         },
         {
           "club": "Spartak Moscu",
-          "inicio": 2012,
-          "fin": 2014
+          "inicio": 2011,
+          "fin": 2012
         },
         {
           "club": "Sporting CP",
@@ -9472,8 +9427,18 @@
           "fin": 2021
         },
         {
+          "club": "Estudiantes (cedido)",
+          "inicio": 2020,
+          "fin": 2021
+        },
+        {
           "club": "Boca Juniors",
           "inicio": 2021,
+          "fin": 2025
+        },
+        {
+          "club": "Racing Club",
+          "inicio": 2025,
           "fin": null
         }
       ]
@@ -13010,22 +12975,12 @@
       "carrera": [
         {
           "club": "Kaiserslautern",
-          "inicio": 2013,
+          "inicio": 2011,
           "fin": 2015
         },
         {
           "club": "RB Leipzig",
           "inicio": 2015,
-          "fin": 2017
-        },
-        {
-          "club": "Hannover 96",
-          "inicio": 2015,
-          "fin": 2017
-        },
-        {
-          "club": "RB Leipzig",
-          "inicio": 2017,
           "fin": null
         }
       ]
@@ -13131,12 +13086,12 @@
           "fin": 2016
         },
         {
-          "club": "Everton",
+          "club": "Northampton Town (cedido)",
           "inicio": 2016,
-          "fin": 2025
+          "fin": 2016
         },
         {
-          "club": "Northampton Town",
+          "club": "Everton",
           "inicio": 2016,
           "fin": 2025
         },
@@ -14240,7 +14195,7 @@
       "carrera": [
         {
           "club": "Sochaux",
-          "inicio": 2007,
+          "inicio": 2006,
           "fin": 2009
         },
         {
@@ -14251,17 +14206,12 @@
         {
           "club": "Borussia Dortmund",
           "inicio": 2011,
-          "fin": 2011
-        },
-        {
-          "club": "VfL Wolfsburg",
-          "inicio": 2011,
           "fin": 2013
         },
         {
-          "club": "Inter Milan",
+          "club": "VfL Wolfsburg",
           "inicio": 2013,
-          "fin": 2022
+          "fin": 2015
         },
         {
           "club": "Inter Milan",
@@ -14269,12 +14219,12 @@
           "fin": 2022
         },
         {
-          "club": "Tottenham Hotspur",
-          "inicio": 2022,
-          "fin": 2024
+          "club": "Bayern Munich (cedido)",
+          "inicio": 2019,
+          "fin": 2020
         },
         {
-          "club": "Bayern Munich",
+          "club": "Tottenham Hotspur",
           "inicio": 2022,
           "fin": 2024
         },
@@ -14284,7 +14234,7 @@
           "fin": 2024
         },
         {
-          "club": "Tottenham Hotspur",
+          "club": "PSV Eindhoven",
           "inicio": 2024,
           "fin": null
         }
@@ -15160,17 +15110,12 @@
       "carrera": [
         {
           "club": "Instituto",
-          "inicio": 1970,
-          "fin": 1973
-        },
-        {
-          "club": "River Plate",
           "inicio": 1973,
-          "fin": 1976
+          "fin": 1974
         },
         {
           "club": "Rosario Central",
-          "inicio": 1973,
+          "inicio": 1974,
           "fin": 1976
         },
         {
@@ -17951,19 +17896,19 @@
           "fin": 2012
         },
         {
-          "club": "Zulte Waregem",
-          "inicio": 2011,
-          "fin": 2012
-        },
-        {
-          "club": "Borussia Monchengladbach",
-          "inicio": 2012,
-          "fin": 2019
-        },
-        {
           "club": "Chelsea",
           "inicio": 2012,
           "fin": 2014
+        },
+        {
+          "club": "Zulte Waregem (cedido)",
+          "inicio": 2012,
+          "fin": 2013
+        },
+        {
+          "club": "Borussia Monchengladbach",
+          "inicio": 2014,
+          "fin": 2019
         },
         {
           "club": "Borussia Dortmund",
@@ -17971,9 +17916,9 @@
           "fin": 2023
         },
         {
-          "club": "PSV Eindhoven",
+          "club": "PSV Eindhoven (cedido)",
           "inicio": 2023,
-          "fin": 2026
+          "fin": 2023
         },
         {
           "club": "Anderlecht",
@@ -18538,13 +18483,13 @@
       "carrera": [
         {
           "club": "Bayer Leverkusen",
-          "inicio": 2001,
+          "inicio": 1999,
           "fin": 2005
         },
         {
-          "club": "San Jose Earthquakes",
+          "club": "San Jose Earthquakes (cedido)",
           "inicio": 2001,
-          "fin": 2005
+          "fin": 2004
         },
         {
           "club": "LA Galaxy",
@@ -18552,14 +18497,19 @@
           "fin": 2016
         },
         {
+          "club": "Bayern Munich (cedido)",
+          "inicio": 2009,
+          "fin": 2009
+        },
+        {
           "club": "Everton (cedido)",
           "inicio": 2010,
           "fin": 2010
         },
         {
-          "club": "Bayern Munich (cedido)",
-          "inicio": 2014,
-          "fin": 2014
+          "club": "Club Leon",
+          "inicio": 2018,
+          "fin": 2018
         }
       ]
     },
@@ -20740,12 +20690,12 @@
       "carrera": [
         {
           "club": "Oldham Athletic",
-          "inicio": 2013,
-          "fin": 2016
+          "inicio": 2011,
+          "fin": 2014
         },
         {
           "club": "Brentford",
-          "inicio": 2013,
+          "inicio": 2014,
           "fin": 2016
         },
         {

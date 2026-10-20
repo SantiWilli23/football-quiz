@@ -9,11 +9,12 @@ export function GameHeader({ game, title, subtitle, icon: Icon, distLabel }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <div className="mb-5 flex items-center gap-3">
+      {/* En teléfono, solo el título: el subtítulo ocupa espacio que necesita el juego. */}
+      <div className="mb-2 sm:mb-5 flex items-center gap-3">
         <Icon size={22} className="text-accent shrink-0" />
         <div className="flex-1 min-w-0">
-          <h1 className="t-title">{title}</h1>
-          <p className="text-gray-400 text-sm">{subtitle}</p>
+          <h1 className="t-title truncate">{title}</h1>
+          <p className="hidden sm:block text-gray-400 text-sm">{subtitle}</p>
         </div>
         <button
           onClick={() => setOpen(true)}

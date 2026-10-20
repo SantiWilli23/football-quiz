@@ -217,17 +217,18 @@ export default function Wordle() {
   return (
     <Layout>
       <h1 className="text-xl sm:text-2xl font-bold mb-1">Fichado</h1>
-      <p className="text-gray-400 text-sm mb-1">
+      {/* Reglas y comodines solo en pantallas grandes: en el teléfono, el «?» las tiene. */}
+      <p className="hidden sm:block text-gray-400 text-sm mb-1">
         Adiviná al futbolista secreto en {meta.maxAttempts} intentos. Cada intento te marca en verde lo que coincide y te da un número de parecido de 0 a 100.
       </p>
-      <p className="text-xs text-gray-500 mb-4">
+      <p className="hidden sm:block text-xs text-gray-500 mb-4">
         Cada {wildcards.step} días seguidos ganando la diaria ganás un comodín: una pista gratis que no gasta intentos.
         {wildcards.streak > 0 && <span className="text-amber ml-1">Racha actual: {wildcards.streak} día{wildcards.streak === 1 ? "" : "s"}.</span>}
       </p>
 
-      <div className="mb-3">
+      <div className="mb-2 sm:mb-3">
         <span className="text-xs font-semibold uppercase tracking-wide text-accent">{MODE_INFO[mode].label}</span>
-        <span className="text-xs text-gray-500 ml-2">{modeNote?.challenge?.label || MODE_INFO[mode].hint}</span>
+        <span className="hidden sm:inline text-xs text-gray-500 ml-2">{modeNote?.challenge?.label || MODE_INFO[mode].hint}</span>
       </div>
 
       {loading && <p className="text-sm text-gray-500">Cargando...</p>}
@@ -267,8 +268,8 @@ export default function Wordle() {
 
       {!loading && game && (
         <div className="flex flex-col">
-          <Card className="mb-6 order-2 lg:order-1 sticky bottom-20 lg:static z-10">
-            <div className="flex items-center justify-between mb-3 text-xs text-gray-500">
+          <Card className="mb-3 sm:mb-6 order-2 lg:order-1 sticky bottom-20 lg:static z-10">
+            <div className="flex items-center justify-between mb-2 sm:mb-3 text-xs text-gray-500">
               <span className="uppercase tracking-wide">
                 {game.mode === "daily" ? "Juego diario" : game.mode === "reto" ? "Reto del día" : `Aleatorio · ${meta.difficulties.find((d) => d.id === game.difficulty)?.label || ""}`}
               </span>
@@ -308,7 +309,7 @@ export default function Wordle() {
 
                 <div className="flex items-center justify-between gap-3 mt-3">
                   <p className="text-xs text-gray-500 leading-snug">
-                    {game.hints.length ? game.hints.join(" · ") : "Sin pistas usadas."}
+                    {game.hints.length ? game.hints.join(" · ") : <span className="hidden sm:inline">Sin pistas usadas.</span>}
                   </p>
                   <div className="flex gap-2 shrink-0 items-center">
                     <span className="flex gap-1" aria-hidden="true">

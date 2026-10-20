@@ -25,10 +25,19 @@ const VALORES_TM = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/valo
 const valueOf = (name) => VALORES_TM[name] ?? VALORES_MERCADO[name] ?? VALORES_DT[name];
 
 const ROUNDS = 10;
+// Solo jugadores en actividad: los del ranking de Transfermarkt lo están por definición;
+// del resto (lista curada y fórmula del DT) solo entran los nacidos desde 1990 con su
+// club actual desde 2021 o después, para no colar retirados que figuran con club.
+const currentOf = (p) => (p.carrera || []).find((c) => c.fin === null || c.fin === undefined);
+const isActive = (p) => {
+  if (VALORES_TM[p.nombre] != null) return true;
+  const current = currentOf(p);
+  return (p.nacimiento || 0) >= 1990 && (current?.inicio || 0) >= 2021;
+};
 const POOL = BASE
-  .filter((p) => valueOf(p.nombre) != null && (p.carrera || []).some((c) => c.fin === null || c.fin === undefined))
+  .filter((p) => valueOf(p.nombre) != null && currentOf(p) && isActive(p))
   .map((p) => {
-    const current = (p.carrera || []).find((c) => c.fin === null || c.fin === undefined);
+    const current = currentOf(p);
     return {
       name: p.nombre,
       position: p.posicion,
@@ -41,26 +50,38 @@ const seedOf = (v) => String(v || "").replace(/[^a-z0-9-]/gi, "").slice(0, 24);
 
 // Fácil: el valor del rival es claramente distinto (nunca igual). Difícil: valores
 // parecidos y, a veces, exactamente iguales.
+// En cadena: la primera ronda arranca con un jugador al azar y, desde la segunda, el de
+// la izquierda es el que estaba a la derecha en la ronda anterior.
 function roundsFor(seed, difficulty) {
   const rand = rng(dailySeed(seed, `compro-${difficulty}`));
   const order = shuffle(POOL, rand);
   const used = new Set();
-  const rounds = [];
-  for (const left of order) {
-    if (rounds.length >= ROUNDS) break;
-    if (used.has(left.name)) continue;
-    const wantEqual = difficulty === "dificil" && rand() < 0.2;
+  const rivalOf = (left, wantEqual) => {
     const candidates = order.filter((r) => {
-      if (r.name === left.name || used.has(r.name)) return false;
+      if (used.has(r.name)) return false;
       const ratio = Math.max(r.value, left.value) / Math.min(r.value, left.value);
       if (difficulty === "facil") return ratio >= 1.5 && ratio <= 8;
       return wantEqual ? r.value === left.value : r.value !== left.value && ratio <= 1.7;
     });
-    const right = candidates[Math.floor(rand() * candidates.length)];
-    if (!right) continue;
-    used.add(left.name);
+    return candidates.length ? candidates[Math.floor(rand() * candidates.length)] : null;
+  };
+  const rounds = [];
+  let start = 0;
+  let left = order[start];
+  used.add(left.name);
+  while (rounds.length < ROUNDS) {
+    const wantEqual = difficulty === "dificil" && rand() < 0.2;
+    const right = (wantEqual && rivalOf(left, true)) || rivalOf(left, false);
+    if (!right) {
+      // Sin rival posible: si todavía no hay rondas se prueba otro jugador inicial.
+      if (rounds.length || ++start >= order.length) break;
+      left = order[start];
+      used.add(left.name);
+      continue;
+    }
     used.add(right.name);
     rounds.push({ left, right });
+    left = right;
   }
   return rounds;
 }

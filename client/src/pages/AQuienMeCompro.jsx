@@ -50,18 +50,19 @@ function PlayerPanel({ player, value, hidden, verdict, label, instant }) {
   const counted = instant ? value : animated;
   const border = verdict === "ok" ? "border-emerald/60" : verdict === "bad" ? "border-red-500/60" : "border-border";
   return (
-    <div className={`flex-1 min-w-0 rounded-3xl border ${border} bg-panel p-4 sm:p-5 text-center transition-colors`}>
-      <p className="t-eyebrow mb-3">{label}</p>
-      <PlayerFace name={player.name} size={88} className="mx-auto" />
-      <p className="mt-3 font-semibold leading-tight text-base sm:text-lg break-words">{player.name}</p>
+    <div className={`flex-1 min-w-0 rounded-3xl border ${border} bg-panel p-2.5 sm:p-5 text-center transition-colors`}>
+      <p className="hidden sm:block t-eyebrow mb-3">{label}</p>
+      <PlayerFace name={player.name} size={64} className="mx-auto sm:hidden" />
+      <PlayerFace name={player.name} size={88} className="mx-auto hidden sm:flex" />
+      <p className="mt-2 sm:mt-3 font-semibold leading-tight text-sm sm:text-lg break-words">{player.name}</p>
       <p className="mt-1.5 flex items-center justify-center gap-1.5 text-xs text-gray-400 min-h-[20px]">
         {player.club && <ClubCrest name={player.club} size={18} />}
         <span className="truncate">{player.club || "Sin club"}</span>
       </p>
       <p className="text-[11px] uppercase tracking-wider text-gray-500 mt-0.5">{player.position}</p>
-      <div className="mt-4 rounded-2xl bg-bg/60 border border-border py-3">
-        <p className="text-[11px] uppercase tracking-wider text-gray-500">Valor de mercado</p>
-        <p className={`text-2xl sm:text-3xl font-bold tabular-nums mt-0.5 ${hidden ? "text-gray-600" : verdict === "bad" ? "text-red-400" : "text-accent"}`}>
+      <div className="mt-2.5 sm:mt-4 rounded-2xl bg-bg/60 border border-border py-2 sm:py-3">
+        <p className="hidden sm:block text-[11px] uppercase tracking-wider text-gray-500">Valor de mercado</p>
+        <p className={`text-xl sm:text-3xl font-bold tabular-nums mt-0.5 ${hidden ? "text-gray-600" : verdict === "bad" ? "text-red-400" : "text-accent"}`}>
           {hidden ? "€ ? M" : money(counted)}
         </p>
       </div>
@@ -248,10 +249,10 @@ export default function AQuienMeCompro() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch gap-3 sm:gap-4">
+          <div className="flex flex-row items-stretch gap-2 sm:gap-4">
             <PlayerPanel player={round.left} value={round.left.value} hidden={false} instant label="Valor a la vista" />
             <div className="flex sm:flex-col items-center justify-center" aria-hidden="true">
-              <span className="w-10 h-10 rounded-full border border-border bg-bg text-xs font-bold text-gray-400 flex items-center justify-center">VS</span>
+              <span className="w-7 h-7 sm:w-10 sm:h-10 text-[10px] sm:text-xs rounded-full border border-border bg-bg font-bold text-gray-400 flex items-center justify-center">VS</span>
             </div>
             <PlayerPanel
               player={round.right}

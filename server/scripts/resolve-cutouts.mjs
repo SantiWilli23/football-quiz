@@ -34,7 +34,7 @@ let n = 0;
 for (const p of interleaved) {
   if (p.name in done) continue;
   try {
-    const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchplayers.php?p=${encodeURIComponent(p.name)}`);
+    const res = await fetch(`https://www.thesportsdb.com/api/v1/json/123/searchplayers.php?p=${encodeURIComponent(p.name)}`);
     if (res.status === 429) { console.log("límite alcanzado, espero 60 s"); await sleep(60000); continue; }
     const j = await res.json();
     const hit = (j.player || []).find((x) => x.strSport === "Soccer" && x.strCutout && matches(p.name, x.strPlayer));
