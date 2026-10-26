@@ -333,6 +333,8 @@ Pulso del botón JUGAR; números que suben (`countUp`); puntos que vuelan a la t
 
 **Fase 4 · cartas.** Cartas para todos, SBC temático solo con repetidas, tienda con monedas, venta de repetidas, intercambio, partido de cartas, carta del día y álbum calendario.
 
+**Fase 4b · motor de partidos en vivo (rehacer, ver sección 14).** Es **prerrequisito de la fase 5** y de todo lo que muestra un partido: marcador en vivo, alineaciones, previa y el día después de los eventos, DT Online, Cartas, Copa semanal, Subasta, Carrera y el 8a2.
+
 **Fase 5 · eventos temáticos.** Kits, detección con `football-api.js`, previa, pronóstico, hinchadas, historial, "el día después". Empezar por Clásico, Superclásico y Final de Champions.
 
 **Fase 6 · ADN y perfil.** Etiquetas por pregunta, estadísticas por área, hexágono, análisis semanal/mensual, carta Futotal, logros, marcos.
@@ -377,5 +379,112 @@ git push -u origin claude/futotal-major-redesign-bl4ibi
 
 ---
 
-## 14. Resumen de una línea
+## 14. Rehacer el sistema de partidos en vivo y alineaciones (NUEVO, prioridad alta)
+
+**Qué pidió el dueño.** El prototipo no lo muestra, pero **ya existe en la app real** y está mal: al ver la **alineación** y el **partido en vivo** en el momento, se ve **bugueado, le falta información y es poco estético**. Además **varias cosas del rediseño dependen de esto** (eventos temáticos, previa, marcador en vivo, día después, DT Online, Cartas, 8a2). Hay que **mejorarlo mucho**. Calidad máxima, sin límite de complejidad.
+
+> **Aviso de honestidad.** Lo que sigue sale de **leer el código**, no de ver un partido real en vivo (la sesión de diseño no pudo). Son **causas probables**. **Paso 0 obligatorio:** reproducir con un partido real en vivo, guardar las respuestas crudas de la API y confirmar cada punto antes de rehacer.
+
+### 14.1 Qué hay hoy (hay 7 piezas distintas que muestran un "partido")
+
+| Pieza | Archivo | Para qué se usa |
+|---|---|---|
+| Alineación de partido real (cancha horizontal con 22 fichas) | `client/src/components/LineupPitch.jsx` | desplegable de `FixtureCard` |
+| Fila de partido real y lista de titulares | `client/src/components/FixtureCard.jsx`, `client/src/pages/Football.jsx` | pantalla "En vivo" (se elimina como página, pero el contenido se reutiliza) |
+| Partido simulado minuto a minuto con 22 jugadores y pelota | `client/src/components/LivePitch.jsx` | Cartas, Copa semanal, Subasta |
+| Variante de cancha | `client/src/components/MatchPitch.jsx` | partidos con cartas |
+| Simulador de Carrera | `client/src/carrera/components/MatchSimulator.jsx` | Modo DT |
+| Partido en vivo de DT Online (WebSocket) | `client/src/dt-liga/LiveMatch.jsx`, `server/dt-live.js`, `server/ws-relay.js` | liga online |
+| Simulación del 8a2 | `client/public/draft-europeo.html` | 8a2 |
+
+Cada una tiene su propio estilo, su propia cancha y su propio formato de eventos. **Eso es parte del problema.**
+
+### 14.2 Causas probables de lo "bugueado" y "faltante" (verificar en el paso 0)
+
+**Datos del partido real**
+1. `espnLineups()` (`server/utils/football-api.js`) devuelve `coach: null` y **no trae `grid`**; `formation` puede venir vacía. Con ESPN (la fuente por defecto, sin clave) **nunca hay DT ni posición exacta**.
+2. `LineupPitch.place()` agrupa por la primera letra de la posición (`G`, `D`, `M`, `F`). Las abreviaturas de ESPN (por ejemplo `CD-L`, `LB`, `CM`, `AM-R`, `LW`, `CF`) **no calzan**, así que varios jugadores caen en una fila "resto" y la formación sale rota.
+3. **No hay eventos del partido**: ni goles con minuto y autor, ni tarjetas, ni cambios, ni VAR, ni estadísticas (posesión, tiros), ni comentarios. La API de ESPN los trae en el resumen del partido, pero hoy no se leen.
+4. **No hay minuto en vivo ni actualización fluida.** La pantalla recarga cada cierto tiempo (`Football.jsx`, `REFRESH_MS`) y el servidor cachea 60–180 s: el marcador se ve atrasado y a saltos. No hay aviso de gol.
+5. La alineación solo se ofrece **cuando el partido ya empezó** (`FixtureCard`). No hay **alineación probable** antes del partido, que es justo lo que sirve en la previa de un clásico.
+6. Con `api-football` (cuando hay clave) el plan gratis solo permite temporadas viejas y cae a datos "demo"; el servidor lo avisa, pero la interfaz puede mostrar un partido de otra temporada como si fuera de hoy. Revisar que siempre se marque claramente.
+7. ESPN se usa a través de un endpoint **no oficial**: puede cambiar sin aviso. Hace falta tolerancia a campos ausentes y pruebas con respuestas guardadas.
+
+**Interfaz**
+8. `LineupPitch` dibuja en un SVG de **1000 × 520 unidades con texto de 14–15**. En un teléfono de ~360 px el texto queda de **~5 px: ilegible**. Mismo problema de escala en `LivePitch` (600 × 380).
+9. Los 22 jugadores están en **una sola cancha horizontal** con círculos y apellido. No hay fotos, ni rating, ni indicadores de gol/tarjeta/cambio, ni banca con información. Es "poco estético" y no se entiende quién hizo qué.
+10. El partido simulado (`LivePitch`) **inventa el movimiento** de la pelota y las ocasiones con una semilla; no hay línea de tiempo de eventos real ni repetición de jugadas. Y cada pantalla que lo usa lo adapta a su manera.
+11. DT Online transmite por WebSocket con un formato propio de eventos; no comparte código con los demás.
+
+### 14.3 Qué construir
+
+**A. Un modelo único de partido (servidor).** Un normalizador que convierta **cualquier fuente** (ESPN, api-football, simulador interno, DT Online, 8a2) a esta forma:
+
+```jsonc
+{
+  "id": "…", "source": "espn|apifootball|sim|dt",
+  "status": "NS|1H|HT|2H|ET|P|FT|AET|PEN|PST|SUSP",
+  "minute": 67, "stoppage": 3,
+  "teams": { "home": {"id","name","logo","colors"}, "away": {…} },
+  "score": { "home": 1, "away": 0, "pens": null },
+  "lineups": {
+    "home": { "formation": "4-3-3", "probable": false, "coach": "…",
+              "starters": [{ "id","number","name","photo","pos":"CB","line":"D","side":"L|C|R","x":0..100,"y":0..100,"rating":null,"captain":false }],
+              "bench": [{ "id","number","name","pos" }] },
+    "away": { … }
+  },
+  "events": [
+    { "min": 12, "type": "goal|own_goal|pen_goal|pen_miss|yellow|red|sub|var", "team": "home", "playerId": "…", "player": "…", "assist": "…", "in": "…", "out": "…", "detail": "…" }
+  ],
+  "stats": { "possession": [55,45], "shots": [10,6], "onTarget": [4,2], "corners": [5,3], "fouls": [9,12] },
+  "commentary": [ { "min": 12, "text": "…" } ],
+  "updatedAt": "…"
+}
+```
+- **Tabla de posiciones** ESPN/api-football → línea (`G`, `D`, `M`, `F`) y lado (`L`, `C`, `R`) para ubicar a cada jugador aunque no venga `grid`; si falta la formación, **inferirla** contando por línea (4-3-3, 4-4-2…).
+- **Alineación probable** antes del partido (cuando la fuente la trae) marcada como "probable".
+- **Fotos de jugadores** (la app ya tiene `PlayerFace` y fotos con TheSportsDB; reutilizar).
+- **Pruebas con respuestas reales guardadas** (carpeta `server/test/fixtures/live/`) para ESPN y api-football, con campos faltantes.
+
+**B. Tiempo real eficiente y estable.**
+- **Un solo consultor por partido** (no uno por usuario): el servidor consulta cada partido en vivo cada 15–30 s, comparte la caché y **empuja los cambios** a los clientes por **SSE** (`GET /api/live/:id/stream`) o WebSocket (ya existe `ws-relay.js`). Respeta el límite del plan gratis.
+- **Aviso de gol** (notificación push y animación en pantalla) con un máximo de 3 avisos por día en total.
+- **Reconexión automática**, "última actualización hace X s" y estado claro cuando la fuente cae (nunca mostrar datos viejos como si fueran de ahora).
+
+**C. Interfaz nueva (pensada para teléfono).**
+- **Tarjeta de partido** con escudos, marcador grande, **minuto en vivo** y estado (en vivo / entretiempo / finalizado).
+- **Pestañas:** *Resumen* (línea de tiempo de eventos con íconos de gol, tarjeta, cambio y VAR) · *Alineación* · *Estadísticas* · *Comentarios*.
+- **Alineación en cancha vertical, de a un equipo** (con selector Local / Visita) o las dos mitades enfrentadas, **a escala real de teléfono**: ficha con **foto, número, apellido, rating**, y **íconos sobre el jugador** (gol, asistencia, amarilla, roja, cambio, capitán). Tocar al jugador abre su ficha. **Banca** con quién entró y en qué minuto. DT y formación visibles. **Alineación probable** en la previa.
+- **Estética:** los mismos tokens, fuentes y animaciones del prototipo (cancha con franjas, marcador estilo estadio, números condensados). Animaciones: gol (destello, número que sube, confeti con los colores del equipo), tarjeta, cambio (la ficha sale y entra), minuto que avanza, línea de tiempo que se arma sola. Respetar `prefers-reduced-motion`.
+- **Accesibilidad:** texto mínimo de 12 px a 360 px de ancho, contraste suficiente, controles ≥ 44 px, descripciones para lectores de pantalla.
+
+**D. Un solo visor para todos los partidos simulados.** Un componente `MatchStage` (el mismo de Cartas, Copa semanal, Subasta, Carrera, DT Online y 8a2) que recibe el **mismo modelo** y muestra cancha, eventos y marcador igual que un partido real. Tomar como referencia el `simMatch` del prototipo (22 puntos que se acomodan según la pelota, línea de tiempo, goles con goleador, penales). Reemplaza a `LivePitch`, `MatchPitch` y `MatchSimulator`. DT Online pasa a usar el mismo formato de eventos por su WebSocket.
+
+**E. Conexión con el rediseño (lo que depende de esto).**
+- **Partidos temáticos (sección 2.3):** la **previa** muestra la **alineación probable**; el día del evento, una franja con el **marcador real en vivo** en Hoy; **"Héroe del clásico"**: quien marcó en el partido real tiene una carta especial en el sobre del evento los días siguientes; **"El día después"** y el **pronóstico** se resuelven con el resultado real; el **duelo de hinchadas** puede mostrarse junto al marcador.
+- **Detección de eventos** con el calendario (`getFixturesByDate`).
+- **Marcador y alineación** reutilizables en el muro del club ("Juan acaba de sacar 82", "gol de Colo-Colo").
+- **Partido de cartas, 8a2 y copa:** mismos eventos y mismo visor.
+
+### 14.4 Criterios de aceptación
+1. Con un partido real en vivo: el marcador y el minuto se actualizan en menos de 30 s sin recargar; los goles y tarjetas aparecen en la línea de tiempo con minuto y autor.
+2. La alineación se ve **correcta** (formación, posiciones, DT, banca, cambios) en ESPN **y** en api-football, aunque falten campos. Probada con respuestas guardadas.
+3. Se lee bien a **360 px** de ancho (texto ≥ 12 px) y en computador.
+4. Una sola implementación de cancha y de eventos en toda la app. Se borran `LivePitch`, `MatchPitch`, `MatchSimulator` y el CSS duplicado.
+5. Si la fuente falla, la pantalla lo dice y no muestra datos viejos como actuales.
+6. Los partidos temáticos funcionan de punta a punta con partidos reales (probar con un clásico real o con una grabación).
+7. Tests: normalizador, mapa de posiciones, inferencia de formación, reconexión y reproducción de una grabación de partido.
+
+### 14.5 Orden sugerido dentro de la fase 4b
+1. Paso 0: reproducir y guardar respuestas reales; listar los bugs confirmados.
+2. Modelo único y normalizadores con pruebas.
+3. Consultor compartido + SSE/WebSocket + aviso de gol.
+4. Interfaz nueva: tarjeta, línea de tiempo, alineación, estadísticas.
+5. `MatchStage` y migración de Cartas, Copa semanal, Subasta, Carrera, DT Online y 8a2.
+6. Borrar lo viejo.
+7. Conectar con los eventos temáticos.
+
+---
+
+## 15. Resumen de una línea
 Futotal pasa de "muchos juegos sueltos y puntos confusos" a **un partido del día igual para todos, que suma al instante a un club con temporada**, con juegos fusionados, cartas con SBC temáticos, partidos de evento con identidad propia, ADN futbolero y un primer ingreso que enseña jugando.
