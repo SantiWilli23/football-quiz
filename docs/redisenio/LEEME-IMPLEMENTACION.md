@@ -180,6 +180,7 @@ Un "kit" por evento: colores, animación de entrada, figuras emblemáticas, jueg
 - **J8** Álbum de temporada de 300 cartas (no por ahora).
 - Sobres pagados con dinero real.
 - **S10** Segunda pantalla en vivo durante el clásico real (después del lanzamiento).
+- **W4** Historia vertical para Instagram, **W8** invitar con premio y **W9** paleta para daltónicos: no se eligieron en la última tanda.
 
 ---
 
@@ -323,11 +324,11 @@ Pulso del botón JUGAR; números que suben (`countUp`); puntos que vuelan a la t
 
 ## 12. Orden de implementación (cada fase deja la app andando)
 
-**Fase 0 · base y medición.** Tabla `analytics_events`, zona horaria `America/Santiago` en `todayStr()`, quitar avisos y textos muertos (A7 sin romper rutas). Tests de fechas.
+**Fase 0 · base y medición.** Incluye la infraestructura V1–V4 (sección 15.7): tareas programadas, registro de errores, decisión sobre el plan de Render y la primera versión del panel del dueño. Tabla `analytics_events`, zona horaria `America/Santiago` en `todayStr()`, quitar avisos y textos muertos (A7 sin romper rutas). Tests de fechas.
 
 **Fase 1 · puntos y clubes (lo más urgente, hoy está roto).** `points_ledger`, tabla única Hoy/Mes/General, racha nueva, puntaje del partido del día en servidor (A5), clubes con modo y **pretemporada/inicio de temporada**, quien entra tarde, club principal, sobres guardados, código de recuperación. Tests: puntos Clásico vs Total, tope 100, "una vez por juego al día", pretemporada sin puntos, entrada tardía, sobres guardados (máx. 3) y desbloqueo.
 
-**Fase 2 · navegación y partido del día.** Barra Hoy/Jugar/Club/Cartas/Yo, pantalla Hoy, partido del día de 3 partes con penales de preguntas, calibración de dificultad, fantasma, "así respondió el club", archivo, copa automática.
+**Fase 2 · navegación y partido del día.** Barra Hoy/Jugar/Club/Cartas/Yo, pantalla Hoy, partido del día de 3 partes con penales de preguntas, calibración de dificultad, fantasma, "así respondió el club", archivo, copa automática. Incluye **W6 jugar sin señal** (sección 15.5).
 
 **Fase 3 · juegos fusionados.** ¿Quién es?, ¿Qué club?, Más o menos, Trivia, VAR, Bingo, Versus (ruleta), Draft (8a2 estilo 7a0 con simulación), Cotrero simple (Copero) y medio (El Ídolo). Redirigir rutas viejas.
 
@@ -335,13 +336,13 @@ Pulso del botón JUGAR; números que suben (`countUp`); puntos que vuelan a la t
 
 **Fase 4b · motor de partidos en vivo (rehacer, ver sección 14).** Es **prerrequisito de la fase 5** y de todo lo que muestra un partido: marcador en vivo, alineaciones, previa y el día después de los eventos, DT Online, Cartas, Copa semanal, Subasta, Carrera y el 8a2.
 
-**Fase 5 · eventos temáticos.** Kits, detección con `football-api.js`, previa, pronóstico, hinchadas, historial, "el día después". Empezar por Clásico, Superclásico y Final de Champions.
+**Fase 5 · eventos temáticos.** Kits, detección con `football-api.js`, previa, pronóstico, hinchadas, historial, "el día después". Empezar por Clásico, Superclásico y Final de Champions. Incluye **W1 Adivina la alineación** y **W2 Figura del partido** (sección 15), que dependen del motor en vivo de la fase 4b, y **W7 Torneo de selecciones** cuando haya un torneo.
 
 **Fase 6 · ADN y perfil.** Etiquetas por pregunta, estadísticas por área, hexágono, análisis semanal/mensual, carta Futotal, logros, marcos.
 
 **Fase 7 · primer ingreso.** Portada = práctica, registro, favorito, sobre de bienvenida, invitación con desafío, tutorial con mano guiada (reemplaza `client/src/tutorial/`), guía "agregar a inicio".
 
-**Fase 8 · cierre de mes y avisos.** Ceremonia de podio y Sobre Élite del club principal, resumen del lunes, avisos con motivo y "a tu hora", tabla en vivo.
+**Fase 8 · cierre de mes, avisos y vida de club.** Incluye **W3 amistoso entre clubes** y **W5 leyendas del club** (sección 15). Ceremonia de podio y Sobre Élite del club principal, resumen del lunes, avisos con motivo y "a tu hora", tabla en vivo.
 
 **Lanzamiento por etapas:** bandera por club (`rediseño_activo`); activar primero el club del dueño, medir (`analytics_events`), luego abrir a todos.
 
@@ -486,5 +487,59 @@ Cada una tiene su propio estilo, su propia cancha y su propio formato de eventos
 
 ---
 
-## 15. Resumen de una línea
+## 15. Agregados aprobados en la última tanda (W1, W2, W3, W5, W6, W7) e infraestructura (V1–V4)
+
+Todos están en el prototipo. Para verlos: selector **Evento** (Previa: mañana el Clásico, Hoy: El Clásico, Temporada especial: torneo de selecciones, Día después) y botón **Sin señal** de la barra superior.
+
+### 15.1 W1 · Adivina la alineación
+- **Cuándo:** en la **previa** de un partido temático (desde que se anuncia hasta que sale la alineación real).
+- **Cómo:** eliges equipo (uno de los dos del evento) y armas el once titular en una cancha 4-3-3. Tocas un jugador de la lista para ponerlo en el primer puesto libre de su línea; tocas su ficha en la cancha para sacarlo. Se guarda con 11.
+- **Revelación:** cuando la fuente publica la alineación real (motor en vivo, sección 14), aparece en Hoy "La alineación real ya salió · Ver". Cada ficha se da vuelta una por una (verde si estaba en el once real, roja si no) con contador `X/11`. Al final se muestra el once real.
+- **Premio:** **8 o más aciertos = sobre del evento** (se guarda cerrado si el club no inició la temporada). No da puntos. Cuenta para logros.
+- **Datos:** lista de candidatos = plantel del equipo (la app ya tiene planteles actuales de ESPN en los scripts de DT). Se compara por jugador, **no** por posición exacta.
+- **Servidor:** `line_guesses(user_id, event_date, team, xi_json, hits, revealed_at)`; `GET/POST /api/events/:date/lineup-guess`; la revelación se dispara cuando el normalizador de partidos marca la alineación como confirmada (no probable).
+
+### 15.2 W2 · Figura del partido (votación del club)
+- Durante y después del partido real, el club vota a la figura entre 5 jugadores destacados (salen de los eventos del partido: goles, asistencias, rating si la fuente lo trae).
+- Barras con el resultado del club. Al terminar el partido (o al día siguiente) se muestra **al lado** la figura de la fuente (ESPN u otra), si la publica.
+- Un voto por persona y por club. No da puntos.
+- **Servidor:** `figure_votes(user_id, group_id, event_date, player)`; `POST /api/events/:date/figure`.
+
+### 15.3 W3 · Amistoso entre clubes
+- Funciona **con solo 2 clubes**: es la puerta de entrada a la futura liga de clubes (que sigue en "próximamente" hasta 5 clubes).
+- El dueño de un club con temporada iniciada desafía a otro club; el otro dueño acepta. Dura **una semana** (lunes a domingo).
+- Gana el club con **mejor media en el partido del día** (promedio de quienes jugaron cada día, mínimo 3 personas por día; con clubes chicos, mínimo 2).
+- Tarjeta en Club › Tabla con los dos escudos, las medias, barra comparativa y días restantes. Al final: insignia "Amistoso ganado" para todo el club ganador y opción de revancha.
+- No suma puntos a la tabla del club. Con la dificultad calibrada, las medias son comparables.
+- **Servidor:** `club_friendlies(id, group_a, group_b, week, status, avg_a, avg_b, winner)`; `POST /api/clubs/:id/friendly`, `POST /api/friendlies/:id/accept`, cierre en la tarea programada del domingo.
+
+### 15.4 W5 · Leyendas del club
+- En Club › Muro, un **salón con las 5 mejores carreras de Cotrero medio** de los miembros: puesto, nombre, etiqueta final (Promesa, Jugador de Primera, Ídolo, Leyenda), posición, a qué figura se parece y puntaje.
+- Se guarda la **mejor carrera** de cada persona; entra si supera a la quinta.
+- Si no tienes carreras: "Termina una carrera de Cotrero medio para entrar al salón" con acceso directo al juego.
+- **Servidor:** `career_scores(user_id, game, score, label, fig, pos, created_at)`; el puntaje se calcula en el servidor al cerrar la carrera (no confiar en el cliente).
+
+### 15.5 W6 · Partido del día sin señal
+- Al abrir la app (con señal) se **descarga el partido del día** del día actual. Se puede jugar sin conexión (metro, micro).
+- Las respuestas y tiempos se guardan en el teléfono; al volver la conexión se envían solas. El servidor valida igual que siempre (respuestas correctas solo en el servidor, tiempos con tolerancia) y **recién ahí suma al club**.
+- La pantalla lo dice claro: chip "Sin señal" arriba, en Hoy "Descargado para jugar sin señal", y en el resultado "Quedó guardado en el teléfono. Se envía al volver la conexión". Al reconectar: aviso "Tu partido se envió al club".
+- **Anti-trampa:** el paquete descargado **no** trae las respuestas correctas en claro. Opción recomendada: el paquete trae cada respuesta **cifrada** con una clave que se libera recién al enviar; o bien se acepta que sin señal solo se guardan las elecciones y la corrección llega al reconectar (más simple y seguro; la animación de acierto/fallo se muestra al reconectar). Decidir en implementación; el prototipo solo muestra el flujo.
+- **Técnica:** service worker (la app ya tiene `client/public/sw.js`) + IndexedDB para el paquete y la cola de envíos. Límite: solo el partido de hoy; si cambia el día sin señal, el partido viejo se envía con su fecha y se acepta solo si llega dentro de un margen (por ejemplo, hasta las 06:00 del día siguiente).
+
+### 15.6 W7 · Temporada especial de torneo de selecciones
+- Cuando hay Copa América, Mundial u otro torneo grande, **toda la app se viste del torneo durante el mes**: es L3 llevado a una temporada entera.
+- **Qué cambia:** banner en Hoy (fase, día X de 30, próximo partido de Chile); colores del torneo en la app; **cada partido de Chile es un partido temático** con su kit (Chile vs rival, juego especial "Campeones de América"); "Esta semana" muestra los partidos de Chile; **SBC del torneo** (11 de La Roja) y **un SBC por grupo**; **álbum de selecciones** en Cartas (una casilla por selección que se completa con sus cartas); sobre e insignia del torneo.
+- **Datos:** selecciones participantes, grupos y fixture vienen del calendario de la fuente; el kit de cada partido se genera con la misma plantilla de eventos. Los datos del juego especial (campeones por año) son públicos pero se revisan a mano.
+- El prototipo usa Chile vs Argentina y un álbum de 16 selecciones **de ejemplo**.
+
+### 15.7 Infraestructura necesaria (V1–V4)
+Sin esto, varias funciones del rediseño fallan. No las comentó el dueño, así que entran.
+- **V1 · Panel del dueño de la app:** aprobar el partido del día de la semana siguiente (ver y cambiar cada pregunta), calendario de eventos y kits, crear SBC (tema, filtro, premio, duración), ver métricas (retención, % que juega el diario, % en club).
+- **V2 · Render se duerme en el plan gratis** tras unos 15 minutos sin tráfico. Rompe el marcador en vivo, el aviso de gol, los avisos "a tu hora" y los cierres automáticos. Recomendado: plan pagado más barato de Render (revisar el precio vigente). Alternativa parche: tareas externas que lo despierten.
+- **V3 · Tareas programadas reales** (no perezosas): cambio de día a las 00:00 de Chile, cierre de copa (domingo), cierre de mes con podio y Sobre Élite, racha del club, cierre de amistosos, detección de partidos temáticos, consulta de partidos en vivo.
+- **V4 · Registro de errores y alertas:** avisar si falla la fuente de partidos en vivo, si no se generó el partido del día o si falla una tarea programada.
+
+---
+
+## 16. Resumen de una línea
 Futotal pasa de "muchos juegos sueltos y puntos confusos" a **un partido del día igual para todos, que suma al instante a un club con temporada**, con juegos fusionados, cartas con SBC temáticos, partidos de evento con identidad propia, ADN futbolero y un primer ingreso que enseña jugando.
