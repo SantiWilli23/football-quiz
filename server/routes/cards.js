@@ -385,7 +385,9 @@ router.post("/open", async (req, res) => {
     // a la base por carta, 10 en total, y abrir un sobre se sentía lento).
     const misses = Number((await db.execute({ sql: "SELECT misses FROM card_pity WHERE user_id = ?", args: [req.userId] })).rows[0]?.misses || 0);
     let drawn;
-    if (pack.theme && String(pack.theme).startsWith("club:")) {
+    if (pack.theme === "elite") {
+      drawn = drawElitePack(misses);
+    } else if (pack.theme && String(pack.theme).startsWith("club:")) {
       drawn = drawWelcomePack(String(pack.theme).slice(5), misses);
     } else if (pack.theme && themeByKey(pack.theme)) {
       drawn = drawThemePack(themeByKey(pack.theme));
@@ -928,6 +930,15 @@ export function themePeriod(date) {
 const activeTheme = (date) => themePeriod(date).theme;
 
 const TIER_ORDER = ["estrella", "oro", "plata", "bronce"];
+
+// Sobre Élite (podio del mes del club principal): una carta de 90 o más asegurada y cuatro de nivel top.
+function drawElitePack(misses = 0) {
+  const top = CARDS.filter((c) => c.ovr >= 90 && c.pos);
+  const best = top.length ? top : [CARDS.reduce((a, b) => (b.ovr > a.ovr ? b : a))];
+  const cards = [pickOf(best)];
+  while (cards.length < 5) cards.push(drawCard("top", cards.length, misses * 3));
+  return cards;
+}
 
 // Sobre de bienvenida: 5 cartas, la primera de tu club favorito (la mejor posible dentro de
 // un sorteo «bueno»). Si no hay cartas de ese club, sale un sobre bueno común.

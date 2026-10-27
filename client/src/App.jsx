@@ -34,6 +34,7 @@ const Entrenar = lazy(() => import("./v2/Entrenar.jsx"));
 const Practica = lazy(() => import("./v2/Practica.jsx"));
 const Portada = lazy(() => import("./v2/Portada.jsx"));
 const Bienvenida = lazy(() => import("./v2/Bienvenida.jsx"));
+const Admin = lazy(() => import("./v2/Admin.jsx"));
 const History = lazy(() => import("./pages/History.jsx"));
 const Profile = lazy(() => import("./pages/Profile.jsx"));
 const Stats = lazy(() => import("./pages/Stats.jsx"));
@@ -145,6 +146,7 @@ export default function App() {
       <Route path="/registro" element={<Register />} />
       <Route path="/" element={<Root />} />
       <Route path="/practica" element={<Suspense fallback={<RouteFallback />}><Practica /></Suspense>} />
+      <Route path="/admin" element={<PrivateRoute><Admin /></PrivateRoute>} />
       <Route path="/bienvenida" element={<PrivateRoute><Bienvenida /></PrivateRoute>} />
       <Route
         path="/panel"

@@ -1909,6 +1909,12 @@
       retireAge: M.age, nationality: M.nationality, clubs: M.clubsPlayed.slice(),
       titles: allT.length, titleList: allT.map(titleText), date: new Date().toISOString()
     });
+    // Futotal 2.0 (Leyendas del club): si hay sesión, se envía el resumen de la carrera. Es un
+    // salón entre amigos: el puntaje lo calcula esta página, el servidor solo lo acota.
+    try {
+      var tk = localStorage.getItem("fq_token");
+      if (tk) fetch("/api/careers/score", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tk }, body: JSON.stringify({ game: "cotrero_medio", score: score, label: ranking, position: POSITIONS[M.position].label, name: M.name }) }).catch(function () {});
+    } catch (e) { /* sin sesión o sin storage: no pasa nada */ }
     clearSave();
     showScreen("legado");
   }

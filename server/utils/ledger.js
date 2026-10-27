@@ -1,5 +1,6 @@
 import { db } from "../db/client.js";
 import { monthOf } from "./points.js";
+import { bus } from "./bus.js";
 
 // Libro único de puntos de los clubes (Futotal 2.0). Cada punto que se gana queda
 // escrito acá, al instante, una vez por club: de este libro salen las vistas
@@ -80,7 +81,10 @@ export async function creditPoints(userId, date, source, basePoints) {
       sql: "INSERT OR IGNORE INTO points_ledger (user_id, group_id, date, month, source, points) VALUES (?, ?, ?, ?, ?, ?)",
       args: [userId, club.group_id, date, month, source, pts],
     });
-    if (res.rowsAffected > 0) credited.push({ groupId: club.group_id, points: pts });
+    if (res.rowsAffected > 0) {
+      credited.push({ groupId: club.group_id, points: pts });
+      bus.emit("points", { groupId: club.group_id, userId, points: pts, source });
+    }
   }
   return { credited, wouldHave };
 }
@@ -99,6 +103,7 @@ export async function creditPointsToGroup(userId, groupId, date, source, basePoi
     sql: "INSERT OR IGNORE INTO points_ledger (user_id, group_id, date, month, source, points) VALUES (?, ?, ?, ?, ?, ?)",
     args: [userId, groupId, date, monthOf(date), source, points],
   });
+  if (res.rowsAffected > 0) bus.emit("points", { groupId, userId, points, source });
   return { credited: res.rowsAffected > 0, points };
 }
 

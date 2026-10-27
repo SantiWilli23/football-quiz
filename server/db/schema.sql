@@ -1347,3 +1347,72 @@ CREATE TABLE IF NOT EXISTS figure_votes (
   player TEXT NOT NULL,
   PRIMARY KEY (user_id, group_id, event_date)
 );
+
+-- Futotal 2.0: cierre de mes, amistosos entre clubes, leyendas, errores y tareas programadas.
+CREATE TABLE IF NOT EXISTS month_closes (
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  month TEXT NOT NULL,
+  podium_json TEXT NOT NULL,
+  closed_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (group_id, month)
+);
+
+CREATE TABLE IF NOT EXISTS club_trophies (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  month TEXT NOT NULL,
+  place INTEGER NOT NULL,
+  points INTEGER NOT NULL,
+  PRIMARY KEY (user_id, group_id, month)
+);
+
+CREATE TABLE IF NOT EXISTS month_seen (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  month TEXT NOT NULL,
+  PRIMARY KEY (user_id, group_id, month)
+);
+
+CREATE TABLE IF NOT EXISTS club_friendlies (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  group_a INTEGER NOT NULL REFERENCES groups_t(id),
+  group_b INTEGER NOT NULL REFERENCES groups_t(id),
+  week TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  avg_a REAL,
+  avg_b REAL,
+  winner INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS career_scores (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  game TEXT NOT NULL,
+  score INTEGER NOT NULL,
+  label TEXT,
+  pos TEXT,
+  name TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, game)
+);
+
+CREATE TABLE IF NOT EXISTS app_errors (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  source TEXT NOT NULL,
+  message TEXT NOT NULL,
+  count INTEGER NOT NULL DEFAULT 1,
+  last_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (source, message)
+);
+
+CREATE TABLE IF NOT EXISTS job_runs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  at TEXT NOT NULL,
+  result_json TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS push_day (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  date TEXT NOT NULL,
+  n INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (user_id, date)
+);

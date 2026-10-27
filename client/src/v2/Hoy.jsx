@@ -9,6 +9,7 @@ import { useClubs } from "./useClubs.js";
 import { track } from "./analytics.js";
 import { pendingMatch, syncQueue } from "./offline.js";
 import EventCards from "./Evento.jsx";
+import Ceremonia from "./Ceremonia.jsx";
 
 // Hoy: lo que importa del día en pocos bloques. El partido del día arriba, tu club
 // debajo, y recién después seguir jugando.
@@ -19,6 +20,7 @@ export default function Hoy() {
   const [streak, setStreak] = useState(null);
   const [table, setTable] = useState(null);
   const [clubStreak, setClubStreak] = useState(null);
+  const [week, setWeek] = useState(null); // desafío temático de la temporada
   const [synced, setSynced] = useState(null); // partida jugada sin señal que recién se envió
   const [waiting, setWaiting] = useState(() => !!pendingMatch(17));
 
@@ -34,6 +36,7 @@ export default function Hoy() {
     load();
     send();
     window.addEventListener("online", send);
+    api.get("/cards/sbc-tema").then((r) => setWeek(r.data)).catch(() => setWeek(null));
     api.get("/clubs/me/streak").then((r) => setStreak(r.data)).catch(() => setStreak(null));
     return () => window.removeEventListener("online", send);
   }, []);
@@ -49,6 +52,7 @@ export default function Hoy() {
 
   return (
     <Layout>
+      <Ceremonia />
       <div className="max-w-2xl mx-auto space-y-4">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
@@ -124,6 +128,16 @@ export default function Hoy() {
             <p className="t-eyebrow flex items-center gap-1.5"><Flame size={13} className="text-orange-400" /> Racha del club</p>
             <p className="text-sm mt-1"><b className="tabular-nums">{clubStreak.streak}</b> {clubStreak.streak === 1 ? "día" : "días"} seguidos con todos jugando.</p>
             <p className="text-xs text-gray-500">{clubStreak.todayDone ? "Hoy jugaron todos: el club ganó un sobre extra." : "Si hoy juegan todos los miembros, el club gana un sobre extra."}</p>
+          </Card>
+        )}
+
+        {week?.theme && (
+          <Card>
+            <p className="t-eyebrow">Esta semana</p>
+            <ul className="mt-1.5 space-y-1 text-sm">
+              <li>Desafío de cartas: <b>{week.theme.label}</b> — {week.done ? "completado" : `${week.owned}/${week.total} repetidas`} <Link to="/cartas" className="text-accent">Ver</Link></li>
+              <li>Copa del club: clasificás de lunes a jueves; las llaves van del viernes al domingo.</li>
+            </ul>
           </Card>
         )}
 

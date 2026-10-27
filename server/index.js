@@ -55,6 +55,10 @@ import liveRoutes from "./routes/live.js";
 import eventsRoutes from "./routes/events.js";
 import meRoutes from "./routes/me.js";
 import publicRoutes from "./routes/public.js";
+import clubStreamRoutes from "./routes/club-stream.js";
+import careersRoutes from "./routes/careers.js";
+import { adminRouter, jobsRouter } from "./routes/admin.js";
+import { startJobs } from "./utils/jobs.js";
 import analyticsRoutes from "./routes/analytics.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -80,6 +84,10 @@ app.use("/api/live", liveRoutes);
 app.use("/api/events", eventsRoutes);
 app.use("/api/me", meRoutes);
 app.use("/api/public", publicRoutes);
+app.use("/api/club-stream", clubStreamRoutes);
+app.use("/api/careers", careersRoutes);
+app.use("/api/admin", adminRouter);
+app.use("/api/jobs", jobsRouter);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/questions", questionsRoutes);
 app.use("/api/bonus", bonusRoutes);
@@ -165,6 +173,7 @@ initSchema()
     httpServer.listen(PORT, () => {
       console.log(`Futotal API escuchando en el puerto ${PORT} (con WS relay en /ws)`);
       startReminderTimer();
+      startJobs();
     });
   })
   .catch((err) => {

@@ -7,6 +7,7 @@ import Card from "../components/Card.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useClubs } from "./useClubs.js";
 import Copa from "./Copa.jsx";
+import { Friendlies, Legends, LiveBanner, Recap, useLiveTable } from "./ClubExtras.jsx";
 
 const VIEWS = [["hoy", "Hoy"], ["mes", "Mes"], ["general", "General"]];
 const MODES = {
@@ -27,6 +28,7 @@ export default function Club() {
   const [newMode, setNewMode] = useState("clasico");
 
   const club = clubs.find((c) => c.id === selected) || main;
+  const [live, setLive] = useState(null);
 
   const loadTable = () => {
     if (!club) return;
@@ -34,6 +36,13 @@ export default function Club() {
     api.get(`/clubs/${club.id}/table`, { params: { view } }).then((r) => setTable(r.data)).catch(() => setTable({ table: [], error: true }));
   };
   useEffect(loadTable, [club?.id, view, club?.started]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Tabla en vivo: cuando alguien del club suma puntos se avisa y se recarga la tabla.
+  useLiveTable(club?.started ? club.id : null, (e) => {
+    setLive(e);
+    loadTable();
+    setTimeout(() => setLive((cur) => (cur === e ? null : cur)), 6000);
+  });
 
   useEffect(() => {
     setInvite("");
@@ -95,6 +104,7 @@ export default function Club() {
               {club.owner && club.started && <p className="text-xs text-gray-600 mt-1">El modo solo se cambia el día 1 de cada mes.</p>}
             </Card>
 
+            <LiveBanner event={live} />
             {club.started && (
               <Card>
                 <div className="flex gap-1.5 mb-3" role="tablist">
@@ -118,6 +128,9 @@ export default function Club() {
             )}
 
             <Copa clubId={club.id} userId={user?.id} />
+            {club.started && <Recap clubId={club.id} />}
+            {club.started && <Friendlies clubId={club.id} />}
+            <Legends clubId={club.id} />
 
             <Card>
               <p className="t-eyebrow mb-2">Invitar</p>
@@ -126,6 +139,11 @@ export default function Club() {
               {invite && <button onClick={() => { const url = `${window.location.origin}/invitacion/${invite}?de=${encodeURIComponent(user?.username || "")}`; navigator.clipboard?.writeText(url).then(() => setMsg("Link copiado: tu amigo verá tu marcador como desafío."), () => setMsg(url)); }} className="btn btn-secondary btn-sm mt-3">Copiar link con desafío</button>}
               {!club.main && <button onClick={makeMain} className="btn btn-secondary btn-sm mt-3">Hacer mi club principal</button>}
               {club.main && <p className="text-xs text-gray-500 mt-3 flex items-center gap-1"><Star size={12} className="text-amber" /> Es tu club principal: de acá sale el súper sobre del podio del mes.</p>}
+            </Card>
+
+            <Card className="opacity-80">
+              <p className="t-eyebrow flex items-center gap-1.5"><Lock size={13} /> Liga de clubes · próximamente</p>
+              <p className="mt-1 text-sm text-gray-400">Se abre cuando haya al menos 5 clubes con la temporada iniciada. Mientras tanto, desafiá a otro club a un amistoso.</p>
             </Card>
 
             <Link to="/grupo" className="block text-center text-xs text-gray-500 hover:text-white">Copa, retos y más del club</Link>

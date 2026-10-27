@@ -6,6 +6,9 @@ import { CLUB_MODES, clubTable } from "../utils/ledger.js";
 import { personalStreak } from "../utils/streak.js";
 import { clubStreak, hasActiveClub, redesignOn, unlockPacksFor } from "../utils/clubs.js";
 import { cupFor, settleLastCup } from "../utils/cup.js";
+import { closeDueMonths, markSeen, pendingCeremonies } from "../utils/month.js";
+import { accept as acceptFriendly, challenge as challengeClub, closeDueFriendlies, decline as declineFriendly, friendliesOf } from "../utils/friendly.js";
+import { addDays, mondayOf } from "../utils/points.js";
 
 // Futotal 2.0: los grupos son «clubes» con modo (clásico o total), pretemporada y
 // temporada. La tabla sale del libro de puntos (utils/ledger.js).
@@ -158,6 +161,115 @@ router.get("/:id/cup", async (req, res) => {
     if (!club) return res.status(404).json({ error: "Club no encontrado" });
     const { raw, ...cup } = await cupFor(club.id);
     res.json(cup);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Ceremonias de fin de mes pendientes de ver (podio con trofeo, o «sin podio»).
+let lastClose = 0;
+router.get("/ceremony", async (req, res) => {
+  try {
+    if (Date.now() - lastClose > 5 * 60_000) { lastClose = Date.now(); await closeDueMonths().catch((e) => console.error("meses", e)); }
+    res.json({ ceremonies: await pendingCeremonies(req.userId) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+router.post("/ceremony/seen", async (req, res) => {
+  try {
+    const groupId = Number(req.body?.groupId);
+    const month = String(req.body?.month || "");
+    if (!/^\d{4}-\d{2}$/.test(month) || !(await clubFor(groupId, req.userId))) return res.status(400).json({ error: "Datos inválidos" });
+    await markSeen(req.userId, groupId, month);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Resumen del lunes: cómo terminó la semana pasada en el club.
+router.get("/:id/recap", async (req, res) => {
+  try {
+    const club = await clubFor(Number(req.params.id), req.userId);
+    if (!club) return res.status(404).json({ error: "Club no encontrado" });
+    const monday = addDays(mondayOf(todayStr()), -7);
+    const week = async (from) => (await db.execute({
+      sql: `SELECT u.id AS user_id, u.username, COALESCE(SUM(l.points), 0) AS points FROM group_members m JOIN users u ON u.id = m.user_id
+            LEFT JOIN points_ledger l ON l.user_id = m.user_id AND l.group_id = m.group_id AND l.date BETWEEN ? AND ?
+            WHERE m.group_id = ? GROUP BY u.id ORDER BY points DESC, u.username`,
+      args: [from, addDays(from, 6), club.id],
+    })).rows.map((r, i) => ({ userId: r.user_id, username: r.username, points: Number(r.points), rank: i + 1 }));
+    const now = await week(monday);
+    const before = await week(addDays(monday, -7));
+    const me = now.find((r) => r.userId === req.userId);
+    const was = before.find((r) => r.userId === req.userId);
+    const cup = (await cupFor(club.id, monday)).cup;
+    res.json({
+      week: monday, top: now.slice(0, 3).filter((r) => r.points > 0),
+      me: me ? { ...me, previousRank: was?.rank ?? null, change: was ? was.rank - me.rank : null } : null,
+      champion: cup.champion ? { userId: cup.champion.userId, username: cup.champion.username } : null,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Amistosos entre clubes.
+router.get("/:id/friendlies", async (req, res) => {
+  try {
+    const club = await clubFor(Number(req.params.id), req.userId);
+    if (!club) return res.status(404).json({ error: "Club no encontrado" });
+    await closeDueFriendlies().catch((e) => console.error("amistosos", e));
+    res.json({ owner: club.created_by === req.userId, friendlies: await friendliesOf(club.id) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+router.post("/:id/friendly", async (req, res) => {
+  try {
+    const club = await clubFor(Number(req.params.id), req.userId);
+    if (!club) return res.status(404).json({ error: "Club no encontrado" });
+    const out = await challengeClub(club.id, req.body?.code, req.userId);
+    if (out.error) return res.status(out.status).json({ error: out.error });
+    res.status(201).json(out);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+router.post("/friendlies/:fid/:action", async (req, res) => {
+  try {
+    const fid = Number(req.params.fid);
+    const out = req.params.action === "accept" ? await acceptFriendly(fid, req.userId) : req.params.action === "decline" ? await declineFriendly(fid, req.userId) : { error: "Acción inválida", status: 400 };
+    if (out.error) return res.status(out.status).json({ error: out.error });
+    res.json(out);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Leyendas del club: las 5 mejores carreras de Cotrero de los miembros (la mejor de cada uno).
+router.get("/:id/legends", async (req, res) => {
+  try {
+    const club = await clubFor(Number(req.params.id), req.userId);
+    if (!club) return res.status(404).json({ error: "Club no encontrado" });
+    const rows = (await db.execute({
+      sql: `SELECT u.username, c.game, c.score, c.label, c.pos, c.name FROM career_scores c
+            JOIN group_members m ON m.user_id = c.user_id AND m.group_id = ? JOIN users u ON u.id = c.user_id
+            ORDER BY c.score DESC LIMIT 5`,
+      args: [club.id],
+    })).rows;
+    res.json({ legends: rows.map((r, i) => ({ place: i + 1, username: r.username, name: r.name, score: Number(r.score), label: r.label, pos: r.pos, game: r.game })) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });
