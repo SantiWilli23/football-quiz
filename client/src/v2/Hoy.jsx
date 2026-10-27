@@ -8,6 +8,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useClubs } from "./useClubs.js";
 import { track } from "./analytics.js";
 import { pendingMatch, syncQueue } from "./offline.js";
+import EventCards from "./Evento.jsx";
 
 // Hoy: lo que importa del día en pocos bloques. El partido del día arriba, tu club
 // debajo, y recién después seguir jugando.
@@ -87,6 +88,8 @@ export default function Hoy() {
             </>
           )}
         </Card>
+
+        <EventCards groupId={main?.id} played={!!played} />
 
         <Card>
           <div className="flex items-center justify-between mb-2">

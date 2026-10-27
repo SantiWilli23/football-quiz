@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { db } from "../db/client.js";
 import { dailySeed, rng, shuffle } from "./futgames.js";
 import { POOL as VALUE_POOL } from "../routes/a-quien-me-compro.js";
+import { eventOn, specialItems } from "./events.js";
 
 // Partido del día (Futotal 2.0): tres partes de ~1 minuto, iguales para todo el mundo.
 //   1T  ¿Quién es?   — 6 jugadores por su carrera (4 opciones)
@@ -81,7 +82,11 @@ export async function matchFor(date) {
   const saved = (await db.execute({ sql: "SELECT items_json FROM daily_matches WHERE date = ?", args: [date] })).rows[0];
   if (saved) return JSON.parse(saved.items_json);
   const rand = rng(dailySeed(date, "partido-del-dia"));
-  const items = [...quienItems(rand, PART_ITEMS[0]), ...masMenosItems(rand, PART_ITEMS[1]), ...(await penalItems(rand, PART_ITEMS[2]))];
+  let items = [...quienItems(rand, PART_ITEMS[0]), ...masMenosItems(rand, PART_ITEMS[1]), ...(await penalItems(rand, PART_ITEMS[2]))];
+  // Día de partido temático: el tercer tiempo es el juego especial del evento (en vez de los penales).
+  const ev = await eventOn(date);
+  const special = ev ? specialItems(ev, date) : null;
+  if (special) items = [...items.filter((i) => i.part !== 3), ...special];
   await db.execute({ sql: "INSERT OR IGNORE INTO daily_matches (date, items_json) VALUES (?, ?)", args: [date, JSON.stringify(items)] });
   return items;
 }

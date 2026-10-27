@@ -1292,3 +1292,58 @@ CREATE TABLE IF NOT EXISTS card_trades (
 );
 
 CREATE INDEX IF NOT EXISTS idx_card_trades_users ON card_trades(from_user, to_user, date);
+
+-- Futotal 2.0: partidos temáticos (clásicos y finales reales) y lo que juega la gente alrededor.
+CREATE TABLE IF NOT EXISTS events (
+  date TEXT PRIMARY KEY,
+  kit_key TEXT NOT NULL,
+  league TEXT NOT NULL,
+  event_id TEXT NOT NULL,
+  home_name TEXT NOT NULL,
+  home_id TEXT,
+  away_name TEXT NOT NULL,
+  away_id TEXT,
+  kickoff TEXT,
+  real_result TEXT,
+  resolved_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS event_preds (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  date TEXT NOT NULL,
+  pick TEXT NOT NULL,
+  PRIMARY KEY (user_id, date)
+);
+
+CREATE TABLE IF NOT EXISTS event_sides (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  date TEXT NOT NULL,
+  side TEXT NOT NULL,
+  PRIMARY KEY (user_id, date)
+);
+
+CREATE TABLE IF NOT EXISTS event_badges (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  date TEXT NOT NULL,
+  kit_key TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'partido',
+  PRIMARY KEY (user_id, date, kind)
+);
+
+CREATE TABLE IF NOT EXISTS line_guesses (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  event_date TEXT NOT NULL,
+  team TEXT NOT NULL,
+  xi_json TEXT NOT NULL,
+  hits INTEGER,
+  revealed_at TEXT,
+  PRIMARY KEY (user_id, event_date)
+);
+
+CREATE TABLE IF NOT EXISTS figure_votes (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  event_date TEXT NOT NULL,
+  player TEXT NOT NULL,
+  PRIMARY KEY (user_id, group_id, event_date)
+);

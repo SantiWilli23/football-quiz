@@ -4,7 +4,8 @@ import { requireAuth } from "../middleware/auth.js";
 import { todayStr, addDays } from "../utils/points.js";
 import { creditPoints, clubTable } from "../utils/ledger.js";
 import { grantPack } from "../utils/rewards.js";
-import { grantClubStreakPacks } from "../utils/clubs.js";
+import { grantClubStreakPacks, redesignOn } from "../utils/clubs.js";
+import { ensureEventsDetected, eventOn, kitByKey } from "../utils/events.js";
 import { matchFor, publicView, itemPoints, trustedMs, partTotals, packQualityForTotal } from "../utils/daily-match.js";
 
 // Partido del día (Futotal 2.0). El cliente solo manda respuestas y el servidor calcula
@@ -38,6 +39,8 @@ async function memberOf(groupId, userId) {
 router.get("/today", async (req, res) => {
   try {
     const date = todayStr();
+    // Antes de armar el partido se mira si hoy hay un clásico o una final real.
+    if (redesignOn()) await ensureEventsDetected(date);
     const items = await matchFor(date);
     const answered = await answersOf(req.userId, date);
     const result = await resultOf(req.userId, date);
@@ -118,11 +121,20 @@ async function closeMatch(userId, date) {
   }
   const quality = packQualityForTotal(total);
   await grantPack(userId, date, quality, `partido-${date}`);
+  // Partido temático: insignia del evento y un sobre del evento (de la temática del kit).
+  let eventReward = null;
+  const ev = await eventOn(date);
+  if (ev) {
+    const kit = kitByKey(ev.kit_key);
+    await db.execute({ sql: "INSERT OR IGNORE INTO event_badges (user_id, date, kit_key, kind) VALUES (?, ?, ?, 'partido')", args: [userId, date, ev.kit_key] });
+    const packRes = await db.execute({ sql: "INSERT OR IGNORE INTO card_packs (user_id, date, source, theme) VALUES (?, ?, ?, ?)", args: [userId, date, `bueno-evento-${date}`, kit?.sbcTheme || null] });
+    eventReward = { badge: kit?.badge || null, pack: packRes.rowsAffected > 0 };
+  }
   // Si con este partido jugaron todos los miembros de algún club, el club gana un sobre extra.
   const clubIds = (await db.execute({ sql: "SELECT group_id FROM group_members WHERE user_id = ?", args: [userId] })).rows;
   let clubPack = false;
   for (const c of clubIds) if ((await grantClubStreakPacks(c.group_id, date)) > 0) clubPack = true;
-  return { status: 200, body: { parts, total, club, pack: quality, clubPack, dailyCard, already: false } };
+  return { status: 200, body: { parts, total, club, pack: quality, clubPack, dailyCard, event: eventReward, already: false } };
 }
 
 router.post("/finish", async (req, res) => {

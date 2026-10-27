@@ -1,0 +1,62 @@
+{
+  "_aviso": "Un kit por tipo de evento: agregar un evento es llenar un kit. Los datos de los juegos especiales (static) se revisaron a mano; los de tipo club salen de las carreras de la base de jugadores, que también hay que revisar antes de publicar.",
+  "kits": [
+    {
+      "key": "superclasico",
+      "label": "El Superclásico",
+      "priority": 1,
+      "leagues": ["chi.1"],
+      "teams": [
+        { "name": "Colo-Colo", "aliases": ["colo colo"], "career": "Colo-Colo", "color": "#f5f5f5", "alt": "#111111" },
+        { "name": "U. de Chile", "aliases": ["universidad de chile", "u de chile", "u. de chile"], "career": "Universidad de Chile", "color": "#1c3f94", "alt": "#d71920" }
+      ],
+      "entry": "humo",
+      "palette": { "bg": "#10131a", "a": "#f5f5f5", "b": "#1c3f94" },
+      "special": { "kind": "club", "title": "¿Albo, azul o los dos?" },
+      "sbcTheme": "la_roja",
+      "badge": "Superclásico"
+    },
+    {
+      "key": "clasico",
+      "label": "El Clásico",
+      "priority": 2,
+      "leagues": ["esp.1"],
+      "teams": [
+        { "name": "Real Madrid", "aliases": ["real madrid"], "career": "Real Madrid", "color": "#f5f5f5", "alt": "#c9a227" },
+        { "name": "Barcelona", "aliases": ["barcelona", "fc barcelona"], "career": "Barcelona", "color": "#a50044", "alt": "#004d98" }
+      ],
+      "entry": "partida",
+      "palette": { "bg": "#10131a", "a": "#f5f5f5", "b": "#a50044" },
+      "special": {
+        "kind": "club",
+        "title": "¿Messi, Cristiano o...?",
+        "static": [
+          { "q": "Ganó la Champions League con el Real Madrid", "options": ["Messi", "Cristiano", "Los dos", "Ninguno"], "answer": 1 },
+          { "q": "Ganó la Champions League con el Barcelona", "options": ["Messi", "Cristiano", "Los dos", "Ninguno"], "answer": 0 },
+          { "q": "Ganó un Mundial con su selección", "options": ["Messi", "Cristiano", "Los dos", "Ninguno"], "answer": 0 },
+          { "q": "Ganó una Eurocopa con su selección", "options": ["Messi", "Cristiano", "Los dos", "Ninguno"], "answer": 1 },
+          { "q": "Fue campeón de LaLiga", "options": ["Messi", "Cristiano", "Los dos", "Ninguno"], "answer": 2 },
+          { "q": "Ganó el Balón de Oro", "options": ["Messi", "Cristiano", "Los dos", "Ninguno"], "answer": 2 },
+          { "q": "Jugó en la Juventus", "options": ["Messi", "Cristiano", "Los dos", "Ninguno"], "answer": 1 },
+          { "q": "Jugó en el Paris Saint-Germain", "options": ["Messi", "Cristiano", "Los dos", "Ninguno"], "answer": 0 },
+          { "q": "Jugó en el Manchester United", "options": ["Messi", "Cristiano", "Los dos", "Ninguno"], "answer": 1 }
+        ]
+      },
+      "sbcTheme": "clasico",
+      "badge": "Clásico"
+    },
+    {
+      "key": "final_champions",
+      "label": "Final de Champions",
+      "priority": 3,
+      "leagues": ["uefa.champions"],
+      "finalOnly": true,
+      "teams": [],
+      "entry": "estrellas",
+      "palette": { "bg": "#0a1230", "a": "#e8eefc", "b": "#2b4cc2" },
+      "special": { "kind": "club", "title": "Campeones de Europa: ¿en qué club jugó?" },
+      "sbcTheme": null,
+      "badge": "Final de Champions"
+    }
+  ]
+}

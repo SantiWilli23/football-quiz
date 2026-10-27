@@ -202,7 +202,8 @@ export default function Partido() {
     api.get("/daily/club-stats", { params: { groupId: main.id } }).then((r) => setClubStats(r.data.questions)).catch(() => setClubStats(null));
   }, [phase, practice, main]);
 
-  const part = PARTS[(item?.part || 1) - 1];
+  const basePart = PARTS[(item?.part || 1) - 1];
+  const part = item?.kind === "especial" ? { ...basePart, title: item.title } : basePart;
   const hits = answers.filter((a) => a.ok).length;
 
   if (error && phase === "loading") {
@@ -284,6 +285,7 @@ export default function Partido() {
         {item.kind === "quien" && <Quien item={item} showing={showing} last={last} onPick={submit} />}
         {item.kind === "mas_menos" && <MasMenos item={item} showing={showing} last={last} onPick={submit} />}
         {item.kind === "penal" && <Penal item={item} showing={showing} last={last} onPick={submit} />}
+        {item.kind === "especial" && <Especial item={item} showing={showing} last={last} onPick={submit} />}
 
         {showing && (
           <button className="btn btn-secondary w-full" onClick={() => next(answers.length)}>Siguiente</button>
@@ -372,6 +374,19 @@ function Penal({ item, showing, last, onPick }) {
   );
 }
 
+// Juego especial de un partido temático (clásico o final): una pregunta con tres o cuatro opciones.
+function Especial({ item, showing, last, onPick }) {
+  return (
+    <div className="space-y-3">
+      <div className="rounded-3xl border border-accent/50 bg-gradient-to-br from-accent/10 to-transparent p-4 text-center">
+        <p className="t-eyebrow">{item.title}</p>
+        <p className="mt-1 font-semibold leading-snug">{item.question}</p>
+      </div>
+      <Options item={item} showing={showing} last={last} onPick={onPick} />
+    </div>
+  );
+}
+
 function useCountUp(target, run) {
   const [n, setN] = useState(0);
   useEffect(() => {
@@ -441,6 +456,7 @@ function Resultado({ result, practice, items, answers, clubStats, main, finishin
             : <p className="text-gray-300">{result.already ? "Tus puntos ya están en la tabla del club." : would > 0 ? `Habrías sumado ${would} pts, pero ningún club tiene la temporada iniciada todavía.` : "Todavía no estás en un club con la temporada iniciada."}</p>}
           {result.dailyCard && <p className="text-accent">Carta del día: <b>{result.dailyCard}</b>. Quedó en tu álbum del mes (Cartas).</p>}
           {result.clubPack && <p className="text-accent">¡Jugaron todos los de tu club hoy! El club gana un sobre extra.</p>}
+          {result.event?.badge && <p className="text-accent">Partido temático: ganaste la insignia <b>{result.event.badge}</b>{result.event.pack ? " y un sobre del evento." : "."}</p>}
           {result.pack && <p className="text-gray-400">Ganaste un sobre {result.pack === "top" ? "top" : result.pack === "bueno" ? "bueno" : "normal"}. Lo abrís en Cartas.</p>}
         </div>
       )}
