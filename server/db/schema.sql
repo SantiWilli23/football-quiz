@@ -1272,3 +1272,23 @@ CREATE TABLE IF NOT EXISTS question_stats (
   correct INTEGER NOT NULL DEFAULT 0,
   total_ms INTEGER NOT NULL DEFAULT 0
 );
+
+-- Futotal 2.0: carta del día (edición con la fecha) e intercambios de repetidas entre amigos.
+CREATE TABLE IF NOT EXISTS daily_cards (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  date TEXT NOT NULL,
+  player_name TEXT NOT NULL,
+  PRIMARY KEY (user_id, date)
+);
+
+CREATE TABLE IF NOT EXISTS card_trades (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  from_user INTEGER NOT NULL REFERENCES users(id),
+  to_user INTEGER NOT NULL REFERENCES users(id),
+  give TEXT NOT NULL,
+  want TEXT NOT NULL,
+  date TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending'
+);
+
+CREATE INDEX IF NOT EXISTS idx_card_trades_users ON card_trades(from_user, to_user, date);

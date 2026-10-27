@@ -40,7 +40,12 @@ router.get("/today", async (req, res) => {
     const date = todayStr();
     const items = await matchFor(date);
     const answered = await answersOf(req.userId, date);
-    res.json({ date, items: publicView(items), answered: reveal(items, answered), result: await resultOf(req.userId, date) });
+    const result = await resultOf(req.userId, date);
+    if (result) {
+      const card = (await db.execute({ sql: "SELECT player_name FROM daily_cards WHERE user_id = ? AND date = ?", args: [req.userId, date] })).rows[0];
+      result.dailyCard = card ? card.player_name : null;
+    }
+    res.json({ date, items: publicView(items), answered: reveal(items, answered), result });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });
@@ -105,13 +110,19 @@ async function closeMatch(userId, date) {
   });
   if (ins.rowsAffected === 0) return { status: 200, body: { ...(await resultOf(userId, date)), already: true } };
   const club = await creditPoints(userId, date, "partido_dia", total);
+  // Carta del día: si acertás el primer «¿Quién es?», te llevás a ese jugador (edición con la fecha).
+  let dailyCard = null;
+  if (answered.find((a) => a.idx === 0)?.ok) {
+    dailyCard = items[0].options[items[0].answer];
+    await db.execute({ sql: "INSERT OR IGNORE INTO daily_cards (user_id, date, player_name) VALUES (?, ?, ?)", args: [userId, date, dailyCard] });
+  }
   const quality = packQualityForTotal(total);
   await grantPack(userId, date, quality, `partido-${date}`);
   // Si con este partido jugaron todos los miembros de algún club, el club gana un sobre extra.
   const clubIds = (await db.execute({ sql: "SELECT group_id FROM group_members WHERE user_id = ?", args: [userId] })).rows;
   let clubPack = false;
   for (const c of clubIds) if ((await grantClubStreakPacks(c.group_id, date)) > 0) clubPack = true;
-  return { status: 200, body: { parts, total, club, pack: quality, clubPack, already: false } };
+  return { status: 200, body: { parts, total, club, pack: quality, clubPack, dailyCard, already: false } };
 }
 
 router.post("/finish", async (req, res) => {

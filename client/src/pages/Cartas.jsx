@@ -6,6 +6,8 @@ import Card from "../components/Card.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import MatchPitch from "../components/MatchPitch.jsx";
 import CardExtrasPanel from "../components/CardExtrasPanel.jsx";
+import CartasTema from "../v2/CartasTema.jsx";
+import useFutotal2 from "../v2/useFutotal2.js";
 import { useToast } from "../context/ToastContext.jsx";
 import { playSfx } from "../utils/sfx.js";
 
@@ -106,6 +108,7 @@ function PackOpening({ cards, onDone }) {
 export default function Cartas() {
   const { toast } = useToast();
   const [tab, setTab] = useState("sobres");
+  const { on: v2 } = useFutotal2();
   const [state, setState] = useState(null);
   const [collection, setCollection] = useState([]);
   const [opened, setOpened] = useState(null);
@@ -330,6 +333,7 @@ export default function Cartas() {
             <p className="t-meta mt-4">Ganás sobres con el diario, cumpliendo el reto del día y ganando partidos (máx. 2 por día) — mejor calidad cuanto más contundente la victoria.</p>
           </Card>
           {opened && <PackOpening cards={opened} />}
+          {v2 && <CartasTema lockedPacks={state.lockedPacks || 0} onChanged={load} />}
 
           <Card>
             <p className="t-eyebrow mb-1">Tienda de sobres</p>

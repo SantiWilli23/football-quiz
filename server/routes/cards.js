@@ -10,7 +10,7 @@ import { rankingBetween } from "./stats.js";
 import { isoWeekKey } from "../utils/challenges.js";
 import { leagueForClub } from "../data/league-clubs.js";
 import { grantQuinielaPacks, grantWeeklyGamePacks } from "../utils/daily-games.js";
-import { packStatus } from "../utils/clubs.js";
+import { packStatus, redesignOn } from "../utils/clubs.js";
 import { buildExtraCards, drawExtra, EXTRA_PACKS, extraPub, extrasFor, lineupEffects, refreshFormIfStale, CAPTAIN_CHEM_CAP_EXTRA } from "../utils/card-types.js";
 
 // Reto semanal de Cartas: cada victoria vale 20 + 10 por gol de diferencia,
@@ -57,6 +57,7 @@ router.use(requireAuth);
 // activó. Sin eso, TODA la sección de Cartas devuelve 404 — no aparece
 // "deshabilitada", directamente no existe, tal como se decidió.
 async function hasCardsAccess(userId) {
+  if (redesignOn()) return true; // Futotal 2.0: Cartas es para todos, no depende del club
   const row = (await db.execute({
     sql: `SELECT 1 FROM group_members gm JOIN groups_t g ON g.id = gm.group_id
           WHERE gm.user_id = ? AND g.cards_enabled = 1 LIMIT 1`,
@@ -374,7 +375,7 @@ router.post("/claim-daily", async (req, res) => {
 router.post("/open", async (req, res) => {
   try {
     const { openable, locked } = await packStatus(req.userId);
-    const pack = openable.length ? (await db.execute({ sql: "SELECT id, source FROM card_packs WHERE id = ?", args: [openable[0]] })).rows[0] : null;
+    const pack = openable.length ? (await db.execute({ sql: "SELECT id, source, theme FROM card_packs WHERE id = ?", args: [openable[0]] })).rows[0] : null;
     if (!pack) return res.status(400).json({ error: locked.length ? "Tus sobres están guardados: entrá a un club con la temporada iniciada para abrirlos" : "No tenés sobres para abrir" });
     const upd = await db.execute({ sql: "UPDATE card_packs SET opened_at = datetime('now') WHERE id = ? AND opened_at IS NULL", args: [pack.id] });
     if (upd.rowsAffected === 0) return res.status(409).json({ error: "Ese sobre ya se abrió" });
@@ -382,7 +383,15 @@ router.post("/open", async (req, res) => {
     // Una lectura de lo que ya tenés + una escritura en lote (antes eran 2 idas
     // a la base por carta, 10 en total, y abrir un sobre se sentía lento).
     const misses = Number((await db.execute({ sql: "SELECT misses FROM card_pity WHERE user_id = ?", args: [req.userId] })).rows[0]?.misses || 0);
-    const drawn = Array.from({ length: 5 }, (_, i) => drawCard(quality, i, misses * 3));
+    let drawn;
+    if (pack.theme && themeByKey(pack.theme)) {
+      drawn = drawThemePack(themeByKey(pack.theme));
+    } else {
+      drawn = Array.from({ length: 5 }, (_, i) => drawCard(quality, i, misses * 3));
+      // Mientras haya un SBC temático activo, cada sobre trae una carta de la temática.
+      const active = redesignOn() ? activeTheme(todayStr()) : null;
+      if (active) drawn[4] = drawFromTheme(active, quality);
+    }
     // Salió una estrella (o una carta especial): se reinicia. Si no, el próximo sobre tiene 3 puntos más.
     const gotStar = drawn.some((c) => c.tier === "estrella" || c.special);
     await db.execute({
@@ -730,6 +739,291 @@ router.post("/match", async (req, res) => {
       events, // línea de tiempo del partido (mismo formato que DT League) para la cancha animada
       pack,
     });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// ---------- Carta del día y álbum calendario (Futotal 2.0) ----------
+// Si acertás el «¿Quién es?» del partido del día te llevás esa carta con la fecha. Es una
+// edición: no se vende ni se entrega en un SBC (vive en daily_cards, no en user_cards).
+// Si un día no jugás o fallás, la casilla queda vacía para siempre.
+router.get("/album", async (req, res) => {
+  try {
+    const today = todayStr();
+    const month = /^\d{4}-\d{2}$/.test(String(req.query.month || "")) ? String(req.query.month) : today.slice(0, 7);
+    const rows = (await db.execute({ sql: "SELECT date, player_name FROM daily_cards WHERE user_id = ? AND date LIKE ?", args: [req.userId, `${month}-%`] })).rows;
+    const byDate = new Map(rows.map((r) => [r.date, r.player_name]));
+    const [y, m] = month.split("-").map(Number);
+    const days = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    const list = [];
+    for (let d = 1; d <= days; d++) {
+      const date = `${month}-${String(d).padStart(2, "0")}`;
+      const name = byDate.get(date);
+      const card = name ? BY_NAME.get(name) : null;
+      list.push({ date, future: date > today, player: name || null, tier: card?.tier || null, ovr: card?.ovr || null });
+    }
+    res.json({ month, days: list, collected: byDate.size });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// ---------- Intercambio de repetidas con un amigo del club (Futotal 2.0) ----------
+// Una carta repetida tuya por una repetida de él, de la misma categoría (tier). Cada uno
+// puede hacer un intercambio por día. La propuesta vence al terminar el día.
+async function sharesClub(a, b) {
+  return !!(await db.execute({
+    sql: "SELECT 1 FROM group_members x JOIN group_members y ON y.group_id = x.group_id AND y.user_id = ? WHERE x.user_id = ? LIMIT 1",
+    args: [b, a],
+  })).rows[0];
+}
+
+const copiesOf = async (userId, name) => Number((await db.execute({ sql: "SELECT count FROM user_cards WHERE user_id = ? AND player_name = ?", args: [userId, name] })).rows[0]?.count || 0);
+
+async function tradeUsedToday(userId, date) {
+  return !!(await db.execute({
+    sql: "SELECT 1 FROM card_trades WHERE date = ? AND status = 'accepted' AND (from_user = ? OR to_user = ?) LIMIT 1",
+    args: [date, userId, userId],
+  })).rows[0];
+}
+
+router.get("/trades/friends", async (req, res) => {
+  try {
+    const rows = (await db.execute({
+      sql: `SELECT DISTINCT u.id, u.username FROM group_members x
+            JOIN group_members y ON y.group_id = x.group_id AND y.user_id <> x.user_id
+            JOIN users u ON u.id = y.user_id WHERE x.user_id = ? ORDER BY u.username`,
+      args: [req.userId],
+    })).rows;
+    res.json({ friends: rows.map((r) => ({ id: r.id, username: r.username })) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+router.get("/trades", async (req, res) => {
+  try {
+    const today = todayStr();
+    const rows = (await db.execute({
+      sql: `SELECT t.id, t.from_user, t.to_user, t.give, t.want, t.status, t.date, fu.username AS from_name, tu.username AS to_name
+            FROM card_trades t JOIN users fu ON fu.id = t.from_user JOIN users tu ON tu.id = t.to_user
+            WHERE t.date = ? AND (t.from_user = ? OR t.to_user = ?) ORDER BY t.id DESC`,
+      args: [today, req.userId, req.userId],
+    })).rows;
+    const map = (r) => ({ id: r.id, from: { id: r.from_user, username: r.from_name }, to: { id: r.to_user, username: r.to_name }, give: r.give, want: r.want, status: r.status });
+    res.json({ trades: rows.map(map), usedToday: await tradeUsedToday(req.userId, today) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+router.post("/trades", async (req, res) => {
+  try {
+    const today = todayStr();
+    const toUser = Number(req.body?.toUserId);
+    const give = String(req.body?.give || "");
+    const want = String(req.body?.want || "");
+    if (!Number.isInteger(toUser) || toUser === req.userId || !(await sharesClub(req.userId, toUser))) return res.status(400).json({ error: "Solo podés intercambiar con amigos de tu club" });
+    const a = BY_NAME.get(give);
+    const b = BY_NAME.get(want);
+    if (!a || !b) return res.status(400).json({ error: "Esa carta no existe" });
+    if (a.tier !== b.tier) return res.status(400).json({ error: "Tienen que ser de la misma categoría" });
+    if (await tradeUsedToday(req.userId, today)) return res.status(409).json({ error: "Hoy ya hiciste un intercambio" });
+    if ((await copiesOf(req.userId, give)) < 2) return res.status(400).json({ error: "Solo podés ofrecer cartas repetidas" });
+    if ((await copiesOf(toUser, want)) < 2) return res.status(400).json({ error: "Tu amigo no tiene esa carta repetida" });
+    const dup = (await db.execute({ sql: "SELECT 1 FROM card_trades WHERE from_user = ? AND date = ? AND status = 'pending'", args: [req.userId, today] })).rows[0];
+    if (dup) return res.status(409).json({ error: "Ya tenés una propuesta pendiente hoy" });
+    const ins = await db.execute({ sql: "INSERT INTO card_trades (from_user, to_user, give, want, date) VALUES (?, ?, ?, ?, ?)", args: [req.userId, toUser, give, want, today] });
+    res.status(201).json({ ok: true, id: Number(ins.lastInsertRowid) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+router.post("/trades/:id/accept", async (req, res) => {
+  try {
+    const today = todayStr();
+    const t = (await db.execute({ sql: "SELECT * FROM card_trades WHERE id = ?", args: [Number(req.params.id)] })).rows[0];
+    if (!t || t.to_user !== req.userId) return res.status(404).json({ error: "Propuesta no encontrada" });
+    if (t.status !== "pending") return res.status(409).json({ error: "Esa propuesta ya se resolvió" });
+    if (t.date !== today) return res.status(409).json({ error: "La propuesta venció" });
+    if (await tradeUsedToday(req.userId, today) || await tradeUsedToday(t.from_user, today)) return res.status(409).json({ error: "Uno de los dos ya hizo un intercambio hoy" });
+    if ((await copiesOf(t.from_user, t.give)) < 2 || (await copiesOf(t.to_user, t.want)) < 2) return res.status(409).json({ error: "Alguna de las cartas ya no está repetida" });
+    const bump = (user, name, delta) => ({
+      sql: "INSERT INTO user_cards (user_id, player_name, count) VALUES (?, ?, ?) ON CONFLICT(user_id, player_name) DO UPDATE SET count = count + ?",
+      args: [user, name, Math.max(delta, 0), delta],
+    });
+    await db.batch([
+      bump(t.from_user, t.give, -1), bump(t.to_user, t.give, 1),
+      bump(t.to_user, t.want, -1), bump(t.from_user, t.want, 1),
+      { sql: "UPDATE card_trades SET status = 'accepted' WHERE id = ?", args: [t.id] },
+    ], "write");
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+router.post("/trades/:id/decline", async (req, res) => {
+  try {
+    const t = (await db.execute({ sql: "SELECT * FROM card_trades WHERE id = ?", args: [Number(req.params.id)] })).rows[0];
+    if (!t || (t.to_user !== req.userId && t.from_user !== req.userId)) return res.status(404).json({ error: "Propuesta no encontrada" });
+    if (t.status !== "pending") return res.status(409).json({ error: "Esa propuesta ya se resolvió" });
+    await db.execute({ sql: "UPDATE card_trades SET status = ? WHERE id = ?", args: [t.from_user === req.userId ? "cancelled" : "declined", t.id] });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// ---------- SBC temático (Futotal 2.0) ----------
+// Cada 2 semanas hay una temática (Portugal, La Roja, El Clásico…). El desafío pide 11
+// cartas REPETIDAS de la temática en una formación a elección (siempre queda una copia de
+// cada una) y paga un sobre muy bueno de esa temática. Para que sea alcanzable, mientras
+// dura cada sobre ganado trae una carta de la temática y la tienda vende el sobre temático.
+const SBC_FORMATIONS = {
+  "4-3-3": { GK: 1, DEF: 4, MID: 3, FWD: 3 },
+  "4-4-2": { GK: 1, DEF: 4, MID: 4, FWD: 2 },
+  "3-5-2": { GK: 1, DEF: 3, MID: 5, FWD: 2 },
+};
+const THEME_SHOP_PRICE = 100;
+const THEME_DEFS = [
+  { key: "portugal", label: "Portugal", test: (c) => c.nationality === "Portugal" },
+  { key: "la_roja", label: "La Roja", test: (c) => c.nationality === "Chile" },
+  { key: "clasico", label: "El Clásico", test: (c) => c.clubs.has("Real Madrid") || c.clubs.has("Barcelona") },
+  { key: "premier", label: "Premier League", test: (c) => c.league === "premier" },
+  { key: "argentina", label: "Argentina", test: (c) => c.nationality === "Argentina" },
+  { key: "leyendas", label: "Leyendas", test: (c) => c.retired },
+  { key: "brasil", label: "Brasil", test: (c) => c.nationality === "Brasil" },
+];
+const THEME_POS = ["GK", "DEF", "MID", "FWD"];
+const themePool = (def) => CARDS.filter((c) => !c.special && THEME_POS.includes(c.pos) && def.test(c));
+// Solo entran temas con suficientes jugadores por línea (al menos 2 arqueros) para que
+// cualquiera de las formaciones se pueda armar.
+const THEMES = THEME_DEFS.filter((def) => {
+  const by = { GK: 0, DEF: 0, MID: 0, FWD: 0 };
+  for (const c of themePool(def)) by[c.pos] += 1;
+  return by.GK >= 2 && by.DEF >= 5 && by.MID >= 5 && by.FWD >= 4;
+}).map((def) => ({ ...def, pool: themePool(def) }));
+const themeByKey = (key) => THEMES.find((t) => t.key === key) || null;
+
+const THEME_EPOCH = "2026-01-05"; // un lunes: las temáticas cambian cada 14 días desde acá
+export function themePeriod(date) {
+  const days = Math.floor((new Date(`${date}T12:00:00Z`) - new Date(`${THEME_EPOCH}T12:00:00Z`)) / 86400000);
+  const k = Math.max(0, Math.floor(days / 14));
+  const start = addDays(THEME_EPOCH, k * 14);
+  return { k, start, end: addDays(start, 13), theme: THEMES.length ? THEMES[k % THEMES.length] : null };
+}
+const activeTheme = (date) => themePeriod(date).theme;
+
+const TIER_ORDER = ["estrella", "oro", "plata", "bronce"];
+function drawFromTheme(theme, quality = "bueno") {
+  const weights = (PACKS[quality] || PACKS.bueno).weights;
+  const byTier = (t) => theme.pool.filter((c) => c.tier === t);
+  let r = Math.random() * TIERS.reduce((sum, t) => sum + (byTier(t.key).length ? weights[t.key] ?? t.weight : 0), 0);
+  for (const t of TIERS) {
+    const pool = byTier(t.key);
+    if (!pool.length) continue;
+    r -= weights[t.key] ?? t.weight;
+    if (r <= 0) return pickOf(pool);
+  }
+  return pickOf(theme.pool);
+}
+// Sobre muy bueno de la temática: 5 cartas de la temática y la primera es la mejor tier disponible.
+function drawThemePack(theme) {
+  const top = TIER_ORDER.map((t) => theme.pool.filter((c) => c.tier === t)).find((p) => p.length) || theme.pool;
+  const cards = [pickOf(top)];
+  for (let i = 1; i < 5; i++) cards.push(drawFromTheme(theme, "bueno"));
+  return cards;
+}
+
+async function ownedRepeats(userId, theme) {
+  const rows = (await db.execute({ sql: "SELECT player_name, count FROM user_cards WHERE user_id = ? AND count >= 2", args: [userId] })).rows;
+  const names = new Set(theme.pool.map((c) => c.name));
+  return rows.filter((r) => names.has(r.player_name)).map((r) => ({ ...BY_NAME.get(r.player_name), count: Number(r.count) }));
+}
+
+function bestFormation(repeats) {
+  const have = { GK: 0, DEF: 0, MID: 0, FWD: 0 };
+  for (const c of repeats) have[c.pos] += 1;
+  let best = null;
+  for (const [name, need] of Object.entries(SBC_FORMATIONS)) {
+    const missing = {};
+    let total = 0;
+    for (const p of THEME_POS) { const m = Math.max(0, need[p] - have[p]); if (m) missing[p] = m; total += m; }
+    if (!best || total < best.total) best = { formation: name, missing, total };
+  }
+  return { have, best, owned: Math.min(11, 11 - best.total) };
+}
+
+router.get("/sbc-tema", async (req, res) => {
+  try {
+    const { theme, start, end } = themePeriod(todayStr());
+    if (!theme) return res.json({ theme: null });
+    const repeats = await ownedRepeats(req.userId, theme);
+    const done = !!(await db.execute({ sql: "SELECT 1 FROM card_packs WHERE user_id = ? AND date = ? AND source = ?", args: [req.userId, start, `bueno-sbctema-${theme.key}`] })).rows[0];
+    const { have, best, owned } = bestFormation(repeats);
+    res.json({
+      theme: { key: theme.key, label: theme.label, start, end }, formations: SBC_FORMATIONS,
+      done, shopPrice: THEME_SHOP_PRICE, have, best, owned, total: 11,
+      candidates: repeats.sort((a, b) => b.ovr - a.ovr).map((c) => ({ name: c.name, pos: c.pos, ovr: c.ovr, tier: c.tier, count: c.count })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+router.post("/sbc-tema/submit", async (req, res) => {
+  try {
+    const { theme, start } = themePeriod(todayStr());
+    if (!theme) return res.status(404).json({ error: "No hay un desafío activo" });
+    const formation = SBC_FORMATIONS[req.body?.formation];
+    if (!formation) return res.status(400).json({ error: "Elegí una formación: 4-3-3, 4-4-2 o 3-5-2" });
+    const names = Array.isArray(req.body?.players) ? [...new Set(req.body.players)] : [];
+    if (names.length !== 11) return res.status(400).json({ error: "El desafío necesita 11 cartas distintas" });
+    const source = `bueno-sbctema-${theme.key}`;
+    if ((await db.execute({ sql: "SELECT 1 FROM card_packs WHERE user_id = ? AND date = ? AND source = ?", args: [req.userId, start, source] })).rows[0]) {
+      return res.status(409).json({ error: "Ya completaste este desafío" });
+    }
+    const inTheme = new Set(theme.pool.map((c) => c.name));
+    const cards = names.map((n) => BY_NAME.get(n));
+    if (cards.some((c) => !c || !inTheme.has(c.name))) return res.status(400).json({ error: `Todas las cartas tienen que ser de la temática: ${theme.label}` });
+    const count = { GK: 0, DEF: 0, MID: 0, FWD: 0 };
+    for (const c of cards) count[c.pos] += 1;
+    if (THEME_POS.some((p) => count[p] !== formation[p])) return res.status(400).json({ error: "Las cartas no calzan con esa formación" });
+    const owned = new Map((await db.execute({ sql: "SELECT player_name, count FROM user_cards WHERE user_id = ?", args: [req.userId] })).rows.map((r) => [r.player_name, Number(r.count)]));
+    if (names.some((n) => (owned.get(n) || 0) < 2)) return res.status(400).json({ error: "Solo se entregan cartas repetidas: siempre te queda una copia de cada una" });
+    for (const n of names) await db.execute({ sql: "UPDATE user_cards SET count = count - 1 WHERE user_id = ? AND player_name = ? AND count >= 2", args: [req.userId, n] });
+    await db.execute({ sql: "INSERT INTO card_packs (user_id, date, source, theme) VALUES (?, ?, ?, ?)", args: [req.userId, start, source, theme.key] });
+    res.json({ ok: true, reward: { pack: "muy bueno", theme: theme.label } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// El sobre temático se vende en la tienda por monedas (nunca dinero real).
+router.post("/sbc-tema/shop", async (req, res) => {
+  try {
+    const { theme } = themePeriod(todayStr());
+    if (!theme) return res.status(404).json({ error: "No hay una temática activa" });
+    const wallet = (await db.execute({ sql: "SELECT balance FROM card_wallets WHERE user_id = ?", args: [req.userId] })).rows[0];
+    const balance = wallet ? Number(wallet.balance) : 0;
+    if (balance < THEME_SHOP_PRICE) return res.status(400).json({ error: "No te alcanzan las monedas" });
+    const today = todayStr();
+    const n = Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM card_packs WHERE user_id = ? AND date = ? AND source LIKE 'bueno-tematica%'", args: [req.userId, today] })).rows[0].n);
+    await db.execute({ sql: "INSERT INTO card_packs (user_id, date, source, theme) VALUES (?, ?, ?, ?)", args: [req.userId, today, `bueno-tematica${n + 1}`, theme.key] });
+    await creditWallet(req.userId, -THEME_SHOP_PRICE);
+    res.json({ ok: true, balance: balance - THEME_SHOP_PRICE });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

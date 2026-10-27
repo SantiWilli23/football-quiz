@@ -439,6 +439,8 @@ function Resultado({ result, practice, items, answers, clubStats, main, finishin
           {clubPoints.length > 0
             ? <p><b className="text-accent">+{clubPoints.reduce((n, c) => Math.max(n, c.points), 0)} pts</b> para tu club{clubPoints.length > 1 ? "es" : ""}. Ya figuran en la tabla.</p>
             : <p className="text-gray-300">{result.already ? "Tus puntos ya están en la tabla del club." : would > 0 ? `Habrías sumado ${would} pts, pero ningún club tiene la temporada iniciada todavía.` : "Todavía no estás en un club con la temporada iniciada."}</p>}
+          {result.dailyCard && <p className="text-accent">Carta del día: <b>{result.dailyCard}</b>. Quedó en tu álbum del mes (Cartas).</p>}
+          {result.clubPack && <p className="text-accent">¡Jugaron todos los de tu club hoy! El club gana un sobre extra.</p>}
           {result.pack && <p className="text-gray-400">Ganaste un sobre {result.pack === "top" ? "top" : result.pack === "bueno" ? "bueno" : "normal"}. Lo abrís en Cartas.</p>}
         </div>
       )}
