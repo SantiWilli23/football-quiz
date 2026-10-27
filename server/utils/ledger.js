@@ -85,6 +85,23 @@ export async function creditPoints(userId, date, source, basePoints) {
   return { credited, wouldHave };
 }
 
+// Igual que creditPoints, pero para un solo club (la copa semanal se reparte por club).
+export async function creditPointsToGroup(userId, groupId, date, source, basePoints) {
+  const club = (await db.execute({
+    sql: `SELECT g.club_mode, g.season_started_at, m.debuts_month FROM group_members m
+          JOIN groups_t g ON g.id = m.group_id WHERE m.user_id = ? AND g.id = ?`,
+    args: [userId, groupId],
+  })).rows[0];
+  if (!club || !club.season_started_at || !counts(club, date)) return { credited: false, points: 0 };
+  const points = pointsFor(club.club_mode, source, basePoints);
+  if (points <= 0) return { credited: false, points: 0 };
+  const res = await db.execute({
+    sql: "INSERT OR IGNORE INTO points_ledger (user_id, group_id, date, month, source, points) VALUES (?, ?, ?, ?, ?, ?)",
+    args: [userId, groupId, date, monthOf(date), source, points],
+  });
+  return { credited: res.rowsAffected > 0, points };
+}
+
 // Tabla de un club: vista «hoy», «mes» o «general». Los miembros que todavía no
 // debutan (entraron a mitad de mes) quedan fuera hasta su mes.
 export async function clubTable(groupId, view, date) {

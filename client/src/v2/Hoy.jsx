@@ -16,6 +16,7 @@ export default function Hoy() {
   const [today, setToday] = useState(null);
   const [streak, setStreak] = useState(null);
   const [table, setTable] = useState(null);
+  const [clubStreak, setClubStreak] = useState(null);
 
   useEffect(() => {
     track("abrio_hoy");
@@ -26,6 +27,7 @@ export default function Hoy() {
   useEffect(() => {
     if (!main) return;
     api.get(`/clubs/${main.id}/table`, { params: { view: "hoy" } }).then((r) => setTable(r.data)).catch(() => setTable(null));
+    api.get(`/clubs/${main.id}/streak`).then((r) => setClubStreak(r.data)).catch(() => setClubStreak(null));
   }, [main]);
 
   const played = today && today.result;
@@ -97,6 +99,14 @@ export default function Hoy() {
             </ol>
           )}
         </Card>
+
+        {clubStreak && clubStreak.members >= 2 && (
+          <Card>
+            <p className="t-eyebrow flex items-center gap-1.5"><Flame size={13} className="text-orange-400" /> Racha del club</p>
+            <p className="text-sm mt-1"><b className="tabular-nums">{clubStreak.streak}</b> {clubStreak.streak === 1 ? "día" : "días"} seguidos con todos jugando.</p>
+            <p className="text-xs text-gray-500">{clubStreak.todayDone ? "Hoy jugaron todos: el club ganó un sobre extra." : "Si hoy juegan todos los miembros, el club gana un sobre extra."}</p>
+          </Card>
+        )}
 
         <Card>
           <p className="t-eyebrow flex items-center gap-1.5 mb-2"><Trophy size={13} /> Seguir jugando</p>

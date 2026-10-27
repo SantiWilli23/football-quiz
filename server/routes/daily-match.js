@@ -4,6 +4,7 @@ import { requireAuth } from "../middleware/auth.js";
 import { todayStr, addDays } from "../utils/points.js";
 import { creditPoints, clubTable } from "../utils/ledger.js";
 import { grantPack } from "../utils/rewards.js";
+import { grantClubStreakPacks } from "../utils/clubs.js";
 import { matchFor, publicView, itemPoints, trustedMs, partTotals, packQualityForTotal } from "../utils/daily-match.js";
 
 // Partido del día (Futotal 2.0). El cliente solo manda respuestas y el servidor calcula
@@ -107,7 +108,11 @@ router.post("/finish", async (req, res) => {
     const club = await creditPoints(req.userId, date, "partido_dia", total);
     const quality = packQualityForTotal(total);
     await grantPack(req.userId, date, quality, `partido-${date}`);
-    res.json({ parts, total, club, pack: quality, already: false });
+    // Si con este partido jugaron todos los miembros de algún club, el club gana un sobre extra.
+    const clubIds = (await db.execute({ sql: "SELECT group_id FROM group_members WHERE user_id = ?", args: [req.userId] })).rows;
+    let clubPack = false;
+    for (const c of clubIds) if ((await grantClubStreakPacks(c.group_id, date)) > 0) clubPack = true;
+    res.json({ parts, total, club, pack: quality, clubPack, already: false });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

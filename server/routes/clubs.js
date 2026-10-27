@@ -4,7 +4,8 @@ import { requireAuth } from "../middleware/auth.js";
 import { todayStr, monthOf } from "../utils/points.js";
 import { CLUB_MODES, clubTable } from "../utils/ledger.js";
 import { personalStreak } from "../utils/streak.js";
-import { hasActiveClub, redesignOn, unlockPacksFor } from "../utils/clubs.js";
+import { clubStreak, hasActiveClub, redesignOn, unlockPacksFor } from "../utils/clubs.js";
+import { cupFor, settleLastCup } from "../utils/cup.js";
 
 // Futotal 2.0: los grupos son «clubes» con modo (clásico o total), pretemporada y
 // temporada. La tabla sale del libro de puntos (utils/ledger.js).
@@ -130,7 +131,33 @@ router.get("/:id/table", async (req, res) => {
     if (!club.season_started_at) {
       return res.json({ view, mode: club.club_mode, preseason: true, members: Number(club.members), table: [] });
     }
+    // Si la copa de la semana pasada ya terminó y nadie la repartió, se reparte ahora.
+    await settleLastCup(club.id).catch((e) => console.error("copa", e));
     res.json({ view, mode: club.club_mode, preseason: false, table: await clubTable(club.id, view, today) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+router.get("/:id/streak", async (req, res) => {
+  try {
+    const club = await clubFor(Number(req.params.id), req.userId);
+    if (!club) return res.status(404).json({ error: "Club no encontrado" });
+    res.json(await clubStreak(club.id, todayStr()));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Copa semanal automática: clasificación de lunes a jueves y llaves del viernes al domingo.
+router.get("/:id/cup", async (req, res) => {
+  try {
+    const club = await clubFor(Number(req.params.id), req.userId);
+    if (!club) return res.status(404).json({ error: "Club no encontrado" });
+    const { raw, ...cup } = await cupFor(club.id);
+    res.json(cup);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

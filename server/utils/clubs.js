@@ -56,3 +56,36 @@ export function debutMonthFor(club, joinDate) {
   const [y, m] = joinDate.split("-").map(Number);
   return m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
 }
+
+// Racha del club: días seguidos en que TODOS los miembros jugaron el partido del día.
+// El día en curso no corta la racha (todavía puede completarse).
+export async function clubStreak(groupId, today) {
+  const members = (await db.execute({ sql: "SELECT user_id FROM group_members WHERE group_id = ?", args: [groupId] })).rows.map((r) => r.user_id);
+  if (members.length < 2) return { streak: 0, todayDone: false, members: members.length };
+  const rows = (await db.execute({
+    sql: `SELECT r.date, COUNT(DISTINCT r.user_id) AS n FROM daily_match_results r
+          JOIN group_members m ON m.user_id = r.user_id AND m.group_id = ? GROUP BY r.date`,
+    args: [groupId],
+  })).rows;
+  const full = new Set(rows.filter((r) => Number(r.n) >= members.length).map((r) => r.date));
+  const step = (d, n) => { const x = new Date(`${d}T12:00:00Z`); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+  const todayDone = full.has(today);
+  let day = todayDone ? today : step(today, -1);
+  let streak = 0;
+  while (full.has(day) && streak < 1500) { streak += 1; day = step(day, -1); }
+  return { streak, todayDone, members: members.length };
+}
+
+// Si hoy jugaron todos los miembros de un club, cada uno recibe un sobre extra (una
+// vez por día y por club, gracias al UNIQUE de card_packs).
+export async function grantClubStreakPacks(groupId, date) {
+  const { todayDone, members } = await clubStreak(groupId, date);
+  if (!todayDone || members < 2) return 0;
+  const ids = (await db.execute({ sql: "SELECT user_id FROM group_members WHERE group_id = ?", args: [groupId] })).rows;
+  let granted = 0;
+  for (const r of ids) {
+    const res = await db.execute({ sql: "INSERT OR IGNORE INTO card_packs (user_id, date, source) VALUES (?, ?, ?)", args: [r.user_id, date, `racha-club${groupId}`] });
+    granted += res.rowsAffected;
+  }
+  return granted;
+}

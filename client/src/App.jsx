@@ -27,6 +27,7 @@ const Hoy = lazy(() => import("./v2/Hoy.jsx"));
 const Partido = lazy(() => import("./v2/Partido.jsx"));
 const Archivo = lazy(() => import("./v2/Archivo.jsx"));
 const ClubV2 = lazy(() => import("./v2/Club.jsx"));
+const Jugar = lazy(() => import("./v2/Jugar.jsx"));
 const History = lazy(() => import("./pages/History.jsx"));
 const Profile = lazy(() => import("./pages/Profile.jsx"));
 const Stats = lazy(() => import("./pages/Stats.jsx"));
@@ -95,6 +96,13 @@ function PublicRoute({ children }) {
 }
 
 // Con el rediseño encendido, el inicio de siempre pasa a ser «Hoy».
+// Con el rediseño encendido, el catálogo de juegos pasa a ser «Jugar».
+function GamesOrJugar() {
+  const { on, ready } = useFutotal2();
+  if (!ready) return null;
+  return on ? <Jugar /> : <Games />;
+}
+
 function PanelOrHoy() {
   const { on, ready } = useFutotal2();
   if (!ready) return null;
@@ -172,7 +180,7 @@ export default function App() {
         path="/juegos"
         element={
           <PrivateRoute>
-            <Games />
+            <GamesOrJugar />
           </PrivateRoute>
         }
       />

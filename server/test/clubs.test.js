@@ -157,3 +157,23 @@ test("código de recuperación: formato, cifrado de ida y vuelta y comparación 
   assert.ok(!recovery.codesMatch("FUT-AAAA-AAAA-AAAA", code));
   assert.equal(monthOf("2026-10-26"), "2026-10");
 });
+
+test("racha del club: cuenta días en que jugaron todos y da un sobre extra una sola vez", async () => {
+  const { groupId, userIds } = await startedClub("clasico", ["r1", "r2", "r3"]);
+  const day = (n) => { const d = new Date(`${todayStr()}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+  const play = (u, date) => db.execute({ sql: "INSERT OR REPLACE INTO daily_match_results (user_id, date, p1, p2, p3, total) VALUES (?, ?, 0, 0, 0, 50)", args: [u, date] });
+  for (const u of userIds) { await play(u, day(-2)); await play(u, day(-1)); }
+  await play(userIds[0], day(0));
+  let s = await clubs.clubStreak(groupId, day(0));
+  assert.equal(s.streak, 2, "hoy todavía no completó pero no corta");
+  assert.equal(s.todayDone, false);
+  assert.equal(await clubs.grantClubStreakPacks(groupId, day(0)), 0, "sin todos no hay sobre");
+  await play(userIds[1], day(0)); await play(userIds[2], day(0));
+  s = await clubs.clubStreak(groupId, day(0));
+  assert.equal(s.streak, 3);
+  assert.equal(await clubs.grantClubStreakPacks(groupId, day(0)), 3, "un sobre por miembro");
+  assert.equal(await clubs.grantClubStreakPacks(groupId, day(0)), 0, "una sola vez por día");
+  // si alguien faltó ayer, la racha se corta ahí
+  await db.execute({ sql: "DELETE FROM daily_match_results WHERE user_id = ? AND date = ?", args: [userIds[0], day(-1)] });
+  assert.equal((await clubs.clubStreak(groupId, day(0))).streak, 1);
+});

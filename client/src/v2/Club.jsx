@@ -6,6 +6,7 @@ import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useClubs } from "./useClubs.js";
+import Copa from "./Copa.jsx";
 
 const VIEWS = [["hoy", "Hoy"], ["mes", "Mes"], ["general", "General"]];
 const MODES = {
@@ -115,6 +116,8 @@ export default function Club() {
                 </ol>
               </Card>
             )}
+
+            <Copa clubId={club.id} userId={user?.id} />
 
             <Card>
               <p className="t-eyebrow mb-2">Invitar</p>
