@@ -28,6 +28,7 @@ const Partido = lazy(() => import("./v2/Partido.jsx"));
 const Archivo = lazy(() => import("./v2/Archivo.jsx"));
 const ClubV2 = lazy(() => import("./v2/Club.jsx"));
 const Jugar = lazy(() => import("./v2/Jugar.jsx"));
+const PartidoVivo = lazy(() => import("./v2/PartidoVivo.jsx"));
 const History = lazy(() => import("./pages/History.jsx"));
 const Profile = lazy(() => import("./pages/Profile.jsx"));
 const Stats = lazy(() => import("./pages/Stats.jsx"));
@@ -148,6 +149,7 @@ export default function App() {
       <Route path="/partido" element={<PrivateRoute><Partido /></PrivateRoute>} />
       <Route path="/partido/:date" element={<PrivateRoute><Partido /></PrivateRoute>} />
       <Route path="/club" element={<PrivateRoute><ClubV2 /></PrivateRoute>} />
+      <Route path="/vivo/:league/:id" element={<PrivateRoute><PartidoVivo /></PrivateRoute>} />
       <Route
         path="/trivia"
         element={<Navigate to="/panel" replace />}

@@ -46,7 +46,7 @@ export function isConfigured() {
 }
 
 const ESPN_BASE = "https://site.api.espn.com/apis";
-const ESPN_SLUGS = { bundesliga: "ger.1", laliga: "esp.1", premier: "eng.1", serie_a: "ita.1", ligue1: "fra.1", chile: "chi.1" };
+export const ESPN_SLUGS = { bundesliga: "ger.1", laliga: "esp.1", premier: "eng.1", serie_a: "ita.1", ligue1: "fra.1", chile: "chi.1" };
 
 async function espnGet(url) {
   let response;

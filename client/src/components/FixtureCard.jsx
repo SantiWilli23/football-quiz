@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import useFutotal2 from "../v2/useFutotal2.js";
 import api from "../api.js";
 import { CHALK } from "../theme.js";
 import LineupPitch from "./LineupPitch.jsx";
@@ -66,6 +68,8 @@ export default function FixtureCard({ fixture, league }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const { on: v2 } = useFutotal2();
+  const leagueKey = league || fixture.leagueKey;
   const isLive = LIVE_STATUSES.has(fixture.status);
   const canShowLineup = fixture.status !== "NS" && fixture.status !== "TBD" && fixture.status !== "PST";
 
@@ -116,6 +120,12 @@ export default function FixtureCard({ fixture, league }) {
           {canShowLineup && <span className="text-gray-500 shrink-0">{open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</span>}
         </div>
       </button>
+
+      {v2 && leagueKey && fixture.status !== "PST" && fixture.status !== "CANC" && (
+        <Link to={`/vivo/${leagueKey}/${fixture.id}`} className="block border-t border-border px-4 py-2 text-center text-xs font-semibold text-accent hover:bg-white/5">
+          {isLive ? "Seguir el partido en vivo" : fixture.status === "NS" ? "Ver la previa" : "Ver el resumen"}
+        </Link>
+      )}
 
       {open && (
         <div className="border-t border-border px-4 py-3 bg-panel">
