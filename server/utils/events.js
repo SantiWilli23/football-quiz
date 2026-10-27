@@ -148,7 +148,7 @@ export function specialItems(ev, date) {
   if (items.length < 3) return null;
   return items.slice(0, 3).map((it) => {
     // se mezclan las opciones sin perder cuál es la correcta (los dos/ninguno van al final)
-    return { kind: "especial", key: it.key, part: 3, title: kit.special.title, question: it.q, options: it.options, answer: it.answer, limitMs: 8000 };
+    return { kind: "especial", key: it.key, part: 3, area: "leyendas", title: kit.special.title, question: it.q, options: it.options, answer: it.answer, limitMs: 8000 };
   });
 }
 

@@ -450,4 +450,6 @@ async function migrateClubs() {
   await addColumn("users", "recovery_code", "TEXT"); // cifrado: se puede volver a mostrar en Ajustes
   await addColumn("users", "tz", "TEXT DEFAULT 'America/Santiago'");
   await addColumn("card_packs", "theme", "TEXT");
+  await addColumn("daily_match_answers", "area", "TEXT"); // tema de la pregunta, para el ADN futbolero
+  await addColumn("daily_match_answers", "speed", "REAL"); // 1 = al instante, 0 = se acabó el tiempo
 }

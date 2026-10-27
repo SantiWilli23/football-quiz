@@ -5,6 +5,7 @@ import { db } from "../db/client.js";
 import { dailySeed, rng, shuffle } from "./futgames.js";
 import { POOL as VALUE_POOL } from "../routes/a-quien-me-compro.js";
 import { eventOn, specialItems } from "./events.js";
+import { leagueForClub } from "../data/league-clubs.js";
 
 // Partido del día (Futotal 2.0): tres partes de ~1 minuto, iguales para todo el mundo.
 //   1T  ¿Quién es?   — 6 jugadores por su carrera (4 opciones)
@@ -22,19 +23,35 @@ export const LIMIT_MS = { quien: 12000, mas_menos: 8000, penal: 6000 };
 const TIME_SHARE = 0.2; // el tiempo pesa 20% de cada pregunta
 const SERVER_GRACE_MS = 3000; // margen por latencia al contrastar el tiempo del cliente
 
+// Áreas del ADN futbolero (cada pregunta cuenta para una; la velocidad sale de los tiempos).
+export const AREAS = ["chile", "europa", "leyendas", "actualidad", "mercado", "velocidad"];
+const TRIVIA_AREA = {
+  "Liga Chilena": "chile", "Copa América": "chile", Libertadores: "chile",
+  Europa: "europa", "Champions League": "europa", Eurocopa: "europa",
+  Historia: "leyendas", Mundiales: "leyendas", Individuales: "leyendas", Reglas: "leyendas",
+};
+const isEuropean = (club) => !!club && !!leagueForClub(club);
+export function areaOfPlayer(p) {
+  const current = (p.carrera || []).find((c) => c.fin === null || c.fin === undefined);
+  if (!current) return "leyendas";
+  if (p.nacionalidad === "Chile" || /colo-colo|universidad (de chile|catolica)|palestino|cobreloa|union espanola/i.test(current.club)) return "chile";
+  return isEuropean(current.club.replace(/\s*\((cedido|cantera)\)\s*$/i, "")) ? "europa" : "actualidad";
+}
+
 const FAMOUS = PLAYERS.slice(0, 700).filter((p) => (p.carrera || []).length >= 4 && p.posicion);
 
-function quienItems(rand, n) {
+export function quienItems(rand, n, filter = () => true) {
   const order = shuffle(FAMOUS, rand);
   const items = [];
   for (const p of order) {
     if (items.length >= n) break;
+    if (!filter(p)) continue;
     const same = order.filter((o) => o.nombre !== p.nombre && o.posicion === p.posicion);
     if (same.length < 3) continue;
     const distractors = shuffle(same, rand).slice(0, 3).map((o) => o.nombre);
     const options = shuffle([p.nombre, ...distractors], rand);
     items.push({
-      kind: "quien", key: `q:${p.nombre}`, part: 1,
+      kind: "quien", key: `q:${p.nombre}`, part: 1, area: areaOfPlayer(p),
       clues: p.carrera.map((c) => ({ club: c.club.replace(/\s*\((cedido|cantera)\)\s*$/i, ""), from: c.inicio, to: c.fin ?? null })),
       position: p.posicion, options, answer: options.indexOf(p.nombre), limitMs: LIMIT_MS.quien,
     });
@@ -42,7 +59,7 @@ function quienItems(rand, n) {
   return items;
 }
 
-function masMenosItems(rand, n) {
+export function masMenosItems(rand, n) {
   const order = shuffle(VALUE_POOL, rand);
   const used = new Set();
   const items = [];
@@ -54,7 +71,7 @@ function masMenosItems(rand, n) {
     if (!right) { left = order[(guard + 1) % order.length]; continue; }
     used.add(right.name);
     items.push({
-      kind: "mas_menos", key: `m:${left.name}|${right.name}`, part: 2,
+      kind: "mas_menos", key: `m:${left.name}|${right.name}`, part: 2, area: "mercado",
       left: { name: left.name, club: left.club, position: left.position, value: left.value },
       right: { name: right.name, club: right.club, position: right.position },
       options: ["Vale más", "Vale menos"], answer: right.value > left.value ? 0 : 1, rightValue: right.value, limitMs: LIMIT_MS.mas_menos,
@@ -64,16 +81,30 @@ function masMenosItems(rand, n) {
   return items;
 }
 
-async function penalItems(rand, n) {
-  const a = (await db.execute("SELECT id, question, option_a, option_b, option_c, option_d, correct_answer FROM questions")).rows.map((r) => ({ ...r, src: "t" }));
+export async function penalItems(rand, n, area = null) {
+  const a = (await db.execute("SELECT id, question, category, option_a, option_b, option_c, option_d, correct_answer FROM questions")).rows.map((r) => ({ ...r, src: "t" }));
   const b = (await db.execute("SELECT id, question, option_a, option_b, option_c, option_d, correct_answer FROM duel_questions")).rows.map((r) => ({ ...r, src: "d" }));
-  const bank = shuffle([...a, ...b], rand).slice(0, n);
+  const tagged = [...a, ...b].filter((r) => !area || (r.src === "t" ? TRIVIA_AREA[r.category] || "actualidad" : "leyendas") === area);
+  const bank = shuffle(tagged, rand).slice(0, n);
   return bank.map((r) => {
     const opts = [r.option_a, r.option_b, r.option_c, r.option_d];
     const correct = opts["abcd".indexOf(r.correct_answer)];
     const options = shuffle(opts, rand);
-    return { kind: "penal", key: `${r.src}:${r.id}`, part: 3, question: r.question, options, answer: options.indexOf(correct), limitMs: LIMIT_MS.penal };
+    return { kind: "penal", key: `${r.src}:${r.id}`, part: 3, area: r.src === "t" ? TRIVIA_AREA[r.category] || "actualidad" : "leyendas", question: r.question, options, answer: options.indexOf(correct), limitMs: LIMIT_MS.penal };
   });
+}
+
+// Sesión de entrenamiento de ~2 minutos sobre un área (del ADN): 6 preguntas, sin puntos.
+// Se corrige en el teléfono, así que viajan con respuestas.
+export async function trainingItems(area, seed) {
+  const rand = rng(dailySeed(seed, `entreno-${area}`));
+  if (area === "mercado") return masMenosItems(rand, 6);
+  if (area === "velocidad") return penalItems(rand, 6);
+  const players = quienItems(rand, 3, (p) => areaOfPlayer(p) === area);
+  const trivia = await penalItems(rand, 6 - players.length, area);
+  const items = [...players, ...trivia];
+  if (items.length < 6) items.push(...(await penalItems(rand, 6 - items.length)));
+  return items.slice(0, 6);
 }
 
 // Genera (o recupera) el partido de una fecha. Es determinista por fecha, así que

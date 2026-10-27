@@ -53,6 +53,7 @@ import clubsRoutes from "./routes/clubs.js";
 import dailyMatchRoutes from "./routes/daily-match.js";
 import liveRoutes from "./routes/live.js";
 import eventsRoutes from "./routes/events.js";
+import meRoutes from "./routes/me.js";
 import analyticsRoutes from "./routes/analytics.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -76,6 +77,7 @@ app.use("/api/clubs", clubsRoutes);
 app.use("/api/daily", dailyMatchRoutes);
 app.use("/api/live", liveRoutes);
 app.use("/api/events", eventsRoutes);
+app.use("/api/me", meRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/questions", questionsRoutes);
 app.use("/api/bonus", bonusRoutes);

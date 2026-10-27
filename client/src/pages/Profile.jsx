@@ -16,6 +16,8 @@ import PlayerCard from "../components/PlayerCard.jsx";
 import TutorialPlayer from "../tutorial/TutorialPlayer.jsx";
 import { GENERAL_TUTORIAL } from "../tutorial/steps.js";
 import RecoveryCode from "../v2/RecoveryCode.jsx";
+import Adn, { CartaFutotal } from "../v2/Adn.jsx";
+import useFutotal2 from "../v2/useFutotal2.js";
 
 export default function Profile() {
   const { user, stats, refreshMe } = useAuth();
@@ -25,6 +27,7 @@ export default function Profile() {
   const [ranking, setRanking] = useState([]);
   const [compareId, setCompareId] = useState("");
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const { on: v2 } = useFutotal2();
   const [tab, setTab] = useState("resumen");
 
   useEffect(() => {
@@ -122,6 +125,12 @@ export default function Profile() {
         </>
       )}
 
+      {v2 && tab === "resumen" && (
+        <div className="mb-6 grid gap-4 lg:grid-cols-2">
+          <CartaFutotal />
+          <Adn />
+        </div>
+      )}
       {tab === "vitrina" && <div className="mb-6"><Vitrina /></div>}
 
       {tab === "ajustes" && (

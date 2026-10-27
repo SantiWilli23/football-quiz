@@ -321,7 +321,7 @@ function Options({ item, showing, last, onPick }) {
   );
 }
 
-function Quien({ item, showing, last, onPick }) {
+export function Quien({ item, showing, last, onPick }) {
   return (
     <div className="space-y-3">
       <p className="t-eyebrow">¿Quién es? · {item.position}</p>
@@ -339,7 +339,7 @@ function Quien({ item, showing, last, onPick }) {
   );
 }
 
-function MasMenos({ item, showing, last, onPick }) {
+export function MasMenos({ item, showing, last, onPick }) {
   const side = (p, value, hidden, tone) => (
     <div className="flex-1 min-w-0 rounded-3xl border border-border bg-panel p-3 text-center">
       <PlayerFace name={p.name} size={64} className="mx-auto" />
@@ -359,7 +359,7 @@ function MasMenos({ item, showing, last, onPick }) {
   );
 }
 
-function Penal({ item, showing, last, onPick }) {
+export function Penal({ item, showing, last, onPick }) {
   return (
     <div className="space-y-3">
       <div className="relative rounded-3xl border border-border bg-panel p-4 text-center overflow-hidden">

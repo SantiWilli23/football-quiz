@@ -76,8 +76,8 @@ router.post("/answer", async (req, res) => {
     const ms = answer === null ? item.limitMs : trustedMs(req.body?.ms, elapsed, item.limitMs);
     const points = itemPoints(item, ok, ms);
     const ins = await db.execute({
-      sql: "INSERT OR IGNORE INTO daily_match_answers (user_id, date, idx, answer, ms, ok, points) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      args: [req.userId, date, idx, answer, Math.round(ms), ok ? 1 : 0, points],
+      sql: "INSERT OR IGNORE INTO daily_match_answers (user_id, date, idx, answer, ms, ok, points, area, speed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      args: [req.userId, date, idx, answer, Math.round(ms), ok ? 1 : 0, points, item.area || null, Math.max(0, 1 - ms / item.limitMs)],
     });
     if (ins.rowsAffected === 0) return res.status(409).json({ error: "Esa pregunta ya se respondió" });
     await db.execute({
@@ -171,8 +171,8 @@ router.post("/sync", async (req, res) => {
       const claimed = Math.max(0, Math.min(Number(sent[idx]?.ms) || item.limitMs, item.limitMs));
       const ms = answer === null ? item.limitMs : Math.max(claimed, item.limitMs * OFFLINE_MIN_MS_SHARE);
       await db.execute({
-        sql: "INSERT OR IGNORE INTO daily_match_answers (user_id, date, idx, answer, ms, ok, points) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        args: [req.userId, date, idx, answer, Math.round(ms), ok ? 1 : 0, itemPoints(item, ok, ms)],
+        sql: "INSERT OR IGNORE INTO daily_match_answers (user_id, date, idx, answer, ms, ok, points, area, speed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        args: [req.userId, date, idx, answer, Math.round(ms), ok ? 1 : 0, itemPoints(item, ok, ms), item.area || null, Math.max(0, 1 - ms / item.limitMs)],
       });
     }
     const out = await closeMatch(req.userId, date);
