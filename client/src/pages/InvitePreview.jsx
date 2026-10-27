@@ -18,7 +18,7 @@ export default function InvitePreview() {
 
   useEffect(() => {
     api
-      .get(`/groups/invite/${code}/preview`)
+      .get(`/groups/invite/${code}/preview`, { params: { de: new URLSearchParams(window.location.search).get("de") || undefined } })
       .then(({ data }) => setPreview(data))
       .catch(() => setError("Este link de invitación no es válido o ya venció."));
   }, [code]);
@@ -54,7 +54,12 @@ export default function InvitePreview() {
             <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Te invitaron a</p>
             <h1 className="text-xl font-bold mb-1">{preview.name}</h1>
             {preview.description && <p className="text-sm text-gray-400 mb-3">{preview.description}</p>}
-            <p className="text-xs text-gray-500 mb-6">{preview.member_count} miembro{preview.member_count === 1 ? "" : "s"}</p>
+            <p className="text-xs text-gray-500 mb-4">{preview.member_count} miembro{preview.member_count === 1 ? "" : "s"}</p>
+            {preview.challenge && (
+              <p className="mb-5 rounded-xl border border-accent/40 bg-accent/10 px-3 py-2 text-sm">
+                <b>{preview.challenge.from}</b> te desafía: superá sus <b className="tabular-nums">{preview.challenge.score}</b>.
+              </p>
+            )}
 
             <p className="text-xs text-gray-500 mb-5">
               Trivia diaria, duelos 1v1, estadísticas del grupo y mucho más — competí con ellos en Futotal.

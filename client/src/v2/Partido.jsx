@@ -7,6 +7,7 @@ import PlayerFace, { ClubCrest } from "../components/PlayerFace.jsx";
 import { playSfx } from "../utils/sfx.js";
 import { track } from "./analytics.js";
 import { useClubs } from "./useClubs.js";
+import Mano, { AddToHome } from "./Mano.jsx";
 import { getQueue, loadPackage, queueAnswer, savePackage, syncQueue } from "./offline.js";
 
 // El día de Chile en el teléfono, para reconocer el paquete guardado cuando no hay red.
@@ -262,8 +263,7 @@ export default function Partido() {
   const showing = phase === "feedback" && last;
   const progress = idx + (showing ? 1 : 0);
 
-  return (
-    <Layout focus exitTo="/hoy">
+  const screen = (
       <div className="max-w-md mx-auto space-y-4">
         <div className="flex items-center justify-between text-xs text-gray-400">
           <span className="font-semibold text-accent">{part.label} · {part.title}{offline && <span className="ml-2 rounded-full border border-amber/60 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber">Sin señal</span>}</span>
@@ -292,6 +292,11 @@ export default function Partido() {
         )}
         {error && <p className="text-sm text-red-400 text-center">{error}</p>}
       </div>
+  );
+
+  return (
+    <Layout focus exitTo="/hoy">
+      {idx === 0 && !practice ? <Mano id="partido" text="Elegí rápido">{screen}</Mano> : screen}
     </Layout>
   );
 }
@@ -484,6 +489,7 @@ function Resultado({ result, practice, items, answers, clubStats, main, finishin
         <button onClick={copy} className="btn btn-secondary flex-1">{copied ? "Copiado" : "Compartir"}</button>
         <button onClick={onBack} className="btn btn-primary flex-1">Volver a Hoy</button>
       </div>
+      {!practice && <AddToHome />}
       {!practice && <Link to="/hoy/archivo" className="block text-center text-xs text-gray-500 hover:text-white">Jugar partidos pasados</Link>}
     </div>
   );

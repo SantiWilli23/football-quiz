@@ -6,6 +6,7 @@ import api from "../api.js";
 const cache = new Map(); // "tipo|nombre" -> Promise<url|null>
 
 function mediaOf(kind, name) {
+  try { if (!localStorage.getItem("fq_token")) return Promise.resolve(null); } catch { /* sin storage */ }
   const key = `${kind}|${name}`;
   if (!cache.has(key)) {
     cache.set(key, api.get(`/media/${kind}`, { params: { name } }).then((r) => r.data.url || null).catch(() => null));

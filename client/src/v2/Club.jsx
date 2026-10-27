@@ -123,6 +123,7 @@ export default function Club() {
               <p className="t-eyebrow mb-2">Invitar</p>
               <p className="text-sm text-gray-400">Pásales este código a tus amigos:</p>
               <p className="mt-1 select-all rounded-xl border border-dashed border-border bg-bg px-3 py-2 text-center font-mono text-lg tracking-widest">{invite || "…"}</p>
+              {invite && <button onClick={() => { const url = `${window.location.origin}/invitacion/${invite}?de=${encodeURIComponent(user?.username || "")}`; navigator.clipboard?.writeText(url).then(() => setMsg("Link copiado: tu amigo verá tu marcador como desafío."), () => setMsg(url)); }} className="btn btn-secondary btn-sm mt-3">Copiar link con desafío</button>}
               {!club.main && <button onClick={makeMain} className="btn btn-secondary btn-sm mt-3">Hacer mi club principal</button>}
               {club.main && <p className="text-xs text-gray-500 mt-3 flex items-center gap-1"><Star size={12} className="text-amber" /> Es tu club principal: de acá sale el súper sobre del podio del mes.</p>}
             </Card>

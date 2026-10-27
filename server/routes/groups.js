@@ -25,7 +25,21 @@ router.get("/invite/:code/preview", async (req, res) => {
     });
     const group = result.rows[0];
     if (!group) return res.status(404).json({ error: "Código de invitación inválido" });
-    res.json({ name: group.name, description: group.description, member_count: Number(group.member_count) });
+    // Invitación con desafío (Futotal 2.0): «Juan te desafía: superá sus 78». Solo si quien
+    // invita es miembro del club y jugó alguna vez.
+    let challenge = null;
+    const from = String(req.query.de || "").trim().slice(0, 40);
+    if (from) {
+      const row = (await db.execute({
+        sql: `SELECT u.username, r.total, r.date FROM users u
+              JOIN group_members m ON m.user_id = u.id JOIN groups_t g ON g.id = m.group_id AND g.invite_code = ?
+              JOIN daily_match_results r ON r.user_id = u.id
+              WHERE u.username = ? ORDER BY r.date DESC LIMIT 1`,
+        args: [code, from],
+      })).rows[0];
+      if (row) challenge = { from: row.username, score: Number(row.total), date: row.date };
+    }
+    res.json({ name: group.name, description: group.description, member_count: Number(group.member_count), challenge });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

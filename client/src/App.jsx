@@ -31,6 +31,9 @@ const Jugar = lazy(() => import("./v2/Jugar.jsx"));
 const PartidoVivo = lazy(() => import("./v2/PartidoVivo.jsx"));
 const Alineacion = lazy(() => import("./v2/Alineacion.jsx"));
 const Entrenar = lazy(() => import("./v2/Entrenar.jsx"));
+const Practica = lazy(() => import("./v2/Practica.jsx"));
+const Portada = lazy(() => import("./v2/Portada.jsx"));
+const Bienvenida = lazy(() => import("./v2/Bienvenida.jsx"));
 const History = lazy(() => import("./pages/History.jsx"));
 const Profile = lazy(() => import("./pages/Profile.jsx"));
 const Stats = lazy(() => import("./pages/Stats.jsx"));
@@ -106,6 +109,16 @@ function GamesOrJugar() {
   return on ? <Jugar /> : <Games />;
 }
 
+// Raíz: con el rediseño, quien no inició sesión ve la portada (se juega antes de registrarse)
+// y quien sí, va directo a Hoy. Sin el rediseño todo sigue como siempre.
+function Root() {
+  const { user, loading } = useAuth();
+  const { on, ready } = useFutotal2();
+  if (loading || !ready) return null;
+  if (user) return on ? <Navigate to="/hoy" replace /> : <Suspense fallback={<RouteFallback />}><Splash /></Suspense>;
+  return on ? <Suspense fallback={<RouteFallback />}><Portada /></Suspense> : <Navigate to="/login" replace />;
+}
+
 function PanelOrHoy() {
   const { on, ready } = useFutotal2();
   if (!ready) return null;
@@ -130,14 +143,9 @@ export default function App() {
       {/* Sin PublicRoute: al crear la cuenta hay que mostrar el código de recuperación
           antes de entrar, y Register se ocupa de redirigir si ya había sesión. */}
       <Route path="/registro" element={<Register />} />
-      <Route
-        path="/"
-        element={
-          <PrivateRoute>
-            <Splash />
-          </PrivateRoute>
-        }
-      />
+      <Route path="/" element={<Root />} />
+      <Route path="/practica" element={<Suspense fallback={<RouteFallback />}><Practica /></Suspense>} />
+      <Route path="/bienvenida" element={<PrivateRoute><Bienvenida /></PrivateRoute>} />
       <Route
         path="/panel"
         element={

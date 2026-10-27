@@ -11,6 +11,7 @@ import { isoWeekKey } from "../utils/challenges.js";
 import { leagueForClub } from "../data/league-clubs.js";
 import { grantQuinielaPacks, grantWeeklyGamePacks } from "../utils/daily-games.js";
 import { packStatus, redesignOn } from "../utils/clubs.js";
+import { careerName } from "../utils/events.js";
 import { buildExtraCards, drawExtra, EXTRA_PACKS, extraPub, extrasFor, lineupEffects, refreshFormIfStale, CAPTAIN_CHEM_CAP_EXTRA } from "../utils/card-types.js";
 
 // Reto semanal de Cartas: cada victoria vale 20 + 10 por gol de diferencia,
@@ -384,7 +385,9 @@ router.post("/open", async (req, res) => {
     // a la base por carta, 10 en total, y abrir un sobre se sentía lento).
     const misses = Number((await db.execute({ sql: "SELECT misses FROM card_pity WHERE user_id = ?", args: [req.userId] })).rows[0]?.misses || 0);
     let drawn;
-    if (pack.theme && themeByKey(pack.theme)) {
+    if (pack.theme && String(pack.theme).startsWith("club:")) {
+      drawn = drawWelcomePack(String(pack.theme).slice(5), misses);
+    } else if (pack.theme && themeByKey(pack.theme)) {
       drawn = drawThemePack(themeByKey(pack.theme));
     } else {
       drawn = Array.from({ length: 5 }, (_, i) => drawCard(quality, i, misses * 3));
@@ -925,6 +928,18 @@ export function themePeriod(date) {
 const activeTheme = (date) => themePeriod(date).theme;
 
 const TIER_ORDER = ["estrella", "oro", "plata", "bronce"];
+
+// Sobre de bienvenida: 5 cartas, la primera de tu club favorito (la mejor posible dentro de
+// un sorteo «bueno»). Si no hay cartas de ese club, sale un sobre bueno común.
+const sameClub = (a, b) => String(a).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() === String(b).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+function drawWelcomePack(clubName, misses = 0) {
+  const canon = careerName(clubName);
+  const pool = CARDS.filter((c) => !c.special && THEME_POS.includes(c.pos) && [...c.clubs].some((k) => sameClub(k, canon) || sameClub(k, clubName)));
+  const cards = [];
+  if (pool.length) cards.push(drawFromTheme({ pool }, "bueno"));
+  while (cards.length < 5) cards.push(drawCard("bueno", cards.length, misses * 3));
+  return cards;
+}
 function drawFromTheme(theme, quality = "bueno") {
   const weights = (PACKS[quality] || PACKS.bueno).weights;
   const byTier = (t) => theme.pool.filter((c) => c.tier === t);

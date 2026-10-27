@@ -18,6 +18,7 @@ import { GENERAL_TUTORIAL } from "../tutorial/steps.js";
 import RecoveryCode from "../v2/RecoveryCode.jsx";
 import Adn, { CartaFutotal } from "../v2/Adn.jsx";
 import useFutotal2 from "../v2/useFutotal2.js";
+import { resetManos } from "../v2/Mano.jsx";
 
 export default function Profile() {
   const { user, stats, refreshMe } = useAuth();
@@ -27,6 +28,7 @@ export default function Profile() {
   const [ranking, setRanking] = useState([]);
   const [compareId, setCompareId] = useState("");
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [guidesReset, setGuidesReset] = useState(false);
   const { on: v2 } = useFutotal2();
   const [tab, setTab] = useState("resumen");
 
@@ -138,7 +140,13 @@ export default function Profile() {
           <Card className="mb-6">
             <h2 className="font-semibold mb-1">Tutorial</h2>
             <p className="text-sm text-gray-400 mb-3">Repasá cómo funciona Futotal cuando quieras. Cada juego tiene su propio tutorial en el botón «?».</p>
-            <button onClick={() => setTutorialOpen(true)} className="btn btn-secondary btn-sm">Ver tutorial general</button>
+            {v2 ? (
+              <button onClick={() => { resetManos(); try { localStorage.removeItem("fq_home_hint"); } catch { /* sin storage */ } setGuidesReset(true); }} className="btn btn-secondary btn-sm">
+                {guidesReset ? "Listo: las guías vuelven a aparecer" : "Ver las guías de nuevo"}
+              </button>
+            ) : (
+              <button onClick={() => setTutorialOpen(true)} className="btn btn-secondary btn-sm">Ver tutorial general</button>
+            )}
           </Card>
           <RecoveryCode />
           <Card className="mb-6">

@@ -9,6 +9,23 @@ import { trainingItems } from "../utils/daily-match.js";
 const router = Router();
 router.use(requireAuth);
 
+// Sobre de bienvenida del registro: se abre aunque todavía no haya club, y trae una carta
+// asegurada del club favorito. Uno por cuenta.
+router.post("/welcome", async (req, res) => {
+  try {
+    const club = String(req.body?.club || "").trim().slice(0, 60);
+    if (!club) return res.status(400).json({ error: "Elegí un club" });
+    const ins = await db.execute({
+      sql: "INSERT OR IGNORE INTO card_packs (user_id, date, source, theme) VALUES (?, 'bienvenida', 'bienvenida', ?)",
+      args: [req.userId, `club:${club}`],
+    });
+    res.json({ ok: true, granted: ins.rowsAffected > 0 });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 router.get("/adn", async (req, res) => {
   try {
     const range = ["week", "month", "all"].includes(req.query.range) ? req.query.range : "month";

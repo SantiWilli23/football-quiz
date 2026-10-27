@@ -11,7 +11,7 @@ const fmt = (iso) =>
   " · " + new Date(iso).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 
 // Selector: liga arriba, equipos de su tabla abajo.
-function Picker({ onPick, onClose }) {
+export function Picker({ onPick, onClose }) {
   const [league, setLeague] = useState("premier");
   const [teams, setTeams] = useState(null);
 

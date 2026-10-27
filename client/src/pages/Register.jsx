@@ -2,12 +2,15 @@ import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
+import useFutotal2 from "../v2/useFutotal2.js";
 import FloatField from "../components/FloatField.jsx";
 import Avatar from "../components/Avatar.jsx";
 
 export default function Register() {
   const { register, user } = useAuth();
   const navigate = useNavigate();
+  const { on: v2 } = useFutotal2();
+  const practica = new URLSearchParams(window.location.search).get("practica");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,7 +59,7 @@ export default function Register() {
   };
 
   // Ya había una sesión (no se está creando una cuenta ahora): directo a la app.
-  if (user && !loading && !revealing) return <Navigate to="/" replace />;
+  if (user && !loading && !revealing) return <Navigate to={v2 ? "/hoy" : "/"} replace />;
 
   if (revealing) {
     return (
@@ -74,7 +77,7 @@ export default function Register() {
               <button type="button" onClick={copyCode} className="btn btn-secondary btn-sm mt-2 w-full">{copied ? "Copiado" : "Copiar código"}</button>
             </div>
           )}
-          <button onClick={() => navigate("/")} className="btn btn-primary inline-flex items-center gap-1">
+          <button onClick={() => navigate(v2 ? "/bienvenida" : "/")} className="btn btn-primary inline-flex items-center gap-1">
             Entrar <ChevronRight size={15} />
           </button>
         </div>
