@@ -257,3 +257,15 @@ test("partido temático: al terminar el partido del día se gana la insignia y e
   assert.ok(pack, "sobre del evento");
   assert.equal(pack.theme, "la_roja");
 });
+
+test("La Roja: cualquier partido de Chile en un torneo de selecciones es un evento, y no cambia el partido del día", async () => {
+  const mk = (home, away) => ({ id: "9500", name: `${away} at ${home}`, date: "2026-06-20T20:00Z", competitions: [{ competitors: [{ homeAway: "home", team: { id: "1", displayName: home } }, { homeAway: "away", team: { id: "2", displayName: away } }] }] });
+  assert.equal(ev.matchKit(mk("Chile", "Argentina"), "conmebol.america").kit.key, "seleccion_chile");
+  assert.equal(ev.matchKit(mk("Brasil", "Chile"), "fifa.world").kit.key, "seleccion_chile");
+  assert.equal(ev.matchKit(mk("Brasil", "Argentina"), "fifa.world"), null);
+  assert.equal(ev.matchKit(mk("Chile", "Argentina"), "esp.1"), null, "otra competencia no cuenta");
+  await db.execute({ sql: "INSERT INTO events (date, kit_key, league, event_id, home_name, away_name) VALUES ('2026-06-20', 'seleccion_chile', 'conmebol.america', '9500', 'Chile', 'Argentina')" });
+  const items = await dm.matchFor("2026-06-20");
+  assert.ok(items.every((i) => i.kind !== "especial"), "sin juego especial el tercer tiempo sigue siendo de penales");
+  assert.equal(items.filter((i) => i.part === 3).length, 3);
+});

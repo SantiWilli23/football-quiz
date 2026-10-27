@@ -51,6 +51,10 @@ export function matchKit(ev, league) {
       continue;
     }
     const [a, b] = kit.teams;
+    if (kit.anyOpponent) {
+      if (sameTeam(a, home.displayName) || sameTeam(a, away.displayName)) return { kit, home, away };
+      continue;
+    }
     if ((sameTeam(a, home.displayName) && sameTeam(b, away.displayName)) || (sameTeam(b, home.displayName) && sameTeam(a, away.displayName))) return { kit, home, away };
   }
   return null;
@@ -77,9 +81,8 @@ const weekCount = async (date) => Number((await db.execute({
 export async function detectEvents(date, { scoreboard = defaultScoreboard } = {}) {
   const found = [];
   const leagues = [...new Set(KITS.flatMap((k) => k.leagues))];
-  for (const slug of leagues) {
-    let json;
-    try { json = await scoreboard(slug, date); } catch { continue; }
+  const boards = await Promise.all(leagues.map(async (slug) => { try { return [slug, await scoreboard(slug, date)]; } catch { return [slug, null]; } }));
+  for (const [slug, json] of boards) {
     for (const ev of json?.events || []) {
       const m = matchKit(ev, slug);
       if (m) found.push({ ...m, ev, slug });
@@ -137,7 +140,7 @@ export function clubQuestions(clubA, clubB, rand, n) {
 // Los 3 ítems del tercer tiempo en un día de evento. `ev` es la fila de events.
 export function specialItems(ev, date) {
   const kit = kitByKey(ev.kit_key);
-  if (!kit) return null;
+  if (!kit || kit.special?.kind === "none") return null;
   const rand = rng(dailySeed(date, `evento-${ev.kit_key}`));
   const names = { A: { name: kit.teams[0]?.name || ev.home_name, career: kit.teams[0]?.career || careerName(ev.home_name) }, B: { name: kit.teams[1]?.name || ev.away_name, career: kit.teams[1]?.career || careerName(ev.away_name) } };
   const items = [];

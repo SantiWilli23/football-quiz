@@ -46,6 +46,19 @@
       "badge": "Clásico"
     },
     {
+      "key": "seleccion_chile",
+      "label": "La Roja",
+      "priority": 2,
+      "leagues": ["fifa.world", "conmebol.america", "fifa.worldq.conmebol", "fifa.friendly"],
+      "anyOpponent": true,
+      "teams": [{ "name": "Chile", "aliases": ["chile"], "career": "Chile", "color": "#d71920", "alt": "#0033a0" }],
+      "entry": "humo",
+      "palette": { "bg": "#10131a", "a": "#d71920", "b": "#0033a0" },
+      "special": { "kind": "none" },
+      "sbcTheme": "la_roja",
+      "badge": "Con La Roja"
+    },
+    {
       "key": "final_champions",
       "label": "Final de Champions",
       "priority": 3,

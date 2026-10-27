@@ -4,6 +4,8 @@ import { CircleHelp, X } from "lucide-react";
 import { helpFor } from "../data/helpTexts.js";
 import { tutorialFor } from "../tutorial/steps.js";
 import TutorialPlayer from "../tutorial/TutorialPlayer.jsx";
+import Demo from "../v2/Demo.jsx";
+import useFutotal2 from "../v2/useFutotal2.js";
 
 // Botón «?» de cada pantalla: abre un resumen de cómo se juega o de cómo
 // funciona. Los textos viven en data/helpTexts.js. `inline` = dentro de una
@@ -12,10 +14,12 @@ export default function HelpButton({ inline = false }) {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(false);
+  const { on: v2 } = useFutotal2();
   const help = helpFor(pathname);
   const tutorial = tutorialFor(pathname);
 
-  useEffect(() => { setOpen(false); setTutorialOpen(false); }, [pathname]);
+  useEffect(() => { setOpen(false); setTutorialOpen(false); setDemoOpen(false); }, [pathname]);
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
@@ -58,7 +62,8 @@ export default function HelpButton({ inline = false }) {
               </ul>
             )}
             <div className="flex gap-2">
-              {tutorial && (
+              {v2 && <button onClick={() => { setOpen(false); setDemoOpen(true); }} className="btn btn-secondary flex-1">Ver demo</button>}
+              {!v2 && tutorial && (
                 <button onClick={() => { setOpen(false); setTutorialOpen(true); }} className="btn btn-secondary flex-1">Ver tutorial</button>
               )}
               <button onClick={() => setOpen(false)} className="btn btn-primary flex-1">Entendido</button>
@@ -66,6 +71,7 @@ export default function HelpButton({ inline = false }) {
           </div>
         </div>
       )}
+      {demoOpen && <Demo onClose={() => setDemoOpen(false)} />}
       {tutorialOpen && tutorial && (
         <TutorialPlayer title={tutorial.title} steps={tutorial.steps} onClose={() => setTutorialOpen(false)} />
       )}

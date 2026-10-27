@@ -18,7 +18,7 @@ Para probar en local: `cd server && FUTOTAL2=1 OWNER_USERNAME=tuUsuario npm star
 Antes de abrirlo a todos: copia de la base (Turso) y activar primero solo para el club del dueño.
 Las migraciones son aditivas (columnas y tablas nuevas): volver a la versión vieja no rompe nada.
 
-## Hecho (con tests: 150 en el servidor, y recorrido en navegador a 375 px)
+## Hecho (con tests: 151 en el servidor, y recorrido en navegador a 375 px)
 
 - **Fase 0 · base**: el día de la app cambia a las 00:00 de Chile (`America/Santiago`); medición (`analytics_events`); tareas programadas (`utils/jobs.js`) y registro de errores/alertas.
 - **Fase 1 · puntos y clubes**: libro único de puntos por club (`points_ledger`), modos Clásico y Total, pretemporada e inicio de temporada, entrada tardía, club principal, racha personal con protector, sobres guardados (máx. 3, solo con `FUTOTAL2=1`), código de recuperación de cuenta.
@@ -39,7 +39,7 @@ Las migraciones son aditivas (columnas y tablas nuevas): volver a la versión vi
 4. **Calibración de dificultad**: es liviana (solo saca las preguntas extremas de la tanda de penales); no ajusta el partido a un promedio objetivo.
 5. **Leyendas del club**: Cotrero es una página estática que calcula su puntaje en el teléfono, así que el servidor lo acota (tope de 3000, etiquetas cerradas) pero no lo puede verificar. Es un salón entre amigos, no un ranking que da puntos. No se calcula «a qué figura se parece».
 6. **Datos del juego especial** de los partidos temáticos: las preguntas «Messi o Cristiano» están revisadas a mano, pero las de «¿en qué club jugó?» salen de las carreras de la base de jugadores, que hay que revisar antes de publicar.
-7. **W7 · Temporada especial de torneo de selecciones**: no se hizo (depende de que haya un torneo).
-8. **Marcos de avatar y logros nuevos, «Ver demo» de 10 s en el «?»**: no se hicieron.
+7. **W7 · torneo de selecciones**: versión mínima. Cualquier partido de Chile en Mundial, Copa América, eliminatorias o amistosos se vuelve un evento «La Roja» (colores, previa, pronóstico, hinchadas, insignia y sobre de La Roja). No hay álbum de selecciones ni banner de toda la temporada.
+8. **Marcos de avatar y logros nuevos**: no se hicieron. El «?» ahora tiene «Ver demo» de 10 s.
 9. **Decisión del dueño (V2)**: el plan gratis de Render se duerme tras ~15 minutos sin tráfico, lo que afecta el aviso de gol, los avisos «a tu hora» y los cierres automáticos. Alternativas: plan pagado, o un cron externo a `POST /api/jobs/run` con el encabezado `x-cron-secret`.
 10. **Conflicto con una decisión anterior**: el plan dice que las partidas libres suman puntos en clubes Total; antes se había pedido que la diversión nunca diera puntos. Como el modo por defecto es Clásico, hoy no suman. Si se prefiere que nunca sumen, se quita la fuente `libre:*` del libro (`utils/ledger.js`).
