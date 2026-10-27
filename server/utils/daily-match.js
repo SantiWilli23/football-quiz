@@ -84,7 +84,11 @@ export function masMenosItems(rand, n) {
 export async function penalItems(rand, n, area = null) {
   const a = (await db.execute("SELECT id, question, category, option_a, option_b, option_c, option_d, correct_answer FROM questions")).rows.map((r) => ({ ...r, src: "t" }));
   const b = (await db.execute("SELECT id, question, option_a, option_b, option_c, option_d, correct_answer FROM duel_questions")).rows.map((r) => ({ ...r, src: "d" }));
-  const tagged = [...a, ...b].filter((r) => !area || (r.src === "t" ? TRIVIA_AREA[r.category] || "actualidad" : "leyendas") === area);
+  // Calibración: con 20 respuestas o más, una pregunta que acierta casi todo el mundo (95%+) o casi
+  // nadie (10% o menos) se saca de la tanda para que el partido salga parejo todos los días.
+  const stats = new Map((await db.execute("SELECT question_key, shown, correct FROM question_stats WHERE shown >= 20")).rows.map((r) => [r.question_key, Number(r.correct) / Number(r.shown)]));
+  const calibrated = (r) => { const p = stats.get(`${r.src}:${r.id}`); return p === undefined || (p < 0.95 && p > 0.1); };
+  const tagged = [...a, ...b].filter(calibrated).filter((r) => !area || (r.src === "t" ? TRIVIA_AREA[r.category] || "actualidad" : "leyendas") === area);
   const bank = shuffle(tagged, rand).slice(0, n);
   return bank.map((r) => {
     const opts = [r.option_a, r.option_b, r.option_c, r.option_d];

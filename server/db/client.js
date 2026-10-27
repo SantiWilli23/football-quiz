@@ -451,5 +451,6 @@ async function migrateClubs() {
   await addColumn("users", "tz", "TEXT DEFAULT 'America/Santiago'");
   await addColumn("card_packs", "theme", "TEXT");
   await addColumn("daily_match_answers", "area", "TEXT"); // tema de la pregunta, para el ADN futbolero
+  await addColumn("events", "last_score", "TEXT"); // último marcador visto, para avisar los goles
   await addColumn("daily_match_answers", "speed", "REAL"); // 1 = al instante, 0 = se acabó el tiempo
 }

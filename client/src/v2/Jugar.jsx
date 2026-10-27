@@ -20,7 +20,7 @@ const SECTIONS = [
   {
     key: "amigos", title: "Con amigos", text: "Para jugar contra gente de tu club.",
     games: [
-      { to: "/quien-sabe-mas", label: "Versus", icon: Swords, text: "Duelos, Mentiroso, Equipo-Jugador y más, uno contra uno.", variants: [["Duelos", "/duelos"], ["Equipo-Jugador", "/equipo-jugador"], ["¿Quién es? en vivo", "/quien-es-vivo"], ["Dorsal histórico", "/dorsal-historico"]] },
+      { to: "/versus", label: "Versus", icon: Swords, text: "Una ruleta elige el modo: Duelos, Equipo-Jugador, ¿Quién es? en vivo…", variants: [["Duelos", "/duelos"], ["Equipo-Jugador", "/equipo-jugador"], ["¿Quién es? en vivo", "/quien-es-vivo"], ["Dorsal histórico", "/dorsal-historico"]] },
       { to: "/copa-8a2", label: "Draft", icon: Star, text: "Armá tu once por rondas, solo o en copa.", variants: [["8a2 (solo)", "/draft-europeo.html"], ["Copa 8a2", "/copa-8a2"], ["Subasta", "/subasta"]] },
       { to: "/dt-liga", label: "DT Online", icon: Users, text: "Una liga de verdad con tus amigos, temporada a temporada.", variants: [] },
     ],

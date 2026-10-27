@@ -1,7 +1,7 @@
 import { db } from "../db/client.js";
 import { addDays, chileHour, todayStr } from "./points.js";
 import { redesignOn } from "./clubs.js";
-import { ensureEventsDetected, eventOn, resolveEvent, kitByKey, resetDetection } from "./events.js";
+import { ensureEventsDetected, eventOn, resolveEvent, kitByKey, resetDetection, liveFor } from "./events.js";
 import { settleLastCup } from "./cup.js";
 import { closeDueMonths } from "./month.js";
 import { closeDueFriendlies } from "./friendly.js";
@@ -55,6 +55,7 @@ export async function runJobs({ today = todayStr(), send = sendToUser, now = new
   }, out);
   await step("meses", async () => ({ cerrados: (await closeDueMonths(today)).length }), out);
   await step("amistosos", async () => ({ cerrados: (await closeDueFriendlies(today)).length }), out);
+  await step("goles", async () => notifyGoals({ today, send }), out);
   await step("avisos", async () => sendSmartReminders({ today, now, send }), out);
   await step("alertas", async () => checkAlerts(today), out);
   try { await db.execute({ sql: "INSERT INTO job_runs (at, result_json) VALUES (datetime('now'), ?)", args: [JSON.stringify(out)] }); } catch { /* sin registro */ }
@@ -117,6 +118,45 @@ export async function sendSmartReminders({ today = todayStr(), now = new Date(),
     }
   }
   return { considered, sent, hour };
+}
+
+// ---------- aviso de gol ----------
+// En un partido temático en juego, cada vez que cambia el marcador se avisa a quienes lo siguen
+// (pronosticaron o eligieron hinchada). Cuenta dentro del tope de 3 avisos por día.
+export async function notifyGoals({ today = todayStr(), send = sendToUser, getMatch = liveFor } = {}) {
+  const evs = (await db.execute({ sql: "SELECT * FROM events WHERE date = ?", args: [today] })).rows;
+  let goals = 0;
+  let sent = 0;
+  for (const ev of evs) {
+    let m;
+    try { m = await getMatch(ev.league, ev.event_id); } catch (err) { await logError("live", err); continue; }
+    if (!m || (!m.live && !m.finished)) continue;
+    const score = `${m.score.home ?? 0}-${m.score.away ?? 0}`;
+    const prev = ev.last_score;
+    if (score === prev) continue;
+    await db.execute({ sql: "UPDATE events SET last_score = ? WHERE date = ?", args: [score, today] });
+    if (prev === null || prev === undefined || m.finished) continue; // la primera lectura o el final no avisan
+    const [ph, pa] = prev.split("-").map(Number);
+    if ((m.score.home ?? 0) + (m.score.away ?? 0) <= ph + pa) continue; // un VAR que anula un gol no es un gol
+    goals += 1;
+    const side = (m.score.home ?? 0) > ph ? "home" : "away";
+    const scorer = [...m.events].reverse().find((e) => e.type === "goal" || e.type === "pen_goal" || e.type === "own_goal");
+    const followers = (await db.execute({
+      sql: `SELECT DISTINCT user_id FROM (SELECT user_id FROM event_preds WHERE date = ? UNION SELECT user_id FROM event_sides WHERE date = ?)`,
+      args: [today, today],
+    })).rows;
+    for (const f of followers) {
+      const used = Number((await db.execute({ sql: "SELECT n FROM push_day WHERE user_id = ? AND date = ?", args: [f.user_id, today] })).rows[0]?.n || 0);
+      if (used >= MAX_PUSH_PER_DAY) continue;
+      const body = `¡Gol de ${m.teams[side]?.name}! ${scorer?.player ? `${scorer.player} ` : ""}${m.teams.home?.name} ${score} ${m.teams.away?.name}`.replace(/\s+/g, " ");
+      const n = await send(f.user_id, { title: "Futotal", body, url: `/vivo/${ev.league}/${ev.event_id}` });
+      if (n > 0) {
+        sent += 1;
+        await db.execute({ sql: "INSERT INTO push_day (user_id, date, n) VALUES (?, ?, 1) ON CONFLICT(user_id, date) DO UPDATE SET n = n + 1", args: [f.user_id, today] });
+      }
+    }
+  }
+  return { goals, sent };
 }
 
 // ---------- alertas (V4) ----------
