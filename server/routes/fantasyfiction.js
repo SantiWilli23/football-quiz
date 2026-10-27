@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
+import { todayStr } from "../utils/points.js";
 import { normalize } from "../db/seed-equipo-jugador.js";
 
 const router = Router();
@@ -176,7 +177,7 @@ async function resolvePendingJornadas(league) {
     for (const [rank, s] of scored.entries()) {
       await db.execute({
         sql: "INSERT OR IGNORE INTO wordle_results (user_id, date, league, attempts, points) VALUES (?, ?, ?, 0, ?)",
-        args: [s.userId, new Date().toISOString().slice(0, 10), `fant${league.id}j${jornada}`, [8, 5, 3][rank] ?? 1],
+        args: [s.userId, todayStr(), `fant${league.id}j${jornada}`, [8, 5, 3][rank] ?? 1],
       });
     }
   }

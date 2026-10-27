@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
+import { todayStr } from "../utils/points.js";
 import {
   FootballApiError,
   LEAGUES,
@@ -16,10 +17,6 @@ import { getRatedLeaders } from "../utils/match-ratings.js";
 
 const router = Router();
 router.use(requireAuth);
-
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function handleFootballError(err, res) {
   if (err instanceof FootballApiError) {

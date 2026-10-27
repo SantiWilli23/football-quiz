@@ -52,6 +52,7 @@ export async function initSchema() {
   await migrateCupMatchEvents();
   await migrateSeasonPredictionPhase();
   await migrateFichadoFailHints();
+  await migrateClubs();
 }
 
 // Fichado: pistas gratis ganadas por intentos fallidos (cada 2 fallos, una).
@@ -430,4 +431,23 @@ async function migrateSpecialQuestionsTable() {
 
   await db.execute("ALTER TABLE special_questions ADD COLUMN option_a TEXT");
   await db.execute("ALTER TABLE special_questions ADD COLUMN option_b TEXT");
+}
+
+// Futotal 2.0: los grupos pasan a ser «clubes» con modo (clásico o total) y
+// temporada. Todo aditivo: ningún dato existente se toca. Un club que ya tenía
+// miembros queda en pretemporada (sin temporada iniciada) hasta que su dueño la inicie.
+async function addColumn(table, column, ddl) {
+  const info = await db.execute(`PRAGMA table_info(${table})`);
+  if (info.rows.length === 0 || info.rows.some((r) => r.name === column)) return;
+  await db.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`);
+}
+
+async function migrateClubs() {
+  await addColumn("groups_t", "club_mode", "TEXT NOT NULL DEFAULT 'clasico'");
+  await addColumn("groups_t", "season_started_at", "TEXT");
+  await addColumn("groups_t", "mode_changed_month", "TEXT");
+  await addColumn("group_members", "debuts_month", "TEXT");
+  await addColumn("users", "recovery_code", "TEXT"); // cifrado: se puede volver a mostrar en Ajustes
+  await addColumn("users", "tz", "TEXT DEFAULT 'America/Santiago'");
+  await addColumn("card_packs", "theme", "TEXT");
 }

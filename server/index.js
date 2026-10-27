@@ -49,6 +49,8 @@ import dorsalRoutes from "./routes/dorsal.js";
 import subastaRoutes from "./routes/subasta.js";
 import mediaRoutes from "./routes/media.js";
 import aQuienMeComproRoutes from "./routes/a-quien-me-compro.js";
+import clubsRoutes from "./routes/clubs.js";
+import analyticsRoutes from "./routes/analytics.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -67,6 +69,8 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/groups", groupsRoutes);
+app.use("/api/clubs", clubsRoutes);
+app.use("/api/analytics", analyticsRoutes);
 app.use("/api/questions", questionsRoutes);
 app.use("/api/bonus", bonusRoutes);
 app.use("/api/mode-b", modeBRoutes);

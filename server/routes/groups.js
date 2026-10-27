@@ -2,7 +2,9 @@ import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { duelSidePoints } from "./duels.js";
-import { getCurrentStreak } from "../utils/points.js";
+import { getCurrentStreak, todayStr } from "../utils/points.js";
+import { CLUB_MODES } from "../utils/ledger.js";
+import { debutMonthFor, hasActiveClub, unlockPacksFor } from "../utils/clubs.js";
 import { settleGroupCup } from "./weekly-cup.js";
 
 const router = Router();
@@ -117,6 +119,7 @@ router.put("/:id/crest", async (req, res) => {
 
 router.post("/", async (req, res) => {
   const { name, description, crest } = req.body || {};
+  const clubMode = CLUB_MODES.includes(req.body?.mode) ? req.body.mode : "clasico";
   if (!name || !name.trim()) {
     return res.status(400).json({ error: "El nombre del grupo es requerido" });
   }
@@ -124,8 +127,8 @@ router.post("/", async (req, res) => {
   try {
     const invite_code = await uniqueInviteCode();
     const result = await db.execute({
-      sql: `INSERT INTO groups_t (name, description, avatar, invite_code, created_by) VALUES (?, ?, ?, ?, ?)`,
-      args: [name.trim(), description || null, buildCrest(name, crest), invite_code, req.userId],
+      sql: `INSERT INTO groups_t (name, description, avatar, invite_code, created_by, club_mode) VALUES (?, ?, ?, ?, ?, ?)`,
+      args: [name.trim(), description || null, buildCrest(name, crest), invite_code, req.userId, clubMode],
     });
     const groupId = Number(result.lastInsertRowid);
 
@@ -166,10 +169,13 @@ router.post("/join", async (req, res) => {
       return res.status(409).json({ error: "Ya eres miembro de este grupo" });
     }
 
+    const hadClub = await hasActiveClub(req.userId);
     await db.execute({
-      sql: "INSERT INTO group_members (group_id, user_id) VALUES (?, ?)",
-      args: [group.id, req.userId],
+      sql: "INSERT INTO group_members (group_id, user_id, debuts_month) VALUES (?, ?, ?)",
+      args: [group.id, req.userId, debutMonthFor(group, todayStr())],
     });
+    // Si el club ya tiene la temporada iniciada, los sobres guardados se desbloquean.
+    if (group.season_started_at) await unlockPacksFor(req.userId, hadClub);
 
     res.status(201).json({ group });
   } catch (err) {

@@ -6,6 +6,7 @@ import { requireAuth } from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rateLimit.js";
 import { getCurrentStreak, getBestStreak } from "../utils/points.js";
 import { computeAchievements } from "./stats.js";
+import { newRecoveryCode, sealCode, openCode, codesMatch } from "../utils/recovery.js";
 
 // Frena la fuerza bruta de contraseñas: 10 intentos cada 15 minutos por IP.
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: "Demasiados intentos. Esperá unos minutos y volvé a probar." });
@@ -246,16 +247,56 @@ router.post("/register", authLimiter, async (req, res) => {
     const password_hash = await bcrypt.hash(password, 10);
     const avatar = username.trim().charAt(0).toUpperCase();
 
+    const recoveryCode = newRecoveryCode();
     const result = await db.execute({
-      sql: "INSERT INTO users (username, email, password_hash, avatar) VALUES (?, ?, ?, ?)",
-      args: [username, email, password_hash, avatar],
+      sql: "INSERT INTO users (username, email, password_hash, avatar, recovery_code) VALUES (?, ?, ?, ?, ?)",
+      args: [username, email, password_hash, avatar, sealCode(recoveryCode)],
     });
 
     const userId = Number(result.lastInsertRowid);
     const token = signToken(userId);
     const userRow = await db.execute({ sql: "SELECT * FROM users WHERE id = ?", args: [userId] });
 
-    res.status(201).json({ token, user: publicUser(userRow.rows[0]) });
+    // El código de recuperación se muestra una vez acá (y de nuevo en Ajustes).
+    res.status(201).json({ token, user: publicUser(userRow.rows[0]), recoveryCode });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Recuperar la cuenta con el código que se mostró al registrarse. Rota el código.
+router.post("/recover", authLimiter, async (req, res) => {
+  const { username, code, newPassword } = req.body || {};
+  if (!username || !code || !newPassword) return res.status(400).json({ error: "Faltan campos requeridos" });
+  if (String(newPassword).length < 6) return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
+  try {
+    const user = (await db.execute({ sql: "SELECT id, recovery_code FROM users WHERE username = ?", args: [username] })).rows[0];
+    const real = user?.recovery_code ? openCode(user.recovery_code) : null;
+    if (!user || !real || !codesMatch(code, real)) return res.status(401).json({ error: "Usuario o código incorrecto" });
+    const fresh = newRecoveryCode();
+    await db.execute({
+      sql: "UPDATE users SET password_hash = ?, recovery_code = ? WHERE id = ?",
+      args: [await bcrypt.hash(String(newPassword), 10), sealCode(fresh), user.id],
+    });
+    res.json({ ok: true, token: signToken(Number(user.id)), recoveryCode: fresh });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Ver de nuevo el código de recuperación (Yo › Ajustes). Las cuentas anteriores al
+// rediseño no tienen: se les genera uno la primera vez que lo piden.
+router.get("/recovery-code", requireAuth, async (req, res) => {
+  try {
+    const row = (await db.execute({ sql: "SELECT recovery_code FROM users WHERE id = ?", args: [req.userId] })).rows[0];
+    let code = row?.recovery_code ? openCode(row.recovery_code) : null;
+    if (!code) {
+      code = newRecoveryCode();
+      await db.execute({ sql: "UPDATE users SET recovery_code = ? WHERE id = ?", args: [sealCode(code), req.userId] });
+    }
+    res.json({ recoveryCode: code });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

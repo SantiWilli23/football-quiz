@@ -23,9 +23,12 @@ export function useTempDatabase() {
   };
 }
 
+// Mismo reloj que la app (día de Chile), sin importar utils/points.js para no
+// abrir la base antes de que useTempDatabase() la configure.
+const CHILE_DAY = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago", year: "numeric", month: "2-digit", day: "2-digit" });
 export function dayOffset(days) {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
+  const d = new Date(CHILE_DAY.format(new Date()) + "T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
 

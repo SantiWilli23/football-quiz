@@ -1,5 +1,7 @@
 // Ranking de "retos" (versión semanal de cada juego + trivia diaria) por grupo.
 // 1° = 100 puntos, 2° = 50, 3° = 30, 4° = 10, el resto no suma.
+import { todayStr } from "./points.js";
+
 export const RANK_POINTS = { 1: 100, 2: 50, 3: 30, 4: 10 };
 
 export function pointsForRank(rank) {
@@ -13,7 +15,7 @@ export function pointsForRank(rank) {
 export const LOWER_IS_BETTER = new Set([]);
 
 export function todayKey() {
-  return new Date().toISOString().slice(0, 10);
+  return todayStr();
 }
 
 // Semana ISO (lunes a domingo), como "YYYY-Www". Reutiliza el mismo criterio

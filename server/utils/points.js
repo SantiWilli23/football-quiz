@@ -1,9 +1,16 @@
 import { db } from "../db/client.js";
 import { TRIVIA_DAILY_RANK_POINTS } from "./points-config.js";
 
-export function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+// El día de Futotal cambia a las 00:00 de Chile, no a las 21:00 como con UTC.
+export const APP_TZ = "America/Santiago";
+const DAY_FORMAT = new Intl.DateTimeFormat("en-CA", { timeZone: APP_TZ, year: "numeric", month: "2-digit", day: "2-digit" });
+
+export function todayStr(now = new Date()) {
+  return DAY_FORMAT.format(now);
 }
+
+// Mes ("YYYY-MM") al que pertenece una fecha ("YYYY-MM-DD").
+export const monthOf = (dateStr) => dateStr.slice(0, 7);
 
 export function addDays(dateStr, delta) {
   const d = new Date(dateStr + "T00:00:00Z");

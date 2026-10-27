@@ -10,6 +10,7 @@ import { rankingBetween } from "./stats.js";
 import { isoWeekKey } from "../utils/challenges.js";
 import { leagueForClub } from "../data/league-clubs.js";
 import { grantQuinielaPacks, grantWeeklyGamePacks } from "../utils/daily-games.js";
+import { packStatus } from "../utils/clubs.js";
 import { buildExtraCards, drawExtra, EXTRA_PACKS, extraPub, extrasFor, lineupEffects, refreshFormIfStale, CAPTAIN_CHEM_CAP_EXTRA } from "../utils/card-types.js";
 
 // Reto semanal de Cartas: cada victoria vale 20 + 10 por gol de diferencia,
@@ -349,10 +350,11 @@ router.get("/state", async (req, res) => {
     await grantWeeklyGamePacks(req.userId); // podio semanal de los juegos diarios
     await grantQuinielaPacks(req.userId); // sobre de la quiniela, cuando era el juego diario
     const today = todayStr();
-    const packs = Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM card_packs WHERE user_id = ? AND opened_at IS NULL", args: [req.userId] })).rows[0].n);
+    const status = await packStatus(req.userId);
+    const packs = status.openable.length;
     const dailyClaimed = !!(await db.execute({ sql: "SELECT 1 FROM card_packs WHERE user_id = ? AND date = ? AND source = 'diario'", args: [req.userId, today] })).rows[0];
     const owned = Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM user_cards WHERE user_id = ?", args: [req.userId] })).rows[0].n);
-    res.json({ packs, dailyClaimed, owned, total: CARDS.length });
+    res.json({ packs, lockedPacks: status.locked.length, dailyClaimed, owned, total: CARDS.length });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });
@@ -371,8 +373,9 @@ router.post("/claim-daily", async (req, res) => {
 
 router.post("/open", async (req, res) => {
   try {
-    const pack = (await db.execute({ sql: "SELECT id, source FROM card_packs WHERE user_id = ? AND opened_at IS NULL ORDER BY id LIMIT 1", args: [req.userId] })).rows[0];
-    if (!pack) return res.status(400).json({ error: "No tenés sobres para abrir" });
+    const { openable, locked } = await packStatus(req.userId);
+    const pack = openable.length ? (await db.execute({ sql: "SELECT id, source FROM card_packs WHERE id = ?", args: [openable[0]] })).rows[0] : null;
+    if (!pack) return res.status(400).json({ error: locked.length ? "Tus sobres están guardados: entrá a un club con la temporada iniciada para abrirlos" : "No tenés sobres para abrir" });
     const upd = await db.execute({ sql: "UPDATE card_packs SET opened_at = datetime('now') WHERE id = ? AND opened_at IS NULL", args: [pack.id] });
     if (upd.rowsAffected === 0) return res.status(409).json({ error: "Ese sobre ya se abrió" });
     const quality = qualityOf(pack.source);

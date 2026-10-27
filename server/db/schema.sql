@@ -1195,3 +1195,34 @@ CREATE TABLE IF NOT EXISTS dt_league_claims (
   claimed_at TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE(league_id, prospect_id)
 );
+
+-- Futotal 2.0: libro único de puntos por club, club principal y medición.
+CREATE TABLE IF NOT EXISTS points_ledger (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  date TEXT NOT NULL,
+  month TEXT NOT NULL,
+  source TEXT NOT NULL,
+  points INTEGER NOT NULL,
+  UNIQUE (user_id, group_id, date, source)
+);
+
+CREATE INDEX IF NOT EXISTS idx_points_ledger_group_month ON points_ledger(group_id, month);
+CREATE INDEX IF NOT EXISTS idx_points_ledger_group_date ON points_ledger(group_id, date);
+
+CREATE TABLE IF NOT EXISTS user_main_club (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id),
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  changed_month TEXT
+);
+
+CREATE TABLE IF NOT EXISTS analytics_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
+  name TEXT NOT NULL,
+  props TEXT,
+  at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_analytics_events_name ON analytics_events(name, at);

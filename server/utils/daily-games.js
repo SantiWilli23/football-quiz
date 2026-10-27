@@ -1,8 +1,9 @@
 import { db } from "../db/client.js";
-import { addDays, mondayOf } from "./points.js";
+import { addDays, mondayOf, todayStr } from "./points.js";
 import { DAILY_GAME_MAX_POINTS, WEEKLY_GAME_RANK_POINTS } from "./points-config.js";
 import { dailySeed, rng, shuffle } from "./futgames.js";
 import { WEEKLY_PODIUM_PACKS, dailyPackQuality, grantPack } from "./rewards.js";
+import { creditPoints, freeGameSource } from "./ledger.js";
 
 // Los doce juegos que se turnan como "juego diario": cada día es UNO solo (ver
 // dailyGameKeyFor), y ese paga hasta DAILY_GAME_MAX_POINTS. Los otros nueve ese
@@ -70,7 +71,11 @@ export async function recordDailyResult(userId, date, gameKey, fraction, score =
     // Práctica libre: no suma puntos. El sobre depende del rendimiento, la dificultad
     // y la duración, con tope de sobres de práctica por día.
     const got = await practicePack(userId, date, gameKey, fraction, play);
-    return { points: 0, already: false, notToday: true, practice: true, pack: got?.quality ?? null, packsLeft: got?.left ?? 0, today: dailyGameKeyFor(date) };
+    // Futotal 2.0: la primera partida libre del día de cada juego suma al club, pero
+    // solo si es Total (en Clásico o sin club se informa lo que habría ganado).
+    const hits = Math.round((Number(fraction) || 0) * 5);
+    const club = hits > 0 ? await creditPoints(userId, date, freeGameSource(gameKey), hits * 4) : { credited: [], wouldHave: 0 };
+    return { points: 0, already: false, notToday: true, practice: true, pack: got?.quality ?? null, packsLeft: got?.left ?? 0, today: dailyGameKeyFor(date), club };
   }
   const points = pointsFromFraction(fraction);
   const res = await db.execute({
@@ -82,7 +87,10 @@ export async function recordDailyResult(userId, date, gameKey, fraction, score =
     // de qué tan bien salió la partida. El puntaje queda para la clasificación.
     const pack = dailyPackQuality(points / DAILY_GAME_MAX_POINTS);
     await grantPack(userId, date, pack, `juego-${gameKey}`);
-    return { points, already: false, pack };
+    // Futotal 2.0: el partido del día suma al instante a cada club con temporada
+    // iniciada (0–20 del juego diario actual se llevan a la escala 0–100).
+    const club = await creditPoints(userId, date, "partido_dia", points * 5);
+    return { points, already: false, pack, club };
   }
   const prev = (await db.execute({
     sql: "SELECT points FROM daily_game_results WHERE user_id = ? AND date = ? AND game_key = ?",
@@ -212,7 +220,7 @@ export async function weeklyGameBonusByUser(userIds, from, to) {
 const WEEKLY_PACK_DONE = new Set();
 
 export async function grantWeeklyGamePacks(userId) {
-  const lastMonday = addDays(mondayOf(new Date().toISOString().slice(0, 10)), -7);
+  const lastMonday = addDays(mondayOf(todayStr()), -7);
   const groups = (await db.execute({ sql: "SELECT group_id FROM group_members WHERE user_id = ?", args: [userId] })).rows;
   for (const { group_id: groupId } of groups) {
     const key = `${userId}|${groupId}|${lastMonday}`;
