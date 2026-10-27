@@ -4,6 +4,7 @@ import { DAILY_GAME_MAX_POINTS, WEEKLY_GAME_RANK_POINTS } from "./points-config.
 import { dailySeed, rng, shuffle } from "./futgames.js";
 import { WEEKLY_PODIUM_PACKS, dailyPackQuality, grantPack } from "./rewards.js";
 import { creditPoints, freeGameSource } from "./ledger.js";
+import { redesignOn } from "./clubs.js";
 
 // Los doce juegos que se turnan como "juego diario": cada día es UNO solo (ver
 // dailyGameKeyFor), y ese paga hasta DAILY_GAME_MAX_POINTS. Los otros nueve ese
@@ -67,7 +68,10 @@ export function pointsFromFraction(fraction) {
 export async function recordDailyResult(userId, date, gameKey, fraction, score = 0, play = {}) {
   // Solo el juego diario de HOY suma; jugar otro es práctica libre.
   // Modo diversión: nunca suma puntos, aunque hoy sea el diario de este juego.
-  if (play.mode === "fun" || dailyGameKeyFor(date) !== gameKey) {
+  // Con el rediseño el único juego diario con puntos base es el Partido del día: el «diario
+  // rotativo» viejo pasa siempre por la rama libre (fuente libre:<juego>) y nunca escribe
+  // partido_dia, daily_game_results ni el sobre del diario (falla F1).
+  if (play.mode === "fun" || dailyGameKeyFor(date) !== gameKey || redesignOn()) {
     // Práctica libre: no suma puntos. El sobre depende del rendimiento, la dificultad
     // y la duración, con tope de sobres de práctica por día.
     const got = await practicePack(userId, date, gameKey, fraction, play);
