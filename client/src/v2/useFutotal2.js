@@ -6,7 +6,13 @@ import api from "../api.js";
 let pending = null;
 
 export function loadFutotal2() {
-  if (!pending) pending = api.get("/clubs/features").then((r) => !!r.data.futotal2).catch(() => false);
+  if (!pending) {
+    pending = api.get("/clubs/features").then((r) => !!r.data.futotal2).catch(() => false);
+    // Con el rediseño encendido se registra el service worker para poder abrir sin señal.
+    pending.then((on) => {
+      if (on && "serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+    });
+  }
   return pending;
 }
 

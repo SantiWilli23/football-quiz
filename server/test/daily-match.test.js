@@ -195,3 +195,30 @@ test("archivo: solo fechas pasadas con partido, y trae las respuestas para pract
   assert.equal((await call("get", "/archive/:date", { userId: 1, params: { date: todayStr() } })).status, 400, "hoy no es archivo");
   assert.equal((await call("get", "/archive/:date", { userId: 1, params: { date: "2020-01-01" } })).status, 400);
 });
+
+test("sin señal: se envían las respuestas al volver, con piso de tiempo y una sola vez", async () => {
+  const { groupId, userIds } = await makeGroup(db, { name: "Offline", members: ["sara", "tito"] });
+  await db.execute({ sql: "UPDATE groups_t SET season_started_at = '2026-01-01' WHERE id = ?", args: [groupId] });
+  const sara = userIds[0];
+  const full = await dm.matchFor(todayStr());
+
+  // incompleta se rechaza
+  const partial = await call("post", "/sync", { userId: sara, body: { date: todayStr(), answers: [{ answer: 0, ms: 100 }] } });
+  assert.equal(partial.status, 400);
+  // una fecha vencida se rechaza
+  assert.equal((await call("post", "/sync", { userId: sara, body: { date: "2020-01-01", answers: [] } })).status, 400);
+
+  const answers = full.map((it) => ({ answer: it.answer, ms: 1 })); // todo bien y "instantáneo"
+  const r = await call("post", "/sync", { userId: sara, body: { date: todayStr(), answers } });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.synced, true);
+  // con el piso de 30% del tiempo no se llega a 100: 80 + 20 × 0,7 = 94
+  assert.ok(r.body.total >= 92 && r.body.total <= 96, `marcador ${r.body.total}`);
+  assert.equal(r.body.club.credited[0].points, r.body.total);
+
+  // reenviar no suma de nuevo
+  const again = await call("post", "/sync", { userId: sara, body: { date: todayStr(), answers } });
+  assert.equal(again.body.already, true);
+  const row = (await ledger.clubTable(groupId, "hoy", todayStr())).find((x) => x.userId === sara);
+  assert.equal(row.points, r.body.total);
+});

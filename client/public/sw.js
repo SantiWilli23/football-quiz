@@ -1,5 +1,32 @@
-// Service worker mínimo: sólo existe para poder recibir notificaciones push.
-// No cachea nada — la app se sigue sirviendo normalmente desde la red.
+// Service worker: recibe notificaciones push y deja abrir la app sin señal (Futotal 2.0).
+// El caché es «primero la red»: con conexión siempre se sirve lo último, y solo si la red
+// falla se usa la copia guardada. Nunca guarda la API (/api) ni los sockets (/ws).
+const SHELL_CACHE = "futotal-shell-v1";
+
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+  if (req.method !== "GET") return;
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin || url.pathname.startsWith("/api/") || url.pathname.startsWith("/ws")) return;
+  event.respondWith(
+    fetch(req)
+      .then((res) => {
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(SHELL_CACHE).then((cache) => {
+            cache.put(req, copy.clone());
+            // La app es de una sola página: cualquier ruta cargada sirve de respaldo de «/».
+            if (req.mode === "navigate") cache.put("/", copy);
+          });
+        }
+        return res;
+      })
+      .catch(() => caches.match(req).then((hit) => hit || (req.mode === "navigate" ? caches.match("/") : Response.error())))
+  );
+});
 
 self.addEventListener("push", (event) => {
   let payload = { title: "Futotal", body: "Tenés preguntas nuevas.", url: "/" };

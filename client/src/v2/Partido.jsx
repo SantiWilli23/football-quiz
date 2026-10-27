@@ -7,6 +7,11 @@ import PlayerFace, { ClubCrest } from "../components/PlayerFace.jsx";
 import { playSfx } from "../utils/sfx.js";
 import { track } from "./analytics.js";
 import { useClubs } from "./useClubs.js";
+import { getQueue, loadPackage, queueAnswer, savePackage, syncQueue } from "./offline.js";
+
+// El día de Chile en el teléfono, para reconocer el paquete guardado cuando no hay red.
+const CHILE_DAY = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago", year: "numeric", month: "2-digit", day: "2-digit" });
+const chileToday = () => CHILE_DAY.format(new Date());
 
 // Partido del día: tres partes de ~1 minuto, igual para todos. El servidor tiene las
 // respuestas y calcula el marcador; esta pantalla solo muestra y manda lo que tocaste.
@@ -42,6 +47,7 @@ export default function Partido() {
   const [result, setResult] = useState(null);
   const [ghost, setGhost] = useState(null);
   const [clubStats, setClubStats] = useState(null);
+  const [offline, setOffline] = useState(false); // jugando con el paquete guardado, sin conexión
   const lock = useRef(false);
   const startedAt = useRef(0);
 
@@ -55,6 +61,7 @@ export default function Partido() {
       if (!alive) return;
       setData(d);
       if (practice) { setPhase("intro"); return; }
+      if (!d.result) savePackage(d.date, d.items);
       if (d.result) {
         setAnswers(d.answered);
         setResult({ parts: d.result.parts, total: d.result.total, already: true });
@@ -66,7 +73,20 @@ export default function Partido() {
       } else {
         setPhase("intro");
       }
-    }).catch((e) => alive && setError(e.response?.data?.error || "No se pudo cargar el partido."));
+    }).catch((e) => {
+      if (!alive) return;
+      // Sin respuesta del servidor = sin señal: se juega con el paquete guardado de hoy.
+      const pkg = !practice && !e.response ? loadPackage(chileToday()) : null;
+      if (!pkg) { setError(e.response?.data?.error || "No se pudo cargar el partido. Si estás sin señal, abrí la app una vez con conexión para poder jugar sin ella."); return; }
+      const q = getQueue();
+      const saved = q && q.date === pkg.date ? q.answers.map((a) => ({ ok: null, offline: true, answer: a.answer, points: 0 })) : [];
+      setData({ date: pkg.date, items: pkg.items, answered: [], result: null });
+      setOffline(true);
+      setAnswers(saved);
+      setIdx(saved.length);
+      setPhase(saved.length >= pkg.items.length ? "done" : saved.length ? "part" : "intro");
+      if (saved.length >= pkg.items.length) setResult({ offline: true, total: 0 });
+    });
     return () => { alive = false; };
   }, [practice, practiceDate]);
 
@@ -75,6 +95,11 @@ export default function Partido() {
     if (practice) {
       const total = Math.round(answers.reduce((n, a) => n + (a.points || 0), 0));
       setResult({ total, practice: true });
+      setPhase("done");
+      return;
+    }
+    if (offline) {
+      setResult({ offline: true, total: 0 });
       setPhase("done");
       return;
     }
@@ -87,7 +112,7 @@ export default function Partido() {
       setError(e.response?.data?.error || "No se pudo cerrar el partido.");
     }
     setPhase("done");
-  }, [answers, practice]);
+  }, [answers, practice, offline]);
 
   const next = useCallback((count) => {
     lock.current = false;
@@ -102,7 +127,12 @@ export default function Partido() {
     lock.current = true;
     const ms = Math.round(performance.now() - startedAt.current);
     let entry;
-    if (practice) {
+    if (offline) {
+      // Sin señal no hay respuestas correctas en el teléfono: se anota lo elegido y la
+      // corrección llega al reconectar.
+      queueAnswer(data.date, { answer: choice, ms });
+      entry = { ok: null, offline: true, answer: choice, points: 0 };
+    } else if (practice) {
       const ok = choice !== null && choice === item.answer;
       entry = { ok, correct: item.answer, points: localPoints(item, ok, ms), rightValue: item.rightValue ?? null, answer: choice };
     } else {
@@ -115,13 +145,13 @@ export default function Partido() {
         return;
       }
     }
-    playSfx(entry.ok ? "ok" : "bad");
+    if (!offline) playSfx(entry.ok ? "ok" : "bad");
     setAnswers((a) => [...a, entry]);
     setPhase("feedback");
-    if (!practice && main) {
+    if (!practice && !offline && main) {
       api.get("/daily/ghost", { params: { groupId: main.id, idx } }).then((r) => setGhost(r.data.ghost)).catch(() => setGhost(null));
     }
-  }, [idx, item, main, practice]);
+  }, [idx, item, main, practice, offline, data]);
 
   // Cronómetro de cada pregunta: sin respuesta a tiempo cuenta como fallada.
   useEffect(() => {
@@ -147,9 +177,28 @@ export default function Partido() {
     return () => clearTimeout(t);
   }, [phase, answers.length, next]);
 
+  // Al volver la conexión se manda la partida guardada y recién ahí se corrige y suma.
+  useEffect(() => {
+    if (!(phase === "done" && result?.offline)) return undefined;
+    let alive = true;
+    const trySync = async () => {
+      const out = await syncQueue(items.length);
+      if (!alive || !out) return;
+      if (out.error) { setError(out.error); return; }
+      setOffline(false);
+      setResult({ ...out, already: false });
+      // La corrección por pregunta (acierto o falla) llega con lo que ya guardó el servidor.
+      try { setAnswers((await api.get("/daily/today")).data.answered); } catch { /* se queda como estaba */ }
+      playSfx("win");
+    };
+    trySync();
+    window.addEventListener("online", trySync);
+    return () => { alive = false; window.removeEventListener("online", trySync); };
+  }, [phase, result?.offline, items.length]);
+
   // Después de jugar: cómo respondió el club.
   useEffect(() => {
-    if (phase !== "done" || practice || !main) return;
+    if (phase !== "done" || practice || offline || result?.offline || !main) return;
     api.get("/daily/club-stats", { params: { groupId: main.id } }).then((r) => setClubStats(r.data.questions)).catch(() => setClubStats(null));
   }, [phase, practice, main]);
 
@@ -216,7 +265,7 @@ export default function Partido() {
     <Layout focus exitTo="/hoy">
       <div className="max-w-md mx-auto space-y-4">
         <div className="flex items-center justify-between text-xs text-gray-400">
-          <span className="font-semibold text-accent">{part.label} · {part.title}</span>
+          <span className="font-semibold text-accent">{part.label} · {part.title}{offline && <span className="ml-2 rounded-full border border-amber/60 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber">Sin señal</span>}</span>
           <span className="tabular-nums">{progress} / {items.length}</span>
         </div>
         <div className="flex gap-1" aria-hidden="true">
@@ -228,7 +277,7 @@ export default function Partido() {
           <div className={`h-full rounded-full ${left < 0.25 ? "bg-bad" : "bg-accent"}`} style={{ width: `${(showing ? 0 : left) * 100}%` }} />
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-400">Tú <b className="text-white tabular-nums">{hits}</b></span>
+          {offline ? <span className="text-gray-500 text-xs">La corrección llega al volver la señal</span> : <span className="text-gray-400">Tú <b className="text-white tabular-nums">{hits}</b></span>}
           {ghost && <span className="text-gray-500 text-xs">{ghost.username}: {ghost.ok ? "acertó" : "falló"} en {(ghost.ms / 1000).toFixed(1)} s</span>}
         </div>
 
@@ -247,6 +296,7 @@ export default function Partido() {
 
 function optionTone(i, showing, last, item) {
   if (!showing) return "border-border bg-panel hover:border-accent/60";
+  if (last.offline) return i === last.answer ? "border-accent bg-accent/15" : "border-border bg-panel opacity-60";
   if (i === last.correct) return "border-good bg-good/15";
   if (i === last.answer) return "border-bad bg-bad/15";
   return "border-border bg-panel opacity-60";
@@ -311,10 +361,10 @@ function Penal({ item, showing, last, onPick }) {
   return (
     <div className="space-y-3">
       <div className="relative rounded-3xl border border-border bg-panel p-4 text-center overflow-hidden">
-        <div className={`mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full ${showing ? (last.ok ? "bg-good/20 text-good" : "bg-bad/20 text-bad") : "bg-accent/15 text-accent"}`}>
-          {showing ? (last.ok ? <Goal size={28} /> : <Shield size={28} />) : <Goal size={28} />}
+        <div className={`mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full ${showing && !last.offline ? (last.ok ? "bg-good/20 text-good" : "bg-bad/20 text-bad") : "bg-accent/15 text-accent"}`}>
+          {showing && !last.offline ? (last.ok ? <Goal size={28} /> : <Shield size={28} />) : <Goal size={28} />}
         </div>
-        <p className="text-xs uppercase tracking-wide text-gray-500">{showing ? (last.ok ? "¡Gol!" : "¡Atajado!") : "Penal"}</p>
+        <p className="text-xs uppercase tracking-wide text-gray-500">{showing ? (last.offline ? "Anotado" : last.ok ? "¡Gol!" : "¡Atajado!") : "Penal"}</p>
         <p className="mt-1 font-semibold leading-snug">{item.question}</p>
       </div>
       <Options item={item} showing={showing} last={last} onPick={onPick} />
@@ -347,6 +397,19 @@ function Resultado({ result, practice, items, answers, clubStats, main, finishin
   const would = result?.club?.wouldHave ?? 0;
 
   if (finishing || !result) return <p className="text-gray-500 text-sm">Sumando tu marcador…</p>;
+
+  if (result.offline) {
+    return (
+      <div className="max-w-md mx-auto space-y-4 text-center">
+        <div className="rounded-3xl border border-amber/50 bg-panel p-6 celebrate-pop">
+          <p className="t-eyebrow text-amber">Sin señal</p>
+          <h2 className="text-xl font-bold mt-1">Tu partido quedó guardado</h2>
+          <p className="text-sm text-gray-400 mt-2">Está en el teléfono. Se envía solo cuando vuelva la conexión, y ahí se corrige y suma a tu club.</p>
+        </div>
+        <button onClick={onBack} className="btn btn-primary w-full">Volver a Hoy</button>
+      </div>
+    );
+  }
 
   const share = `⚽ Futotal · Partido ${practice ? date : "del día"}\n${squares}\n${total}/100`;
   async function copy() {

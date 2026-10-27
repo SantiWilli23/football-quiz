@@ -7,6 +7,7 @@ import Card from "../components/Card.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useClubs } from "./useClubs.js";
 import { track } from "./analytics.js";
+import { pendingMatch, syncQueue } from "./offline.js";
 
 // Hoy: lo que importa del día en pocos bloques. El partido del día arriba, tu club
 // debajo, y recién después seguir jugando.
@@ -17,11 +18,23 @@ export default function Hoy() {
   const [streak, setStreak] = useState(null);
   const [table, setTable] = useState(null);
   const [clubStreak, setClubStreak] = useState(null);
+  const [synced, setSynced] = useState(null); // partida jugada sin señal que recién se envió
+  const [waiting, setWaiting] = useState(() => !!pendingMatch(17));
 
   useEffect(() => {
     track("abrio_hoy");
-    api.get("/daily/today").then((r) => setToday(r.data)).catch(() => setToday(false));
+    const load = () => api.get("/daily/today").then((r) => setToday(r.data)).catch(() => setToday(false));
+    const send = async () => {
+      const out = await syncQueue();
+      if (!out) return;
+      setWaiting(false);
+      if (!out.error) { setSynced(out); load(); }
+    };
+    load();
+    send();
+    window.addEventListener("online", send);
     api.get("/clubs/me/streak").then((r) => setStreak(r.data)).catch(() => setStreak(null));
+    return () => window.removeEventListener("online", send);
   }, []);
 
   useEffect(() => {
@@ -49,6 +62,9 @@ export default function Hoy() {
             </span>
           )}
         </div>
+
+        {synced && <p className="rounded-2xl border border-accent/40 bg-accent/10 px-4 py-2 text-sm" role="status">Tu partido se envió al club: sacaste <b>{synced.total}</b>.</p>}
+        {waiting && !synced && <p className="rounded-2xl border border-amber/40 bg-amber/10 px-4 py-2 text-sm" role="status">Tu partido está guardado en el teléfono y se envía solo cuando vuelva la conexión.</p>}
 
         <Card variant="feature">
           <p className="t-eyebrow">Partido del día</p>

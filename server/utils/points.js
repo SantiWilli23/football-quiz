@@ -9,6 +9,10 @@ export function todayStr(now = new Date()) {
   return DAY_FORMAT.format(now);
 }
 
+// Hora (0–23) en Chile: sirve para el margen de las partidas jugadas sin señal.
+const HOUR_FORMAT = new Intl.DateTimeFormat("en-GB", { timeZone: APP_TZ, hour: "2-digit", hour12: false });
+export const chileHour = (now = new Date()) => Number(HOUR_FORMAT.format(now)) % 24;
+
 // Mes ("YYYY-MM") al que pertenece una fecha ("YYYY-MM-DD").
 export const monthOf = (dateStr) => dateStr.slice(0, 7);
 

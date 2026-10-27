@@ -90,29 +90,70 @@ router.post("/answer", async (req, res) => {
   }
 });
 
-// Cierra el partido: arma el marcador por partes y lo suma al instante a los clubes.
+// Cierra el partido de una fecha: arma el marcador por partes y lo suma al instante a los
+// clubes. Idempotente: si ya estaba cerrado devuelve el resultado guardado.
+async function closeMatch(userId, date) {
+  const items = await matchFor(date);
+  const prev = await resultOf(userId, date);
+  if (prev) return { status: 200, body: { ...prev, already: true } };
+  const answered = await answersOf(userId, date);
+  if (answered.length < items.length) return { status: 409, body: { error: "Faltan preguntas por responder", answered: answered.length } };
+  const { parts, total } = partTotals(answered.map((a) => ({ part: items[a.idx].part, points: a.points })));
+  const ins = await db.execute({
+    sql: "INSERT OR IGNORE INTO daily_match_results (user_id, date, p1, p2, p3, total) VALUES (?, ?, ?, ?, ?, ?)",
+    args: [userId, date, parts[0], parts[1], parts[2], total],
+  });
+  if (ins.rowsAffected === 0) return { status: 200, body: { ...(await resultOf(userId, date)), already: true } };
+  const club = await creditPoints(userId, date, "partido_dia", total);
+  const quality = packQualityForTotal(total);
+  await grantPack(userId, date, quality, `partido-${date}`);
+  // Si con este partido jugaron todos los miembros de algún club, el club gana un sobre extra.
+  const clubIds = (await db.execute({ sql: "SELECT group_id FROM group_members WHERE user_id = ?", args: [userId] })).rows;
+  let clubPack = false;
+  for (const c of clubIds) if ((await grantClubStreakPacks(c.group_id, date)) > 0) clubPack = true;
+  return { status: 200, body: { parts, total, club, pack: quality, clubPack, already: false } };
+}
+
 router.post("/finish", async (req, res) => {
   try {
-    const date = todayStr();
+    const out = await closeMatch(req.userId, todayStr());
+    res.status(out.status).json(out.body);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Partida jugada sin señal: el teléfono guarda lo que elegiste y lo manda al volver la
+// conexión. Sin las respuestas correctas en el teléfono, no hay forma de mejorar el
+// puntaje; el tiempo no se puede contrastar, así que la rapidez cuenta con un piso.
+// Se acepta la fecha de hoy, o la de ayer hasta las 06:00 de Chile.
+export const OFFLINE_MIN_MS_SHARE = 0.3;
+router.post("/sync", async (req, res) => {
+  try {
+    const date = String(req.body?.date || "");
+    const today = todayStr();
+    const allowed = date === today || (date === addDays(today, -1) && chileHour() < 6);
+    if (!allowed) return res.status(400).json({ error: "Esa partida ya no se puede enviar: venció el plazo." });
     const items = await matchFor(date);
-    const prev = await resultOf(req.userId, date);
-    if (prev) return res.json({ ...prev, already: true });
-    const answered = await answersOf(req.userId, date);
-    if (answered.length < items.length) return res.status(409).json({ error: "Faltan preguntas por responder", answered: answered.length });
-    const { parts, total } = partTotals(answered.map((a) => ({ part: items[a.idx].part, points: a.points })));
-    const ins = await db.execute({
-      sql: "INSERT OR IGNORE INTO daily_match_results (user_id, date, p1, p2, p3, total) VALUES (?, ?, ?, ?, ?, ?)",
-      args: [req.userId, date, parts[0], parts[1], parts[2], total],
-    });
-    if (ins.rowsAffected === 0) return res.json({ ...(await resultOf(req.userId, date)), already: true });
-    const club = await creditPoints(req.userId, date, "partido_dia", total);
-    const quality = packQualityForTotal(total);
-    await grantPack(req.userId, date, quality, `partido-${date}`);
-    // Si con este partido jugaron todos los miembros de algún club, el club gana un sobre extra.
-    const clubIds = (await db.execute({ sql: "SELECT group_id FROM group_members WHERE user_id = ?", args: [req.userId] })).rows;
-    let clubPack = false;
-    for (const c of clubIds) if ((await grantClubStreakPacks(c.group_id, date)) > 0) clubPack = true;
-    res.json({ parts, total, club, pack: quality, clubPack, already: false });
+    const sent = Array.isArray(req.body?.answers) ? req.body.answers : [];
+    if (sent.length !== items.length) return res.status(400).json({ error: "La partida está incompleta" });
+    if (await resultOf(req.userId, date)) return res.json({ ...(await resultOf(req.userId, date)), already: true });
+    const existing = await answersOf(req.userId, date);
+    for (let idx = existing.length; idx < items.length; idx++) {
+      const item = items[idx];
+      const raw = sent[idx]?.answer;
+      const answer = Number.isInteger(raw) && raw >= 0 && raw < item.options.length ? raw : null;
+      const ok = answer !== null && answer === item.answer;
+      const claimed = Math.max(0, Math.min(Number(sent[idx]?.ms) || item.limitMs, item.limitMs));
+      const ms = answer === null ? item.limitMs : Math.max(claimed, item.limitMs * OFFLINE_MIN_MS_SHARE);
+      await db.execute({
+        sql: "INSERT OR IGNORE INTO daily_match_answers (user_id, date, idx, answer, ms, ok, points) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        args: [req.userId, date, idx, answer, Math.round(ms), ok ? 1 : 0, itemPoints(item, ok, ms)],
+      });
+    }
+    const out = await closeMatch(req.userId, date);
+    res.status(out.status).json({ ...out.body, synced: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });
