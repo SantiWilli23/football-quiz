@@ -56,7 +56,7 @@ test("pretemporada: un club sin temporada iniciada no suma y se informa lo que h
   const { groupId, userIds } = await makeGroup(db, { name: "Pre", members: ["pepe", "quique"] });
   const res = await ledger.creditPoints(userIds[0], todayStr(), "partido_dia", 50);
   assert.deepEqual(res.credited, []);
-  assert.equal(res.wouldHave, 100);
+  assert.equal(res.wouldHave, 50, "sin club iniciado se informa el valor Clásico");
   const table = await ledger.clubTable(groupId, "general", todayStr());
   assert.ok(table.every((r) => r.points === 0));
 });

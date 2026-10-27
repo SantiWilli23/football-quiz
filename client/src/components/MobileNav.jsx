@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Search, Volume2, VolumeX, BarChart3, Flame, Gamepad2, History, Home, HelpCircle, LogOut, MoreHorizontal, Radio, User, Users, X } from "lucide-react";
+import { Search, Volume2, VolumeX, BarChart3, Flame, Gamepad2, History, Home, HelpCircle, LogOut, MoreHorizontal, Radio, User, Users, X, Layers } from "lucide-react";
+import useFutotal2 from "../v2/useFutotal2.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import Avatar from "./Avatar.jsx";
 import AlertsBell from "./AlertsBell.jsx";
@@ -16,6 +17,15 @@ const links = [
   { to: "/perfil", label: "Yo", icon: User },
 ];
 
+// Futotal 2.0: Hoy · Jugar · Club · Cartas · Yo (sin «Más»: todo está en esas cinco).
+const linksV2 = [
+  { to: "/hoy", label: "Hoy", icon: Home, end: true },
+  { to: "/juegos", label: "Jugar", icon: Gamepad2 },
+  { to: "/club", label: "Club", icon: Users },
+  { to: "/cartas", label: "Cartas", icon: Layers },
+  { to: "/perfil", label: "Yo", icon: User },
+];
+
 const moreLinks = [
   { to: "/futbol", label: "En vivo", icon: Radio },
   { to: "/estadisticas", label: "Estadísticas", icon: BarChart3 },
@@ -25,6 +35,8 @@ const moreLinks = [
 export default function MobileNav() {
   const { user, stats, logout } = useAuth();
   const [moreOpen, setMoreOpen] = useState(false);
+  const { on: v2 } = useFutotal2();
+  const navLinks = v2 ? linksV2 : links;
   const location = useLocation();
   const [sound, setSound] = useState(isSfxOn);
   const openSearch = () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }));
@@ -82,7 +94,7 @@ export default function MobileNav() {
       )}
 
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 flex border-t border-border bg-panel/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
-        {links.map(({ to, label, icon: Icon, end }) => (
+        {navLinks.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
             to={to}
@@ -107,7 +119,7 @@ export default function MobileNav() {
             )}
           </NavLink>
         ))}
-        <button
+        {!v2 && <button
           onClick={() => setMoreOpen((o) => !o)}
           aria-expanded={moreOpen}
           className={`relative flex-1 min-w-0 flex flex-col items-center gap-0.5 py-2 px-0.5 text-xs font-medium leading-tight transition-colors ${moreOpen ? "text-accent" : "text-gray-500"}`}
@@ -115,7 +127,7 @@ export default function MobileNav() {
           <span className={`absolute top-0 h-0.5 w-8 rounded-full bg-accent transition-opacity ${moreOpen ? "opacity-100" : "opacity-0"}`} aria-hidden="true" />
           <MoreHorizontal size={20} />
           Más
-        </button>
+        </button>}
       </nav>
     </>
   );

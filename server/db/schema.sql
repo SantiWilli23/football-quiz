@@ -1226,3 +1226,49 @@ CREATE TABLE IF NOT EXISTS analytics_events (
 );
 
 CREATE INDEX IF NOT EXISTS idx_analytics_events_name ON analytics_events(name, at);
+
+-- Futotal 2.0: partido del día. El servidor guarda las respuestas correctas y calcula el puntaje.
+CREATE TABLE IF NOT EXISTS daily_matches (
+  date TEXT PRIMARY KEY,
+  event_key TEXT,
+  items_json TEXT NOT NULL,
+  target_avg INTEGER NOT NULL DEFAULT 60
+);
+
+CREATE TABLE IF NOT EXISTS daily_match_runs (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  date TEXT NOT NULL,
+  started_at INTEGER NOT NULL,
+  last_at INTEGER NOT NULL,
+  PRIMARY KEY (user_id, date)
+);
+
+CREATE TABLE IF NOT EXISTS daily_match_answers (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  date TEXT NOT NULL,
+  idx INTEGER NOT NULL,
+  answer INTEGER,
+  ms INTEGER NOT NULL,
+  ok INTEGER NOT NULL,
+  points REAL NOT NULL,
+  PRIMARY KEY (user_id, date, idx)
+);
+
+CREATE TABLE IF NOT EXISTS daily_match_results (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  date TEXT NOT NULL,
+  p1 INTEGER NOT NULL,
+  p2 INTEGER NOT NULL,
+  p3 INTEGER NOT NULL,
+  total INTEGER NOT NULL,
+  side INTEGER,
+  PRIMARY KEY (user_id, date)
+);
+
+CREATE TABLE IF NOT EXISTS question_stats (
+  question_key TEXT PRIMARY KEY,
+  kind TEXT NOT NULL,
+  shown INTEGER NOT NULL DEFAULT 0,
+  correct INTEGER NOT NULL DEFAULT 0,
+  total_ms INTEGER NOT NULL DEFAULT 0
+);

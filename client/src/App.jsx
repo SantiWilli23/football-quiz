@@ -3,11 +3,13 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./context/AuthContext.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
+import Recover from "./pages/Recover.jsx";
 import Splash from "./pages/Splash.jsx";
 import InvitePreview from "./pages/InvitePreview.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import CommandPalette from "./components/CommandPalette.jsx";
 import { FEATURES } from "./data/features.js";
+import useFutotal2 from "./v2/useFutotal2.js";
 
 // Pantallas de funciones apagadas (client/src/data/features.js): si la bandera
 // está en false, quien entre por un link viejo vuelve a Juegos.
@@ -20,6 +22,11 @@ function FeatureGate({ flag, children }) {
 // (ya pasaba los 750kb) y la enorme mayoría de una sesión nunca visita, por
 // ejemplo, Carrera DT o Equipo-Jugador.
 const Group = lazy(() => import("./pages/Group.jsx"));
+// Futotal 2.0 (se enciende con FUTOTAL2=1 en el servidor; ver v2/useFutotal2.js).
+const Hoy = lazy(() => import("./v2/Hoy.jsx"));
+const Partido = lazy(() => import("./v2/Partido.jsx"));
+const Archivo = lazy(() => import("./v2/Archivo.jsx"));
+const ClubV2 = lazy(() => import("./v2/Club.jsx"));
 const History = lazy(() => import("./pages/History.jsx"));
 const Profile = lazy(() => import("./pages/Profile.jsx"));
 const Stats = lazy(() => import("./pages/Stats.jsx"));
@@ -87,6 +94,13 @@ function PublicRoute({ children }) {
   return children;
 }
 
+// Con el rediseño encendido, el inicio de siempre pasa a ser «Hoy».
+function PanelOrHoy() {
+  const { on, ready } = useFutotal2();
+  if (!ready) return null;
+  return on ? <Navigate to="/hoy" replace /> : <Dashboard />;
+}
+
 export default function App() {
   return (
     <>
@@ -101,14 +115,10 @@ export default function App() {
         }
       />
       <Route path="/invitacion/:code" element={<InvitePreview />} />
-      <Route
-        path="/registro"
-        element={
-          <PublicRoute>
-            <Register />
-          </PublicRoute>
-        }
-      />
+      <Route path="/recuperar" element={<PublicRoute><Recover /></PublicRoute>} />
+      {/* Sin PublicRoute: al crear la cuenta hay que mostrar el código de recuperación
+          antes de entrar, y Register se ocupa de redirigir si ya había sesión. */}
+      <Route path="/registro" element={<Register />} />
       <Route
         path="/"
         element={
@@ -121,10 +131,15 @@ export default function App() {
         path="/panel"
         element={
           <PrivateRoute>
-            <Dashboard />
+            <PanelOrHoy />
           </PrivateRoute>
         }
       />
+      <Route path="/hoy" element={<PrivateRoute><Hoy /></PrivateRoute>} />
+      <Route path="/hoy/archivo" element={<PrivateRoute><Archivo /></PrivateRoute>} />
+      <Route path="/partido" element={<PrivateRoute><Partido /></PrivateRoute>} />
+      <Route path="/partido/:date" element={<PrivateRoute><Partido /></PrivateRoute>} />
+      <Route path="/club" element={<PrivateRoute><ClubV2 /></PrivateRoute>} />
       <Route
         path="/trivia"
         element={<Navigate to="/panel" replace />}

@@ -59,7 +59,8 @@ export async function creditPoints(userId, date, source, basePoints) {
   const month = monthOf(date);
   const kind = kindOf(source);
   const credited = [];
-  const allModes = clubs.length ? clubs.map((c) => c.club_mode) : ["total"];
+  // Sin ningún club iniciado se informa lo que valdría en Clásico (lo mínimo seguro).
+  const allModes = clubs.length ? clubs.map((c) => c.club_mode) : ["clasico"];
   const wouldHave = Math.max(...allModes.map((m) => pointsFor(m, source, basePoints)), 0);
 
   for (const club of clubs) {

@@ -61,6 +61,7 @@ export function AuthProvider({ children }) {
     setUser(data.user);
     await joinPendingInviteIfAny();
     await refreshMe();
+    return data; // trae el código de recuperación, que se muestra una sola vez
   };
 
   const logout = () => {

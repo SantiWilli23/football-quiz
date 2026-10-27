@@ -15,6 +15,7 @@ import Vitrina from "../components/Vitrina.jsx";
 import PlayerCard from "../components/PlayerCard.jsx";
 import TutorialPlayer from "../tutorial/TutorialPlayer.jsx";
 import { GENERAL_TUTORIAL } from "../tutorial/steps.js";
+import RecoveryCode from "../v2/RecoveryCode.jsx";
 
 export default function Profile() {
   const { user, stats, refreshMe } = useAuth();
@@ -130,6 +131,7 @@ export default function Profile() {
             <p className="text-sm text-gray-400 mb-3">Repasá cómo funciona Futotal cuando quieras. Cada juego tiene su propio tutorial en el botón «?».</p>
             <button onClick={() => setTutorialOpen(true)} className="btn btn-secondary btn-sm">Ver tutorial general</button>
           </Card>
+          <RecoveryCode />
           <Card className="mb-6">
             <div className="flex items-center gap-4">
               <Avatar user={user} size={56} />

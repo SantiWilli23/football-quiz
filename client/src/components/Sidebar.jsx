@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Home, HelpCircle, Users, History, BarChart3, Gamepad2, Radio, User, LogOut, Flame, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Home, HelpCircle, Users, History, BarChart3, Gamepad2, Radio, User, LogOut, Flame, Layers, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import useFutotal2 from "../v2/useFutotal2.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import Avatar from "./Avatar.jsx";
 import AlertsBell from "./AlertsBell.jsx";
@@ -16,6 +17,15 @@ const links = [
   { to: "/juegos", label: "Juegos", icon: Gamepad2, tone: "purple" },
   { to: "/futbol", label: "En vivo", icon: Radio, tone: "red" },
   { to: "/grupo", label: "Mi grupo", icon: Users, tone: "blue" },
+];
+
+// Futotal 2.0: las mismas cinco secciones que en el teléfono.
+const linksV2 = [
+  { to: "/hoy", label: "Hoy", icon: Home, end: true, tone: "accent" },
+  { to: "/juegos", label: "Jugar", icon: Gamepad2, tone: "purple" },
+  { to: "/club", label: "Club", icon: Users, tone: "blue" },
+  { to: "/cartas", label: "Cartas", icon: Layers, tone: "amber" },
+  { to: "/perfil", label: "Yo", icon: User, tone: "pink" },
 ];
 
 const accountLinks = [
@@ -52,6 +62,7 @@ function NavGroup({ items, collapsed }) {
 
 export default function Sidebar() {
   const { user, stats, logout } = useAuth();
+  const { on: v2 } = useFutotal2();
   const [size, setSize] = useState(readSidebarSize);
   useEffect(() => {
     const sync = () => setSize(readSidebarSize());
@@ -74,15 +85,19 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 flex flex-col gap-1">
-        <NavGroup items={links} collapsed={collapsed} />
+        <NavGroup items={v2 ? linksV2 : links} collapsed={collapsed} />
 
-        {!collapsed && (
-          <p className="px-3 pt-5 pb-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-gray-600">
-            Vos
-          </p>
+        {!v2 && (
+          <>
+          {!collapsed && (
+            <p className="px-3 pt-5 pb-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-gray-600">
+              Vos
+            </p>
+          )}
+          {collapsed && <div className="my-2 border-t border-border" />}
+          <NavGroup items={accountLinks} collapsed={collapsed} />
+          </>
         )}
-        {collapsed && <div className="my-2 border-t border-border" />}
-        <NavGroup items={accountLinks} collapsed={collapsed} />
       </nav>
 
       <div className="border-t border-border pt-4 mt-4">

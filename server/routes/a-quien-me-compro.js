@@ -34,7 +34,7 @@ const isActive = (p) => {
   const current = currentOf(p);
   return (p.nacimiento || 0) >= 1990 && (current?.inicio || 0) >= 2021;
 };
-const POOL = BASE
+export const POOL = BASE
   .filter((p) => valueOf(p.nombre) != null && currentOf(p) && isActive(p))
   .map((p) => {
     const current = currentOf(p);

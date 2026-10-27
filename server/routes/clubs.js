@@ -4,7 +4,7 @@ import { requireAuth } from "../middleware/auth.js";
 import { todayStr, monthOf } from "../utils/points.js";
 import { CLUB_MODES, clubTable } from "../utils/ledger.js";
 import { personalStreak } from "../utils/streak.js";
-import { hasActiveClub, unlockPacksFor } from "../utils/clubs.js";
+import { hasActiveClub, redesignOn, unlockPacksFor } from "../utils/clubs.js";
 
 // Futotal 2.0: los grupos son «clubes» con modo (clásico o total), pretemporada y
 // temporada. La tabla sale del libro de puntos (utils/ledger.js).
@@ -24,6 +24,9 @@ async function clubFor(groupId, userId) {
   })).rows[0];
   return club || null;
 }
+
+// El cliente pregunta si el rediseño está encendido (lanzamiento por etapas, FUTOTAL2=1).
+router.get("/features", (req, res) => res.json({ futotal2: redesignOn() }));
 
 router.get("/", async (req, res) => {
   try {
