@@ -8,6 +8,25 @@ Cada punto trae cuatro partes: **decisión final**, **pasos ordenados**, **crite
 
 ---
 
+
+> ## Estado de ejecución (actualizado)
+>
+> **Hecho y verificado** (pruebas del servidor + recorrido en navegador a 375 px):
+> F1 y F2 · sección 6 completa (con las correcciones de abajo) · fusión de juegos (¿Quién es?, ¿Qué club?, Más o menos, Trivia, VAR, Bingo, Cotrero y Draft) con carcasa, récords y redirecciones ·
+> visor único `MatchStage` (Cartas, Copa semanal, Subasta, DT Online y Draft) · Cotrero con motor en el servidor · Draft 8a2 solo en el servidor ·
+> logros con congelado, catálogo de 22 y marcos de trofeo · álbum de selecciones (W7).
+>
+> **Corrección a la auditoría de la sección 6:** el código de recuperación en Ajustes (6.5) y el sobre con carta temática (6.7b) **ya existían**; el menú viejo ya se ocultaba con la bandera (6.10, quedaba el buscador). Además se encontró y arregló otra falla de main: `/api/clubs/me/streak` quedaba tapada por `/:id/streak` y devolvía 500.
+>
+> **Pendiente (con motivo):**
+> - Visor en la Carrera DT (`MatchSimulator`): es interactivo y mezcla motor y dibujo; sigue con su cancha propia.
+> - Puntos `versus` para Mentiroso, ¿Quién es? en vivo, Equipo-Jugador y Dorsal: hoy el ganador lo informa el teléfono y no hay forma de verificarlo; solo suman los Duelos (decide el servidor). Requiere que el servidor conozca las salas.
+> - Draft contra un amigo (dos en un teléfono / en línea): sigue en el html clásico (`/draft-europeo.html?legacy=1`).
+> - Escudos «Medio» y el botón «Continuar» de partidas guardadas en la entrada de cada juego (1.1).
+> - Supervivencia es multijugador: no reporta fracción y no suma por sí sola (la tabla 1.2.4 suponía que era solo).
+> - Limpieza (punto 4, etapas A–C): **no se ejecutó** a propósito; la condición es llevar 2 semanas abierto a todos.
+> - Cotrero: los cortes de las etiquetas se reescalaron con la simulación (Leyenda ≈ 4%, Jugador de paso ≈ 25%); el término de valoración máxima de la fórmula pasó de `peak×6` a `(peak−55)×6`; con elecciones al azar Exprés no queda 15% por debajo de Intensa (se mide con `node server/scripts/calibrar-cotrero.js`).
+
 ## 0. Antes de empezar
 
 ### 0.1 Lo que ya está decidido (no volver a preguntarlo)

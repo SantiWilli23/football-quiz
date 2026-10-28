@@ -43,3 +43,21 @@ Las migraciones son aditivas (columnas y tablas nuevas): volver a la versión vi
 8. **Marcos de avatar y logros nuevos**: no se hicieron. El «?» ahora tiene «Ver demo» de 10 s.
 9. **Decisión del dueño (V2)**: el plan gratis de Render se duerme tras ~15 minutos sin tráfico, lo que afecta el aviso de gol, los avisos «a tu hora» y los cierres automáticos. Alternativas: plan pagado, o un cron externo a `POST /api/jobs/run` con el encabezado `x-cron-secret`.
 10. **Conflicto con una decisión anterior**: el plan dice que las partidas libres suman puntos en clubes Total; antes se había pedido que la diversión nunca diera puntos. Como el modo por defecto es Clásico, hoy no suman. Si se prefiere que nunca sumen, se quita la fuente `libre:*` del libro (`utils/ledger.js`).
+
+## Segunda tanda (sobre `ESPEC-PENDIENTES.md`)
+
+Todo sigue detrás de `FUTOTAL2=1`. Con `FUTOTAL2_JUEGOS=juego1,juego2` (por ejemplo `bingo,cotrero`) se abren los juegos fusionados de a uno; sin la variable se abren todos.
+
+- **Fallas de main arregladas**: el diario rotativo viejo ocupaba `partido_dia`; `versus`, `draft`, `carrera` y `dt_podio` no se acreditaban nunca; `/api/clubs/me/streak` devolvía 500.
+- **Club**: pestañas Tabla / Copa / Muro, ficha de miembro con cara a cara, insignias (escudo con aro que se enciende) y anillo de uniforme, crear club en 3 pasos.
+- **Cartas, sonido y animaciones**: oferta del día, aviso al vender repetidas útiles, contador del desafío, silbato / gol / ambiente de estadio en eventos, ~15 animaciones nuevas del prototipo (con `prefers-reduced-motion`).
+- **Panel del dueño**: crear desafíos de plantilla (filtro, fechas, monedas) y torneos de selecciones.
+- **Fusión de juegos**: `/jugar/<juego>/<variante>` con chips y Récords, redirección de rutas viejas conservando la query, un cupo de puntos libres por juego fusionado y mensajes de por qué suma o no.
+- **Visor único**: `MatchStage` + `SimMatch` en Cartas, Copa semanal, Subasta, DT Online y Draft (borrados `MatchPitch` y `LivePitch`).
+- **Cotrero**: motor en el servidor (`utils/career-engine.js`), carreras verificadas, `careers/start|active|:id/act`.
+- **Draft 8a2 solo**: 139 planteles extraídos (`server/data/draft-squads.json`), motor y simulación en el servidor, Champions animada.
+- **Logros**: `user_achievements` con congelado de los anteriores, 22 logros nuevos con sus disparadores y marcos Copa / Racha 30 / Podio.
+- **Álbum de selecciones (W7)**: torneos desde el panel, banner en Hoy, premios y carta de selección en cada sobre.
+- **Versus y DT**: ganar un duelo suma 30; el podio de cada jornada de DT Online suma 60 / 40 / 20 en clubes Total.
+
+Pendiente: ver el bloque «Estado de ejecución» de `ESPEC-PENDIENTES.md` (visor en Carrera DT, puntos de Versus online, Draft contra un amigo, limpieza).
