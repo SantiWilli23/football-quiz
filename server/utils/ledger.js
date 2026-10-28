@@ -60,9 +60,12 @@ export async function creditPoints(userId, date, source, basePoints) {
   const month = monthOf(date);
   const kind = kindOf(source);
   const credited = [];
+  let already = false; // ya había sumado hoy en esta fuente
+  let capped = false; // llegó al tope diario de partidas libres
   // Sin ningún club iniciado se informa lo que valdría en Clásico (lo mínimo seguro).
   const allModes = clubs.length ? clubs.map((c) => c.club_mode) : ["clasico"];
-  const wouldHave = Math.max(...allModes.map((m) => pointsFor(m, source, basePoints)), 0);
+  // Las partidas libres solo suman en Total: en Clásico o sin club se muestra lo que habrían valido en Total.
+  const wouldHave = kind === "free" ? pointsFor("total", source, basePoints) : Math.max(...allModes.map((m) => pointsFor(m, source, basePoints)), 0);
 
   for (const club of clubs) {
     if (!counts(club, date)) continue;
@@ -75,7 +78,7 @@ export async function creditPoints(userId, date, source, basePoints) {
         args: [userId, club.group_id, date],
       })).rows[0].n);
       pts = Math.min(pts, Math.max(0, FREE_DAILY_CAP - used));
-      if (pts <= 0) continue;
+      if (pts <= 0) { capped = true; continue; }
     }
     const res = await db.execute({
       sql: "INSERT OR IGNORE INTO points_ledger (user_id, group_id, date, month, source, points) VALUES (?, ?, ?, ?, ?, ?)",
@@ -84,9 +87,17 @@ export async function creditPoints(userId, date, source, basePoints) {
     if (res.rowsAffected > 0) {
       credited.push({ groupId: club.group_id, points: pts });
       bus.emit("points", { groupId: club.group_id, userId, points: pts, source });
-    }
+    } else already = true;
   }
-  return { credited, wouldHave };
+  // Por qué no sumó (para que la pantalla lo explique): sin club, club Clásico, ya sumó hoy o tope.
+  let reason = null;
+  if (!credited.length) {
+    if (!clubs.length) reason = "sin_club";
+    else if (allModes.every((m) => pointsFor(m, source, basePoints) <= 0)) reason = "clasico";
+    else if (already) reason = "ya";
+    else if (capped) reason = "tope";
+  }
+  return { credited, wouldHave, reason };
 }
 
 // Igual que creditPoints, pero para un solo club (la copa semanal se reparte por club).

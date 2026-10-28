@@ -17,8 +17,26 @@ export async function submitDaily(gameKey, fraction, score = 0, extra = {}) {
   }
 }
 
+// Qué pasó con los puntos del club (Futotal 2.0): sumó, ya había sumado hoy, llegó al tope o no suma
+// porque el club es Clásico o no hay club. Sin `club` (rediseño apagado) no dice nada.
+export function clubMessage(club) {
+  if (!club) return "";
+  if (club.credited?.length) {
+    const n = club.credited.length;
+    return `Sumaste ${club.credited[0].points} ${n > 1 ? `a cada uno de tus ${n} clubes` : "a tu club"}.`;
+  }
+  if (club.reason === "ya") return "Hoy ya sumaste en este juego: esta partida es de práctica.";
+  if (club.reason === "tope") return "Llegaste al tope de 100 puntos libres de hoy.";
+  if (club.wouldHave > 0) return club.reason === "clasico" ? `Habrías sumado ${club.wouldHave} · tu club es Clásico y no suma.` : `Habrías sumado ${club.wouldHave} · no va a ningún club con la temporada iniciada.`;
+  return "";
+}
+
 export function dailyMessage(res) {
-  if (res?.practice) return res.pack ? "Partida libre: ganaste un sobre normal de cartas (no suma puntos)." : "Partida libre: hoy ya tenés el sobre de este juego.";
+  if (res?.practice) {
+    const pack = res.pack ? "Partida libre: ganaste un sobre normal de cartas." : "Partida libre: hoy ya tenés el sobre de este juego.";
+    if (!res.club) return `${pack.replace(/\.$/, "")} (no suma puntos).`;
+    return `${pack} ${clubMessage(res.club)}`.trim();
+  }
   if (!res || res.notToday) return ""; // hoy el diario es otro juego: esta partida es práctica
   if (res.already) return "Ya jugaste el diario de hoy: tu puntaje y tu sobre ya están. Esta partida no da más.";
   return res.pack

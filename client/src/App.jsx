@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard.jsx";
 import CommandPalette from "./components/CommandPalette.jsx";
 import { FEATURES } from "./data/features.js";
 import useFutotal2 from "./v2/useFutotal2.js";
+import { LEGACY, redirectFor } from "./v2/fusion.js";
 
 // Pantallas de funciones apagadas (client/src/data/features.js): si la bandera
 // está en false, quien entre por un link viejo vuelve a Juegos.
@@ -42,6 +43,7 @@ const Stats = lazy(() => import("./pages/Stats.jsx"));
 const Duels = lazy(() => import("./pages/Duels.jsx"));
 const Football = lazy(() => import("./pages/Football.jsx"));
 const Games = lazy(() => import("./pages/Games.jsx"));
+const JugarJuego = lazy(() => import("./v2/JugarJuego.jsx"));
 const QuienEs = lazy(() => import("./pages/QuienEs.jsx"));
 const Cartas = lazy(() => import("./pages/Cartas.jsx"));
 const CopaSemanal = lazy(() => import("./pages/CopaSemanal.jsx"));
@@ -121,6 +123,18 @@ function Root() {
   return on ? <Suspense fallback={<RouteFallback />}><Portada /></Suspense> : <Navigate to="/login" replace />;
 }
 
+// Rutas viejas de juegos que ya se fusionaron: con el rediseño y el juego abierto se redirigen a
+// `/jugar/<juego>/<variante>` conservando la query, para no romper links compartidos.
+function LegacyGate({ children }) {
+  const { pathname, search } = useLocation();
+  const { ready, on, games } = useFutotal2();
+  const key = pathname.replace(/\/+$/, "") || "/";
+  if (!LEGACY[key]) return children;
+  if (!ready) return null;
+  const to = on ? redirectFor(pathname, search, games) : null;
+  return to ? <Navigate to={to} replace /> : children;
+}
+
 function PanelOrHoy() {
   const { on, ready } = useFutotal2();
   if (!ready) return null;
@@ -131,6 +145,7 @@ export default function App() {
   return (
     <>
     <CommandPalette />
+    <LegacyGate>
     <Routes>
       <Route
         path="/login"
@@ -158,6 +173,8 @@ export default function App() {
           </PrivateRoute>
         }
       />
+      <Route path="/jugar/:juego" element={<PrivateRoute><JugarJuego /></PrivateRoute>} />
+      <Route path="/jugar/:juego/:variante" element={<PrivateRoute><JugarJuego /></PrivateRoute>} />
       <Route path="/hoy" element={<PrivateRoute><Hoy /></PrivateRoute>} />
       <Route path="/hoy/archivo" element={<PrivateRoute><Archivo /></PrivateRoute>} />
       <Route path="/partido" element={<PrivateRoute><Partido /></PrivateRoute>} />
@@ -500,6 +517,7 @@ export default function App() {
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </LegacyGate>
     </>
   );
 }

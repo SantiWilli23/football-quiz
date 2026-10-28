@@ -4,7 +4,7 @@ import { requireAuth } from "../middleware/auth.js";
 import { todayStr, monthOf } from "../utils/points.js";
 import { CLUB_MODES, clubTable } from "../utils/ledger.js";
 import { personalStreak } from "../utils/streak.js";
-import { clubStreak, hasActiveClub, redesignOn, unlockPacksFor } from "../utils/clubs.js";
+import { clubStreak, enabledGames, hasActiveClub, redesignOn, unlockPacksFor } from "../utils/clubs.js";
 import { cupFor, settleLastCup } from "../utils/cup.js";
 import { closeDueMonths, markSeen, pendingCeremonies } from "../utils/month.js";
 import { accept as acceptFriendly, challenge as challengeClub, closeDueFriendlies, decline as declineFriendly, friendliesOf } from "../utils/friendly.js";
@@ -31,7 +31,7 @@ async function clubFor(groupId, userId) {
 }
 
 // El cliente pregunta si el rediseño está encendido (lanzamiento por etapas, FUTOTAL2=1).
-router.get("/features", (req, res) => res.json({ futotal2: redesignOn() }));
+router.get("/features", (req, res) => res.json({ futotal2: redesignOn(), games: enabledGames() }));
 
 router.get("/", async (req, res) => {
   try {

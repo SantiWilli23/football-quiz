@@ -5,6 +5,18 @@ import { db } from "../db/client.js";
 // comporta como siempre y nada se bloquea.
 export const redesignOn = () => process.env.FUTOTAL2 === "1";
 
+// Juegos fusionados que ya se abren por /jugar/<juego>. Con FUTOTAL2_JUEGOS (lista separada por
+// comas) se abren de a uno; sin la variable, con el rediseño encendido están todos. Los que no
+// figuran siguen en su ruta de siempre, sin redirección.
+export const MERGED_GAMES = ["quien_es", "que_club", "mas_o_menos", "trivia", "var", "bingo"];
+export function enabledGames() {
+  if (!redesignOn()) return [];
+  const raw = process.env.FUTOTAL2_JUEGOS;
+  if (raw == null || raw.trim() === "") return MERGED_GAMES;
+  const asked = raw.split(",").map((x) => x.trim()).filter(Boolean);
+  return MERGED_GAMES.filter((g) => asked.includes(g));
+}
+
 export const MAX_LOCKED_PACKS = 3;
 // El sobre de bienvenida del registro se abre aunque todavía no haya club.
 const WELCOME = "%bienvenida%";

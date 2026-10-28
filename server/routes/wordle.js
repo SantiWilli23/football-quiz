@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { todayStr } from "../utils/points.js";
+import { redesignOn } from "../utils/clubs.js";
 import { dailyGameKeyFor, recordDailyResult } from "../utils/daily-games.js";
 import { challengeFor } from "./daily-challenge.js";
 import { LEAGUES, leagueForClub, wideLeagueLabelForClub } from "../data/league-clubs.js";
@@ -339,6 +340,10 @@ async function closeGame(loaded, won, opts = {}) {
     // no contar dos veces.
     // Como juego diario: un solo jugador, si lo adivinás sumás y si no, no.
     await recordDailyResult(game.user_id, game.date, "fichado", won ? total / FICHADO_DAILY_BEST : 0, total);
+  } else if (redesignOn() && game.mode !== "reto") {
+    // Futotal 2.0: Fichado fue una variante de «¿Quién es?». Las partidas libres también
+    // cuentan (sobre de práctica y, en clubes Total, la primera del día suma al club).
+    await recordDailyResult(game.user_id, todayStr(), "fichado", won ? Math.min(1, total / FICHADO_DAILY_BEST) : 0, total, { mode: "fun", level: game.difficulty });
   }
   if (won && game.mode === "daily") {
     await db.execute({

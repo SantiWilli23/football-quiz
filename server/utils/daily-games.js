@@ -55,7 +55,20 @@ export function dailyGameKeyFor(dateStr) {
 }
 
 // Los que mandan su resultado desde el cliente (fichado y quiniela no).
-export const SUBMITTABLE_DAILY = new Set(["cotrero", "escudos", "draft_europeo", "un_minuto", "arbitraje_var", "tateti", "piramide", "torta", "traspasos", "a_quien_me_compro", "trivia", "quien_es"]);
+// Futotal 2.0: los juegos parecidos se fusionaron. La partida libre que suma al club es una por
+// juego fusionado y por día, aunque se juegue otra variante (Fichado y ¿Quién es? comparten cupo).
+// Supervivencia es multijugador y no reporta fracción: no suma por sí sola.
+export const MERGED_GAME = {
+  fichado: "quien_es", quien_es: "quien_es", traspasos: "quien_es",
+  escudos: "que_club", torta: "que_club",
+  piramide: "mas_o_menos", a_quien_me_compro: "mas_o_menos",
+  un_minuto: "trivia", trivia: "trivia",
+  arbitraje_var: "var",
+  tateti: "bingo", bingo: "bingo",
+};
+export const mergedKey = (gameKey) => MERGED_GAME[gameKey] || gameKey;
+
+export const SUBMITTABLE_DAILY = new Set(["cotrero", "escudos", "draft_europeo", "un_minuto", "arbitraje_var", "tateti", "piramide", "torta", "traspasos", "a_quien_me_compro", "trivia", "quien_es", "bingo"]);
 
 export function pointsFromFraction(fraction) {
   const f = Number(fraction);
@@ -78,7 +91,7 @@ export async function recordDailyResult(userId, date, gameKey, fraction, score =
     // Futotal 2.0: la primera partida libre del día de cada juego suma al club, pero
     // solo si es Total (en Clásico o sin club se informa lo que habría ganado).
     const hits = Math.round((Number(fraction) || 0) * 5);
-    const club = hits > 0 ? await creditPoints(userId, date, freeGameSource(gameKey), hits * 4) : { credited: [], wouldHave: 0 };
+    const club = hits > 0 ? await creditPoints(userId, date, freeGameSource(redesignOn() ? mergedKey(gameKey) : gameKey), hits * 4) : { credited: [], wouldHave: 0 };
     return { points: 0, already: false, notToday: true, practice: true, pack: got?.quality ?? null, packsLeft: got?.left ?? 0, today: dailyGameKeyFor(date), club };
   }
   const points = pointsFromFraction(fraction);

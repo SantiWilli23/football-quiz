@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { rateLimit } from "../middleware/rateLimit.js";
-import { redesignOn } from "../utils/clubs.js";
+import { enabledGames, redesignOn } from "../utils/clubs.js";
 import { todayStr } from "../utils/points.js";
 import { rng, dailySeed } from "../utils/futgames.js";
 import { masMenosItems, penalItems, quienItems } from "../utils/daily-match.js";
@@ -10,7 +10,7 @@ const router = Router();
 const limiter = rateLimit({ windowMs: 60_000, max: 40 });
 
 // El cliente pregunta si el rediseño está encendido (también sin iniciar sesión).
-router.get("/features", (req, res) => res.json({ futotal2: redesignOn() }));
+router.get("/features", (req, res) => res.json({ futotal2: redesignOn(), games: enabledGames() }));
 
 // Partido de práctica: 6 preguntas (2 + 2 + 2) iguales para todos ese día. Se corrige en el
 // teléfono y no da puntos, así que las respuestas viajan con las preguntas.

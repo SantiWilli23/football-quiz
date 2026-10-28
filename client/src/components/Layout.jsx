@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { X } from "lucide-react";
 import Sidebar from "./Sidebar.jsx";
@@ -7,12 +7,14 @@ import TopBar from "./TopBar.jsx";
 import HelpButton from "./HelpButton.jsx";
 import PlenoStreak from "./PlenoStreak.jsx";
 import { markVisit } from "../utils/visits.js";
+import { ShellContext } from "../v2/ShellContext.js";
 
 // `focus` = modo enfoque: durante una partida se esconden el menú y la barra
 // y queda solo el juego y un botón «Salir». Los juegos lo prenden mientras
 // se está jugando.
 export default function Layout({ children, focus = false, exitTo = "/juegos", wide = false }) {
   const { pathname } = useLocation();
+  const shell = useContext(ShellContext);
 
   useEffect(() => { markVisit(pathname); }, [pathname]);
 
@@ -39,6 +41,7 @@ export default function Layout({ children, focus = false, exitTo = "/juegos", wi
         {/* pb-24 deja lugar para la barra de navegación fija del teléfono. */}
         <main className={`flex-1 px-4 py-5 pb-24 sm:px-6 lg:px-8 lg:py-8 lg:pb-8 ${wide ? "" : "max-w-[1400px]"} page-fade`}>
           <PlenoStreak />
+          {shell?.chips}
           {children}
         </main>
       </div>
