@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { Brain, Building2, Crown, Gavel, Grid3x3, Shield, ShieldCheck, Star, Swords, Timer, Users, Wallet, Target, Play } from "lucide-react";
 import Layout from "../components/Layout.jsx";
+import useFutotal2 from "./useFutotal2.js";
+import { JUEGOS } from "./juegos.js";
 
 // Jugar (Futotal 2.0): los juegos en tres filas. Cada entrada reúne a los juegos
 // parecidos de antes (`variants`); entrar a uno abre su mejor versión y desde ahí se
@@ -36,7 +38,11 @@ const SECTIONS = [
   },
 ];
 
-function Entry({ game }) {
+// Juegos fusionados abiertos: la tarjeta y sus chips apuntan a /jugar/<juego>/<variante>.
+const FUSED_OF = { "/fulbodle": ["quien_es", "parecido"], "/quien-es": ["quien_es", "carrera"], "/traspasos": ["quien_es", "traspasos"], "/escudos": ["que_club", "escudos"], "/torta": ["que_club", "plantel"], "/a-quien-me-compro": ["mas_o_menos", "compro"], "/piramide": ["mas_o_menos", "piramide"], "/un-minuto": ["trivia", "un-minuto"], "/supervivencia": ["trivia", "supervivencia"], "/arbitraje-var": ["var", "arbitro"], "/var-votacion": ["var", "arbitro"], "/bingo": ["bingo", "bingo"] };
+const nuevo = (to, juegos) => { const f = FUSED_OF[to]; return f && juegos.includes(f[0]) ? `/jugar/${JUEGOS[f[0]].slug}/${f[1]}` : to; };
+
+function Entry({ game, juegos }) {
   const Icon = game.icon;
   const inner = (
     <>
@@ -50,13 +56,13 @@ function Entry({ game }) {
   const cls = "flex items-start gap-3 rounded-2xl border border-border bg-panel p-3 hover:border-accent/60 transition-colors";
   return (
     <div className="space-y-1">
-      {game.href ? <a href={game.href} className={cls}>{inner}</a> : <Link to={game.to} className={cls}>{inner}</Link>}
+      {game.href ? <a href={game.href} className={cls}>{inner}</a> : <Link to={nuevo(game.to, juegos)} className={cls}>{inner}</Link>}
       {game.variants.length > 1 && (
         <div className="flex flex-wrap gap-1.5 px-1">
           {game.variants.map(([label, to]) => (
             to.endsWith(".html")
               ? <a key={label} href={to} className="text-[11px] rounded-full border border-border px-2 py-0.5 text-gray-400 hover:text-white">{label}</a>
-              : <Link key={label} to={to} className="text-[11px] rounded-full border border-border px-2 py-0.5 text-gray-400 hover:text-white">{label}</Link>
+              : <Link key={label} to={nuevo(to, juegos)} className="text-[11px] rounded-full border border-border px-2 py-0.5 text-gray-400 hover:text-white">{label}</Link>
           ))}
         </div>
       )}
@@ -78,6 +84,7 @@ function forYou() {
 
 export default function Jugar() {
   const picks = forYou();
+  const { juegos } = useFutotal2();
   return (
     <Layout>
       <div className="max-w-3xl mx-auto space-y-7">
@@ -101,7 +108,7 @@ export default function Jugar() {
             <h2 id={`sec-${s.key}`} className="font-semibold">{s.title}</h2>
             <p className="text-xs text-gray-500 mb-2">{s.text}</p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {s.games.map((g) => <Entry key={g.label} game={g} />)}
+              {s.games.map((g) => <Entry key={g.label} game={g} juegos={juegos} />)}
             </div>
           </section>
         ))}

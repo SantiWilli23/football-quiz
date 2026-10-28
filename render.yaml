@@ -13,3 +13,7 @@ services:
         sync: false
       - key: DATABASE_AUTH_TOKEN
         sync: false
+      - key: FUTOTAL2
+        value: "1"
+      - key: OWNER_USERNAME
+        sync: false
