@@ -4,6 +4,7 @@ import { DAILY_GAME_MAX_POINTS, WEEKLY_GAME_RANK_POINTS } from "./points-config.
 import { dailySeed, rng, shuffle } from "./futgames.js";
 import { WEEKLY_PODIUM_PACKS, dailyPackQuality, grantPack } from "./rewards.js";
 import { creditPoints, freeGameSource } from "./ledger.js";
+import { redesignOn } from "./clubs.js";
 
 // Los doce juegos que se turnan como "juego diario": cada día es UNO solo (ver
 // dailyGameKeyFor), y ese paga hasta DAILY_GAME_MAX_POINTS. Los otros nueve ese
@@ -67,7 +68,10 @@ export function pointsFromFraction(fraction) {
 export async function recordDailyResult(userId, date, gameKey, fraction, score = 0, play = {}) {
   // Solo el juego diario de HOY suma; jugar otro es práctica libre.
   // Modo diversión: nunca suma puntos, aunque hoy sea el diario de este juego.
-  if (play.mode === "fun" || dailyGameKeyFor(date) !== gameKey) {
+  // Futotal 2.0: el único juego diario con puntos base es el Partido del día. Si el
+  // diario rotativo viejo escribiera «partido_dia», ocuparía el cupo único del libro y
+  // el Partido del día de verdad no sumaría; por eso con el rediseño todo es partida libre.
+  if (redesignOn() || play.mode === "fun" || dailyGameKeyFor(date) !== gameKey) {
     // Práctica libre: no suma puntos. El sobre depende del rendimiento, la dificultad
     // y la duración, con tope de sobres de práctica por día.
     const got = await practicePack(userId, date, gameKey, fraction, play);
