@@ -1,4 +1,5 @@
 import "dotenv/config";
+import draftRouter from "./routes/draft.js";
 import { enabledGames } from "./utils/clubs.js";
 import torneoRouter from "./routes/torneo.js";
 import express from "express";
@@ -90,6 +91,7 @@ app.use("/api/club-stream", clubStreamRoutes);
 app.use("/api/careers", careersRoutes);
 app.use("/api/admin", adminRouter);
 app.use("/api/torneo", torneoRouter);
+app.use("/api/draft", draftRouter);
 app.use("/api/jobs", jobsRouter);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/questions", questionsRoutes);
@@ -134,6 +136,10 @@ app.get("/api/health", (req, res) => res.json({ ok: true }));
 
 // Cotrero rehecho (Futotal 2.0): las páginas estáticas viejas redirigen a la nueva. Con ?legacy=1 se
 // abren igual, para terminar una carrera que quedó guardada en el teléfono.
+app.get("/draft-europeo.html", (req, res, next) => {
+  if (req.query.legacy === "1" || !enabledGames().includes("draft")) return next();
+  res.redirect(302, "/jugar/draft/solo");
+});
 app.get(["/cotrero.html", "/cotrero-medio.html"], (req, res, next) => {
   if (req.query.legacy === "1" || !enabledGames().includes("cotrero")) return next();
   res.redirect(302, req.path.includes("medio") ? "/jugar/cotrero/medio" : "/jugar/cotrero/simple");

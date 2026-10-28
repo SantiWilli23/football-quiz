@@ -1490,4 +1490,20 @@ CREATE TABLE IF NOT EXISTS careers (
   finished_at TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx_careers_user ON careers(user_id, game, status)
+CREATE INDEX IF NOT EXISTS idx_careers_user ON careers(user_id, game, status);
+
+-- Partidas del Draft 8a2 (solo) jugadas contra el servidor.
+CREATE TABLE IF NOT EXISTS draft_runs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  seed INTEGER NOT NULL,
+  step INTEGER NOT NULL DEFAULT 0,
+  state_json TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'activa',
+  champion INTEGER,
+  average REAL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  finished_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_draft_runs_user ON draft_runs(user_id, status)

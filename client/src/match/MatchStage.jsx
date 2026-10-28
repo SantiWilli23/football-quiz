@@ -12,7 +12,7 @@ import { scoreOf } from "./simMatch.js";
 const PITCH = { w: 600, h: 380 };
 const CENTER = { x: PITCH.w / 2, y: PITCH.h / 2 };
 const MINUTE_MS = 90; // x1: ~8 s el partido completo
-const HOLD_MS = { goal: 900, pen_goal: 900, own_goal: 900, chance: 600, save: 600, pen_miss: 700, yellow: 700, red: 900, sub: 600, injury: 700, ht: 1100, ft: 1100, kickoff: 700 };
+const HOLD_MS = { shootout_kick: 700, goal: 900, pen_goal: 900, own_goal: 900, chance: 600, save: 600, pen_miss: 700, yellow: 700, red: 900, sub: 600, injury: 700, ht: 1100, ft: 1100, kickoff: 700 };
 const SPEEDS = [1, 2, 4];
 
 const reduced = () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -43,6 +43,7 @@ const BANNER = {
   ht: () => ({ big: "Entretiempo", small: "", tone: "text-white" }),
   ft: (_e, _m, score) => ({ big: "Final del partido", small: `${score.home} – ${score.away}`, tone: "text-white" }),
   kickoff: () => ({ big: "¡Pitazo inicial!", small: "", tone: "text-white" }),
+  shootout_kick: (e) => ({ big: e.scored ? "¡Gol de penal!" : "¡Atajado!", small: e.player || "", tone: e.scored ? "text-amber" : "text-red-400" }),
 };
 
 function Dot({ team }) {
@@ -70,6 +71,7 @@ export default function MatchStage({ match, live = false, onDone, controls = tru
 
   const shown = events.slice(0, cursor);
   const score = scoreOf(shown);
+  const pens = { home: shown.filter((e) => e.type === "shootout_kick" && e.scored && e.team === "home").length, away: shown.filter((e) => e.type === "shootout_kick" && e.scored && e.team === "away").length };
   const last = shown[shown.length - 1];
 
   function finish() {
@@ -87,19 +89,26 @@ export default function MatchStage({ match, live = false, onDone, controls = tru
     let m = 0;
     let c = 0;
     let timer;
-    const reveal = (upTo) => {
-      while (c < events.length && events[c].min <= upTo) {
-        const e = events[c];
-        c += 1;
-        setCursor(c);
-        setFocus({ e, key: `${c}-${e.type}` });
-        if (e.type === "goal" || e.type === "pen_goal" || e.type === "own_goal") playGoal();
-        else if (e.type === "ht" || e.type === "ft" || e.type === "kickoff") playWhistle(e.type === "ft");
-        else if (e.type === "yellow" || e.type === "red") playSfx("tick");
-      }
+    const revealOne = () => {
+      const e = events[c];
+      c += 1;
+      setCursor(c);
+      setFocus({ e, key: `${c}-${e.type}` });
+      if (e.type === "goal" || e.type === "pen_goal" || e.type === "own_goal") playGoal();
+      else if (e.type === "shootout_kick") playSfx(e.scored ? "ok" : "bad");
+      else if (e.type === "ht" || e.type === "ft" || e.type === "kickoff") playWhistle(e.type === "ft");
+      else if (e.type === "yellow" || e.type === "red") playSfx("tick");
     };
+    // Los penales de la definición se muestran de a uno, no todos juntos.
+    const reveal = (upTo) => { while (c < events.length && events[c].min <= upTo && events[c].type !== "shootout_kick") revealOne(); };
     const step = () => {
+      if (doneRef.current) return; // «Saltar» ya mostró todo: el reloj no vuelve a tocar nada
       reveal(m);
+      if (c < events.length && events[c].type === "shootout_kick" && m >= duration) {
+        revealOne();
+        timer = setTimeout(step, noMotion ? 25 : 700 / speedRef.current);
+        return;
+      }
       if (m >= duration || c >= events.length && m >= (events[events.length - 1]?.min ?? 0)) {
         setMinute(Math.min(m, duration));
         finish();
@@ -157,7 +166,7 @@ export default function MatchStage({ match, live = false, onDone, controls = tru
       <div className="overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-emerald-900/40 to-emerald-950/40">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-black/30 px-4 py-2.5 text-sm">
           <span className="flex min-w-0 items-center gap-1.5 font-medium"><Dot team={home} /><span className="truncate">{home.name}</span></span>
-          <span key={`${score.home}-${score.away}`} className={`px-3 text-xl font-extrabold tabular-nums ${goalFx ? "fq-pop" : ""}`}>{score.home} – {score.away}</span>
+          <span key={`${score.home}-${score.away}`} className={`px-3 text-center text-xl font-extrabold tabular-nums ${goalFx ? "fq-pop" : ""}`}>{score.home} – {score.away}{pens.home + pens.away > 0 && <small className="block text-[11px] font-semibold text-gray-400">pen. {pens.home}–{pens.away}</small>}</span>
           <span className="flex min-w-0 items-center justify-end gap-1.5 text-right font-medium"><span className="truncate">{away.name}</span><Dot team={away} /></span>
         </div>
         <div className="relative">

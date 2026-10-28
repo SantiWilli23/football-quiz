@@ -32,7 +32,10 @@ export function validateSimMatch(m) {
   const out = [];
   if (!m?.teams?.home?.name || !m?.teams?.away?.name) out.push("faltan los equipos");
   const ev = m?.events || [];
-  if (!ev.length || ev[ev.length - 1].type !== "ft") out.push("el último evento tiene que ser «ft»");
+  // Después de «ft» solo pueden venir los penales de la definición.
+  const tail = [...ev].reverse().findIndex((e) => e.type !== "shootout_kick");
+  const lastMain = tail < 0 ? null : ev[ev.length - 1 - tail];
+  if (!ev.length || !lastMain || lastMain.type !== "ft") out.push("el último evento tiene que ser «ft»");
   for (let i = 1; i < ev.length; i++) if (ev[i].min < ev[i - 1].min) { out.push("los eventos no están ordenados"); break; }
   for (const e of ev) if (!EVENT_TYPES.includes(e.type)) { out.push(`tipo desconocido: ${e.type}`); break; }
   const s = scoreOf(ev);
@@ -59,6 +62,30 @@ export function fromEngine({ id, source = "sim:cartas", events = [], home, away,
     id: id || `${source}:${out.map((e) => `${e.min}${e.type[0]}${e.team?.[0] || ""}`).join("")}:${home.name}:${away.name}`, source,
     teams: { home: { name: home.name, short: short(home.name), isMe: !!home.isMe, colors: home.colors }, away: { name: away.name, short: short(away.name), isMe: !!away.isMe, colors: away.colors } },
     lineups, events: out, score, duration: 90, playback: { mode: "replay", speed },
+  };
+}
+
+// Partido del Draft 8a2 (servidor): { home, away, events: [{ minute, type: goal | sub | shootout, side: "A" | "B", … }],
+// scoreHome, scoreAway, extra, pens, penHome, penAway, winner }.
+export function fromDraft(m) {
+  const team = (side) => (side === "A" ? "home" : "away");
+  const out = [{ min: 0, type: "kickoff", team: null }];
+  const kicks = [];
+  for (const e of m.events) {
+    if (e.type === "goal") out.push({ min: e.minute, type: "goal", team: team(e.side), player: e.player });
+    else if (e.type === "sub") out.push({ min: e.minute, type: "sub", team: team(e.side), in: e.inName, out: e.outName });
+    else if (e.type === "shootout") kicks.push({ min: 121, type: "shootout_kick", team: team(e.side), player: e.player, scored: e.scored });
+  }
+  out.push({ min: 45, type: "ht", team: null });
+  const duration = m.extra ? 120 : 90;
+  out.sort((a, b) => a.min - b.min);
+  out.push({ min: duration, type: "ft", team: null }, ...kicks.map((k) => ({ ...k, min: duration })));
+  const score = { home: m.scoreHome, away: m.scoreAway };
+  if (m.pens) score.pens = { home: m.penHome, away: m.penAway };
+  return {
+    id: `sim:draft:${m.home.label}:${m.away.label}:${m.scoreHome}-${m.scoreAway}:${out.length}`, source: "sim:draft",
+    teams: { home: { name: m.home.label, short: short(m.home.label), isMe: m.home.isYou }, away: { name: m.away.label, short: short(m.away.label), isMe: m.away.isYou } },
+    events: out, score, duration, playback: { mode: "replay", speed: 1 },
   };
 }
 

@@ -48,6 +48,15 @@ export const FUSED = {
       { key: "medio", label: "Medio", old: "/cotrero-medio.html", keys: [], Page: lazy(() => import("./CotreroMedio.jsx")) },
     ],
   },
+  draft: {
+    slug: "draft", label: "Draft",
+    variants: [
+      { key: "solo", label: "Solo (8a2)", old: "/draft-europeo.html", keys: [], Page: lazy(() => import("./DraftSolo.jsx")) },
+      { key: "copa", label: "Copa 8a2", old: "/copa-8a2", keys: [], Page: lazy(() => import("../pages/Copa8a2.jsx")) },
+      { key: "subasta", label: "Subasta", old: "/subasta", keys: [], Page: lazy(() => import("../pages/Subasta.jsx")) },
+      { key: "amigo", label: "Contra un amigo", old: null, keys: [], Page: lazy(() => import("./DraftAmigo.jsx")) },
+    ],
+  },
   bingo: {
     slug: "bingo", label: "Bingo",
     variants: [
@@ -61,7 +70,7 @@ export const gameBySlug = (slug) => Object.entries(FUSED).find(([, g]) => g.slug
 // Rutas viejas → nueva ruta del juego fusionado. `/tateti` ya redirigía a `/bingo`.
 export const LEGACY = (() => {
   const out = { "/tateti": ["bingo", "bingo"] };
-  for (const [game, g] of Object.entries(FUSED)) for (const v of g.variants) out[v.old] = [game, v.key];
+  for (const [game, g] of Object.entries(FUSED)) for (const v of g.variants) if (v.old) out[v.old] = [game, v.key];
   return out;
 })();
 
