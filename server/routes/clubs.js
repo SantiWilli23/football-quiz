@@ -144,6 +144,16 @@ router.get("/:id/table", async (req, res) => {
   }
 });
 
+// Va antes de «/:id/streak»: si no, «me» se leería como el id de un club y devolvería 500.
+router.get("/me/streak", async (req, res) => {
+  try {
+    res.json(await personalStreak(req.userId, todayStr()));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 router.get("/:id/streak", async (req, res) => {
   try {
     const club = await clubFor(Number(req.params.id), req.userId);
@@ -408,15 +418,6 @@ router.get("/:id/head-to-head/:uid", async (req, res) => {
       parts: [1, 2, 3].map((p) => ({ part: p, me: Number(mine[`p${p}`]), them: Number(theirs[`p${p}`]) })),
       rows,
     });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Error del servidor" });
-  }
-});
-
-router.get("/me/streak", async (req, res) => {
-  try {
-    res.json(await personalStreak(req.userId, todayStr()));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

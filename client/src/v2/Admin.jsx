@@ -98,6 +98,7 @@ export default function Admin() {
         </div>
 
         <SbcAdmin />
+        <TournamentAdmin />
 
         <Card>
           <p className="t-eyebrow">Errores y tareas</p>
@@ -176,6 +177,55 @@ function SbcAdmin() {
           </p>
         )}
         <button className="btn btn-primary btn-sm" disabled={!form.label.trim() || (preview && !preview.feasible)}>Crear desafío</button>
+        {msg && <p className="text-sm text-gray-300" role="status">{msg}</p>}
+      </form>
+    </Card>
+  );
+}
+
+// Torneos de selecciones (W7): nombre, fechas y las selecciones que juegan.
+function TournamentAdmin() {
+  const [info, setInfo] = useState(null);
+  const [form, setForm] = useState({ name: "", starts: today(), ends: addDays(today(), 29), groupsEnd: "", nations: [] });
+  const [msg, setMsg] = useState("");
+  const load = useCallback(() => api.get("/admin/tournaments").then((r) => setInfo(r.data)).catch(() => setInfo(false)), []);
+  useEffect(() => { load(); }, [load]);
+  if (info === null || info === false) return null;
+  const field = "w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm";
+  const toggle = (n) => setForm((f) => ({ ...f, nations: f.nations.includes(n) ? f.nations.filter((x) => x !== n) : [...f.nations, n] }));
+  async function create(e) {
+    e.preventDefault();
+    setMsg("");
+    try { await api.post("/admin/tournaments", { ...form, groupsEnd: form.groupsEnd || null }); setMsg("Torneo creado."); setForm((f) => ({ ...f, name: "", nations: [] })); load(); }
+    catch (err) { setMsg(err.response?.data?.error || "No se pudo crear."); }
+  }
+  return (
+    <Card>
+      <p className="t-eyebrow">Torneo de selecciones (álbum)</p>
+      <p className="mt-1 text-xs text-gray-400">Mientras dura: álbum de selecciones, banner en Hoy y una carta de selección en cada sobre. Solo hay selecciones con al menos 5 cartas.</p>
+      <ul className="mt-2 divide-y divide-border text-sm">
+        {info.tournaments.length === 0 && <li className="py-2 text-gray-500">No hay torneos creados.</li>}
+        {info.tournaments.map((t) => (
+          <li key={t.id} className="flex items-center gap-2 py-2">
+            <span className="min-w-0 flex-1"><b className="block truncate">{t.name}</b><span className="text-xs text-gray-500">{t.starts} a {t.ends} · {t.nations.length} selecciones</span></span>
+            <button onClick={() => api.delete(`/admin/tournaments/${t.id}`).then(load)} className="btn btn-secondary btn-sm">Borrar</button>
+          </li>
+        ))}
+      </ul>
+      <form onSubmit={create} className="mt-3 grid gap-2">
+        <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={50} placeholder="Nombre (por ejemplo, Copa América 2028)" className={field} />
+        <div className="grid grid-cols-3 gap-2">
+          <label className="text-xs text-gray-500">Desde<input type="date" value={form.starts} onChange={(e) => setForm({ ...form, starts: e.target.value })} className={field} /></label>
+          <label className="text-xs text-gray-500">Hasta<input type="date" value={form.ends} onChange={(e) => setForm({ ...form, ends: e.target.value })} className={field} /></label>
+          <label className="text-xs text-gray-500">Fin de grupos<input type="date" value={form.groupsEnd} onChange={(e) => setForm({ ...form, groupsEnd: e.target.value })} className={field} /></label>
+        </div>
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Selecciones">
+          {info.available.map((n) => (
+            <button type="button" key={n.name} onClick={() => toggle(n.name)} aria-pressed={form.nations.includes(n.name)}
+              className={`rounded-full border px-2.5 py-1 text-xs ${form.nations.includes(n.name) ? "border-accent bg-accent/15" : "border-border text-gray-400"}`}>{n.name} <span className="text-gray-500">{n.cards}</span></button>
+          ))}
+        </div>
+        <button className="btn btn-primary btn-sm" disabled={!form.name.trim() || form.nations.length < 2}>Crear torneo</button>
         {msg && <p className="text-sm text-gray-300" role="status">{msg}</p>}
       </form>
     </Card>

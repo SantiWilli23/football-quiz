@@ -10,6 +10,7 @@ import { track } from "./analytics.js";
 import { pendingMatch, syncQueue } from "./offline.js";
 import EventCards from "./Evento.jsx";
 import Ceremonia from "./Ceremonia.jsx";
+import { TorneoBanner } from "./Album.jsx";
 
 // Hoy: lo que importa del día en pocos bloques. El partido del día arriba, tu club
 // debajo, y recién después seguir jugando.
@@ -70,6 +71,8 @@ export default function Hoy() {
 
         {synced && <p className="rounded-2xl border border-accent/40 bg-accent/10 px-4 py-2 text-sm" role="status">Tu partido se envió al club: sacaste <b>{synced.total}</b>.</p>}
         {waiting && !synced && <p className="rounded-2xl border border-amber/40 bg-amber/10 px-4 py-2 text-sm" role="status">Tu partido está guardado en el teléfono y se envía solo cuando vuelva la conexión.</p>}
+
+        <TorneoBanner />
 
         <Card variant="feature">
           <p className="t-eyebrow">Partido del día</p>

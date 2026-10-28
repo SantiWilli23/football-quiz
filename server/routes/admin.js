@@ -7,7 +7,8 @@ import { rng, dailySeed, shuffle } from "../utils/futgames.js";
 import { checkAlerts, runJobs } from "../utils/jobs.js";
 import { matchFor, quienItems, masMenosItems, penalItems } from "../utils/daily-match.js";
 import { KITS, eventOn } from "../utils/events.js";
-import { SBC_FILTERS, previewSbcFilter, refreshCustomSbcs } from "./cards.js";
+import { CARDS, SBC_FILTERS, previewSbcFilter, refreshCustomSbcs } from "./cards.js";
+import { eligibleNations } from "../utils/tournament.js";
 
 // Panel del dueño de la app (Futotal 2.0, V1). El dueño es el usuario cuyo nombre está en la
 // variable OWNER_USERNAME del servidor; si no está configurada, el panel queda apagado.
@@ -167,6 +168,50 @@ adminRouter.delete("/sbc/:id", async (req, res) => {
   try {
     await db.execute({ sql: "DELETE FROM custom_sbcs WHERE id = ?", args: [Number(req.params.id)] });
     await refreshCustomSbcs(true);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Torneos de selecciones (W7): el dueño crea el torneo con sus fechas y las selecciones que juegan.
+// Solo entran selecciones con al menos 5 cartas en el juego (si no, el álbum sería imposible).
+adminRouter.get("/tournaments", async (req, res) => {
+  try {
+    const rows = (await db.execute("SELECT * FROM tournaments ORDER BY starts DESC")).rows;
+    res.json({ available: eligibleNations(CARDS), tournaments: rows.map((r) => ({ id: r.id, name: r.name, starts: r.starts, ends: r.ends, groupsEnd: r.groups_end, nations: JSON.parse(r.nations_json) })) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+adminRouter.post("/tournaments", async (req, res) => {
+  try {
+    const { name, starts, ends, groupsEnd = null } = req.body || {};
+    const title = String(name || "").trim().slice(0, 50);
+    if (!title) return res.status(400).json({ error: "Ponle un nombre al torneo" });
+    if (!isDate(starts) || !isDate(ends) || ends < starts) return res.status(400).json({ error: "Las fechas no son válidas" });
+    if (groupsEnd && (!isDate(groupsEnd) || groupsEnd < starts || groupsEnd > ends)) return res.status(400).json({ error: "El fin de la fase de grupos tiene que estar dentro del torneo" });
+    const ok = new Set(eligibleNations(CARDS).map((n) => n.name));
+    const nations = [...new Set((Array.isArray(req.body?.nations) ? req.body.nations : []).map(String))];
+    if (nations.length < 2) return res.status(400).json({ error: "Elige al menos 2 selecciones" });
+    const bad = nations.filter((n) => !ok.has(n));
+    if (bad.length) return res.status(400).json({ error: `Sin cartas suficientes (mínimo 5) para: ${bad.join(", ")}` });
+    const clash = (await db.execute({ sql: "SELECT name FROM tournaments WHERE starts <= ? AND ends >= ?", args: [ends, starts] })).rows[0];
+    if (clash) return res.status(409).json({ error: `Se superpone con «${clash.name}»` });
+    const r = await db.execute({ sql: "INSERT INTO tournaments (name, starts, ends, groups_end, nations_json) VALUES (?, ?, ?, ?, ?)", args: [title, starts, ends, groupsEnd, JSON.stringify(nations)] });
+    res.status(201).json({ ok: true, id: Number(r.lastInsertRowid) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+adminRouter.delete("/tournaments/:id", async (req, res) => {
+  try {
+    await db.execute({ sql: "DELETE FROM tournaments WHERE id = ?", args: [Number(req.params.id)] });
     res.json({ ok: true });
   } catch (err) {
     console.error(err);

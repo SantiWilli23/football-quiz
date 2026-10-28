@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { activeTournament } from "../utils/tournament.js";
 import { grant, safely } from "../utils/achievements.js";
 import fs from "node:fs";
 import path from "node:path";
@@ -221,7 +222,7 @@ const SPECIAL_CARDS = [];
 }
 
 // Íconos, Momentos y entrenadores (server/utils/card-types.js).
-const CARDS = [...BASE_CARDS, ...SPECIAL_CARDS, ...buildExtraCards(BASE_CARDS)];
+export const CARDS = [...BASE_CARDS, ...SPECIAL_CARDS, ...buildExtraCards(BASE_CARDS)];
 const BY_NAME = new Map(CARDS.map((c) => [c.name, c]));
 // Los sobres normales/buenos solo salen de la base — las especiales son más
 // raras y salen aparte (ver drawCard) para que sigan siendo especiales.
@@ -398,6 +399,14 @@ router.post("/open", async (req, res) => {
       // Mientras haya un SBC temático activo, cada sobre trae una carta de la temática.
       const active = redesignOn() ? activeTheme(todayStr()) : null;
       if (active) drawn[4] = drawFromTheme(active, quality);
+      // Torneo de selecciones activo: una carta de alguna selección participante.
+      if (redesignOn()) {
+        const t = await activeTournament(todayStr());
+        if (t) {
+          const pool = CARDS.filter((c) => !c.special && THEME_POS.includes(c.pos) && t.nations.includes(c.nationality));
+          if (pool.length) drawn[3] = pickOf(pool);
+        }
+      }
     }
     // Salió una estrella (o una carta especial): se reinicia. Si no, el próximo sobre tiene 3 puntos más.
     const gotStar = drawn.some((c) => c.tier === "estrella" || c.special);

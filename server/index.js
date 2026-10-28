@@ -1,4 +1,5 @@
 import "dotenv/config";
+import torneoRouter from "./routes/torneo.js";
 import express from "express";
 import cors from "cors";
 import path from "node:path";
@@ -87,6 +88,7 @@ app.use("/api/public", publicRoutes);
 app.use("/api/club-stream", clubStreamRoutes);
 app.use("/api/careers", careersRoutes);
 app.use("/api/admin", adminRouter);
+app.use("/api/torneo", torneoRouter);
 app.use("/api/jobs", jobsRouter);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/questions", questionsRoutes);

@@ -43,6 +43,7 @@ const Stats = lazy(() => import("./pages/Stats.jsx"));
 const Duels = lazy(() => import("./pages/Duels.jsx"));
 const Football = lazy(() => import("./pages/Football.jsx"));
 const Games = lazy(() => import("./pages/Games.jsx"));
+const Album = lazy(() => import("./v2/Album.jsx"));
 const JugarJuego = lazy(() => import("./v2/JugarJuego.jsx"));
 const QuienEs = lazy(() => import("./pages/QuienEs.jsx"));
 const Cartas = lazy(() => import("./pages/Cartas.jsx"));
@@ -175,6 +176,7 @@ export default function App() {
       />
       <Route path="/jugar/:juego" element={<PrivateRoute><JugarJuego /></PrivateRoute>} />
       <Route path="/jugar/:juego/:variante" element={<PrivateRoute><JugarJuego /></PrivateRoute>} />
+      <Route path="/album" element={<PrivateRoute><Album /></PrivateRoute>} />
       <Route path="/hoy" element={<PrivateRoute><Hoy /></PrivateRoute>} />
       <Route path="/hoy/archivo" element={<PrivateRoute><Archivo /></PrivateRoute>} />
       <Route path="/partido" element={<PrivateRoute><Partido /></PrivateRoute>} />

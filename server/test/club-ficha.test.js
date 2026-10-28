@@ -86,3 +86,13 @@ test("la racha más larga cuenta días corridos", () => {
   assert.equal(longestRun(["2026-01-01", "2026-01-02", "2026-01-04", "2026-01-05", "2026-01-06"]), 3);
   assert.equal(longestRun(["2026-01-31", "2026-02-01"]), 2);
 });
+
+test("la racha personal responde antes que la ruta de racha de un club", async () => {
+  const { userIds } = await makeGroup(db, { name: "Racha propia", members: ["rp1", "rp2"] });
+  const idxMe = clubsRouter.stack.findIndex((l) => l.route?.path === "/me/streak");
+  const idxClub = clubsRouter.stack.findIndex((l) => l.route?.path === "/:id/streak");
+  assert.ok(idxMe >= 0 && idxMe < idxClub, "«/me/streak» tiene que registrarse antes");
+  const out = await call("get", "/me/streak", { userId: userIds[0] });
+  assert.equal(out.status, 200);
+  assert.equal(out.body.streak, 0);
+});

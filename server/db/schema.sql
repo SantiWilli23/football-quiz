@@ -1452,3 +1452,23 @@ CREATE TABLE IF NOT EXISTS ghost_wins (
   date TEXT NOT NULL,
   PRIMARY KEY (user_id, date)
 );
+
+-- Torneos de selecciones (Mundial, Copa América…): los crea el dueño desde /admin. Mientras
+-- dura uno hay álbum de selecciones, banner en Hoy y una carta de selección en cada sobre.
+CREATE TABLE IF NOT EXISTS tournaments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  starts TEXT NOT NULL,
+  ends TEXT NOT NULL,
+  groups_end TEXT,
+  nations_json TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS tournament_claims (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  tournament_id INTEGER NOT NULL REFERENCES tournaments(id),
+  reward TEXT NOT NULL,
+  claimed_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, tournament_id, reward)
+);
