@@ -57,7 +57,7 @@ export default function MobileNav() {
           <Flame size={13} />
           {stats?.current_streak ?? 0}
         </span>
-        <button onClick={openSearch} aria-label="Buscar" className="p-1.5 text-gray-400"><Search size={17} /></button>
+        {!v2 && <button onClick={openSearch} aria-label="Buscar" className="p-1.5 text-gray-400"><Search size={17} /></button>}
         <button onClick={toggleSound} aria-label={sound ? "Silenciar sonidos" : "Activar sonidos"} aria-pressed={sound} className="p-1.5 text-gray-400">
           {sound ? <Volume2 size={17} /> : <VolumeX size={17} />}
         </button>

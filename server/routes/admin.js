@@ -7,6 +7,7 @@ import { rng, dailySeed, shuffle } from "../utils/futgames.js";
 import { checkAlerts, runJobs } from "../utils/jobs.js";
 import { matchFor, quienItems, masMenosItems, penalItems } from "../utils/daily-match.js";
 import { KITS, eventOn } from "../utils/events.js";
+import { SBC_FILTERS, previewSbcFilter, refreshCustomSbcs } from "./cards.js";
 
 // Panel del dueño de la app (Futotal 2.0, V1). El dueño es el usuario cuyo nombre está en la
 // variable OWNER_USERNAME del servidor; si no está configurada, el panel queda apagado.
@@ -116,4 +117,59 @@ jobsRouter.post("/run", async (req, res) => {
   if (!secret) return res.status(503).json({ error: "Falta configurar PUSH_CRON_SECRET" });
   if (req.get("x-cron-secret") !== secret) return res.status(401).json({ error: "No autorizado" });
   try { res.json(await runJobs()); } catch (err) { console.error(err); res.status(500).json({ error: "Error del servidor" }); }
+});
+
+// Desafíos de plantilla (SBC): el dueño elige un filtro, las fechas y un premio extra en monedas.
+// Mientras uno está activo reemplaza a la temática automática. Se valida que el filtro deje
+// cartas suficientes en cada línea (2 arqueros, 5 defensas, 5 medios y 4 delanteros).
+adminRouter.get("/sbc", async (req, res) => {
+  try {
+    const rows = (await db.execute("SELECT * FROM custom_sbcs ORDER BY start_date DESC")).rows;
+    res.json({ filters: Object.fromEntries(Object.entries(SBC_FILTERS).map(([k, v]) => [k, v.label])), sbcs: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+adminRouter.get("/sbc/preview", (req, res) => {
+  const out = previewSbcFilter(String(req.query.filterType || ""), String(req.query.filterValue || ""));
+  if (!out) return res.status(400).json({ error: "Filtro desconocido" });
+  res.json(out);
+});
+
+const isDate = (d) => /^\d{4}-\d{2}-\d{2}$/.test(String(d || ""));
+adminRouter.post("/sbc", async (req, res) => {
+  try {
+    const { label, filterType, filterValue = "", start, end } = req.body || {};
+    const bonus = Math.max(0, Math.min(500, Math.round(Number(req.body?.bonusCoins) || 0)));
+    const name = String(label || "").trim().slice(0, 40);
+    if (!name) return res.status(400).json({ error: "Ponle un nombre al desafío" });
+    if (!isDate(start) || !isDate(end) || end < start) return res.status(400).json({ error: "Las fechas no son válidas" });
+    const prev = previewSbcFilter(String(filterType), String(filterValue));
+    if (!prev) return res.status(400).json({ error: "Filtro desconocido" });
+    if (!prev.feasible) return res.status(400).json({ error: `Con ese filtro no alcanzan las cartas para armar el once (hay ${prev.by.GK} arqueros, ${prev.by.DEF} defensas, ${prev.by.MID} medios y ${prev.by.FWD} delanteros; se necesitan 2, 5, 5 y 4).` });
+    const clash = (await db.execute({ sql: "SELECT label FROM custom_sbcs WHERE start_date <= ? AND end_date >= ?", args: [end, start] })).rows[0];
+    if (clash) return res.status(409).json({ error: `Se superpone con «${clash.label}»` });
+    const r = await db.execute({
+      sql: "INSERT INTO custom_sbcs (label, filter_type, filter_value, start_date, end_date, bonus_coins) VALUES (?, ?, ?, ?, ?, ?)",
+      args: [name, String(filterType), String(filterValue).trim(), start, end, bonus],
+    });
+    await refreshCustomSbcs(true);
+    res.status(201).json({ ok: true, id: Number(r.lastInsertRowid) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+adminRouter.delete("/sbc/:id", async (req, res) => {
+  try {
+    await db.execute({ sql: "DELETE FROM custom_sbcs WHERE id = ?", args: [Number(req.params.id)] });
+    await refreshCustomSbcs(true);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
 });

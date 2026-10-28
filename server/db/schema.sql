@@ -1416,3 +1416,16 @@ CREATE TABLE IF NOT EXISTS push_day (
   n INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (user_id, date)
 );
+
+-- Desafíos de plantilla (SBC) creados por el dueño desde /admin. Mientras uno está activo
+-- reemplaza a la temática que rota sola cada 14 días.
+CREATE TABLE IF NOT EXISTS custom_sbcs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  label TEXT NOT NULL,
+  filter_type TEXT NOT NULL,
+  filter_value TEXT NOT NULL DEFAULT '',
+  start_date TEXT NOT NULL,
+  end_date TEXT NOT NULL,
+  bonus_coins INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

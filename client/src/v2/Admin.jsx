@@ -97,6 +97,8 @@ export default function Admin() {
           </Card>
         </div>
 
+        <SbcAdmin />
+
         <Card>
           <p className="t-eyebrow">Errores y tareas</p>
           <ul className="mt-1 space-y-1 text-xs">
@@ -109,5 +111,73 @@ export default function Admin() {
         </Card>
       </div>
     </Layout>
+  );
+}
+
+// Desafíos de plantilla (SBC): filtro, fechas y premio extra. Mientras uno está activo
+// reemplaza a la temática que rota sola cada 14 días.
+function SbcAdmin() {
+  const [info, setInfo] = useState(null);
+  const [form, setForm] = useState({ label: "", filterType: "nacionalidad", filterValue: "", start: today(), end: addDays(today(), 13), bonusCoins: 0 });
+  const [preview, setPreview] = useState(null);
+  const [msg, setMsg] = useState("");
+  const load = useCallback(() => api.get("/admin/sbc").then((r) => setInfo(r.data)).catch(() => setInfo(false)), []);
+  useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    setPreview(null);
+    const t = setTimeout(() => {
+      api.get("/admin/sbc/preview", { params: { filterType: form.filterType, filterValue: form.filterValue } }).then((r) => setPreview(r.data)).catch(() => setPreview(null));
+    }, 300);
+    return () => clearTimeout(t);
+  }, [form.filterType, form.filterValue]);
+
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  async function create(e) {
+    e.preventDefault();
+    setMsg("");
+    try { await api.post("/admin/sbc", { ...form, bonusCoins: Number(form.bonusCoins) || 0 }); setMsg("Desafío creado."); setForm((f) => ({ ...f, label: "" })); load(); }
+    catch (err) { setMsg(err.response?.data?.error || "No se pudo crear."); }
+  }
+  async function remove(id) {
+    try { await api.delete(`/admin/sbc/${id}`); load(); } catch { setMsg("No se pudo borrar."); }
+  }
+  if (info === null || info === false) return null;
+  const field = "w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm";
+  return (
+    <Card>
+      <p className="t-eyebrow">Desafíos de plantilla (SBC)</p>
+      <p className="mt-1 text-xs text-gray-400">Eliges el filtro y las fechas. Mientras esté activo, reemplaza a la temática automática y todos los sobres traen una carta de esa temática.</p>
+      <ul className="mt-2 divide-y divide-border text-sm">
+        {info.sbcs.length === 0 && <li className="py-2 text-gray-500">No hay desafíos creados: rota la temática automática.</li>}
+        {info.sbcs.map((c) => (
+          <li key={c.id} className="flex items-center gap-2 py-2">
+            <span className="min-w-0 flex-1"><b className="block truncate">{c.label}</b><span className="text-xs text-gray-500">{info.filters[c.filter_type]}{c.filter_value ? `: ${c.filter_value}` : ""} · {c.start_date} a {c.end_date}{c.bonus_coins ? ` · +${c.bonus_coins} monedas` : ""}</span></span>
+            <button onClick={() => remove(c.id)} className="btn btn-secondary btn-sm">Borrar</button>
+          </li>
+        ))}
+      </ul>
+      <form onSubmit={create} className="mt-3 grid gap-2">
+        <input value={form.label} onChange={set("label")} maxLength={40} placeholder="Nombre (por ejemplo, Los albicelestes)" className={field} />
+        <div className="grid grid-cols-2 gap-2">
+          <select value={form.filterType} onChange={set("filterType")} className={field} aria-label="Filtro">
+            {Object.entries(info.filters).map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+          </select>
+          <input value={form.filterValue} onChange={set("filterValue")} disabled={form.filterType === "retirados"} placeholder={form.filterType === "liga" ? "premier, laliga…" : "Valor"} className={`${field} disabled:opacity-40`} />
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <label className="text-xs text-gray-500">Desde<input type="date" value={form.start} onChange={set("start")} className={field} /></label>
+          <label className="text-xs text-gray-500">Hasta<input type="date" value={form.end} onChange={set("end")} className={field} /></label>
+          <label className="text-xs text-gray-500">Monedas extra<input type="number" min="0" max="500" value={form.bonusCoins} onChange={set("bonusCoins")} className={field} /></label>
+        </div>
+        {preview && (
+          <p className={`text-xs ${preview.feasible ? "text-accent" : "text-amber"}`}>
+            {preview.total} cartas: {preview.by.GK} arqueros, {preview.by.DEF} defensas, {preview.by.MID} medios, {preview.by.FWD} delanteros. {preview.feasible ? "Alcanza para armar el once." : "No alcanza (se necesitan 2, 5, 5 y 4)."}
+          </p>
+        )}
+        <button className="btn btn-primary btn-sm" disabled={!form.label.trim() || (preview && !preview.feasible)}>Crear desafío</button>
+        {msg && <p className="text-sm text-gray-300" role="status">{msg}</p>}
+      </form>
+    </Card>
   );
 }

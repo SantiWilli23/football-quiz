@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import api from "../api.js";
@@ -132,6 +133,12 @@ export default function Profile() {
         <div className="mb-6 grid gap-4 lg:grid-cols-2">
           <CartaFutotal />
           <Adn />
+        </div>
+      )}
+      {v2 && tab === "resumen" && (
+        <div className="mb-6 grid grid-cols-2 gap-3">
+          <Link to="/estadisticas" className="rounded-2xl border border-border bg-panel p-4 text-sm hover:border-accent/60"><b className="block">Estadísticas</b><span className="text-xs text-gray-400">Tus números y gráficos</span></Link>
+          <Link to="/historial" className="rounded-2xl border border-border bg-panel p-4 text-sm hover:border-accent/60"><b className="block">Historial</b><span className="text-xs text-gray-400">Tus partidas anteriores</span></Link>
         </div>
       )}
       {tab === "vitrina" && <div className="mb-6"><Vitrina /></div>}

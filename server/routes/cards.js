@@ -375,6 +375,7 @@ router.post("/claim-daily", async (req, res) => {
 
 router.post("/open", async (req, res) => {
   try {
+    await refreshCustomSbcs();
     const { openable, locked } = await packStatus(req.userId);
     const pack = openable.length ? (await db.execute({ sql: "SELECT id, source, theme FROM card_packs WHERE id = ?", args: [openable[0]] })).rows[0] : null;
     if (!pack) return res.status(400).json({ error: locked.length ? "Tus sobres están guardados: entrá a un club con la temporada iniciada para abrirlos" : "No tenés sobres para abrir" });
@@ -476,6 +477,7 @@ async function creditWallet(userId, amount) {
 // once guardado sin darte cuenta).
 router.post("/sell", async (req, res) => {
   try {
+    await refreshCustomSbcs();
     const name = String(req.body?.name || "");
     const count = Math.max(1, Number(req.body?.count) || 1);
     const card = BY_NAME.get(name);
@@ -953,10 +955,46 @@ const THEMES = THEME_DEFS.filter((def) => {
   for (const c of themePool(def)) by[c.pos] += 1;
   return by.GK >= 2 && by.DEF >= 5 && by.MID >= 5 && by.FWD >= 4;
 }).map((def) => ({ ...def, pool: themePool(def) }));
-const themeByKey = (key) => THEMES.find((t) => t.key === key) || null;
+// Desafíos creados por el dueño (tabla custom_sbcs). Se leen de la base cada 30 s y mientras
+// uno está activo reemplaza a la temática que rota sola.
+export const SBC_FILTERS = {
+  nacionalidad: { label: "Nacionalidad", test: (v) => (c) => c.nationality === v },
+  club: { label: "Club (que haya jugado)", test: (v) => (c) => c.clubs.has(v) },
+  liga: { label: "Liga", test: (v) => (c) => c.league === v },
+  retirados: { label: "Retirados", test: () => (c) => !!c.retired },
+};
+const lineCounts = (pool) => {
+  const by = { GK: 0, DEF: 0, MID: 0, FWD: 0 };
+  for (const c of pool) by[c.pos] += 1;
+  return by;
+};
+export const sbcFeasible = (by) => by.GK >= 2 && by.DEF >= 5 && by.MID >= 5 && by.FWD >= 4;
+// Cartas que cumplen el filtro y cuántas hay por línea: sirve de vista previa en el panel.
+export function previewSbcFilter(filterType, filterValue) {
+  const f = SBC_FILTERS[filterType];
+  if (!f) return null;
+  const pool = themePool({ test: f.test(String(filterValue || "")) });
+  const by = lineCounts(pool);
+  return { total: pool.length, by, feasible: sbcFeasible(by) };
+}
+let customThemes = [];
+let customLoadedAt = 0;
+export async function refreshCustomSbcs(force = false) {
+  if (!force && Date.now() - customLoadedAt < 30_000) return;
+  customLoadedAt = Date.now();
+  const rows = (await db.execute("SELECT * FROM custom_sbcs ORDER BY start_date")).rows;
+  customThemes = rows.map((r) => {
+    const f = SBC_FILTERS[r.filter_type];
+    const pool = f ? themePool({ test: f.test(String(r.filter_value || "")) }) : [];
+    return { key: `custom${r.id}`, label: r.label, pool, start: r.start_date, end: r.end_date, bonusCoins: Number(r.bonus_coins) || 0, custom: true };
+  }).filter((t) => sbcFeasible(lineCounts(t.pool)));
+}
+const themeByKey = (key) => THEMES.find((t) => t.key === key) || customThemes.find((t) => t.key === key) || null;
 
 const THEME_EPOCH = "2026-01-05"; // un lunes: las temáticas cambian cada 14 días desde acá
 export function themePeriod(date) {
+  const custom = customThemes.find((t) => t.start <= date && date <= t.end);
+  if (custom) return { k: -1, start: custom.start, end: custom.end, theme: custom };
   const days = Math.floor((new Date(`${date}T12:00:00Z`) - new Date(`${THEME_EPOCH}T12:00:00Z`)) / 86400000);
   const k = Math.max(0, Math.floor(days / 14));
   const start = addDays(THEME_EPOCH, k * 14);
@@ -1027,6 +1065,7 @@ function bestFormation(repeats) {
 
 router.get("/sbc-tema", async (req, res) => {
   try {
+    await refreshCustomSbcs();
     const { theme, start, end } = themePeriod(todayStr());
     if (!theme) return res.json({ theme: null });
     const repeats = await ownedRepeats(req.userId, theme);
@@ -1045,6 +1084,7 @@ router.get("/sbc-tema", async (req, res) => {
 
 router.post("/sbc-tema/submit", async (req, res) => {
   try {
+    await refreshCustomSbcs();
     const { theme, start } = themePeriod(todayStr());
     if (!theme) return res.status(404).json({ error: "No hay un desafío activo" });
     const formation = SBC_FORMATIONS[req.body?.formation];
@@ -1065,7 +1105,8 @@ router.post("/sbc-tema/submit", async (req, res) => {
     if (names.some((n) => (owned.get(n) || 0) < 2)) return res.status(400).json({ error: "Solo se entregan cartas repetidas: siempre te queda una copia de cada una" });
     for (const n of names) await db.execute({ sql: "UPDATE user_cards SET count = count - 1 WHERE user_id = ? AND player_name = ? AND count >= 2", args: [req.userId, n] });
     await db.execute({ sql: "INSERT INTO card_packs (user_id, date, source, theme) VALUES (?, ?, ?, ?)", args: [req.userId, start, source, theme.key] });
-    res.json({ ok: true, reward: { pack: "muy bueno", theme: theme.label } });
+    if (theme.bonusCoins) await creditWallet(req.userId, theme.bonusCoins);
+    res.json({ ok: true, reward: { pack: "muy bueno", theme: theme.label, coins: theme.bonusCoins || 0 } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });
@@ -1075,6 +1116,7 @@ router.post("/sbc-tema/submit", async (req, res) => {
 // El sobre temático se vende en la tienda por monedas (nunca dinero real).
 router.post("/sbc-tema/shop", async (req, res) => {
   try {
+    await refreshCustomSbcs();
     const { theme } = themePeriod(todayStr());
     if (!theme) return res.status(404).json({ error: "No hay una temática activa" });
     const wallet = (await db.execute({ sql: "SELECT balance FROM card_wallets WHERE user_id = ?", args: [req.userId] })).rows[0];

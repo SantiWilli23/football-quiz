@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { GAMES } from "../data/gameCatalog.js";
+import useFutotal2 from "../v2/useFutotal2.js";
 
 const PAGES = [
   { label: "Inicio", to: "/panel" },
@@ -19,6 +20,7 @@ const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 // Ctrl/Cmd+K: saltar a cualquier pantalla o juego escribiendo unas letras.
 export default function CommandPalette() {
+  const { on: v2 } = useFutotal2();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [cursor, setCursor] = useState(0);
@@ -37,6 +39,7 @@ export default function CommandPalette() {
   const results = entries.filter((e) => norm(e.label).includes(norm(query))).slice(0, 8);
 
   useEffect(() => {
+    if (v2) return undefined; // Futotal 2.0: sin buscador Ctrl+K
     function onKey(e) {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
@@ -47,7 +50,7 @@ export default function CommandPalette() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [v2]);
 
   useEffect(() => { if (open) inputRef.current?.focus(); }, [open]);
 
