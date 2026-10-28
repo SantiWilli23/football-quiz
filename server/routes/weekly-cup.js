@@ -3,7 +3,7 @@ import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { addDays, todayStr, mondayOf, dayIndex } from "../utils/points.js";
 import { lineupOf, strengthOf } from "./cards.js";
-import { simulateMatchEvents } from "../utils/match-engine.js";
+import { simulateMatchEvents, withScorers } from "../utils/match-engine.js";
 import { grantPack } from "../utils/rewards.js";
 import { WEEKLY_CUP_ROUND_POINTS, WEEKLY_CUP_CHAMPION_BONUS } from "../utils/points-config.js";
 
@@ -41,7 +41,9 @@ async function playCardsMatch(a, b) {
     return { winner, aGoals: null, bGoals: null, events: [{ min: 0, team: null, type: "wo", text }] };
   }
   const sa = strengthOf(la).total, sb = strengthOf(lb).total;
-  const { homeGoals, awayGoals, events } = simulateMatchEvents({ ovrHome: sa / 11, ovrAway: sb / 11, homeAdvantage: 0 });
+  const sim = simulateMatchEvents({ ovrHome: sa / 11, ovrAway: sb / 11, homeAdvantage: 0 });
+  const { homeGoals, awayGoals } = sim;
+  const events = withScorers(sim.events, { home: la, away: lb });
   let winner = homeGoals > awayGoals ? a : awayGoals > homeGoals ? b : null;
   if (!winner) {
     // Empate: penales, con leve ventaja para el equipo más fuerte.

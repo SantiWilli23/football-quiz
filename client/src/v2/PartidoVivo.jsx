@@ -5,6 +5,7 @@ import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import PlayerFace from "../components/PlayerFace.jsx";
 import { playSfx } from "../utils/sfx.js";
+import { Timeline } from "../match/parts.jsx";
 
 // Partido real en vivo con el modelo único del servidor (utils/live-match.js): marcador y
 // minuto, línea de tiempo, alineación en cancha vertical, estadísticas y comentarios.
@@ -89,36 +90,6 @@ function Team({ t, right }) {
       {t?.logo ? <img src={t.logo} alt="" className="h-12 w-12 object-contain" /> : <span className="h-12 w-12 rounded-full bg-white/10" />}
       <span className="text-sm font-semibold leading-tight break-words">{t?.name}</span>
     </div>
-  );
-}
-
-function EventIcon({ type }) {
-  if (type === "goal" || type === "pen_goal") return <Goal size={15} className="text-white" />;
-  if (type === "own_goal") return <Goal size={15} className="text-red-400" />;
-  if (type === "yellow") return <span className="inline-block h-3.5 w-2.5 rounded-[2px] bg-yellow-400" />;
-  if (type === "red") return <span className="inline-block h-3.5 w-2.5 rounded-[2px] bg-red-500" />;
-  if (type === "sub") return <ArrowLeftRight size={14} className="text-accent" />;
-  return <span className="text-[10px] font-bold text-gray-400">VAR</span>;
-}
-
-function Timeline({ m }) {
-  if (!m.events.length) return <p className="text-sm text-gray-500">{m.status === "NS" ? "El partido todavía no empezó." : "Todavía no hay eventos."}</p>;
-  return (
-    <ol className="divide-y divide-border">
-      {m.events.map((e) => {
-        const left = e.team === "home";
-        const text = e.type === "sub"
-          ? <><span className="text-good">▲ {e.in}</span> <span className="text-gray-500">▼ {e.out}</span></>
-          : <>{e.player}{e.assist ? <span className="text-gray-500"> · asist. {e.assist}</span> : null}{e.type === "pen_goal" ? <span className="text-gray-500"> (pen.)</span> : null}{e.type === "own_goal" ? <span className="text-gray-500"> (en contra)</span> : null}</>;
-        return (
-          <li key={e.id} className={`flex items-center gap-2 py-2 text-sm ${left ? "" : "flex-row-reverse text-right"}`}>
-            <span className="w-12 shrink-0 tabular-nums text-xs text-gray-400 text-center">{e.display || `${e.min}'`}</span>
-            <span className="w-5 shrink-0 flex justify-center"><EventIcon type={e.type} /></span>
-            <span className="min-w-0 flex-1 break-words">{text}</span>
-          </li>
-        );
-      })}
-    </ol>
   );
 }
 
@@ -245,7 +216,7 @@ export default function PartidoVivo() {
               ))}
             </div>
             <div className="rounded-2xl border border-border bg-panel p-4">
-              {tab === "resumen" && <Timeline m={view} />}
+              {tab === "resumen" && <Timeline events={view.events} empty={view.status === "NS" ? "El partido todavía no empezó." : "Todavía no hay eventos."} />}
               {tab === "alineacion" && <Lineup m={view} />}
               {tab === "stats" && <Stats m={view} />}
               {tab === "comentarios" && <Commentary m={view} />}

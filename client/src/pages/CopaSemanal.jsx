@@ -6,7 +6,8 @@ import Card from "../components/Card.jsx";
 import Avatar from "../components/Avatar.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import GroupSelector from "../components/GroupSelector.jsx";
-import MatchPitch from "../components/MatchPitch.jsx";
+import MatchStage from "../match/MatchStage.jsx";
+import { fromEngine } from "../match/simMatch.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
@@ -171,7 +172,7 @@ export default function CopaSemanal() {
                 <p className="t-heading">{replay.m.a?.username} vs {replay.m.b?.username}</p>
                 <button onClick={() => setReplay(null)} className="text-xs text-gray-500 hover:text-white">Cerrar</button>
               </div>
-              <MatchPitch key={replay.key} events={replay.m.events} homeLabel={replay.m.a?.username} awayLabel={replay.m.b?.username} />
+              <MatchStage key={replay.key} match={fromEngine({ source: "sim:copa", events: replay.m.events, home: { name: replay.m.a?.username || "Local" }, away: { name: replay.m.b?.username || "Visita" } })} />
             </Card>
           )}
         </div>

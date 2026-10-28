@@ -91,3 +91,23 @@ export function simulateMatchEvents({ ovrHome, ovrAway, homeAdvantage = 2.2 }) {
 
   return { homeGoals, awayGoals, events };
 }
+
+// Le pone nombre a cada gol de la línea de tiempo: se sortea entre los once del equipo que
+// anotó, con más chance para los delanteros que para los defensas (el arquero no anota). Si no
+// hay once para ese lado, el gol queda sin nombre en vez de inventar uno.
+const SCORER_WEIGHT = { FWD: 6, MID: 3, DEF: 1, GK: 0 };
+export function withScorers(events, xis, rand = Math.random) {
+  return events.map((e) => {
+    if (e.type !== "goal" || e.player || !e.team) return e;
+    const xi = (xis?.[e.team] || []).filter((p) => p?.name);
+    if (!xi.length) return e;
+    const weights = xi.map((p) => SCORER_WEIGHT[p.pos] ?? 1);
+    const total = weights.reduce((a, b) => a + b, 0) || xi.length;
+    let r = rand() * total;
+    for (let i = 0; i < xi.length; i++) {
+      r -= weights[i] || (total === xi.length ? 1 : 0);
+      if (r <= 0) return { ...e, player: xi[i].name };
+    }
+    return { ...e, player: xi[xi.length - 1].name };
+  });
+}

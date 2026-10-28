@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { addDays, todayStr } from "../utils/points.js";
-import { simulateMatchEvents } from "../utils/match-engine.js";
+import { simulateMatchEvents, withScorers } from "../utils/match-engine.js";
 import { rankingBetween } from "./stats.js";
 import { isoWeekKey } from "../utils/challenges.js";
 import { leagueForClub } from "../data/league-clubs.js";
@@ -778,7 +778,9 @@ router.post("/match", async (req, res) => {
       score: [myGoals, theirGoals],
       result: won ? "win" : myGoals === theirGoals ? "draw" : "loss",
       strength: { mine: Math.round(a.total), theirs: Math.round(b.total), chemistry: Math.round(a.chem + a.nat) },
-      events, // línea de tiempo del partido (mismo formato que DT League) para la cancha animada
+      // Línea de tiempo del partido (mismo formato que DT League) con el autor de cada gol.
+      events: withScorers(events, { home: mine, away: opp }),
+      lineups: { home: mine.map((c) => ({ name: c.name, pos: c.pos })), away: opp.map((c) => ({ name: c.name, pos: c.pos })) },
       pack,
     });
   } catch (err) {

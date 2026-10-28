@@ -4,7 +4,8 @@ import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import EmptyState from "../components/EmptyState.jsx";
-import MatchPitch from "../components/MatchPitch.jsx";
+import MatchStage from "../match/MatchStage.jsx";
+import { fromEngine } from "../match/simMatch.js";
 import CardExtrasPanel from "../components/CardExtrasPanel.jsx";
 import CartasTema from "../v2/CartasTema.jsx";
 import useFutotal2 from "../v2/useFutotal2.js";
@@ -492,11 +493,12 @@ export default function Cartas() {
             </div>
             {match && match.events && (
               <div className="mt-4">
-                <MatchPitch
+                <MatchStage
                   key={`${match.opponent}-${match.score.join("-")}-${match.events.length}`}
-                  events={match.events}
-                  homeLabel="Tu equipo"
-                  awayLabel={match.opponent}
+                  match={fromEngine({
+                    source: "sim:cartas", events: match.events, lineups: match.lineups ? { home: { players: match.lineups.home }, away: { players: match.lineups.away } } : null,
+                    home: { name: "Tu equipo", isMe: true }, away: { name: match.opponent },
+                  })}
                   onDone={finishMatch}
                 />
                 {matchDone && (
