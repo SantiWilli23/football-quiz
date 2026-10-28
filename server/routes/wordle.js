@@ -6,6 +6,7 @@ import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { todayStr } from "../utils/points.js";
 import { dailyGameKeyFor, recordDailyResult } from "../utils/daily-games.js";
+import { redesignOn } from "../utils/clubs.js";
 import { challengeFor } from "./daily-challenge.js";
 import { LEAGUES, leagueForClub, wideLeagueLabelForClub } from "../data/league-clubs.js";
 import { styleOf, styleLabel } from "../data/player-style.js";
@@ -332,6 +333,11 @@ async function closeGame(loaded, won, opts = {}) {
   // La diaria ganada suma al ranking global el MISMO puntaje que ve el
   // jugador en pantalla (antes era un número aparte, más chico y sin
   // relación con la dificultad ni la velocidad — quedaba inconsistente).
+  // Con el rediseño (juego fusionado «¿Quién es?») Fichado reporta en TODOS los modos: la
+  // fracción la calcula el servidor y entra por la rama libre (libre:quien_es, una vez al día).
+  if (game.mode !== "daily" && redesignOn()) {
+    await recordDailyResult(game.user_id, game.date, "fichado", won ? Math.min(1, total / FICHADO_DAILY_BEST) : 0, total, { mode: "fun", level: game.difficulty });
+  }
   if (game.mode === "daily") {
     // Fichado es un juego diario: la diaria (dificultad normal) paga el mismo
     // tope que los demás diarios, en proporción al puntaje de la partida.

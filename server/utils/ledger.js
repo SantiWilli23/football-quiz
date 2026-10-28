@@ -62,7 +62,8 @@ export async function creditPoints(userId, date, source, basePoints) {
   const credited = [];
   // Sin ningún club iniciado se informa lo que valdría en Clásico (lo mínimo seguro).
   const allModes = clubs.length ? clubs.map((c) => c.club_mode) : ["clasico"];
-  const wouldHave = Math.max(...allModes.map((m) => pointsFor(m, source, basePoints)), 0);
+  // Lo libre solo suma en Total: si no suma acá, se informa lo que valdría en un club Total.
+  const wouldHave = kind === "free" ? pointsFor("total", source, basePoints) : Math.max(...allModes.map((m) => pointsFor(m, source, basePoints)), 0);
 
   for (const club of clubs) {
     if (!counts(club, date)) continue;

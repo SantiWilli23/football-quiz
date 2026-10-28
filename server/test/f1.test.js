@@ -9,6 +9,7 @@ const ledger = await import("../utils/ledger.js");
 const dm = await import("../utils/daily-match.js");
 const { default: dailyRouter } = await import("../routes/daily-match.js");
 const { todayStr } = await import("../utils/points.js");
+const { fusedOf } = await import("../utils/juegos.js");
 
 before(async () => {
   await initSchema();
@@ -41,7 +42,7 @@ test("F1: con FUTOTAL2 el diario rotativo viejo no le quita los puntos al Partid
     assert.equal(Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM daily_game_results WHERE user_id = ?", args: [user] })).rows[0].n), 0, "no escribe daily_game_results");
     assert.equal(Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM card_packs WHERE user_id = ? AND source LIKE '%juego-%'", args: [user] })).rows[0].n), 0, "no da el sobre del diario");
     const libre = (await db.execute({ sql: "SELECT source, points FROM points_ledger WHERE user_id = ? AND group_id = ?", args: [user, g.groupId] })).rows;
-    assert.deepEqual(libre.map((r) => r.source), [ledger.freeGameSource(rotativo)], "queda como libre:<juego>");
+    assert.deepEqual(libre.map((r) => r.source), [ledger.freeGameSource(fusedOf(rotativo))], "queda como libre:<juego fusionado>");
     assert.ok(!libre.some((r) => r.source === "partido_dia"));
 
     // 2) se juega el Partido del día completo
@@ -53,7 +54,7 @@ test("F1: con FUTOTAL2 el diario rotativo viejo no le quita los puntos al Partid
 
     const rows = Object.fromEntries((await db.execute({ sql: "SELECT source, points FROM points_ledger WHERE user_id = ? AND group_id = ?", args: [user, g.groupId] })).rows.map((r) => [r.source, Number(r.points)]));
     assert.equal(rows.partido_dia, fin.total * 2);
-    assert.equal(rows[ledger.freeGameSource(rotativo)], 20, "el diario viejo suma como libre (4 por acierto, máximo 20)");
+    assert.equal(rows[ledger.freeGameSource(fusedOf(rotativo))], 20, "el diario viejo suma como libre (4 por acierto, máximo 20)");
   } finally { delete process.env.FUTOTAL2; }
 });
 

@@ -17,7 +17,22 @@ export async function submitDaily(gameKey, fraction, score = 0, extra = {}) {
   }
 }
 
+// Lo que pasó con los puntos del club (Futotal 2.0): sumó, ya había sumado hoy o no suma en este club.
+function clubNote(res) {
+  const c = res?.club;
+  if (!c) return "";
+  if (res.rejected === "duracion") return " La partida fue demasiado rápida para contar.";
+  if (c.credited?.length) return ` Sumaste ${Math.max(...c.credited.map((x) => x.points))} a tu club.`;
+  if (res.firstToday === false) return " Ya sumaste hoy en este juego: esta partida es de práctica.";
+  if (c.wouldHave > 0) return ` Habrías sumado ${c.wouldHave} · en tu club no suma.`;
+  return "";
+}
+
 export function dailyMessage(res) {
+  if (res?.practice && res.club) {
+    const base = res.pack ? "Partida libre: ganaste un sobre de cartas." : "Partida libre.";
+    return base + clubNote(res);
+  }
   if (res?.practice) return res.pack ? "Partida libre: ganaste un sobre normal de cartas (no suma puntos)." : "Partida libre: hoy ya tenés el sobre de este juego.";
   if (!res || res.notToday) return ""; // hoy el diario es otro juego: esta partida es práctica
   if (res.already) return "Ya jugaste el diario de hoy: tu puntaje y tu sobre ya están. Esta partida no da más.";

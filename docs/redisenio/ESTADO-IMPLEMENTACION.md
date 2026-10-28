@@ -43,3 +43,14 @@ Las migraciones son aditivas (columnas y tablas nuevas): volver a la versión vi
 8. **Marcos de avatar y logros nuevos**: no se hicieron. El «?» ahora tiene «Ver demo» de 10 s.
 9. **Decisión del dueño (V2)**: el plan gratis de Render se duerme tras ~15 minutos sin tráfico, lo que afecta el aviso de gol, los avisos «a tu hora» y los cierres automáticos. Alternativas: plan pagado, o un cron externo a `POST /api/jobs/run` con el encabezado `x-cron-secret`.
 10. **Conflicto con una decisión anterior**: el plan dice que las partidas libres suman puntos en clubes Total; antes se había pedido que la diversión nunca diera puntos. Como el modo por defecto es Clásico, hoy no suman. Si se prefiere que nunca sumen, se quita la fuente `libre:*` del libro (`utils/ledger.js`).
+
+## Segunda tanda (ESPEC-PENDIENTES.md)
+
+Rama `claude/futotal-pendientes`, sobre `main` (9bcec9c). Todo sigue detrás de `FUTOTAL2=1`.
+
+**Hecho**
+- **F1**: con `FUTOTAL2=1` el diario rotativo viejo ya no escribe `partido_dia` (ni `daily_game_results` ni su sobre): pasa siempre por `libre:<juego fusionado>`. Prueba: `server/test/f1.test.js`.
+- **Infraestructura de fusión**: traducción de clave → juego fusionado en el servidor (`server/utils/juegos.js`), «una vez por juego fusionado al día» (tabla `daily_free_plays`), duración imposible (<15 s) no se acredita, «ya sumaste hoy» / «habrías sumado N · en tu club no suma» en el mensaje de resultado, carcasa `/jugar/:juego/:variante` con chips, Jugar/Continuar, demo y pestaña Récords, ruta de juego `/jugar/:juego/:variante/jugar`, tabla de redirecciones (14 rutas probadas en 375 px, con query) e interruptor por juego `FUTOTAL2_JUEGOS` (ej. `bingo,que_club,mas_o_menos,trivia,var,quien_es`).
+- **Juegos fusionados**: Bingo, ¿Qué club? (Escudos y Plantel), Más o menos (¿A quién me compro? y Pirámide), VAR (Árbitro y pestaña Votación), Trivia (Un minuto y Supervivencia) y ¿Quién es? (Parecido, Carrera y Traspasos; Fichado ahora reporta en todos los modos).
+
+**Pendiente de esta tanda** (en el orden de la especificación): Escudos «Medio» y fracción `aciertos/5` en todos los modos; Récords con datos por variante de Fichado/Un Minuto/VAR (hoy solo los juegos de futgames); Versus (cambio de porción, chips, duelo asíncrono, acreditación `versus` y `dt_podio`); MatchStage + SimMatch; Cotrero con motor en el servidor y calibración de 10.000 carreras; Draft (8a2 en React y simulación portada al servidor con prueba dorada); congelar logros y marcos de trofeo; álbum de selecciones (W7); limpieza por etapas (solo con el rediseño abierto 2 semanas).

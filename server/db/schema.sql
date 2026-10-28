@@ -1416,3 +1416,11 @@ CREATE TABLE IF NOT EXISTS push_day (
   n INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (user_id, date)
 );
+
+-- Futotal 2.0: primera partida del día de cada juego fusionado (para «ya sumaste hoy»).
+CREATE TABLE IF NOT EXISTS daily_free_plays (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  date TEXT NOT NULL,
+  game TEXT NOT NULL,
+  PRIMARY KEY (user_id, date, game)
+);

@@ -5,6 +5,7 @@ import { dailySeed, rng, shuffle } from "./futgames.js";
 import { WEEKLY_PODIUM_PACKS, dailyPackQuality, grantPack } from "./rewards.js";
 import { creditPoints, freeGameSource } from "./ledger.js";
 import { redesignOn } from "./clubs.js";
+import { NO_FREE, fusedOf, tooFast } from "./juegos.js";
 
 // Los doce juegos que se turnan como "juego diario": cada día es UNO solo (ver
 // dailyGameKeyFor), y ese paga hasta DAILY_GAME_MAX_POINTS. Los otros nueve ese
@@ -74,12 +75,22 @@ export async function recordDailyResult(userId, date, gameKey, fraction, score =
   if (play.mode === "fun" || dailyGameKeyFor(date) !== gameKey || redesignOn()) {
     // Práctica libre: no suma puntos. El sobre depende del rendimiento, la dificultad
     // y la duración, con tope de sobres de práctica por día.
+    // Con el rediseño, una duración imposible no se acredita (ni puntos ni sobre).
+    if (redesignOn() && tooFast(play.seconds) && Number(fraction) > 0) {
+      return { points: 0, already: false, notToday: true, practice: true, pack: null, packsLeft: 0, today: dailyGameKeyFor(date), club: { credited: [], wouldHave: 0 }, firstToday: false, rejected: "duracion" };
+    }
     const got = await practicePack(userId, date, gameKey, fraction, play);
-    // Futotal 2.0: la primera partida libre del día de cada juego suma al club, pero
+    // Futotal 2.0: la primera partida libre del día de cada juego (fusionado) suma al club, pero
     // solo si es Total (en Clásico o sin club se informa lo que habría ganado).
     const hits = Math.round((Number(fraction) || 0) * 5);
-    const club = hits > 0 ? await creditPoints(userId, date, freeGameSource(gameKey), hits * 4) : { credited: [], wouldHave: 0 };
-    return { points: 0, already: false, notToday: true, practice: true, pack: got?.quality ?? null, packsLeft: got?.left ?? 0, today: dailyGameKeyFor(date), club };
+    const fused = redesignOn() ? fusedOf(gameKey) : gameKey;
+    let firstToday = true;
+    if (redesignOn()) {
+      firstToday = (await db.execute({ sql: "INSERT OR IGNORE INTO daily_free_plays (user_id, date, game) VALUES (?, ?, ?)", args: [userId, date, fused] })).rowsAffected > 0;
+    }
+    const free = hits > 0 && !(redesignOn() && NO_FREE.has(gameKey));
+    const club = free && firstToday ? await creditPoints(userId, date, freeGameSource(fused), hits * 4) : { credited: [], wouldHave: 0 };
+    return { points: 0, already: false, notToday: true, practice: true, pack: got?.quality ?? null, packsLeft: got?.left ?? 0, today: dailyGameKeyFor(date), club, firstToday, fused };
   }
   const points = pointsFromFraction(fraction);
   const res = await db.execute({

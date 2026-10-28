@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "./context/AuthContext.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard.jsx";
 import CommandPalette from "./components/CommandPalette.jsx";
 import { FEATURES } from "./data/features.js";
 import useFutotal2 from "./v2/useFutotal2.js";
+import { REDIRECCIONES } from "./v2/juegos.js";
 
 // Pantallas de funciones apagadas (client/src/data/features.js): si la bandera
 // está en false, quien entre por un link viejo vuelve a Juegos.
@@ -36,6 +37,7 @@ const Portada = lazy(() => import("./v2/Portada.jsx"));
 const Bienvenida = lazy(() => import("./v2/Bienvenida.jsx"));
 const Admin = lazy(() => import("./v2/Admin.jsx"));
 const Versus = lazy(() => import("./v2/Versus.jsx"));
+const JuegoShell = lazy(() => import("./v2/JuegoShell.jsx"));
 const History = lazy(() => import("./pages/History.jsx"));
 const Profile = lazy(() => import("./pages/Profile.jsx"));
 const Stats = lazy(() => import("./pages/Stats.jsx"));
@@ -104,6 +106,35 @@ function PublicRoute({ children }) {
 }
 
 // Con el rediseño encendido, el inicio de siempre pasa a ser «Hoy».
+// Juegos fusionados: si el juego de esta ruta vieja está abierto (FUTOTAL2_JUEGOS), redirige a la
+// carcasa nueva conservando la query. Si no, sigue con la pantalla de siempre.
+function Fused({ from, children }) {
+  const { search } = useLocation();
+  const { on, ready, juegos } = useFutotal2();
+  if (!ready) return null;
+  const rule = REDIRECCIONES[from];
+  if (on && rule && juegos.includes(rule[0])) {
+    const [, to] = rule;
+    const q = search.replace(/^\?/, "");
+    return <Navigate to={q ? `${to}${to.includes("?") ? "&" : "?"}${q}` : to} replace />;
+  }
+  return children;
+}
+
+// La pantalla de siempre de cada variante, dentro de /jugar/<juego>/<variante>/jugar.
+const JUGAR = {
+  "quien-es/parecido": Wordle, "quien-es/carrera": QuienEs, "quien-es/traspasos": Traspasos,
+  "que-club/escudos": CrestQuiz, "que-club/plantel": Torta,
+  "mas-o-menos/piramide": Piramide, "mas-o-menos/compro": AQuienMeCompro,
+  "trivia/un-minuto": UnMinuto, "trivia/supervivencia": Survival,
+  "var/arbitro": ArbitrajeVar, "var/votacion": VarVotacion, "bingo/bingo": Bingo,
+};
+function JugarJuego() {
+  const { slug, variante } = useParams();
+  const Comp = JUGAR[`${slug}/${variante}`];
+  return Comp ? <Comp /> : <Navigate to={`/jugar/${slug}`} replace />;
+}
+
 // Con el rediseño encendido, el catálogo de juegos pasa a ser «Jugar».
 function GamesOrJugar() {
   const { on, ready } = useFutotal2();
@@ -147,6 +178,9 @@ export default function App() {
       <Route path="/registro" element={<Register />} />
       <Route path="/" element={<Root />} />
       <Route path="/practica" element={<Suspense fallback={<RouteFallback />}><Practica /></Suspense>} />
+      <Route path="/jugar/:slug" element={<PrivateRoute><JuegoShell /></PrivateRoute>} />
+      <Route path="/jugar/:slug/:variante" element={<PrivateRoute><JuegoShell /></PrivateRoute>} />
+      <Route path="/jugar/:slug/:variante/jugar" element={<PrivateRoute><JugarJuego /></PrivateRoute>} />
       <Route path="/versus" element={<PrivateRoute><Versus /></PrivateRoute>} />
       <Route path="/admin" element={<PrivateRoute><Admin /></PrivateRoute>} />
       <Route path="/bienvenida" element={<PrivateRoute><Bienvenida /></PrivateRoute>} />
@@ -248,7 +282,7 @@ export default function App() {
         path="/quien-es"
         element={
           <PrivateRoute>
-            <QuienEs />
+            <Fused from="/quien-es"><QuienEs /></Fused>
           </PrivateRoute>
         }
       />
@@ -264,7 +298,7 @@ export default function App() {
         path="/var-votacion"
         element={
           <PrivateRoute>
-            <VarVotacion />
+            <Fused from="/var-votacion"><VarVotacion /></Fused>
           </PrivateRoute>
         }
       />
@@ -296,7 +330,7 @@ export default function App() {
         path="/supervivencia"
         element={
           <PrivateRoute>
-            <Survival />
+            <Fused from="/supervivencia"><Survival /></Fused>
           </PrivateRoute>
         }
       />
@@ -304,7 +338,7 @@ export default function App() {
         path="/fulbodle"
         element={
           <PrivateRoute>
-            <Wordle />
+            <Fused from="/fulbodle"><Wordle /></Fused>
           </PrivateRoute>
         }
       />
@@ -332,7 +366,7 @@ export default function App() {
         path="/un-minuto"
         element={
           <PrivateRoute>
-            <UnMinuto />
+            <Fused from="/un-minuto"><UnMinuto /></Fused>
           </PrivateRoute>
         }
       />
@@ -340,7 +374,7 @@ export default function App() {
         path="/escudos"
         element={
           <PrivateRoute>
-            <CrestQuiz />
+            <Fused from="/escudos"><CrestQuiz /></Fused>
           </PrivateRoute>
         }
       />
@@ -389,7 +423,7 @@ export default function App() {
         path="/bingo"
         element={
           <PrivateRoute>
-            <Bingo />
+            <Fused from="/bingo"><Bingo /></Fused>
           </PrivateRoute>
         }
       />
@@ -398,7 +432,7 @@ export default function App() {
         path="/a-quien-me-compro"
         element={
           <PrivateRoute>
-            <AQuienMeCompro />
+            <Fused from="/a-quien-me-compro"><AQuienMeCompro /></Fused>
           </PrivateRoute>
         }
       />
@@ -406,7 +440,7 @@ export default function App() {
         path="/piramide"
         element={
           <PrivateRoute>
-            <Piramide />
+            <Fused from="/piramide"><Piramide /></Fused>
           </PrivateRoute>
         }
       />
@@ -430,7 +464,7 @@ export default function App() {
         path="/traspasos"
         element={
           <PrivateRoute>
-            <Traspasos />
+            <Fused from="/traspasos"><Traspasos /></Fused>
           </PrivateRoute>
         }
       />
@@ -438,7 +472,7 @@ export default function App() {
         path="/torta"
         element={
           <PrivateRoute>
-            <Torta />
+            <Fused from="/torta"><Torta /></Fused>
           </PrivateRoute>
         }
       />
@@ -446,7 +480,7 @@ export default function App() {
         path="/arbitraje-var"
         element={
           <PrivateRoute>
-            <ArbitrajeVar />
+            <Fused from="/arbitraje-var"><ArbitrajeVar /></Fused>
           </PrivateRoute>
         }
       />
