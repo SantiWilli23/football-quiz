@@ -16,7 +16,7 @@ router.get("/:league/:id", limiter, async (req, res) => {
   } catch (err) {
     if (err.status === 400) return res.status(400).json({ error: err.message });
     await logError("live", err);
-    res.status(502).json({ error: "No se pudo traer el partido. Probá de nuevo en unos segundos." });
+    res.status(502).json({ error: "No se pudo traer el partido. Prueba de nuevo en unos segundos." });
   }
 });
 

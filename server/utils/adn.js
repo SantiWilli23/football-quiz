@@ -2,8 +2,8 @@ import { db } from "../db/client.js";
 import { addDays, mondayOf, monthOf, todayStr } from "./points.js";
 
 // ADN futbolero (Futotal 2.0): seis áreas, de 0 a 99, comparadas con el resto de los jugadores.
-// Cinco salen de qué tan bien respondés las preguntas de cada tema (Chile, Europa, Leyendas,
-// Actualidad, Mercado) y la sexta, Velocidad, de qué tan rápido respondés. Un área solo se
+// Cinco salen de qué tan bien respondes las preguntas de cada tema (Chile, Europa, Leyendas,
+// Actualidad, Mercado) y la sexta, Velocidad, de qué tan rápido respondes. Un área solo se
 // muestra con 15 respuestas o más: antes, «faltan datos».
 export const AREAS = ["chile", "europa", "leyendas", "actualidad", "mercado", "velocidad"];
 export const AREA_LABEL = { chile: "Chile", europa: "Europa", leyendas: "Leyendas", actualidad: "Actualidad", mercado: "Mercado", velocidad: "Velocidad" };
@@ -99,12 +99,12 @@ export function archetypeOf(areas) {
 }
 
 const SUGGESTION = {
-  chile: { text: "Practicá preguntas de la liga chilena y la Roja.", game: "/club" },
-  europa: { text: "Mirá los partidos de las grandes ligas y practicá Champions.", game: "/futbol" },
-  leyendas: { text: "Probá «¿Quién es?» con jugadores retirados y las partidas de Cotrero.", game: "/fulbodle" },
-  actualidad: { text: "Seguí los resultados de la semana y los fichajes.", game: "/futbol" },
+  chile: { text: "Practica preguntas de la liga chilena y la Roja.", game: "/club" },
+  europa: { text: "Mira los partidos de las grandes ligas y practica Champions.", game: "/futbol" },
+  leyendas: { text: "Prueba «¿Quién es?» con jugadores retirados y las partidas de Cotrero.", game: "/fulbodle" },
+  actualidad: { text: "Sigue los resultados de la semana y los fichajes.", game: "/futbol" },
   mercado: { text: "Entrená con «Más o menos»: cuánto vale cada jugador.", game: "/a-quien-me-compro" },
-  velocidad: { text: "Respondé sin pensarlo de más: la rapidez pesa el 20% de cada pregunta.", game: "/partido" },
+  velocidad: { text: "Responde sin pensarlo de más: la rapidez pesa el 20% de cada pregunta.", game: "/partido" },
 };
 
 // Análisis semanal o mensual: mejor y peor área, cuánto subiste o bajaste, sugerencia concreta

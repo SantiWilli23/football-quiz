@@ -28,7 +28,7 @@ export default function GroupDivision({ groupId }) {
           <h3 className="font-semibold">Liga del grupo</h3>
         </div>
         <p className="text-sm text-gray-400">
-          Necesitás al menos {data.minSize} miembros para armar divisiones con ascensos y descensos.
+          Necesitas al menos {data.minSize} miembros para armar divisiones con ascensos y descensos.
           Por ahora son {data.memberCount ?? 0}.
         </p>
       </Card>

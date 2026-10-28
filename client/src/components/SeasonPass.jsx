@@ -30,7 +30,7 @@ export default function SeasonPass() {
     <section aria-labelledby="pase-titulo">
       <div className="mb-4">
         <h2 id="pase-titulo" className="text-lg font-semibold mb-1">Pase de temporada</h2>
-        <p className="text-gray-400 text-sm">Cada mes tiene un tema y misiones con lo que ya jugás. Sumá experiencia y reclamá sobres de cartas y títulos.</p>
+        <p className="text-gray-400 text-sm">Cada mes tiene un tema y misiones con lo que ya juegas. Suma experiencia y reclama sobres de cartas y títulos.</p>
       </div>
 
       {data === undefined && <SkeletonCard lines={4} />}

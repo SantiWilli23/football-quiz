@@ -38,6 +38,10 @@ export async function playedDates(userId) {
   return new Set(rows.map((r) => r.date));
 }
 
+// Además de la racha, la semana en curso (lunes a domingo): qué días se jugó el partido.
 export async function personalStreak(userId, today) {
-  return streakFromDates(await playedDates(userId), today);
+  const dates = await playedDates(userId);
+  const monday = mondayOf(today);
+  const week = Array.from({ length: 7 }, (_, i) => dates.has(addDays(monday, i)));
+  return { ...streakFromDates(dates, today), week, weekday: Math.round((Date.parse(today) - Date.parse(monday)) / 86400000) };
 }

@@ -268,14 +268,14 @@ export default function Duels() {
       key: "8a2",
       label: "Draft 8a2",
       icon: Star,
-      description: "Armá tu equipo y jugá la final 1 contra 1",
+      description: "Arma tu equipo y juega la final 1 contra 1",
       available: true,
     },
     {
       key: "mentiroso",
       label: "Mentiroso",
       icon: Zap,
-      description: "¿Sabés más jugadores que el otro?",
+      description: "¿Sabes más jugadores que el otro?",
       available: true,
     },
   ];
@@ -286,7 +286,7 @@ export default function Duels() {
         <h1 className="text-xl sm:text-2xl font-bold mb-1">Duelos</h1>
         <p className="text-gray-400 text-sm mb-6">Uno contra uno, con las preguntas más difíciles</p>
         <Card>
-          <p className="text-gray-400 text-center py-6">Necesitás estar en un grupo para jugar duelos.</p>
+          <p className="text-gray-400 text-center py-6">Necesitas estar en un grupo para jugar duelos.</p>
         </Card>
       </Layout>
     );
@@ -319,7 +319,7 @@ export default function Duels() {
       <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold mb-1">Duelos</h1>
-          <p className="text-gray-400 text-sm">Uno contra uno — elegí el juego</p>
+          <p className="text-gray-400 text-sm">Uno contra uno — elige el juego</p>
         </div>
         <GroupSelector />
       </div>
@@ -556,7 +556,7 @@ export default function Duels() {
             <p className={`text-sm font-medium ${useWildcard ? "text-amber" : ""}`}>Comodín semanal — doble o nada</p>
             <p className="text-xs text-gray-500">
               {data?.wildcard_available
-                ? "Si ganás este duelo, el doble de puntos. Si empatás o perdés, cero. Uno por semana."
+                ? "Si ganas este duelo, el doble de puntos. Si empatas o pierdes, cero. Uno por semana."
                 : "Ya usaste tu comodín de esta semana."}
             </p>
           </div>
@@ -564,7 +564,7 @@ export default function Duels() {
         </button>
 
         {members.length === 0 ? (
-          <p className="text-sm text-gray-500">Sos el único miembro del grupo por ahora.</p>
+          <p className="text-sm text-gray-500">Eres el único miembro del grupo por ahora.</p>
         ) : (
           <div className="space-y-2">
             {members.map((m) => (
@@ -629,7 +629,7 @@ export default function Duels() {
                   <div className="flex items-center justify-center gap-4">
                     <div className="flex flex-col items-center gap-1.5 w-20 min-w-0">
                       <Avatar user={user} size={36} />
-                      <span className="text-xs truncate max-w-full">Vos</span>
+                      <span className="text-xs truncate max-w-full">Tú</span>
                     </div>
                     <div className="text-center shrink-0">
                       <p className="text-lg font-bold tabular-nums">{d.my_correct} – {d.rival_correct}</p>

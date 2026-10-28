@@ -24,7 +24,7 @@ export function LiveBanner({ event }) {
   const label = event.source === "partido_dia" ? `sacó ${event.points}` : event.source === "copa" ? `ganó ${event.points} en la copa` : `sumó ${event.points}`;
   return (
     <p className="celebrate-pop flex items-center gap-2 rounded-2xl border border-accent/40 bg-accent/10 px-4 py-2 text-sm" role="status">
-      <Radio size={14} className="shrink-0 text-accent animate-pulse" /> <b>{event.username}</b> acaba de sumar: {label}.
+      <Radio size={14} className="shrink-0 text-accent anímate-pulse" /> <b>{event.username}</b> acaba de sumar: {label}.
     </p>
   );
 }
@@ -130,7 +130,7 @@ export function Legends({ clubId }) {
           ))}
         </ol>
       )}
-      <a href="/cotrero-medio.html" className="mt-2 inline-block text-xs text-accent">{list.length ? "Probá superarlos en Cotrero medio" : "Ir a Cotrero medio"}</a>
+      <a href="/cotrero-medio.html" className="mt-2 inline-block text-xs text-accent">{list.length ? "Prueba superarlos en Cotrero medio" : "Ir a Cotrero medio"}</a>
     </Card>
   );
 }

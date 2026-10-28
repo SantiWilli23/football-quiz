@@ -115,7 +115,7 @@ async function closeMatch(userId, date) {
   });
   if (ins.rowsAffected === 0) return { status: 200, body: { ...(await resultOf(userId, date)), already: true } };
   const club = await creditPoints(userId, date, "partido_dia", total);
-  // Carta del día: si acertás el primer «¿Quién es?», te llevás a ese jugador (edición con la fecha).
+  // Carta del día: si aciertas el primer «¿Quién es?», te llevas a ese jugador (edición con la fecha).
   let dailyCard = null;
   if (answered.find((a) => a.idx === 0)?.ok) {
     dailyCard = items[0].options[items[0].answer];
@@ -205,7 +205,7 @@ router.get("/club-stats", async (req, res) => {
     const groupId = Number(req.query.groupId);
     const date = todayStr();
     if (!(await memberOf(groupId, req.userId))) return res.status(403).json({ error: "No pertenecés a ese club" });
-    if (!(await resultOf(req.userId, date))) return res.status(409).json({ error: "Jugá el partido para ver cómo respondió el club" });
+    if (!(await resultOf(req.userId, date))) return res.status(409).json({ error: "Juega el partido para ver cómo respondió el club" });
     const rows = (await db.execute({
       sql: `SELECT a.idx, COUNT(*) AS n, SUM(a.ok) AS hits FROM daily_match_answers a
             JOIN group_members m ON m.user_id = a.user_id AND m.group_id = ?

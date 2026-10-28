@@ -14,7 +14,7 @@ export default function SaveManager({ onNewCareer }) {
         <Link to="/panel" className="inline-block text-xs text-gray-500 hover:text-white mb-3">Volver al menú principal</Link>
         <h1 className="text-2xl font-bold mb-1">Modo Carrera · DT</h1>
         <p className="text-gray-400 text-sm mb-5">
-          {saveSlots.length ? "Retomá una carrera guardada o empezá una nueva." : "Elegí el equipo que vas a dirigir."}
+          {saveSlots.length ? "Retoma una carrera guardada o empieza una nueva." : "Elige el equipo que vas a dirigir."}
         </p>
 
         {saveSlots.length > 0 && (

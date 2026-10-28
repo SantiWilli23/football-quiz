@@ -70,7 +70,7 @@ export default function Entrenar() {
           <Card variant="feature">
             <p className="t-eyebrow">Entrenamiento · {LABEL[area]}</p>
             <p className="mt-1 text-5xl font-extrabold tabular-nums">{hits}<span className="text-2xl text-gray-400">/{items.length}</span></p>
-            <p className="mt-2 text-sm text-gray-400">{hits >= 5 ? "Muy bien. Esta área viene firme." : hits >= 3 ? "Vas mejorando. Repetí mañana." : "Costó. Otra ronda ayuda."} No suma puntos: es para practicar.</p>
+            <p className="mt-2 text-sm text-gray-400">{hits >= 5 ? "Muy bien. Esta área viene firme." : hits >= 3 ? "Vas mejorando. Repite mañana." : "Costó. Otra ronda ayuda."} No suma puntos: es para practicar.</p>
           </Card>
           <div className="flex gap-2">
             <button onClick={() => setRun((r) => r + 1)} className="btn btn-secondary flex-1">Otra ronda</button>

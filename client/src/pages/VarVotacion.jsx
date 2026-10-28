@@ -51,12 +51,12 @@ export default function VarVotacion() {
         Votación del VAR
       </h1>
       <p className="text-gray-400 text-sm mb-4">
-        Una jugada polémica por día. Votá qué cobrarías: cuando votás, ves cómo votó tu grupo y qué dijo el VAR.
+        Una jugada polémica por día. Vota qué cobrarías: cuando votas, ves cómo votó tu grupo y qué dijo el VAR.
       </p>
 
       <GroupSelector />
 
-      {!groupId && <Card className="mt-4"><p className="text-sm text-gray-400">Unite a un grupo para votar con tus amigos.</p></Card>}
+      {!groupId && <Card className="mt-4"><p className="text-sm text-gray-400">Únete a un grupo para votar con tus amigos.</p></Card>}
       {error && <p className="text-sm text-red-400 mt-4">{error}</p>}
 
       {data && (
@@ -91,7 +91,7 @@ export default function VarVotacion() {
             })}
           </div>
 
-          {!voted && <p className="text-xs text-gray-500 mt-3">Votó {data.voted} de {data.members}. Votá para ver al resto y el fallo.</p>}
+          {!voted && <p className="text-xs text-gray-500 mt-3">Votó {data.voted} de {data.members}. Vota para ver al resto y el fallo.</p>}
           {voted && (
             <div className="mt-4">
               <p className={`text-sm font-medium flex items-center gap-1.5 ${data.myVote === data.correctIdx ? "text-emerald" : "text-red-400"}`}>
@@ -99,7 +99,7 @@ export default function VarVotacion() {
                 {data.myVote === data.correctIdx ? "Coincidiste con el VAR" : `El VAR dijo: ${data.situation.options[data.correctIdx]}`}
               </p>
               <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">{data.why}</p>
-              <p className="text-xs text-gray-500 mt-2">Votó {data.voted} de {data.members}. Volvé mañana por otra jugada.</p>
+              <p className="text-xs text-gray-500 mt-2">Votó {data.voted} de {data.members}. Vuelve mañana por otra jugada.</p>
             </div>
           )}
         </Card>

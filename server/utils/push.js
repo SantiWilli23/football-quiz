@@ -114,7 +114,7 @@ export async function sendDailyReminder({ force = false } = {}) {
   for (const row of pending.rows) {
     sent += await sendToUser(row.user_id, {
       title: "Futotal",
-      body: "Ya están las preguntas de hoy. ¿Las respondés antes que el grupo?",
+      body: "Ya están las preguntas de hoy. ¿Las respondes antes que el grupo?",
       url: "/",
     });
   }

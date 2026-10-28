@@ -21,7 +21,7 @@ export default function GhostToggle() {
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <h2 className="font-semibold">Fantasma del rival</h2>
-          <p className="text-sm text-gray-400">Mientras jugás el partido del día, ves en qué pregunta acertó o falló tu rival de la semana.</p>
+          <p className="text-sm text-gray-400">Mientras juegas el partido del día, ves en qué pregunta acertó o falló tu rival de la semana.</p>
         </div>
         <button role="switch" aria-checked={on} aria-label="Fantasma del rival" onClick={toggle}
           className={`relative h-7 w-12 shrink-0 rounded-full border transition-colors ${on ? "border-accent bg-accent/30" : "border-border bg-bg"}`}>

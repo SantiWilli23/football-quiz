@@ -11,7 +11,7 @@ import { computeAchievements } from "./stats.js";
 import { newRecoveryCode, sealCode, openCode, codesMatch } from "../utils/recovery.js";
 
 // Frena la fuerza bruta de contraseñas: 10 intentos cada 15 minutos por IP.
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: "Demasiados intentos. Esperá unos minutos y volvé a probar." });
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: "Demasiados intentos. Espera unos minutos y vuelve a probar." });
 
 // Espejo de FRAME_REQUIREMENTS en client/src/components/Avatar.jsx — los
 // marcos son cosméticos desbloqueables por logros, no elegibles libremente,

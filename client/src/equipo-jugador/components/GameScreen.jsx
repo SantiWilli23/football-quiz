@@ -36,7 +36,7 @@ export default function GameScreen({ state, mySeat, isLocal, onAttempt, onTimeou
 
   const prompt =
     state.expected === "start"
-      ? "Decí cualquier futbolista para arrancar la cadena"
+      ? "Di cualquier futbolista para arrancar la cadena"
       : expectedKind === "club"
       ? `¿En qué equipo jugó ${last?.label}?`
       : `¿Quién jugó en ${last?.label}?`;
@@ -64,7 +64,7 @@ export default function GameScreen({ state, mySeat, isLocal, onAttempt, onTimeou
           >
             {state.turnSeat === i && state.status === "playing" && "▶ "}
             {name}
-            {mySeat === i && " (vos)"}
+            {mySeat === i && " (tú)"}
           </span>
         ))}
       </div>
@@ -77,7 +77,7 @@ export default function GameScreen({ state, mySeat, isLocal, onAttempt, onTimeou
 
       {isLocal && passGateOpen && myTurn && state.status === "playing" && (
         <div className="bg-panel border border-accent/30 rounded-2xl p-6 text-center">
-          <p className="text-sm text-gray-400 mb-1">Pasá el dispositivo a</p>
+          <p className="text-sm text-gray-400 mb-1">Pasa el dispositivo a</p>
           <p className="text-xl font-bold mb-4">{state.playerNames[state.turnSeat]}</p>
           <button
             onClick={() => setPassGateOpen(false)}

@@ -60,7 +60,7 @@ function SquadDraft({ cup, onJoined }) {
   return (
     <div className="rounded-card border border-border bg-bg p-4 space-y-3">
       <p className="text-sm font-medium">
-        Armá tu plantel: elegí {cup.squadSize} jugadores reales ({squad.length}/{cup.squadSize})
+        Arma tu plantel: elige {cup.squadSize} jugadores reales ({squad.length}/{cup.squadSize})
       </p>
 
       <div className="flex flex-wrap gap-2">
@@ -291,7 +291,7 @@ export default function GroupCup({ groupId }) {
             {cup.participants.map((p) => (
               <span key={p.id} className="text-xs px-3 py-1.5 rounded-full border border-border bg-bg">
                 {p.username}
-                {p.userId === user?.id ? " (vos)" : ""}
+                {p.userId === user?.id ? " (tú)" : ""}
               </span>
             ))}
           </div>

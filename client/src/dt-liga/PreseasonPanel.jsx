@@ -76,7 +76,7 @@ export default function PreseasonPanel({ code, league, variant = "play" }) {
       const r = await markPreseasonReady(code);
       setMarked(true);
       setWait(r.started ? "¡Arrancó la liga!" : `Falta que terminen: ${(r.pending || []).join(", ")}`);
-    } catch { setWait("No se pudo avisar. Probá de nuevo."); }
+    } catch { setWait("No se pudo avisar. Prueba de nuevo."); }
   }
 
   return (
@@ -108,14 +108,14 @@ export default function PreseasonPanel({ code, league, variant = "play" }) {
               {done ? (
                 <p className="text-emerald">Ya avisaste que terminaste. {wait || "Esperando a los demás managers."}</p>
               ) : (
-                <button onClick={markReady} disabled={!finished} className="btn btn-primary btn-sm disabled:opacity-40">{finished ? "Terminé mi pretemporada" : `Jugá tus ${pre.total} amistosos para poder terminar (${pre.matchesPlayed}/${pre.total})`}</button>
+                <button onClick={markReady} disabled={!finished} className="btn btn-primary btn-sm disabled:opacity-40">{finished ? "Terminé mi pretemporada" : `Juega tus ${pre.total} amistosos para poder terminar (${pre.matchesPlayed}/${pre.total})`}</button>
               )}
               {wait && !done && <p className="text-xs text-gray-400">{wait}</p>}
             </div>
           )}
           {league?.members?.length > 0 && (
             <ul className="text-sm space-y-1">
-              {league.members.map((m) => <li key={m.userId} className="flex items-center gap-2"><span className={m.preseasonReady ? "text-emerald" : "text-gray-500"}>{m.preseasonReady ? "✓" : "…"}</span>{m.username}{m.isMe ? " (vos)" : ""}</li>)}
+              {league.members.map((m) => <li key={m.userId} className="flex items-center gap-2"><span className={m.preseasonReady ? "text-emerald" : "text-gray-500"}>{m.preseasonReady ? "✓" : "…"}</span>{m.username}{m.isMe ? " (tú)" : ""}</li>)}
             </ul>
           )}
         </>

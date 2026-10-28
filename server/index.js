@@ -90,7 +90,7 @@ app.use("/api/jobs", jobsRouter);
 app.use("/api/analytics", analyticsRoutes);
 // Futotal 2.0, etapa A de la limpieza: Trivia, Modo B, banco de preguntas, retos del día, encuestas y
 // torneos de duelos ya no existen para quien juega. Las lecturas siguen funcionando (para poder revisar
-// o exportar lo que había) y toda escritura responde 410. Sin FUTOTAL2 no cambia nada.
+// o exportar lo que había) y toda escritura responde 410. Con FUTOTAL2=0 no cambia nada.
 const retired = (req, res, next) => {
   if (!redesignOn() || req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") return next();
   res.status(410).json({ error: "Este modo ya no está en Futotal." });

@@ -60,7 +60,7 @@ export default function Ceremonia() {
             </div>
             <h2 className="relative mt-3 text-2xl font-extrabold">{PLACE[c.place]}</h2>
             <p className="relative text-sm text-gray-400">El trofeo ya está en tu vitrina.</p>
-            {c.elite && <p className="relative mt-3 rounded-xl border border-accent/50 bg-accent/10 px-3 py-2 text-sm">Ganaste un <b>Sobre Élite</b>: una carta de 90 o más asegurada. Lo abrís en Cartas.</p>}
+            {c.elite && <p className="relative mt-3 rounded-xl border border-accent/50 bg-accent/10 px-3 py-2 text-sm">Ganaste un <b>Sobre Élite</b>: una carta de 90 o más asegurada. Lo abres en Cartas.</p>}
             {!c.elite && <p className="relative mt-3 text-xs text-gray-500">El Sobre Élite solo sale del club que marcaste como principal.</p>}
           </>
         ) : (

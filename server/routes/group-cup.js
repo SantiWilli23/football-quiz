@@ -225,7 +225,7 @@ router.post("/:cupId/join", async (req, res) => {
 
   const squad = Array.isArray(req.body?.squad) ? req.body.squad.map(Number).filter(Number.isInteger) : [];
   if (squad.length !== cup.squad_size || new Set(squad).size !== squad.length) {
-    return res.status(400).json({ error: `Elegí ${cup.squad_size} jugadores distintos` });
+    return res.status(400).json({ error: `Elige ${cup.squad_size} jugadores distintos` });
   }
 
   const already = await db.execute({
@@ -287,7 +287,7 @@ router.post("/:cupId/start", async (req, res) => {
   if (cup.status !== "lobby") return res.status(400).json({ error: "Esta copa ya arrancó" });
 
   let participants = await loadParticipants(cup.id);
-  if (participants.length < 1) return res.status(400).json({ error: "Necesitás al menos un participante" });
+  if (participants.length < 1) return res.status(400).json({ error: "Necesitas al menos un participante" });
 
   // Rellena los cupos vacíos con CPU (plantel al azar, sin pisar jugadores ya tomados).
   const taken = new Set(participants.flatMap((p) => p.squad));

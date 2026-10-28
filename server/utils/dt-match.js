@@ -22,7 +22,7 @@ const DT_TIER_WEIGHT = { 1: 3, 2: 2, 3: 1 };
 export function dtWeeklyPoints(myTier, oppTier, outcome) {
   const myWeight = DT_TIER_WEIGHT[myTier] ?? 2;
   const oppWeight = DT_TIER_WEIGHT[oppTier] ?? 2;
-  const gap = oppWeight - myWeight; // positivo = el rival era más grande que vos
+  const gap = oppWeight - myWeight; // positivo = el rival era más grande que tú
 
   if (outcome === "win") return 10 + Math.max(0, gap) * 8;
   if (outcome === "draw") return 4 + Math.max(0, gap) * 3;

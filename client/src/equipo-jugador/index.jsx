@@ -52,7 +52,7 @@ export default function EquipoJugador() {
               className="w-full bg-panel border border-border rounded-2xl p-5 text-left hover:border-accent/40 transition-colors"
             >
               <p className="font-semibold">Vs. Bot</p>
-              <p className="text-sm text-gray-500 mt-1">Jugás solo contra un bot que responde solo. Ideal para practicar.</p>
+              <p className="text-sm text-gray-500 mt-1">Juegas solo contra un bot que responde solo. Ideal para practicar.</p>
             </button>
 
             <button

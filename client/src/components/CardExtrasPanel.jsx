@@ -7,7 +7,7 @@ import { useToast } from "../context/ToastContext.jsx";
 const plain = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 // Entrenador, capitán, colecciones de selección y cartas "en forma" de Mi equipo.
-// `lineupNames` son los 11 guardados; `collection` lo que tenés; `onChanged` recarga fuerza.
+// `lineupNames` son los 11 guardados; `collection` lo que tienes; `onChanged` recarga fuerza.
 export default function CardExtrasPanel({ lineupNames, collection, onChanged }) {
   const { toast } = useToast();
   const [data, setData] = useState(null);
@@ -57,7 +57,7 @@ export default function CardExtrasPanel({ lineupNames, collection, onChanged }) 
         <div>
           <p className="text-sm font-semibold mb-2 flex items-center gap-1.5"><UserCog size={14} /> Entrenador</p>
           {data.coaches.length === 0 ? (
-            <p className="text-xs text-gray-500">No tenés ningún entrenador todavía. Salen en los sobres, más seguido en el Sobre Íconos.</p>
+            <p className="text-xs text-gray-500">No tienes ningún entrenador todavía. Salen en los sobres, más seguido en el Sobre Íconos.</p>
           ) : (
             <div className="grid sm:grid-cols-2 gap-2">
               <button
@@ -85,7 +85,7 @@ export default function CardExtrasPanel({ lineupNames, collection, onChanged }) 
         <div>
           <p className="text-sm font-semibold mb-2 flex items-center gap-1.5"><Shield size={14} /> Capitán</p>
           {lineupCards.length !== 11 ? (
-            <p className="text-xs text-gray-500">Guardá tu once de 11 para elegir capitán.</p>
+            <p className="text-xs text-gray-500">Guarda tu once de 11 para elegir capitán.</p>
           ) : (
             <>
               <select
@@ -105,13 +105,13 @@ export default function CardExtrasPanel({ lineupNames, collection, onChanged }) 
 
         <div>
           <p className="text-sm font-semibold mb-1">Colecciones de selección</p>
-          <p className="text-[11px] text-gray-500 mb-2">Poné en tu once jugadores de un plantel histórico: {data.squadRule}.</p>
+          <p className="text-[11px] text-gray-500 mb-2">Pon en tu once jugadores de un plantel histórico: {data.squadRule}.</p>
           <div className="space-y-2">
             {data.squads.map((s) => (
               <div key={s.id}>
                 <div className="flex justify-between text-xs mb-1">
                   <span className={s.chem > 0 ? "text-emerald-500" : "text-gray-300"}>{s.label}</span>
-                  <span className="text-gray-500 tabular-nums">en tu once {s.inLineup} · tenés {s.owned}/{s.size}{s.chem > 0 ? ` · +${s.chem}` : ""}</span>
+                  <span className="text-gray-500 tabular-nums">en tu once {s.inLineup} · tienes {s.owned}/{s.size}{s.chem > 0 ? ` · +${s.chem}` : ""}</span>
                 </div>
                 <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
                   <div className="h-full bg-accent/70" style={{ width: `${Math.min(100, (s.owned / s.size) * 100)}%` }} />

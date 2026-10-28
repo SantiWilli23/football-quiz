@@ -42,7 +42,7 @@ export default function LocalGame({ onExit }) {
       }
       setState((s) => applyMove(s, entity));
     } catch {
-      setAttemptError("Error de conexión, probá de nuevo.");
+      setAttemptError("Error de conexión, prueba de nuevo.");
     } finally {
       setAttempting(false);
     }

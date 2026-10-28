@@ -20,6 +20,7 @@ import RecoveryCode from "../v2/RecoveryCode.jsx";
 import GhostToggle from "../v2/GhostToggle.jsx";
 import Adn, { CartaFutotal } from "../v2/Adn.jsx";
 import useFutotal2 from "../v2/useFutotal2.js";
+import Yo from "../v2/Yo.jsx";
 import { resetManos } from "../v2/Mano.jsx";
 
 export default function Profile() {
@@ -53,6 +54,9 @@ export default function Profile() {
     };
     if (user) loadGroup();
   }, [user, activeGroupId]);
+
+  // Futotal 2.0: «Yo» tiene su propia pantalla, como en el prototipo.
+  if (v2) return <Yo />;
 
   const me = ranking.find((r) => r.id === user?.id);
   const rival = ranking.find((r) => r.id === Number(compareId));
@@ -147,7 +151,7 @@ export default function Profile() {
         <>
           <Card className="mb-6">
             <h2 className="font-semibold mb-1">Tutorial</h2>
-            <p className="text-sm text-gray-400 mb-3">Repasá cómo funciona Futotal cuando quieras. Cada juego tiene su propio tutorial en el botón «?».</p>
+            <p className="text-sm text-gray-400 mb-3">Repasa cómo funciona Futotal cuando quieras. Cada juego tiene su propio tutorial en el botón «?».</p>
             {v2 ? (
               <button onClick={() => { resetManos(); try { localStorage.removeItem("fq_home_hint"); } catch { /* sin storage */ } setGuidesReset(true); }} className="btn btn-secondary btn-sm">
                 {guidesReset ? "Listo: las guías vuelven a aparecer" : "Ver las guías de nuevo"}
@@ -190,7 +194,7 @@ export default function Profile() {
             onChange={(e) => setCompareId(e.target.value)}
             className="w-full sm:w-auto bg-bg border border-border rounded-card px-3 py-2 text-sm mb-4 focus:outline-none focus:border-accent"
           >
-            <option value="">Elegí a alguien del grupo...</option>
+            <option value="">Elige a alguien del grupo...</option>
             {others.map((r) => (
               <option key={r.id} value={r.id}>{r.username}</option>
             ))}

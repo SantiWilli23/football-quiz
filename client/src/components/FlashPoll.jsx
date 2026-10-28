@@ -88,7 +88,7 @@ export default function FlashPoll({ groupId }) {
       </div>
 
       {!poll && !creating && (
-        <EmptyState compact icon={BarChart3} title="Sin encuestas por ahora" hint="Tirá una pregunta rápida al grupo y mirá cómo votan." />
+        <EmptyState compact icon={BarChart3} title="Sin encuestas por ahora" hint="Tira una pregunta rápida al grupo y mira cómo votan." />
       )}
 
       {creating && (

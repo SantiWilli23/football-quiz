@@ -165,7 +165,7 @@ export default function QuestionCard({ item, index, total, onAnswered, timedMode
 
       {skipped && !result ? (
         <div className="rounded-card border border-blue-500/30 bg-blue-500/10 px-4 py-3.5 text-sm text-blue-300">
-          Pasaste esta pregunta. Podés responderla otro día si vuelve a aparecer.
+          Pasaste esta pregunta. Puedes responderla otro día si vuelve a aparecer.
         </div>
       ) : (
       <div className="space-y-3">

@@ -55,7 +55,7 @@ function QuienEsSolo({ fromDaily }) {
       setResult(null);
       setQuery("");
     } catch {
-      setError("No se pudo armar la ronda. Probá de nuevo.");
+      setError("No se pudo armar la ronda. Prueba de nuevo.");
     } finally {
       setBusy(false);
     }
@@ -127,7 +127,7 @@ function QuienEsSolo({ fromDaily }) {
         <Tv size={22} className="text-accent shrink-0" />
         <div>
           <h1 className="t-title">¿Quién es?</h1>
-          <p className="text-gray-400 text-sm">Te mostramos su carrera club por club. Adiviná quién es con la menor cantidad de pistas.</p>
+          <p className="text-gray-400 text-sm">Te mostramos su carrera club por club. Adivina quién es con la menor cantidad de pistas.</p>
         </div>
       </div>
 
@@ -142,7 +142,7 @@ function QuienEsSolo({ fromDaily }) {
       {!game && !(fromDaily && dailyDone) && (
         <Card className="text-center py-8">
           <p className="text-sm text-gray-400 mb-4">
-            Cada pista extra resta 10 puntos. Si fallás, se revela otra.
+            Cada pista extra resta 10 puntos. Si fallas, se revela otra.
             {fromDaily ? " Juego diario: el mismo jugador para todos, una sola vez al día." : " Partida libre: las veces que quieras, da un sobre y no suma puntos al grupo."}
           </p>
           {!fromDaily && <div className="flex gap-2 justify-center mb-5">
@@ -254,7 +254,7 @@ function QuienEsSolo({ fromDaily }) {
               unit={`puntos · era ${result.name}`}
               onAgain={fromDaily ? undefined : start}
               highlight={dailyMsg || undefined}
-              shareText={`⚽ Futotal · ¿Quién es?: adiviné a ${result.name} con ${game.clues.length} pista${game.clues.length === 1 ? "" : "s"} (${result.points} pts) — ¿podés vos?`}
+              shareText={`⚽ Futotal · ¿Quién es?: adiviné a ${result.name} con ${game.clues.length} pista${game.clues.length === 1 ? "" : "s"} (${result.points} pts) — ¿puedes tú?`}
             />
           ) : (
             <Card className="text-center py-8">

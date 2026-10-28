@@ -141,7 +141,7 @@ export default function Torta() {
       await fetchPuzzle(seed);
       persist({ mode, step: 0, guesses: [], status: "playing", seed });
     } catch {
-      setError("No se pudo cargar el juego. Probá de nuevo.");
+      setError("No se pudo cargar el juego. Prueba de nuevo.");
     } finally {
       setBusy(false);
     }
@@ -198,7 +198,7 @@ export default function Torta() {
 
   return (
     <Layout>
-      <GameHeader game={GAME} title="Torta de plantel" subtitle="Adiviná el club por las nacionalidades." icon={PieChart} distLabel="intentos usados" />
+      <GameHeader game={GAME} title="Torta de plantel" subtitle="Adivina el club por las nacionalidades." icon={PieChart} distLabel="intentos usados" />
 
       {!state && (
         <PreGame
@@ -207,7 +207,7 @@ export default function Torta() {
           how={[
             "La torta muestra las nacionalidades de los jugadores de nuestra base que pasaron por un club (su historia, no una sola temporada).",
             "Cada porción es un país; el tamaño es la cantidad de jugadores.",
-            "Tenés 3 intentos. Al principio ves ~30% de la torta; cada fallo o salto destapa más (60% y 100%).",
+            "Tienes 3 intentos. Al principio ves ~30% de la torta; cada fallo o salto destapa más (60% y 100%).",
           ]}
         >
           <OptionRow label="Cómo se destapa" value={mode} onChange={setMode} options={[["clockwise", "De mayor a menor"], ["random", "Al azar"]]} />
@@ -236,7 +236,7 @@ export default function Torta() {
             <p className="text-xs text-gray-500 text-center mt-2 min-h-[2.5em]">
               {hovered
                 ? `${hovered.flag} ${hovered.country}: ${hovered.count} jugador${hovered.count === 1 ? "" : "es"}${hoveredPlayers ? ` — ${hoveredPlayers.join(", ")}` : ""}`
-                : over ? "Tocá una porción para ver quiénes son." : "Tocá una porción para ver cuántos jugadores tiene."}
+                : over ? "Toca una porción para ver quiénes son." : "Toca una porción para ver cuántos jugadores tiene."}
             </p>
           </Card>
 
@@ -244,7 +244,7 @@ export default function Torta() {
             <Card>
               <div className="flex gap-2 items-start">
                 <div className="flex-1 min-w-0">
-                  <Autocomplete options={data.clubs} exclude={state.guesses.filter(Boolean)} onPick={guess} disabled={busy} placeholder="Escribí el club…" />
+                  <Autocomplete options={data.clubs} exclude={state.guesses.filter(Boolean)} onPick={guess} disabled={busy} placeholder="Escribe el club…" />
                 </div>
                 <button onClick={skip} disabled={busy} className="inline-flex items-center gap-1 px-3 py-2.5 rounded-card border border-border text-xs text-gray-300 hover:text-white" title="Saltar (cuenta como intento)">
                   <SkipForward size={14} /> Saltar

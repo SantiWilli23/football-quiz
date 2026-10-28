@@ -169,7 +169,7 @@ function ClubPicker({ onStart }) {
             <p className="text-xs text-gray-500">Objetivo de la directiva: {E.objectiveFor(team.id).label}</p>
           </div>
         </div>
-        <p className="text-sm font-medium mb-2">Elegí la filosofía deportiva del club</p>
+        <p className="text-sm font-medium mb-2">Elige la filosofía deportiva del club</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           {Object.entries(E.PHILOSOPHIES).map(([key, p]) => (
             <button
@@ -192,7 +192,7 @@ function ClubPicker({ onStart }) {
 
   return (
     <Card>
-      <h3 className="font-semibold mb-4">Elegí el club que vas a presidir</h3>
+      <h3 className="font-semibold mb-4">Elige el club que vas a presidir</h3>
       <div className="flex gap-2 mb-4">
         {["premier", "laliga"].map((l) => (
           <button
@@ -225,15 +225,15 @@ function Despacho({ state, act }) {
   const objective = E.objectiveFor(state.teamId);
   const pos = E.myLeaguePosition(state);
   const alerts = [];
-  if (!state.dtName) alerts.push("El banco está vacío: elegí un DT en la pestaña Fútbol para poder avanzar.");
-  if (state.debt > E.DEBT_CEILING) alerts.push("Límite salarial de emergencia: con esta deuda no podés invertir en nada nuevo hasta bajarla.");
-  if (state.tv && state.tv.seasonsLeft <= 0) alerts.push("Se venció el contrato de TV: negociá uno nuevo en Dinero.");
-  if (!state.tv) alerts.push("No tenés contrato de TV.");
+  if (!state.dtName) alerts.push("El banco está vacío: elige un DT en la pestaña Fútbol para poder avanzar.");
+  if (state.debt > E.DEBT_CEILING) alerts.push("Límite salarial de emergencia: con esta deuda no puedes invertir en nada nuevo hasta bajarla.");
+  if (state.tv && state.tv.seasonsLeft <= 0) alerts.push("Se venció el contrato de TV: negocia uno nuevo en Dinero.");
+  if (!state.tv) alerts.push("No tienes contrato de TV.");
   const expiring = state.squad.filter((p) => p.contract <= 1);
   if (expiring.length) alerts.push(`${expiring.length} jugador${expiring.length > 1 ? "es" : ""} en su último año de contrato (Fútbol).`);
   if (state.dtName && state.dtContract <= 1) alerts.push(`El contrato de ${state.dtName} vence a fin de temporada.`);
   const toElection = E.seasonsToElection(state);
-  if (toElection === 1) alerts.push("Este año hay elecciones al cierre de la temporada. Mirá la pestaña Gente.");
+  if (toElection === 1) alerts.push("Este año hay elecciones al cierre de la temporada. Mira la pestaña Gente.");
 
   return (
     <div className="space-y-5">
@@ -287,7 +287,7 @@ function Despacho({ state, act }) {
             </div>
           </div>
         ) : (
-          <p className="text-sm text-gray-500">Ya decidiste esta semana. Avanzá para ver qué pasa.</p>
+          <p className="text-sm text-gray-500">Ya decidiste esta semana. Avanza para ver qué pasa.</p>
         )}
       </Card>
 
@@ -493,7 +493,7 @@ function Comercial({ state, act }) {
                   {active && <span className="text-xs text-emerald">{deal.brand} · {perWeek(deal.weekly)} · {deal.seasonsLeft} temp.</span>}
                 </div>
                 {locked && <p className="text-xs text-gray-500">Se habilita con el estadio nivel {slot.needsStadium}.</p>}
-                {!locked && active && <p className="text-xs text-gray-500">{deal.bonus ? `Bonus de ${money(deal.bonus)} si cumplís el objetivo. ` : ""}{deal.risky ? "⚠️ Marca polémica: puede salpicarte." : ""}</p>}
+                {!locked && active && <p className="text-xs text-gray-500">{deal.bonus ? `Bonus de ${money(deal.bonus)} si cumples el objetivo. ` : ""}{deal.risky ? "⚠️ Marca polémica: puede salpicarte." : ""}</p>}
                 {!locked && !active && offers.length === 0 && <p className="text-xs text-gray-500">Sin ofertas por ahora. Aparecen al cerrar la temporada.</p>}
                 {!locked && !active && offers.length > 0 && (
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -621,7 +621,7 @@ function Plantel({ state, act }) {
           </div>
         ) : (
           <div>
-            <p className="text-sm text-amber mb-3">El banco está vacío. Elegí a alguien para poder seguir.</p>
+            <p className="text-sm text-amber mb-3">El banco está vacío. Elige a alguien para poder seguir.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {E.DT_CANDIDATES.map((c) => (
                 <Btn key={c.id} onClick={() => act(E.hireDt, c.id)} disabled={state.budget < c.cost}>
@@ -710,7 +710,7 @@ function Directiva({ state, act }) {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <p className="text-2xl font-bold tabular-nums" style={{ color: vote >= 50 ? "rgb(var(--c-emerald))" : "rgb(var(--c-red))" }}>{vote}%</p>
-            <p className="text-xs text-gray-500">apoyo proyectado (necesitás 50%)</p>
+            <p className="text-xs text-gray-500">apoyo proyectado (necesitas 50%)</p>
           </div>
           <div>
             <p className="text-2xl font-bold tabular-nums">{toElection === 1 ? "Este año" : `${toElection} temp.`}</p>
@@ -887,7 +887,7 @@ function Dashboard({ state, setState, onExit }) {
     setState((s) => fn(s, ...args));
   };
 
-  // Puntaje semanal: el puntaje de legado que llevás AHORA (temporadas,
+  // Puntaje semanal: el puntaje de legado que llevas AHORA (temporadas,
   // títulos y logros acumulados) se manda cada vez que sube, y el servidor se
   // queda con el mejor de la semana — así jugar más esta semana (más
   // temporadas resueltas) suma, sin esperar a renunciar. El de "legado" de
@@ -1000,7 +1000,7 @@ function Dashboard({ state, setState, onExit }) {
         disabled={!state.dtName}
         className="btn btn-primary w-full sticky bottom-3"
       >
-        {!state.dtName ? "Elegí un DT (Fútbol) para seguir" : state.week >= weeksPerSeason - 1 ? "Cerrar temporada →" : "Avanzar semana →"}
+        {!state.dtName ? "Elige un DT (Fútbol) para seguir" : state.week >= weeksPerSeason - 1 ? "Cerrar temporada →" : "Avanzar semana →"}
       </button>
     </div>
   );
@@ -1031,7 +1031,7 @@ function PresidenteGame() {
             Modo Presidente
           </h1>
           <p className="text-gray-400 text-sm max-w-2xl">
-            Tu historia, no un partido más: no dirigís la cancha, manejás el club. Caja, estadio, sponsors, socios, prensa, contratos y una directiva que te puede echar (o reelegir cada cuatro años) — solo, a tu ritmo, sin esperar a nadie del grupo.
+            Tu historia, no un partido más: no diriges la cancha, manejas el club. Caja, estadio, sponsors, socios, prensa, contratos y una directiva que te puede echar (o reelegir cada cuatro años) — solo, a tu ritmo, sin esperar a nadie del grupo.
           </p>
         </div>
         {state && !state.gameOver && (

@@ -218,7 +218,7 @@ export function DaysSection() {
         <div className="space-y-3">
           <div>
             <p className="text-sm font-semibold">Plan de la semana</p>
-            <p className="text-xs text-gray-500">Elegís una sola vez cómo trabaja el plantel hasta el partido: el plan se aplica a todos los días de la semana.</p>
+            <p className="text-xs text-gray-500">Eliges una sola vez cómo trabaja el plantel hasta el partido: el plan se aplica a todos los días de la semana.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {Object.entries(ACTIVITIES).map(([id, a]) => (
@@ -240,7 +240,7 @@ export function DaysSection() {
           </div>
         </div>
       )}
-      {matchDay && <p className="text-sm text-gray-400">{isOnline ? "Ya es sábado: tu partido se juega desde la pestaña Jornada de la liga." : "Ya es sábado: jugá el partido desde el Inicio. Después de jugar arranca la semana siguiente."}</p>}
+      {matchDay && <p className="text-sm text-gray-400">{isOnline ? "Ya es sábado: tu partido se juega desde la pestaña Jornada de la liga." : "Ya es sábado: juega el partido desde el Inicio. Después de jugar arranca la semana siguiente."}</p>}
 
       <div className="grid lg:grid-cols-[minmax(0,1fr)_260px] gap-5 items-start">
         <div>

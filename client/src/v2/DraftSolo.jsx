@@ -76,7 +76,7 @@ function Pitch({ d, selected, moving, onSlot }) {
         const canTarget = !slot.filled && ((sel && fitsOf(sel).includes(slot.type)) || (movingPlayer && fitsOf(movingPlayer).includes(slot.type)));
         return (
           <button key={i} onClick={() => onSlot(i)} aria-label={slot.filled ? `${slot.filled.n}, ${POS[slot.type]}` : `Puesto libre: ${POS[slot.type]}`}
-            className={`absolute flex w-[72px] -translate-x-1/2 -translate-y-1/2 flex-col items-center ${canTarget ? "animate-pulse" : ""}`} style={{ left: `${x}%`, top: `${y}%` }}>
+            className={`absolute flex w-[72px] -translate-x-1/2 -translate-y-1/2 flex-col items-center ${canTarget ? "anímate-pulse" : ""}`} style={{ left: `${x}%`, top: `${y}%` }}>
             <span className={`flex h-11 w-11 items-center justify-center rounded-full border-2 text-xs font-bold ${slot.filled ? "fq-pop border-white bg-black/60 text-white" : canTarget ? "border-amber bg-amber/25 text-amber" : "border-white/40 bg-black/30 text-white/70"} ${moving === i ? "ring-2 ring-accent" : ""}`}>
               {slot.filled ? (slot.filled.r ?? "✓") : slot.type}
             </span>

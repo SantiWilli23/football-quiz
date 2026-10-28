@@ -76,7 +76,7 @@ export default function PlayerInfoModal({ player: p, state, watched, onClose, on
               })}
             </div>
           ) : (
-            <p className="text-xs text-gray-500 bg-bg/60 border border-dashed border-border rounded-xl px-3 py-3">Todavía no scouteaste a este jugador. Mandá un ojeador desde Scouting para conocer su nivel y sus estadísticas.</p>
+            <p className="text-xs text-gray-500 bg-bg/60 border border-dashed border-border rounded-xl px-3 py-3">Todavía no scouteaste a este jugador. Manda un ojeador desde Scouting para conocer su nivel y sus estadísticas.</p>
           )}
         </div>
 

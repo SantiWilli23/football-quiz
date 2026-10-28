@@ -110,7 +110,7 @@ export default function Stats() {
         <p className="text-gray-400 text-sm mb-6">Cómo viene la temporada del grupo</p>
         <Card>
           <p className="text-gray-400 text-center py-6">
-            Unite a un grupo para ver estadísticas y logros.
+            Únete a un grupo para ver estadísticas y logros.
           </p>
         </Card>
       </Layout>
@@ -297,10 +297,10 @@ export default function Stats() {
 
             <Card>
               <SectionTitle icon={Heart} hint="según el modo especial">
-                Con quién coincidís
+                Con quién coincides
               </SectionTitle>
               {compatibility.length === 0 ? (
-                <p className="text-sm text-gray-500">Sos el único miembro del grupo por ahora.</p>
+                <p className="text-sm text-gray-500">Eres el único miembro del grupo por ahora.</p>
               ) : (
                 <div className="space-y-3">
                   {compatibility.map((c) => (

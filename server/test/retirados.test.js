@@ -12,8 +12,7 @@ after(() => { for (const c of children) c.kill(); cleanup(); });
 
 // Levanta el servidor de verdad (index.js) en un puerto libre y espera a que responda.
 async function boot(port, flag) {
-  const env = { ...process.env, PORT: String(port), JWT_SECRET: "test-secret", PUSH_CRON_SECRET: "", ...(flag ? { FUTOTAL2: "1" } : { FUTOTAL2: "" }) };
-  if (!flag) delete env.FUTOTAL2;
+  const env = { ...process.env, PORT: String(port), JWT_SECRET: "test-secret", PUSH_CRON_SECRET: "", ...(flag ? { FUTOTAL2: "1" } : { FUTOTAL2: "0" }) };
   const child = spawn(process.execPath, ["index.js"], { cwd: path.join(here, ".."), env, stdio: "ignore" });
   children.push(child);
   for (let i = 0; i < 80; i++) {

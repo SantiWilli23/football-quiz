@@ -33,7 +33,7 @@ export function clubMessage(club) {
 
 export function dailyMessage(res) {
   if (res?.practice) {
-    const pack = res.pack ? "Partida libre: ganaste un sobre normal de cartas." : "Partida libre: hoy ya tenés el sobre de este juego.";
+    const pack = res.pack ? "Partida libre: ganaste un sobre normal de cartas." : "Partida libre: hoy ya tienes el sobre de este juego.";
     if (!res.club) return `${pack.replace(/\.$/, "")} (no suma puntos).`;
     return `${pack} ${clubMessage(res.club)}`.trim();
   }

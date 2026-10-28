@@ -64,7 +64,7 @@ router.put("/", async (req, res) => {
     if (coach) {
       if (!isCoachCard(coach)) return res.status(400).json({ error: "Esa carta no es un entrenador" });
       const owned = new Set(await ownedNames(req.userId));
-      if (!owned.has(coach)) return res.status(400).json({ error: "Ese entrenador no lo tenés" });
+      if (!owned.has(coach)) return res.status(400).json({ error: "Ese entrenador no lo tienes" });
     }
     if (captain && !lineup.some((c) => c.name === captain)) {
       return res.status(400).json({ error: "El capitán tiene que estar en tu once guardado" });

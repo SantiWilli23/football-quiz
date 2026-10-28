@@ -36,7 +36,7 @@ export default function ResultScreen({ state, mySeat, mode = "local", onPlayAgai
       <div>
         <p className="text-2xl font-bold">{winnerName ? `${winnerName} gana la partida` : "Partida terminada"}</p>
         {mySeat != null && winnerName && (
-          <p className="text-sm text-gray-500 mt-1">{iWon ? "¡Sos el último en pie! 🎉" : "Mejor suerte la próxima."}</p>
+          <p className="text-sm text-gray-500 mt-1">{iWon ? "¡Eres el último en pie! 🎉" : "Mejor suerte la próxima."}</p>
         )}
       </div>
 

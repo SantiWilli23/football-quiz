@@ -338,7 +338,7 @@ async function closeGame(loaded, won, opts = {}) {
     // tope que los demás diarios, en proporción al puntaje de la partida.
     // wordle_results queda con 0 puntos (solo marca que se ganó ese día) para
     // no contar dos veces.
-    // Como juego diario: un solo jugador, si lo adivinás sumás y si no, no.
+    // Como juego diario: un solo jugador, si lo adivinas sumas y si no, no.
     await recordDailyResult(game.user_id, game.date, "fichado", won ? total / FICHADO_DAILY_BEST : 0, total);
   } else if (redesignOn() && game.mode !== "reto") {
     // Futotal 2.0: Fichado fue una variante de «¿Quién es?». Las partidas libres también
@@ -395,7 +395,7 @@ const DAILY_SQL = "SELECT id FROM fichado_games WHERE user_id = ? AND mode = 'da
 
 // Partida actual de un modo: la diaria (se crea sola la primera vez que se
 // pide) o la aleatoria en curso (null si no hay ninguna empezada).
-// Filtros del reto del día: "adiviná con solo jugadores jóvenes (o leyendas,
+// Filtros del reto del día: "adivina con solo jugadores jóvenes (o leyendas,
 // porteros, de una liga...)". Se arma el pool con los más conocidos de cada filtro.
 const RETO_FILTERS = {
   young: (p) => (p.nacimiento || 0) >= 2003,
@@ -491,7 +491,7 @@ router.post("/guess", async (req, res) => {
     if (game.status !== "playing") return res.status(400).json({ error: "Esta partida ya terminó" });
 
     const guess = findPlayer(game.league, guessName);
-    if (!guess) return res.status(400).json({ error: "Ese jugador no está en la lista — elegilo del buscador" });
+    if (!guess) return res.status(400).json({ error: "Ese jugador no está en la lista — elígelo del buscador" });
     if (guessNames.includes(guess.nombre)) return res.status(400).json({ error: `Ya probaste a ${guess.nombre}` });
 
     await db.execute({
@@ -523,7 +523,7 @@ router.post("/hint", async (req, res) => {
       await db.execute({ sql: "UPDATE fichado_games SET fail_hints = fail_hints + 1, bonus_hints = bonus_hints + 1 WHERE id = ?", args: [game.id] });
     } else if (wantFree) {
       const row = (await db.execute({ sql: "SELECT available FROM fichado_wildcards WHERE user_id = ?", args: [req.userId] })).rows[0];
-      if (!row || row.available <= 0) return res.status(400).json({ error: "No tenés comodines disponibles" });
+      if (!row || row.available <= 0) return res.status(400).json({ error: "No tienes comodines disponibles" });
       await db.execute({ sql: "UPDATE fichado_wildcards SET available = available - 1 WHERE user_id = ?", args: [req.userId] });
       await db.execute({ sql: "UPDATE fichado_games SET bonus_hints = bonus_hints + 1 WHERE id = ?", args: [game.id] });
     } else {

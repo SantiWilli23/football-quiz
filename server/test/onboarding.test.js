@@ -30,7 +30,7 @@ function call(router, method, p, { userId, body = {}, query = {}, params = {} })
 test("la bandera del rediseño se puede preguntar sin iniciar sesión", async () => {
   assert.equal((await call(publicRouter, "get", "/features", {})).body.futotal2, false);
   process.env.FUTOTAL2 = "1";
-  try { assert.equal((await call(publicRouter, "get", "/features", {})).body.futotal2, true); } finally { delete process.env.FUTOTAL2; }
+  try { assert.equal((await call(publicRouter, "get", "/features", {})).body.futotal2, true); } finally { process.env.FUTOTAL2 = "0"; }
 });
 
 test("partido de práctica de la portada: 6 preguntas con respuesta, iguales para todos", async () => {
@@ -75,7 +75,7 @@ test("sobre de bienvenida: uno por cuenta, se abre sin club y trae una carta del
     const first5 = base.find((p) => p.nombre === names[0].split(" · ")[0]);
     assert.ok(first5 && first5.carrera.some((c) => c.club === "Real Madrid"), `${names[0]} debería haber jugado en el Real Madrid`);
   } finally {
-    delete process.env.FUTOTAL2;
+    process.env.FUTOTAL2 = "0";
   }
 });
 

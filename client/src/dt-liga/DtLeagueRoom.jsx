@@ -85,7 +85,7 @@ export default function DtLeagueRoom() {
     return (
       <div className="min-h-screen bg-bg text-white p-4 flex items-center justify-center">
         <div className="text-center space-y-3">
-          <p className="text-sm text-gray-400">No encontramos esa liga, o no sos parte de ella.</p>
+          <p className="text-sm text-gray-400">No encontramos esa liga, o no eres parte de ella.</p>
           <Link to="/dt-liga" className="text-sm text-accent hover:underline">Volver</Link>
         </div>
       </div>
@@ -150,7 +150,7 @@ export default function DtLeagueRoom() {
                   m.isMe ? "border-accent/50 bg-accent/10 text-accent" : "border-border text-gray-300"
                 }`}
               >
-                {m.username}{m.isMe && " (vos)"} — {m.teamId ? teamName(m.teamId) : "sin equipo"}
+                {m.username}{m.isMe && " (tú)"} — {m.teamId ? teamName(m.teamId) : "sin equipo"}
               </span>
             ))}
           </div>
@@ -195,7 +195,7 @@ export default function DtLeagueRoom() {
           <>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
-                Elegí tu equipo {myTeamId && `(actual: ${teamName(myTeamId)})`}
+                Elige tu equipo {myTeamId && `(actual: ${teamName(myTeamId)})`}
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {league.allTeams.map((t) => {
@@ -283,7 +283,7 @@ export default function DtLeagueRoom() {
 
             {league.preseasonOpen && tab === "fixtures" && (myTeamId
               ? <ClubPanel code={code} league={league} myTeamId={myTeamId} view="preseason" />
-              : <p className="text-sm text-gray-500">Todavía no tenés club en esta liga.</p>)}
+              : <p className="text-sm text-gray-500">Todavía no tienes club en esta liga.</p>)}
             {!league.preseasonOpen && tab === "fixtures" && myTeamId && <ClubPanel code={code} league={league} myTeamId={myTeamId} view="preseasonCalendar" />}
             {!league.preseasonOpen && tab === "fixtures" && (
               <FixturesTab code={code} league={league} myTeamId={myTeamId} onAdvanced={setLeague} onReload={load} />
@@ -292,7 +292,7 @@ export default function DtLeagueRoom() {
             {tab === "calendar" && <CalendarTab code={code} myTeamId={myTeamId} />}
             {tab === "standings" && <StandingsTab code={code} myTeamId={myTeamId} />}
             {tab === "score" && <ScoreTab code={code} league={league} onReload={load} />}
-            {tab === "club" && (myTeamId ? <ClubPanel code={code} league={league} myTeamId={myTeamId} /> : <p className="text-sm text-gray-500">Todavía no tenés club en esta liga.</p>)}
+            {tab === "club" && (myTeamId ? <ClubPanel code={code} league={league} myTeamId={myTeamId} /> : <p className="text-sm text-gray-500">Todavía no tienes club en esta liga.</p>)}
             {tab === "market" && <MarketTab code={code} league={league} />}
             {tab === "config" && <ConfigTab league={league} />}
           </>
@@ -466,14 +466,14 @@ function FixturesTab({ code, league, myTeamId, onAdvanced, onReload }) {
 
       {seasonOver ? (
         <div className="text-center space-y-2 py-2">
-          <p className="text-sm text-emerald font-medium">🏆 La temporada terminó — mirá la tabla final y el puntaje.</p>
+          <p className="text-sm text-emerald font-medium">🏆 La temporada terminó — mira la tabla final y el puntaje.</p>
           {league.isMine && <NextSeasonButton code={code} league={league} onStarted={() => { load(); onReload?.(); }} />}
         </div>
       ) : monthDone ? (
         <p className="text-sm text-gray-500 text-center py-2">Se jugaron todos los partidos de este mes. Para pasar al siguiente, todos los jugadores tienen que dar "Listo".</p>
       ) : (
         <p className="text-xs text-gray-600 text-center">
-          Jugá tus partidos contra la CPU cuando quieras. Los que son contra otro jugador se juegan en vivo, los dos conectados a la vez.
+          Juega tus partidos contra la CPU cuando quieras. Los que son contra otro jugador se juegan en vivo, los dos conectados a la vez.
         </p>
       )}
     </div>
@@ -757,7 +757,7 @@ function MarketTab({ code, league }) {
   }
 
   if (!me?.teamId) {
-    return <p className="text-sm text-gray-500 text-center py-6">No dirigís ningún equipo en esta liga.</p>;
+    return <p className="text-sm text-gray-500 text-center py-6">No diriges ningún equipo en esta liga.</p>;
   }
 
   const pending = trades.filter((t) => t.status === "pending");

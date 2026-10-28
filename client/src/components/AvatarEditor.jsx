@@ -195,7 +195,7 @@ export default function AvatarEditor({ user, onSaved }) {
     e.target.value = "";
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setError("Elegí un archivo de imagen (JPG, PNG o WebP)");
+      setError("Elige un archivo de imagen (JPG, PNG o WebP)");
       return;
     }
     setUploading(true);

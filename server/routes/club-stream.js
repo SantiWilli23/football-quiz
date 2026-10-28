@@ -4,7 +4,7 @@ import { db } from "../db/client.js";
 import { bus } from "../utils/bus.js";
 
 // Tabla en vivo (SSE): EventSource no puede mandar el encabezado Authorization, así que el
-// token viaja en la URL (?token=). Solo se entrega lo que pasa en clubes de los que sos miembro.
+// token viaja en la URL (?token=). Solo se entrega lo que pasa en clubes de los que eres miembro.
 const router = Router();
 const HEARTBEAT_MS = 25_000;
 

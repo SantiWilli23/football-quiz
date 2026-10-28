@@ -213,14 +213,14 @@ export default function OnlineGame({ onExit }) {
           className="w-full bg-panel border border-border rounded-2xl p-4 text-left hover:border-accent/40 transition-colors"
         >
           <p className="font-semibold text-sm">Crear sala</p>
-          <p className="text-xs text-gray-500 mt-0.5">Vos elegís 2 o 4 jugadores y compartís el código.</p>
+          <p className="text-xs text-gray-500 mt-0.5">Tú eliges 2 o 4 jugadores y compartes el código.</p>
         </button>
         <button
           onClick={() => setSetupMode("join")}
           className="w-full bg-panel border border-border rounded-2xl p-4 text-left hover:border-accent/40 transition-colors"
         >
           <p className="font-semibold text-sm">Unirse a una sala</p>
-          <p className="text-xs text-gray-500 mt-0.5">Pedile el código a quien la creó.</p>
+          <p className="text-xs text-gray-500 mt-0.5">Pídele el código a quien la creó.</p>
         </button>
         <button onClick={onExit} className="w-full text-center text-xs text-gray-500 hover:text-gray-300 py-2">Volver</button>
       </div>
@@ -332,7 +332,7 @@ export default function OnlineGame({ onExit }) {
           <div className="flex flex-wrap gap-2">
             {roster.map((r) => (
               <span key={r.seat} className="text-xs px-3 py-1.5 rounded-full border border-border bg-bg">
-                {r.name}{r.seat === seat ? " (vos)" : ""}
+                {r.name}{r.seat === seat ? " (tú)" : ""}
               </span>
             ))}
           </div>

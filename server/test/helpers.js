@@ -5,6 +5,9 @@ import path from "node:path";
 // Cada archivo de test corre en su propio proceso, así que alcanza con apuntar
 // DATABASE_URL a un archivo temporal ANTES de importar nada que toque la base:
 // el cliente se construye una sola vez al importarse el módulo.
+// Las pruebas viejas cubren la app sin rediseño; las del rediseño ponen FUTOTAL2=1 ellas mismas.
+if (process.env.FUTOTAL2 === undefined) process.env.FUTOTAL2 = "0";
+
 export function useTempDatabase() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "fq-test-"));
   const file = path.join(dir, "test.db");

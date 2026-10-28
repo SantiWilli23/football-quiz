@@ -5,7 +5,7 @@ import { vfKey } from "../../utils/vidaFut.js";
 
 const SAVE_VERSION = 2;
 // Claves resueltas en cada uso: con ?vidafut=1 la Carrera DT guarda aparte
-// (prefijo "vidafut_"), separada de las carreras que jugás suelto.
+// (prefijo "vidafut_"), separada de las carreras que juegas suelto.
 // `vf` permite forzar el modo (Vida FUT lee su progreso sin estar en ?vidafut=1).
 let forcedVf = null;
 const k = (key) => vfKey(key, forcedVf ?? undefined);

@@ -188,7 +188,7 @@ export default function Football() {
 
           {tab === "hoy" && (
             <span className="text-xs text-gray-500 flex items-center gap-1.5">
-              {anyLive && <Radio size={11} style={{ color: CHALK.red }} className="animate-pulse" />}
+              {anyLive && <Radio size={11} style={{ color: CHALK.red }} className="anímate-pulse" />}
               <span>{formatDate(today)}</span> · se actualiza solo
             </span>
           )}
@@ -257,13 +257,13 @@ export default function Football() {
 
         {!loading && !error && tab === "tabla" && standings && (
           <>
-            <p className="text-xs text-gray-500 mb-3">Tocá un equipo para ver su página: liga pasada, resultados, plantilla, lesiones y títulos.</p>
+            <p className="text-xs text-gray-500 mb-3">Toca un equipo para ver su página: liga pasada, resultados, plantilla, lesiones y títulos.</p>
             <StandingsTable table={standings} onTeamClick={setTeam} />
           </>
         )}
         {!loading && !error && tab === "goleadores" && leaders && (
           <>
-            <p className="text-xs text-gray-500 mb-4">Tocá un jugador para ver su carrera: clubes, temporadas y datos.</p>
+            <p className="text-xs text-gray-500 mb-4">Toca un jugador para ver su carrera: clubes, temporadas y datos.</p>
             <LeadersBoard data={leaders} onPick={(p) => setPlayer(p)} />
           </>
         )}

@@ -222,9 +222,9 @@ router.post("/", async (req, res) => {
   const groupId = Number(req.body?.groupId);
   const weeksPerMonth = clamp(Number(req.body?.weeksPerMonth) || 4, 1, 20);
   const draftMode = !!req.body?.draftMode;
-  if (!name) return res.status(400).json({ error: "Ponele un nombre a la liga" });
+  if (!name) return res.status(400).json({ error: "Ponle un nombre a la liga" });
   if (!["premier", "laliga", "seriea", "bundesliga"].includes(leagueKey)) return res.status(400).json({ error: "Liga inválida" });
-  if (!groupId) return res.status(400).json({ error: "Elegí a qué grupo pertenece esta liga" });
+  if (!groupId) return res.status(400).json({ error: "Elige a qué grupo pertenece esta liga" });
 
   const creatorMembership = await db.execute({
     sql: "SELECT 1 FROM group_members WHERE group_id = ? AND user_id = ?",
@@ -238,7 +238,7 @@ router.post("/", async (req, res) => {
     const exists = await db.execute({ sql: "SELECT 1 FROM dt_leagues WHERE invite_code = ?", args: [candidate] });
     if (!exists.rows.length) { inviteCode = candidate; break; }
   }
-  if (!inviteCode) return res.status(500).json({ error: "No se pudo generar un código, probá de nuevo" });
+  if (!inviteCode) return res.status(500).json({ error: "No se pudo generar un código, prueba de nuevo" });
 
   const result = await db.execute({
     sql: "INSERT INTO dt_leagues (name, league_key, invite_code, created_by, group_id, weeks_per_month, draft_mode, team_version) VALUES (?, ?, ?, ?, ?, ?, ?, 2)",
@@ -320,7 +320,7 @@ router.get("/:code", async (req, res) => {
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
 
   const { members, me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
 
   league = await rollDraftOrderIfNeeded(league, members);
 
@@ -334,25 +334,25 @@ router.post("/:code/team", async (req, res) => {
   const teamId = String(req.body?.teamId || "");
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
-  if (league.status !== "lobby") return res.status(400).json({ error: "La liga ya arrancó, no podés cambiar de equipo" });
+  if (league.status !== "lobby") return res.status(400).json({ error: "La liga ya arrancó, no puedes cambiar de equipo" });
 
   const validTeam = teamsForLeague(league).find((t) => t.id === teamId);
   if (!validTeam) return res.status(400).json({ error: "Ese equipo no pertenece a esta liga" });
 
   const { members, me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
 
   const takenBy = members.find((m) => m.team_id === teamId && m.user_id !== req.userId);
   if (takenBy) return res.status(409).json({ error: `${validTeam.name} ya lo eligió ${takenBy.username}` });
 
   if (league.draft_mode && !league.draft_order) {
-    return res.status(400).json({ error: "Esta liga es a draft — esperá a que se sume alguien más para sortear el orden de turnos." });
+    return res.status(400).json({ error: "Esta liga es a draft — espera a que se sume alguien más para sortear el orden de turnos." });
   }
   if (league.draft_mode && league.draft_order && !me.team_id) {
     const turnUserId = currentDraftTurn(league, members);
     if (turnUserId !== null && turnUserId !== req.userId) {
       const turnMember = members.find((m) => m.user_id === turnUserId);
-      return res.status(400).json({ error: `Es el turno de ${turnMember?.username || "otro jugador"}, esperá tu turno.` });
+      return res.status(400).json({ error: `Es el turno de ${turnMember?.username || "otro jugador"}, espera tu turno.` });
     }
   }
 
@@ -380,7 +380,7 @@ router.post("/:code/start", async (req, res) => {
     return res.status(400).json({ error: "Todavía hay jugadores sin elegir equipo" });
   }
   if (members.length < 2) {
-    return res.status(400).json({ error: "Hace falta al menos otro jugador además de vos" });
+    return res.status(400).json({ error: "Hace falta al menos otro jugador además de ti" });
   }
 
   await startSeason(league, members);
@@ -397,7 +397,7 @@ router.get("/:code/tactics", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   const { me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
   if (!me.team_id) return res.json({ tactics: null });
 
   const result = await db.execute({
@@ -416,7 +416,7 @@ router.get("/:code/cantera/claims", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   const { me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
   const rows = (await db.execute({
     sql: "SELECT c.prospect_id, c.user_id, u.username FROM dt_league_claims c JOIN users u ON u.id = c.user_id WHERE c.league_id = ?",
     args: [league.id],
@@ -429,7 +429,7 @@ router.post("/:code/cantera/claim", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   const { me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
   const prospectId = String(req.body?.prospectId || "");
   if (!/^cantera_[\w .áéíóúñÁÉÍÓÚÑ-]{3,80}$/.test(prospectId)) return res.status(400).json({ error: "Joven inválido" });
   const r = await db.execute({
@@ -449,7 +449,7 @@ router.get("/:code/squad", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   const { me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
   if (!me.team_id) return res.json({ teamId: null, state: null, week: league.current_week });
   const row = (await db.execute({
     sql: "SELECT state, power FROM dt_league_squads WHERE league_id = ? AND user_id = ? AND team_id = ?",
@@ -464,7 +464,7 @@ router.put("/:code/squad", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   const { me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
   if (!me.team_id) return res.status(400).json({ error: "Todavía no elegiste equipo" });
   const state = req.body?.state;
   if (!isValidSquadState(state) || state.teamId !== me.team_id) return res.status(400).json({ error: "El plantel enviado no es válido" });
@@ -508,7 +508,7 @@ router.post("/:code/tactics", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   const { me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
   if (!me.team_id) return res.status(400).json({ error: "Todavía no elegiste equipo" });
 
   const toInt = (value, fallback) => (Number.isFinite(Number(value)) ? Math.round(Number(value)) : fallback);
@@ -534,7 +534,7 @@ router.get("/:code/fixtures", async (req, res) => {
   let league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   let { members, me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
   // En la pretemporada no se juega ni se resuelve nada de la liga: solo se ven los amistosos de Mi club.
   if (league.preseason_open) return res.json({ preseason: true, month: 1, activeMonth: 1, totalMonths: await totalMonthsOf(league), season: Number(league.season || 1), fixtures: [] });
   if (league.status === "in_progress") ({ league, members } = await refreshLeague(league));
@@ -628,7 +628,7 @@ router.post("/:code/preseason/ready", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   const { members, me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
   if (!league.preseason_open) return res.json({ ok: true, started: true });
   await db.execute({ sql: "UPDATE dt_league_members SET preseason_ready = 1 WHERE league_id = ? AND user_id = ?", args: [league.id, req.userId] });
   const fresh = await loadMembers(league.id);
@@ -642,7 +642,7 @@ router.post("/:code/fixtures/:fixtureId/play", async (req, res) => {
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   if (league.preseason_open) return res.status(400).json({ error: "La liga arranca cuando todos terminen la pretemporada" });
   let { members, me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
   if (!me.team_id) return res.status(400).json({ error: "Todavía no elegiste equipo" });
   if (league.status !== "in_progress") return res.status(400).json({ error: "La liga no está en curso" });
 
@@ -699,7 +699,7 @@ router.get("/:code/fixtures/:fixtureId/live", async (req, res) => {
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   if (league.preseason_open) return res.status(400).json({ error: "La liga arranca cuando todos terminen la pretemporada" });
   const { members, me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
 
   const fxResult = await db.execute({
     sql: "SELECT * FROM dt_league_fixtures WHERE id = ? AND league_id = ?",
@@ -709,10 +709,10 @@ router.get("/:code/fixtures/:fixtureId/live", async (req, res) => {
   if (!fx) return res.status(404).json({ error: "Partido no encontrado" });
   if (fx.played) return res.status(400).json({ error: "Ese partido ya se jugó" });
   if (fx.month > Number(league.current_month || 1)) return res.status(400).json({ error: "Ese mes todavía no empezó" });
-  // No hace falta ser vos el que juega: cualquiera de la liga puede entrar a mirar en vivo.
+  // No hace falta ser tú el que juega: cualquiera de la liga puede entrar a mirar en vivo.
   const humanTeams = new Set(humansOf(members).map((m) => m.team_id));
   if (!humanTeams.has(fx.home_team_id) || !humanTeams.has(fx.away_team_id)) {
-    return res.status(400).json({ error: "Este partido no enfrenta a dos jugadores — jugalo con /play" });
+    return res.status(400).json({ error: "Este partido no enfrenta a dos jugadores — juégalo con /play" });
   }
 
   res.json({ fixtureId: fx.id, allowedSpeeds: ALLOWED_SPEEDS });
@@ -722,7 +722,7 @@ router.get("/:code/standings", async (req, res) => {
   let league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   let { members, me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
   if (league.status === "in_progress") ({ league, members } = await refreshLeague(league));
 
   const teams = teamsForLeague(league);
@@ -754,7 +754,7 @@ router.post("/:code/advance", async (req, res) => {
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   if (league.preseason_open) return res.status(400).json({ error: "La liga arranca cuando todos terminen la pretemporada" });
   const { me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
   if (league.status !== "in_progress") return res.status(400).json({ error: "La liga no está en curso" });
 
   const { league: fresh } = await refreshLeague(league);
@@ -796,7 +796,7 @@ router.get("/:code/month", async (req, res) => {
   let league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   let { members, me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
   if (league.status === "in_progress") ({ league, members } = await refreshLeague(league));
   res.json(await monthPayload(league, members, req.userId));
 });
@@ -807,9 +807,9 @@ router.post("/:code/ready", async (req, res) => {
   let league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   let { members, me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
   if (league.status !== "in_progress") return res.status(400).json({ error: "La liga no está en curso" });
-  if (!me.team_id) return res.status(400).json({ error: "Ya no tenés un club en esta liga" });
+  if (!me.team_id) return res.status(400).json({ error: "Ya no tienes un club en esta liga" });
   const wantReady = req.body?.ready !== false;
   const month = Number(league.current_month || 1);
 
@@ -833,7 +833,7 @@ router.get("/:code/budget-adjustments", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   const { me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
   res.json(await pendingBudgetAdjustment(league.id, req.userId));
 });
 
@@ -841,7 +841,7 @@ router.post("/:code/budget-adjustments/ack", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   const { me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
   res.json(await pendingBudgetAdjustment(league.id, req.userId, { markApplied: true }));
 });
 
@@ -850,7 +850,7 @@ router.get("/:code/cpu-offers", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   const { me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
   const rows = (await db.execute({
     sql: "SELECT * FROM dt_league_cpu_offers WHERE league_id = ? AND to_user_id = ? AND status = 'pending' ORDER BY id DESC LIMIT 30",
     args: [league.id, req.userId],
@@ -867,7 +867,7 @@ router.post("/:code/cpu-offers/:offerId/respond", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   const { me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
   const offer = await resolveCpuOffer(league, Number(req.params.offerId), req.userId, !!req.body?.accept);
   if (!offer) return res.status(404).json({ error: "Esa oferta ya no está disponible" });
   res.json({ ok: true, accepted: !!req.body?.accept });
@@ -878,7 +878,7 @@ router.get("/:code/score", async (req, res) => {
   let league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   let { members, me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
   if (league.status === "in_progress") ({ league, members } = await refreshLeague(league));
   const season = Number(league.season || 1);
   const info = await clubInfo(league, members);
@@ -945,9 +945,9 @@ router.post("/:code/trade", async (req, res) => {
   if (league.status !== "in_progress") return res.status(400).json({ error: "Solo se puede negociar con la temporada en curso" });
 
   const { members, me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
-  if (!me.team_id) return res.status(400).json({ error: "Todavía no tenés un club para ofrecer" });
-  if (toUserId === req.userId) return res.status(400).json({ error: "No podés proponerte un cambio a vos mismo" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
+  if (!me.team_id) return res.status(400).json({ error: "Todavía no tienes un club para ofrecer" });
+  if (toUserId === req.userId) return res.status(400).json({ error: "No puedes proponerte un cambio a ti mismo" });
 
   const target = members.find((m) => m.user_id === toUserId);
   if (!target || !target.team_id) return res.status(400).json({ error: "Ese jugador no tiene un club en esta liga" });
@@ -971,7 +971,7 @@ router.get("/:code/trades", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   const { me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
 
   const result = await db.execute({
     sql: `SELECT t.*, uf.username AS from_username, ut.username AS to_username
@@ -1007,7 +1007,7 @@ router.post("/:code/trade/:tradeId/respond", async (req, res) => {
   const league = await loadLeagueByCode(req.params.code);
   if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
   const { me } = await requireMembership(league, req.userId);
-  if (!me) return res.status(403).json({ error: "No sos parte de esta liga" });
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
 
   const tradeResult = await db.execute({
     sql: "SELECT * FROM dt_league_trades WHERE id = ? AND league_id = ?",
@@ -1016,7 +1016,7 @@ router.post("/:code/trade/:tradeId/respond", async (req, res) => {
   const trade = tradeResult.rows[0];
   if (!trade) return res.status(404).json({ error: "Propuesta no encontrada" });
   if (trade.status !== "pending") return res.status(400).json({ error: "Esta propuesta ya se resolvió" });
-  if (trade.to_user_id !== req.userId) return res.status(403).json({ error: "Esta propuesta no es para vos" });
+  if (trade.to_user_id !== req.userId) return res.status(403).json({ error: "Esta propuesta no es para ti" });
 
   if (!accept) {
     await db.execute({

@@ -150,7 +150,7 @@ test("con FUTOTAL2 cada sobre normal trae una carta de la temática", async () =
       assert.ok(r.body.cards.some((c) => inTheme.has(c.name)), `el sobre ${i + 1} trae una carta de la temática`);
     }
   } finally {
-    delete process.env.FUTOTAL2;
+    process.env.FUTOTAL2 = "0";
   }
 });
 
@@ -219,7 +219,7 @@ test("intercambio: repetida por repetida, misma categoría, solo entre amigos de
   let r = await call("post", "/trades", { userId: a, body: { toUserId: stranger, give: c1.name, want: c2.name } });
   assert.equal(r.status, 400, "no es del club");
   r = await call("post", "/trades", { userId: a, body: { toUserId: b, give: c3.name, want: c2.name } });
-  assert.equal(r.status, 400, "no tenés repetida esa carta");
+  assert.equal(r.status, 400, "no tienes repetida esa carta");
   r = await call("post", "/trades", { userId: a, body: { toUserId: b, give: c1.name, want: tierCards(other)[0].name } });
   assert.equal(r.status, 400, "otra categoría");
 

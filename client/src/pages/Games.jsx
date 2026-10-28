@@ -144,7 +144,7 @@ function WeeklyGamesToggle() {
   const { activeGroup, reloadGroups } = useGroups();
   const { user } = useAuth();
   const [busy, setBusy] = useState(false);
-  if (!activeGroup) return <p className="text-xs text-gray-500 mb-3">Unite a un grupo para que estos juegos den puntos.</p>;
+  if (!activeGroup) return <p className="text-xs text-gray-500 mb-3">Únete a un grupo para que estos juegos den puntos.</p>;
   const on = !!activeGroup.weekly_games_enabled;
   const isOwner = activeGroup.created_by === user?.id;
 

@@ -37,14 +37,14 @@ function PyramidIntro({ fromDaily, mode, setMode, busy, onStart, error }) {
           </div>
           <div className="space-y-2">
             <p className="text-lg font-semibold">10 jugadores, una estadística, un orden.</p>
-            <p className="text-sm text-gray-300">Los jugadores aparecen de a uno y los ubicás de mayor (arriba) a menor (abajo) antes de ver al siguiente.</p>
+            <p className="text-sm text-gray-300">Los jugadores aparecen de a uno y los ubicas de mayor (arriba) a menor (abajo) antes de ver al siguiente.</p>
           </div>
         </div>
       </div>
 
       <Card className="space-y-5">
         <ul className="text-sm text-gray-300 space-y-1.5 list-disc pl-5">
-          <li>Podés reordenar cuando quieras: arrastrá o tocá dos casillas para intercambiarlas.</li>
+          <li>Puedes reordenar cuando quieras: arrastra o toca dos casillas para intercambiarlas.</li>
           <li>Una ayuda por partida: te dice cuántos están bien ubicados (no cuáles).</li>
           <li>{fromDaily ? "La estadística y los jugadores de hoy son los mismos para todos." : "Cada partida tiene su propia estadística."}</li>
         </ul>
@@ -93,7 +93,7 @@ export default function Piramide() {
       const { data } = await api.get("/futgames/pyramid", { params: { mode: fromDaily ? "normal" : mode, seed } });
       persist({ seed, mode: fromDaily ? "normal" : mode, daily: fromDaily, category: data.category, unit: data.unit, players: data.players, next: 0, slots: Array(10).fill(null), selected: null, helpUsed: false, help: null, status: "playing", result: null });
     } catch {
-      setError("No se pudo cargar la pirámide. Probá de nuevo.");
+      setError("No se pudo cargar la pirámide. Prueba de nuevo.");
     } finally {
       setBusy(false);
     }
@@ -174,7 +174,7 @@ export default function Piramide() {
       recordResult(GAME, today(), { won: data.correct === 10, bucket: data.correct });
       playSfx(data.correct >= 7 ? "win" : "bad");
     } catch {
-      setError("No se pudo enviar. Probá de nuevo.");
+      setError("No se pudo enviar. Prueba de nuevo.");
     } finally {
       setBusy(false);
     }
@@ -188,7 +188,7 @@ export default function Piramide() {
 
   return (
     <Layout>
-      <GameHeader game={GAME} title="Pirámide" subtitle="Ordená 10 jugadores de mayor a menor." icon={Triangle} distLabel="aciertos" />
+      <GameHeader game={GAME} title="Pirámide" subtitle="Ordena 10 jugadores de mayor a menor." icon={Triangle} distLabel="aciertos" />
 
       {!state && <PyramidIntro fromDaily={fromDaily} mode={mode} setMode={setMode} busy={busy} onStart={start} error={error} />}
 
@@ -212,7 +212,7 @@ export default function Piramide() {
                   Espiar este jugador (1 vez)
                 </button>
               )}
-              <p className="text-xs text-gray-500 mt-2">Tocá una casilla libre para ubicarlo.</p>
+              <p className="text-xs text-gray-500 mt-2">Toca una casilla libre para ubicarlo.</p>
             </Card>
           )}
 

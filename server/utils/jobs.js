@@ -76,7 +76,7 @@ export async function usualHour(userId) {
   return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0][0];
 }
 
-// El motivo concreto del aviso (nunca un «volvé» genérico): alguien te pasó en la tabla, quedan
+// El motivo concreto del aviso (nunca un «vuelve» genérico): alguien te pasó en la tabla, quedan
 // pocas horas, o mañana hay un partido temático.
 export async function reminderFor(userId, today, hour) {
   const clubs = (await db.execute({
@@ -90,7 +90,7 @@ export async function reminderFor(userId, today, hour) {
     if (played) return { title: "Futotal", body: `${played.username} ya sacó ${played.points} en ${c.name}. ¿Lo pasás?`, url: "/partido", reason: "paso" };
   }
   const tomorrow = await eventOn(addDays(today, 1));
-  if (tomorrow) return { title: "Futotal", body: `Mañana es ${kitByKey(tomorrow.kit_key)?.label || "un partido especial"}: ${tomorrow.home_name} vs ${tomorrow.away_name}. Dejá tu pronóstico.`, url: "/hoy", reason: "evento" };
+  if (tomorrow) return { title: "Futotal", body: `Mañana es ${kitByKey(tomorrow.kit_key)?.label || "un partido especial"}: ${tomorrow.home_name} vs ${tomorrow.away_name}. Deja tu pronóstico.`, url: "/hoy", reason: "evento" };
   if (hour >= 21) return { title: "Futotal", body: "Quedan pocas horas para el partido de hoy.", url: "/partido", reason: "tiempo" };
   return { title: "Futotal", body: "Ya está el partido de hoy. Igual para todo tu club.", url: "/partido", reason: "diario" };
 }

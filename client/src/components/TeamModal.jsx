@@ -63,7 +63,7 @@ function ResultRow({ g, teamId }) {
 
 // Página del club (a ancho completo, con la barra lateral a la izquierda):
 // cabecera con los colores del club, números de la liga pasada, forma
-// reciente, títulos, lesiones y plantilla completa (tocá un jugador para ver su carrera).
+// reciente, títulos, lesiones y plantilla completa (toca un jugador para ver su carrera).
 export default function TeamModal({ league, team, onClose }) {
   const [info, setInfo] = useState(undefined);
   const [player, setPlayer] = useState(null);

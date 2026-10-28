@@ -16,7 +16,7 @@ import { submitDaily, dailyMessage } from "../utils/dailyGames.js";
 const DAILY_DIFFICULTY = "ultra";
 const DAILY_TARGET = 30;
 
-// Arrancás con 20 segundos: cada acierto suma y cada error resta.
+// Arrancas con 20 segundos: cada acierto suma y cada error resta.
 const ROUND_SECONDS = 20;
 const BONUS_SECONDS = 3;
 const PENALTY_SECONDS = 3;
@@ -192,7 +192,7 @@ export default function UnMinuto() {
     <Layout focus={phase === "playing"}>
       <h1 className="text-xl sm:text-2xl font-bold mb-1">Un Minuto</h1>
       <p className="text-gray-400 text-sm mb-4">
-        Arrancás con {ROUND_SECONDS} segundos: cada acierto suma {BONUS_SECONDS}s y cada error resta {PENALTY_SECONDS}s. Cada {STREAK_STEP} aciertos seguidos ganás un punto extra. Cuando el reloj llega a cero, se acabó. Tu mejor marca de la semana suma al ranking de retos del grupo.
+        Arrancas con {ROUND_SECONDS} segundos: cada acierto suma {BONUS_SECONDS}s y cada error resta {PENALTY_SECONDS}s. Cada {STREAK_STEP} aciertos seguidos ganas un punto extra. Cuando el reloj llega a cero, se acabó. Tu mejor marca de la semana suma al ranking de retos del grupo.
       </p>
 
       <GroupSelector />
@@ -200,7 +200,7 @@ export default function UnMinuto() {
       {phase === "idle" && (
         <Card className="mt-4 text-center py-10">
           <Timer size={32} className="mx-auto text-accent mb-3" />
-          <p className="text-sm text-gray-400 mb-2">Arrancás ya, sin vueltas: preguntas de a una hasta que se acabe el reloj.</p>
+          <p className="text-sm text-gray-400 mb-2">Arrancas ya, sin vueltas: preguntas de a una hasta que se acabe el reloj.</p>
           <p className="text-xs text-gray-500 mb-5">Juego diario: la primera partida del día en Difícil te da un puntaje de hasta 20 (de referencia) y un sobre de cartas; el podio del día del grupo suma 5 / 3 / 1 puntos.</p>
           {!fromDaily && <div className="flex gap-1.5 justify-center mb-3 flex-wrap" role="group" aria-label="Categoría">
             {Object.entries(CATEGORY_LABELS).map(([id, label]) => (
@@ -245,7 +245,7 @@ export default function UnMinuto() {
             <span className={`text-2xl font-bold tabular-nums ${secondsLeft <= 10 ? "text-red-400" : ""}`}>
               {secondsLeft}s
               {delta && (
-                <span key={delta.key} className={`ml-2 text-sm font-semibold animate-result-pop ${delta.n > 0 ? "text-emerald" : "text-red-400"}`}>
+                <span key={delta.key} className={`ml-2 text-sm font-semibold anímate-result-pop ${delta.n > 0 ? "text-emerald" : "text-red-400"}`}>
                   {delta.n > 0 ? "+" : ""}{delta.n}s
                 </span>
               )}
@@ -305,7 +305,7 @@ export default function UnMinuto() {
           saveState={saveState}
           highlight={dailyMsg || undefined}
           onAgain={start}
-          shareText={`⚽ Futotal · Un Minuto: ${points} puntos (${correctCount} aciertos) — ¿me ganás?`}
+          shareText={`⚽ Futotal · Un Minuto: ${points} puntos (${correctCount} aciertos) — ¿me ganas?`}
         />
       )}
     </Layout>

@@ -84,14 +84,14 @@ export default function CartasTema({ lockedPacks = 0, onChanged }) {
       {lockedPacks > 0 && (
         <Card variant="feature">
           <p className="t-eyebrow flex items-center gap-1.5"><Lock size={13} /> Sobres guardados</p>
-          <p className="text-sm mt-1">Tenés <b>{lockedPacks}</b> {lockedPacks === 1 ? "sobre guardado" : "sobres guardados"}. Se abren cuando entres a un club con la temporada iniciada (se guardan hasta 3).</p>
+          <p className="text-sm mt-1">Tienes <b>{lockedPacks}</b> {lockedPacks === 1 ? "sobre guardado" : "sobres guardados"}. Se abren cuando entres a un club con la temporada iniciada (se guardan hasta 3).</p>
         </Card>
       )}
 
       {sbc && sbc.theme && (
         <Card>
           <p className="t-eyebrow flex items-center gap-1.5"><Sparkles size={13} /> Desafío de la temporada · {sbc.theme.label}</p>
-          <p className="text-sm text-gray-400 mt-1">Entregá 11 cartas <b>repetidas</b> de {sbc.theme.label} y ganá un sobre muy bueno de la temática. Siempre te queda una copia de cada una. Dura hasta el {sbc.theme.end}.</p>
+          <p className="text-sm text-gray-400 mt-1">Entrega 11 cartas <b>repetidas</b> de {sbc.theme.label} y gana un sobre muy bueno de la temática. Siempre te queda una copia de cada una. Dura hasta el {sbc.theme.end}.</p>
           <p className="text-xs text-gray-500 mt-1">Mientras dure, cada sobre que abras trae una carta de {sbc.theme.label}.</p>
           {!sbc.done && (
             <div className="mt-3" aria-label={`${sbc.owned} de 11 repetidas en tu mejor formación`}>
@@ -117,7 +117,7 @@ export default function CartasTema({ lockedPacks = 0, onChanged }) {
                 <div key={pos} className="mt-2">
                   <p className="text-xs uppercase tracking-wide text-gray-500">{POS_PLURAL[pos]} · {count(pos)}/{need[pos]}</p>
                   <div className="mt-1 flex flex-wrap gap-1.5">
-                    {byPos[pos].length === 0 && <span className="text-xs text-gray-600">No tenés repetidos en esta línea.</span>}
+                    {byPos[pos].length === 0 && <span className="text-xs text-gray-600">No tienes repetidos en esta línea.</span>}
                     {byPos[pos].map((c) => (
                       <button key={c.name} onClick={() => toggle(c)} className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs ${picked.includes(c.name) ? "border-accent bg-accent/15" : "border-border text-gray-300"}`}>
                         <span className={`h-2 w-2 rounded-full ${TIER_DOT[c.tier]}`} /> {c.name} <span className="text-gray-500 tabular-nums">{c.ovr}</span>
@@ -155,7 +155,7 @@ function Album() {
   return (
     <Card>
       <p className="t-eyebrow flex items-center gap-1.5"><CalendarDays size={13} /> Álbum del mes · {data.month}</p>
-      <p className="text-sm text-gray-400 mt-1">Acertá el primer «¿Quién es?» del partido del día y te llevás esa carta con la fecha. {data.collected} de este mes.</p>
+      <p className="text-sm text-gray-400 mt-1">Acierta el primer «¿Quién es?» del partido del día y te llevas esa carta con la fecha. {data.collected} de este mes.</p>
       <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[10px] text-gray-500">
         {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => <span key={i}>{d}</span>)}
         {Array.from({ length: firstDow }).map((_, i) => <span key={`b${i}`} />)}
@@ -232,7 +232,7 @@ function Trades({ onChanged }) {
             <option value="">Tu carta repetida</option>
             {mine.map((c) => <option key={c.name} value={c.name}>{c.name} ({c.tier})</option>)}
           </select>
-          <input value={form.want} onChange={(e) => setForm({ ...form, want: e.target.value })} placeholder="Carta repetida que querés (nombre exacto)" className="rounded-xl border border-border bg-bg px-3 py-2 text-sm" />
+          <input value={form.want} onChange={(e) => setForm({ ...form, want: e.target.value })} placeholder="Carta repetida que quieres (nombre exacto)" className="rounded-xl border border-border bg-bg px-3 py-2 text-sm" />
           <button className="btn btn-secondary btn-sm" disabled={!form.to || !form.give || !form.want.trim()}>Proponer</button>
         </form>
       )}

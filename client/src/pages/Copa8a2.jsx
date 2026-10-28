@@ -14,7 +14,7 @@ export default function Copa8a2() {
         <h1 className="text-xl sm:text-2xl font-bold mb-1">Copa 8a2</h1>
         <p className="text-gray-400 text-sm mb-6">Torneo de eliminación directa entre tu grupo, draftando jugadores reales</p>
         <Card>
-          <p className="text-gray-400 text-center py-6">Necesitás estar en un grupo para jugar la Copa 8a2.</p>
+          <p className="text-gray-400 text-center py-6">Necesitas estar en un grupo para jugar la Copa 8a2.</p>
         </Card>
       </Layout>
     );

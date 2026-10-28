@@ -151,7 +151,7 @@ export default function Squad() {
             ))}
           </div>
 
-          <p className="text-xs text-gray-600">Tocá a un jugador para ver sus estadísticas. El potencial (POT) es una estimación de tus reclutadores — mandá uno a verlo en la pestaña Scouting para afinar el rango.</p>
+          <p className="text-xs text-gray-600">Toca a un jugador para ver sus estadísticas. El potencial (POT) es una estimación de tus reclutadores — manda uno a verlo en la pestaña Scouting para afinar el rango.</p>
       </div>
     </div>
   );
@@ -183,7 +183,7 @@ function SquadMeeting({ options, onMeet, usedThisWeek }) {
         <div>
           <p className="text-sm font-semibold">Reunión de la semana</p>
           <p className="text-xs text-gray-500 mt-0.5">
-            {usedThisWeek ? "Ya tuviste tu reunión esta semana." : "Elegí una de las 3 reuniones que se pueden hacer esta semana."}
+            {usedThisWeek ? "Ya tuviste tu reunión esta semana." : "Elige una de las 3 reuniones que se pueden hacer esta semana."}
           </p>
         </div>
         <span className="text-gray-500 text-sm ml-4">{open ? "▲" : "▼"}</span>

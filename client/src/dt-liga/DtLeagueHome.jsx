@@ -68,7 +68,7 @@ export default function DtLeagueHome() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Liga Online DT</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Armá una liga con amigos: cada uno dirige un club real.</p>
+            <p className="text-sm text-gray-500 mt-0.5">Arma una liga con amigos: cada uno dirige un club real.</p>
           </div>
           <Link to="/panel" className="text-xs text-gray-500 hover:text-white shrink-0">🏠 Salir</Link>
         </div>
@@ -111,7 +111,7 @@ export default function DtLeagueHome() {
           <p className="text-sm text-gray-500 text-center py-6">Cargando…</p>
         ) : groups.length === 0 ? (
           <div className="bg-amber/10 border border-amber/30 rounded-2xl px-4 py-3 text-sm text-amber">
-            Necesitás estar en un grupo (el mismo de Trivia/Duelos) para crear o unirte a una liga —
+            Necesitas estar en un grupo (el mismo de Trivia/Duelos) para crear o unirte a una liga —
             la Liga Online DT es solo para gente de tu grupo, así los puntos van al mismo ranking.
           </div>
         ) : (
@@ -185,7 +185,7 @@ export default function DtLeagueHome() {
 
             <div className="bg-panel border border-border rounded-2xl p-5 space-y-4">
               <p className="text-sm font-semibold">Unirte con un código</p>
-              <p className="text-xs text-gray-500">Solo funciona si sos parte del mismo grupo que la liga.</p>
+              <p className="text-xs text-gray-500">Solo funciona si eres parte del mismo grupo que la liga.</p>
               <div className="flex gap-2">
                 <input
                   value={joinCode}

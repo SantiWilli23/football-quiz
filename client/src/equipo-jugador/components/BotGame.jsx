@@ -10,14 +10,14 @@ const BOT_SEAT = 1;
 const BOT_THINK_MS = 1300;
 
 export default function BotGame({ onExit }) {
-  const [name, setName] = useState("Vos");
+  const [name, setName] = useState("Tú");
   const [state, setState] = useState(null);
   const [attempting, setAttempting] = useState(false);
   const [attemptError, setAttemptError] = useState(null);
   const [botThinking, setBotThinking] = useState(false);
 
   function start() {
-    setState(createGame(2, [name.trim() || "Vos", "Bot 🤖"]));
+    setState(createGame(2, [name.trim() || "Tú", "Bot 🤖"]));
     setAttemptError(null);
   }
 
@@ -48,7 +48,7 @@ export default function BotGame({ onExit }) {
       }
       setState((s) => applyMove(s, entity));
     } catch {
-      setAttemptError("Error de conexión, probá de nuevo.");
+      setAttemptError("Error de conexión, prueba de nuevo.");
     } finally {
       setAttempting(false);
     }
@@ -82,7 +82,7 @@ export default function BotGame({ onExit }) {
   if (!state) {
     return (
       <div className="bg-panel border border-border rounded-2xl p-6 space-y-4 max-w-md mx-auto">
-        <p className="text-sm text-gray-400">Jugás vos contra un bot. Elegí tu nombre:</p>
+        <p className="text-sm text-gray-400">Juegas tú contra un bot. Elige tu nombre:</p>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -108,7 +108,7 @@ export default function BotGame({ onExit }) {
         state={state}
         mySeat={HUMAN_SEAT}
         mode="bot"
-        onPlayAgain={() => setState(createGame(2, [name.trim() || "Vos", "Bot 🤖"]))}
+        onPlayAgain={() => setState(createGame(2, [name.trim() || "Tú", "Bot 🤖"]))}
         onExit={onExit}
       />
     );

@@ -8,6 +8,8 @@ import HelpButton from "./HelpButton.jsx";
 import PlenoStreak from "./PlenoStreak.jsx";
 import { markVisit } from "../utils/visits.js";
 import { ShellContext } from "../v2/ShellContext.js";
+import useFutotal2 from "../v2/useFutotal2.js";
+import Shell from "../v2/Shell.jsx";
 
 // `focus` = modo enfoque: durante una partida se esconden el menú y la barra
 // y queda solo el juego y un botón «Salir». Los juegos lo prenden mientras
@@ -15,6 +17,7 @@ import { ShellContext } from "../v2/ShellContext.js";
 export default function Layout({ children, focus = false, exitTo = "/juegos", wide = false }) {
   const { pathname } = useLocation();
   const shell = useContext(ShellContext);
+  const { on: v2 } = useFutotal2();
 
   useEffect(() => { markVisit(pathname); }, [pathname]);
 
@@ -29,6 +32,16 @@ export default function Layout({ children, focus = false, exitTo = "/juegos", wi
         </div>
         <main className={`px-4 py-3 pb-10 sm:px-6 lg:px-8 mx-auto ${wide ? "max-w-7xl" : "max-w-3xl"}`}>{children}</main>
       </div>
+    );
+  }
+
+  // Futotal 2.0: la carcasa del prototipo (una columna, marca arriba y cinco pestañas abajo).
+  if (v2) {
+    return (
+      <Shell chips={shell?.chips} wide={wide}>
+        <PlenoStreak />
+        {children}
+      </Shell>
     );
   }
 

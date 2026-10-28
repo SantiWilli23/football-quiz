@@ -380,11 +380,11 @@ router.post("/open", async (req, res) => {
     await refreshCustomSbcs();
     const { openable, locked } = await packStatus(req.userId);
     const pack = openable.length ? (await db.execute({ sql: "SELECT id, source, theme FROM card_packs WHERE id = ?", args: [openable[0]] })).rows[0] : null;
-    if (!pack) return res.status(400).json({ error: locked.length ? "Tus sobres están guardados: entrá a un club con la temporada iniciada para abrirlos" : "No tenés sobres para abrir" });
+    if (!pack) return res.status(400).json({ error: locked.length ? "Tus sobres están guardados: entra a un club con la temporada iniciada para abrirlos" : "No tienes sobres para abrir" });
     const upd = await db.execute({ sql: "UPDATE card_packs SET opened_at = datetime('now') WHERE id = ? AND opened_at IS NULL", args: [pack.id] });
     if (upd.rowsAffected === 0) return res.status(409).json({ error: "Ese sobre ya se abrió" });
     const quality = qualityOf(pack.source);
-    // Una lectura de lo que ya tenés + una escritura en lote (antes eran 2 idas
+    // Una lectura de lo que ya tienes + una escritura en lote (antes eran 2 idas
     // a la base por carta, 10 en total, y abrir un sobre se sentía lento).
     const misses = Number((await db.execute({ sql: "SELECT misses FROM card_pity WHERE user_id = ?", args: [req.userId] })).rows[0]?.misses || 0);
     let drawn;
@@ -499,18 +499,18 @@ router.post("/sell", async (req, res) => {
 
     const owned = (await db.execute({ sql: "SELECT count FROM user_cards WHERE user_id = ? AND player_name = ?", args: [req.userId, name] })).rows[0];
     const have = owned ? Number(owned.count) : 0;
-    if (have < count) return res.status(400).json({ error: "No tenés esa cantidad de esa carta" });
+    if (have < count) return res.status(400).json({ error: "No tienes esa cantidad de esa carta" });
 
     const lineup = await lineupOf(req.userId);
     const inLineup = lineup.some((c) => c.name === name);
-    if (inLineup && have - count < 1) return res.status(400).json({ error: "No podés vender la última copia de una carta que está en tu equipo" });
+    if (inLineup && have - count < 1) return res.status(400).json({ error: "No puedes vender la última copia de una carta que está en tu equipo" });
 
     // Si es una repetida que sirve para el desafío temático activo, se avisa antes de venderla.
     if (redesignOn() && !req.body?.confirmTheme && have - count >= 1) {
       const { theme, start } = themePeriod(todayStr());
       if (theme && theme.pool.some((c) => c.name === name)) {
         const done = (await db.execute({ sql: "SELECT 1 FROM card_packs WHERE user_id = ? AND date = ? AND source = ?", args: [req.userId, start, `bueno-sbctema-${theme.key}`] })).rows[0];
-        if (!done) return res.status(409).json({ needsConfirm: true, error: `${name} es una repetida que sirve para el desafío de ${theme.label}. ¿La vendés igual?` });
+        if (!done) return res.status(409).json({ needsConfirm: true, error: `${name} es una repetida que sirve para el desafío de ${theme.label}. ¿La vendes igual?` });
       }
     }
 
@@ -591,8 +591,8 @@ router.post("/shop/buy", async (req, res) => {
   }
 });
 
-// SBC (Squad Building Challenges): armás un equipo de 11 que cumpla un
-// requisito puntual, lo "entregás" (se pierden esas cartas, como en el FIFA
+// SBC (Squad Building Challenges): armas un equipo de 11 que cumpla un
+// requisito puntual, lo "entregas" (se pierden esas cartas, como en el FIFA
 // real) y a cambio te dan un sobre. Le da un destino a las cartas de bajo
 // tier que si no solo servirían para vender.
 const SBC_DEFS = [
@@ -633,11 +633,11 @@ router.post("/sbc/:id/submit", async (req, res) => {
 
     const owned = new Map((await db.execute({ sql: "SELECT player_name, count FROM user_cards WHERE user_id = ?", args: [req.userId] })).rows.map((r) => [r.player_name, Number(r.count)]));
     const cards = names.map((n) => BY_NAME.get(n));
-    if (cards.some((c) => !c) || names.some((n) => !owned.get(n))) return res.status(400).json({ error: "Solo podés usar cartas que tenés" });
+    if (cards.some((c) => !c) || names.some((n) => !owned.get(n))) return res.status(400).json({ error: "Solo puedes usar cartas que tienes" });
 
     const lineup = await lineupOf(req.userId);
     const inLineupAndLastCopy = names.some((n) => lineup.some((c) => c.name === n) && owned.get(n) === 1);
-    if (inLineupAndLastCopy) return res.status(400).json({ error: "No podés entregar la última copia de una carta que está en tu equipo" });
+    if (inLineupAndLastCopy) return res.status(400).json({ error: "No puedes entregar la última copia de una carta que está en tu equipo" });
 
     if (!def.check(cards)) return res.status(400).json({ error: "Ese equipo no cumple el requisito del SBC" });
 
@@ -701,9 +701,9 @@ router.put("/lineup", async (req, res) => {
     if (new Set(names).size !== 11) return res.status(400).json({ error: "El equipo necesita 11 jugadores distintos" });
     const owned = new Set((await db.execute({ sql: "SELECT player_name FROM user_cards WHERE user_id = ?", args: [req.userId] })).rows.map((r) => r.player_name));
     const cards = names.map((n) => BY_NAME.get(n));
-    if (cards.some((c) => !c) || names.some((n) => !owned.has(n))) return res.status(400).json({ error: "Solo podés usar cartas que tenés" });
+    if (cards.some((c) => !c) || names.some((n) => !owned.has(n))) return res.status(400).json({ error: "Solo puedes usar cartas que tienes" });
     if (new Set(cards.map((c) => c.realName)).size !== 11) {
-      return res.status(400).json({ error: "No podés poner dos cartas de la misma persona (base + especial) en el mismo equipo" });
+      return res.status(400).json({ error: "No puedes poner dos cartas de la misma persona (base + especial) en el mismo equipo" });
     }
     const count = { GK: 0, DEF: 0, MID: 0, FWD: 0 };
     for (const c of cards) count[c.pos]++;
@@ -742,7 +742,7 @@ router.get("/rivals", async (req, res) => {
 router.post("/match", async (req, res) => {
   try {
     const mine = await lineupOf(req.userId);
-    if (mine.length !== 11) return res.status(400).json({ error: "Primero armá tu equipo de 11" });
+    if (mine.length !== 11) return res.status(400).json({ error: "Primero arma tu equipo de 11" });
     const vs = req.body?.vs;
     let oppName = "CPU";
     let opp;
@@ -804,9 +804,9 @@ router.post("/match", async (req, res) => {
 });
 
 // ---------- Carta del día y álbum calendario (Futotal 2.0) ----------
-// Si acertás el «¿Quién es?» del partido del día te llevás esa carta con la fecha. Es una
+// Si aciertas el «¿Quién es?» del partido del día te llevas esa carta con la fecha. Es una
 // edición: no se vende ni se entrega en un SBC (vive en daily_cards, no en user_cards).
-// Si un día no jugás o fallás, la casilla queda vacía para siempre.
+// Si un día no juegas o fallas, la casilla queda vacía para siempre.
 router.get("/album", async (req, res) => {
   try {
     const today = todayStr();
@@ -886,16 +886,16 @@ router.post("/trades", async (req, res) => {
     const toUser = Number(req.body?.toUserId);
     const give = String(req.body?.give || "");
     const want = String(req.body?.want || "");
-    if (!Number.isInteger(toUser) || toUser === req.userId || !(await sharesClub(req.userId, toUser))) return res.status(400).json({ error: "Solo podés intercambiar con amigos de tu club" });
+    if (!Number.isInteger(toUser) || toUser === req.userId || !(await sharesClub(req.userId, toUser))) return res.status(400).json({ error: "Solo puedes intercambiar con amigos de tu club" });
     const a = BY_NAME.get(give);
     const b = BY_NAME.get(want);
     if (!a || !b) return res.status(400).json({ error: "Esa carta no existe" });
     if (a.tier !== b.tier) return res.status(400).json({ error: "Tienen que ser de la misma categoría" });
     if (await tradeUsedToday(req.userId, today)) return res.status(409).json({ error: "Hoy ya hiciste un intercambio" });
-    if ((await copiesOf(req.userId, give)) < 2) return res.status(400).json({ error: "Solo podés ofrecer cartas repetidas" });
+    if ((await copiesOf(req.userId, give)) < 2) return res.status(400).json({ error: "Solo puedes ofrecer cartas repetidas" });
     if ((await copiesOf(toUser, want)) < 2) return res.status(400).json({ error: "Tu amigo no tiene esa carta repetida" });
     const dup = (await db.execute({ sql: "SELECT 1 FROM card_trades WHERE from_user = ? AND date = ? AND status = 'pending'", args: [req.userId, today] })).rows[0];
-    if (dup) return res.status(409).json({ error: "Ya tenés una propuesta pendiente hoy" });
+    if (dup) return res.status(409).json({ error: "Ya tienes una propuesta pendiente hoy" });
     const ins = await db.execute({ sql: "INSERT INTO card_trades (from_user, to_user, give, want, date) VALUES (?, ?, ?, ?, ?)", args: [req.userId, toUser, give, want, today] });
     res.status(201).json({ ok: true, id: Number(ins.lastInsertRowid) });
   } catch (err) {
@@ -1104,7 +1104,7 @@ router.post("/sbc-tema/submit", async (req, res) => {
     const { theme, start } = themePeriod(todayStr());
     if (!theme) return res.status(404).json({ error: "No hay un desafío activo" });
     const formation = SBC_FORMATIONS[req.body?.formation];
-    if (!formation) return res.status(400).json({ error: "Elegí una formación: 4-3-3, 4-4-2 o 3-5-2" });
+    if (!formation) return res.status(400).json({ error: "Elige una formación: 4-3-3, 4-4-2 o 3-5-2" });
     const names = Array.isArray(req.body?.players) ? [...new Set(req.body.players)] : [];
     if (names.length !== 11) return res.status(400).json({ error: "El desafío necesita 11 cartas distintas" });
     const source = `bueno-sbctema-${theme.key}`;

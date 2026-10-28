@@ -139,7 +139,7 @@ export async function resolveIfComplete(duel) {
 
 // Comodín semanal: "doble o nada". Cada lado del duelo puede jugárselo con
 // su propio comodín (uno por persona por semana, en cualquier duelo). Si lo
-// activaste y ganás, el doble de puntos; si empatás o perdés, cero — ni
+// activaste y ganas, el doble de puntos; si empatas o pierdes, cero — ni
 // siquiera el consuelo del empate. Exportada porque stats.js necesita el
 // mismo cálculo para el ranking general del grupo, no solo esta pantalla.
 export function duelSidePoints(difficulty, outcome, wildcard) {
@@ -153,8 +153,8 @@ export function duelSidePoints(difficulty, outcome, wildcard) {
 }
 
 // Al resolverse el duelo, se liquidan las apuestas cruzadas que otros
-// miembros del grupo hayan hecho sobre él: acertás quién gana y ganás lo
-// apostado, fallás y lo perdés (empate: nadie gana ni pierde nada).
+// miembros del grupo hayan hecho sobre él: aciertas quién gana y ganas lo
+// apostado, fallas y lo pierdes (empate: nadie gana ni pierde nada).
 async function settleBets(duel) {
   const bets = await db.execute({
     sql: "SELECT * FROM duel_bets WHERE duel_id = ? AND settled = 0",
@@ -206,7 +206,7 @@ router.post("/", async (req, res) => {
   if (!groupId || !opponentId) return res.status(400).json({ error: "Faltan campos requeridos" });
   if (!DUEL_DIFFICULTIES[difficulty]) return res.status(400).json({ error: "Dificultad inválida" });
   if (opponentId === req.userId) {
-    return res.status(400).json({ error: "No podés desafiarte a vos mismo" });
+    return res.status(400).json({ error: "No puedes desafiarte a ti mismo" });
   }
 
   try {
@@ -228,7 +228,7 @@ router.post("/", async (req, res) => {
       args: [groupId, req.userId, opponentId, opponentId, req.userId],
     });
     if (open.rows.length > 0) {
-      return res.status(409).json({ error: "Ya tenés un duelo abierto con esa persona" });
+      return res.status(409).json({ error: "Ya tienes un duelo abierto con esa persona" });
     }
 
     const questions = await db.execute({
@@ -405,7 +405,7 @@ router.get("/", async (req, res) => {
               : duel.challenger_correct
             : null,
         // Antes de terminar no se dice cómo le fue al rival: sabrías cuántas
-        // tenés que acertar.
+        // tienes que acertar.
         result:
           duel.status !== "terminado"
             ? null
@@ -475,13 +475,13 @@ router.post("/:id/bet", async (req, res) => {
     if (!duel) return res.status(404).json({ error: "Duelo no encontrado" });
     if (duel.status !== "esperando") return res.status(400).json({ error: "Este duelo ya terminó" });
     if (duel.challenger_id === req.userId || duel.opponent_id === req.userId) {
-      return res.status(400).json({ error: "No podés apostar en tu propio duelo" });
+      return res.status(400).json({ error: "No puedes apostar en tu propio duelo" });
     }
     if (!(await requireMembership(duel.group_id, req.userId))) {
       return res.status(403).json({ error: "No perteneces a este grupo" });
     }
     if (pickedUserId !== duel.challenger_id && pickedUserId !== duel.opponent_id) {
-      return res.status(400).json({ error: "Tenés que elegir a uno de los dos rivales" });
+      return res.status(400).json({ error: "Tienes que elegir a uno de los dos rivales" });
     }
 
     try {

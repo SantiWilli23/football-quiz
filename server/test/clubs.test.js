@@ -134,7 +134,7 @@ test("sobres guardados: máximo 3 sin club y se desbloquean al entrar a un club 
     assert.equal(st.locked.length, 0);
     assert.equal(st.openable.length, 4, "bienvenida + los 3 guardados");
   } finally {
-    delete process.env.FUTOTAL2;
+    process.env.FUTOTAL2 = "0";
   }
 });
 

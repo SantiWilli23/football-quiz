@@ -78,7 +78,7 @@ function EventCard({ day, groupId, played, onChange }) {
         <>
           {!started && (
             <div className="mt-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Tu pronóstico · da un sobre si acertás</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Tu pronóstico · da un sobre si aciertas</p>
               <div className="mt-1.5 grid grid-cols-3 gap-1.5">
                 {["home", "draw", "away"].map((p) => (
                   <button key={p} disabled={busy} onClick={() => post("/events/pred", { date: event.date, pick: p }, "Pronóstico guardado")} className={`min-h-[44px] rounded-xl border px-1 text-sm ${mine.pred === p ? "border-accent bg-accent/15 font-semibold" : "border-border text-gray-300"}`}>

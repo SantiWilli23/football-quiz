@@ -305,7 +305,7 @@ function optionsOfGroupQuestion(question) {
     .map((key) => ({ value: key, label: question[`option_${key}`] }));
 }
 
-// Los resultados quedan tapados hasta que votás Y predecís. Si se vieran antes,
+// Los resultados quedan tapados hasta que votas Y predecís. Si se vieran antes,
 // acertar la predicción sería mirar el marcador en vez de jugar.
 async function buildQuestionPayload(kind, question, groupId, userId, options) {
   const my_answer = await myAnswerFor(kind, question.id, groupId, userId);
@@ -606,7 +606,7 @@ router.post("/bank", async (req, res) => {
       args: [group_id, req.userId],
     });
     if (Number(mine.rows[0].total) >= 20) {
-      return res.status(409).json({ error: "Ya tenés 20 preguntas esperando. Dejá que salgan algunas." });
+      return res.status(409).json({ error: "Ya tienes 20 preguntas esperando. Deja que salgan algunas." });
     }
 
     const q = cleanedGroupQuestion(prompt, options);
@@ -635,7 +635,7 @@ router.delete("/bank/:id", async (req, res) => {
     const entry = result.rows[0];
     if (!entry) return res.status(404).json({ error: "Pregunta no encontrada" });
     if (entry.author_id !== req.userId) {
-      return res.status(403).json({ error: "Sólo podés borrar tus propias preguntas" });
+      return res.status(403).json({ error: "Sólo puedes borrar tus propias preguntas" });
     }
     if (entry.used_on) {
       return res.status(400).json({ error: "Esa pregunta ya salió: no se puede borrar" });
@@ -670,7 +670,7 @@ router.post("/predict", async (req, res) => {
       return res.status(400).json({ error: "Predicción inválida" });
     }
     if (!(await myAnswerFor(question_kind, question.id, group_id, req.userId))) {
-      return res.status(400).json({ error: "Primero respondé la pregunta" });
+      return res.status(400).json({ error: "Primero responde la pregunta" });
     }
     if (await myPredictionFor(question_kind, question.id, group_id, req.userId)) {
       return res.status(409).json({ error: "Ya hiciste tu predicción" });

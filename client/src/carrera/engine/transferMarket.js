@@ -1,6 +1,6 @@
 // Motor de fichajes: primero se le oferta al CLUB (por el pase), y sólo si
 // acepta se pasa a ofertarle un contrato al JUGADOR. Cada lado decide según
-// reglas propias, no simplemente "si tenés la plata, listo".
+// reglas propias, no simplemente "si tienes la plata, listo".
 import { ROLES, expectedRole } from "./playerForm.js";
 
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
@@ -25,7 +25,7 @@ export function askingPrice(player, sellerTeam) {
 // Por debajo del precio pedido sigue siendo un albur (más chance cuanto más
 // cerca), pero ya no hay sorpresa cuando pagás lo que piden. La cifra exacta
 // (askingPrice) siempre viaja en la respuesta: apenas hacés UNA oferta —
-// la acepten o no — ya sabés el número real para la próxima.
+// la acepten o no — ya sabes el número real para la próxima.
 export function clubDecision(player, sellerTeam, offerAmount) {
   const ask = askingPrice(player, sellerTeam);
   const ratio = offerAmount / ask;
@@ -68,7 +68,7 @@ export function playerDecision(player, sellerTeam, buyerTeam, wageOffered, years
   const ratio = wageOffered / expected;
   const hint = ratio < 0.7 ? "muy_lejos" : ratio < 0.95 ? "lejos" : ratio < 1 ? "cerca" : "alcanzado";
   const roleTalk = roleGap > 0
-    ? `Quiero ser ${wantedRole.label.toLowerCase()} y me ofrecés ${offeredRole.label.toLowerCase()}.`
+    ? `Quiero ser ${wantedRole.label.toLowerCase()} y me ofreces ${offeredRole.label.toLowerCase()}.`
     : roleGap < 0 ? `Me gusta que me ofrezcas ser ${offeredRole.label.toLowerCase()}.` : `Ser ${offeredRole.label.toLowerCase()} me parece bien.`;
   const extra = { wantedRole: wantedRole.id, offeredRole: offeredRole.id, roleTalk };
   if (ratio >= 1) {
@@ -80,7 +80,7 @@ export function playerDecision(player, sellerTeam, buyerTeam, wageOffered, years
 }
 
 export const HINT_LABEL = {
-  muy_lejos: "Ni cerca — subí bastante la cifra.",
+  muy_lejos: "Ni cerca — sube bastante la cifra.",
   lejos: "Se está acercando, pero todavía falta.",
   cerca: "Muy cerca, con un poco más alcanza.",
   alcanzado: "La oferta llega, pero igual la rechazaron (mala suerte).",

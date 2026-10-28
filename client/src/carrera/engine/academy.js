@@ -1,7 +1,7 @@
 import { attributesFor } from "../data/players.js";
 
-// Sistema de inferiores: contratás agentes (mismos 3 tipos que en Scouting)
-// y los mandás a recorrer un país. Cada 4 semanas ese agente te trae ~7
+// Sistema de inferiores: contratas agentes (mismos 3 tipos que en Scouting)
+// y los mandas a recorrer un país. Cada 4 semanas ese agente te trae ~7
 // chicos nuevos con OVR/potencial ya tasados — no hace falta scoutearlos,
 // el agente ya te dice lo que encontró (con el mismo sesgo por especialidad
 // que en Scouting: el especialista en OVR trae chicos más hechos pero con

@@ -67,7 +67,7 @@ export default function QuestionBank({ groupId }) {
         <h2 className="font-semibold">Banco de preguntas del grupo</h2>
       </div>
       <p className="text-sm text-gray-400 mb-5">
-        Dejá preguntas cargadas y van saliendo solas en el modo especial. Tienen prioridad sobre las
+        Deja preguntas cargadas y van saliendo solas en el modo especial. Tienen prioridad sobre las
         que trae la app: sólo se usa una del banco si ese día nadie escribió una en vivo.
       </p>
 
@@ -175,7 +175,7 @@ export default function QuestionBank({ groupId }) {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm mb-1">{q.prompt}</p>
                   <p className="text-xs text-gray-500 truncate">
-                    {q.options.join(" · ")} — de {q.mine ? "vos" : q.author}
+                    {q.options.join(" · ")} — de {q.mine ? "tú" : q.author}
                   </p>
                 </div>
                 {q.mine && (

@@ -48,10 +48,10 @@ export default function ResultScreen({
         </span>
       )}
       <Trophy size={32} className="mx-auto text-accent mb-3" />
-      <p className="text-4xl font-bold mb-1 tabular-nums animate-result-pop">{score}</p>
+      <p className="text-4xl font-bold mb-1 tabular-nums anímate-result-pop">{score}</p>
       <p className="text-sm text-gray-400 mb-5">{unit}</p>
       {highlight && <p className="text-xs text-gray-500 mb-5">{highlight}</p>}
-      {!groupId && <p className="text-xs text-gray-500 mb-5">Unite a un grupo para que tu marca cuente en un ranking.</p>}
+      {!groupId && <p className="text-xs text-gray-500 mb-5">Únete a un grupo para que tu marca cuente en un ranking.</p>}
       {saveState === "saving" && <p className="text-xs text-gray-500 mb-5">Guardando marca...</p>}
       {saveState && saveState !== "saving" && !improved && (
         <p className="text-xs text-gray-500 mb-5">Guardado (no superó tu mejor marca de esta semana)</p>

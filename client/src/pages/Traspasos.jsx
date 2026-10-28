@@ -163,7 +163,7 @@ export default function Traspasos() {
 
   return (
     <Layout>
-      <GameHeader game={GAME} title="Traspasos a ciegas" subtitle="Adiviná al jugador por sus clubes." icon={ArrowLeftRight} distLabel="intentos usados" />
+      <GameHeader game={GAME} title="Traspasos a ciegas" subtitle="Adivina al jugador por sus clubes." icon={ArrowLeftRight} distLabel="intentos usados" />
 
 
       {!state && (
@@ -182,8 +182,8 @@ export default function Traspasos() {
           </div>
           <Card className="space-y-4">
             <ul className="text-sm text-gray-300 space-y-2">
-              <li className="flex gap-2"><ArrowLeftRight size={16} className="text-accent shrink-0 mt-0.5" />Ves los clubes de un jugador, en orden y con años. Adiviná quién es.</li>
-              <li className="flex gap-2"><Flag size={16} className="text-accent shrink-0 mt-0.5" />Tenés 5 intentos. Arrancás con 2 clubes; cada fallo o salto destapa uno más.</li>
+              <li className="flex gap-2"><ArrowLeftRight size={16} className="text-accent shrink-0 mt-0.5" />Ves los clubes de un jugador, en orden y con años. Adivina quién es.</li>
+              <li className="flex gap-2"><Flag size={16} className="text-accent shrink-0 mt-0.5" />Tienes 5 intentos. Arrancas con 2 clubes; cada fallo o salto destapa uno más.</li>
               <li className="flex gap-2"><Globe2 size={16} className="text-accent shrink-0 mt-0.5" />Después llegan las pistas: posición, nacionalidad y año de nacimiento.</li>
             </ul>
             {error && <p className="text-sm text-red-400">{error}</p>}
@@ -232,7 +232,7 @@ export default function Traspasos() {
                 {puzzle.hints.born && <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-accent/40 bg-accent/10 text-xs"><Cake size={12} />Nació en {puzzle.hints.born}</span>}
               </p>
             )}
-            {!over && NEXT_HINT[attempts] && <p className="text-xs text-gray-500 mt-4 text-center">Si fallás, se destapa {NEXT_HINT[attempts]}.</p>}
+            {!over && NEXT_HINT[attempts] && <p className="text-xs text-gray-500 mt-4 text-center">Si fallas, se destapa {NEXT_HINT[attempts]}.</p>}
             <div className="flex justify-center items-center gap-2 mt-4" aria-label={`Intentos: ${attempts} de ${MAX}`}>
               {Array.from({ length: MAX }).map((_, i) => {
                 const used = i < attempts;
@@ -246,7 +246,7 @@ export default function Traspasos() {
             <Card>
               <div className="flex gap-2 items-start">
                 <div className="flex-1 min-w-0">
-                  <Autocomplete options={puzzle.players} exclude={state.guesses.filter(Boolean)} onPick={guess} disabled={busy} placeholder="Escribí el jugador…" />
+                  <Autocomplete options={puzzle.players} exclude={state.guesses.filter(Boolean)} onPick={guess} disabled={busy} placeholder="Escribe el jugador…" />
                 </div>
                 <button onClick={skip} disabled={busy} className="inline-flex items-center gap-1 px-3 py-2.5 rounded-card border border-border text-xs text-gray-300 hover:text-white" title="Saltar (cuenta como intento)">
                   <SkipForward size={14} /> Saltar

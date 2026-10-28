@@ -18,9 +18,9 @@ export async function searchClubs(query, excludeIds = []) {
 
 // Dificultad elegida en el menú de Equipo-Jugador (se guarda en este dispositivo).
 export const DIFFICULTIES = [
-  { id: "facil", label: "Fácil", hint: "Arrancás con jugadores de muchos clubes: hay más caminos." },
+  { id: "facil", label: "Fácil", hint: "Arrancas con jugadores de muchos clubes: hay más caminos." },
   { id: "normal", label: "Normal", hint: "Como siempre." },
-  { id: "dificil", label: "Difícil", hint: "Arrancás con jugadores de pocos clubes: la cadena se corta antes." },
+  { id: "dificil", label: "Difícil", hint: "Arrancas con jugadores de pocos clubes: la cadena se corta antes." },
 ];
 export function getDifficulty() {
   try {

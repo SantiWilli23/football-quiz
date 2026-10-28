@@ -17,7 +17,7 @@ export default function Recover() {
     e.preventDefault();
     setError("");
     if (!username.trim() || !code.trim() || password.length < 6) {
-      setError("Completá todo. La contraseña nueva necesita al menos 6 caracteres.");
+      setError("Completa todo. La contraseña nueva necesita al menos 6 caracteres.");
       return;
     }
     setLoading(true);
@@ -37,7 +37,7 @@ export default function Recover() {
       <div className="min-h-screen flex items-center justify-center bg-bg text-white px-6">
         <div className="max-w-sm w-full space-y-4 text-center">
           <h1 className="text-2xl font-bold">¡Cuenta recuperada!</h1>
-          <p className="text-sm text-gray-400">Cambiamos tu contraseña y generamos un código nuevo. El anterior ya no sirve. Guardalo:</p>
+          <p className="text-sm text-gray-400">Cambiamos tu contraseña y generamos un código nuevo. El anterior ya no sirve. Guárdalo:</p>
           <p className="select-all rounded-xl border border-dashed border-border bg-panel px-3 py-3 font-mono tracking-widest">{fresh}</p>
           <button className="btn btn-primary w-full" onClick={() => { window.location.assign("/"); }}>Entrar</button>
         </div>

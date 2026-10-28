@@ -28,15 +28,15 @@ export default function WeeklyRankingHero({ groupId }) {
     return (
       <Card variant="feature" className="mb-8 text-center py-10">
         <Trophy size={26} className="mx-auto text-accent mb-2" />
-        <p className="font-semibold mb-1">Todavía no tenés un grupo</p>
-        <p className="text-sm text-gray-400 mb-4">El ranking semanal se juega entre tu grupo de amigos — sumá o creá uno para empezar a competir.</p>
+        <p className="font-semibold mb-1">Todavía no tienes un grupo</p>
+        <p className="text-sm text-gray-400 mb-4">El ranking semanal se juega entre tu grupo de amigos — suma o crea uno para empezar a competir.</p>
         <Link to="/grupo" className="btn btn-primary btn-sm inline-flex">Ir a Grupos ›</Link>
       </Card>
     );
   }
 
   if (recap === undefined) {
-    return <Card variant="feature" className="mb-8 h-48 animate-pulse" />;
+    return <Card variant="feature" className="mb-8 h-48 anímate-pulse" />;
   }
   if (recap === null || recap.ranking.length === 0) {
     return null;
@@ -73,7 +73,7 @@ export default function WeeklyRankingHero({ groupId }) {
           <div className="flex items-center gap-3 px-3 py-2 rounded-card bg-accent/10 border border-accent/30 mt-2">
             <span className="w-5 text-sm font-semibold tabular-nums text-center text-gray-500">{recap.myPosition}</span>
             <Avatar user={recap.me} size={26} />
-            <span className="text-sm flex-1 truncate">Vos</span>
+            <span className="text-sm flex-1 truncate">Tú</span>
             <span className="text-sm font-semibold tabular-nums">{recap.me.points} pts</span>
           </div>
         )}

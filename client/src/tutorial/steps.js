@@ -8,14 +8,14 @@ export const GENERAL_TUTORIAL = {
   steps: [
     {
       title: "¡Bienvenido a Futotal!",
-      body: "Juegos de fútbol para jugar con tus amigos. En pocos pasos sabés cómo funciona todo.",
+      body: "Juegos de fútbol para jugar con tus amigos. En pocos pasos sabes cómo funciona todo.",
     },
     {
       title: "Primero, los grupos",
-      body: "Un grupo es tu pandilla. Todo lo que jugás suma a un ranking semanal que se reinicia cada lunes.",
+      body: "Un grupo es tu pandilla. Todo lo que juegas suma a un ranking semanal que se reinicia cada lunes.",
       points: [
-        "Creás un grupo o entrás con un código de invitación.",
-        "Podés estar en varios grupos y cambiar de uno a otro arriba.",
+        "Creás un grupo o entras con un código de invitación.",
+        "Puedes estar en varios grupos y cambiar de uno a otro arriba.",
         "Con 10 o más miembros, el grupo puede activar una Liga con dos divisiones.",
       ],
     },
@@ -36,8 +36,8 @@ export const GENERAL_TUTORIAL = {
       ],
     },
     {
-      title: "¿Qué querés jugar hoy?",
-      body: "Elegí y te llevamos. Lo que elijas queda destacado en Inicio.",
+      title: "¿Qué quieres jugar hoy?",
+      body: "Elige y te llevamos. Lo que elijas queda destacado en Inicio.",
       choices: [
         { label: "Algo rápido", hint: "Un Minuto, Fichado, Pirámide", to: "/juegos", favorites: ["/juegos"] },
         { label: "Contra amigos", hint: "Duelos, grupo y retos semanales", to: "/grupo", favorites: ["/grupo", "/juegos"] },

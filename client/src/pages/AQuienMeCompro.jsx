@@ -98,7 +98,7 @@ export default function AQuienMeCompro() {
       setGame({ ...data, seed });
       return data;
     } catch {
-      setError("No se pudo cargar la partida. Probá de nuevo.");
+      setError("No se pudo cargar la partida. Prueba de nuevo.");
       return null;
     } finally {
       setBusy(false);
@@ -178,7 +178,7 @@ export default function AQuienMeCompro() {
 
   return (
     <Layout focus={phase === "playing"}>
-      <GameHeader game={GAME} title="¿A quién me compro?" subtitle="Adiviná quién vale más en el mercado." icon={Wallet} distLabel="aciertos" />
+      <GameHeader game={GAME} title="¿A quién me compro?" subtitle="Adivina quién vale más en el mercado." icon={Wallet} distLabel="aciertos" />
 
       {phase === "intro" && (
         <div className="space-y-4">
@@ -196,8 +196,8 @@ export default function AQuienMeCompro() {
                 <p className="text-xl font-bold text-gray-600 mt-1">€ ? M</p>
               </div>
             </div>
-            <p className="relative mt-5 text-lg font-semibold">Mirá lo que vale uno y apostá por el otro.</p>
-            <p className="relative text-sm text-gray-300 mt-1">10 rondas con futbolistas en actividad. Acertá cuánto vale cada uno frente a su rival.</p>
+            <p className="relative mt-5 text-lg font-semibold">Mira lo que vale uno y apuesta por el otro.</p>
+            <p className="relative text-sm text-gray-300 mt-1">10 rondas con futbolistas en actividad. Acierta cuánto vale cada uno frente a su rival.</p>
           </div>
 
           <Card className="space-y-5">
@@ -304,7 +304,7 @@ export default function AQuienMeCompro() {
             <p className="relative t-eyebrow">Tu resultado</p>
             <p className="text-5xl font-bold tabular-nums mt-1">{correctCount}<span className="text-2xl text-gray-400">/{total}</span></p>
             <p className="text-sm text-gray-300 mt-2">
-              {correctCount >= 9 ? "Ojo de ojeador: sabés lo que vale cada uno." : correctCount >= 7 ? "Buen olfato para el mercado." : correctCount >= 4 ? "Vas aprendiendo cuánto vale el fútbol." : "El mercado te sorprendió esta vez."}
+              {correctCount >= 9 ? "Ojo de ojeador: sabes lo que vale cada uno." : correctCount >= 7 ? "Buen olfato para el mercado." : correctCount >= 4 ? "Vas aprendiendo cuánto vale el fútbol." : "El mercado te sorprendió esta vez."}
             </p>
             {dailyMsg && <p className="text-sm text-accent mt-3">{dailyMsg}</p>}
             <div className="mt-4 flex flex-wrap justify-center gap-3">

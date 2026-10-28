@@ -14,7 +14,7 @@ export default function ThemeSettings() {
   return (
     <Card>
       <h2 className="font-semibold mb-1">Diseño</h2>
-      <p className="text-xs text-gray-500 mb-5">Elegí el diseño de color, la forma y el ancho del menú lateral. Cada elección se guarda en este dispositivo.</p>
+      <p className="text-xs text-gray-500 mb-5">Elige el diseño de color, la forma y el ancho del menú lateral. Cada elección se guarda en este dispositivo.</p>
 
       <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2.5">Modo de pantalla</p>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">

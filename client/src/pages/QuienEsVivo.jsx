@@ -175,7 +175,7 @@ export function QuienEsVivoBody() {
 
       {phase === "waiting" && (
         <Card className="text-center py-8">
-          <p className="text-sm text-gray-400 mb-2">{gameRef.current.isHost ? "Pasale este código a tu rival" : "Esperando que el anfitrión empiece…"}</p>
+          <p className="text-sm text-gray-400 mb-2">{gameRef.current.isHost ? "Pásale este código a tu rival" : "Esperando que el anfitrión empiece…"}</p>
           <p className="text-4xl font-bold tracking-[0.3em]">{code}</p>
         </Card>
       )}
@@ -214,7 +214,7 @@ export function QuienEsVivoBody() {
               </div>
               <div className="flex gap-2 mt-3">
                 {EMOJIS.map((e) => (
-                  <button key={e} onClick={() => { send({ t: "react", emoji: e, by: user.username }); say(`Vos: ${e}`); }} className="text-xl px-2 py-1 rounded-card border border-border hover:bg-white/5" aria-label={`Reaccionar ${e}`}>{e}</button>
+                  <button key={e} onClick={() => { send({ t: "react", emoji: e, by: user.username }); say(`Tú: ${e}`); }} className="text-xl px-2 py-1 rounded-card border border-border hover:bg-white/5" aria-label={`Reaccionar ${e}`}>{e}</button>
                 ))}
               </div>
             </Card>

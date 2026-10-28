@@ -58,7 +58,7 @@ export default function Survival() {
   const submittedRef = useRef(false);
   const difficultyRef = useRef("dificil"); // la dificultad la elige el host: se manda en cada pregunta para que todos la sepan
   const roundsPlayedRef = useRef(0);
-  const me = { id: myId(), username: user?.username || "Vos" };
+  const me = { id: myId(), username: user?.username || "Tú" };
 
   const isHost = role === "host";
 
@@ -124,7 +124,7 @@ export default function Survival() {
   }, [timeLeft, phase]);
 
   // Puntaje semanal: rondas que aguantaste (esfuerzo) × dificultad elegida,
-  // + bonus por ganar. Cuantas más rondas sobrevivís, más tiempo y más
+  // + bonus por ganar. Cuantas más rondas sobrevives, más tiempo y más
   // preguntas difíciles respondiste bien, así que la duración va implícita.
   useEffect(() => {
     if (phase !== "gameover" || submittedRef.current || !groupId) return;
@@ -280,7 +280,7 @@ export default function Survival() {
 
           <Card>
             <h2 className="font-semibold mb-3">Unirse a una sala</h2>
-            <p className="text-xs text-gray-500 mb-3">Pedile el código a quien creó la sala.</p>
+            <p className="text-xs text-gray-500 mb-3">Pídele el código a quien creó la sala.</p>
             <div className="flex gap-2">
               <input
                 value={joinCode}
@@ -327,7 +327,7 @@ export default function Survival() {
           <div className="flex flex-wrap gap-2 mb-6">
             {players.map((p) => (
               <span key={p.id} className="text-xs px-3 py-1.5 rounded-full border border-border bg-bg">
-                {p.username}{p.id === me.id ? " (vos)" : ""}
+                {p.username}{p.id === me.id ? " (tú)" : ""}
               </span>
             ))}
           </div>
@@ -413,7 +413,7 @@ export default function Survival() {
               {winner ? `${winner.username} gana la partida` : "Partida terminada"}
             </p>
             <p className="text-sm text-gray-500 mb-6">
-              {winner?.id === me.id ? "¡Sos el último en pie! 🏆" : "Mejor suerte la próxima."}
+              {winner?.id === me.id ? "¡Eres el último en pie! 🏆" : "Mejor suerte la próxima."}
             </p>
             <button
               onClick={handleLeave}

@@ -4,7 +4,7 @@ import { useCareer } from "../context/CareerContext.jsx";
 import TeamCrest from "./TeamCrest.jsx";
 
 // Epílogo de Cotrero: si te retiraste en un club que también existe acá,
-// "Dirigí a tu ex-club" deja esta bandera antes de navegar y la consumimos
+// "Dirige a tu ex-club" deja esta bandera antes de navegar y la consumimos
 // una sola vez para preseleccionarlo.
 function readDtPrefill() {
   try {
@@ -35,11 +35,11 @@ export default function TeamSelector({ onBack }) {
           )}
         </div>
         <h1 className="text-2xl font-bold mb-1">Modo Carrera · DT</h1>
-        <p className="text-gray-400 text-sm mb-5">Elegí el equipo que vas a dirigir.</p>
+        <p className="text-gray-400 text-sm mb-5">Elige el equipo que vas a dirigir.</p>
 
         {prefillTeam && (
           <div className="bg-amber/10 border border-amber/30 rounded-card px-4 py-3 mb-5 text-sm text-amber">
-            Colgaste los botines en {prefillTeam.name}. Ya te lo dejamos preseleccionado — confirmá abajo para dirigirlo.
+            Colgaste los botines en {prefillTeam.name}. Ya te lo dejamos preseleccionado — confirma abajo para dirigirlo.
           </div>
         )}
 

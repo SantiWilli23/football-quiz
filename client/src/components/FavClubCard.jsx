@@ -28,7 +28,7 @@ export function Picker({ onPick, onClose }) {
     <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-panel border border-border rounded-2xl p-5 max-w-md w-full max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold flex items-center gap-2"><Heart size={16} className="text-red-400" /> Elegí tu equipo favorito</h2>
+          <h2 className="font-semibold flex items-center gap-2"><Heart size={16} className="text-red-400" /> Elige tu equipo favorito</h2>
           <button onClick={onClose} className="p-1 text-gray-400 hover:text-white" aria-label="Cerrar"><X size={18} /></button>
         </div>
         <div className="flex flex-wrap gap-1.5 mb-4">
@@ -92,7 +92,7 @@ export default function FavClubCard() {
     return (
       <>
         <button onClick={() => setPicking(true)} className="mb-6 w-full flex items-center gap-3 rounded-2xl border border-dashed border-border px-4 py-3 text-left text-sm text-gray-400 hover:text-white hover:border-white/30 transition-colors">
-          <Heart size={16} className="text-red-400 shrink-0" /> Elegí tu equipo favorito y mirá sus partidos acá
+          <Heart size={16} className="text-red-400 shrink-0" /> Elige tu equipo favorito y mira sus partidos acá
         </button>
         {picking && <Picker onPick={save} onClose={() => setPicking(false)} />}
       </>

@@ -172,7 +172,7 @@ export default function CrestQuiz() {
     <Layout focus={phase === "playing"}>
       <h1 className="text-xl sm:text-2xl font-bold mb-1">Escudos a ciegas</h1>
       <p className="text-gray-400 text-sm mb-4">
-        {ROUNDS} escudos reales, muy borrosos, que se aclaran solos (los primeros 3 segundos no cambian: acertar antes vale más). En práctica podés pedir pistas para verlos más nítidos; el diario y el Experto son sin pistas.
+        {ROUNDS} escudos reales, muy borrosos, que se aclaran solos (los primeros 3 segundos no cambian: acertar antes vale más). En práctica puedes pedir pistas para verlos más nítidos; el diario y el Experto son sin pistas.
       </p>
 
       {phase === "idle" && (
@@ -181,7 +181,7 @@ export default function CrestQuiz() {
           {SAMPLE_CREST && <img src={crestSrc(SAMPLE_CREST)} alt="" aria-hidden="true" className="absolute -right-6 top-1/2 -translate-y-1/2 w-56 h-56 sm:w-72 sm:h-72 object-contain opacity-90 pointer-events-none" style={{ filter: "blur(10px)" }} />}
           <div className="relative max-w-xl">
           <Trophy size={28} className="text-accent mb-3" />
-          <p className="text-lg text-gray-300 mb-5">¿Cuántos clubes reconocés solo por el escudo, bien borroso?</p>
+          <p className="text-lg text-gray-300 mb-5">¿Cuántos clubes reconoces solo por el escudo, bien borroso?</p>
 
           <div className="flex flex-wrap gap-3">
             {fromDaily ? (
@@ -323,7 +323,7 @@ export default function CrestQuiz() {
               : "Guardando tu partida…")
           }
           onAgain={() => setPhase("idle")}
-          shareText={`⚽ Futotal · Escudos a ciegas: ${correctCount}/${ROUNDS} — ¿me ganás?`}
+          shareText={`⚽ Futotal · Escudos a ciegas: ${correctCount}/${ROUNDS} — ¿me ganas?`}
         />
         </div>
       )}

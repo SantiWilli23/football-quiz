@@ -40,7 +40,7 @@ export function attributeEffects(players, lineup, sliders = {}) {
   return { atk, def, lineAdj, defPace: Math.round(avg(defs, "pace")) };
 }
 
-// Frases para la ficha del jugador: cómo le va con la táctica que tenés puesta.
+// Frases para la ficha del jugador: cómo le va con la táctica que tienes puesta.
 export function playerTacticNotes(player, sliders = {}) {
   const notes = [];
   const pos = player.position;

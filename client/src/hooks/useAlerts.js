@@ -5,7 +5,7 @@ import { useGroups } from "../context/GroupContext.jsx";
 import { daysSince, readVisits } from "../utils/visits.js";
 
 // Los retos semanales que se ganan entrando: si hace una semana o más que no
-// jugás uno, aparece en los avisos.
+// juegas uno, aparece en los avisos.
 const WEEKLY = [
   { route: "/fulbodle", label: "Reto semanal de Fichado sin jugar", icon: Target },
   { route: "/un-minuto", label: "Reto semanal de Un Minuto sin jugar", icon: Timer },

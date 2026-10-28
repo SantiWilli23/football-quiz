@@ -80,7 +80,7 @@ const maxBidFor = (p, slots) => p.budget - STEP * (p.picks.filter((x, i) => !x).
 export default function Subasta() {
   const { user } = useAuth();
   const { status, roomCode, role, error, lastMessage, createRoom, joinRoom, send, publishState, leave } = useRoomRelay(GAME);
-  const me = useMemo(() => ({ id: myId(), name: user?.username || "Vos" }), [user]);
+  const me = useMemo(() => ({ id: myId(), name: user?.username || "Tú" }), [user]);
   const isHost = role === "host";
   const [size, setSize] = useState(4);
   const [formation, setFormation] = useState("4-3-3");
@@ -218,14 +218,14 @@ export default function Subasta() {
       const queue = { GK: [], DEF: [], MID: [], FWD: [] };
       data.lots.forEach((l) => queue[l.pos]?.push(l));
       const short = Object.keys(F).find((pos) => queue[pos].length < F[pos] * n);
-      if (short) { setErr(`Todavía no hay suficientes jugadores con foto para ${POS_LABEL[short]}. Probá con menos jugadores.`); S.current.players = S.current.players.filter((p) => !p.bot); setBusy(false); return; }
+      if (short) { setErr(`Todavía no hay suficientes jugadores con foto para ${POS_LABEL[short]}. Prueba con menos jugadores.`); S.current.players = S.current.players.filter((p) => !p.bot); setBusy(false); return; }
       host.current = { ...host.current, queue, cur: null, counter: 0, tries: {}, reported: false };
       st.phase = "auction"; st.slotIdx = 0; st.log = "¡Empieza la subasta!";
       nextLot();
       clearInterval(host.current.timer);
       host.current.timer = setInterval(tick, 250);
     } catch {
-      setErr("No se pudo armar la subasta. Probá de nuevo.");
+      setErr("No se pudo armar la subasta. Prueba de nuevo.");
     }
     setBusy(false);
   }
@@ -430,13 +430,13 @@ export default function Subasta() {
     return (
       <Layout>
         <h1 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2"><Gavel size={22} className="text-accent" /> Sala {roomCode}</h1>
-        <p className="text-gray-400 text-sm mb-5">Formación {view.formation} · {view.size} jugadores · {BUDGET} M cada uno. Compartí el código para que se sumen.</p>
+        <p className="text-gray-400 text-sm mb-5">Formación {view.formation} · {view.size} jugadores · {BUDGET} M cada uno. Comparte el código para que se sumen.</p>
         <div className="grid gap-3 sm:grid-cols-2 mb-5">
           {Array.from({ length: view.size }, (_, i) => view.players[i] || null).map((p, i) => (
             <div key={i} className={`flex items-center gap-3 rounded-2xl border px-4 py-3 ${p ? "border-border bg-panel" : "border-dashed border-border text-gray-500"}`}>
               <span className="w-9 h-9 rounded-full bg-accent/15 text-accent flex items-center justify-center font-bold">{p ? p.name[0].toUpperCase() : "?"}</span>
               <span className="font-medium">{p ? p.name : "Esperando… (si no llega, juega un bot)"}</span>
-              {p?.id === me.id && <span className="ml-auto text-xs text-accent">Vos</span>}
+              {p?.id === me.id && <span className="ml-auto text-xs text-accent">Tú</span>}
             </div>
           ))}
         </div>
@@ -493,7 +493,7 @@ export default function Subasta() {
 
                 {lot.turn && !lot.rev && (
                   <p className="text-sm text-center text-amber-200">
-                    Turno de <b>{view.players.find((p) => p.id === lot.turn)?.name}{lot.turn === me.id ? " (vos)" : ""}</b>: abrió con la mínima ({lot.minBid} M).
+                    Turno de <b>{view.players.find((p) => p.id === lot.turn)?.name}{lot.turn === me.id ? " (tú)" : ""}</b>: abrió con la mínima ({lot.minBid} M).
                   </p>
                 )}
                 <div className="w-full max-w-md rounded-2xl border border-white/15 bg-black/25 p-4 text-center">
@@ -516,13 +516,13 @@ export default function Subasta() {
                     {lot.best?.id === me.id && <p className="text-xs text-accent text-center">Vas ganando. Si nadie sube, es tuyo.</p>}
                   </div>
                 )}
-                {!lot.rev && !canBid && <p className="text-sm text-gray-300">Ya tenés este puesto: mirá cómo pujan los demás.</p>}
+                {!lot.rev && !canBid && <p className="text-sm text-gray-300">Ya tienes este puesto: mira cómo pujan los demás.</p>}
 
                 {!lot.rev && canBid && !iGuessed && (
                   <form onSubmit={submitGuess} className="w-full max-w-md flex gap-2">
                     <div className="relative flex-1">
                       <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-                      <input value={guess} onChange={(e) => setGuess(e.target.value)} placeholder="¿Quién es? Adiviná (3 intentos)" className="w-full bg-bg border border-border rounded-card pl-8 pr-3 py-2 text-sm focus:outline-none focus:border-accent" />
+                      <input value={guess} onChange={(e) => setGuess(e.target.value)} placeholder="¿Quién es? Adivina (3 intentos)" className="w-full bg-bg border border-border rounded-card pl-8 pr-3 py-2 text-sm focus:outline-none focus:border-accent" />
                     </div>
                     <button className="btn btn-secondary" disabled={!guess.trim()}>Adivinar</button>
                   </form>
@@ -535,7 +535,7 @@ export default function Subasta() {
             <div className="space-y-3">
               {meP && (
                 <div>
-                  <p className="t-eyebrow mb-2">Tu equipo · tocá dos jugadores para cambiarlos de lugar</p>
+                  <p className="t-eyebrow mb-2">Tu equipo · toca dos jugadores para cambiarlos de lugar</p>
                   <FormationPitch slots={view.slots} picks={meP.picks} selected={sel} onSelect={pickSlot} />
                 </div>
               )}
@@ -544,7 +544,7 @@ export default function Subasta() {
                 return (
                   <div key={p.id} className={`tone-${["accent", "blue", "purple", "amber", "pink", "cyan", "red", "emerald"][i % 8]} rounded-2xl border px-4 py-3 ${lot.best?.id === p.id ? "tile-b" : "border-border bg-panel"}`}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold flex items-center gap-1.5 truncate">{p.bot && <Bot size={13} className="text-gray-500" />}{p.name}{p.id === me.id && <span className="text-xs text-accent">(vos)</span>}</span>
+                      <span className="font-semibold flex items-center gap-1.5 truncate">{p.bot && <Bot size={13} className="text-gray-500" />}{p.name}{p.id === me.id && <span className="text-xs text-accent">(tú)</span>}</span>
                       <span className="tabular-nums text-sm text-tone font-bold">{p.budget} M</span>
                     </div>
                     <div className="flex gap-1 mt-2" title={`${filled} de ${view.slots.length}`}>

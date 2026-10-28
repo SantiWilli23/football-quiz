@@ -41,7 +41,7 @@ export default function DorsalHistorico() {
   const startedRef = useRef(null);
   const sentRef = useRef(false);
   const reportedRef = useRef(false);
-  const me = useMemo(() => ({ id: myId(), username: user?.username || "Vos" }), [user]);
+  const me = useMemo(() => ({ id: myId(), username: user?.username || "Tú" }), [user]);
   const isHost = role === "host";
 
   // Al entrar a la sala: anunciarse (el host lleva la lista y la reparte).
@@ -145,7 +145,7 @@ export default function DorsalHistorico() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
-  // Sugerencias: jugadores de la base cuyo nombre contiene lo que escribís (los que empiezan igual, primero).
+  // Sugerencias: jugadores de la base cuyo nombre contiene lo que escribes (los que empiezan igual, primero).
   const suggestions = useMemo(() => {
     const q = normalizeText(text);
     if (q.length < 2) return [];
@@ -187,7 +187,7 @@ export default function DorsalHistorico() {
     <Layout focus={phase === "playing"}>
       <h1 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2"><Hash size={22} className="text-accent" /> Dorsal histórico</h1>
       <p className="text-gray-400 text-sm mb-4">
-        Online, de a dos o más: te damos un club y un número, y tenés {SECONDS} segundos para nombrar a todos los que usaron esa camiseta. Gana quien diga más (3 puntos por cada rival vencido).
+        Online, de a dos o más: te damos un club y un número, y tienes {SECONDS} segundos para nombrar a todos los que usaron esa camiseta. Gana quien diga más (3 puntos por cada rival vencido).
       </p>
 
       {phase === "menu" && (
@@ -242,7 +242,7 @@ export default function DorsalHistorico() {
                 onChange={(e) => setText(e.target.value)}
                 autoFocus
                 autoComplete="off"
-                placeholder="Escribí un nombre y Enter"
+                placeholder="Escribe un nombre y Enter"
                 className="flex-1 bg-bg border border-border rounded-card px-3 py-2.5 text-sm focus:outline-none focus:border-accent"
               />
               <button type="submit" className="btn btn-primary">Decir</button>
@@ -278,7 +278,7 @@ export default function DorsalHistorico() {
           <ol className="space-y-1.5">
             {ranking.map((r, i) => (
               <li key={r.id} className="flex items-center justify-between text-sm border-b border-border/60 pb-1.5 last:border-0">
-                <span>{i + 1}. {r.username}{r.id === me.id ? " (vos)" : ""}</span>
+                <span>{i + 1}. {r.username}{r.id === me.id ? " (tú)" : ""}</span>
                 <span className="font-semibold tabular-nums">{r.count}</span>
               </li>
             ))}

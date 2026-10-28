@@ -19,7 +19,7 @@ function HireAgentCard({ title, description, onHire, disabled }) {
   function handleHire() {
     const res = onHire(specialty, seasons);
     if (res?.error === "insufficient_budget") setFeedback(`No te alcanza el presupuesto (cuesta €${res.cost}M).`);
-    else if (res?.error === "max_scouts" || res?.error === "max_agents") setFeedback("Ya tenés el máximo de 3 contratados.");
+    else if (res?.error === "max_scouts" || res?.error === "max_agents") setFeedback("Ya tienes el máximo de 3 contratados.");
     else if (res?.success) setFeedback(`✅ Contratado por €${res.scout?.cost ?? res.agent?.cost}M.`);
   }
 
@@ -115,7 +115,7 @@ export default function Scouts() {
   return (
     <div className="space-y-5">
       <p className="text-sm text-gray-500 max-w-lg leading-relaxed">
-        Ya no hay un ojeador fijo: contratás agentes especializados (por temporadas) y los mandás a
+        Ya no hay un ojeador fijo: contratas agentes especializados (por temporadas) y los mandas a
         investigar. El ojeador viaja a la liga del jugador entre 3 y 14 días (más rápido si es conocido)
         y, cuantos más días se queda, más jugadores de esa liga trae. Las figuras mundiales ya vienen scouteadas.
       </p>
@@ -172,7 +172,7 @@ export default function Scouts() {
           )}
 
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Elegí a quién investigar</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Elige a quién investigar</p>
             <div className="flex flex-wrap gap-3 items-center mb-3">
               <select value={teamId} onChange={(e) => setTeamId(e.target.value)} className="bg-panel border border-border rounded-2xl px-4 py-3 text-sm max-w-[220px]">
                 <option value={team.id}>Mi plantel ({team.name})</option>
@@ -210,7 +210,7 @@ export default function Scouts() {
                         {pending ? (
                           <span className="text-xs text-gray-600 px-3 py-2.5 inline-block">En camino…</span>
                         ) : !hiredScouts.length ? (
-                          <span className="text-xs text-gray-600 px-3 py-2.5 inline-block" title="Contratá un ojeador primero">Contratá un ojeador</span>
+                          <span className="text-xs text-gray-600 px-3 py-2.5 inline-block" title="Contrata un ojeador primero">Contrata un ojeador</span>
                         ) : (
                           <select
                             defaultValue=""
@@ -242,7 +242,7 @@ export default function Scouts() {
                             ))}
                           </div>
                         ) : (
-                          <p className="text-xs text-gray-600">Sin scoutear: mandá un ojeador para conocer sus estadísticas.</p>
+                          <p className="text-xs text-gray-600">Sin scoutear: manda un ojeador para conocer sus estadísticas.</p>
                         )}
                       </div>
                     )}

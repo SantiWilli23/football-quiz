@@ -101,7 +101,7 @@ export default function Transfers() {
           <div>
             <p className="text-sm font-semibold text-amber">Ventana de transferencias cerrada</p>
             <p className="text-xs text-gray-400 mt-0.5">
-              Podés negociar y explorar el mercado, pero no podés cerrar fichajes hasta la ventana de invierno (jornada 20-24) o el próximo verano.
+              Puedes negociar y explorar el mercado, pero no puedes cerrar fichajes hasta la ventana de invierno (jornada 20-24) o el próximo verano.
             </p>
           </div>
         </div>
@@ -111,7 +111,7 @@ export default function Transfers() {
         <div>
           <h2 className="text-2xl font-bold mb-1">Fichajes</h2>
           <p className="text-sm text-gray-500 max-w-lg leading-relaxed">
-            Primero le ofertás al club por el pase. Si acepta, recién ahí le ofrecés contrato al jugador.
+            Primero le ofertas al club por el pase. Si acepta, recién ahí le ofreces contrato al jugador.
           </p>
         </div>
         <div className="tone-accent tile-b rounded-2xl px-5 py-3 text-right shrink-0">
@@ -244,13 +244,13 @@ export default function Transfers() {
                           ))}
                         </select>
                       ) : (
-                        <span className="text-[11px] text-gray-600" title="Contratá un ojeador en la pestaña Scouting">sin ojeadores</span>
+                        <span className="text-[11px] text-gray-600" title="Contrata un ojeador en la pestaña Scouting">sin ojeadores</span>
                       )
                     )}
                     {scouting && <span className="text-[11px] text-gray-600 px-1">en camino…</span>}
                     {cooling ? (
                       <span className="text-[11px] text-gray-600 px-2 py-2 inline-block" title="Te rechazaron hace poco">
-                        Esperá {weeksUntilCanOffer(p.id)} sem.
+                        Espera {weeksUntilCanOffer(p.id)} sem.
                       </span>
                     ) : (
                       <>
@@ -381,8 +381,8 @@ function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, 
       </section>
 
       <section>
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-2.5">☆ Jugadores que seguís</h3>
-        {!watchlist.length && <p className="text-xs text-gray-600">Marcá jugadores con la estrella en el Mercado o en Scouting para seguirlos acá.</p>}
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-2.5">☆ Jugadores que sigues</h3>
+        {!watchlist.length && <p className="text-xs text-gray-600">Marca jugadores con la estrella en el Mercado o en Scouting para seguirlos acá.</p>}
         <div className="grid sm:grid-cols-2 gap-2.5">
           {watchlist.map((id) => {
             const p = findAnyPlayer(state, id);
@@ -515,7 +515,7 @@ function OfferFlow({ squad, player, budget, report, releaseClause, windowOpen, i
                 Valor de mercado: <span className="text-white font-semibold">€{player.value}M</span> · Presupuesto: <span className="text-white font-semibold">€{budget}M</span>
                 {report?.suggestedOffer != null && <> · Sugerida por scout: <span className="text-white font-semibold">€{report.suggestedOffer}M</span></>}
               </p>
-              <p className="text-xs text-gray-500">Si igualás o superás lo que pide el club, el pase se cierra seguro. Por debajo es más arriesgado.</p>
+              <p className="text-xs text-gray-500">Si igualas o superas lo que pide el club, el pase se cierra seguro. Por debajo es más arriesgado.</p>
 
               {/* Cláusula de liberación */}
               {releaseClause != null && (
@@ -538,7 +538,7 @@ function OfferFlow({ squad, player, budget, report, releaseClause, windowOpen, i
                     ❌ {feeResult.noBudget ? "No te alcanza el presupuesto." : `Rechazada. ${HINT_LABEL[feeResult.hint]}`}
                   </p>
                   {feeResult.askingPrice != null && (
-                    <p className="text-xs text-gray-400">El club pide unos <span className="text-white font-semibold">€{feeResult.askingPrice}M</span> — ya te lo prellenamos abajo, ajustá y volvé a intentar.</p>
+                    <p className="text-xs text-gray-400">El club pide unos <span className="text-white font-semibold">€{feeResult.askingPrice}M</span> — ya te lo prellenamos abajo, ajusta y vuelve a intentar.</p>
                   )}
                 </div>
               )}
@@ -566,7 +566,7 @@ function OfferFlow({ squad, player, budget, report, releaseClause, windowOpen, i
               <p className="text-sm text-emerald font-medium">✅ El club aceptó €{feeAgreed}M por el pase.</p>
               <div className="bg-amber/10 border border-amber/30 rounded-xl p-3">
                 <p className="text-sm text-amber font-semibold">Ventana cerrada</p>
-                <p className="text-xs text-gray-400 mt-1">El pase está acordado pero no podés cerrar el fichaje hasta la ventana de invierno (jornada 20-24) o el próximo verano.</p>
+                <p className="text-xs text-gray-400 mt-1">El pase está acordado pero no puedes cerrar el fichaje hasta la ventana de invierno (jornada 20-24) o el próximo verano.</p>
               </div>
               <button onClick={onClose} className="w-full bg-panel border border-border text-gray-300 font-semibold py-2.5 rounded-2xl hover:border-gray-500 transition">
                 Cerrar (negociación pendiente)
@@ -578,7 +578,7 @@ function OfferFlow({ squad, player, budget, report, releaseClause, windowOpen, i
             <>
               <p className="text-sm text-emerald font-medium">✅ El club aceptó €{feeAgreed}M por el pase.</p>
               <p className="text-sm text-gray-400">Sueldo actual: <span className="text-white font-semibold">€{player.wage}k/sem</span></p>
-              <p className="text-xs text-gray-500">Hablá con el jugador: sueldo y relevancia. Si igualás o superás lo que pide, firma seguro. Contratos de 1 año piden un plus.</p>
+              <p className="text-xs text-gray-500">Habla con el jugador: sueldo y relevancia. Si igualas o superas lo que pide, firma seguro. Contratos de 1 año piden un plus.</p>
               <div className="bg-bg border border-border rounded-xl p-3 text-sm">
                 <p className="text-[11px] uppercase tracking-wide text-gray-600 mb-1">{player.name} dice</p>
                 <p className="text-gray-300">{wageResult?.roleTalk || `Para venir quiero tener un lugar de ${wantedRole.label.toLowerCase()} en tu equipo.`}</p>
@@ -588,7 +588,7 @@ function OfferFlow({ squad, player, budget, report, releaseClause, windowOpen, i
                 <div className="bg-red-500/10 border border-red-500/25 rounded-xl p-3 space-y-1">
                   <p className="text-sm text-red-300">❌ Rechazó el contrato. {HINT_LABEL[wageResult.hint]}</p>
                   {wageResult.expectedWageHint != null && (
-                    <p className="text-xs text-gray-400">Pide unos <span className="text-white font-semibold">€{wageResult.expectedWageHint}k/sem</span> — ya lo prellenamos, ajustá y reintentá.</p>
+                    <p className="text-xs text-gray-400">Pide unos <span className="text-white font-semibold">€{wageResult.expectedWageHint}k/sem</span> — ya lo prellenamos, ajusta y reintenta.</p>
                   )}
                 </div>
               )}
@@ -599,11 +599,11 @@ function OfferFlow({ squad, player, budget, report, releaseClause, windowOpen, i
                 onChange={(e) => setWageInput(Number(e.target.value))}
                 className="w-full bg-bg border border-border rounded-2xl px-4 py-3 text-sm"
               />
-              <label className="block text-xs text-gray-500 uppercase tracking-wide">Relevancia que le prometés</label>
+              <label className="block text-xs text-gray-500 uppercase tracking-wide">Relevancia que le prometes</label>
               <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full bg-bg border border-border rounded-2xl px-4 py-3 text-sm">
                 {Object.values(ROLES).map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
               </select>
-              <p className="text-[11px] text-gray-600">Si después no la cumplís, su moral baja de a poco. Prometer más de lo que vas a dar sale caro.</p>
+              <p className="text-[11px] text-gray-600">Si después no la cumples, su moral baja de a poco. Prometer más de lo que vas a dar sale caro.</p>
               <label className="block text-xs text-gray-500 uppercase tracking-wide">Años de contrato</label>
               <select value={years} onChange={(e) => setYears(Number(e.target.value))} className="w-full bg-bg border border-border rounded-2xl px-4 py-3 text-sm">
                 {[1, 2, 3, 4, 5].map((y) => <option key={y} value={y}>{y} año{y === 1 ? "" : "s"}</option>)}
@@ -619,7 +619,7 @@ function OfferFlow({ squad, player, budget, report, releaseClause, windowOpen, i
               <p className="text-sm text-emerald font-medium">✅ El jugador aceptó el contrato.</p>
               <div className="bg-amber/10 border border-amber/30 rounded-xl p-3">
                 <p className="text-sm text-amber font-semibold">Ventana cerrada</p>
-                <p className="text-xs text-gray-400 mt-1">Todo está acordado pero no podés formalizar el traspaso hasta que abra la ventana.</p>
+                <p className="text-xs text-gray-400 mt-1">Todo está acordado pero no puedes formalizar el traspaso hasta que abra la ventana.</p>
               </div>
               <button onClick={onClose} className="w-full bg-panel border border-border text-gray-300 font-semibold py-2.5 rounded-2xl hover:border-gray-500 transition">
                 Cerrar
@@ -632,7 +632,7 @@ function OfferFlow({ squad, player, budget, report, releaseClause, windowOpen, i
               <p className="text-sm text-red-400">
                 ❌ {completeError === "insufficient_budget" ? "El presupuesto bajó y ya no te alcanza para cerrar este fichaje." : "No se pudo cerrar el fichaje."}
               </p>
-              <p className="text-xs text-gray-500">El acuerdo con el jugador se perdió. Revisá tu presupuesto e intentá de nuevo más adelante.</p>
+              <p className="text-xs text-gray-500">El acuerdo con el jugador se perdió. Revisa tu presupuesto e intenta de nuevo más adelante.</p>
               <button onClick={onClose} className="w-full bg-panel border border-border text-gray-300 font-semibold py-2.5 rounded-2xl hover:border-gray-500 transition">
                 Cerrar
               </button>

@@ -43,7 +43,7 @@ export default function DuelBets({ groupId }) {
         <h3 className="font-semibold">Apuestas cruzadas</h3>
       </div>
       <p className="text-xs text-gray-500 mb-4">
-        Apostá puntos propios a quién gana un duelo ajeno. Acertás, ganás lo apostado; fallás, lo perdés.
+        Apuesta puntos propios a quién gana un duelo ajeno. Aciertas, ganas lo apostado; fallas, lo pierdes.
       </p>
 
       {error && <p className="text-sm text-red-400 mb-3">{error}</p>}

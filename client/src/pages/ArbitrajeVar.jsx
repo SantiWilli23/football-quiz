@@ -165,7 +165,7 @@ export default function ArbitrajeVar() {
         <Card className="mt-4 text-center py-10">
           <Gavel size={32} className="mx-auto text-accent mb-3" />
           <p className="text-sm text-gray-400 mb-5">
-            Jugadas polémicas reales revisadas por el VAR, en video y sin sonido. Pausalas o pasalas en cámara lenta y decidí qué cobrarías.
+            Jugadas polémicas reales revisadas por el VAR, en video y sin sonido. Páusalas o pásalas en cámara lenta y decide qué cobrarías.
           </p>
           {fromDaily ? (
             <p className="text-xs text-amber-500 mb-5 -mt-2">Juego diario: con reloj de {SECONDS_PER_SITUATION}s por jugada, una sola vez al día. Da puntos y un sobre de cartas.</p>
@@ -262,7 +262,7 @@ export default function ArbitrajeVar() {
           saveState={saveState}
           highlight={timed ? dailyMsg || undefined : "Sin reloj es práctica: no cuenta para el ranking semanal ni para el juego diario."}
           onAgain={() => setPhase("idle")}
-          shareText={`⚽ Futotal · Arbitraje / VAR: ${correctCount}/${totalRounds} — ¿me ganás?`}
+          shareText={`⚽ Futotal · Arbitraje / VAR: ${correctCount}/${totalRounds} — ¿me ganas?`}
         />
       )}
     </Layout>

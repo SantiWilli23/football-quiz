@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useState } from "react";
 import { Trophy } from "lucide-react";
 
-// Avisos chicos que confirman lo que acabás de hacer (guardar una marca, subir
+// Avisos chicos que confirman lo que acabas de hacer (guardar una marca, subir
 // de puesto, sumar racha). Arriba en el móvil (abajo tapaban la barra de
 // navegación) y abajo en escritorio. Máximo 3 a la vez y se van solos.
 // `toast(mensaje, { undo })`: si se pasa `undo`, el aviso ofrece «Deshacer»

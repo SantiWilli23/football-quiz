@@ -16,7 +16,7 @@ const router = Router();
 router.use(requireAuth);
 
 // Evita que alguien prueba a las patadas cientos de nombres por minuto.
-const guessLimiter = rateLimit({ windowMs: 60 * 1000, max: 20, message: "Muchos intentos seguidos, esperá un momento." });
+const guessLimiter = rateLimit({ windowMs: 60 * 1000, max: 20, message: "Muchos intentos seguidos, espera un momento." });
 
 // "¿Quién es?": se muestra la carrera del jugador club por club (con años) y
 // hay que adivinarlo antes de la última pista. Sin estado en la base: el
@@ -144,7 +144,7 @@ router.post("/preguntas/secret", (req, res) => {
   const name = String(req.body?.name || "");
   const difficulty = TIERS[req.body?.difficulty] ? req.body.difficulty : "medio";
   const p = ALL.find((x) => x.nombre === name);
-  if (!p) return res.status(400).json({ ok: false, error: "Ese jugador no está en la base: elegilo de la lista." });
+  if (!p) return res.status(400).json({ ok: false, error: "Ese jugador no está en la base: elígelo de la lista." });
   const tier = tierOf(p.nombre);
   if (tier !== difficulty) {
     return res.json({ ok: false, error: `${p.nombre} es de dificultad ${tier === "facil" ? "fácil" : tier === "medio" ? "media" : "difícil"} y la sala es ${difficulty === "facil" ? "fácil" : difficulty === "medio" ? "media" : "difícil"}. Cambialo por otro.` });

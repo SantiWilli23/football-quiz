@@ -21,7 +21,7 @@ export default function CareerHistory() {
       </div>
 
       {!history.length && (
-        <p className="text-sm text-gray-500">Todavía no completaste ninguna temporada. Volvé cuando termine la primera.</p>
+        <p className="text-sm text-gray-500">Todavía no completaste ninguna temporada. Vuelve cuando termine la primera.</p>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

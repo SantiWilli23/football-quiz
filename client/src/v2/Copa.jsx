@@ -7,7 +7,7 @@ const ROUND_NAME = { cuartos: "Cuartos", semis: "Semifinales", final: "Final" };
 const DAY_NAME = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"];
 const dayOf = (iso) => DAY_NAME[(new Date(`${iso}T12:00:00Z`).getUTCDay() + 6) % 7];
 
-// Copa semanal automática: de lunes a jueves clasificás con la suma de tus partidos del
+// Copa semanal automática: de lunes a jueves clasificas con la suma de tus partidos del
 // día y del viernes al domingo se juegan las llaves. No hay que inscribirse.
 export default function Copa({ clubId, userId }) {
   const [data, setData] = useState(null);
@@ -31,7 +31,7 @@ export default function Copa({ clubId, userId }) {
 
       {data.started && data.phase === "clasificacion" && (
         <>
-          <p className="text-sm text-gray-400 mt-1">Clasificás sumando tus partidos del día de lunes a jueves. El viernes arrancan las llaves.</p>
+          <p className="text-sm text-gray-400 mt-1">Clasificas sumando tus partidos del día de lunes a jueves. El viernes arrancan las llaves.</p>
           <ol className="mt-2 divide-y divide-border">
             {data.qualifying.length === 0 && <li className="py-2 text-sm text-gray-500">Nadie jugó todavía esta semana.</li>}
             {data.qualifying.map((q, i) => (

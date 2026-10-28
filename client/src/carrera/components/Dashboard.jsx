@@ -107,7 +107,7 @@ function SeasonNameEditor({ value, onSave }) {
             if (e.key === "Escape") setEditing(false);
           }}
           maxLength={60}
-          placeholder="Ponele un nombre a esta temporada…"
+          placeholder="Ponle un nombre a esta temporada…"
           className="bg-bg border border-border rounded-card px-3 py-1.5 text-sm flex-1 max-w-xs focus:outline-none focus:border-accent"
         />
         <button
@@ -126,7 +126,7 @@ function SeasonNameEditor({ value, onSave }) {
       className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors"
     >
       <PenLine size={12} />
-      {value ? `"${value}"` : "Ponele un nombre a esta temporada"}
+      {value ? `"${value}"` : "Ponle un nombre a esta temporada"}
     </button>
   );
 }
@@ -145,7 +145,7 @@ function CustomObjectiveCard({ objective, onSet, onToggleDone, onClear }) {
         className="w-full bg-panel border border-dashed border-border rounded-2xl p-4 text-left text-sm text-gray-500 hover:text-gray-300 hover:border-white/30 transition-colors flex items-center gap-2"
       >
         <Target size={14} />
-        Ponete un objetivo propio para esta temporada
+        Ponte un objetivo propio para esta temporada
       </button>
     );
   }
@@ -295,7 +295,7 @@ export default function Dashboard({ onPlayMatch }) {
         <div className="bg-red-500/10 border border-red-500/30 rounded-2xl px-4 py-2.5 flex items-center gap-2.5">
           <Lock size={15} className="text-red-400 shrink-0" />
           <p className="text-sm text-red-300">
-            <span className="font-semibold">Ventana de transferencias cerrada.</span> No podés fichar jugadores hasta la jornada 20 (ventana de invierno).
+            <span className="font-semibold">Ventana de transferencias cerrada.</span> No puedes fichar jugadores hasta la jornada 20 (ventana de invierno).
           </p>
         </div>
       )}
@@ -541,7 +541,7 @@ export default function Dashboard({ onPlayMatch }) {
                   <p className="text-xs text-gray-400 mt-0.5">
                     {LEAGUE_LABELS[offer.fromLeague] || offer.fromLeague} · Te ofrecen el puesto de técnico principal
                   </p>
-                  <p className="text-xs text-gray-600 mt-0.5">Aceptar implica dejar {team.name} y empezar de cero en ese club. Mantenés tu reputación acumulada.</p>
+                  <p className="text-xs text-gray-600 mt-0.5">Aceptar implica dejar {team.name} y empezar de cero en ese club. Mantienes tu reputación acumulada.</p>
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <button

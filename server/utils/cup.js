@@ -4,12 +4,12 @@ import { addDays, mondayOf, todayStr } from "./points.js";
 import { COPA_POINTS, creditPointsToGroup } from "./ledger.js";
 
 // Copa semanal automática (Futotal 2.0), sin inscripción.
-//   Lunes a jueves: clasificás con la suma de tus partidos del día.
+//   Lunes a jueves: clasificas con la suma de tus partidos del día.
 //   8+ miembros: cuartos (viernes), semis (sábado) y final (domingo).
 //   4–7 miembros: semis (sábado) y final (domingo).
 //   2–3 miembros: solo la final (domingo). El viernes solo se confirma el cuadro.
-// Cada cruce lo gana quien saque más en el partido del día de esa fecha; si no jugás,
-// perdés. Empate: gana quien sumó más de lunes a jueves.
+// Cada cruce lo gana quien saque más en el partido del día de esa fecha; si no juegas,
+// pierdes. Empate: gana quien sumó más de lunes a jueves.
 const SEEDING = {
   8: [[1, 8], [4, 5], [2, 7], [3, 6]],
   4: [[1, 4], [2, 3]],

@@ -70,7 +70,7 @@ function Scoreboard({ m, age, error }) {
           <p className="text-4xl font-extrabold tabular-nums leading-none">{m.score.home ?? "–"}<span className="text-gray-500 mx-1.5">:</span>{m.score.away ?? "–"}</p>
           {m.score.pens && <p className="text-xs text-gray-400 mt-1">({m.score.pens.home} – {m.score.pens.away} en penales)</p>}
           <p className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${live ? "bg-red-600 text-white" : "bg-white/10 text-gray-300"}`}>
-            {live && <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />}
+            {live && <span className="h-1.5 w-1.5 rounded-full bg-white anímate-pulse" />}
             {live && m.minute != null ? `${m.minute}'${m.stoppage ? `+${m.stoppage}` : ""}` : STATUS_TEXT[m.status] || m.detail}
           </p>
         </div>

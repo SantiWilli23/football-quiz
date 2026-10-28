@@ -91,7 +91,7 @@ export default function Sidebar() {
           <>
           {!collapsed && (
             <p className="px-3 pt-5 pb-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-gray-600">
-              Vos
+              Tú
             </p>
           )}
           {collapsed && <div className="my-2 border-t border-border" />}

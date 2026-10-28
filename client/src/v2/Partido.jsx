@@ -19,9 +19,9 @@ const chileToday = () => CHILE_DAY.format(new Date());
 // respuestas y calcula el marcador; esta pantalla solo muestra y manda lo que tocaste.
 // En «archivo» (partidos pasados) se corrige acá mismo y no suma puntos ni sobre.
 const PARTS = [
-  { n: 1, label: "1T", title: "¿Quién es?", hint: "Adiviná al jugador por su carrera." },
+  { n: 1, label: "1T", title: "¿Quién es?", hint: "Adivina al jugador por su carrera." },
   { n: 2, label: "2T", title: "Más o menos", hint: "¿El de la derecha vale más o menos?" },
-  { n: 3, label: "3T", title: "Penales", hint: "Acertás, es gol. Fallás, te atajan." },
+  { n: 3, label: "3T", title: "Penales", hint: "Aciertas, es gol. Fallas, te atajan." },
 ];
 const FEEDBACK_MS = 1100;
 // Mismo reparto que el servidor (33 + 33 + 34; 80% por acertar y 20% por rapidez). Solo
@@ -87,7 +87,7 @@ export default function Partido() {
       if (!alive) return;
       // Sin respuesta del servidor = sin señal: se juega con el paquete guardado de hoy.
       const pkg = !practice && !e.response ? loadPackage(chileToday()) : null;
-      if (!pkg) { setError(e.response?.data?.error || "No se pudo cargar el partido. Si estás sin señal, abrí la app una vez con conexión para poder jugar sin ella."); return; }
+      if (!pkg) { setError(e.response?.data?.error || "No se pudo cargar el partido. Si estás sin señal, abre la app una vez con conexión para poder jugar sin ella."); return; }
       const q = getQueue();
       const saved = q && q.date === pkg.date ? q.answers.map((a) => ({ ok: null, offline: true, answer: a.answer, points: 0 })) : [];
       setData({ date: pkg.date, items: pkg.items, answered: [], result: null });
@@ -230,7 +230,7 @@ export default function Partido() {
             <p className="t-eyebrow">{practice ? `Partido del ${practiceDate} · práctica` : "Partido del día"}</p>
             <h1 className="t-title">Tres partes, un minuto cada una</h1>
             <p className="text-sm text-gray-400 mt-1">
-              {practice ? "Es un partido pasado: lo jugás para practicar y no suma puntos ni sobre." : "Es el mismo para todos y solo se juega una vez. El 80% de cada pregunta es por acertar y el 20% por la rapidez."}
+              {practice ? "Es un partido pasado: lo juegas para practicar y no suma puntos ni sobre." : "Es el mismo para todos y solo se juega una vez. El 80% de cada pregunta es por acertar y el 20% por la rapidez."}
             </p>
           </div>
           <ol className="space-y-2">
@@ -252,7 +252,7 @@ export default function Partido() {
     return (
       <Layout focus exitTo="/hoy">
         <div className="max-w-md mx-auto text-center pt-10 space-y-3 celebrate-pop" key={p.n}>
-          <p className="text-6xl font-extrabold text-accent tabular-nums">{p.label}</p>
+          <p className="p-num text-7xl leading-none" style={{ color: "var(--gold)", textShadow: "0 0 18px #f2b84b55" }}>{p.label}</p>
           <h2 className="text-2xl font-bold">{p.title}</h2>
           <p className="text-sm text-gray-400">{p.hint}</p>
           <button className="btn btn-primary mt-4" autoFocus onClick={() => setPhase("item")}>Vamos</button>
@@ -306,7 +306,7 @@ export default function Partido() {
 
   return (
     <Layout focus exitTo="/hoy">
-      {idx === 0 && !practice ? <Mano id="partido" text="Elegí rápido">{screen}</Mano> : screen}
+      {idx === 0 && !practice ? <Mano id="partido" text="Elige rápido">{screen}</Mano> : screen}
     </Layout>
   );
 }
@@ -478,7 +478,7 @@ function Resultado({ result, practice, items, answers, clubStats, main, finishin
           {result.dailyCard && <p className="text-accent">Carta del día: <b>{result.dailyCard}</b>. Quedó en tu álbum del mes (Cartas).</p>}
           {result.clubPack && <p className="text-accent">¡Jugaron todos los de tu club hoy! El club gana un sobre extra.</p>}
           {result.event?.badge && <p className="text-accent">Partido temático: ganaste la insignia <b>{result.event.badge}</b>{result.event.pack ? " y un sobre del evento." : "."}</p>}
-          {result.pack && <p className="text-gray-400">Ganaste un sobre {result.pack === "top" ? "top" : result.pack === "bueno" ? "bueno" : "normal"}. Lo abrís en Cartas.</p>}
+          {result.pack && <p className="text-gray-400">Ganaste un sobre {result.pack === "top" ? "top" : result.pack === "bueno" ? "bueno" : "normal"}. Lo abres en Cartas.</p>}
         </div>
       )}
       {practice && <p className="text-sm text-gray-400 text-center">Los partidos pasados no suman puntos ni sobres.</p>}

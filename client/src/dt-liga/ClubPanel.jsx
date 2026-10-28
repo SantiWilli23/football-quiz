@@ -48,7 +48,7 @@ function Sections({ code, league, leagueWeek, season, marketLabel }) {
     <div className="space-y-4">
       {marketLabel && (
         <p className="text-xs rounded-card border border-accent/30 bg-accent/10 text-accent px-3 py-2">
-          {marketLabel} abierto: podés fichar y vender. Los clubes de la CPU también hacen movimientos y te pueden mandar ofertas.
+          {marketLabel} abierto: puedes fichar y vender. Los clubes de la CPU también hacen movimientos y te pueden mandar ofertas.
         </p>
       )}
       <div className="flex gap-1 overflow-x-auto pb-1" role="tablist" aria-label="Mi club">
@@ -131,7 +131,7 @@ export default function ClubPanel({ code, league, myTeamId, view = "club" }) {
       <div className={`flex items-center justify-between gap-3 text-xs text-gray-500 ${view !== "club" ? "hidden" : ""}`}>
         <p>Tu plantel define cómo rinde tu club en la liga: el once titular, la energía y las tácticas cuentan en cada partido.</p>
         <span className="inline-flex items-center gap-1 shrink-0" aria-live="polite">
-          {status === "saving" && <><Loader2 size={12} className="animate-spin" /> Guardando</>}
+          {status === "saving" && <><Loader2 size={12} className="anímate-spin" /> Guardando</>}
           {status === "saved" && <><Check size={12} className="text-emerald" /> Guardado</>}
           {status === "error" && <button onClick={flush} className="text-red-300 hover:underline">No se guardó, reintentar</button>}
         </span>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Coins, Layers, Package, Shield, Swords } from "lucide-react";
+import { Coins, Layers, Package, Puzzle, Shield, ShoppingBag, Swords } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
@@ -106,9 +107,47 @@ function PackOpening({ cards, onDone }) {
   );
 }
 
+// Sobres (Futotal 2.0), como en el prototipo: los que tienes para abrir y cómo se ganan.
+const EARN = [
+  ["Requisito", "Un club con la temporada iniciada"],
+  ["Partido del día", "Mejor marcador, mejor sobre"],
+  ["Copa semanal", "El campeón gana uno top"],
+  ["Podio del mes", "Súper sobre Élite, solo del club principal"],
+  ["Racha del club", "Si juegan todos, sobre extra"],
+  ["Partidas libres", "La primera de cada juego al día"],
+];
+function SobresV2({ state, busy, openPack, claimDaily }) {
+  return (
+    <>
+      <section>
+        <div className="p-sect" style={{ marginTop: 0 }}><h3>Para abrir<small>{state.packs} {state.packs === 1 ? "sobre" : "sobres"}</small></h3></div>
+        {state.packs > 0 ? (
+          <button onClick={openPack} disabled={busy} className="block w-full text-left rounded-2xl p-4 relative overflow-hidden" style={{ background: "linear-gradient(145deg,#2fb673,#0f3d2a)", boxShadow: "0 14px 30px -14px #2fb673", minHeight: 150 }}>
+            <b style={{ font: "800 22px var(--f-d)", color: "#fff" }}>Abrir sobre</b>
+            <small className="block" style={{ color: "#fffc" }}>5 cartas · toca para abrir{state.packs > 1 ? ` · te quedan ${state.packs}` : ""}</small>
+          </button>
+        ) : (
+          <div className="p-card text-center text-sm p-muted">No tienes sobres. Juega el partido del día para ganar uno.</div>
+        )}
+        {!state.dailyClaimed && <button onClick={claimDaily} className="p-btn ghost w-full mt-2.5">Reclamar sobre diario</button>}
+        {state.lockedPacks > 0 && <p className="p-gap">Tienes {state.lockedPacks} {state.lockedPacks === 1 ? "sobre guardado" : "sobres guardados"}: se abren al entrar a un club con la temporada iniciada.</p>}
+      </section>
+      <section className="p-sect">
+        <h3>Cómo ganas sobres</h3>
+        <div className="p-rows">
+          {EARN.map(([t, d]) => (
+            <div key={t} className="p-row"><Layers size={20} style={{ color: "var(--acc2)" }} /><span className="nm">{t}<small style={{ color: "var(--mute)" }}>{d}</small></span></div>
+          ))}
+        </div>
+      </section>
+    </>
+  );
+}
+
 export default function Cartas() {
   const { toast } = useToast();
-  const [tab, setTab] = useState("sobres");
+  const [params] = useSearchParams();
+  const [tab, setTab] = useState(() => (["sobres", "album", "equipo", "sbc", "tienda"].includes(params.get("tab")) ? params.get("tab") : "sobres"));
   const { on: v2 } = useFutotal2();
   const [state, setState] = useState(null);
   const [collection, setCollection] = useState([]);
@@ -279,7 +318,11 @@ export default function Cartas() {
     if (match.pack) toast("¡Ganaste un sobre!");
   }
 
-  const TABS = [["sobres", "Sobres", Package], ["album", "Álbum", Layers], ["equipo", "Mi equipo", Shield]];
+  const TABS = v2
+    ? [["sobres", "Sobres", Package], ["album", "Álbum", Layers], ["equipo", "Mi once", Shield], ["sbc", "SBC", Puzzle], ["tienda", "Tienda", ShoppingBag]]
+    : [["sobres", "Sobres", Package], ["album", "Álbum", Layers], ["equipo", "Mi equipo", Shield]];
+  // Con el rediseño, SBC y Tienda tienen su pestaña; antes iban debajo de los sobres.
+  const show = (k) => (v2 ? tab === k : tab === "sobres");
 
   if (accessError) {
     return (
@@ -298,9 +341,23 @@ export default function Cartas() {
 
   return (
     <Layout>
+      {v2 ? (
+        <div className="mt-1.5 mb-4">
+          <div className="p-seg scroll" role="tablist" aria-label="Secciones de Cartas">
+            {TABS.map(([k, label]) => <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{label}</button>)}
+          </div>
+          {state && (
+            <div className="p-eyebrow mt-4">
+              <span>Monedas</span>
+              <span className="p-num text-base" style={{ color: "var(--gold)", letterSpacing: 0 }}>{wallet}</span>
+            </div>
+          )}
+          {state && <p className="text-xs p-dim mt-1">{state.owned} de {state.total} cartas en tu álbum</p>}
+        </div>
+      ) : (<>
       <div className="mb-6">
         <h1 className="t-title mb-1">Cartas</h1>
-        <p className="text-gray-400 text-sm">Cada jugador de la base es una carta. Abrí sobres, armá tu once y jugá partidos: la química sale de los clubes que compartieron.</p>
+        <p className="text-gray-400 text-sm">Cada jugador de la base es una carta. Abre sobres, arma tu once y juega partidos: la química sale de los clubes que compartieron.</p>
       </div>
 
       <div className="flex gap-1.5 mb-5">
@@ -322,10 +379,12 @@ export default function Cartas() {
           </span>
         )}
       </div>
+      </>)}
 
-      {tab === "sobres" && state && (
+      {["sobres", "sbc", "tienda"].includes(tab) && state && (
         <div className="space-y-4">
-          <Card className="text-center py-8">
+          {show("sobres") && v2 && <SobresV2 state={state} busy={busy} openPack={openPack} claimDaily={claimDaily} />}
+          {show("sobres") && !v2 && <Card className="text-center py-8">
             <p className="text-4xl font-bold tabular-nums mb-1">{state.packs}</p>
             <p className="text-sm text-gray-400 mb-5">sobre{state.packs === 1 ? "" : "s"} para abrir · 5 cartas cada uno</p>
             <div className="flex gap-2 justify-center flex-wrap">
@@ -338,14 +397,14 @@ export default function Cartas() {
                 </button>
               )}
             </div>
-            <p className="t-meta mt-4">Ganás sobres con el diario, cumpliendo el reto del día y ganando partidos (máx. 2 por día) — mejor calidad cuanto más contundente la victoria.</p>
-          </Card>
+            <p className="t-meta mt-4">Ganas sobres con el diario, cumpliendo el reto del día y ganando partidos (máx. 2 por día) — mejor calidad cuanto más contundente la victoria.</p>
+          </Card>}
           {opened && <PackOpening cards={opened} />}
-          {v2 && <CartasTema lockedPacks={state.lockedPacks || 0} onChanged={load} />}
+          {v2 && tab === "sbc" && <CartasTema lockedPacks={state.lockedPacks || 0} onChanged={load} />}
 
-          <Card>
+          {show("tienda") && <Card>
             <p className="t-eyebrow mb-1">Tienda de sobres</p>
-            <p className="text-xs text-gray-500 mb-3">Comprá con la moneda de vender cartas — nunca con dinero real.</p>
+            <p className="text-xs text-gray-500 mb-3">Compra con la moneda de vender cartas — nunca con dinero real.</p>
             {shop.deal && (
               <div className="deal-card mb-3 flex items-center justify-between gap-3 rounded-card border border-amber-400/50 bg-amber-400/10 px-3 py-2.5">
                 <span className="min-w-0 text-sm">
@@ -374,11 +433,11 @@ export default function Cartas() {
                 </button>
               ))}
             </div>
-          </Card>
+          </Card>}
 
-          <Card>
-            <p className="t-eyebrow mb-1">SBC — armá el equipo, ganá el sobre</p>
-            <p className="text-xs text-gray-500 mb-3">Entregás 11 cartas que cumplan el requisito (se pierden, como en el FIFA real) y te dan un sobre a cambio.</p>
+          {show("sbc") && <Card>
+            <p className="t-eyebrow mb-1">{v2 ? "Más SBC" : "SBC — arma el equipo, gana el sobre"}</p>
+            <p className="text-xs text-gray-500 mb-3">Entregas 11 cartas que cumplan el requisito (se pierden, como en el FIFA real) y te dan un sobre a cambio.</p>
             <div className="space-y-2">
               {sbcs.map((s) => (
                 <div key={s.id} className="rounded-card border border-border p-3">
@@ -417,13 +476,13 @@ export default function Cartas() {
                 </div>
               ))}
             </div>
-          </Card>
+          </Card>}
         </div>
       )}
 
       {tab === "album" && (
         collection.length === 0 ? (
-          <Card><EmptyState icon={Package} title="Todavía no tenés cartas" hint="Reclamá tu sobre diario y abrilo para empezar el álbum." actions={[{ label: "Ir a Sobres", onClick: () => setTab("sobres") }]} /></Card>
+          <Card><EmptyState icon={Package} title="Todavía no tienes cartas" hint="Reclama tu sobre diario y ábrelo para empezar el álbum." actions={[{ label: "Ir a Sobres", onClick: () => setTab("sobres") }]} /></Card>
         ) : (
           <div className="space-y-4">
             <div className="flex flex-wrap gap-2 items-center">
@@ -514,7 +573,7 @@ export default function Cartas() {
           {collection.length > 0 && <CardExtrasPanel lineupNames={saved} collection={collection} onChanged={load} />}
 
           {collection.length === 0 ? (
-            <Card><EmptyState icon={Package} title="Sin cartas todavía" hint="Abrí sobres para poder armar tu equipo." actions={[{ label: "Ir a Sobres", onClick: () => setTab("sobres") }]} /></Card>
+            <Card><EmptyState icon={Package} title="Sin cartas todavía" hint="Abre sobres para poder armar tu equipo." actions={[{ label: "Ir a Sobres", onClick: () => setTab("sobres") }]} /></Card>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {collection.filter((c) => c.pos !== "DT").map((c) => <PlayerCard key={c.name} c={c} small selected={selected.includes(c.name)} onClick={() => toggle(c)} />)}

@@ -116,10 +116,10 @@ export default function ModeBCard({ data, groupId, onChanged }) {
           </span>
 
           <div className="flex items-center gap-3">
-            <Step n="1" label="Respondé" color={kind.color} active={!answered} done={answered} />
+            <Step n="1" label="Responde" color={kind.color} active={!answered} done={answered} />
             <Step
               n="2"
-              label="Predecí"
+              label="Predice"
               color={kind.color}
               active={answered && !predicted}
               done={predicted}
@@ -131,8 +131,8 @@ export default function ModeBCard({ data, groupId, onChanged }) {
         <h2 className="text-xl font-semibold mb-2">{data.prompt}</h2>
 
         <p className="text-xs mb-5" style={{ color: answered && !predicted ? kind.color : CHALK.faint }}>
-          {!answered && "Elegí tu respuesta."}
-          {answered && !predicted && "Ahora adiviná: ¿qué va a votar la mayoría del grupo? (+15 pts si acertás)"}
+          {!answered && "Elige tu respuesta."}
+          {answered && !predicted && "Ahora adivina: ¿qué va a votar la mayoría del grupo? (+15 pts si aciertas)"}
           {data.revealed && "Resultados del grupo"}
         </p>
 
@@ -182,7 +182,7 @@ export default function ModeBCard({ data, groupId, onChanged }) {
                 <span className="text-sm flex-1 relative">
                   {option.label}
                   {data.kind === "quien_es_mas" && String(option.value) === String(user?.id) && (
-                    <span className="text-gray-500"> (vos)</span>
+                    <span className="text-gray-500"> (tú)</span>
                   )}
                 </span>
 
@@ -248,7 +248,7 @@ export default function ModeBCard({ data, groupId, onChanged }) {
               ))}
               <span className="text-xs text-gray-600 flex items-center gap-1 ml-1">
                 <Sparkles size={10} />
-                Reaccioná al resultado
+                Reacciona al resultado
               </span>
             </div>
           </>

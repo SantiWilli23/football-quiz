@@ -99,7 +99,7 @@ export default function MatchSimulator({ matchResult, onFinish }) {
     <div className="min-h-screen bg-bg text-white p-4">
       <div className="max-w-2xl mx-auto">
         <p className="mb-2 flex items-center justify-center gap-2 text-xs uppercase tracking-wide text-gray-300">
-          {!eventsDone && <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />}
+          {!eventsDone && <span className="h-2 w-2 anímate-pulse rounded-full bg-red-500" />}
           {data.competitionLabel || "Liga"}{!eventsDone ? " · en vivo" : " · final"}
         </p>
         {/* Visor único: el motor de la carrera sigue siendo el mismo, solo cambia cómo se ve. */}
@@ -118,8 +118,8 @@ export default function MatchSimulator({ matchResult, onFinish }) {
         {showHalftimePanel && (
           <div className="space-y-4">
             <div className="bg-amber/5 border border-amber/30 rounded-card p-4">
-              <p className="text-sm font-semibold text-amber mb-1 flex items-center gap-1.5"><Pause size={14} /> Entretiempo: hacé tus cambios</p>
-              <p className="text-xs text-gray-400 mb-4">Podés hacer hasta {MAX_SUBS} sustituciones antes del segundo tiempo. También podés continuar sin cambios.</p>
+              <p className="text-sm font-semibold text-amber mb-1 flex items-center gap-1.5"><Pause size={14} /> Entretiempo: haz tus cambios</p>
+              <p className="text-xs text-gray-400 mb-4">Puedes hacer hasta {MAX_SUBS} sustituciones antes del segundo tiempo. También puedes continuar sin cambios.</p>
 
               {subs.length > 0 && (
                 <div className="space-y-1.5 mb-3">

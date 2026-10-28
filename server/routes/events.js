@@ -46,7 +46,7 @@ router.get("/current", async (req, res) => {
   }
 });
 
-// Pronóstico de un toque: no da puntos, da un sobre si acertás cómo terminó.
+// Pronóstico de un toque: no da puntos, da un sobre si aciertas cómo terminó.
 router.post("/pred", async (req, res) => {
   try {
     const date = String(req.body?.date || "");
@@ -130,7 +130,7 @@ router.get("/history", async (req, res) => {
 });
 
 // ---------- El día después ----------
-// Una pregunta sin puntos sobre cómo terminó el partido real de ayer; si acertás, insignia.
+// Una pregunta sin puntos sobre cómo terminó el partido real de ayer; si aciertas, insignia.
 function dayAfterQuestion(ev) {
   const r = JSON.parse(ev.real_result);
   const real = `${r.home}-${r.away}`;
@@ -182,7 +182,7 @@ router.post("/day-after", async (req, res) => {
 });
 
 // ---------- W1 · Adivina la alineación ----------
-// En la previa elegís equipo y armás el once. Cuando sale la alineación real, cada ficha se
+// En la previa eliges equipo y armas el once. Cuando sale la alineación real, cada ficha se
 // da vuelta (verde si estaba, roja si no). 8 aciertos o más = sobre del evento. No da puntos.
 router.get("/lineup", async (req, res) => {
   try {
@@ -229,14 +229,14 @@ router.post("/lineup-guess", async (req, res) => {
     const date = String(req.body?.date || "");
     const team = req.body?.team === "away" ? "away" : req.body?.team === "home" ? "home" : null;
     const ev = await eventOn(date);
-    if (!ev || !team) return res.status(400).json({ error: "Elegí un equipo" });
+    if (!ev || !team) return res.status(400).json({ error: "Elige un equipo" });
     const players = Array.isArray(req.body?.players) ? [...new Set(req.body.players.map(String))] : [];
     if (players.length !== 11) return res.status(400).json({ error: "El once necesita 11 jugadores distintos" });
     const old = (await db.execute({ sql: "SELECT revealed_at FROM line_guesses WHERE user_id = ? AND event_date = ?", args: [req.userId, date] })).rows[0];
     if (old?.revealed_at) return res.status(409).json({ error: "La alineación real ya salió" });
     const squad = await squadFor(ev.league, team === "home" ? ev.home_id : ev.away_id).catch(() => []);
     const known = new Set(squad.map(normalize));
-    if (!players.every((p) => known.has(normalize(p)))) return res.status(400).json({ error: "Elegí jugadores del plantel de ese equipo" });
+    if (!players.every((p) => known.has(normalize(p)))) return res.status(400).json({ error: "Elige jugadores del plantel de ese equipo" });
     await db.execute({
       sql: `INSERT INTO line_guesses (user_id, event_date, team, xi_json) VALUES (?, ?, ?, ?)
             ON CONFLICT(user_id, event_date) DO UPDATE SET team = excluded.team, xi_json = excluded.xi_json`,

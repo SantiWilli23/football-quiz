@@ -1,7 +1,7 @@
 // Presupuesto y finanzas del club.
 export function transferBudgetFor(team, lastLeaguePosition) {
   // El presupuesto de fichajes arranca del presupuesto del club (el mismo que se muestra al elegirlo),
-  // así no hay diferencia entre lo que ves y lo que tenés para gastar.
+  // así no hay diferencia entre lo que ves y lo que tienes para gastar.
   const base = team.budget ?? team.prestige * 20;
   let bonus = 0;
   if (lastLeaguePosition) {

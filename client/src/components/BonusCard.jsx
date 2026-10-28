@@ -93,7 +93,7 @@ export default function BonusCard({ groupId }) {
               <Avatar user={c} size={32} className="relative" />
               <span className="text-sm flex-1 relative">
                 {c.username}
-                {c.id === user?.id && <span className="text-gray-500"> (vos)</span>}
+                {c.id === user?.id && <span className="text-gray-500"> (tú)</span>}
               </span>
               {data.voted && (
                 <span className="text-xs font-semibold text-gray-400 relative shrink-0">{votes} votos</span>
@@ -106,7 +106,7 @@ export default function BonusCard({ groupId }) {
       {error && <p className="text-sm text-red-400 mt-4">{error}</p>}
 
       {!data.voted && (
-        <p className="text-xs text-gray-500 mt-4">Tocá un nombre para votar. Solo se puede votar una vez.</p>
+        <p className="text-xs text-gray-500 mt-4">Toca un nombre para votar. Solo se puede votar una vez.</p>
       )}
     </Card>
   );

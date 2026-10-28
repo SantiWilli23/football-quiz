@@ -7,7 +7,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 // Página pública (sin login) para un link de invitación — antes solo se
 // podía unir tipeando el código a mano adentro del grupo ya logueado. Acá se
 // ve un preview del grupo antes de registrarse, para que el link se pueda
-// mandar por WhatsApp con contexto real en vez de "confiá y registrate".
+// mandar por WhatsApp con contexto real en vez de "confía y regístrate".
 export default function InvitePreview() {
   const { code } = useParams();
   const navigate = useNavigate();
@@ -57,12 +57,12 @@ export default function InvitePreview() {
             <p className="text-xs text-gray-500 mb-4">{preview.member_count} miembro{preview.member_count === 1 ? "" : "s"}</p>
             {preview.challenge && (
               <p className="mb-5 rounded-xl border border-accent/40 bg-accent/10 px-3 py-2 text-sm">
-                <b>{preview.challenge.from}</b> te desafía: superá sus <b className="tabular-nums">{preview.challenge.score}</b>.
+                <b>{preview.challenge.from}</b> te desafía: supera sus <b className="tabular-nums">{preview.challenge.score}</b>.
               </p>
             )}
 
             <p className="text-xs text-gray-500 mb-5">
-              Trivia diaria, duelos 1v1, estadísticas del grupo y mucho más — competí con ellos en Futotal.
+              Trivia diaria, duelos 1v1, estadísticas del grupo y mucho más — compite con ellos en Futotal.
             </p>
 
             {!loading && user && (

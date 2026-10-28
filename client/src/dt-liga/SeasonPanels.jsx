@@ -78,7 +78,7 @@ export function MonthPanel({ code, onChanged }) {
       <ul className="grid sm:grid-cols-2 gap-1.5 text-xs">
         {m.humans.map((h) => (
           <li key={h.userId} className="flex items-center justify-between gap-2 rounded-xl border border-border px-3 py-1.5">
-            <span className="truncate">{h.username}{h.userId === me.userId ? " (vos)" : ""}</span>
+            <span className="truncate">{h.username}{h.userId === me.userId ? " (tú)" : ""}</span>
             <span className={h.done ? "text-emerald" : h.pendingMatches === 0 ? "text-amber" : "text-gray-400"}>
               {h.done ? "Listo ✓" : h.pendingMatches === 0 ? "Falta dar Listo" : `Faltan ${h.pendingMatches} partido${h.pendingMatches === 1 ? "" : "s"}`}
             </span>
@@ -100,7 +100,7 @@ export function MonthPanel({ code, onChanged }) {
       </div>
       {m.overdue && (
         <p className="text-xs text-amber bg-amber/10 border border-amber/30 rounded-xl px-3 py-2">
-          Los demás ya cerraron el mes y vos sos el que falta. Desde tu último movimiento corre el reloj: multa de €{m.finePerDay}M por día
+          Los demás ya cerraron el mes y tú eres el que falta. Desde tu último movimiento corre el reloj: multa de €{m.finePerDay}M por día
           ({m.overdue.daysElapsed} día{m.overdue.daysElapsed === 1 ? "" : "s"} hasta ahora) y a los {m.expelAfterDays} días te expulsan y tu club pasa a la CPU.
         </p>
       )}

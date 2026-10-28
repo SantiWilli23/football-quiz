@@ -111,14 +111,14 @@ export const DT_CANDIDATES = [
   { id: "dt_veterano", name: "Ricardo Suels", style: "Veterano de la casa", cost: 0, quality: 50, fanBoost: 4 },
 ];
 export const ACHIEVEMENTS = [
-  { id: "titulo", label: "Primer título", desc: "Salí campeón de liga", test: (s) => s.titlesWon >= 1 },
-  { id: "dinastia", label: "Dinastía", desc: "Ganá 3 títulos", test: (s) => s.titlesWon >= 3 },
+  { id: "titulo", label: "Primer título", desc: "Sal campeón de liga", test: (s) => s.titlesWon >= 1 },
+  { id: "dinastia", label: "Dinastía", desc: "Gana 3 títulos", test: (s) => s.titlesWon >= 3 },
   { id: "coloso", label: "El coloso", desc: "Estadio al máximo", test: (s) => s.stadiumTier >= 4 },
   { id: "cantera", label: "Cantera de élite", desc: "Cantera nivel 3", test: (s) => s.academyTier >= 3 },
   { id: "cuentas", label: "Cuentas sanas", desc: "Sin deuda y más de €30M en caja (desde la temporada 3)", test: (s) => s.season >= 3 && s.debt === 0 && s.budget >= 30 },
-  { id: "socios50", label: "50 mil socios", desc: "Llegá a 50.000 socios", test: (s) => s.members >= 50000 },
-  { id: "reelecto", label: "Reelecto", desc: "Ganá una elección", test: (s) => s.electionsWon >= 1 },
-  { id: "europa", label: "Noches europeas", desc: "Clasificá a competencia internacional", test: (s) => (s.history || []).some((h) => h.qualifiesInternational) },
+  { id: "socios50", label: "50 mil socios", desc: "Llega a 50.000 socios", test: (s) => s.members >= 50000 },
+  { id: "reelecto", label: "Reelecto", desc: "Gana una elección", test: (s) => s.electionsWon >= 1 },
+  { id: "europa", label: "Noches europeas", desc: "Clasifica a competencia internacional", test: (s) => (s.history || []).some((h) => h.qualifiesInternational) },
   { id: "prestigio", label: "Marca global", desc: "80 de prestigio", test: (s) => s.prestige >= 80 },
   { id: "vip", label: "Palco de oro", desc: "Palcos VIP nivel 3", test: (s) => s.vipTier >= 3 },
   { id: "pueblo", label: "Presidente del pueblo", desc: "Hinchada 90+ y prensa 70+", test: (s) => s.fanHappiness >= 90 && s.press >= 70 },
@@ -410,7 +410,7 @@ export function tvOptions(state) {
   const base = 0.22 + state.prestige * 0.004;
   return [
     { id: "fija", label: "Contrato fijo", desc: "Plata segura por dos temporadas.", weekly: r3(base), bonusWeekly: 0, seasons: 2 },
-    { id: "variable", label: "Variable por rendimiento", desc: "Menos base, pero cobrás un extra semanal si estás en el top 4.", weekly: r3(base * 0.7), bonusWeekly: r3(base * 0.9), seasons: 2 },
+    { id: "variable", label: "Variable por rendimiento", desc: "Menos base, pero cobras un extra semanal si estás en el top 4.", weekly: r3(base * 0.7), bonusWeekly: r3(base * 0.9), seasons: 2 },
     { id: "corto", label: "Acuerdo anual flexible", desc: "Un poco más por semana, pero hay que renegociar cada año.", weekly: r3(base * 1.08), bonusWeekly: 0, seasons: 1 },
   ];
 }
@@ -533,7 +533,7 @@ export function initialPresidentState(teamId, teamName, league, teamPrestige, ph
     gameOver: false, gameOverReason: null, currentDecision: null, decisionUsed: false, _usedDecisions: [],
   };
   base.tv = { ...tvOptions(base)[0], seasonsLeft: 2 };
-  // Arrancás con dos sponsors ya firmados (camiseta e indumentaria): los que
+  // Arrancas con dos sponsors ya firmados (camiseta e indumentaria): los que
   // heredaste de la gestión anterior. El resto hay que salir a buscarlos.
   base.sponsorOffers = generateSponsorOffers(base);
   for (const slot of ["shirt", "kit"]) {

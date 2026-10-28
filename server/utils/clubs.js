@@ -1,9 +1,10 @@
 import { db } from "../db/client.js";
 
-// Futotal 2.0 se enciende por etapas: con FUTOTAL2=1 los sobres ganados sin un club
-// iniciado quedan guardados (máximo 3) hasta entrar a uno. Sin la bandera, la app se
+// Futotal 2.0: con el rediseño los sobres ganados sin un club
+// iniciado quedan guardados (máximo 3) hasta entrar a uno. Con FUTOTAL2=0, la app se
 // comporta como siempre y nada se bloquea.
-export const redesignOn = () => process.env.FUTOTAL2 === "1";
+// Encendido por defecto: solo FUTOTAL2=0 vuelve a la app anterior.
+export const redesignOn = () => process.env.FUTOTAL2 !== "0";
 
 // Juegos fusionados que ya se abren por /jugar/<juego>. Con FUTOTAL2_JUEGOS (lista separada por
 // comas) se abren de a uno; sin la variable, con el rediseño encendido están todos. Los que no
@@ -85,7 +86,8 @@ export async function clubStreak(groupId, today) {
   let day = todayDone ? today : step(today, -1);
   let streak = 0;
   while (full.has(day) && streak < 1500) { streak += 1; day = step(day, -1); }
-  return { streak, todayDone, members: members.length };
+  const playedToday = Number(rows.find((r) => r.date === today)?.n || 0);
+  return { streak, todayDone, members: members.length, playedToday };
 }
 
 // Si hoy jugaron todos los miembros de un club, cada uno recibe un sobre extra (una

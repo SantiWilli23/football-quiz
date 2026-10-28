@@ -6,7 +6,7 @@ import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 
-// Adivina la alineación: elegís equipo y armás los 11 titulares. Cuando sale la alineación
+// Adivina la alineación: eliges equipo y armas los 11 titulares. Cuando sale la alineación
 // real, cada ficha se da vuelta (verde si estaba, roja si no). 8 aciertos o más = sobre del evento.
 export default function Alineacion() {
   const { date } = useParams();
@@ -53,7 +53,7 @@ export default function Alineacion() {
         <div>
           <p className="t-eyebrow">{ev.label}</p>
           <h1 className="t-title">Adivina la alineación</h1>
-          <p className="text-sm text-gray-400">Elegí un equipo y armá su once titular. Con 8 aciertos o más ganás un sobre del evento (no da puntos).</p>
+          <p className="text-sm text-gray-400">Elige un equipo y arma su once titular. Con 8 aciertos o más ganas un sobre del evento (no da puntos).</p>
         </div>
 
         {!locked && !data.guess && (

@@ -11,14 +11,14 @@ import { MONTH_NAMES, currentDate } from "../engine/energy.js";
 const SPECIALTIES = Object.values(SCOUT_SPECIALTIES);
 const ERRORS = {
   insufficient_budget: (r) => `No te alcanza el presupuesto (cuesta €${r.cost}M).`,
-  max_scouts: () => `Ya tenés el máximo de ${MAX_CANTERA_SCOUTS} ojeadores de cantera.`,
-  max_networks: () => `Ya tenés redes en ${MAX_NETWORKS} países.`,
+  max_scouts: () => `Ya tienes el máximo de ${MAX_CANTERA_SCOUTS} ojeadores de cantera.`,
+  max_networks: () => `Ya tienes redes en ${MAX_NETWORKS} países.`,
   max_level: () => "Esa red ya está al nivel máximo.",
-  no_scouts: () => "Contratá un ojeador de cantera para poder fichar chicos.",
-  need_scout: () => "Para abrir una red hay que mandar a un ojeador libre a ese país: elegí uno.",
+  no_scouts: () => "Contrata un ojeador de cantera para poder fichar chicos.",
+  need_scout: () => "Para abrir una red hay que mandar a un ojeador libre a ese país: elige uno.",
   expired: () => "Ese joven ya no está: pasó la semana del informe.",
   taken: (r) => `${r.takenBy} se lo llevó antes: lo fichó primero.`,
-  network: () => "No se pudo confirmar con la liga. Probá de nuevo.",
+  network: () => "No se pudo confirmar con la liga. Prueba de nuevo.",
   full: () => `La cantera está llena (${MAX_YOUTH} chicos).`,
 };
 
@@ -86,7 +86,7 @@ export default function Cantera() {
         <div>
           <h2 className="text-2xl font-bold mb-1 flex items-center gap-2"><Sprout size={22} className="text-emerald" /> Cantera</h2>
           <p className="text-sm text-gray-500 max-w-xl leading-relaxed">
-            Armá tu red de ojeadores por el mundo: cada mes te muestran jóvenes para sumar. Para fichar a un chico necesitás tener ojeadores contratados.
+            Arma tu red de ojeadores por el mundo: cada mes te muestran jóvenes para sumar. Para fichar a un chico necesitas tener ojeadores contratados.
           </p>
         </div>
         <div className="tone-accent tile-b rounded-2xl px-5 py-3 text-right shrink-0">
@@ -104,7 +104,7 @@ export default function Cantera() {
 
       {leavingCount > 0 && (
         <div className="bg-red-500/10 border border-red-500/30 rounded-2xl px-4 py-3 text-sm text-red-300">
-          {leavingCount} chico{leavingCount === 1 ? "" : "s"} de tu cantera se {leavingCount === 1 ? "va" : "van"} a otro club al terminar la temporada si no {leavingCount === 1 ? "lo subís" : "los subís"} al primer equipo.
+          {leavingCount} chico{leavingCount === 1 ? "" : "s"} de tu cantera se {leavingCount === 1 ? "va" : "van"} a otro club al terminar la temporada si no {leavingCount === 1 ? "lo subes" : "los subes"} al primer equipo.
         </div>
       )}
 
@@ -130,7 +130,7 @@ export default function Cantera() {
           {!hasScouts || !cantera.networks.length ? (
             <div className="bg-panel border border-dashed border-border rounded-2xl p-6 text-center space-y-2">
               <p className="text-sm text-gray-300">Todavía no te llegan jóvenes.</p>
-              <p className="text-xs text-gray-500">Contratá al menos un ojeador y abrí una red en algún país: desde el mes que viene te muestran jóvenes.</p>
+              <p className="text-xs text-gray-500">Contrata al menos un ojeador y abre una red en algún país: desde el mes que viene te muestran jóvenes.</p>
               <button onClick={() => setSection("redes")} className="mt-1 text-xs font-medium px-4 py-2 rounded-full bg-accent/10 text-accent border border-accent/40 hover:bg-accent/20">Ir a ojeadores y redes</button>
             </div>
           ) : null}
@@ -168,7 +168,7 @@ export default function Cantera() {
                 <button
                   onClick={() => report(signCanteraProspect(p.id), () => `Sumaste a ${p.name} a la cantera.`)}
                   disabled={!hasScouts || !!claims?.[p.id]}
-                  title={hasScouts ? "" : "Necesitás un ojeador de cantera contratado"}
+                  title={hasScouts ? "" : "Necesitas un ojeador de cantera contratado"}
                   className="self-end text-xs font-medium px-3.5 py-2 rounded-xl bg-accent/10 text-accent border border-accent/40 hover:bg-accent/20 disabled:opacity-40 transition-colors"
                 >
                   Fichar para la cantera
@@ -201,7 +201,7 @@ export default function Cantera() {
                 </div>
                 {y.leaving && (
                   <p className="text-xs text-red-300 bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-1.5">
-                    {y.leaving.club} lo quiere: se va en ~{monthsUntilLeaving(state.week)} mes{monthsUntilLeaving(state.week) === 1 ? "" : "es"} si no lo subís.
+                    {y.leaving.club} lo quiere: se va en ~{monthsUntilLeaving(state.week)} mes{monthsUntilLeaving(state.week) === 1 ? "" : "es"} si no lo subes.
                   </p>
                 )}
                 <div className="flex gap-1.5 justify-end">
@@ -264,7 +264,7 @@ export default function Cantera() {
                   <div key={sc.id} className="bg-bg/60 border border-border rounded-xl px-3 py-2">
                     <p className="text-sm font-semibold">{SCOUT_SPECIALTIES[sc.specialty]?.label}</p>
                     <p className="text-xs text-gray-500">Quedan {sc.seasonsLeft} temporada{sc.seasonsLeft === 1 ? "" : "s"}</p>
-                    <p className={`text-xs mt-0.5 ${countryOfScout[sc.id] ? "text-emerald" : "text-amber"}`}>{countryOfScout[sc.id] ? `Asignado a la red de ${countryOfScout[sc.id]}` : "Libre: mandalo a un país para abrir una red"}</p>
+                    <p className={`text-xs mt-0.5 ${countryOfScout[sc.id] ? "text-emerald" : "text-amber"}`}>{countryOfScout[sc.id] ? `Asignado a la red de ${countryOfScout[sc.id]}` : "Libre: mándalo a un país para abrir una red"}</p>
                   </div>
                 ))}
               </div>
@@ -273,11 +273,11 @@ export default function Cantera() {
 
           <div>
             <p className="text-sm font-semibold mb-1">Redes en países ({cantera.networks.length}/{MAX_NETWORKS})</p>
-            <p className="text-xs text-gray-500 mb-2">Para abrir una red mandás a un ojeador libre a ese país (queda asignado a esa red). Después podés subirla de nivel (1 a {MAX_NETWORK_LEVEL}): más nivel, más jóvenes en el informe de cada mes.</p>
+            <p className="text-xs text-gray-500 mb-2">Para abrir una red mandas a un ojeador libre a ese país (queda asignado a esa red). Después puedes subirla de nivel (1 a {MAX_NETWORK_LEVEL}): más nivel, más jóvenes en el informe de cada mes.</p>
             <div className="flex items-center gap-2 mb-3 flex-wrap">
               <label className="text-xs text-gray-400" htmlFor="cantera-scout">Ojeador a mandar:</label>
               <select id="cantera-scout" value={scoutToSend} onChange={(e) => setChosenScout(e.target.value)} disabled={!freeScouts.length} className="bg-bg border border-border rounded-xl px-3 py-1.5 text-xs disabled:opacity-50">
-                {freeScouts.length === 0 && <option value="">No tenés ojeadores libres</option>}
+                {freeScouts.length === 0 && <option value="">No tienes ojeadores libres</option>}
                 {freeScouts.map((sc) => <option key={sc.id} value={sc.id}>{SCOUT_SPECIALTIES[sc.specialty]?.label} ({sc.seasonsLeft} temp.)</option>)}
               </select>
             </div>

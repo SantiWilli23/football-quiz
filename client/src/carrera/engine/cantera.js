@@ -10,12 +10,12 @@ import { SCOUT_SPECIALTIES } from "./scouting.js";
 //    fichar a ningún chico.
 //  - Redes en países: abrir una red exige mandar un ojeador a ese país (queda asignado) y
 //    cada red tiene nivel 1 a 3. Cada mes, cada red te entrega un informe con jóvenes de ese
-//    país; a más nivel, más chicos y mejores. Tenés una semana para fichar a cada uno: el que
+//    país; a más nivel, más chicos y mejores. Tienes una semana para fichar a cada uno: el que
 //    no ficha en ese plazo desaparece y no vuelve.
 //  - Rango de potencial: lo que se ve del potencial de un chico es un rango. De joven es
 //    muy ancho y optimista (alto); a medida que crece se achica y baja hacia su potencial
 //    real.
-//  - Salida: un chico de 20 años o más que no subís al primer equipo se puede ir a otro
+//  - Salida: un chico de 20 años o más que no subes al primer equipo se puede ir a otro
 //    club. Se avisa varios meses antes de que termine la temporada.
 
 export const MAX_CANTERA_SCOUTS = 6;

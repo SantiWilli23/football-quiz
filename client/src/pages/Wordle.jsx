@@ -9,13 +9,13 @@ import { playSfx } from "../utils/sfx.js";
 import { celebrateScore } from "../utils/celebrate.js";
 
 const HINT_ORDER_LABELS = ["Posición", "Liga", "Nacionalidad", "Nacimiento", "Club"];
-// Fichado se juega según por dónde entrás: desde "Juego diario" (?diario=1) es UN
+// Fichado se juega según por dónde entras: desde "Juego diario" (?diario=1) es UN
 // solo jugador y no se repite; desde el reto del día (?reto=1) el secreto sale de
 // un grupo restringido (jóvenes, leyendas...); desde Juegos es partida libre.
 const MODE_INFO = {
-  daily: { label: "Juego diario", hint: "Un solo jugador secreto para todos hoy: si lo adivinás sumás, y después no se puede volver a jugar." },
+  daily: { label: "Juego diario", hint: "Un solo jugador secreto para todos hoy: si lo adivinas sumas, y después no se puede volver a jugar." },
   reto: { label: "Reto del día", hint: "El secreto sale de un grupo restringido." },
-  random: { label: "Partida libre", hint: "Un secreto nuevo cada partida, con dificultad a elección. Practicá sin límite." },
+  random: { label: "Partida libre", hint: "Un secreto nuevo cada partida, con dificultad a elección. Practica sin límite." },
 };
 
 function Cell({ label, children, tone }) {
@@ -219,10 +219,10 @@ export default function Wordle() {
       <h1 className="text-xl sm:text-2xl font-bold mb-1">Fichado</h1>
       {/* Reglas y comodines solo en pantallas grandes: en el teléfono, el «?» las tiene. */}
       <p className="hidden sm:block text-gray-400 text-sm mb-1">
-        Adiviná al futbolista secreto en {meta.maxAttempts} intentos. Cada intento te marca en verde lo que coincide y te da un número de parecido de 0 a 100.
+        Adivina al futbolista secreto en {meta.maxAttempts} intentos. Cada intento te marca en verde lo que coincide y te da un número de parecido de 0 a 100.
       </p>
       <p className="hidden sm:block text-xs text-gray-500 mb-4">
-        Cada {wildcards.step} días seguidos ganando la diaria ganás un comodín: una pista gratis que no gasta intentos.
+        Cada {wildcards.step} días seguidos ganando la diaria ganas un comodín: una pista gratis que no gasta intentos.
         {wildcards.streak > 0 && <span className="text-amber ml-1">Racha actual: {wildcards.streak} día{wildcards.streak === 1 ? "" : "s"}.</span>}
       </p>
 
@@ -236,7 +236,7 @@ export default function Wordle() {
       {!loading && !game && mode !== "random" && (
         <Card className="mb-6">
           <p className="text-sm text-gray-400">
-            {modeNote?.notToday ? "Hoy el juego diario es otro. Fichado lo vas a poder jugar como diario cuando le toque; mientras tanto, la partida libre está en Juegos." : modeNote?.notFichado ? "El reto de hoy no es de Fichado: lo encontrás en Inicio." : "No se pudo cargar la partida."}
+            {modeNote?.notToday ? "Hoy el juego diario es otro. Fichado lo vas a poder jugar como diario cuando le toque; mientras tanto, la partida libre está en Juegos." : modeNote?.notFichado ? "El reto de hoy no es de Fichado: lo encuentras en Inicio." : "No se pudo cargar la partida."}
           </p>
         </Card>
       )}
@@ -377,7 +377,7 @@ export default function Wordle() {
                     {groupSave.improved ? "Nueva mejor marca de la semana en el grupo" : "Guardado (no superó tu mejor marca de la semana)"}
                   </p>
                 )}
-                {!groupId && <p className="text-xs text-gray-600 mt-1">Unite a un grupo para que tus puntos cuenten en el ranking semanal.</p>}
+                {!groupId && <p className="text-xs text-gray-600 mt-1">Únete a un grupo para que tus puntos cuenten en el ranking semanal.</p>}
                 <div className="flex gap-2 justify-center mt-4">
                   <button onClick={copyShare} className="px-4 py-2 rounded-card border border-border text-sm text-gray-300 hover:text-white">
                     {copied ? "Copiado" : "Compartir"}
@@ -387,7 +387,7 @@ export default function Wordle() {
                       Jugar de nuevo
                     </button>
                   ) : (
-                    <p className="text-xs text-gray-600 self-center">Volvé mañana por el próximo, o probá el modo Aleatorio.</p>
+                    <p className="text-xs text-gray-600 self-center">Vuelve mañana por el próximo, o prueba el modo Aleatorio.</p>
                   )}
                 </div>
               </div>

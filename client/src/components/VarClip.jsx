@@ -211,7 +211,7 @@ export default function VarClip({ video }) {
           )}
         </div>
         <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded bg-black/70 text-[10px] font-semibold tracking-wider text-white pointer-events-none">
-          <span className={`w-1.5 h-1.5 rounded-full ${playing ? "bg-red-500 animate-pulse" : "bg-gray-400"}`} />
+          <span className={`w-1.5 h-1.5 rounded-full ${playing ? "bg-red-500 anímate-pulse" : "bg-gray-400"}`} />
           VAR · {segIdx > 0 ? "REPETICIÓN" : "CLIP REAL"}
         </div>
         <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded bg-black/70 text-[10px] text-white pointer-events-none">
@@ -222,7 +222,7 @@ export default function VarClip({ video }) {
         )}
         {failed && (
           <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-400 px-6 text-center">
-            No se pudo cargar el clip. Revisá tu conexión o que YouTube no esté bloqueado.
+            No se pudo cargar el clip. Revisa tu conexión o que YouTube no esté bloqueado.
           </div>
         )}
       </div>

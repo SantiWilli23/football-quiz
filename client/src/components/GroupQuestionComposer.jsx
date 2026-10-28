@@ -56,7 +56,7 @@ export default function GroupQuestionComposer({ groupId, onCreated }) {
           <>
             <h2 className="text-lg font-semibold mb-1">Todavía nadie escribió la pregunta de hoy</h2>
             <p className="text-sm text-gray-400 mb-5">
-              Sé el primero: escribí una pregunta con alternativas y el resto del grupo la responde.
+              Sé el primero: escribe una pregunta con alternativas y el resto del grupo la responde.
             </p>
             <button
               onClick={() => setOpen(true)}

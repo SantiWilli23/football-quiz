@@ -42,7 +42,7 @@ export default function CopaSemanal() {
   useEffect(() => { load(); }, [load]);
 
   // Festejo una sola vez por semana ganada, la primera vez que esta pantalla
-  // se abre después de que vos seas el campeón (no en cada render).
+  // se abre después de que tú seas el campeón (no en cada render).
   useEffect(() => {
     if (!data?.champion || data.champion.id !== user?.id) return;
     if (celebratedWeek.current === data.week) return;
@@ -78,13 +78,13 @@ export default function CopaSemanal() {
         <div>
           <h1 className="t-title mb-1">Copa semanal</h1>
           <p className="text-gray-400 text-sm">
-            Anotate de lunes a jueves. Desde el viernes se juega a eliminación y la final es el domingo. Hay dos modalidades: por puntos (gana quien sume más ese día en trivia, Fichado y reto del día) o con Cartas (partido simulado entre los equipos de cada uno).
+            Anótate de lunes a jueves. Desde el viernes se juega a eliminación y la final es el domingo. Hay dos modalidades: por puntos (gana quien sume más ese día en trivia, Fichado y reto del día) o con Cartas (partido simulado entre los equipos de cada uno).
           </p>
         </div>
         <GroupSelector />
       </div>
 
-      {!groupId && <Card><EmptyState icon={Trophy} title="Elegí un grupo" hint="La copa se juega entre los miembros de tu grupo." actions={[{ label: "Ir a Mi grupo", to: "/grupo" }]} /></Card>}
+      {!groupId && <Card><EmptyState icon={Trophy} title="Elige un grupo" hint="La copa se juega entre los miembros de tu grupo." actions={[{ label: "Ir a Mi grupo", to: "/grupo" }]} /></Card>}
 
       {data && (
         <div className="space-y-4">
@@ -116,9 +116,9 @@ export default function CopaSemanal() {
             </div>
             <p className="t-meta">
               {data.mode === "cartas"
-                ? "Cada cruce es un partido simulado entre los equipos de Cartas (el once que tengas guardado ese día). Empate: penales. Sin equipo armado, perdés por W.O."
+                ? "Cada cruce es un partido simulado entre los equipos de Cartas (el once que tengas guardado ese día). Empate: penales. Sin equipo armado, pierdes por W.O."
                 : "Cada cruce lo gana quien sume más puntos ese día."}
-              {data.canChangeMode ? (data.cardsAvailable ? " Como creaste el grupo, podés cambiarla hasta el jueves." : " Para jugarla con Cartas, primero activá Cartas en el grupo.") : ""}
+              {data.canChangeMode ? (data.cardsAvailable ? " Como creaste el grupo, puedes cambiarla hasta el jueves." : " Para jugarla con Cartas, primero activa Cartas en el grupo.") : ""}
             </p>
           </Card>
 

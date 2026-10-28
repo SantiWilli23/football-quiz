@@ -11,6 +11,7 @@ import { applyStoredDensity } from "./utils/density.js";
 import { applyDevice, watchDevice } from "./utils/device.js";
 import DeviceShell from "./components/DeviceShell.jsx";
 import "./index.css";
+import "./v2/v2.css";
 import { polyfillCountryFlagEmojis } from "country-flag-emoji-polyfill";
 import flagFontUrl from "country-flag-emoji-polyfill/dist/TwemojiCountryFlags.woff2?url";
 

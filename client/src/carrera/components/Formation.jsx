@@ -9,7 +9,7 @@ function clampPct(v) { return Math.min(95, Math.max(5, v)); }
 const DRAG_THRESHOLD = 6;
 
 // A qué posición corresponde soltar al jugador en tal punto de la cancha.
-// Son los puntos medios entre las líneas de LINE_Y: si lo soltás más cerca
+// Son los puntos medios entre las líneas de LINE_Y: si lo sueltas más cerca
 // de la línea de ataque que de la de mediocampo, pasa a jugar de delantero
 // (con la penalización que le toque si no es lo suyo), y así con el resto.
 function nearestPositionForDrop(x, y) {
@@ -33,8 +33,8 @@ function lineTone(slot) {
 
 export default function Formation() {
   const { state, formations, setFormation, assignSlot, setSlotPosition, resetLineupPositions, moveToBench, moveToReserves } = useCareer();
-  // Intercambio de dos toques: primero tocás un titular (queda resaltado),
-  // después tocás a cualquier otro jugador (titular, banca o reserva) y se
+  // Intercambio de dos toques: primero tocas un titular (queda resaltado),
+  // después tocas a cualquier otro jugador (titular, banca o reserva) y se
   // cambian de lugar. Nada de menús — es la misma lógica que mover fichas.
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [dragPos, setDragPos] = useState(null); // { index, x, y } — posición en vivo mientras se arrastra
@@ -120,13 +120,13 @@ export default function Formation() {
             ↺ Restablecer posiciones
           </button>
         )}
-        <span className="text-xs text-gray-500">Tocá un titular y después a otro jugador (titular, banca o reserva) para cambiarlos de lugar, o arrastrá para reposicionar.</span>
+        <span className="text-xs text-gray-500">Toca un titular y después a otro jugador (titular, banca o reserva) para cambiarlos de lugar, o arrastra para reposicionar.</span>
       </div>
 
       {selectedPlayer && (
         <div className="flex items-center justify-between gap-3 bg-accent/10 border border-accent/30 rounded-card px-3.5 py-2.5">
           <p className="text-sm">
-            <span className="font-semibold">{selectedPlayer.name}</span> seleccionado ({starters[selectedSlot].slot}) — tocá a otro jugador para cambiarlo de lugar.
+            <span className="font-semibold">{selectedPlayer.name}</span> seleccionado ({starters[selectedSlot].slot}) — toca a otro jugador para cambiarlo de lugar.
           </p>
           <div className="flex gap-1.5 shrink-0">
             <button onClick={() => { assignSlot(selectedSlot, null); setSelectedSlot(null); }} className="text-xs px-2.5 py-1 rounded-card border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors">
@@ -228,9 +228,9 @@ function BenchList({ title, ids, byId, selecting, selectedSlotPos, onPick, onMov
             <button
               key={id}
               onClick={() => (selecting ? onPick(id) : onMove(id))}
-              title={selecting ? "Tocá para cambiarlo con el titular seleccionado" : moveLabel}
+              title={selecting ? "Toca para cambiarlo con el titular seleccionado" : moveLabel}
               className={`relative flex flex-col items-center gap-1 p-3 rounded-card border transition-colors ${
-                selecting ? "border-accent/50 bg-accent/5 hover:bg-accent/15 animate-pulse" : "border-border bg-panel hover:border-accent/40 hover:bg-bg"
+                selecting ? "border-accent/50 bg-accent/5 hover:bg-accent/15 anímate-pulse" : "border-border bg-panel hover:border-accent/40 hover:bg-bg"
               }`}
             >
               <span className="text-xs font-semibold text-gray-500">{p.position}</span>
@@ -243,7 +243,7 @@ function BenchList({ title, ids, byId, selecting, selectedSlotPos, onPick, onMov
         {!ids.length && <p className="text-xs text-gray-600 col-span-full py-2">Vacío.</p>}
       </div>
       {!selecting && !!ids.length && (
-        <p className="text-xs text-gray-600 mt-1.5">Tocá un titular en la cancha para intercambiarlo con uno de estos.</p>
+        <p className="text-xs text-gray-600 mt-1.5">Toca un titular en la cancha para intercambiarlo con uno de estos.</p>
       )}
     </div>
   );

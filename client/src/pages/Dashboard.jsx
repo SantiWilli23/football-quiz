@@ -59,7 +59,7 @@ export default function Dashboard() {
 
       {/* Pizarra del día: reemplaza el saludo suelto + la franja de "Te falta
           hoy" de antes por un solo panel, con el mismo trato visual que la
-          pizarra técnica de un vestuario — quién sos, qué día es, qué falta
+          pizarra técnica de un vestuario — quién eres, qué día es, qué falta
           jugar hoy y cómo viene la racha, todo en un solo golpe de vista. */}
       <div className="hero-b mb-8 rounded-3xl overflow-hidden" style={{ "--hero-a": "var(--c-accent)", "--hero-b": "var(--c-purple)" }}>
         <div className="p-5 sm:p-7">

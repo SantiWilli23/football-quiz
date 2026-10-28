@@ -38,7 +38,7 @@ test("versus: el ganador de un duelo cerrado por el servidor suma 30 en un club 
     // volver a resolver el mismo duelo (ya terminado) no suma otra vez
     await resolveIfComplete({ ...duel, status: "terminado" });
     assert.equal((await credits(a)).length, 1);
-  } finally { delete process.env.FUTOTAL2; }
+  } finally { process.env.FUTOTAL2 = "0"; }
 });
 
 test("versus: un empate no suma a nadie, y sin la bandera nada cambia", async () => {
@@ -50,7 +50,7 @@ test("versus: un empate no suma a nadie, y sin la bandera nada cambia", async ()
     await resolveIfComplete(await duelBetween(c, d, 3, 3));
     assert.deepEqual(await credits(c), []);
     assert.deepEqual(await credits(d), []);
-  } finally { delete process.env.FUTOTAL2; }
+  } finally { process.env.FUTOTAL2 = "0"; }
   await resolveIfComplete(await duelBetween(c, d, 5, 0));
   assert.deepEqual(await credits(c), [], "sin FUTOTAL2 no se acredita");
   assert.equal(todayStr().length, 10);

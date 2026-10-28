@@ -137,7 +137,12 @@ router.get("/:id/table", async (req, res) => {
     }
     // Si la copa de la semana pasada ya terminó y nadie la repartió, se reparte ahora.
     await settleLastCup(club.id).catch((e) => console.error("copa", e));
-    res.json({ view, mode: club.club_mode, preseason: false, table: await clubTable(club.id, view, today) });
+    // Quiénes ya jugaron el partido de hoy: en la vista «Hoy» los demás salen como pendientes.
+    const played = (await db.execute({
+      sql: `SELECT r.user_id FROM daily_match_results r JOIN group_members m ON m.user_id = r.user_id AND m.group_id = ? WHERE r.date = ?`,
+      args: [club.id, today],
+    })).rows.map((r) => r.user_id);
+    res.json({ view, mode: club.club_mode, preseason: false, table: await clubTable(club.id, view, today), playedToday: played });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });
@@ -148,6 +153,21 @@ router.get("/:id/table", async (req, res) => {
 router.get("/me/streak", async (req, res) => {
   try {
     res.json(await personalStreak(req.userId, todayStr()));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Partidas libres de hoy (tope 100 por club Total): lo sumado en el club donde más se sumó.
+router.get("/me/free", async (req, res) => {
+  try {
+    const row = (await db.execute({
+      sql: `SELECT COALESCE(MAX(t), 0) AS pts FROM (SELECT SUM(points) AS t FROM points_ledger
+            WHERE user_id = ? AND date = ? AND source LIKE 'libre:%' GROUP BY group_id)`,
+      args: [req.userId, todayStr()],
+    })).rows[0];
+    res.json({ points: Number(row?.pts || 0), cap: 100 });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

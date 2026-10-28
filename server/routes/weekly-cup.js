@@ -207,7 +207,7 @@ router.post("/:groupId/join", async (req, res) => {
     const n = Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM cup_signups WHERE week = ? AND group_id = ?", args: [week, groupId] })).rows[0].n);
     if (n >= MAX_PLAYERS) return res.status(400).json({ error: "La copa ya tiene 8 anotados" });
     if ((await modeOf(week, groupId)) === "cartas" && (await lineupOf(req.userId)).length !== 11) {
-      return res.status(400).json({ error: "Esta semana la copa es de Cartas: primero armá tu once en Cartas → Mi equipo" });
+      return res.status(400).json({ error: "Esta semana la copa es de Cartas: primero arma tu once en Cartas → Mi equipo" });
     }
     await db.execute({ sql: "INSERT OR IGNORE INTO cup_signups (week, group_id, user_id) VALUES (?, ?, ?)", args: [week, groupId, req.userId] });
     res.json({ ok: true });

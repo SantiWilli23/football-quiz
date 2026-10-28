@@ -1,118 +1,87 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Brain, Building2, Crown, Gavel, Grid3x3, Shield, ShieldCheck, Star, Swords, Timer, Users, Wallet, Target, Play } from "lucide-react";
+import { ArrowUpDown, Building2, Crown, Gavel, Grid3x3, Shield, Sparkles, Star, Swords, Timer, Trophy, User, Users } from "lucide-react";
+import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import useFutotal2 from "./useFutotal2.js";
-import { JUEGOS } from "./juegos.js";
+import { useClubs } from "./useClubs.js";
+import { fusedPath } from "./fusion.js";
 
-// Jugar (Futotal 2.0): los juegos en tres filas. Cada entrada reúne a los juegos
-// parecidos de antes (`variants`); entrar a uno abre su mejor versión y desde ahí se
-// llega a las demás, así no se pierde ninguno mientras se terminan de fusionar.
-const SECTIONS = [
-  {
-    key: "arcade", title: "Arcade", text: "Partidas cortas, solo, en cualquier momento.",
-    games: [
-      { to: "/fulbodle", label: "¿Quién es?", icon: Target, text: "Adiviná al futbolista por colores, carrera o traspasos.", variants: [["Fichado", "/fulbodle"], ["Traspasos a ciegas", "/traspasos"], ["¿Quién es? por carrera", "/quien-es"]] },
-      { to: "/escudos", label: "¿Qué club?", icon: ShieldCheck, text: "Un escudo borroso o una torta de nacionalidades.", variants: [["Escudos a ciegas", "/escudos"], ["Torta de plantel", "/torta"]] },
-      { to: "/a-quien-me-compro", label: "Más o menos", icon: Wallet, text: "¿Quién vale más? Ordená o comparate con tu rival.", variants: [["¿A quién me compro?", "/a-quien-me-compro"], ["Pirámide", "/piramide"]] },
-      { to: "/un-minuto", label: "Trivia", icon: Timer, text: "Preguntas contra el reloj, o hasta que falles.", variants: [["Un Minuto", "/un-minuto"], ["Supervivencia", "/supervivencia"]] },
-      { to: "/arbitraje-var", label: "VAR", icon: Gavel, text: "Mirá la jugada y decidí como árbitro.", variants: [["Arbitraje / VAR", "/arbitraje-var"], ["Votación del VAR", "/var-votacion"]] },
-      { to: "/bingo", label: "Bingo", icon: Grid3x3, text: "Completá el tablero con jugadores que pasaron por el club.", variants: [] },
-    ],
-  },
-  {
-    key: "amigos", title: "Con amigos", text: "Para jugar contra gente de tu club.",
-    games: [
-      { to: "/versus", label: "Versus", icon: Swords, text: "Una ruleta elige el modo: Duelos, Equipo-Jugador, ¿Quién es? en vivo…", variants: [["Duelos", "/duelos"], ["Equipo-Jugador", "/equipo-jugador"], ["¿Quién es? en vivo", "/quien-es-vivo"], ["Dorsal histórico", "/dorsal-historico"]] },
-      { to: "/copa-8a2", label: "Draft", icon: Star, text: "Armá tu once por rondas, solo o en copa.", variants: [["8a2 (solo)", "/draft-europeo.html"], ["Copa 8a2", "/copa-8a2"], ["Subasta", "/subasta"]] },
-      { to: "/dt-liga", label: "DT Online", icon: Users, text: "Una liga de verdad con tus amigos, temporada a temporada.", variants: [] },
-    ],
-  },
-  {
-    key: "carrera", title: "Carrera", text: "Partidas largas, a tu ritmo.",
-    games: [
-      { to: "/carrera-dt", label: "Modo DT", icon: Shield, text: "Dirigí un club: tácticas, fichajes y partidos.", variants: [] },
-      { to: "/presidente", label: "Presidente", icon: Building2, text: "Decisiones, prensa y la presión de la directiva.", variants: [] },
-      { href: "/cotrero.html", label: "Cotrero simple", icon: Crown, text: "De potrero a leyenda, decisión por temporada.", variants: [] },
-      { href: "/cotrero-medio.html", label: "Cotrero medio", icon: Brain, text: "Reputación, selección y un lugar en el salón de leyendas.", variants: [] },
-    ],
-  },
+// Jugar (Futotal 2.0): de ~35 entradas a 13 juegos, en tres filas deslizables como en el
+// prototipo. Cada juego fusionado abre su carcasa /jugar/<juego>; si todavía no está abierto
+// (FUTOTAL2_JUEGOS), la tarjeta lleva a la pantalla de siempre.
+const GAMES = [
+  { id: "quien_es", label: "¿Quién es?", icon: User, color: "#2fb673", min: 3, solo: true, sec: "arcade", old: "/fulbodle", replaces: "Fichado, ¿Quién es? y Traspasos" },
+  { id: "que_club", label: "¿Qué club?", icon: Shield, color: "#4aa8e8", min: 3, solo: true, sec: "arcade", old: "/escudos", replaces: "Escudos y Torta de plantel" },
+  { id: "mas_o_menos", label: "Más o menos", icon: ArrowUpDown, color: "#f2b84b", min: 3, solo: true, sec: "arcade", old: "/a-quien-me-compro", replaces: "Pirámide y ¿A quién me compro?" },
+  { id: "trivia", label: "Trivia", icon: Timer, color: "#8e7dff", min: 2, solo: true, sec: "arcade", old: "/un-minuto", replaces: "Un Minuto y Supervivencia" },
+  { id: "var", label: "VAR", icon: Gavel, color: "#ef5b5b", min: 3, solo: true, sec: "arcade", old: "/arbitraje-var", replaces: "Arbitraje y Votación del VAR" },
+  { id: "bingo", label: "Bingo", icon: Grid3x3, color: "#3cd6c4", min: 5, solo: true, sec: "arcade", old: "/bingo", replaces: "Bingo y Tatetí" },
+  { id: "versus", label: "Versus", icon: Swords, color: "#f27aa8", min: 5, solo: false, sec: "amigos", to: "/versus", replaces: "Duelos, Mentiroso, Equipo-Jugador, ¿Quién es? en vivo" },
+  { id: "draft", label: "Draft", icon: Star, color: "#2fb673", min: 10, solo: false, sec: "amigos", old: "/copa-8a2", replaces: "8a2, Copa 8a2 y Subasta" },
+  { id: "dtonline", label: "DT Online", icon: Trophy, color: "#f2b84b", min: 60, solo: false, sec: "amigos", to: "/dt-liga", replaces: "" },
+  { id: "dt", label: "Modo DT", icon: Users, color: "#4aa8e8", min: 60, solo: true, sec: "carrera", to: "/carrera-dt", replaces: "" },
+  { id: "presidente", label: "Presidente", icon: Building2, color: "#c9a9e8", min: 30, solo: true, sec: "carrera", to: "/presidente", replaces: "" },
+  { id: "cotrero", variant: "simple", label: "Cotrero simple", icon: Crown, color: "#f2b84b", min: 15, solo: true, sec: "carrera", old: "/cotrero.html", replaces: "De potrero a leyenda" },
+  { id: "cotrero", variant: "medio", label: "Cotrero medio", icon: Sparkles, color: "#ef5b5b", min: 25, solo: true, sec: "carrera", old: "/cotrero-medio.html", replaces: "Reputación y selección" },
 ];
+const SECS = [["arcade", "Arcade", "Rápido y solo"], ["amigos", "Con amigos", "Versus, Draft y ligas"], ["carrera", "Carrera", "Partidas largas"]];
 
-// Juegos fusionados abiertos: la tarjeta y sus chips apuntan a /jugar/<juego>/<variante>.
-const FUSED_OF = { "/fulbodle": ["quien_es", "parecido"], "/quien-es": ["quien_es", "carrera"], "/traspasos": ["quien_es", "traspasos"], "/escudos": ["que_club", "escudos"], "/torta": ["que_club", "plantel"], "/a-quien-me-compro": ["mas_o_menos", "compro"], "/piramide": ["mas_o_menos", "piramide"], "/un-minuto": ["trivia", "un-minuto"], "/supervivencia": ["trivia", "supervivencia"], "/arbitraje-var": ["var", "arbitro"], "/var-votacion": ["var", "arbitro"], "/bingo": ["bingo", "bingo"] };
-const nuevo = (to, juegos) => { const f = FUSED_OF[to]; return f && juegos.includes(f[0]) ? `/jugar/${JUEGOS[f[0]].slug}/${f[1]}` : to; };
+function pathOf(g, open) {
+  if (g.to) return { to: g.to };
+  if (open.includes(g.id)) return { to: fusedPath(g.id, g.variant) };
+  return g.old.endsWith(".html") ? { href: g.old } : { to: g.old };
+}
 
-function Entry({ game, juegos }) {
-  const Icon = game.icon;
+function GameCard({ g, open, big = false }) {
+  const Icon = g.icon;
+  const dest = pathOf(g, open);
   const inner = (
     <>
-      <span className="w-10 h-10 shrink-0 rounded-xl bg-accent/15 text-accent flex items-center justify-center"><Icon size={20} /></span>
-      <span className="min-w-0">
-        <span className="block font-semibold leading-tight">{game.label}</span>
-        <span className="block text-xs text-gray-400 mt-0.5 leading-snug">{game.text}</span>
-      </span>
+      <span className="gi"><Icon size={big ? 30 : 24} /></span>
+      <b>{g.label}</b>
+      <small>{g.min >= 60 ? `${g.min / 60} h` : `${g.min} min`} · {g.solo ? "solo" : "con amigos"}</small>
+      {big && g.replaces && <small style={{ color: "var(--dim)" }}>Reúne: {g.replaces}</small>}
     </>
   );
-  const cls = "flex items-start gap-3 rounded-2xl border border-border bg-panel p-3 hover:border-accent/60 transition-colors";
-  return (
-    <div className="space-y-1">
-      {game.href ? <a href={game.href} className={cls}>{inner}</a> : <Link to={nuevo(game.to, juegos)} className={cls}>{inner}</Link>}
-      {game.variants.length > 1 && (
-        <div className="flex flex-wrap gap-1.5 px-1">
-          {game.variants.map(([label, to]) => (
-            to.endsWith(".html")
-              ? <a key={label} href={to} className="text-[11px] rounded-full border border-border px-2 py-0.5 text-gray-400 hover:text-white">{label}</a>
-              : <Link key={label} to={nuevo(to, juegos)} className="text-[11px] rounded-full border border-border px-2 py-0.5 text-gray-400 hover:text-white">{label}</Link>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  const props = { className: `p-gc ${big ? "big" : ""}`, style: { "--gc": g.color }, title: g.replaces ? `Reúne: ${g.replaces}` : g.label };
+  return dest.href ? <a href={dest.href} {...props}>{inner}</a> : <Link to={dest.to} {...props}>{inner}</Link>;
 }
 
 // «Para ti»: tres tarjetas que cambian cada día, para no decidir con la lista entera.
 function forYou() {
   const day = Math.floor(Date.now() / 86400000);
-  const arcade = SECTIONS[0].games;
-  const social = SECTIONS[1].games;
-  return [
-    { title: "El partido del día", text: "Tres partes, el mismo para todo tu club.", to: "/partido", accent: true },
-    { title: arcade[day % arcade.length].label, text: arcade[day % arcade.length].text, to: arcade[day % arcade.length].to },
-    { title: social[day % social.length].label, text: social[day % social.length].text, to: social[day % social.length].to },
-  ];
+  const arcade = GAMES.filter((g) => g.sec === "arcade");
+  const social = GAMES.filter((g) => g.sec === "amigos");
+  const career = GAMES.filter((g) => g.sec === "carrera");
+  return [arcade[day % arcade.length], arcade[(day + 2) % arcade.length], day % 2 ? social[day % social.length] : career[day % career.length]];
 }
 
 export default function Jugar() {
-  const picks = forYou();
-  const { juegos } = useFutotal2();
+  const { games: open = [] } = useFutotal2();
+  const { main } = useClubs();
+  const [free, setFree] = useState(null);
+  useEffect(() => { api.get("/clubs/me/free").then((r) => setFree(r.data)).catch(() => setFree(null)); }, []);
+
+  const total = main && main.mode === "total" && main.started;
+  const cap = total
+    ? <div className="p-cap">Partidas libres hoy <b>{free?.points ?? 0}/100</b><i style={{ width: `${free?.points ?? 0}%` }} /></div>
+    : <div className="p-cap">{!main ? "Sin club no hay puntos ni sobres. Crea uno o únete." : !main.started ? "Pretemporada: aún no suman puntos ni sobres." : "Club Clásico: las partidas libres dan sobres, no puntos."}</div>;
+
   return (
     <Layout>
-      <div className="max-w-3xl mx-auto space-y-7">
-        <div>
-          <p className="t-eyebrow">Jugar</p>
-          <h1 className="t-title">¿Qué jugamos?</h1>
-        </div>
-
-        <section aria-label="Para ti" className="grid gap-2 sm:grid-cols-3">
-          {picks.map((p) => (
-            <Link key={p.title} to={p.to} className={`rounded-2xl border p-4 ${p.accent ? "border-accent/50 bg-gradient-to-br from-accent/15 to-transparent" : "border-border bg-panel"} hover:border-accent/70 transition-colors`}>
-              <p className="t-eyebrow flex items-center gap-1"><Play size={11} /> Para ti</p>
-              <p className="font-semibold mt-1">{p.title}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{p.text}</p>
-            </Link>
-          ))}
+      <section className="p-sect p-stg" style={{ "--i": 0, marginTop: 6 }}>
+        <h3>Para ti</h3>
+        <div className="p-hrow">{forYou().map((g) => <GameCard key={g.label} g={g} open={open} big />)}</div>
+      </section>
+      <div className="p-stg" style={{ "--i": 1 }}>{cap}</div>
+      {SECS.map(([k, label, sub], i) => (
+        <section key={k} className="p-sect p-stg" style={{ "--i": i + 2 }}>
+          <h3>{label}<small>{sub}</small></h3>
+          <div className="p-hrow">{GAMES.filter((g) => g.sec === k).map((g) => <GameCard key={g.label} g={g} open={open} />)}</div>
         </section>
-
-        {SECTIONS.map((s) => (
-          <section key={s.key} aria-labelledby={`sec-${s.key}`}>
-            <h2 id={`sec-${s.key}`} className="font-semibold">{s.title}</h2>
-            <p className="text-xs text-gray-500 mb-2">{s.text}</p>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {s.games.map((g) => <Entry key={g.label} game={g} juegos={juegos} />)}
-            </div>
-          </section>
-        ))}
-      </div>
+      ))}
+      <p className="text-xs p-dim text-center mt-5">13 juegos. Los de antes siguen dentro de cada uno como variantes.</p>
     </Layout>
   );
 }

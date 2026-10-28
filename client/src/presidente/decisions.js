@@ -20,7 +20,7 @@ export const CLASSIC_DECISIONS = [
     id: "p02",
     context: "Una marca te ofrece renovar el sponsor principal por más plata, pero con exigencias de resultados.",
     options: [
-      { text: "Aceptás las condiciones." },
+      { text: "Aceptas las condiciones." },
       { text: "Negociás algo más conservador." },
       { text: "Rechazás la oferta." },
     ],
@@ -36,7 +36,7 @@ export const CLASSIC_DECISIONS = [
     options: [
       { text: "Le das un refuerzo grande al presupuesto." },
       { text: "Le das un aumento moderado." },
-      { text: "Le decís que no hay margen este semestre." },
+      { text: "Le dices que no hay margen este semestre." },
     ],
     effects: [
       { dtBudgetGiven: 8, budget: -8, dtQuality: 6 },
@@ -50,7 +50,7 @@ export const CLASSIC_DECISIONS = [
     options: [
       { text: "Invertís en mejorar la experiencia del día de partido." },
       { text: "Hacés mejoras menores." },
-      { text: "Lo dejás como está por ahora." },
+      { text: "Lo dejas como está por ahora." },
     ],
     effects: [
       { budget: -2, fanHappiness: 10 },
@@ -76,7 +76,7 @@ export const CLASSIC_DECISIONS = [
     id: "p06",
     context: "La directiva pide una actualización sobre el estado financiero del club.",
     options: [
-      { text: "Sos transparente, incluso con las malas noticias." },
+      { text: "Eres transparente, incluso con las malas noticias." },
       { text: "Presentás un panorama optimista." },
       { text: "Evitás dar detalles." },
     ],
@@ -90,9 +90,9 @@ export const CLASSIC_DECISIONS = [
     id: "p07",
     context: "Un grupo de hinchas organiza una protesta pacífica por el rumbo del club.",
     options: [
-      { text: "Los recibís y escuchás sus reclamos." },
+      { text: "Los recibes y escuchás sus reclamos." },
       { text: "Emitís un comunicado institucional." },
-      { text: "No respondés públicamente." },
+      { text: "No respondes públicamente." },
     ],
     effects: [
       { fanHappiness: 8, boardTrust: -1 },
@@ -104,7 +104,7 @@ export const CLASSIC_DECISIONS = [
     id: "p08",
     context: "Un club rival te ofrece armar un amistoso de pretemporada de alto perfil, con buena bolsa de dinero.",
     options: [
-      { text: "Aceptás — la plata sirve, aunque cansa al plantel." },
+      { text: "Aceptas — la plata sirve, aunque cansa al plantel." },
       { text: "Proponés uno más chico, menos exigente." },
       { text: "Rechazás para cuidar la pretemporada." },
     ],
@@ -120,7 +120,7 @@ export const CLASSIC_DECISIONS = [
     options: [
       { text: "Le das tu respaldo público total." },
       { text: "Contestás con ambigüedad calculada." },
-      { text: "Dejás la puerta abierta a un cambio." },
+      { text: "Dejas la puerta abierta a un cambio." },
     ],
     effects: [
       { dtQuality: 3, boardTrust: -1 },
@@ -134,7 +134,7 @@ export const CLASSIC_DECISIONS = [
     options: [
       { text: "Firmás un contrato largo y grande." },
       { text: "Firmás algo más corto y modesto." },
-      { text: "No tocás el nombre del estadio — pesa la historia." },
+      { text: "No tocas el nombre del estadio — pesa la historia." },
     ],
     effects: [
       { budget: 6, fanHappiness: -6, boardTrust: 4 },
@@ -146,7 +146,7 @@ export const CLASSIC_DECISIONS = [
     id: "p11",
     context: "El club de al lado te ofrece un canje de socios/beneficios cruzados con la comunidad.",
     options: [
-      { text: "Aceptás — buena imagen institucional." },
+      { text: "Aceptas — buena imagen institucional." },
       { text: "Lo evaluás para más adelante." },
       { text: "No, son rivales históricos." },
     ],
@@ -160,9 +160,9 @@ export const CLASSIC_DECISIONS = [
     id: "p12",
     context: "Un fondo de inversión se acerca a comprar un porcentaje minoritario del club.",
     options: [
-      { text: "Abrís la negociación en serio." },
+      { text: "Abres la negociación en serio." },
       { text: "Escuchás la oferta sin comprometerte." },
-      { text: "Cerrás la puerta — el club sigue 100% de los socios." },
+      { text: "Cierras la puerta — el club sigue 100% de los socios." },
     ],
     effects: [
       { budget: 15, boardTrust: -5, special: "fund_pressure" },
@@ -188,8 +188,8 @@ export const CLASSIC_DECISIONS = [
     id: "p14",
     context: "Un periodista te pregunta si el mercado de pases estuvo a la altura de lo que pedía el DT.",
     options: [
-      { text: "Reconocés que faltó presupuesto." },
-      { text: "Decís que el plantel actual alcanza y sobra." },
+      { text: "Reconoces que faltó presupuesto." },
+      { text: "Dices que el plantel actual alcanza y sobra." },
       { text: "Cambiás de tema." },
     ],
     effects: [
@@ -229,8 +229,8 @@ export const NEW_DECISIONS = [
     context: "Un fondo de inversión ofrece comprar el 30% de las acciones del club a cambio de plata fresca y voz en la directiva.",
     when: (s) => s.season >= 2,
     options: [
-      { text: "Aceptás: entra plata, pero pierden autonomía." },
-      { text: "Pedís un préstamo más chico sin ceder acciones." },
+      { text: "Aceptas: entra plata, pero pierden autonomía." },
+      { text: "Pides un préstamo más chico sin ceder acciones." },
       { text: "Los rechazás: el club es de los socios." },
     ],
     effects: [
@@ -244,7 +244,7 @@ export const NEW_DECISIONS = [
     context: "Salió un audio filtrado de un directivo hablando mal del plantel. La prensa quiere una respuesta tuya.",
     options: [
       { text: "Lo echás de la directiva en público." },
-      { text: "Pedís disculpas y bajás el tono." },
+      { text: "Pides disculpas y bajás el tono." },
       { text: "Lo defendés: 'fue sacado de contexto'." },
     ],
     effects: [
@@ -260,7 +260,7 @@ export const NEW_DECISIONS = [
     options: [
       { text: "Aprobás todo el paquete." },
       { text: "Aprobás la mitad." },
-      { text: "Le decís que se arregle con lo que hay." },
+      { text: "Le dices que se arregle con lo que hay." },
     ],
     effects: [
       { budget: -4, dtQuality: 3, dtConfidence: 6 },
@@ -287,7 +287,7 @@ export const NEW_DECISIONS = [
     when: (s) => s.prestige >= 30,
     options: [
       { text: "Firmás el contrato: la plata es la plata." },
-      { text: "Pedís que se investiguen antes de firmar." },
+      { text: "Pides que se investiguen antes de firmar." },
       { text: "Los rechazás." },
     ],
     effects: [
@@ -298,10 +298,10 @@ export const NEW_DECISIONS = [
   },
   {
     id: "n07",
-    context: "Un periodista de peso propone una entrevista larga y sin filtro con vos. Puede sumarte o hundirte.",
+    context: "Un periodista de peso propone una entrevista larga y sin filtro contigo. Puede sumarte o hundirte.",
     options: [
-      { text: "Vas y respondés todo." },
-      { text: "Mandás al vocero." },
+      { text: "Vas y respondes todo." },
+      { text: "Mandas al vocero." },
       { text: "Te negás." },
     ],
     effects: [
@@ -315,8 +315,8 @@ export const NEW_DECISIONS = [
     context: "La Federación te propone que tu estadio sea sede de una final. Hay que adaptar accesos y seguridad.",
     when: (s) => s.stadiumTier >= 2,
     options: [
-      { text: "Aceptás y hacés la inversión." },
-      { text: "Aceptás con un evento reducido." },
+      { text: "Aceptas y hacés la inversión." },
+      { text: "Aceptas con un evento reducido." },
       { text: "Declinás: no da el presupuesto." },
     ],
     effects: [
@@ -331,7 +331,7 @@ export const NEW_DECISIONS = [
     when: (s) => (s.memberFeeLevel || 1) >= 3,
     options: [
       { text: "Bajás la cuota un escalón." },
-      { text: "Mantenés la cuota pero sumás beneficios." },
+      { text: "Mantienes la cuota pero sumas beneficios." },
       { text: "No cambiás nada." },
     ],
     effects: [
@@ -345,7 +345,7 @@ export const NEW_DECISIONS = [
     context: "El club rival ofrece dinero por una de tus promesas de la cantera, y el chico quiere irse.",
     when: (s) => s.academyTier >= 1,
     options: [
-      { text: "Lo vendés y cobrás." },
+      { text: "Lo vendes y cobras." },
       { text: "Le mejorás el contrato para que se quede." },
     ],
     effects: [
@@ -358,7 +358,7 @@ export const NEW_DECISIONS = [
     context: "El gremio de jugadores amenaza con una medida de fuerza por los premios por partido atrasados.",
     when: (s) => s.wageLevel <= 2,
     options: [
-      { text: "Pagás lo adeudado y sumás un bono." },
+      { text: "Pagás lo adeudado y sumas un bono." },
       { text: "Te sentás a negociar en cuotas." },
       { text: "Los enfrentás públicamente." },
     ],
@@ -389,8 +389,8 @@ export const NEW_DECISIONS = [
     when: (s) => s.season >= 2 && s.budget < 15,
     options: [
       { text: "Regularizás todo y pagás la multa." },
-      { text: "Contratás un estudio jurídico caro para resistir." },
-      { text: "Escondés lo que podés." },
+      { text: "Contratas un estudio jurídico caro para resistir." },
+      { text: "Escondés lo que puedes." },
     ],
     effects: [
       { budget: -4, boardTrust: 2, press: 2 },
@@ -403,9 +403,9 @@ export const NEW_DECISIONS = [
     context: "El capitán pide públicamente que se haga un esfuerzo para reforzar el plantel o se va a fin de año.",
     when: (s) => s.week >= 6,
     options: [
-      { text: "Prometés refuerzos y le das plata al DT." },
+      { text: "Prometes refuerzos y le das plata al DT." },
       { text: "Hablás a solas con él y lo calmás." },
-      { text: "Le decís que el club está primero." },
+      { text: "Le dices que el club está primero." },
     ],
     effects: [
       { budget: -5, dtBudgetGiven: 4, dtQuality: 3, fanHappiness: 3 },
@@ -433,7 +433,7 @@ export const NEW_DECISIONS = [
     context: "La oposición política del club te acusa de mala gestión y pide una auditoría abierta.",
     when: (s) => s.boardTrust < 60,
     options: [
-      { text: "Abrís los libros contables." },
+      { text: "Abres los libros contables." },
       { text: "Los descalificás: 'es puro relato'." },
       { text: "Los invitás a integrar una comisión de control." },
     ],
@@ -448,8 +448,8 @@ export const NEW_DECISIONS = [
     context: "Un mecenas del club quiere donar plata para una obra, pero exige poner su nombre a la tribuna.",
     when: (s) => s.stadiumTier >= 2,
     options: [
-      { text: "Aceptás: la tribuna lleva su nombre." },
-      { text: "Aceptás sin naming, solo un reconocimiento." },
+      { text: "Aceptas: la tribuna lleva su nombre." },
+      { text: "Aceptas sin naming, solo un reconocimiento." },
       { text: "Rechazás la donación." },
     ],
     effects: [
@@ -464,8 +464,8 @@ export const NEW_DECISIONS = [
     when: (s) => !!s.rivalId,
     options: [
       { text: "Lanzás un discurso encendido." },
-      { text: "Pedís calma y juego limpio." },
-      { text: "Te mantenés al margen." },
+      { text: "Pides calma y juego limpio." },
+      { text: "Te mantienes al margen." },
     ],
     effects: [
       { fanHappiness: 8, press: -3, prestige: -1 },
@@ -477,7 +477,7 @@ export const NEW_DECISIONS = [
     id: "n19",
     context: "Una aerolínea quiere pagar por llevar al plantel y los hinchas a un partido lejano en un vuelo temático.",
     options: [
-      { text: "Aceptás el paquete promocional." },
+      { text: "Aceptas el paquete promocional." },
       { text: "Negociás mejores condiciones." },
     ],
     effects: [
@@ -487,7 +487,7 @@ export const NEW_DECISIONS = [
   },
   {
     id: "n20",
-    context: "Un joven talento del club rival quiere jugar con vos, y su representante pide una cifra por la mediación.",
+    context: "Un joven talento del club rival quiere jugar contigo, y su representante pide una cifra por la mediación.",
     options: [
       { text: "Pagás la comisión: ese pibe vale oro." },
       { text: "Te negás a pagar comisiones." },

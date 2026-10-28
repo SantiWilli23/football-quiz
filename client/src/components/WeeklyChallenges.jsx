@@ -77,7 +77,7 @@ export default function WeeklyChallenges({ groupId }) {
       {loading && <SkeletonRows rows={3} avatar={false} />}
 
       {!loading && entries && entries.length === 0 && (
-        <EmptyState compact icon={Trophy} title="Nadie jugó este reto todavía" hint="Sé el primero y quedás arriba de la tabla del grupo." />
+        <EmptyState compact icon={Trophy} title="Nadie jugó este reto todavía" hint="Sé el primero y quedas arriba de la tabla del grupo." />
       )}
 
       {!loading && entries && entries.length > 0 && (

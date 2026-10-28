@@ -53,7 +53,7 @@ describe("puntaje de los humanos", () => {
     assert.equal(season.positionPoints(7, 1, 2), 0);
   });
 
-  it("las copas pagan más cuanto más lejos llegás y las europeas pesan más", () => {
+  it("las copas pagan más cuanto más lejos llegas y las europeas pesan más", () => {
     assert.ok(season.cupRoundPoints("copa", 3, "win", 5, 5) > season.cupRoundPoints("copa", 0, "win", 5, 5));
     assert.ok(season.cupRoundPoints("champions", 1, "win", 5, 5) > season.cupRoundPoints("copa", 1, "win", 5, 5));
   });

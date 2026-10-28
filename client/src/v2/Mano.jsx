@@ -46,12 +46,12 @@ export function AddToHome() {
   const close = () => { try { localStorage.setItem("fq_home_hint", "1"); } catch { /* sin storage */ } setShow(false); };
   return (
     <div className="rounded-2xl border border-border bg-panel p-4 text-sm">
-      <p className="t-eyebrow">Tenelo a mano</p>
-      <p className="mt-1 font-semibold">Agregá Futotal a tu inicio</p>
+      <p className="t-eyebrow">Tenlo a mano</p>
+      <p className="mt-1 font-semibold">Agrega Futotal a tu inicio</p>
       <ol className="mt-2 space-y-1 text-gray-300">
         {ios
-          ? <><li>1. Tocá Compartir (el cuadrado con flecha).</li><li>2. «Agregar a pantalla de inicio».</li><li>3. Así te llegan los avisos.</li></>
-          : <><li>1. Tocá el menú ⋮ del navegador.</li><li>2. «Agregar a pantalla de inicio».</li><li>3. Entrá desde ahí cada día.</li></>}
+          ? <><li>1. Toca Compartir (el cuadrado con flecha).</li><li>2. «Agregar a pantalla de inicio».</li><li>3. Así te llegan los avisos.</li></>
+          : <><li>1. Toca el menú ⋮ del navegador.</li><li>2. «Agregar a pantalla de inicio».</li><li>3. Entra desde ahí cada día.</li></>}
       </ol>
       <button onClick={close} className="btn btn-secondary btn-sm mt-3">Listo</button>
     </div>

@@ -6,7 +6,7 @@ import useAlerts from "../hooks/useAlerts.js";
 
 // Campana con contador: junta en un panel lo que antes eran avisos sueltos
 // (trivia sin responder, duelos que esperan tu turno, retos semanales).
-export default function AlertsBell({ align = "left", className = "" }) {
+export default function AlertsBell({ align = "left", className = "", buttonClassName = "relative p-2 rounded-card text-gray-400 hover:text-white hover:bg-white/5 transition-colors" }) {
   const items = useAlerts();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -40,7 +40,7 @@ export default function AlertsBell({ align = "left", className = "" }) {
         onClick={() => setOpen((o) => !o)}
         aria-label={`Avisos${items.length ? `: ${items.length} pendientes` : ""}`}
         aria-expanded={open}
-        className="relative p-2 rounded-card text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+        className={buttonClassName}
       >
         <Bell size={18} />
         {items.length > 0 && (

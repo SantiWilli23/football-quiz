@@ -44,7 +44,7 @@ export async function challenge(groupA, inviteCode, userId, today = todayStr()) 
   const a = (await db.execute({ sql: "SELECT id, season_started_at FROM groups_t WHERE id = ?", args: [groupA] })).rows[0];
   const b = (await db.execute({ sql: "SELECT id, name, season_started_at FROM groups_t WHERE invite_code = ?", args: [String(inviteCode || "").trim().toUpperCase()] })).rows[0];
   if (!b) return { error: "No existe un club con ese código", status: 404 };
-  if (b.id === a.id) return { error: "No podés desafiar a tu propio club", status: 400 };
+  if (b.id === a.id) return { error: "No puedes desafiar a tu propio club", status: 400 };
   if (!a.season_started_at || !b.season_started_at) return { error: "Los dos clubes tienen que tener la temporada iniciada", status: 409 };
   const week = startWeekFor(today);
   const dup = (await db.execute({

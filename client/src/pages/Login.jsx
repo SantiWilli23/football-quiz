@@ -16,7 +16,7 @@ export default function Login() {
     setError("");
 
     if (!email.trim() || !password) {
-      setError("Completá todos los campos");
+      setError("Completa todos los campos");
       return;
     }
 
@@ -80,7 +80,7 @@ export default function Login() {
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">
           <h2 className="text-2xl font-bold mb-1">Iniciar sesión</h2>
-          <p className="text-gray-400 text-sm mb-8">Ingresá a tu cuenta para continuar</p>
+          <p className="text-gray-400 text-sm mb-8">Ingresa a tu cuenta para continuar</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <FloatField label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -102,9 +102,9 @@ export default function Login() {
           </p>
 
           <p className="text-sm text-gray-400 mt-6 text-center">
-            ¿No tenés cuenta?{" "}
+            ¿No tienes cuenta?{" "}
             <Link to="/registro" className="text-accent hover:text-accent-light font-medium">
-              Registrate
+              Regístrate
             </Link>
           </p>
         </div>

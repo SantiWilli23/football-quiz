@@ -47,7 +47,7 @@ export default function FormationPitch({ slots, picks = [], selected = null, onS
         return (
           <Tag
             key={i}
-            {...(can ? { type: "button", onClick: () => (pick ? onSelect(i) : onEmptyClick(i)), "aria-label": pick ? `${pick.name}, ${POS_SHORT[pos]}. Tocá para cambiarlo` : `Puesto vacío de ${POS_SHORT[pos]}. Tocá para elegir un jugador` } : {})}
+            {...(can ? { type: "button", onClick: () => (pick ? onSelect(i) : onEmptyClick(i)), "aria-label": pick ? `${pick.name}, ${POS_SHORT[pos]}. Toca para cambiarlo` : `Puesto vacío de ${POS_SHORT[pos]}. Toca para elegir un jugador` } : {})}
             className={`absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center w-[19%] ${can ? "cursor-pointer" : ""}`}
             style={{ left: `${p.x}%`, top: `${p.y}%` }}
           >

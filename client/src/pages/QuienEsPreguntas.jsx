@@ -51,7 +51,7 @@ function Autocomplete({ options, placeholder, onPick, exclude = [] }) {
 export default function QuienEsPreguntasBody() {
   const { user } = useAuth();
   const { status, roomCode, role, error, lastMessage, createRoom, joinRoom, send, leave } = useRoomRelay(GAME);
-  const me = useMemo(() => ({ id: myId(), name: user?.username || "Vos" }), [user]);
+  const me = useMemo(() => ({ id: myId(), name: user?.username || "Tú" }), [user]);
   const isHost = role === "host";
   const [meta, setMeta] = useState(null);
   const [joinCode, setJoinCode] = useState("");
@@ -202,7 +202,7 @@ export default function QuienEsPreguntasBody() {
         </div>
       )}
       {cat === "nation" && (
-        <Autocomplete options={meta.countries} placeholder="¿Es de qué país? Escribí un país" onPick={(c) => myTurn && ask({ type: "nation", value: c, label: `¿Es de ${c}?` })} />
+        <Autocomplete options={meta.countries} placeholder="¿Es de qué país? Escribe un país" onPick={(c) => myTurn && ask({ type: "nation", value: c, label: `¿Es de ${c}?` })} />
       )}
       {cat === "league" && (
         <div className="flex gap-2 flex-wrap">
@@ -210,7 +210,7 @@ export default function QuienEsPreguntasBody() {
         </div>
       )}
       {cat === "club" && (
-        <Autocomplete options={meta.clubs} placeholder="¿Jugó alguna vez en…? Escribí un club" onPick={(c) => myTurn && ask({ type: "club", value: c, label: `¿Jugó alguna vez en ${c}?` })} />
+        <Autocomplete options={meta.clubs} placeholder="¿Jugó alguna vez en…? Escribe un club" onPick={(c) => myTurn && ask({ type: "club", value: c, label: `¿Jugó alguna vez en ${c}?` })} />
       )}
       {cat === "born" && (
         <div className="flex gap-2 flex-wrap">
@@ -260,7 +260,7 @@ export default function QuienEsPreguntasBody() {
       <Card className="text-center py-8 space-y-2">
         <p className="text-sm text-gray-400">Código de sala</p>
         <p className="text-4xl font-bold tracking-[0.3em]">{roomCode}</p>
-        <p className="text-sm text-gray-400">{rival ? `${rival.name} se unió.` : isHost ? "Pasale el código a tu rival." : "Esperando al anfitrión…"}</p>
+        <p className="text-sm text-gray-400">{rival ? `${rival.name} se unió.` : isHost ? "Pásale el código a tu rival." : "Esperando al anfitrión…"}</p>
         <button onClick={exit} className="text-xs text-gray-500 hover:text-white">Salir</button>
       </Card>
     );
@@ -270,14 +270,14 @@ export default function QuienEsPreguntasBody() {
     return (
       <Card className="space-y-4">
         <div>
-          <p className="t-eyebrow mb-1">Elegí tu jugador secreto</p>
-          <p className="text-sm text-gray-400">Dificultad de la sala: <b className="text-white">{(meta?.tiers.find((t) => t.id === cfgDifficulty) || {}).label || cfgDifficulty}</b>. El servidor revisa que el que elijas sea de esa dificultad; si no lo es, tenés que cambiarlo.</p>
+          <p className="t-eyebrow mb-1">Elige tu jugador secreto</p>
+          <p className="text-sm text-gray-400">Dificultad de la sala: <b className="text-white">{(meta?.tiers.find((t) => t.id === cfgDifficulty) || {}).label || cfgDifficulty}</b>. El servidor revisa que el que elijas sea de esa dificultad; si no lo es, tienes que cambiarlo.</p>
         </div>
         {secret ? (
           <p className="text-sm text-accent">Tu jugador secreto: <b>{secret.name}</b>. {rivalReady ? "Tu rival también eligió: arranca el partido." : `Esperando a ${rival?.name || "tu rival"}…`}</p>
         ) : (
           <>
-            {meta && <Autocomplete options={meta.names} placeholder="Buscá un jugador" onPick={chooseSecret} />}
+            {meta && <Autocomplete options={meta.names} placeholder="Busca un jugador" onPick={chooseSecret} />}
             {busy && <p className="text-xs text-gray-500">Revisando…</p>}
           </>
         )}
@@ -290,7 +290,7 @@ export default function QuienEsPreguntasBody() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 text-sm">
-        <span className="text-gray-400">Vos vs <b className="text-white">{rival?.name || "rival"}</b> · preguntas {asked}/{MAX_QUESTIONS}</span>
+        <span className="text-gray-400">Tú vs <b className="text-white">{rival?.name || "rival"}</b> · preguntas {asked}/{MAX_QUESTIONS}</span>
         {phase === "playing" && (
           <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${myTurn ? "border-accent text-accent" : "border-border text-gray-400"}`}>{myTurn ? "Tu turno" : `Turno de ${rival?.name || "tu rival"}…`}</span>
         )}
@@ -308,13 +308,13 @@ export default function QuienEsPreguntasBody() {
       {phase === "playing" && (
         <>
           <Card className="space-y-3">
-            <p className="t-eyebrow">{myTurn ? "Hacé una pregunta" : "Esperá tu turno"}</p>
+            <p className="t-eyebrow">{myTurn ? "Haz una pregunta" : "Espera tu turno"}</p>
             {questions}
             {asked >= MAX_QUESTIONS && <p className="text-xs text-amber-400">Ya hiciste las {MAX_QUESTIONS} preguntas: solo te queda arriesgar un nombre.</p>}
           </Card>
           <Card className="space-y-2">
-            <p className="t-eyebrow">O arriesgá un nombre (si fallás perdés el turno)</p>
-            {meta && (myTurn ? <Autocomplete options={meta.names} placeholder="¿Quién es? Elegí un jugador" onPick={guess} /> : <p className="text-sm text-gray-500">Disponible en tu turno.</p>)}
+            <p className="t-eyebrow">O arriesga un nombre (si fallas pierdes el turno)</p>
+            {meta && (myTurn ? <Autocomplete options={meta.names} placeholder="¿Quién es? Elige un jugador" onPick={guess} /> : <p className="text-sm text-gray-500">Disponible en tu turno.</p>)}
           </Card>
         </>
       )}
@@ -325,7 +325,7 @@ export default function QuienEsPreguntasBody() {
           <ul className="space-y-1.5 text-sm">
             {log.map((e, i) => (
               <li key={i} className="flex items-center gap-2">
-                <span className={`text-[10px] font-bold uppercase w-12 shrink-0 ${e.by === "me" ? "text-accent" : "text-gray-500"}`}>{e.by === "me" ? "Vos" : rival?.name?.slice(0, 7) || "Rival"}</span>
+                <span className={`text-[10px] font-bold uppercase w-12 shrink-0 ${e.by === "me" ? "text-accent" : "text-gray-500"}`}>{e.by === "me" ? "Tú" : rival?.name?.slice(0, 7) || "Rival"}</span>
                 <span className="flex-1">{e.label}</span>
                 <span className={`font-bold ${e.answer ? "text-emerald-400" : "text-red-400"}`}>{e.guess ? "✗" : e.answer ? "Sí" : "No"}</span>
               </li>

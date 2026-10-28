@@ -225,9 +225,9 @@ function generateReleaseClauses() {
 }
 
 export const WEEKLY_DECISIONS = [
-  { id: "elogiar", label: "Elogiar al plantel", desc: "Conferencia de prensa: destacás el trabajo del grupo.", morale: 4, board: 0 },
-  { id: "exigir", label: "Exigir más", desc: "Vestuario: pedís un salto de nivel. La directiva lo valora, el grupo no tanto.", morale: -3, board: 5 },
-  { id: "defender", label: "Defender al club", desc: "Entrevista: respaldás a la institución frente a las críticas.", morale: 1, board: 3 },
+  { id: "elogiar", label: "Elogiar al plantel", desc: "Conferencia de prensa: destacas el trabajo del grupo.", morale: 4, board: 0 },
+  { id: "exigir", label: "Exigir más", desc: "Vestuario: pides un salto de nivel. La directiva lo valora, el grupo no tanto.", morale: -3, board: 5 },
+  { id: "defender", label: "Defender al club", desc: "Entrevista: respaldas a la institución frente a las críticas.", morale: 1, board: 3 },
 ];
 
 function applyMatchMorale(morale, squad, lineup, isWin, isLoss) {
@@ -412,7 +412,7 @@ function monthlyTick(s) {
   return {
     ...base,
     cantera,
-    news: rolled.found ? [`🌱 Nuevo mes: tus redes mandaron un informe con ${rolled.found} jóvenes. Tenés una semana para fichar a cada uno o se pierden.`, ...base.news].slice(0, 8) : base.news,
+    news: rolled.found ? [`🌱 Nuevo mes: tus redes mandaron un informe con ${rolled.found} jóvenes. Tienes una semana para fichar a cada uno o se pierden.`, ...base.news].slice(0, 8) : base.news,
   };
 }
 
@@ -435,7 +435,7 @@ function endOfWeek(s) {
       next = {
         ...next,
         cantera,
-        news: [`📨 ${announced.map((a) => `${a.name} (lo quiere ${a.club})`).join(", ")}: si no lo subís al primer equipo, se va al terminar la temporada.`, ...next.news].slice(0, 8),
+        news: [`📨 ${announced.map((a) => `${a.name} (lo quiere ${a.club})`).join(", ")}: si no lo subes al primer equipo, se va al terminar la temporada.`, ...next.news].slice(0, 8),
       };
     }
   }
@@ -463,8 +463,8 @@ export function CareerProvider({ children, online = null }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
-  // Puntaje semanal de Modo DT: cada vez que cerrás una temporada se manda
-  // lo que llevás en la carrera — 15 por temporada dirigida (el esfuerzo de
+  // Puntaje semanal de Modo DT: cada vez que cierras una temporada se manda
+  // lo que llevas en la carrera — 15 por temporada dirigida (el esfuerzo de
   // jugarla entera), +40 por objetivo cumplido, +25 por copa, +60 por
   // título continental. El servidor guarda el mejor de la semana, así que
   // jugar más temporadas esta semana es lo que sube el número.
@@ -731,8 +731,8 @@ export function CareerProvider({ children, online = null }) {
     });
   }
 
-  // El club/jugador solo se "cansa" de vos si le ofertaste algo ridículamente
-  // bajo (muy_lejos). Si estuviste cerca y no salió, podés subir la cifra y
+  // El club/jugador solo se "cansa" de ti si le ofertaste algo ridículamente
+  // bajo (muy_lejos). Si estuviste cerca y no salió, puedes subir la cifra y
   // volver a intentar en el momento — no tiene sentido bloquear a alguien
   // que está negociando de buena fe.
   const OFFER_COOLDOWN_WEEKS = 1;
@@ -908,7 +908,7 @@ export function CareerProvider({ children, online = null }) {
     setState((s) => ({
       ...s,
       jobOffers: (s.jobOffers || []).map((o) => o.id === offerId ? { ...o, status: "declined" } : o),
-      news: [`❌ Rechazaste la oferta de otro club. Seguís en tu proyecto.`, ...s.news].slice(0, 8),
+      news: [`❌ Rechazaste la oferta de otro club. Sigues en tu proyecto.`, ...s.news].slice(0, 8),
     }));
   }
 
@@ -1271,9 +1271,9 @@ export function CareerProvider({ children, online = null }) {
         };
       }
 
-      // Robo de fichaje: si seguís a un jugador ajeno demasiado tiempo sin
+      // Robo de fichaje: si sigues a un jugador ajeno demasiado tiempo sin
       // cerrar el pase, un club rival se puede adelantar y ficharlo. Sólo
-      // corre sobre la watchlist (los objetivos que marcaste vos) — no roba
+      // corre sobre la watchlist (los objetivos que marcaste tú) — no roba
       // jugadores al azar de todo el mercado.
       const targets = (next.watchlist || []).filter((id) => !(next.acquired || []).includes(id));
       if (targets.length) {
@@ -1512,7 +1512,7 @@ export function CareerProvider({ children, online = null }) {
       } else {
         newCopa.currentRound = roundIdx + 1;
         budget = Math.round((budget + COPA_PRIZES[roundIdx]) * 20) / 20;
-        news = [`🏅 Copa ${COPA_ROUNDS[roundIdx]}: avanzás a ${COPA_ROUNDS[roundIdx + 1]} vs ${newCopa.opponents[roundIdx + 1]?.name || "?"} (ganaste ${result.myGoals}-${result.rivalGoals}${result.myGoals === result.rivalGoals ? " en penales" : ""}). +€${COPA_PRIZES[roundIdx]}M.`, ...news].slice(0, 8);
+        news = [`🏅 Copa ${COPA_ROUNDS[roundIdx]}: avanzas a ${COPA_ROUNDS[roundIdx + 1]} vs ${newCopa.opponents[roundIdx + 1]?.name || "?"} (ganaste ${result.myGoals}-${result.rivalGoals}${result.myGoals === result.rivalGoals ? " en penales" : ""}). +€${COPA_PRIZES[roundIdx]}M.`, ...news].slice(0, 8);
       }
 
       return { ...s, copa: newCopa, news, budget, injuries, playerStats, morale, fatigue, lastMatch: { ...result, rival: rivalTeam, competitionLabel: `Copa del Rey · ${COPA_ROUNDS[roundIdx]}` } };
@@ -1591,7 +1591,7 @@ export function CareerProvider({ children, online = null }) {
         newContinental.currentRound = roundIdx + 1;
         budget = Math.round((budget + prizes[roundIdx]) * 20) / 20;
         managerPrestige = Math.min(100, managerPrestige + 3);
-        news = [`🌍 ${compLabel} ${CONTINENTAL_ROUNDS[roundIdx]}: avanzás a ${CONTINENTAL_ROUNDS[roundIdx + 1]} vs ${newContinental.opponents[roundIdx + 1]?.name || "?"} (ganaste ${result.myGoals}-${result.rivalGoals}${result.myGoals === result.rivalGoals ? " en penales" : ""}). +€${prizes[roundIdx]}M.`, ...news].slice(0, 8);
+        news = [`🌍 ${compLabel} ${CONTINENTAL_ROUNDS[roundIdx]}: avanzas a ${CONTINENTAL_ROUNDS[roundIdx + 1]} vs ${newContinental.opponents[roundIdx + 1]?.name || "?"} (ganaste ${result.myGoals}-${result.rivalGoals}${result.myGoals === result.rivalGoals ? " en penales" : ""}). +€${prizes[roundIdx]}M.`, ...news].slice(0, 8);
       }
 
       return {
@@ -1736,11 +1736,11 @@ export function CareerProvider({ children, online = null }) {
     }
 
     const offerNews = newJobOffers.some((o) => o.status === "pending")
-      ? [`📩 ${newJobOffers.find(o => o.status === "pending").fromTeamName} te ofrece su banquillo. Revisá tu bandeja.`]
+      ? [`📩 ${newJobOffers.find(o => o.status === "pending").fromTeamName} te ofrece su banquillo. Revisa tu bandeja.`]
       : [];
 
     const renewalNews = renewalOffers.length
-      ? [`✍️ ${renewalOffers.length} contrato${renewalOffers.length === 1 ? "" : "s"} por vencer. Decidí si renovás o dejás salir.`]
+      ? [`✍️ ${renewalOffers.length} contrato${renewalOffers.length === 1 ? "" : "s"} por vencer. Decide si renuevas o dejas salir.`]
       : [];
 
     // Los contratos de ojeadores y agentes de inferiores duran temporadas
@@ -1798,7 +1798,7 @@ export function CareerProvider({ children, online = null }) {
 
   // ===== Selección Nacional (modo secundario dentro de Modo DT) =====
   // No es una segunda carrera aparte: es una oferta ocasional en ventana
-  // FIFA que, si la aceptás, corre en paralelo a tu club con su propio
+  // FIFA que, si la aceptas, corre en paralelo a tu club con su propio
   // historial de partidos — resuelta con un simulador propio y liviano
   // (nationalTeam.js), sin tocar el motor de partidos de club para nada.
 

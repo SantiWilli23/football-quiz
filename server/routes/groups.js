@@ -25,7 +25,7 @@ router.get("/invite/:code/preview", async (req, res) => {
     });
     const group = result.rows[0];
     if (!group) return res.status(404).json({ error: "Código de invitación inválido" });
-    // Invitación con desafío (Futotal 2.0): «Juan te desafía: superá sus 78». Solo si quien
+    // Invitación con desafío (Futotal 2.0): «Juan te desafía: supera sus 78». Solo si quien
     // invita es miembro del club y jugó alguna vez.
     let challenge = null;
     const from = String(req.query.de || "").trim().slice(0, 40);
@@ -462,7 +462,7 @@ router.put("/:id/rival", async (req, res) => {
     if (membership.rows.length === 0) return res.status(403).json({ error: "No perteneces a este grupo" });
 
     if (rivalId !== null) {
-      if (rivalId === req.userId) return res.status(400).json({ error: "No podés elegirte a vos mismo como rival" });
+      if (rivalId === req.userId) return res.status(400).json({ error: "No puedes elegirte a ti mismo como rival" });
       const rivalMembership = await db.execute({
         sql: "SELECT id FROM group_members WHERE group_id = ? AND user_id = ?",
         args: [groupId, rivalId],

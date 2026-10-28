@@ -34,7 +34,7 @@ export default function Register() {
     setError("");
 
     if (!username.trim() || !email.trim() || !password) {
-      setError("Completá todos los campos");
+      setError("Completa todos los campos");
       return;
     }
     if (username.trim().length < 3) {
@@ -73,7 +73,7 @@ export default function Register() {
             <div className="mb-6 rounded-2xl border border-border bg-panel p-4 text-left">
               <p className="t-eyebrow mb-1">Tu código de recuperación</p>
               <p className="select-all rounded-xl border border-dashed border-border bg-bg px-3 py-2 text-center font-mono text-base tracking-widest">{recoveryCode}</p>
-              <p className="text-xs text-gray-400 mt-2">Guardalo: es la única forma de recuperar tu cuenta si olvidás la contraseña. Lo podés volver a ver en Perfil › Ajustes.</p>
+              <p className="text-xs text-gray-400 mt-2">Guárdalo: es la única forma de recuperar tu cuenta si olvidas la contraseña. Lo puedes volver a ver en Perfil › Ajustes.</p>
               <button type="button" onClick={copyCode} className="btn btn-secondary btn-sm mt-2 w-full">{copied ? "Copiado" : "Copiar código"}</button>
             </div>
           )}
@@ -96,12 +96,12 @@ export default function Register() {
         </div>
         <div>
           <h1 className="text-4xl font-bold leading-tight mb-4">
-            Sumate a la
+            Súmate a la
             <br />
             competencia.
           </h1>
           <p className="text-gray-400 max-w-md">
-            Creá tu cuenta, uníte a un grupo con tus amigos y empezá a sumar puntos
+            Crea tu cuenta, únete a un grupo con tus amigos y empieza a sumar puntos
             respondiendo la pregunta del día.
           </p>
         </div>
@@ -111,7 +111,7 @@ export default function Register() {
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">
           <h2 className="text-2xl font-bold mb-1">Crear cuenta</h2>
-          <p className="text-gray-400 text-sm mb-8">Empezá a jugar en un minuto</p>
+          <p className="text-gray-400 text-sm mb-8">Empieza a jugar en un minuto</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <FloatField label="Usuario" type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
@@ -130,9 +130,9 @@ export default function Register() {
           </form>
 
           <p className="text-sm text-gray-400 mt-6 text-center">
-            ¿Ya tenés cuenta?{" "}
+            ¿Ya tienes cuenta?{" "}
             <Link to="/login" className="text-accent hover:text-accent-light font-medium">
-              Iniciá sesión
+              Inicia sesión
             </Link>
           </p>
         </div>

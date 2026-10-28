@@ -37,8 +37,8 @@ function BingoIntro({ fromDaily, mode, setMode, timer, setTimer, busy, onStart, 
           </div>
           <ol className="space-y-3 text-sm text-gray-300">
             <li className="flex gap-3"><span className="w-6 h-6 shrink-0 rounded-full bg-accent text-onaccent text-xs font-bold flex items-center justify-center">1</span>Cada casilla cruza una fila (club o selección) con una columna (club).</li>
-            <li className="flex gap-3"><span className="w-6 h-6 shrink-0 rounded-full bg-accent text-onaccent text-xs font-bold flex items-center justify-center">2</span>Escribí un futbolista que cumpla las dos cosas: si encaja en varias casillas, elegís dónde va.</li>
-            <li className="flex gap-3"><span className="w-6 h-6 shrink-0 rounded-full bg-accent text-onaccent text-xs font-bold flex items-center justify-center">3</span>Llená las 9 casillas. Cada jugador se usa una sola vez.</li>
+            <li className="flex gap-3"><span className="w-6 h-6 shrink-0 rounded-full bg-accent text-onaccent text-xs font-bold flex items-center justify-center">2</span>Escribe un futbolista que cumpla las dos cosas: si encaja en varias casillas, eliges dónde va.</li>
+            <li className="flex gap-3"><span className="w-6 h-6 shrink-0 rounded-full bg-accent text-onaccent text-xs font-bold flex items-center justify-center">3</span>Llena las 9 casillas. Cada jugador se usa una sola vez.</li>
           </ol>
         </div>
       </div>
@@ -181,7 +181,7 @@ export default function Bingo() {
       setGrid(data);
       return data;
     } catch {
-      setError("No se pudo cargar el tablero. Probá de nuevo.");
+      setError("No se pudo cargar el tablero. Prueba de nuevo.");
       return null;
     } finally {
       setBusy(false);
@@ -228,7 +228,7 @@ export default function Bingo() {
       } else if (data.cells.length === 1) {
         place(name, data.cells[0]);
       } else {
-        setMsg(`${name} encaja en varias casillas: tocá la que prefieras.`);
+        setMsg(`${name} encaja en varias casillas: toca la que prefieras.`);
         setChoices({ name, cells: data.cells });
       }
     } catch {
@@ -297,7 +297,7 @@ export default function Bingo() {
                       aria-label={name ? `${r.name} y ${c.name}: ${name}` : `${r.name} y ${c.name}: vacía`}
                       className={`tone-${COL_TONES[ci]} aspect-square rounded-xl border flex flex-col items-center justify-center p-1 text-center transition-colors ${
                         name ? "tile-b text-white"
-                          : selectable ? "border-accent bg-accent/15 animate-pulse cursor-pointer"
+                          : selectable ? "border-accent bg-accent/15 anímate-pulse cursor-pointer"
                           : "border-border bg-panel"
                       }`}
                     >
@@ -325,7 +325,7 @@ export default function Bingo() {
                     exclude={state.cells.filter(Boolean)}
                     onPick={guess}
                     disabled={busy}
-                    placeholder="Escribí el futbolista…"
+                    placeholder="Escribe el futbolista…"
                   />
                 </div>
                 <button onClick={giveUp} className="p-2.5 rounded-card border border-border text-gray-400 hover:text-white" aria-label="Rendirse" title="Rendirse">

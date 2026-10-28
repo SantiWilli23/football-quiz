@@ -49,7 +49,7 @@ function CardsToggle({ group, memberCount, onToggled }) {
         <p className="text-xs text-gray-500">
           {memberCount >= 3
             ? "Álbum, equipo y partidos con cartas — se activa una vez, para siempre."
-            : `Hacen falta al menos 3 miembros (hoy tenés ${memberCount}).`}
+            : `Hacen falta al menos 3 miembros (hoy tienes ${memberCount}).`}
         </p>
       </div>
       <button
@@ -186,7 +186,7 @@ export default function Group() {
     e.preventDefault();
     setJoinError("");
     if (!joinCode.trim()) {
-      setJoinError("Ingresá un código");
+      setJoinError("Ingresa un código");
       return;
     }
     setJoinLoading(true);
@@ -265,7 +265,7 @@ export default function Group() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold mb-1">Mi grupo</h1>
-          <p className="text-gray-400 text-sm">Competí con tus amigos y mirá el ranking</p>
+          <p className="text-gray-400 text-sm">Compite con tus amigos y mira el ranking</p>
         </div>
         <div className="flex gap-3">
           <button
@@ -346,7 +346,7 @@ export default function Group() {
           <div className="text-center py-8">
             <Users className="mx-auto text-gray-600 mb-3" size={32} />
             <p className="text-gray-400 mb-1">Todavía no formás parte de ningún grupo</p>
-            <p className="text-sm text-gray-600">Creá uno nuevo o unite con un código de invitación</p>
+            <p className="text-sm text-gray-600">Crea uno nuevo o únete con un código de invitación</p>
           </div>
         </Card>
       )}
@@ -435,7 +435,7 @@ export default function Group() {
               )}
 
               {/* Salir es difícil de deshacer (hace falta el código para
-                  volver), y si sos el último el grupo se borra: por eso pide
+                  volver), y si eres el último el grupo se borra: por eso pide
                   confirmación en vez de irse de una. */}
               <div className="mb-5">
                 {!confirmLeave ? (
@@ -449,11 +449,11 @@ export default function Group() {
                 ) : (
                   <div className="rounded-card border border-red-500/40 bg-red-500/5 px-4 py-3">
                     <p className="text-sm mb-1">
-                      ¿Seguro que querés salir de {detail.name}?
+                      ¿Seguro que quieres salir de {detail.name}?
                     </p>
                     <p className="text-xs text-gray-500 mb-3">
                       {ranking.length <= 1
-                        ? "Sos el único miembro, así que el grupo se va a borrar con todo su historial."
+                        ? "Eres el único miembro, así que el grupo se va a borrar con todo su historial."
                         : "Para volver vas a necesitar el código de invitación. Tus respuestas anteriores quedan en el historial del grupo."}
                     </p>
                     {leaveError && <p className="text-sm text-red-400 mb-2">{leaveError}</p>}
@@ -570,7 +570,7 @@ export default function Group() {
                   <EmptyState
                     icon={Trophy}
                     title={`Nadie sumó puntos ${scope === "mes" ? "este mes" : "todavía"}`}
-                    hint="Jugá hoy y abrís el ranking del grupo."
+                    hint="Juega hoy y abres el ranking del grupo."
                     actions={[{ label: "Ir a los juegos", to: "/juegos" }]}
                   />
                 )}
@@ -666,7 +666,7 @@ export default function Group() {
               <Shield size={18} className="text-[#d97a41] shrink-0" />
               <div className="min-w-0">
                 <p className="text-sm font-semibold">Crear Liga Online DT</p>
-                <p className="text-xs text-gray-500">Invitá al grupo, cada uno elige un club real y compiten toda una temporada.</p>
+                <p className="text-xs text-gray-500">Invita al grupo, cada uno elige un club real y compiten toda una temporada.</p>
               </div>
             </Link>
             <Link

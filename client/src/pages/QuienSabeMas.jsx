@@ -17,7 +17,7 @@ const MODES = [
     href: "/mentiroso.html",
     label: "Mentiroso",
     icon: Zap,
-    description: "Duelo 1 contra 1: ¿sabés más jugadores que el otro antes de que se te acaben?",
+    description: "Duelo 1 contra 1: ¿sabes más jugadores que el otro antes de que se te acaben?",
   },
   {
     to: "/equipo-jugador",
@@ -35,7 +35,7 @@ const MODES = [
     to: "/var-votacion",
     label: "Votación del VAR",
     icon: Gavel,
-    description: "Una jugada polémica por día: votá qué cobrarías y mirá cómo votó el grupo antes de ver el fallo real.",
+    description: "Una jugada polémica por día: vota qué cobrarías y mira cómo votó el grupo antes de ver el fallo real.",
   },
   {
     to: "/dorsal-historico",
@@ -53,7 +53,7 @@ const MODES = [
     to: "/supervivencia",
     label: "Supervivencia",
     icon: Skull,
-    description: "Trivia sin margen de error: una vida, a ver hasta dónde llegás.",
+    description: "Trivia sin margen de error: una vida, a ver hasta dónde llegas.",
   },
 ];
 
@@ -64,7 +64,7 @@ export default function QuienSabeMas() {
         <Brain size={22} className="text-accent shrink-0" />
         <div>
           <h1 className="t-title mb-1">¿Quién sabe más de fútbol?</h1>
-          <p className="text-gray-400 text-sm">Elegí con qué modo querés medirte hoy.</p>
+          <p className="text-gray-400 text-sm">Elige con qué modo quieres medirte hoy.</p>
         </div>
       </div>
 

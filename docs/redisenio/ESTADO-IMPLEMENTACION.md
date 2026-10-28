@@ -63,3 +63,16 @@ Todo sigue detrás de `FUTOTAL2=1`. Con `FUTOTAL2_JUEGOS=juego1,juego2` (por eje
 ### Tercera tanda (cierre de lo pendiente)
 
 Visor único en la Carrera DT · puntos `versus` por victorias online verificadas por el relay · Draft contra un amigo en línea · Escudos «Medio» y aviso de partida a medias · limpieza etapa A (410 en escrituras retiradas) y etapa B de lo aislado (Pase, Quiniela, Campeón y descenso, Mercado, Fantasy, liga de grupos, Vida FUT, ranking global viejo, Trivia). Queda a propósito el camino sin rediseño y la etapa C (ver «Estado de ejecución» de `ESPEC-PENDIENTES.md`).
+
+### Cuarta tanda (la capa visual del prototipo)
+
+El dueño desplegó y vio «el mismo diseño». Era cierto: lo anterior cambió la mecánica pero la app seguía con la carcasa, la paleta y las tarjetas de antes, y «Jugar» se caía en blanco (el merge con main dejó un `Jugar.jsx` que leía `juegos` de `useFutotal2`, que devuelve `games`). En esta tanda:
+
+- **Encendido por defecto**: `redesignOn()` es verdadero salvo `FUTOTAL2=0`. Las pruebas viejas fijan `FUTOTAL2=0` en `test/helpers.js`.
+- **Sistema visual** (`client/src/v2/v2.css`, `<html data-v2>`): paleta del prototipo (césped `#08100d`, paneles verdes), tipografías Bricolage Grotesque / Figtree / Barlow Condensed, radios de 14–24 px, sin esquinas cortadas. Las variables `--c-*` son las de Tailwind, así que TODAS las pantallas (también los juegos de siempre) toman el aspecto nuevo. Se recuerda la última respuesta del servidor (`fq_v2`) para no parpadear.
+- **Carcasa** (`v2/Shell.jsx`): marca FUTOTAL, racha y campana arriba; una sola columna (480 px, centrada en computador); Hoy · Jugar · Club · Cartas · Yo abajo.
+- **Pantallas rehechas igual que el prototipo**: Portada (pelota que rebota), Hoy (marcador 1T/2T/PEN, cuenta regresiva a medianoche de Chile, semana Lun–Dom, racha y protector, racha del club «jugaron X de N», tabla con pendientes, copa, SBC, seguir jugando), Jugar (Para ti, partidas libres X/100, filas Arcade / Con amigos / Carrera con los 13 juegos), Club (escudo con sellos TOTAL ×2 / CLÁSICO / PRINCIPAL, pestañas, tabla con «Pendiente» y «Avisar»), Cartas (pestañas Sobres / Álbum / Mi once / SBC / Tienda, «Cómo ganas sobres»), Yo (carta Futotal que se da vuelta, ADN, números, vitrina, últimos partidos, ajustes).
+- **Servidor**: `/clubs/me/streak` trae la semana; `/clubs/:id/streak` trae `playedToday`; `/clubs/:id/table` trae `playedToday`; `/clubs/me/free` (partidas libres de hoy); `/me/card` trae partidos, mejor marcador y últimos 7.
+- **Idioma**: los textos pasan de voseo («Elegí», «Ganás», «vos») a tú, como el prototipo (unos 630 cambios en cliente y servidor).
+
+Verificado con capturas a 390 px y 1280 px de cada pantalla, un partido del día jugado completo y `FUTOTAL2=0` (vuelve la app anterior).

@@ -26,7 +26,7 @@ export default function Bienvenida() {
       await refreshMe();
       setFav(club);
     } catch (e) {
-      setError(e.response?.data?.error || "No se pudo guardar tu club. Probá de nuevo.");
+      setError(e.response?.data?.error || "No se pudo guardar tu club. Prueba de nuevo.");
     } finally { setBusy(false); }
   }
 
@@ -40,7 +40,7 @@ export default function Bienvenida() {
 
         {!fav ? (
           <Card variant="feature">
-            <p className="flex items-center gap-2 font-semibold"><Heart size={16} className="text-red-400" /> ¿De qué club sos hincha?</p>
+            <p className="flex items-center gap-2 font-semibold"><Heart size={16} className="text-red-400" /> ¿De qué club eres hincha?</p>
             <p className="mt-1 text-sm text-gray-400">Te regalamos un sobre con una carta segura de ese club.</p>
             <button onClick={() => setPicking(true)} disabled={busy} className="btn btn-primary mt-4 w-full">Elegir mi club</button>
             {error && <p className="mt-2 text-sm text-red-400">{error}</p>}

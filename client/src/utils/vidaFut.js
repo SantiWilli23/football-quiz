@@ -1,4 +1,4 @@
-// Vida FUT tiene sus propias partidas, separadas de las que jugás suelto: un
+// Vida FUT tiene sus propias partidas, separadas de las que juegas suelto: un
 // Cotrero, una Carrera DT o un Presidente abiertos desde Vida FUT llevan
 // ?vidafut=1 en la URL y guardan todo con el prefijo "vidafut_". Así jugar un
 // Cotrero normal no avanza (ni pisa) la campaña, y viceversa.

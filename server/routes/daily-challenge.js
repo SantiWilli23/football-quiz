@@ -14,18 +14,18 @@ router.use(requireAuth);
 // suma de puntos de stats.js.
 const CHALLENGE_LEAGUE = "reto";
 
-// Los retos ya no dicen "jugá a tal juego": cambian las condiciones. Los de
+// Los retos ya no dicen "juega a tal juego": cambian las condiciones. Los de
 // Fichado tienen un secreto restringido (solo jóvenes, solo leyendas...) y se
 // juegan desde /fulbodle?reto=1; el de trivia usa la trivia del día. Cada reto
 // puede ser de cualquier juego activo — sumar uno nuevo es agregarlo acá.
 const CHALLENGES = [
-  { key: "fichado_jovenes", label: "Adiviná al jugador secreto: hoy son solo jugadores jóvenes (nacidos desde 2003)", to: "/fulbodle?reto=1", fichado: "young" },
-  { key: "trivia_2", label: "Acertá al menos 2 de las 3 preguntas de la trivia del día", to: "/trivia" },
-  { key: "fichado_leyendas", label: "Adiviná al jugador secreto: hoy son solo leyendas retiradas", to: "/fulbodle?reto=1", fichado: "legends" },
-  { key: "fichado_porteros", label: "Adiviná al jugador secreto: hoy son solo porteros", to: "/fulbodle?reto=1", fichado: "keepers" },
-  { key: "fichado_premier", label: "Adiviná al jugador secreto: hoy son solo jugadores de la Premier League", to: "/fulbodle?reto=1", fichado: "premier" },
-  { key: "fichado_laliga", label: "Adiviná al jugador secreto: hoy son solo jugadores de LaLiga", to: "/fulbodle?reto=1", fichado: "laliga" },
-  { key: "fichado_seriea", label: "Adiviná al jugador secreto: hoy son solo jugadores de la Serie A", to: "/fulbodle?reto=1", fichado: "seriea" },
+  { key: "fichado_jovenes", label: "Adivina al jugador secreto: hoy son solo jugadores jóvenes (nacidos desde 2003)", to: "/fulbodle?reto=1", fichado: "young" },
+  { key: "trivia_2", label: "Acierta al menos 2 de las 3 preguntas de la trivia del día", to: "/trivia" },
+  { key: "fichado_leyendas", label: "Adivina al jugador secreto: hoy son solo leyendas retiradas", to: "/fulbodle?reto=1", fichado: "legends" },
+  { key: "fichado_porteros", label: "Adivina al jugador secreto: hoy son solo porteros", to: "/fulbodle?reto=1", fichado: "keepers" },
+  { key: "fichado_premier", label: "Adivina al jugador secreto: hoy son solo jugadores de la Premier League", to: "/fulbodle?reto=1", fichado: "premier" },
+  { key: "fichado_laliga", label: "Adivina al jugador secreto: hoy son solo jugadores de LaLiga", to: "/fulbodle?reto=1", fichado: "laliga" },
+  { key: "fichado_seriea", label: "Adivina al jugador secreto: hoy son solo jugadores de la Serie A", to: "/fulbodle?reto=1", fichado: "seriea" },
 ];
 
 export function challengeFor(dateStr) {

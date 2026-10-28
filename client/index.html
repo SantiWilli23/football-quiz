@@ -24,7 +24,7 @@
     <!-- Sin manifest, iOS no instala la app en la pantalla de inicio, y sin eso
          Apple no permite activar las notificaciones push. -->
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#0e1317" />
+    <meta name="theme-color" content="#08100d" />
 
     <!-- iOS ignora el manifest para el ícono y el modo pantalla completa:
          necesita sus propias etiquetas. -->
@@ -35,6 +35,11 @@
 
     <link rel="icon" type="image/png" href="/icon-192.png" />
 
+    <!-- Tipografías de Futotal 2.0: Bricolage (títulos), Figtree (texto) y Barlow Condensed (marcador). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
     <!-- Aplica el tema guardado ANTES del primer paint, para no arrancar en
          Nocturno (el default) y saltar al tema elegido un instante después. -->
     <script>
@@ -44,6 +49,8 @@
           if (t === "azul" || t === "cancha-dia") document.documentElement.setAttribute("data-theme", t);
           var s = localStorage.getItem("fq_shape");
           if (s === "cancha") document.documentElement.setAttribute("data-shape", s);
+          // Futotal 2.0 viene encendido salvo que el servidor diga lo contrario (se recuerda la última respuesta).
+          if (localStorage.getItem("fq_v2") !== "0") document.documentElement.setAttribute("data-v2", "");
         } catch (e) {}
       })();
     </script>
