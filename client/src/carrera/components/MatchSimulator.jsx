@@ -1,89 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useCareer } from "../context/CareerContext.jsx";
 import { getInjury } from "../engine/injuryEngine.js";
-import { layoutSlots } from "../engine/pitchLayout.js";
 import { getPressQuestion } from "../engine/pressEngine.js";
 import { ArrowRight, Brain, FastForward, Mic, Pause, X } from "lucide-react";
-import TeamCrest from "./TeamCrest.jsx";
+import MatchStage from "../../match/MatchStage.jsx";
+import { fromCareer } from "../../match/simMatch.js";
 import { MENTALITY_LABELS, SLIDER_DEFS } from "./Tactics.jsx";
 
 const MAX_SUBS = 3;
 const TICK_MS = 1000;
-const RIVAL_FORMATION = ["GK", "RB", "CB", "CB", "LB", "CDM", "CM", "CM", "RW", "ST", "LW"].map((slot) => ({ slot }));
-
-// El bloque entero se corre hacia el arco rival cuando ataca "mi" equipo, y
-// hacia el propio cuando ataca el rival — antes las 22 fichas quedaban
-// clavadas en su spot toda la mitad y solo se movía la pelota.
-function attackShift(event) {
-  if (!event) return 0;
-  if ((event.type === "goal" || event.type === "shot") && event.team === "me") return -5;
-  if ((event.type === "goal" || event.type === "shot") && event.team === "rival") return 5;
-  return 0;
-}
-
-function ballPositionFor(event) {
-  if (!event || event.x == null || event.y == null) return { x: 50, y: 50 };
-  return { x: event.x, y: event.y };
-}
-
-function LivePitch({ myColor, starters, byId, lastEvent }) {
-  const myCoords = useMemo(() => layoutSlots(starters), [starters]);
-  const rivalCoords = useMemo(
-    () => layoutSlots(RIVAL_FORMATION).map((c) => ({ x: c.x, y: 100 - c.y })),
-    []
-  );
-  const ball = ballPositionFor(lastEvent);
-  const goalFlash = lastEvent?.type === "goal";
-  const shift = attackShift(lastEvent);
-  const clampY = (y) => Math.max(4, Math.min(96, y));
-  const involvedId = lastEvent?.scorerId || lastEvent?.shooterId || lastEvent?.cardPlayerId || null;
-
-  return (
-    <div
-      className="relative w-full rounded-card overflow-hidden border border-border select-none mb-4"
-      style={{ aspectRatio: "0.8", background: "linear-gradient(180deg,#1f4d33,#255c3d 50%,#1f4d33)" }}
-    >
-      <div className="absolute inset-2 border border-white/25 rounded-md" />
-      <div className="absolute left-2 right-2 top-1/2 border-t border-white/25" />
-      <div className="absolute left-1/2 top-1/2 w-14 h-14 -translate-x-1/2 -translate-y-1/2 border border-white/25 rounded-full" />
-
-      {starters.map((slot, i) => {
-        const p = byId[slot.playerId];
-        const pos = myCoords[i] || { x: 50, y: 50 };
-        const isInvolved = involvedId && slot.playerId === involvedId;
-        return (
-          <div
-            key={`me-${i}`}
-            className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5"
-            style={{ left: `${pos.x}%`, top: `${clampY(pos.y + shift)}%`, transition: "left 0.4s ease, top 0.5s ease" }}
-          >
-            <div
-              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-xs font-bold text-white shadow-md border ${isInvolved ? "border-amber ring-2 ring-amber/70" : "border-black/20"}`}
-              style={{ background: myColor }}
-            >
-              {p?.number ?? "?"}
-            </div>
-          </div>
-        );
-      })}
-
-      {rivalCoords.map((pos, i) => (
-        <div
-          key={`riv-${i}`}
-          className="absolute -translate-x-1/2 -translate-y-1/2 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-xs sm:text-xs font-bold bg-gray-700 text-gray-300 border border-gray-500"
-          style={{ left: `${pos.x}%`, top: `${clampY(pos.y + shift)}%`, transition: "left 0.4s ease, top 0.5s ease" }}
-        >
-          {i + 1}
-        </div>
-      ))}
-
-      <div
-        className={`absolute w-2.5 h-2.5 rounded-full bg-white shadow transition-all duration-500 ${goalFlash ? "ring-4 ring-amber/70" : ""}`}
-        style={{ left: `${ball.x}%`, top: `${ball.y}%`, transform: "translate(-50%,-50%)" }}
-      />
-    </div>
-  );
-}
 
 export default function MatchSimulator({ matchResult, onFinish }) {
   const { team, state, formations, playNextMatchSecondHalf, answerPressConference } = useCareer();
@@ -148,8 +73,6 @@ export default function MatchSimulator({ matchResult, onFinish }) {
   const finished = eventsDone && !isHalftimePending;
   const showHalftimePanel = eventsDone && isHalftimePending;
 
-  const myGoalsSoFar = shown.filter((e) => e.type === "goal" && e.team === "me").length;
-  const rivalGoalsSoFar = shown.filter((e) => e.type === "goal" && e.team === "rival").length;
 
   const starters = (state.lineup.starters || []).filter((s) => s.playerId);
   const bench = state.lineup.bench || [];
@@ -160,7 +83,7 @@ export default function MatchSimulator({ matchResult, onFinish }) {
   const availableIn = bench.filter((id) => !usedIn.has(id) && !getInjury(state.injuries || [], id));
 
   const byId = Object.fromEntries(state.squad.map((p) => [p.id, p]));
-  const lastEvent = shown[shown.length - 1] || null;
+  const sim = fromCareer({ events: shown, home: { name: team.name }, away: { name: rival?.name || "Rival" }, byId, partial: !finished });
   const isPreseason = data.competitionLabel === "Amistoso de pretemporada";
   const pressQuestion = finished && !isPreseason ? getPressQuestion(data.myGoals, data.rivalGoals) : null;
 
@@ -175,25 +98,13 @@ export default function MatchSimulator({ matchResult, onFinish }) {
   return (
     <div className="min-h-screen bg-bg text-white p-4">
       <div className="max-w-2xl mx-auto">
-        <div className="hero-b rounded-3xl p-6 text-center mb-4" style={{ "--hero-a": "var(--c-accent)", "--hero-b": "var(--c-red)" }}>
-          <p className="text-xs text-gray-300 uppercase tracking-wide mb-3 flex items-center justify-center gap-2">
-            {!eventsDone && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
-            {data.competitionLabel || "Liga"}{!eventsDone ? " · en vivo" : " · final"}
-          </p>
-          <div className="flex items-center justify-center gap-4 flex-wrap">
-            <span className="flex items-center gap-2 font-bold text-lg"><TeamCrest team={team} size={36} />{team.name}</span>
-            <span className="text-5xl font-extrabold tabular-nums tracking-tight">{myGoalsSoFar} - {rivalGoalsSoFar}</span>
-            <span className="flex items-center gap-2 font-bold text-lg">{rival?.name}{rival && <TeamCrest team={rival} size={36} />}</span>
-          </div>
-          <div className="h-1.5 rounded-full bg-white/15 overflow-hidden mt-4 max-w-md mx-auto">
-            <div className="h-full rounded-full bg-accent transition-[width]" style={{ width: `${Math.min(100, ((shown.length ? shown[shown.length - 1].min : 0) / 90) * 100)}%` }} />
-          </div>
-          {!eventsDone && <p className="text-xs text-gray-300 mt-2">Min {shown.length ? shown[shown.length - 1].min : 0}'</p>}
-        </div>
-
-        {/* En móvil la cancha ocupa todo el ancho de la pantalla. */}
-        <div className="-mx-4 sm:mx-0">
-          <LivePitch myColor={team.colors?.primary || "rgb(var(--c-emerald))"} starters={activeStarters} byId={byId} lastEvent={lastEvent} />
+        <p className="mb-2 flex items-center justify-center gap-2 text-xs uppercase tracking-wide text-gray-300">
+          {!eventsDone && <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />}
+          {data.competitionLabel || "Liga"}{!eventsDone ? " · en vivo" : " · final"}
+        </p>
+        {/* Visor único: el motor de la carrera sigue siendo el mismo, solo cambia cómo se ve. */}
+        <div className="mb-4">
+          <MatchStage live controls={false} match={sim} />
         </div>
 
         {!eventsDone && (
@@ -203,15 +114,6 @@ export default function MatchSimulator({ matchResult, onFinish }) {
             </button>
           </div>
         )}
-
-        <div className="bg-panel border border-border p-4 mb-4 overflow-y-auto space-y-2 rounded-card max-h-72 max-sm:sticky max-sm:bottom-0 max-sm:z-10 max-sm:-mx-4 max-sm:rounded-none max-sm:rounded-t-xl max-sm:max-h-40 max-sm:shadow-[0_-8px_20px_rgba(0,0,0,0.35)]">
-          {shown.length === 0 && <p className="text-sm text-gray-500">El partido está por comenzar...</p>}
-          {shown.map((e, i) => (
-            <p key={i} className={`text-sm border-l-4 pl-3 py-0.5 ${/gol/i.test(e.text) ? "border-emerald bg-emerald/10" : /amarilla|roja|lesi/i.test(e.text) ? "border-amber" : "border-border"}`}>
-              <span className="text-gray-500">Min {e.min}'</span> — {e.text}
-            </p>
-          ))}
-        </div>
 
         {showHalftimePanel && (
           <div className="space-y-4">

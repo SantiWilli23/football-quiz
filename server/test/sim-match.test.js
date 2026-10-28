@@ -69,3 +69,20 @@ test("fromDraft arma prórroga y penales con los remates después del final", as
   assert.deepEqual(types.slice(-3), ["ft", "shootout_kick", "shootout_kick"]);
   assert.ok(m.events.find((e) => e.type === "sub" && e.in === "Y"));
 });
+
+test("fromCareer traduce los eventos de la Carrera DT sin tocar el motor", async () => {
+  const { fromCareer } = await import("../../client/src/match/simMatch.js");
+  const byId = { p9: { name: "Delantero Propio" }, p3: { name: "Zaguero" } };
+  const events = [
+    { min: 10, type: "shot", team: "me", text: "Remate" }, { min: 23, type: "goal", team: "me", scorerId: "p9", text: "¡Gol!" },
+    { min: 31, type: "card", team: "rival", text: "Tarjeta amarilla" }, { min: 45, type: "half", team: null, text: "⏸ FIN DEL PRIMER TIEMPO" },
+    { min: 60, type: "goal", team: "rival", text: "¡Gol del rival!" }, { min: 70, type: "card", team: "me", cardPlayerId: "p3", text: "Tarjeta roja" },
+  ];
+  const live = fromCareer({ events, home: { name: "Mi club" }, away: { name: "Rival" }, byId });
+  assert.deepEqual(live.score, { home: 1, away: 1 });
+  assert.equal(live.events.find((e) => e.type === "goal" && e.team === "home").player, "Delantero Propio");
+  assert.equal(live.events.find((e) => e.type === "red").player, "Zaguero");
+  assert.equal(live.events.filter((e) => e.type === "ht").length, 1);
+  assert.notEqual(live.events.at(-1).type, "ft");
+  assert.deepEqual(validateSimMatch(fromCareer({ events, home: { name: "A" }, away: { name: "B" }, byId, partial: false })), []);
+});

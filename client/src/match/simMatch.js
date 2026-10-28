@@ -90,6 +90,26 @@ export function fromDraft(m) {
   };
 }
 
+// Carrera DT (`MatchSimulator`): eventos { min, type: goal | shot | card | half, team: "me" | "rival", text, scorerId, cardPlayerId }.
+// El motor no cambia: solo se traduce lo que ya se fue mostrando para que el visor único lo dibuje.
+export function fromCareer({ events = [], home, away, byId = {}, partial = true }) {
+  const team = (t) => (t === "me" ? "home" : t === "rival" ? "away" : null);
+  const out = [{ min: 0, type: "kickoff", team: null }];
+  for (const e of events) {
+    if (e.type === "goal") out.push({ min: e.min, type: "goal", team: team(e.team), player: byId[e.scorerId]?.name, text: e.text });
+    else if (e.type === "shot") out.push({ min: e.min, type: "chance", team: team(e.team), player: byId[e.shooterId]?.name, text: e.text });
+    else if (e.type === "card") out.push({ min: e.min, type: /roja/i.test(e.text || "") ? "red" : "yellow", team: team(e.team), player: byId[e.cardPlayerId]?.name, text: e.text });
+    else if (e.type === "half") out.push({ min: 45, type: "ht", team: null });
+    else if (/lesi/i.test(e.text || "")) out.push({ min: e.min, type: "injury", team: team(e.team), text: e.text });
+  }
+  if (!partial) out.push({ min: 90, type: "ft", team: null });
+  return {
+    id: `sim:carrera:${home.name}:${away.name}`, source: "sim:carrera",
+    teams: { home: { name: home.name, short: short(home.name), isMe: true }, away: { name: away.name, short: short(away.name) } },
+    events: out, score: scoreOf(out), duration: 90, playback: { mode: "live", speed: 1 },
+  };
+}
+
 // Salida de la Subasta (`match` de LivePitch): { goalsA, goalsB, scorersA, scorersB, minsA, minsB, chances }.
 export function fromSubasta({ id, match, home, away, lineups = null }) {
   const out = [{ min: 0, type: "kickoff", team: null }, { min: 45, type: "ht", team: null }];
