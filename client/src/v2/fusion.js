@@ -17,14 +17,14 @@ export const FUSED = {
     slug: "que-club", label: "¿Qué club?",
     variants: [
       { key: "escudos", label: "Escudos", old: "/escudos", keys: ["escudos"], Page: lazy(() => import("../pages/CrestQuiz.jsx")) },
-      { key: "plantel", label: "Plantel", old: "/torta", keys: ["torta"], Page: lazy(() => import("../pages/Torta.jsx")) },
+      { key: "plantel", label: "Plantel", old: "/torta", keys: ["torta"], resume: "torta", Page: lazy(() => import("../pages/Torta.jsx")) },
     ],
   },
   mas_o_menos: {
     slug: "mas-o-menos", label: "Más o menos",
     variants: [
       { key: "compro", label: "¿A quién me compro?", old: "/a-quien-me-compro", keys: ["a_quien_me_compro"], Page: lazy(() => import("../pages/AQuienMeCompro.jsx")) },
-      { key: "piramide", label: "Pirámide", old: "/piramide", keys: ["piramide"], Page: lazy(() => import("../pages/Piramide.jsx")) },
+      { key: "piramide", label: "Pirámide", old: "/piramide", keys: ["piramide"], resume: "piramide", Page: lazy(() => import("../pages/Piramide.jsx")) },
     ],
   },
   trivia: {
@@ -60,7 +60,7 @@ export const FUSED = {
   bingo: {
     slug: "bingo", label: "Bingo",
     variants: [
-      { key: "bingo", label: "Bingo", old: "/bingo", keys: ["tateti"], Page: lazy(() => import("../pages/Bingo.jsx")) },
+      { key: "bingo", label: "Bingo", old: "/bingo", keys: ["tateti"], resume: "tateti", Page: lazy(() => import("../pages/Bingo.jsx")) },
     ],
   },
 };
@@ -88,6 +88,20 @@ export function redirectFor(pathname, search, enabled) {
   params.delete("diario");
   const qs = params.toString();
   return `${fusedPath(hit[0], hit[1])}${qs ? `?${qs}` : ""}`;
+}
+
+// ¿Hay una partida de hoy a medias en alguna variante de este juego? (solo las que se guardan en el
+// teléfono con `futgames:<juego>:<día>` y un estado «playing»). Devuelve la variante o null.
+export function unfinishedVariant(game) {
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Santiago" });
+  for (const v of FUSED[game].variants) {
+    if (!v.resume) continue;
+    try {
+      const raw = localStorage.getItem(`futgames:${v.resume}:${today}`);
+      if (raw && JSON.parse(raw)?.status === "playing") return v;
+    } catch { /* sin storage o guardado ilegible */ }
+  }
+  return null;
 }
 
 const LAST = (game) => `fq2_variante:${game}`;

@@ -5,7 +5,7 @@ import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/Card.jsx";
 import useFutotal2 from "./useFutotal2.js";
-import { FUSED, fusedPath, gameBySlug, lastVariant, rememberVariant } from "./fusion.js";
+import { FUSED, fusedPath, gameBySlug, lastVariant, rememberVariant, unfinishedVariant } from "./fusion.js";
 import { ShellContext } from "./ShellContext.js";
 
 // Récords de la variante: lo que ya guarda el Historial (partidas, mejor puntaje, promedio,
@@ -37,6 +37,7 @@ function Records({ variant }) {
 }
 
 function Chips({ game, g, variant, records, setRecords }) {
+  const pending = unfinishedVariant(game);
   const base = "shrink-0 rounded-full border px-3 py-1.5 text-sm transition-colors";
   return (
     <div className="mb-4 space-y-2">
@@ -44,6 +45,11 @@ function Chips({ game, g, variant, records, setRecords }) {
         <p className="t-eyebrow">Jugar</p>
         <h1 className="t-title">{g.label}</h1>
       </div>
+      {pending && (pending.key !== variant.key || records) && (
+        <Link to={fusedPath(game, pending.key)} onClick={() => setRecords(false)} className="fq-rise flex items-center justify-between gap-2 rounded-xl border border-accent/50 bg-accent/10 px-3 py-2 text-sm">
+          <span>Tienes una partida de <b>{pending.label}</b> a medias</span><span className="font-semibold text-accent">Continuar →</span>
+        </Link>
+      )}
       <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Variantes">
         {g.variants.length > 1 && g.variants.map((v) => (
           <Link key={v.key} role="tab" aria-selected={variant.key === v.key && !records} to={fusedPath(game, v.key)} onClick={() => setRecords(false)}

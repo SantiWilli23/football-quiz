@@ -95,6 +95,7 @@ export default function CrestQuiz() {
   const [phase, setPhase] = useState("idle"); // idle | playing | done
   const [isDaily, setIsDaily] = useState(false); // juego diario: sin pistas, dificultad media
   const [isExpert, setIsExpert] = useState(false); // nivel Experto: clubes de ascenso y oscuros, sin pistas
+  const [isMedio, setIsMedio] = useState(false); // nivel Medio: clubes de reconocimiento intermedio, escudo en blanco y negro, sin pistas
   const [dailyMsg, setDailyMsg] = useState("");
   const [rounds, setRounds] = useState([]);
   const [index, setIndex] = useState(0);
@@ -110,8 +111,9 @@ export default function CrestQuiz() {
   function start(kind) {
     setIsDaily(kind === "daily");
     setIsExpert(kind === "expert");
+    setIsMedio(kind === "medio");
     setDailyMsg("");
-    setRounds(buildRounds(kind === "daily", kind === "expert"));
+    setRounds(buildRounds(kind === "daily" || kind === "medio", kind === "expert"));
     setIndex(0);
     setCorrectCount(0);
     setResults([]);
@@ -153,14 +155,14 @@ export default function CrestQuiz() {
         setFeedback(null);
       } else {
         setPhase("done");
-        logGame("escudos", isExpert ? 4 : isDaily ? 3 : 2, nextResults.filter(Boolean).length / ROUNDS, nextResults.filter(Boolean).length + "/" + ROUNDS + " escudos" + (isExpert ? " · experto" : isDaily ? " · diario" : " · fácil"));
+        logGame("escudos", isExpert ? 4 : isDaily || isMedio ? 3 : 2, nextResults.filter(Boolean).length / ROUNDS, nextResults.filter(Boolean).length + "/" + ROUNDS + " escudos" + (isExpert ? " · experto" : isMedio ? " · medio" : isDaily ? " · diario" : " · fácil"));
         if (isDaily) {
           const hits = nextResults.filter(Boolean).length;
           const weighted = nextResults.reduce((sum, ok, i) => sum + (ok ? (LEVEL_VALUE[nextLevels[i] ?? 0] ?? 0.55) : 0), 0);
           submitDaily("escudos", weighted / ROUNDS, hits, { mode: "daily" }).then((r) => setDailyMsg(dailyMessage(r)));
         } else {
           const hits = nextResults.filter(Boolean).length;
-          submitDaily("escudos", hits / ROUNDS, hits, { mode: "fun", level: isExpert ? "dificil" : "facil", seconds: 120 }).then((r) => setDailyMsg(dailyMessage(r)));
+          submitDaily("escudos", hits / ROUNDS, hits, { mode: "fun", level: isExpert ? "dificil" : isMedio ? "normal" : "facil", seconds: 120 }).then((r) => setDailyMsg(dailyMessage(r)));
         }
       }
     }, 700);
@@ -192,6 +194,12 @@ export default function CrestQuiz() {
                   Fácil (con pistas)
                 </button>
                 <button
+                  onClick={() => start("medio")}
+                  className="px-6 py-2.5 rounded-card border border-border text-sm text-gray-300 hover:text-white hover:border-white/30 transition-colors"
+                >
+                  Medio (en blanco y negro)
+                </button>
+                <button
                   onClick={() => start("expert")}
                   className="px-6 py-2.5 rounded-card border border-border text-sm text-gray-300 hover:text-white hover:border-white/30 transition-colors"
                 >
@@ -204,7 +212,7 @@ export default function CrestQuiz() {
         </div>
         <div className="rounded-2xl border border-border bg-panel p-4 sm:p-5">
           <div className="grid grid-cols-3 gap-y-3">
-            <div className="strip-cell tone-blue"><p className="text-xs uppercase tracking-wider text-gray-500">{fromDaily ? "Modo" : "Modos"}</p><p className="text-xl sm:text-2xl font-bold text-tone mt-1">{fromDaily ? "Diario" : "Fácil y Experto"}</p></div>
+            <div className="strip-cell tone-blue"><p className="text-xs uppercase tracking-wider text-gray-500">{fromDaily ? "Modo" : "Modos"}</p><p className="text-xl sm:text-2xl font-bold text-tone mt-1">{fromDaily ? "Diario" : "Fácil, Medio y Experto"}</p></div>
             <div className="strip-cell tone-amber"><p className="text-xs uppercase tracking-wider text-gray-500">{fromDaily ? "Juego diario" : "Práctica"}</p><p className="text-xl sm:text-2xl font-bold text-tone mt-1">{fromDaily ? "hasta 20 pts" : "da un sobre"}</p></div>
             <div className="strip-cell tone-pink"><p className="text-xs uppercase tracking-wider text-gray-500">Cada partida</p><p className="text-xl sm:text-2xl font-bold text-tone mt-1">{ROUNDS} escudos</p></div>
           </div>
@@ -226,7 +234,7 @@ export default function CrestQuiz() {
               ))}
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">Escudo {index + 1} / {rounds.length}{isDaily ? " · diario, sin pistas" : isExpert ? " · experto, sin pistas" : " · fácil"}</span>
+              <span className="text-gray-400">Escudo {index + 1} / {rounds.length}{isDaily ? " · diario, sin pistas" : isExpert ? " · experto, sin pistas" : isMedio ? " · medio, en blanco y negro" : " · fácil"}</span>
               <span className="text-gray-400">
                 {correctCount} correctas
                 {(() => { let n = 0; for (let i = results.length - 1; i >= 0 && results[i]; i--) n++; return n >= 2 ? ` · racha de ${n}` : ""; })()}
@@ -245,12 +253,12 @@ export default function CrestQuiz() {
                   src={crestSrc(current.team)}
                   alt="Escudo a adivinar"
                   className="relative w-32 h-32 sm:w-40 sm:h-40 object-contain transition-[filter]"
-                  style={{ filter: `blur(${blur}px)` }}
+                  style={{ filter: `blur(${blur}px)${isMedio && !feedback ? " grayscale(1)" : ""}` }}
                 />
               </span>
               <p className="text-xs uppercase tracking-wider text-gray-400">Claridad {Math.round(((blurLevel + 1) / BLUR_STEPS.length) * 100)}% · vale ×{LEVEL_VALUE[Math.min(blurLevel, LEVEL_VALUE.length - 1)]}</p>
 
-              {!isDaily && !isExpert && !feedback && blurLevel < BLUR_STEPS.length - 1 && (
+              {!isDaily && !isExpert && !isMedio && !feedback && blurLevel < BLUR_STEPS.length - 1 && (
                 <button
                   onClick={revealMore}
                   className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors"
@@ -310,9 +318,9 @@ export default function CrestQuiz() {
           groupId={null}
           saveState={null}
           highlight={
-            isDaily
-              ? dailyMsg || "Guardando tu puntaje del día…"
-              : "Fue práctica: no cuenta para el ranking, pero da un sobre normal por día. Para sumar puntos entrá por el juego diario."
+            dailyMsg || (isDaily
+              ? "Guardando tu puntaje del día…"
+              : "Guardando tu partida…")
           }
           onAgain={() => setPhase("idle")}
           shareText={`⚽ Futotal · Escudos a ciegas: ${correctCount}/${ROUNDS} — ¿me ganás?`}
