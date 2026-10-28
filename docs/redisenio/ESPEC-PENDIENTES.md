@@ -860,3 +860,28 @@ El orden va de lo menos usado a lo más usado, y cada grupo es un PR.
 6. Congelar logros + catálogo nuevo + marcos de trofeo.
 7. W7, que se puede adelantar si hay un torneo de selecciones cerca. No depende de lo anterior.
 8. Limpieza: etapa A, 30 días, etapa B.
+
+---
+
+## 6. Lo que falta para que quede como el prototipo (auditoría de main 9bcec9c)
+
+Auditoría hecha leyendo el código contra el plan y el prototipo; los 151 tests del servidor pasan.
+No se probó en navegador. Estos puntos no estaban en los cuatro bloques anteriores.
+Regla de ejecución: igual que el resto del documento. Cada ítem se da por terminado cuando se ve en 375 px y no hay errores en consola.
+
+| # | Falta | Qué hacer | Terminado cuando |
+|---|---|---|---|
+| 6.1 | Club sin pestañas ni **Muro** | `Club.jsx` pasa a pestañas **Tabla / Copa / Muro**. Hoy/Mes/General quedan como selector dentro de Tabla. El Muro reúne Leyendas, resumen semanal, amistoso e historial de clásicos | Las tres pestañas existen y cada bloque actual vive en una |
+| 6.2 | **Ficha de miembro** | Endpoints `GET /api/clubs/:id/members/:uid` y `GET /api/clubs/:id/head-to-head/:uid` (solo si ambos jugaron hoy; compara pregunta por pregunta y tiempos). Al tocar a alguien en la tabla se abre la ficha con «Supera mi marcador» (desafío sin puntos), «Cara a cara» y «Pedir revancha» (abre un Versus) | Tocar a un miembro abre su ficha; cara a cara bloqueado si alguno no jugó hoy; pruebas del servidor |
+| 6.3 | **Insignias del club y uniforme** | Tabla de insignias del club (se ganan entre todos y desbloquean piezas del escudo) y anillo de color del uniforme en los avatares de ese club (`Avatar.jsx`) | Una insignia ganada se ve en el escudo y el anillo aparece en tabla y ficha |
+| 6.4 | **Crear club en 3 pasos animados** | Paso 1 nombre y escudo, paso 2 modo (con la explicación), paso 3 invitar. Reemplaza el formulario simple | Se crea un club completo pasando los 3 pasos |
+| 6.5 | **Ver el código de recuperación** | En Yo › Ajustes, botón para verlo de nuevo (el servidor lo guarda cifrado en `users.recovery_code` y ya sabe abrirlo). Pedir la contraseña antes de mostrarlo | Se ve el mismo código entregado al registrarse |
+| 6.6 | **Apagar el fantasma** | Interruptor en Yo › Ajustes; `Partido.jsx` deja de pedir `/daily/ghost` si está apagado | Con el interruptor apagado no hay llamadas al fantasma |
+| 6.7 | **Cartas incompletas** | (a) «Oferta del día» en la tienda. (b) Mientras haya desafío temático activo, cada sobre ganado trae 1 carta de la temática. (c) Aviso al vender una repetida que sirve para el desafío activo. (d) Mostrar el contador «7/11 · te faltan 1 arquero y 2 defensas» (la API ya entrega `best.missing`) | Las cuatro cosas visibles; prueba del servidor para (b) |
+| 6.8 | **Sonido** | Silbato (inicio y fin) y gol con vibración propia siempre; ambiente de estadio solo en partidos temáticos; opción de silenciar (ya existe el botón). Hoy solo hay 4 tonos: ok, mal, ganar, tick | Suena el silbato al iniciar y terminar el partido del día; el ambiente solo en eventos |
+| 6.9 | **Animaciones** | El prototipo tiene unos 45 `@keyframes` y el código unos 12. Portar al menos: `starfall`, `smoke`, `spark`, `deal`, `flash`, `shake`, y las de ruleta y sobres, copiando desde `prototipo-futotal-2.html`. Siempre respetar `prefers-reduced-motion`, solo `transform` y `opacity` | Cada momento grande (sumar puntos, pasar a alguien, abrir sobre, ganar copa) tiene su animación; con movimiento reducido no hay movimiento |
+| 6.10 | **Navegación vieja viva** | Con `FUTOTAL2=1`: quitar del menú de computador «En vivo», «Estadísticas» e «Historial» (pasan a Yo), quitar el buscador Ctrl+K y el tutorial de diapositivas | Con la bandera, el menú muestra solo Hoy · Jugar · Club · Cartas · Yo |
+| 6.11 | **Panel del dueño: crear desafíos de plantilla** | Formulario para crear un SBC (tema, filtro, premio, duración) en `/admin`; hoy solo revisa el partido, eventos y métricas | Un SBC creado desde el panel aparece en Cartas |
+| 6.12 | **W7 completo** | Ver 4.5 | Ver 4.5 |
+
+Orden sugerido: 6.5 y 6.6 (cortos) → 6.1, 6.2, 6.3, 6.4 (Club) → 6.7, 6.8, 6.9 (cartas, sonido, animaciones) → 6.10, 6.11 → 6.12.
