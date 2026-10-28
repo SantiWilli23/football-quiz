@@ -5,7 +5,7 @@
 export const DEVICE_MODES = [
   { id: "auto", label: "Automático", hint: "Teléfono en pantallas chicas, computador en las grandes." },
   { id: "telefono", label: "Teléfono", hint: "Botones grandes, una columna y menú abajo, pensado para el pulgar." },
-  { id: "computador", label: "Computador", hint: "El diseño de siempre, con menú lateral." },
+  { id: "computador", label: "Computador", hint: "Menú lateral, pantalla ancha y contenido en dos columnas." },
 ];
 
 const KEY = "fq_device";

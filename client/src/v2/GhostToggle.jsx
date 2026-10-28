@@ -24,8 +24,8 @@ export default function GhostToggle() {
           <p className="text-sm text-gray-400">Mientras juegas el partido del día, ves en qué pregunta acertó o falló tu rival de la semana.</p>
         </div>
         <button role="switch" aria-checked={on} aria-label="Fantasma del rival" onClick={toggle}
-          className={`relative h-7 w-12 shrink-0 rounded-full border transition-colors ${on ? "border-accent bg-accent/30" : "border-border bg-bg"}`}>
-          <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${on ? "translate-x-6" : "translate-x-0.5"}`} />
+          className={`relative !h-7 !min-h-0 w-12 shrink-0 rounded-full border p-0 transition-colors ${on ? "border-accent bg-accent" : "border-border bg-bg"}`}>
+          <span className={`absolute left-0.5 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full transition-all ${on ? "translate-x-5 bg-white" : "bg-gray-500"}`} />
         </button>
       </div>
     </Card>

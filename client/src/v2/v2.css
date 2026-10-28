@@ -216,3 +216,104 @@
 
 /* Pantallas anchas (Modo DT, Presidente…): en computador la columna se abre. */
 @media (min-width: 900px) { .p-col.wide { max-width: 1100px; } .p-col.wide ~ .p-tabs { max-width: 1100px; } }
+
+/* ===================== Modo computador =====================
+   data-device="desktop" (Automático en pantallas de 768 px o más, o elegido en Yo › Ajustes).
+   Barra lateral fija en vez de las pestañas de abajo, contenido ancho y pantallas en dos columnas
+   (.p-dgrid con .p-l / .p-r). En teléfono .p-dgrid es una sola columna y `order` mantiene el orden
+   del prototipo. */
+.p-side { display: none; }
+.p-dgrid { display: flex; flex-direction: column; }
+.p-dgrid > .p-l, .p-dgrid > .p-r { display: contents; }
+
+:root[data-device="desktop"] .p-side {
+  display: flex; flex-direction: column; position: fixed; inset: 0 auto 0 0; width: 248px; z-index: 40;
+  background: var(--panel); border-right: 1px solid var(--line); padding: 20px 14px;
+}
+:root[data-device="desktop"] .p-side-logo { padding: 0 12px 18px; }
+:root[data-device="desktop"] .p-side-logo .p-logo { font-size: 26px; }
+.p-side-link { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 12px; color: var(--mute); font: 600 15px var(--f-b); position: relative; transition: background 0.15s, color 0.15s; }
+.p-side-link:hover { background: var(--panel2); color: var(--fg); }
+.p-side-link.on { background: #16342a; color: var(--acc2); }
+.p-side-link.on::before { content: ""; position: absolute; left: -14px; top: 9px; bottom: 9px; width: 4px; border-radius: 0 4px 4px 0; background: var(--acc); }
+.p-side-me { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg2); color: var(--fg); font-size: 14px; }
+.p-side-me:hover { border-color: var(--acc); }
+
+:root[data-device="desktop"] .p-tabs,
+:root[data-device="desktop"] .p-top { display: none; }
+:root[data-device="desktop"] .p-col { max-width: none; margin-left: 248px; width: auto; border: 0; background: var(--bg); }
+:root[data-device="desktop"] .p-main { width: 100%; max-width: 960px; margin: 0 auto; padding: 28px 40px 56px; }
+:root[data-device="desktop"] .p-col.hub .p-main { max-width: 1180px; }
+:root[data-device="desktop"] .p-col.wide .p-main { max-width: 1440px; }
+:root[data-device="desktop"] .p-app { background: radial-gradient(70% 50% at 70% 0, #2fb6730f, transparent 70%), var(--bg); }
+
+:root[data-device="desktop"] .p-dgrid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(300px, 1fr); gap: 0 32px; align-items: start; }
+:root[data-device="desktop"] .p-dgrid.even { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+:root[data-device="desktop"] .p-dgrid > .p-l, :root[data-device="desktop"] .p-dgrid > .p-r { display: block; min-width: 0; }
+/* La primera sección de la derecha (margen de .p-sect) queda alineada con la de la izquierda. */
+:root[data-device="desktop"] .p-dgrid > .p-r { margin-top: -14px; }
+
+/* Encabezado de cada pantalla, solo en computador (en teléfono lo dice la pestaña). */
+.p-dhead { display: none; }
+:root[data-device="desktop"] .p-dhead { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+:root[data-device="desktop"] .p-dhead h1 { font: 800 32px/1.1 var(--f-d); letter-spacing: -0.02em; }
+:root[data-device="desktop"] .p-dhead p { color: var(--mute); font-size: 14px; margin-top: 4px; }
+
+/* Piezas más grandes donde sobra espacio. */
+:root[data-device="desktop"] .p-hero { padding: 22px 24px; }
+:root[data-device="desktop"] .p-cell .num { font-size: 56px; }
+:root[data-device="desktop"] .p-cell { padding: 12px 8px 10px; }
+:root[data-device="desktop"] .p-total b { font-size: 80px; }
+:root[data-device="desktop"] .p-btn.big { max-width: 420px; margin-inline: auto; display: flex; }
+:root[data-device="desktop"] .p-sect > h3 { font-size: 19px; }
+
+/* Jugar: las filas deslizables pasan a cuadrícula. */
+:root[data-device="desktop"] .p-hrow { display: grid; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); gap: 14px; overflow: visible; margin: 0; padding: 0; }
+:root[data-device="desktop"] .p-gc .gi { margin-bottom: 10px; }
+:root[data-device="desktop"] .p-gc small:last-of-type { margin-top: auto; }
+:root[data-device="desktop"] .p-hrow.big { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+:root[data-device="desktop"] .p-gc { width: auto; min-height: 150px; padding: 16px; }
+:root[data-device="desktop"] .p-gc.big { width: auto; min-height: 196px; }
+:root[data-device="desktop"] .p-gc .gi { width: 48px; height: 48px; }
+:root[data-device="desktop"] .p-gc b { font-size: 17px; }
+:root[data-device="desktop"] .p-gc.big b { font-size: 24px; }
+:root[data-device="desktop"] .p-gc .desc { display: block; }
+.p-gc .desc { display: none; font-size: 12px; color: var(--mute); line-height: 1.35; }
+
+/* Portada en computador: más grande, con la marca a la izquierda de la pelota. */
+:root[data-device="desktop"] .p-wm { font-size: 88px; }
+:root[data-device="desktop"] .p-tagl { max-width: 420px; font-size: 18px; }
+:root[data-device="desktop"] .p-porta .p-btn { max-width: 340px; }
+
+/* Partido de práctica y pantallas sin carcasa: centradas y no más anchas que un teléfono grande. */
+:root[data-device="desktop"] .p-fcard { width: 220px; height: 304px; }
+:root[data-device="desktop"] .p-only-phone { display: none !important; }
+:root:not([data-device="desktop"]) .p-only-desktop { display: none !important; }
+:root[data-device="desktop"] .p-dhead .p-cap { margin-top: 0; }
+:root[data-device="desktop"] .p-narrow { max-width: 520px; margin-inline: auto; }
+:root[data-device="desktop"] .p-chead h2 { font-size: 32px; }
+:root[data-device="desktop"] .p-chead { gap: 16px; }
+:root[data-device="desktop"] .p-dgrid > section.p-r { margin-top: 0; }
+:root[data-device="desktop"] .p-seg.scroll { max-width: 640px; }
+
+/* Tablets y ventanas angostas (768–1099 px): barra lateral solo con íconos y una columna. */
+@media (max-width: 1099px) {
+  :root[data-device="desktop"] .p-side { width: 76px; padding: 18px 10px; align-items: center; }
+  :root[data-device="desktop"] .p-side-logo { padding: 0 0 14px; }
+  :root[data-device="desktop"] .p-side-logo .p-logo { font-size: 0; }
+  :root[data-device="desktop"] .p-side-logo .p-logo span { font-size: 0; }
+  :root[data-device="desktop"] .p-side-logo .p-logo::before { content: "FT"; font-size: 22px; color: var(--fg); }
+  :root[data-device="desktop"] .p-side > div:first-of-type { flex-direction: column; padding: 0; gap: 10px; }
+  :root[data-device="desktop"] .p-side .p-pill { padding: 4px 8px; font-size: 13px; }
+  :root[data-device="desktop"] .p-side-txt { display: none; }
+  :root[data-device="desktop"] .p-side-link { font-size: 0; gap: 0; justify-content: center; padding: 12px; }
+  :root[data-device="desktop"] .p-side-link.on::before { left: -10px; }
+  :root[data-device="desktop"] .p-side-me { padding: 4px; border: 0; background: none; }
+  :root[data-device="desktop"] .p-side-me > span:last-child { display: none; }
+  :root[data-device="desktop"] .p-col { margin-left: 76px; }
+  :root[data-device="desktop"] .p-main { padding: 22px 28px 48px; }
+  :root[data-device="desktop"] .p-dgrid { grid-template-columns: minmax(0, 1fr); }
+  :root[data-device="desktop"] .p-dgrid.even { grid-template-columns: minmax(0, 1fr); }
+  :root[data-device="desktop"] .p-dgrid > .p-r { margin-top: 0; }
+  :root[data-device="desktop"] .p-hrow, :root[data-device="desktop"] .p-hrow.big { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+}

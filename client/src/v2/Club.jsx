@@ -78,9 +78,9 @@ export default function Club() {
   const copyLink = () => { const url = `${window.location.origin}/invitacion/${invite}?de=${encodeURIComponent(user?.username || "")}`; navigator.clipboard?.writeText(url).then(() => setMsg("Link copiado: tu amigo verá tu marcador como desafío."), () => setMsg(url)); };
 
   return (
-    <Layout>
+    <Layout hub>
       {loaded && !club && !creating && (
-        <div className="p-sect p-stg" style={{ "--i": 0, marginTop: 6 }}>
+        <div className="p-sect p-stg p-narrow" style={{ "--i": 0, marginTop: 6 }}>
           <div className="p-card flex flex-col gap-3 items-center text-center" style={{ padding: 22 }}>
             <Shield size={44} style={{ color: "var(--acc)" }} />
             <h2 style={{ font: "800 22px var(--f-d)" }}>Juega con tus amigos</h2>
@@ -108,6 +108,8 @@ export default function Club() {
           </button>
           <p className="p-stg mt-2.5 text-xs p-muted" style={{ "--i": 1 }}>{tt ? "Suman: partido del día ×2, copa ×2 y partidas libres (tope 100/día)." : "Suman: partido del día y copa semanal."}</p>
 
+          <div className="p-dgrid mt-1">
+          <div className="p-l">
           {!club.started ? (
             <div className="p-stg mt-3" style={{ "--i": 2 }}>
               <div className="p-card flex flex-col gap-3">
@@ -173,6 +175,8 @@ export default function Club() {
             </>
           )}
 
+          </div>
+          <div className="p-r">
           <section className="p-sect">
             <h3>Invitar</h3>
             <div className="p-card">
@@ -213,6 +217,8 @@ export default function Club() {
             </div>
             {joining && <div className="mt-3"><JoinForm code={code} setCode={setCode} join={join} /></div>}
           </section>
+          </div>
+          </div>
         </>
       )}
 

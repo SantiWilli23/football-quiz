@@ -118,8 +118,8 @@ const EARN = [
 ];
 function SobresV2({ state, busy, openPack, claimDaily }) {
   return (
-    <>
-      <section>
+    <div className="p-dgrid even">
+      <section className="p-l" style={{ display: "block" }}>
         <div className="p-sect" style={{ marginTop: 0 }}><h3>Para abrir<small>{state.packs} {state.packs === 1 ? "sobre" : "sobres"}</small></h3></div>
         {state.packs > 0 ? (
           <button onClick={openPack} disabled={busy} className="block w-full text-left rounded-2xl p-4 relative overflow-hidden" style={{ background: "linear-gradient(145deg,#2fb673,#0f3d2a)", boxShadow: "0 14px 30px -14px #2fb673", minHeight: 150 }}>
@@ -132,7 +132,7 @@ function SobresV2({ state, busy, openPack, claimDaily }) {
         {!state.dailyClaimed && <button onClick={claimDaily} className="p-btn ghost w-full mt-2.5">Reclamar sobre diario</button>}
         {state.lockedPacks > 0 && <p className="p-gap">Tienes {state.lockedPacks} {state.lockedPacks === 1 ? "sobre guardado" : "sobres guardados"}: se abren al entrar a un club con la temporada iniciada.</p>}
       </section>
-      <section className="p-sect">
+      <section className="p-sect p-r" style={{ display: "block" }}>
         <h3>Cómo ganas sobres</h3>
         <div className="p-rows">
           {EARN.map(([t, d]) => (
@@ -140,7 +140,7 @@ function SobresV2({ state, busy, openPack, claimDaily }) {
           ))}
         </div>
       </section>
-    </>
+    </div>
   );
 }
 
@@ -340,19 +340,23 @@ export default function Cartas() {
   }
 
   return (
-    <Layout>
+    <Layout hub={v2}>
       {v2 ? (
         <div className="mt-1.5 mb-4">
+          <header className="p-dhead">
+            <div><h1>Cartas</h1><p>Abre sobres, completa el álbum, arma tu once y entrega repetidas en los SBC.</p></div>
+            {state && <span className="p-pill" style={{ fontSize: 18 }}><Coins size={16} />{wallet} monedas</span>}
+          </header>
           <div className="p-seg scroll" role="tablist" aria-label="Secciones de Cartas">
             {TABS.map(([k, label]) => <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{label}</button>)}
           </div>
           {state && (
-            <div className="p-eyebrow mt-4">
+            <div className="p-eyebrow mt-4 p-only-phone">
               <span>Monedas</span>
               <span className="p-num text-base" style={{ color: "var(--gold)", letterSpacing: 0 }}>{wallet}</span>
             </div>
           )}
-          {state && <p className="text-xs p-dim mt-1">{state.owned} de {state.total} cartas en tu álbum</p>}
+          {state && <p className="text-xs p-dim mt-1 p-only-phone">{state.owned} de {state.total} cartas en tu álbum</p>}
         </div>
       ) : (<>
       <div className="mb-6">

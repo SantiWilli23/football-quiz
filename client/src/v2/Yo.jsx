@@ -17,6 +17,7 @@ import RecoveryCode from "./RecoveryCode.jsx";
 import GhostToggle from "./GhostToggle.jsx";
 import Adn from "./Adn.jsx";
 import { resetManos } from "./Mano.jsx";
+import { DEVICE_MODES, readDeviceMode, setDeviceMode } from "../utils/device.js";
 
 const AREAS = [["chile", "CHI"], ["europa", "EUR"], ["leyendas", "LEY"], ["actualidad", "ACT"], ["mercado", "MER"], ["velocidad", "VEL"]];
 const TIER = { especial: ["#f2b84b", "Especial"], oro: ["#e8c46a", "Oro"], plata: ["#b9c2cc", "Plata"], bronce: ["#c58a5b", "Bronce"] };
@@ -62,7 +63,7 @@ function CartaFutotal({ card, user }) {
           </div>
         </div>
       </button>
-      <p className="p-gap" style={{ justifyContent: "center" }}>Media de tus últimos {card.played} partidos del día. Toca para ver tu ADN.</p>
+      <p className="p-gap" style={{ justifyContent: "center" }}>{card.played === 1 ? "Media de tu primer partido del día" : `Media de tus últimos ${card.played} partidos del día`}. Toca para ver tu ADN.</p>
     </section>
   );
 }
@@ -90,12 +91,13 @@ export default function Yo() {
   const [sound, setSound] = useState(isSfxOn);
   const [editing, setEditing] = useState(false);
   const [guides, setGuides] = useState(false);
+  const [device, setDevice] = useState(readDeviceMode);
   useEffect(() => { api.get("/me/card").then((r) => setCard(r.data)).catch(() => setCard(null)); }, []);
   if (!user) return null;
 
   const hist = card?.history || [];
   return (
-    <Layout>
+    <Layout hub>
       <div className="p-stg flex items-center gap-3.5 mt-2" style={{ "--i": 0 }}>
         <Avatar user={user} size={64} />
         <div className="flex-1 min-w-0">
@@ -104,30 +106,35 @@ export default function Yo() {
         </div>
       </div>
 
-      <CartaFutotal card={card} user={user} />
+      {/* Teléfono: una columna en el orden del prototipo (order). Computador: dos columnas. */}
+      <div className="p-dgrid">
+      <div className="p-l">
+      <div style={{ order: 2 }}><CartaFutotal card={card} user={user} /></div>
 
-      <section className="p-sect p-stg" style={{ "--i": 2 }}>
-        <Adn />
-      </section>
-
-      <div className="p-stats p-stg mt-4" style={{ "--i": 3 }}>
+      <div className="p-stats p-stg mt-4" style={{ "--i": 3, order: 4 }}>
         <div><b>{card?.games ?? 0}</b><span>Partidos</span></div>
         <div><b>{card?.best ?? 0}</b><span>Mejor marcador</span></div>
         <div><b>{streak?.streak ?? 0}</b><span>Racha</span></div>
       </div>
 
-      <section className="p-sect p-stg" style={{ "--i": 4 }}>
+      <section className="p-sect p-stg" style={{ "--i": 4, order: 5 }}>
         <h3>Vitrina</h3>
         <Vitrina />
       </section>
+      </div>
+
+      <div className="p-r">
+      <section className="p-sect p-stg" style={{ "--i": 2, order: 3 }}>
+        <Adn />
+      </section>
 
       {hist.length > 0 && (
-        <section className="p-sect p-stg" style={{ "--i": 5 }}>
+        <section className="p-sect p-stg" style={{ "--i": 5, order: 6 }}>
           <h3>Últimos partidos<Link to="/historial">Ver todo</Link></h3>
           <div className="p-card">
-            <div className="flex items-end gap-2 h-[90px] pt-1.5">
+            <div className="flex items-end justify-center gap-2 h-[90px] pt-1.5">
               {hist.map((h) => (
-                <div key={h.date} className="flex-1 flex flex-col items-center justify-end h-full gap-1 p-num text-[11px] p-muted">
+                <div key={h.date} className="flex-1 max-w-[56px] flex flex-col items-center justify-end h-full gap-1 p-num text-[11px] p-muted">
                   <span>{h.total}</span>
                   <i className="block w-full rounded-t-[5px]" style={{ height: `${Math.max(4, h.total / 100 * 70)}px`, background: "var(--acc)" }} />
                 </div>
@@ -137,9 +144,18 @@ export default function Yo() {
         </section>
       )}
 
-      <section className="p-sect p-stg" style={{ "--i": 6 }}>
+      <section className="p-sect p-stg" style={{ "--i": 6, order: 7 }}>
         <h3>Ajustes</h3>
         <div className="p-card" style={{ padding: "4px 14px" }}>
+          <div className="py-3 border-b" style={{ borderColor: "var(--line)" }}>
+            <span className="block mb-2">Modo de pantalla</span>
+            <div className="p-seg" role="radiogroup" aria-label="Modo de pantalla">
+              {DEVICE_MODES.map((m) => (
+                <button key={m.id} role="radio" aria-checked={device === m.id} title={m.hint} className={device === m.id ? "on" : ""} onClick={() => { setDeviceMode(m.id); setDevice(m.id); }}>{m.label}</button>
+              ))}
+            </div>
+            <small className="block mt-1.5 p-dim">{DEVICE_MODES.find((m) => m.id === device)?.hint}</small>
+          </div>
           <Toggle label="Sonido" on={sound} onChange={(v) => { setSfxOn(v); setSound(v); }} />
           <div className="py-3 border-b flex items-center justify-between gap-3" style={{ borderColor: "var(--line)" }}>
             <span>Guías de cada juego</span>
@@ -159,6 +175,8 @@ export default function Yo() {
           <button onClick={logout} className="p-btn ghost w-full"><LogOut size={16} /> Cerrar sesión</button>
         </div>
       </section>
+      </div>
+      </div>
     </Layout>
   );
 }

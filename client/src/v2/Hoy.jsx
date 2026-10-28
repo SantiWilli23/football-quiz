@@ -224,42 +224,51 @@ export default function Hoy() {
   const mult = main && main.mode === "total" && main.started ? 2 : 1;
 
   return (
-    <Layout>
+    <Layout hub>
       <Ceremonia />
       {synced && <p className="p-card text-sm mb-3" role="status" style={{ borderColor: "#2c6a4f" }}>Tu partido se envió al club: sacaste <b>{synced.total}</b>.</p>}
       {waiting && !synced && <p className="p-card text-sm mb-3" role="status" style={{ borderColor: "#6b5420" }}>Tu partido está guardado en el teléfono y se envía solo cuando vuelva la conexión.</p>}
 
-      <Hero today={today} streak={streak} mult={mult} />
-
-      <div className="mt-4 space-y-3 empty:hidden">
-        <TorneoBanner />
-        <EventCards groupId={main?.id} played={!!(today && today.result)} />
-      </div>
-
-      <ClubStreak data={clubStreak} />
-      <ClubBlock main={main} table={table} me={user?.id} loaded={loaded} />
-      <CupBlock cup={cup} />
-
-      {week?.theme && (
-        <section className="p-sect p-stg" style={{ "--i": 4 }}>
-          <h3>Esta semana<Link to="/cartas?tab=sbc">Ver SBC</Link></h3>
-          <Link to="/cartas?tab=sbc" className="p-card block">
-            <b className="block">SBC: 11 de {week.theme.label}</b>
-            <small className="p-muted">{week.done ? "Completado" : `${week.owned}/${week.total} repetidas listas`}</small>
-            {!week.done && <div className="p-cbar mt-2"><i style={{ width: `${Math.min(100, week.owned / week.total * 100)}%` }} /></div>}
-          </Link>
-        </section>
-      )}
-
-      <section className="p-sect p-stg" style={{ "--i": 5 }}>
-        <h3>Seguir jugando</h3>
-        <div className="p-rows">
-          <Link to="/juegos" className="p-row"><span className="nm">Todos los juegos<small className="p-muted" style={{ color: "var(--mute)" }}>Arcade, con amigos y carrera</small></span><ChevronRight size={20} style={{ color: "var(--acc2)" }} /></Link>
-          <Link to="/hoy/archivo" className="p-row"><span className="nm">Partidos pasados<small style={{ color: "var(--mute)" }}>Sin puntos ni sobre</small></span><ChevronRight size={20} style={{ color: "var(--acc2)" }} /></Link>
+      <header className="p-dhead">
+        <div>
+          <h1>Hola, {user?.username}</h1>
+          <p>{new Date().toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Santiago" })} · el partido de hoy es igual para todos.</p>
         </div>
-      </section>
+      </header>
 
-      {loaded && clubs.length > 1 && <p className="text-xs p-dim text-center mt-4">Tu partido de hoy cuenta en los {clubs.length} clubes en los que estás.</p>}
+      {/* En teléfono, una columna en el orden del prototipo (order); en computador, dos columnas. */}
+      <div className="p-dgrid">
+        <div className="p-l">
+          <div style={{ order: 1 }}><Hero today={today} streak={streak} mult={mult} /></div>
+          <div style={{ order: 2 }} className="mt-4 space-y-3 empty:hidden">
+            <TorneoBanner />
+            <EventCards groupId={main?.id} played={!!(today && today.result)} />
+          </div>
+          <div style={{ order: 4 }}><ClubBlock main={main} table={table} me={user?.id} loaded={loaded} /></div>
+        </div>
+        <div className="p-r">
+          <div style={{ order: 3 }}><ClubStreak data={clubStreak} /></div>
+          <div style={{ order: 5 }}><CupBlock cup={cup} /></div>
+          {week?.theme && (
+            <section className="p-sect p-stg" style={{ "--i": 4, order: 6 }}>
+              <h3>Esta semana<Link to="/cartas?tab=sbc">Ver SBC</Link></h3>
+              <Link to="/cartas?tab=sbc" className="p-card block">
+                <b className="block">SBC: 11 de {week.theme.label}</b>
+                <small className="p-muted">{week.done ? "Completado" : `${week.owned}/${week.total} repetidas listas`}</small>
+                {!week.done && <div className="p-cbar mt-2"><i style={{ width: `${Math.min(100, week.owned / week.total * 100)}%` }} /></div>}
+              </Link>
+            </section>
+          )}
+          <section className="p-sect p-stg" style={{ "--i": 5, order: 7 }}>
+            <h3>Seguir jugando</h3>
+            <div className="p-rows">
+              <Link to="/juegos" className="p-row"><span className="nm">Todos los juegos<small style={{ color: "var(--mute)" }}>Arcade, con amigos y carrera</small></span><ChevronRight size={20} style={{ color: "var(--acc2)" }} /></Link>
+              <Link to="/hoy/archivo" className="p-row"><span className="nm">Partidos pasados<small style={{ color: "var(--mute)" }}>Sin puntos ni sobre</small></span><ChevronRight size={20} style={{ color: "var(--acc2)" }} /></Link>
+            </div>
+          </section>
+          {loaded && clubs.length > 1 && <p className="text-xs p-dim text-center mt-4" style={{ order: 8 }}>Tu partido de hoy cuenta en los {clubs.length} clubes en los que estás.</p>}
+        </div>
+      </div>
     </Layout>
   );
 }

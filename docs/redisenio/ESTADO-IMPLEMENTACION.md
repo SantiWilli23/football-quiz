@@ -76,3 +76,14 @@ El dueño desplegó y vio «el mismo diseño». Era cierto: lo anterior cambió 
 - **Idioma**: los textos pasan de voseo («Elegí», «Ganás», «vos») a tú, como el prototipo (unos 630 cambios en cliente y servidor).
 
 Verificado con capturas a 390 px y 1280 px de cada pantalla, un partido del día jugado completo y `FUTOTAL2=0` (vuelve la app anterior).
+
+### Quinta tanda (modo computador)
+
+El modo teléfono queda como estaba. El modo computador usa el «Modo de pantalla» que ya existía (`data-device`, en Yo › Ajustes: Automático / Teléfono / Computador; Automático = computador desde 768 px):
+
+- **Carcasa**: barra lateral fija (marca, racha, avisos, Hoy · Jugar · Club · Cartas · Yo y tu perfil abajo) en vez de las pestañas de abajo. Entre 768 y 1099 px la barra queda solo con íconos.
+- **Ancho**: Hoy, Jugar, Club, Cartas y Yo usan hasta 1180 px (`<Layout hub>`); los juegos, 960 px para que no se estiren; Modo DT y otras pantallas anchas, 1440 px.
+- **Dos columnas** (`.p-dgrid`): Hoy (partido y tabla | racha del club, copa, semana, seguir jugando), Club (tabla | invitar, modo, liga), Yo (carta, números, vitrina | ADN, últimos partidos, ajustes), Cartas › Sobres (para abrir | cómo ganas). En teléfono es una sola columna y `order` mantiene el orden del prototipo.
+- **Jugar**: cuadrícula con descripción de cada juego (Arcade 3×2, Con amigos 3, Carrera 4) y «Para ti» en 3 tarjetas grandes.
+- Encabezado de página solo en computador (`.p-dhead`), números del marcador más grandes, portada más grande.
+- Arreglado el interruptor del fantasma (la bolita se salía).

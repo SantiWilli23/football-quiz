@@ -14,7 +14,7 @@ import Shell from "../v2/Shell.jsx";
 // `focus` = modo enfoque: durante una partida se esconden el menú y la barra
 // y queda solo el juego y un botón «Salir». Los juegos lo prenden mientras
 // se está jugando.
-export default function Layout({ children, focus = false, exitTo = "/juegos", wide = false }) {
+export default function Layout({ children, focus = false, exitTo = "/juegos", wide = false, hub = false }) {
   const { pathname } = useLocation();
   const shell = useContext(ShellContext);
   const { on: v2 } = useFutotal2();
@@ -38,7 +38,7 @@ export default function Layout({ children, focus = false, exitTo = "/juegos", wi
   // Futotal 2.0: la carcasa del prototipo (una columna, marca arriba y cinco pestañas abajo).
   if (v2) {
     return (
-      <Shell chips={shell?.chips} wide={wide}>
+      <Shell chips={shell?.chips} wide={wide} hub={hub}>
         <PlenoStreak />
         {children}
       </Shell>
