@@ -4,6 +4,9 @@ import { requireAuth } from "../middleware/auth.js";
 import { todayStr } from "../utils/points.js";
 import { ONLINE_POINTS_PER_OPPONENT } from "../utils/points-config.js";
 import { grantPack } from "../utils/rewards.js";
+import { redesignOn } from "../utils/clubs.js";
+import { FLAT_POINTS, creditPoints } from "../utils/ledger.js";
+import { sharedRoomWithOther } from "../ws-relay.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -11,6 +14,8 @@ router.use(requireAuth);
 // Las partidas online se juegan por un relay que no conoce las reglas: el
 // cliente del ganador avisa acá, igual que con los retos. Una partida (sala o
 // token) cuenta una sola vez por jugador.
+// Nombre de la sala en el relay (ws-relay.js) de cada juego online.
+export const RELAY_GAME = { quien_es_vivo: "quien_es_vivo", supervivencia: "survival", equipo_jugador: "equipo-jugador", mentiroso: "mentiroso", draft_europeo: "draft8a2", dorsal_historico: "dorsal", subasta: "subasta", quien_es_preguntas: "quien_es_preguntas" };
 const ONLINE_GAMES = new Set(["quien_es_vivo", "supervivencia", "equipo_jugador", "mentiroso", "draft_europeo", "dorsal_historico", "subasta", "quien_es_preguntas"]);
 
 router.post("/win", async (req, res) => {
@@ -34,7 +39,15 @@ router.post("/win", async (req, res) => {
       await grantPack(req.userId, todayStr(), "estrella", `supervivencia-${room.replace(/[^a-zA-Z0-9]/g, "").slice(0, 24)}`);
       pack = "estrella";
     }
-    res.status(201).json({ points, newly: ins.rowsAffected > 0, pack });
+    // Futotal 2.0: ganarle a una persona suma «versus» (30) a los clubes Total. El servidor no
+    // puede ver el marcador, pero sí que quien reporta estuvo en una sala con otra persona de
+    // verdad (sesión verificada en el relay): sin eso no suma. Una vez al día por el libro.
+    let club = null;
+    if (redesignOn() && ins.rowsAffected > 0) {
+      const shared = sharedRoomWithOther(req.userId, RELAY_GAME[gameKey]);
+      if (shared) club = await creditPoints(req.userId, todayStr(), "versus", FLAT_POINTS.versus);
+    }
+    res.status(201).json({ points, newly: ins.rowsAffected > 0, pack, club });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

@@ -14,7 +14,10 @@ function createOnlineRelay(gameName, callbacks) {
   function connect(onOpenMsg) {
     closedByUs = false;
     ws = new WebSocket(wsUrl());
-    ws.onopen = function () { ws.send(JSON.stringify(onOpenMsg)); };
+    ws.onopen = function () {
+      try { onOpenMsg.token = localStorage.getItem("fq_token") || undefined; } catch (e) {}
+      ws.send(JSON.stringify(onOpenMsg));
+    };
     ws.onmessage = function (ev) {
       var msg;
       try { msg = JSON.parse(ev.data); } catch (e) { return; }

@@ -122,7 +122,7 @@ export function publicView(st) {
     slots: st.slots.map((s) => ({ type: s.type, filled: s.filled && { n: s.filled.n, p: s.filled.p, club: s.filled.club, season: s.filled.season, ...(hide ? {} : { r: s.filled.r, eff: s.filled.eff }) } })),
     rerolls: { club: canRerollClub(st), season: canRerollSeason(st), usedClub: st.rerollsClub, usedSeason: st.rerollsSeason, max: st.mode === "clasico" ? 1 : 3 },
     transfersLeft: st.transfersLeft, transferSlot: st.transferSlot, transferOptions: st.transferOptions && st.transferOptions.map((o) => ({ n: o.n, p: o.p, r: o.r, eff: o.eff, club: o.club, season: o.season })),
-    average: st.phase === "draft" ? null : avgOf(st), cup: st.cup && publicCup(st.cup), final: st.final,
+    average: st.phase === "draft" ? null : avgOf(st), cup: st.cup && publicCup(st.cup), final: st.final, room: st.room || null,
   };
 }
 const avgOf = (st) => Math.round((st.slots.reduce((a, s) => a + s.filled.eff, 0) / st.slots.length) * 10) / 10;
@@ -366,6 +366,31 @@ export function playCup(st) {
   s.phase = "done";
   s.final = { average: avgOf(s), champion: champion.isYou, eliminated, championName: champion.isYou ? "Tu selección" : champion.label };
   return s;
+}
+
+// Contra un amigo: los dos equipos juegan UN partido (con prórroga y penales si hace falta). El azar sale de
+// las dos semillas, así que cualquiera de los dos servidores da lo mismo.
+export function playVersus(stA, stB, nameA, nameB) {
+  const rng = { seed: (stA.seed ^ stB.seed) >>> 0, n: 0 };
+  const a = { ...packFromSlots(stA.slots, stA.formation), label: nameA, isYou: false };
+  const b = { ...packFromSlots(stB.slots, stB.formation), label: nameB, isYou: false };
+  const r = simulateMatch(rng, a, b);
+  return { entry: matchEntry(rng, a, b, r), winner: r.winner === "A" ? "A" : "B", avgA: avgOf(stA), avgB: avgOf(stB) };
+}
+// El mismo partido visto desde el otro lado (la «casa» pasa a ser quien lo mira).
+export function flipEntry(e) {
+  const swap = (side) => (side === "A" ? "B" : "A");
+  return {
+    home: e.away, away: e.home, scoreHome: e.scoreAway, scoreAway: e.scoreHome, extra: e.extra, pens: e.pens, penHome: e.penAway, penAway: e.penHome,
+    winner: e.winner === "home" ? "away" : "home", isYours: true,
+    events: e.events.map((ev) => (ev.side ? { ...ev, side: swap(ev.side) } : ev)),
+  };
+}
+
+// El partido visto por quien juega de A (o de B): su equipo siempre queda de «casa» y marcado como suyo.
+export function viewFor(entry, side) {
+  const e = side === "A" ? entry : flipEntry(entry);
+  return { ...e, home: { ...e.home, isYou: true }, away: { ...e.away, isYou: false }, isYours: true };
 }
 
 // La vista pública del torneo: todo el cuadro ya jugado.

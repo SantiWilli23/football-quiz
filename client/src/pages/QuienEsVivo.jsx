@@ -100,7 +100,7 @@ export function QuienEsVivoBody() {
     const proto = location.protocol === "https:" ? "wss:" : "ws:";
     const ws = new WebSocket(`${proto}//${location.host}/ws`);
     wsRef.current = ws;
-    ws.onopen = () => ws.send(JSON.stringify(first));
+    ws.onopen = () => { let token; try { token = localStorage.getItem("fq_token") || undefined; } catch { /* sin storage */ } ws.send(JSON.stringify({ ...first, token })); };
     ws.onmessage = async (ev) => {
       let m; try { m = JSON.parse(ev.data); } catch { return; }
       if (m.type === "created") { setCode(m.room); setPhase("waiting"); gameRef.current.isHost = true; }

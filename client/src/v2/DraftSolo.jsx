@@ -14,7 +14,7 @@ import { clubMessage } from "../utils/dailyGames.js";
 const FORMATIONS = ["4-3-3", "4-4-2", "4-2-3-1", "4-2-4", "3-5-2", "5-3-2", "4-5-1", "3-4-3"];
 const MODES = [["clasico", "Clásico", "Valoraciones ocultas y un solo cambio de equipo."], ["almanaque", "De almanaque", "Ves las valoraciones, hasta 3 cambios y 3 fichajes al final."]];
 const STYLES = [["equilibrado", "Equilibrado"], ["defensivo", "Defensivo"], ["ofensivo", "Ofensivo"]];
-const ROUND = { octavos: "Octavos de final", cuartos: "Cuartos de final", semis: "Semifinales", final: "La final" };
+const ROUND = { duelo: "El duelo", octavos: "Octavos de final", cuartos: "Cuartos de final", semis: "Semifinales", final: "La final" };
 const POS = { GOL: "Arquero", ZAG: "Central", LD: "Lat. der.", LE: "Lat. izq.", MEI: "Medio", PD: "Ext. der.", CA: "Delantero", PE: "Ext. izq." };
 const norm = (raw) => raw.split("/").map((p) => ({ LI: "LE", MD: "MEI", ME: "MEI", MEC: "MEI", MED: "MEI", MC: "MEI" }[p.trim()] || p.trim()));
 
@@ -45,19 +45,19 @@ function useDraft() {
   return { ...s, start, act, reset: () => setS({ loading: false, id: null, step: 0, draft: null }) };
 }
 
-function Setup({ onStart }) {
+export function Setup({ onStart, label = "Empezar el draft", title = "8a2 · Draft solo", text = "11 rondas: sale un plantel histórico de la Champions y fichas a uno. Con el once armado, juegas la Champions entera." }) {
   const [f, setF] = useState({ formation: "4-3-3", mode: "clasico", style: "equilibrado" });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const chip = (on) => `rounded-xl border px-3 py-2 text-left text-sm transition-colors ${on ? "border-accent bg-accent/10" : "border-border text-gray-400"}`;
   return (
     <div className="space-y-4">
-      <Card variant="feature"><p className="t-eyebrow">8a2 · Draft solo</p><p className="mt-1 text-sm text-gray-300">11 rondas: sale un plantel histórico de la Champions y fichas a uno. Con el once armado, juegas la Champions entera.</p></Card>
+      <Card variant="feature"><p className="t-eyebrow">{title}</p><p className="mt-1 text-sm text-gray-300">{text}</p></Card>
       <div><p className="t-eyebrow mb-1.5">Formación</p><div className="grid grid-cols-4 gap-1.5" role="radiogroup" aria-label="Formación">{FORMATIONS.map((n) => <button key={n} role="radio" aria-checked={f.formation === n} onClick={() => setF({ ...f, formation: n })} className={`${chip(f.formation === n)} text-center font-semibold tabular-nums`}>{n}</button>)}</div></div>
       <div><p className="t-eyebrow mb-1.5">Modo</p><div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Modo">{MODES.map(([k, label, text]) => <button key={k} role="radio" aria-checked={f.mode === k} onClick={() => setF({ ...f, mode: k })} className={chip(f.mode === k)}><b className="block">{label}</b><span className="text-xs text-gray-400">{text}</span></button>)}</div></div>
       <div><p className="t-eyebrow mb-1.5">Estilo de juego</p><div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Estilo">{STYLES.map(([k, label]) => <button key={k} role="radio" aria-checked={f.style === k} onClick={() => setF({ ...f, style: k })} className={`${chip(f.style === k)} text-center`}>{label}</button>)}</div><p className="mt-1 text-xs text-gray-500">Defensivo y ofensivo suman +3 de valoración a los jugadores de esa zona.</p></div>
       {err && <p className="text-sm text-red-400" role="alert">{err}</p>}
-      <button disabled={busy} onClick={async () => { setBusy(true); setErr(""); try { await onStart(f); } catch (e) { setErr(e.response?.data?.error || "No se pudo empezar"); setBusy(false); } }} className="btn btn-primary w-full disabled:opacity-50">{busy ? "Empezando…" : "Empezar el draft"}</button>
+      <button disabled={busy} onClick={async () => { setBusy(true); setErr(""); try { await onStart(f); } catch (e) { setErr(e.response?.data?.error || "No se pudo empezar"); setBusy(false); } }} className="btn btn-primary w-full disabled:opacity-50">{busy ? "Empezando…" : label}</button>
     </div>
   );
 }
@@ -88,7 +88,7 @@ function Pitch({ d, selected, moving, onSlot }) {
   );
 }
 
-function DraftRound({ d, act }) {
+export function DraftRound({ d, act }) {
   const [selected, setSelected] = useState(null);
   const [moving, setMoving] = useState(null);
   useEffect(() => { setSelected(null); setMoving(null); }, [d.round, d.team?.club, d.team?.season]);
@@ -137,7 +137,7 @@ function DraftRound({ d, act }) {
   );
 }
 
-function Result({ d, act }) {
+export function Result({ d, act, room = false }) {
   const [slot, setSlot] = useState(null);
   const almanaque = d.mode === "almanaque";
   return (
@@ -168,13 +168,13 @@ function Result({ d, act }) {
           </div>
         </Card>
       )}
-      <button onClick={() => act("cup")} className="btn btn-primary w-full inline-flex items-center justify-center gap-2"><Trophy size={16} /> Jugar la Champions con este equipo</button>
+      <button onClick={() => act(room ? "ready" : "cup")} className="btn btn-primary w-full inline-flex items-center justify-center gap-2"><Trophy size={16} /> {room ? "Estoy listo: que juegue mi equipo" : "Jugar la Champions con este equipo"}</button>
     </div>
   );
 }
 
 // Tus partidos de la Champions, uno por uno con el visor; después el cuadro completo.
-function Cup({ d, onAgain }) {
+export function Cup({ d, onAgain }) {
   const rounds = d.cup.rounds;
   const mine = useMemo(() => rounds.map((r) => ({ name: r.name, m: r.matches.find((x) => x.isYours) })).filter((x) => x.m), [rounds]);
   const [i, setI] = useState(0);
@@ -183,21 +183,22 @@ function Cup({ d, onAgain }) {
   const cur = mine[i];
   const next = () => (i + 1 < mine.length ? (setI(i + 1), setDone(false)) : setAll(true));
   const f = d.final;
+  const versus = !!f.versus;
   return (
     <div className="space-y-3">
       {!all && cur && (
         <>
           <Card variant="feature" key={cur.name}><p className="t-eyebrow">{ROUND[cur.name]}</p><p className="text-sm text-gray-300">Tu selección vs <b>{cur.m.home.isYou ? cur.m.away.label : cur.m.home.label}</b></p></Card>
           <MatchStage key={`${cur.name}`} match={fromDraft(cur.m)} onDone={() => setDone(true)} />
-          {done && <button onClick={next} className="btn btn-primary w-full fq-rise">{i + 1 < mine.length ? (cur.m.winner === (cur.m.home.isYou ? "home" : "away") ? "Seguir en la Champions" : "Ver el cuadro") : "Ver el cuadro"}</button>}
+          {done && <button onClick={next} className="btn btn-primary w-full fq-rise">{versus ? "Ver el resultado" : i + 1 < mine.length ? (cur.m.winner === (cur.m.home.isYou ? "home" : "away") ? "Seguir en la Champions" : "Ver el cuadro") : "Ver el cuadro"}</button>}
         </>
       )}
       {(all || !cur) && (
         <>
           <Card variant="feature" className={`fq-pop text-center ${f.champion ? "border-amber/60" : ""}`}>
             <Trophy size={28} className={`mx-auto ${f.champion ? "text-amber" : "text-gray-500"}`} />
-            <p className="mt-1 text-2xl font-black">{f.champion ? "¡Campeón de Europa!" : `Eliminado en ${ROUND[f.eliminated]?.toLowerCase()}`}</p>
-            <p className="text-sm text-gray-400">{f.champion ? "Levantaste la copa." : `Campeón: ${f.championName}`}</p>
+            <p className="mt-1 text-2xl font-black">{versus ? (f.champion ? `¡Le ganaste a ${f.rival}!` : `${f.rival} te ganó`) : f.champion ? "¡Campeón de Europa!" : `Eliminado en ${ROUND[f.eliminated]?.toLowerCase()}`}</p>
+            <p className="text-sm text-gray-400">{versus ? `Tu equipo ${f.average} · el de ${f.rival} ${f.rivalAverage}` : f.champion ? "Levantaste la copa." : `Campeón: ${f.championName}`}</p>
             {f.rewards && <p className="mt-2 text-sm text-gray-300">{clubMessage(f.rewards.club)} {f.rewards.pack ? `Ganaste un sobre ${f.rewards.pack}.` : ""}</p>}
           </Card>
           {rounds.map((r) => (
@@ -209,7 +210,7 @@ function Cup({ d, onAgain }) {
                   <span className={`truncate text-right ${m.winner === "away" ? "" : "text-gray-500"}`}>{m.away.label}</span>
                 </li>))}</ul></Card>
           ))}
-          <button onClick={onAgain} className="btn btn-primary w-full inline-flex items-center justify-center gap-2">Nueva copa <ArrowRight size={15} /></button>
+          <button onClick={onAgain} className="btn btn-primary w-full inline-flex items-center justify-center gap-2">{versus ? "Otro duelo" : "Nueva copa"} <ArrowRight size={15} /></button>
         </>
       )}
     </div>

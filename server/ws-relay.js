@@ -1,4 +1,5 @@
 import { WebSocketServer } from "ws";
+import jwt from "jsonwebtoken";
 
 // Relay genérico de salas para multijugador online (Draft 8A2, Mentiroso,
 // Supervivencia, Equipo-Jugador). El servidor no conoce las reglas de ningún
@@ -17,6 +18,28 @@ import { WebSocketServer } from "ws";
 // pierde la partida en curso por una desconexión.
 
 const MAX_PLAYERS_PER_ROOM = 16;
+
+// Quiénes (con sesión válida) compartieron cada sala. Sirve para verificar que una victoria online
+// fue contra otra persona de verdad: el servidor no conoce las reglas de los juegos, pero sí sabe
+// quién estuvo en la sala. Se guarda por usuario y juego: la sala más reciente.
+const recentRooms = new Map(); // `${userId}|${game}` -> { code, users:Set, at }
+const ROOM_MEMORY_MS = 3 * 60 * 60 * 1000;
+
+function userFromToken(token) {
+  try { return token ? Number(jwt.verify(String(token), process.env.JWT_SECRET).userId) || null : null; } catch { return null; }
+}
+function noteUser(code, room, userId) {
+  if (!userId) return;
+  room.users = room.users || new Set();
+  room.users.add(userId);
+  for (const u of room.users) recentRooms.set(`${u}|${room.game}`, { code, users: room.users, at: Date.now() });
+}
+// ¿Compartió ese usuario una sala reciente de ese juego con al menos otra persona con sesión?
+export function sharedRoomWithOther(userId, game) {
+  const r = recentRooms.get(`${userId}|${game}`);
+  if (!r || Date.now() - r.at > ROOM_MEMORY_MS) return null;
+  return r.users.size >= 2 && r.users.has(userId) ? { code: r.code, others: r.users.size - 1 } : null;
+}
 const ROOM_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sin 0/O/1/I para evitar confusión
 
 function genRoomCode() {
@@ -85,6 +108,7 @@ export function attachWsRelay(httpServer) {
         rooms.set(code, room);
         ws._room = room;
         ws._roomCode = code;
+        noteUser(code, room, userFromToken(msg.token));
         send(ws, { type: "created", room: code, you: "host", seat: 0 });
         return;
       }
@@ -111,6 +135,7 @@ export function attachWsRelay(httpServer) {
         room.sockets.set(ws, seat);
         ws._room = room;
         ws._roomCode = code;
+        noteUser(code, room, userFromToken(msg.token));
         send(ws, { type: "joined", room: code, you: roleFor(seat), seat, players: room.sockets.size });
         if (room.lastState != null) send(ws, { type: "state-sync", payload: room.lastState });
         broadcastExcept(room, ws, { type: "opponent-joined", seat, players: room.sockets.size });

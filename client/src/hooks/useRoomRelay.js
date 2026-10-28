@@ -2,6 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const MAX_RECONNECT_ATTEMPTS = 5;
 
+// La sesión viaja al relay para que el servidor sepa con quién jugaste (victorias verificadas).
+function sessionToken() {
+  try { return localStorage.getItem("fq_token") || undefined; } catch { return undefined; }
+}
+
 // Un id propio por juego+pestaña, persistido en sessionStorage. Si el socket
 // se corta y el jugador vuelve a entrar (mismo código de sala) con este mismo
 // id, el servidor le devuelve SU MISMO asiento en vez de sumarlo como jugador
@@ -52,7 +57,7 @@ export default function useRoomRelay(gameName) {
     const ws = new WebSocket(wsUrl());
     wsRef.current = ws;
 
-    ws.onopen = () => ws.send(JSON.stringify({ ...openMsg, clientId: clientIdFor(gameNameRef.current) }));
+    ws.onopen = () => ws.send(JSON.stringify({ ...openMsg, clientId: clientIdFor(gameNameRef.current), token: sessionToken() }));
     ws.onmessage = (ev) => {
       let msg;
       try {

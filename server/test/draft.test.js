@@ -133,3 +133,63 @@ test("por la API: jugar entero, doble toque rechazado y ganar la copa suma 30 un
   const ledger = (await db.execute({ sql: "SELECT points FROM points_ledger WHERE user_id = ? AND source = 'draft' AND date = ?", args: [u, todayStr()] })).rows;
   assert.equal(ledger.length, 1);
 });
+
+test("contra un amigo: sala por código, mismo formato, y el servidor decide el partido", async () => {
+  const { groupId, userIds } = await makeGroup(db, { name: "Duelo draft", members: ["amigoa", "amigob", "amigoc"] });
+  await db.execute({ sql: "UPDATE groups_t SET club_mode = 'total', season_started_at = '2026-01-01' WHERE id = ?", args: [groupId] });
+  const [a, b, c] = userIds;
+  const room = await call("post", "/room", { userId: a, body: { formation: "4-3-3", mode: "almanaque", style: "ofensivo" } });
+  assert.equal(room.status, 201);
+  const code = room.body.code;
+  assert.match(code, /^[A-Z2-9]{5}$/);
+  assert.equal((await call("get", "/active", { userId: a })).body.draft, null, "una partida de sala no aparece como solo");
+
+  assert.equal((await call("post", "/room/join", { userId: a, body: { code } })).status, 400, "no puedes unirte a tu propia sala");
+  assert.equal((await call("post", "/room/join", { userId: b, body: { code: "ZZZZZ" } })).status, 404);
+  const join = await call("post", "/room/join", { userId: b, body: { code: code.toLowerCase() } });
+  assert.equal(join.status, 201);
+  assert.equal(join.body.draft.formation, "4-3-3");
+  assert.equal(join.body.draft.mode, "almanaque");
+  assert.equal((await call("post", "/room/join", { userId: c, body: { code } })).status, 409, "la sala ya está completa");
+
+  // Cada uno arma su equipo por su lado.
+  async function build(id, step, draft, userId) {
+    for (let g = 0; draft.phase === "draft" && g < 100; g++) {
+      const mv = bestMove(draft.pool, draft.slots);
+      const r = await call("post", "/:id/:action", { userId, params: { id, action: "pick" }, body: { step, ...mv } });
+      assert.equal(r.status, 200, JSON.stringify(r.body));
+      ({ step, draft } = r.body);
+    }
+    return { step, draft };
+  }
+  const A = await build(room.body.id, room.body.step, room.body.draft, a);
+  const B = await build(join.body.id, join.body.step, join.body.draft, b);
+  assert.equal(A.draft.phase, "result");
+  assert.equal((await call("post", "/:id/:action", { userId: a, params: { id: room.body.id, action: "cup" }, body: { step: A.step } })).status, 400, "no se juega la Champions en un duelo");
+
+  const readyA = await call("post", "/:id/:action", { userId: a, params: { id: room.body.id, action: "ready" }, body: { step: A.step } });
+  assert.equal(readyA.body.draft.phase, "ready", "espera al amigo");
+  assert.equal((await call("get", "/room/:code", { userId: a, params: { code } })).body.status, "playing");
+  const readyB = await call("post", "/:id/:action", { userId: b, params: { id: join.body.id, action: "ready" }, body: { step: B.step } });
+  assert.equal(readyB.body.draft.phase, "done");
+
+  const viewA = (await call("get", "/room/:code", { userId: a, params: { code } })).body;
+  const viewB = (await call("get", "/room/:code", { userId: b, params: { code } })).body;
+  assert.equal(viewA.status, "done");
+  const [fa, fb] = [viewA.draft.final, viewB.draft.final];
+  assert.notEqual(fa.champion, fb.champion, "exactamente uno gana");
+  const [ma, mb] = [viewA.draft.cup.rounds[0].matches[0], viewB.draft.cup.rounds[0].matches[0]];
+  assert.equal(ma.home.isYou, true);
+  assert.equal(mb.home.isYou, true);
+  assert.equal(ma.scoreHome, mb.scoreAway, "es el mismo partido visto desde cada lado");
+  assert.equal(ma.scoreAway, mb.scoreHome);
+  assert.equal(ma.winner === "home", fa.champion);
+  assert.equal(mb.winner === "home", fb.champion);
+  // El ganador suma 30 al club Total (una vez); el perdedor no.
+  const winner = fa.champion ? a : b;
+  const points = async (u) => (await db.execute({ sql: "SELECT points FROM points_ledger WHERE user_id = ? AND source = 'draft' AND date = ?", args: [u, todayStr()] })).rows.map((r) => Number(r.points));
+  assert.deepEqual(await points(winner), [30]);
+  assert.deepEqual(await points(winner === a ? b : a), []);
+  // Sala terminada: no se puede reutilizar.
+  assert.equal((await call("post", "/room/join", { userId: c, body: { code } })).status, 409);
+});

@@ -1506,4 +1506,22 @@ CREATE TABLE IF NOT EXISTS draft_runs (
   finished_at TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx_draft_runs_user ON draft_runs(user_id, status)
+CREATE INDEX IF NOT EXISTS idx_draft_runs_user ON draft_runs(user_id, status);
+
+-- Draft 8a2 contra un amigo (en línea): cada uno arma su equipo con la misma formación, modo y
+-- estilo. Cuando los dos están listos el servidor simula el partido y decide quién ganó.
+CREATE TABLE IF NOT EXISTS draft_rooms (
+  code TEXT PRIMARY KEY,
+  creator_id INTEGER NOT NULL REFERENCES users(id),
+  guest_id INTEGER REFERENCES users(id),
+  formation TEXT NOT NULL,
+  mode TEXT NOT NULL,
+  style TEXT NOT NULL,
+  run_a INTEGER,
+  run_b INTEGER,
+  status TEXT NOT NULL DEFAULT 'waiting',
+  winner_id INTEGER,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_draft_rooms_creator ON draft_rooms(creator_id, status)
