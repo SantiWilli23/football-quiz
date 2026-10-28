@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { enabledGames } from "./utils/clubs.js";
 import torneoRouter from "./routes/torneo.js";
 import express from "express";
 import cors from "cors";
@@ -130,6 +131,13 @@ app.use("/api/media", mediaRoutes);
 app.use("/api/a-quien-me-compro", aQuienMeComproRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
+
+// Cotrero rehecho (Futotal 2.0): las páginas estáticas viejas redirigen a la nueva. Con ?legacy=1 se
+// abren igual, para terminar una carrera que quedó guardada en el teléfono.
+app.get(["/cotrero.html", "/cotrero-medio.html"], (req, res, next) => {
+  if (req.query.legacy === "1" || !enabledGames().includes("cotrero")) return next();
+  res.redirect(302, req.path.includes("medio") ? "/jugar/cotrero/medio" : "/jugar/cotrero/simple");
+});
 
 const clientDist = path.resolve(__dirname, "../client/dist");
 if (fs.existsSync(clientDist)) {

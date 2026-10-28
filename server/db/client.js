@@ -19,6 +19,14 @@ export const db = createClient({
   authToken: process.env.DATABASE_AUTH_TOKEN,
 });
 
+// Cotrero: los puntajes que llegaron del teléfono (sin verificar) y los de una carrera jugada
+// contra el servidor (verified = 1) conviven; los verificados nunca se pisan con los otros.
+async function migrateCareerVerified() {
+  const info = await db.execute("PRAGMA table_info(career_scores)");
+  if (info.rows.length === 0 || info.rows.some((r) => r.name === "verified")) return;
+  await db.execute("ALTER TABLE career_scores ADD COLUMN verified INTEGER NOT NULL DEFAULT 0");
+}
+
 export async function initSchema() {
   const schemaPath = path.join(__dirname, "schema.sql");
   const schema = fs.readFileSync(schemaPath, "utf-8");
@@ -53,6 +61,7 @@ export async function initSchema() {
   await migrateSeasonPredictionPhase();
   await migrateFichadoFailHints();
   await migrateClubs();
+  await migrateCareerVerified();
 }
 
 // Fichado: pistas gratis ganadas por intentos fallidos (cada 2 fallos, una).

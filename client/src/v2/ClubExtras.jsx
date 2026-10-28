@@ -124,7 +124,7 @@ export function Legends({ clubId }) {
           {list.map((l) => (
             <li key={l.place} className="flex items-center gap-3 py-2 text-sm">
               <span className="w-5 text-center font-bold text-gray-400">{l.place}</span>
-              <span className="min-w-0 flex-1"><b className="block truncate">{l.name || l.username}</b><span className="text-xs text-gray-500">{[l.label, l.pos, l.name ? `de ${l.username}` : null].filter(Boolean).join(" · ")}</span></span>
+              <span className="min-w-0 flex-1"><b className="block truncate">{l.name || l.username}</b><span className="text-xs text-gray-500">{[l.label, l.pos, l.name ? `de ${l.username}` : null, l.verified === false ? "sin verificar" : null].filter(Boolean).join(" · ")}</span></span>
               <b className="tabular-nums">{l.score}</b>
             </li>
           ))}

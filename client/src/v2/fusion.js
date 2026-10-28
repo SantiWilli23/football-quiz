@@ -41,6 +41,13 @@ export const FUSED = {
       { key: "votacion", label: "Votación del club", old: "/var-votacion", keys: [], Page: lazy(() => import("../pages/VarVotacion.jsx")) },
     ],
   },
+  cotrero: {
+    slug: "cotrero", label: "Cotrero",
+    variants: [
+      { key: "simple", label: "Simple", old: "/cotrero.html", keys: [], Page: lazy(() => import("./CotreroSimple.jsx")) },
+      { key: "medio", label: "Medio", old: "/cotrero-medio.html", keys: [], Page: lazy(() => import("./CotreroMedio.jsx")) },
+    ],
+  },
   bingo: {
     slug: "bingo", label: "Bingo",
     variants: [

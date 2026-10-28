@@ -1,0 +1,332 @@
+[
+ {
+  "name": "Marcelo Salas",
+  "pos": "Delantero",
+  "goalsPerSeason": 13,
+  "titles": 10,
+  "seasons": 17,
+  "caps": 70,
+  "rep": 34,
+  "approx": true
+ },
+ {
+  "name": "Iván Zamorano",
+  "pos": "Delantero",
+  "goalsPerSeason": 16,
+  "titles": 9,
+  "seasons": 17,
+  "caps": 69,
+  "rep": 32,
+  "approx": true
+ },
+ {
+  "name": "Carlos Caszely",
+  "pos": "Delantero",
+  "goalsPerSeason": 14,
+  "titles": 6,
+  "seasons": 15,
+  "caps": 49,
+  "rep": 40,
+  "approx": true
+ },
+ {
+  "name": "Alexis Sánchez",
+  "pos": "Delantero",
+  "goalsPerSeason": 11,
+  "titles": 14,
+  "seasons": 19,
+  "caps": 160,
+  "rep": 26,
+  "approx": true
+ },
+ {
+  "name": "Arturo Vidal",
+  "pos": "Enganche",
+  "goalsPerSeason": 6,
+  "titles": 18,
+  "seasons": 19,
+  "caps": 140,
+  "rep": 8,
+  "approx": true
+ },
+ {
+  "name": "Carlos Valderrama",
+  "pos": "Enganche",
+  "goalsPerSeason": 4,
+  "titles": 6,
+  "seasons": 18,
+  "caps": 111,
+  "rep": 38,
+  "approx": true
+ },
+ {
+  "name": "Pelé",
+  "pos": "Delantero",
+  "goalsPerSeason": 32,
+  "titles": 28,
+  "seasons": 20,
+  "caps": 92,
+  "rep": 50,
+  "approx": true
+ },
+ {
+  "name": "Diego Maradona",
+  "pos": "Enganche",
+  "goalsPerSeason": 21,
+  "titles": 12,
+  "seasons": 20,
+  "caps": 91,
+  "rep": 22,
+  "approx": true
+ },
+ {
+  "name": "Lionel Messi",
+  "pos": "Delantero",
+  "goalsPerSeason": 36,
+  "titles": 44,
+  "seasons": 21,
+  "caps": 190,
+  "rep": 45,
+  "approx": true
+ },
+ {
+  "name": "Cristiano Ronaldo",
+  "pos": "Delantero",
+  "goalsPerSeason": 38,
+  "titles": 35,
+  "seasons": 22,
+  "caps": 215,
+  "rep": 10,
+  "approx": true
+ },
+ {
+  "name": "Ronaldo Nazário",
+  "pos": "Delantero",
+  "goalsPerSeason": 24,
+  "titles": 12,
+  "seasons": 17,
+  "caps": 98,
+  "rep": 28,
+  "approx": true
+ },
+ {
+  "name": "Romário",
+  "pos": "Delantero",
+  "goalsPerSeason": 34,
+  "titles": 14,
+  "seasons": 25,
+  "caps": 70,
+  "rep": 2,
+  "approx": true
+ },
+ {
+  "name": "Gabriel Batistuta",
+  "pos": "Delantero",
+  "goalsPerSeason": 24,
+  "titles": 5,
+  "seasons": 18,
+  "caps": 78,
+  "rep": 30,
+  "approx": true
+ },
+ {
+  "name": "Luis Suárez",
+  "pos": "Delantero",
+  "goalsPerSeason": 29,
+  "titles": 22,
+  "seasons": 19,
+  "caps": 142,
+  "rep": -14,
+  "approx": true
+ },
+ {
+  "name": "Edinson Cavani",
+  "pos": "Delantero",
+  "goalsPerSeason": 22,
+  "titles": 17,
+  "seasons": 19,
+  "caps": 136,
+  "rep": 15,
+  "approx": true
+ },
+ {
+  "name": "Diego Forlán",
+  "pos": "Delantero",
+  "goalsPerSeason": 17,
+  "titles": 6,
+  "seasons": 18,
+  "caps": 112,
+  "rep": 25,
+  "approx": true
+ },
+ {
+  "name": "Radamel Falcao",
+  "pos": "Delantero",
+  "goalsPerSeason": 19,
+  "titles": 10,
+  "seasons": 18,
+  "caps": 109,
+  "rep": 24,
+  "approx": true
+ },
+ {
+  "name": "Thierry Henry",
+  "pos": "Delantero",
+  "goalsPerSeason": 24,
+  "titles": 11,
+  "seasons": 19,
+  "caps": 123,
+  "rep": 30,
+  "approx": true
+ },
+ {
+  "name": "Zlatan Ibrahimović",
+  "pos": "Delantero",
+  "goalsPerSeason": 27,
+  "titles": 33,
+  "seasons": 23,
+  "caps": 122,
+  "rep": -8,
+  "approx": true
+ },
+ {
+  "name": "Zinedine Zidane",
+  "pos": "Enganche",
+  "goalsPerSeason": 7,
+  "titles": 11,
+  "seasons": 17,
+  "caps": 108,
+  "rep": 46,
+  "approx": true
+ },
+ {
+  "name": "Juan Román Riquelme",
+  "pos": "Enganche",
+  "goalsPerSeason": 9,
+  "titles": 13,
+  "seasons": 18,
+  "caps": 51,
+  "rep": 31,
+  "approx": true
+ },
+ {
+  "name": "Andrea Pirlo",
+  "pos": "Enganche",
+  "goalsPerSeason": 5,
+  "titles": 12,
+  "seasons": 22,
+  "caps": 116,
+  "rep": 36,
+  "approx": true
+ },
+ {
+  "name": "Andrés Iniesta",
+  "pos": "Enganche",
+  "goalsPerSeason": 5,
+  "titles": 35,
+  "seasons": 21,
+  "caps": 131,
+  "rep": 48,
+  "approx": true
+ },
+ {
+  "name": "Xavi Hernández",
+  "pos": "Enganche",
+  "goalsPerSeason": 6,
+  "titles": 31,
+  "seasons": 21,
+  "caps": 133,
+  "rep": 44,
+  "approx": true
+ },
+ {
+  "name": "Ronaldinho",
+  "pos": "Enganche",
+  "goalsPerSeason": 16,
+  "titles": 15,
+  "seasons": 19,
+  "caps": 97,
+  "rep": 38,
+  "approx": true
+ },
+ {
+  "name": "Kaká",
+  "pos": "Enganche",
+  "goalsPerSeason": 11,
+  "titles": 11,
+  "seasons": 17,
+  "caps": 92,
+  "rep": 40,
+  "approx": true
+ },
+ {
+  "name": "James Rodríguez",
+  "pos": "Enganche",
+  "goalsPerSeason": 8,
+  "titles": 12,
+  "seasons": 16,
+  "caps": 82,
+  "rep": 12,
+  "approx": true
+ },
+ {
+  "name": "Enzo Francescoli",
+  "pos": "Delantero",
+  "goalsPerSeason": 18,
+  "titles": 8,
+  "seasons": 17,
+  "caps": 73,
+  "rep": 35,
+  "approx": true
+ },
+ {
+  "name": "Neymar",
+  "pos": "Delantero",
+  "goalsPerSeason": 25,
+  "titles": 27,
+  "seasons": 17,
+  "caps": 128,
+  "rep": -6,
+  "approx": true
+ },
+ {
+  "name": "Kylian Mbappé",
+  "pos": "Delantero",
+  "goalsPerSeason": 34,
+  "titles": 17,
+  "seasons": 10,
+  "caps": 86,
+  "rep": 20,
+  "approx": true
+ },
+ {
+  "name": "Erling Haaland",
+  "pos": "Delantero",
+  "goalsPerSeason": 36,
+  "titles": 10,
+  "seasons": 8,
+  "caps": 40,
+  "rep": 5,
+  "approx": true
+ },
+ {
+  "name": "Paulo Dybala",
+  "pos": "Enganche",
+  "goalsPerSeason": 13,
+  "titles": 12,
+  "seasons": 13,
+  "caps": 42,
+  "rep": 18,
+  "approx": true
+ },
+ {
+  "name": "Mohamed Salah",
+  "pos": "Delantero",
+  "goalsPerSeason": 28,
+  "titles": 8,
+  "seasons": 14,
+  "caps": 100,
+  "rep": 32,
+  "approx": true
+ }
+]

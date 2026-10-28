@@ -1472,3 +1472,22 @@ CREATE TABLE IF NOT EXISTS tournament_claims (
   claimed_at TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (user_id, tournament_id, reward)
 );
+
+-- Carreras de Cotrero jugadas contra el servidor (Futotal 2.0): el servidor guarda el estado, tira
+-- el azar con la semilla y calcula el puntaje. Una carrera activa por juego y por usuario.
+CREATE TABLE IF NOT EXISTS careers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  game TEXT NOT NULL,
+  mode TEXT,
+  seed INTEGER NOT NULL,
+  step INTEGER NOT NULL DEFAULT 0,
+  state_json TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'activa',
+  score INTEGER,
+  label TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  finished_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_careers_user ON careers(user_id, game, status)

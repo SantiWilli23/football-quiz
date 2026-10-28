@@ -275,12 +275,12 @@ router.get("/:id/legends", async (req, res) => {
     const club = await clubFor(Number(req.params.id), req.userId);
     if (!club) return res.status(404).json({ error: "Club no encontrado" });
     const rows = (await db.execute({
-      sql: `SELECT u.username, c.game, c.score, c.label, c.pos, c.name FROM career_scores c
+      sql: `SELECT u.username, c.game, c.score, c.label, c.pos, c.name, c.verified FROM career_scores c
             JOIN group_members m ON m.user_id = c.user_id AND m.group_id = ? JOIN users u ON u.id = c.user_id
             ORDER BY c.score DESC LIMIT 5`,
       args: [club.id],
     })).rows;
-    res.json({ legends: rows.map((r, i) => ({ place: i + 1, username: r.username, name: r.name, score: Number(r.score), label: r.label, pos: r.pos, game: r.game })) });
+    res.json({ legends: rows.map((r, i) => ({ place: i + 1, username: r.username, name: r.name, score: Number(r.score), label: r.label, pos: r.pos, game: r.game, verified: Number(r.verified) === 1 })) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });
