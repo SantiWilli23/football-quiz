@@ -6,6 +6,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { db } from "../db/client.js";
 import { generateRoundRobin } from "./dt-match.js";
+import { redesignOn } from "./clubs.js";
+import { DT_PODIO_POINTS, creditPointsToGroup } from "./ledger.js";
+import { todayStr } from "./points.js";
 import {
   baseRatingForTier, budgetAfterSeason, CHAMPIONS_SPOTS, cupRoundPoints, EURO_COMPS, EUROPA_SPOTS, EXPEL_AFTER_DAYS,
   FINE_PER_DAY, firstRound, initialBudget, levelFromRating, matchPoints, NATIONAL_COMPS, nextRoundPairs, outcomeOf,
@@ -231,6 +234,25 @@ async function ligaStandings(league, season) {
   return standingsFrom(leagueTeams(league).map((t) => t.id), rows);
 }
 
+// Futotal 2.0: el podio de cada jornada (60 / 40 / 20) suma al club Total de la liga. Quienes empatan
+// comparten puesto. Cada jornada tiene su propia fuente, así que varias el mismo día no se pisan.
+export async function payPodium(league, week, points, date = todayStr()) {
+  if (!redesignOn() || !league.group_id) return [];
+  const ranked = [...points.entries()].filter(([, p]) => p > 0).sort((a, b) => b[1] - a[1]);
+  if (ranked.length < 2) return []; // un podio necesita al menos dos jugadores con puntos
+  const paid = [];
+  let place = 0;
+  let prev = null;
+  for (let i = 0; i < ranked.length; i++) {
+    if (ranked[i][1] !== prev) { place = i + 1; prev = ranked[i][1]; }
+    const base = DT_PODIO_POINTS[place];
+    if (!base) continue;
+    const res = await creditPointsToGroup(ranked[i][0], league.group_id, date, `dt_podio:${league.id}-${weekCode(Number(league.season || 1), week)}`, base);
+    if (res.credited) paid.push({ userId: ranked[i][0], place, points: res.points });
+  }
+  return paid;
+}
+
 // Cuando todos los partidos de una jornada (de todas las competencias) están jugados, se le
 // suma a cada humano lo que hizo: resultado según el nivel del rival, copas y su posición en la
 // tabla frente a lo que se esperaba de su club. El puntaje cae en la mini liga semanal del grupo.
@@ -294,6 +316,7 @@ export async function settleWeeks(league, members) {
         args: [league.id, league.group_id, userId, weekCode(season, week), pts],
       });
     }
+    await payPodium(league, week, points).catch((e) => console.error("podio", e));
     await db.execute({ sql: "UPDATE dt_league_fixtures SET scored = 1 WHERE league_id = ? AND season = ? AND week = ? AND played = 1", args: [league.id, season, week] });
   }
 }

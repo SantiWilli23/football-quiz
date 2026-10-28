@@ -10,9 +10,11 @@ const MODES = [
   { label: "Equipo-Jugador", text: "Una cadena de jugadores y equipos.", to: "/equipo-jugador" },
   { label: "¿Quién es? en vivo", text: "Pistas cada 12 segundos: gana quien adivine primero.", to: "/quien-es-vivo" },
   { label: "Dorsal histórico", text: "¿Quién usó ese número?", to: "/dorsal-historico" },
-  { label: "Mentiroso y más", text: "Los juegos de preguntas entre amigos.", to: "/quien-sabe-mas" },
+  { label: "Mentiroso", text: "Una afirmación, ¿es verdad o mentira?", to: "/mentiroso.html" },
 ];
 const N = MODES.length;
+// Las páginas estáticas (Mentiroso) no pasan por el enrutador.
+const go = (navigate, to) => (to.endsWith(".html") ? window.location.assign(to) : navigate(to));
 const SLICE = 360 / N;
 const COLORS = ["var(--c-emerald)", "var(--c-blue)", "var(--c-amber)", "var(--c-purple)", "var(--c-red)"];
 
@@ -77,12 +79,19 @@ export default function Versus() {
             <p className="text-sm text-gray-300">{picked.text}</p>
             <div className="mt-3 flex gap-2">
               <button onClick={spin} className="btn btn-secondary flex-1">Girar de nuevo</button>
-              <button onClick={() => navigate(picked.to)} className="btn btn-primary flex-1">Jugar</button>
+              <button onClick={() => go(navigate, picked.to)} className="btn btn-primary flex-1">Jugar</button>
             </div>
           </div>
         ) : (
           <button onClick={spin} disabled={spinning} className="btn btn-primary w-full disabled:opacity-60">{spinning ? "Girando…" : "Girar la ruleta"}</button>
         )}
+        <div>
+          <p className="t-eyebrow mb-1.5">¿Prefieres elegir?</p>
+          <div className="flex flex-wrap justify-center gap-1.5">
+            {MODES.map((m) => <button key={m.label} onClick={() => go(navigate, m.to)} className="rounded-full border border-border px-3 py-1.5 text-xs text-gray-300 hover:border-accent/60">{m.label}</button>)}
+          </div>
+        </div>
+        <p className="text-xs text-gray-500">Ganar un Duelo suma 30 puntos a los clubes Total en los que estás (una vez al día). Si nadie está conectado, el Duelo se juega a tu ritmo: respondes ahora y tu rival cuando entre.</p>
         <ul className="space-y-1 text-left text-xs text-gray-500">{MODES.map((m) => <li key={m.label}><b className="text-gray-300">{m.label}:</b> {m.text}</li>)}</ul>
       </div>
     </Layout>

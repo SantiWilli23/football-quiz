@@ -22,7 +22,7 @@ const BASE_SOURCES = new Set(["partido_dia", "copa"]);
 
 export function kindOf(source) {
   if (BASE_SOURCES.has(source)) return "base";
-  if (source === "dt_podio") return "weekly";
+  if (source === "dt_podio" || source.startsWith("dt_podio:")) return "weekly";
   return "free";
 }
 
@@ -74,7 +74,7 @@ export async function creditPoints(userId, date, source, basePoints) {
     if (kind === "free") {
       const used = Number((await db.execute({
         sql: `SELECT COALESCE(SUM(points), 0) AS n FROM points_ledger
-              WHERE user_id = ? AND group_id = ? AND date = ? AND source NOT IN ('partido_dia', 'copa', 'dt_podio')`,
+              WHERE user_id = ? AND group_id = ? AND date = ? AND source NOT IN ('partido_dia', 'copa', 'dt_podio') AND source NOT LIKE 'dt_podio:%'`,
         args: [userId, club.group_id, date],
       })).rows[0].n);
       pts = Math.min(pts, Math.max(0, FREE_DAILY_CAP - used));
