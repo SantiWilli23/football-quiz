@@ -136,6 +136,13 @@ function LegacyGate({ children }) {
   return to ? <Navigate to={to} replace /> : children;
 }
 
+// Con el rediseño, esta ruta vieja pasa a otra (por ejemplo, el centro de «Mentiroso y más» ahora es Versus).
+function V2Redirect({ to, children }) {
+  const { on, ready } = useFutotal2();
+  if (!ready) return null;
+  return on ? <Navigate to={to} replace /> : children;
+}
+
 function PanelOrHoy() {
   const { on, ready } = useFutotal2();
   if (!ready) return null;
@@ -291,7 +298,7 @@ export default function App() {
         path="/quien-sabe-mas"
         element={
           <PrivateRoute>
-            <QuienSabeMas />
+            <V2Redirect to="/versus"><QuienSabeMas /></V2Redirect>
           </PrivateRoute>
         }
       />

@@ -8,7 +8,8 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { reportOnlineWin } from "../utils/onlineWin.js";
 import { playSfx } from "../utils/sfx.js";
 import FormationPitch from "../components/FormationPitch.jsx";
-import LivePitch from "../components/LivePitch.jsx";
+import MatchStage from "../match/MatchStage.jsx";
+import { fromSubasta } from "../match/simMatch.js";
 
 // Subasta: 2, 4 u 8 DTs con 1000 M cada uno arman su once pujando por jugadores que salen
 // en silueta negra. Por cada puesto se subasta hasta que todos tengan uno; al final se juega
@@ -588,7 +589,7 @@ export default function Subasta() {
             {cur && (
               <div className="space-y-3 max-w-3xl mx-auto">
                 <p className="t-eyebrow">{cur.r.name} · partido {watch + 1} de {flat.length}</p>
-                <LivePitch key={watch} home={lineup(cur.m.a)} away={lineup(cur.m.b)} match={cur.m} onDone={() => setMatchDone(true)} />
+                <MatchStage key={watch} match={fromSubasta({ id: `subasta-${watch}`, match: cur.m, home: { name: lineup(cur.m.a).name }, away: { name: lineup(cur.m.b).name } })} onDone={() => setMatchDone(true)} />
                 {matchDone && cur.m.penalties && <p className="text-sm text-center text-gray-300">Empate: definió por penales {view.players.find((p) => p.id === cur.m.winner)?.name}.</p>}
                 <div className="flex gap-2 justify-center">
                   {matchDone && (

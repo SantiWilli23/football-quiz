@@ -44,7 +44,7 @@ export function validateSimMatch(m) {
 }
 
 // Salida de utils/match-engine.js (Cartas y Copa semanal): { min, team, type: "goal" | "half" | "final" | "wo" | "penalties", text, player? }.
-export function fromEngine({ id, source = "sim:cartas", events = [], home, away, lineups = null, speed = 1 }) {
+export function fromEngine({ id, source = "sim:cartas", events = [], home, away, lineups = null, speed = 1, partial = false }) {
   const out = [{ min: 0, type: "kickoff", team: null }];
   let hasFt = false;
   let pens = null;
@@ -55,7 +55,8 @@ export function fromEngine({ id, source = "sim:cartas", events = [], home, away,
     else if (e.type === "penalties") pens = e.team;
     else if (e.type === "wo") out.push({ min: 0, type: "chance", team: null, text: e.text });
   }
-  if (!hasFt) out.push({ min: 90, type: "ft", team: null });
+  // En vivo (`partial`) el «ft» llega recién cuando el servidor avisa que terminó.
+  if (!hasFt && !partial) out.push({ min: 90, type: "ft", team: null });
   const score = scoreOf(out);
   if (pens) score.pens = { winner: pens };
   return {
@@ -99,7 +100,9 @@ export function fromSubasta({ id, match, home, away, lineups = null }) {
     const min = typeof c === "number" ? c : c?.min;
     if (min == null || busy.has(min)) return;
     busy.add(min);
-    out.push({ min, type: "chance", team: (typeof c === "object" && c.team) || (i % 2 ? "away" : "home") });
+    // La Subasta marca el lado con «a» / «b» (o con el id del jugador A).
+    const team = typeof c === "object" && c.team != null ? (c.team === "a" || c.team === match.a ? "home" : "away") : i % 2 ? "away" : "home";
+    out.push({ min, type: "chance", team });
   });
   out.push({ min: 90, type: "ft", team: null });
   out.sort((a, b) => a.min - b.min || (a.type === "ft") - (b.type === "ft"));

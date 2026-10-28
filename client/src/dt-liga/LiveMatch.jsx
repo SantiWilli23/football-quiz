@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getLiveAccess, dtLiveWsUrl } from "./api.js";
+import MatchStage from "../match/MatchStage.jsx";
+import { fromEngine } from "../match/simMatch.js";
 
 const SPEED_OPTIONS = [
   { value: 0.2, label: "0.2x — muy lento" },
@@ -95,6 +97,12 @@ export default function LiveMatch() {
   }
 
   const bothConnected = teams && connected.length >= 2;
+  // El visor único recibe cada evento a medida que llega (modo en vivo): marcador, cancha, avisos y
+  // línea de tiempo. Si alguien entra a mitad del partido recibe los eventos de golpe y solo se
+  // anima el último.
+  const sim = useMemo(() => (teams ? fromEngine({
+    id: `dt-${fixtureId}`, source: "sim:dt", events, home: { name: teams.home }, away: { name: teams.away }, partial: phase !== "final",
+  }) : null), [teams, events, fixtureId, phase]);
 
   return (
     <div className="min-h-screen bg-bg text-white p-4">
@@ -115,7 +123,7 @@ export default function LiveMatch() {
           <div className="bg-red-500/10 border border-red-500/30 rounded-2xl px-4 py-3 text-sm text-red-300">{error}</div>
         )}
 
-        {teams && (
+        {teams && phase !== "live" && phase !== "final" && (
           <div className="bg-panel border border-border rounded-2xl p-5 text-center">
             <div className="flex items-center justify-center gap-4 mb-1">
               <span className={`font-semibold ${you === "home" ? "text-accent" : ""}`}>{teams.home}</span>
@@ -158,15 +166,11 @@ export default function LiveMatch() {
           </div>
         )}
 
-        {(phase === "live" || phase === "final") && (
-          <div className="bg-panel border border-border rounded-2xl p-4 max-h-96 overflow-y-auto space-y-2">
-            {events.length === 0 && <p className="text-sm text-gray-500 text-center py-4">El partido está por arrancar…</p>}
-            {events.map((e, i) => (
-              <p key={i} className="text-sm">
-                <span className="text-gray-500">Min {e.min}'</span> — {e.text}
-              </p>
-            ))}
-          </div>
+        {(phase === "live" || phase === "final") && sim && (
+          <>
+            <MatchStage match={sim} live controls={false} />
+            <p className="text-center text-xs text-gray-500">{teams.homeUser} vs {teams.awayUser}{spectators > 0 && ` · 👀 ${spectators} mirando`}</p>
+          </>
         )}
 
         {phase === "final" && (

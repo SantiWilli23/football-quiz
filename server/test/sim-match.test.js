@@ -44,3 +44,28 @@ test("fromSubasta traduce goles, ocasiones y cortes del partido", () => {
   assert.equal(m.events.filter((e) => e.type === "chance").length, 2, "la ocasión del minuto 12 se pisaba con el gol y se descarta");
   assert.equal(m.events.find((e) => e.min === 33).player, "Cami");
 });
+
+test("en vivo el partido no termina hasta que llega el final", () => {
+  const live = fromEngine({ events: [{ min: 12, team: "home", type: "goal", text: "Gol" }, { min: 45, team: null, type: "half" }], home, away, partial: true });
+  assert.notEqual(live.events.at(-1).type, "ft");
+  assert.ok(validateSimMatch(live).join().includes("ft"));
+  const done = fromEngine({ events: [{ min: 12, team: "home", type: "goal" }, { min: 45, team: null, type: "half" }], home, away });
+  assert.equal(done.events.at(-1).type, "ft");
+  assert.deepEqual(validateSimMatch(done), []);
+});
+
+test("fromDraft arma prórroga y penales con los remates después del final", async () => {
+  const { fromDraft } = await import("../../client/src/match/simMatch.js");
+  const m = fromDraft({
+    home: { label: "Tu selección", isYou: true }, away: { label: "RIVAL 2010-11", isYou: false },
+    events: [{ minute: 20, type: "goal", side: "A", player: "Delantero" }, { minute: 77, type: "goal", side: "B", player: "Rival" }, { minute: 60, type: "sub", side: "A", outName: "X", inName: "Y" },
+      { minute: 121, type: "shootout", side: "A", player: "Delantero", scored: true }, { minute: 121, type: "shootout", side: "B", player: "Rival", scored: false }],
+    scoreHome: 1, scoreAway: 1, extra: true, pens: true, penHome: 1, penAway: 0, winner: "home",
+  });
+  assert.deepEqual(validateSimMatch(m), []);
+  assert.equal(m.duration, 120);
+  assert.deepEqual(m.score, { home: 1, away: 1, pens: { home: 1, away: 0 } });
+  const types = m.events.map((e) => e.type);
+  assert.deepEqual(types.slice(-3), ["ft", "shootout_kick", "shootout_kick"]);
+  assert.ok(m.events.find((e) => e.type === "sub" && e.in === "Y"));
+});
