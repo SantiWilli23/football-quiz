@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ghostOn } from "./GhostToggle.jsx";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Check, Goal, Shield, X } from "lucide-react";
 import api from "../api.js";
@@ -149,7 +150,7 @@ export default function Partido() {
     if (!offline) playSfx(entry.ok ? "ok" : "bad");
     setAnswers((a) => [...a, entry]);
     setPhase("feedback");
-    if (!practice && !offline && main) {
+    if (!practice && !offline && main && ghostOn()) {
       api.get("/daily/ghost", { params: { groupId: main.id, idx } }).then((r) => setGhost(r.data.ghost)).catch(() => setGhost(null));
     }
   }, [idx, item, main, practice, offline, data]);

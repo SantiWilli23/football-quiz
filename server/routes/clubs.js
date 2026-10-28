@@ -9,6 +9,7 @@ import { cupFor, settleLastCup } from "../utils/cup.js";
 import { closeDueMonths, markSeen, pendingCeremonies } from "../utils/month.js";
 import { accept as acceptFriendly, challenge as challengeClub, closeDueFriendlies, decline as declineFriendly, friendliesOf } from "../utils/friendly.js";
 import { addDays, mondayOf } from "../utils/points.js";
+import { matchFor } from "../utils/daily-match.js";
 
 // Futotal 2.0: los grupos son «clubes» con modo (clásico o total), pretemporada y
 // temporada. La tabla sale del libro de puntos (utils/ledger.js).
@@ -270,6 +271,143 @@ router.get("/:id/legends", async (req, res) => {
       args: [club.id],
     })).rows;
     res.json({ legends: rows.map((r, i) => ({ place: i + 1, username: r.username, name: r.name, score: Number(r.score), label: r.label, pos: r.pos, game: r.game })) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Insignias del club: se ganan entre todos y cada una enciende una pieza del escudo.
+// Se calculan al pedirlas (nada que migrar): salen del libro de puntos, los cierres de
+// mes, los amistosos y los días en que jugaron todos.
+export const BADGES = [
+  { key: "temporada", label: "Temporada iniciada", text: "El club arrancó su primera temporada." },
+  { key: "mes", label: "Primer mes cerrado", text: "Se cerró un mes completo con su podio." },
+  { key: "copa", label: "Copa ganada", text: "Alguien del club ganó la copa semanal." },
+  { key: "amistoso", label: "Amistoso ganado", text: "El club le ganó un amistoso a otro club." },
+  { key: "racha", label: "Racha de 7", text: "7 días seguidos con todos jugando el partido del día." },
+];
+
+export function longestRun(dates) {
+  const sorted = [...new Set(dates)].sort();
+  let best = 0;
+  let run = 0;
+  let prev = null;
+  for (const d of sorted) {
+    const expected = prev ? new Date(`${prev}T12:00:00Z`) : null;
+    if (expected) expected.setUTCDate(expected.getUTCDate() + 1);
+    run = expected && expected.toISOString().slice(0, 10) === d ? run + 1 : 1;
+    best = Math.max(best, run);
+    prev = d;
+  }
+  return best;
+}
+
+export async function badgesOf(club) {
+  const has = async (sql, args) => !!(await db.execute({ sql, args })).rows[0];
+  const members = Number(club.members);
+  let bestRun = 0;
+  if (members >= 2) {
+    const rows = (await db.execute({
+      sql: `SELECT r.date FROM daily_match_results r JOIN group_members m ON m.user_id = r.user_id AND m.group_id = ?
+            GROUP BY r.date HAVING COUNT(DISTINCT r.user_id) >= ?`,
+      args: [club.id, members],
+    })).rows;
+    bestRun = longestRun(rows.map((r) => r.date));
+  }
+  const earned = {
+    temporada: !!club.season_started_at,
+    mes: await has("SELECT 1 FROM month_closes WHERE group_id = ?", [club.id]),
+    copa: await has("SELECT 1 FROM points_ledger WHERE group_id = ? AND source = 'copa' AND points >= 200", [club.id]),
+    amistoso: await has("SELECT 1 FROM club_friendlies WHERE winner = ?", [club.id]),
+    racha: bestRun >= 7,
+  };
+  return BADGES.map((b) => ({ ...b, earned: earned[b.key] }));
+}
+
+router.get("/:id/badges", async (req, res) => {
+  try {
+    const club = await clubFor(Number(req.params.id), req.userId);
+    if (!club) return res.status(404).json({ error: "Club no encontrado" });
+    res.json({ badges: await badgesOf(club) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+async function memberOfClub(groupId, userId) {
+  return !!(await db.execute({ sql: "SELECT 1 FROM group_members WHERE group_id = ? AND user_id = ?", args: [groupId, userId] })).rows[0];
+}
+
+// Ficha de miembro: lo que cualquiera del club puede ver de otro.
+router.get("/:id/members/:uid", async (req, res) => {
+  try {
+    const club = await clubFor(Number(req.params.id), req.userId);
+    const uid = Number(req.params.uid);
+    if (!club || !(await memberOfClub(club.id, uid))) return res.status(404).json({ error: "Miembro no encontrado" });
+    const today = todayStr();
+    const user = (await db.execute({ sql: "SELECT id, username, avatar, avatar_config FROM users WHERE id = ?", args: [uid] })).rows[0];
+    const ranks = {};
+    if (club.season_started_at) {
+      for (const view of ["hoy", "mes", "general"]) {
+        const row = (await clubTable(club.id, view, today)).find((r) => r.userId === uid);
+        ranks[view] = row ? { rank: row.rank, points: row.points } : null;
+      }
+    }
+    const result = (await db.execute({ sql: "SELECT total, p1, p2, p3 FROM daily_match_results WHERE user_id = ? AND date = ?", args: [uid, today] })).rows[0];
+    const mine = (await db.execute({ sql: "SELECT total FROM daily_match_results WHERE user_id = ? AND date = ?", args: [req.userId, today] })).rows[0];
+    const trophies = (await db.execute({ sql: "SELECT month, place FROM club_trophies WHERE user_id = ? AND group_id = ? ORDER BY month DESC LIMIT 6", args: [uid, club.id] })).rows;
+    const avg = (await db.execute({ sql: "SELECT AVG(total) AS a, COUNT(*) AS n FROM (SELECT total FROM daily_match_results WHERE user_id = ? ORDER BY date DESC LIMIT 30)", args: [uid] })).rows[0];
+    const streak = await personalStreak(uid, today);
+    res.json({
+      user: { id: user.id, username: user.username, avatar: user.avatar, avatar_config: user.avatar_config },
+      me: uid === req.userId,
+      ranks,
+      streak: streak.streak,
+      average: Number(avg.n) ? Math.round(Number(avg.a)) : null,
+      today: result ? { played: true, total: Number(result.total) } : { played: false },
+      // Solo si ambos jugaron hoy se puede abrir el cara a cara.
+      canCompare: !!result && !!mine && uid !== req.userId,
+      myToday: mine ? Number(mine.total) : null,
+      trophies: trophies.map((t) => ({ month: t.month, place: Number(t.place) })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
+// Cara a cara: pregunta por pregunta y con los tiempos, solo si los dos ya jugaron hoy
+// (así no se regalan respuestas del partido a quien todavía no lo jugó).
+router.get("/:id/head-to-head/:uid", async (req, res) => {
+  try {
+    const club = await clubFor(Number(req.params.id), req.userId);
+    const uid = Number(req.params.uid);
+    if (!club || uid === req.userId || !(await memberOfClub(club.id, uid))) return res.status(404).json({ error: "Miembro no encontrado" });
+    const date = todayStr();
+    const played = async (id) => (await db.execute({ sql: "SELECT total, p1, p2, p3 FROM daily_match_results WHERE user_id = ? AND date = ?", args: [id, date] })).rows[0];
+    const [mine, theirs] = [await played(req.userId), await played(uid)];
+    if (!mine || !theirs) return res.status(409).json({ error: "El cara a cara se abre cuando los dos jugaron el partido de hoy" });
+    const items = await matchFor(date);
+    const answers = async (id) => new Map((await db.execute({ sql: "SELECT idx, ok, ms, points FROM daily_match_answers WHERE user_id = ? AND date = ?", args: [id, date] })).rows.map((r) => [Number(r.idx), r]));
+    const [a, b] = [await answers(req.userId), await answers(uid)];
+    const other = (await db.execute({ sql: "SELECT username FROM users WHERE id = ?", args: [uid] })).rows[0];
+    const rows = items.map((it, idx) => {
+      const x = a.get(idx);
+      const y = b.get(idx);
+      return {
+        idx, part: it.part, kind: it.kind,
+        me: x ? { ok: !!x.ok, ms: Number(x.ms) } : null,
+        them: y ? { ok: !!y.ok, ms: Number(y.ms) } : null,
+      };
+    });
+    res.json({
+      date, username: other.username,
+      totals: { me: Number(mine.total), them: Number(theirs.total) },
+      parts: [1, 2, 3].map((p) => ({ part: p, me: Number(mine[`p${p}`]), them: Number(theirs[`p${p}`]) })),
+      rows,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

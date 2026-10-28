@@ -16,6 +16,7 @@ import PlayerCard from "../components/PlayerCard.jsx";
 import TutorialPlayer from "../tutorial/TutorialPlayer.jsx";
 import { GENERAL_TUTORIAL } from "../tutorial/steps.js";
 import RecoveryCode from "../v2/RecoveryCode.jsx";
+import GhostToggle from "../v2/GhostToggle.jsx";
 import Adn, { CartaFutotal } from "../v2/Adn.jsx";
 import useFutotal2 from "../v2/useFutotal2.js";
 import { resetManos } from "../v2/Mano.jsx";
@@ -149,6 +150,7 @@ export default function Profile() {
             )}
           </Card>
           <RecoveryCode />
+          {v2 && <GhostToggle />}
           <Card className="mb-6">
             <div className="flex items-center gap-4">
               <Avatar user={user} size={56} />

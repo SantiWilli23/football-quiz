@@ -115,7 +115,7 @@ export async function clubTable(groupId, view, date) {
   if (view === "hoy") { filter = "AND l.date = ?"; args.push(date); }
   else if (view === "mes") { filter = "AND l.month = ?"; args.push(monthOf(date)); }
   const rows = (await db.execute({
-    sql: `SELECT u.id AS user_id, u.username, u.avatar, m.debuts_month,
+    sql: `SELECT u.id AS user_id, u.username, u.avatar, u.avatar_config, m.debuts_month,
                  COALESCE(SUM(l.points), 0) AS points
           FROM group_members m JOIN users u ON u.id = m.user_id
           LEFT JOIN points_ledger l ON l.user_id = m.user_id AND l.group_id = m.group_id ${filter}
@@ -128,6 +128,6 @@ export async function clubTable(groupId, view, date) {
   let prev = null;
   return visible.map((r, i) => {
     if (r.points !== prev) { rank = i + 1; prev = r.points; }
-    return { userId: r.user_id, username: r.username, avatar: r.avatar, points: Number(r.points), rank };
+    return { userId: r.user_id, username: r.username, avatar: r.avatar, avatar_config: r.avatar_config, points: Number(r.points), rank };
   });
 }

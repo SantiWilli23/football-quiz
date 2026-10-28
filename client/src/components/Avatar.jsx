@@ -441,10 +441,12 @@ function AvatarSvg({ config, size }) {
 }
 
 // Si el usuario todavía no armó su muñequito, se cae a la inicial de siempre.
-export default function Avatar({ user, size = 32, className = "" }) {
+export default function Avatar({ user, size = 32, className = "", uniform = null }) {
   const config = parseAvatarConfig(user?.avatar_config);
   const initial = user?.avatar || user?.username?.charAt(0).toUpperCase() || "?";
-  const ring = config ? frameStyle(config.frame) : null;
+  // `uniform`: color del club (anillo de uniforme). El marco ganado por logros manda si lo hay.
+  const frame = config ? frameStyle(config.frame) : null;
+  const ring = frame && Object.keys(frame).length ? frame : uniform ? { boxShadow: `0 0 0 2px rgb(var(--c-bg, 15 23 42)), 0 0 0 4px ${uniform}` } : frame;
   // Si subió una foto y la tiene activa, se muestra en vez del muñequito.
   const photoUrl = config?.usePhoto && config?.photo && user?.id ? `/api/auth/photo/${user.id}?v=${config.photo}` : null;
 

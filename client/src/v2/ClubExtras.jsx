@@ -134,3 +134,26 @@ export function Legends({ clubId }) {
     </Card>
   );
 }
+
+// Historial de clásicos del club: qué hinchada ganó en cada partido temático.
+export function Clasicos({ clubId }) {
+  const [rows, setRows] = useState(null);
+  useEffect(() => { api.get("/events/history", { params: { groupId: clubId } }).then((r) => setRows(r.data.history)).catch(() => setRows([])); }, [clubId]);
+  if (!rows || rows.length === 0) return null;
+  return (
+    <Card>
+      <p className="t-eyebrow">Historial de clásicos</p>
+      <ul className="mt-2 divide-y divide-border">
+        {rows.map((r) => (
+          <li key={r.event.date} className="py-2.5 text-sm">
+            <p className="font-semibold">{r.event.teams.home.name} <span className="text-gray-500">vs</span> {r.event.teams.away.name}</p>
+            <p className="text-xs text-gray-400">
+              {r.event.date} · {r.home.fans} vs {r.away.fans} hinchas ·{" "}
+              {r.winner ? <>ganó la hinchada de <b className="text-white">{r.event.teams[r.winner].name}</b></> : "empate"}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
