@@ -14,7 +14,6 @@ import * as E from "../presidente/engine.js";
 import { buildPresidenteLegacy } from "../presidente/legacy.js";
 import { vfKey } from "../utils/vidaFut.js";
 import { useLocation } from "react-router-dom";
-import VidaFutBanner from "../components/VidaFutBanner.jsx";
 
 // "Seguir jugando" lee presidente_v1; desde Vida FUT (?vidafut=1) se guarda aparte en vidafut_presidente_v1.
 const SAVE_KEY = () => vfKey("presidente_v1");
@@ -1025,7 +1024,6 @@ function PresidenteGame() {
 
   return (
     <Layout>
-      <VidaFutBanner />
       <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2">

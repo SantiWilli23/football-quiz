@@ -26,7 +26,6 @@ const ALL_GAMES = [
   // ---- Solo ----
   { to: "/fulbodle", label: "Fichado", icon: Target, description: "Adiviná al futbolista secreto con colores, número de parecido, ligas y dificultades. Diario o aleatorio; la partida suma al reto semanal del grupo.", family: "solo", daily: true, available: true },
   { to: "/copa-semanal", label: "Copa semanal", icon: Trophy, description: "Anotate de lunes a jueves; de viernes a domingo se juega a eliminación por puntos de cada día.", family: "grupo", weekly: true, available: true },
-  { to: "/mercado", label: "Mercado de pases", icon: Repeat, description: "Predecí a dónde juega cada figura, en Europa o en Chile. Abre solo en las vacaciones de verano.", family: "pronostico", feature: "temporada", available: true },
   { to: "/cartas", label: "Cartas", icon: Layers, description: "Abrí sobres con los 2000 jugadores, armá tu once y jugá partidos: la química sale de los clubes que compartieron.", family: "grupo", available: true },
   { to: "/escudos", label: "Escudos a ciegas", icon: ShieldCheck, description: "Fácil con pistas o Experto con clubes de ascenso: adiviná el club solo por el escudo borroso.", family: "solo", daily: true, available: true },
   { to: "/bingo", label: "Bingo", icon: Grid3x3, description: "Tablero 3x3 del día: un jugador que haya pasado por el club (o sea de la selección) de la fila y el club de la columna.", family: "solo", daily: true, available: true },
@@ -39,7 +38,6 @@ const ALL_GAMES = [
   // ---- Con amigos ----
   { to: "/quien-sabe-mas", label: "¿Quién sabe más de fútbol?", icon: Brain, description: "Elegí entre Duelos, Mentiroso, Equipo-Jugador, ¿Quién es? (solo o en vivo), Votación del VAR, Dorsal histórico y Supervivencia.", family: "grupo", available: true },
   { to: "/copa-8a2", label: "Copa 8a2", icon: Trophy, description: "Torneo de eliminación directa del grupo: cada uno arma su equipo draftando jugadores reales.", family: "grupo", available: true },
-  { to: "/fantasy", label: "Fantasy", icon: TrendingUp, description: "Liga de fantasy de la Premier o LaLiga con tu grupo: plantel, tienda de pujas a ciegas, fichajes y hasta 3 temporadas.", family: "grupo", available: true },
   { to: "/dt-liga", label: "Modo DT Online", icon: Users, description: "Armá una liga con amigos: cada uno elige un club real y compite temporada a temporada.", family: "grupo", weekly: true, available: true },
 
   // ---- Contrarreloj ----
@@ -48,14 +46,11 @@ const ALL_GAMES = [
   { to: "/arbitraje-var", label: "Arbitraje / VAR", icon: Gavel, description: "Jugadas polémicas reales en video: decidí como el árbitro contra reloj y comparate con el VAR.", family: "solo", daily: true, available: true },
 
   // ---- Pronóstico ----
-  { to: "/quiniela", label: "Quiniela", icon: CalendarDays, description: "Predecí el marcador exacto de los partidos de hoy antes de que arranquen.", family: "pronostico", feature: "pronosticos", daily: true, weekly: true, available: true },
-  { to: "/pronosticos", label: "Campeón y descenso", icon: Trophy, description: "Predecí campeón y descensos de las ligas europeas y la chilena. Abre solo en las vacaciones de verano.", family: "pronostico", feature: "temporada", available: true },
 
   // ---- Carrera ----
   { href: "/cotrero.html", label: "Cotrero simple", icon: Crown, description: "De potrero a leyenda: simulá toda la carrera de un jugador, temporada a temporada. Cada día, el primer bloque de temporadas da el sobre del juego diario.", family: "carrera", daily: true, available: true },
   { to: "/carrera-dt", label: "Modo DT", icon: Shield, description: "Dirigí un equipo de Premier League o La Liga: tácticas, fichajes, selección nacional y partidos en vivo.", family: "carrera", available: true },
   { to: "/presidente", label: "Modo Presidente", icon: Building2, description: "Tu historia como presidente: decisiones, prensa y presión de la directiva. Solo, a tu ritmo, sin depender del grupo.", family: "carrera", available: true },
-  { to: "/vida-fut", label: "Vida FUT", icon: Sparkles, description: "Jugador en Cotrero, después 3 temporadas de DT y 3 de presidente, en tres etapas.", family: "carrera", available: true },
 ];
 
 export const GAMES = ALL_GAMES.filter((g) => isEnabled(g.feature));

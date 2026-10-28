@@ -18,14 +18,15 @@ Cada punto trae cuatro partes: **decisión final**, **pasos ordenados**, **crite
 >
 > **Corrección a la auditoría de la sección 6:** el código de recuperación en Ajustes (6.5) y el sobre con carta temática (6.7b) **ya existían**; el menú viejo ya se ocultaba con la bandera (6.10, quedaba el buscador). Además se encontró y arregló otra falla de main: `/api/clubs/me/streak` quedaba tapada por `/:id/streak` y devolvía 500.
 >
-> **Pendiente (con motivo):**
-> - Visor en la Carrera DT (`MatchSimulator`): es interactivo y mezcla motor y dibujo; sigue con su cancha propia.
-> - Puntos `versus` para Mentiroso, ¿Quién es? en vivo, Equipo-Jugador y Dorsal: hoy el ganador lo informa el teléfono y no hay forma de verificarlo; solo suman los Duelos (decide el servidor). Requiere que el servidor conozca las salas.
-> - Draft contra un amigo (dos en un teléfono / en línea): sigue en el html clásico (`/draft-europeo.html?legacy=1`).
-> - Escudos «Medio» y el botón «Continuar» de partidas guardadas en la entrada de cada juego (1.1).
-> - Supervivencia es multijugador: no reporta fracción y no suma por sí sola (la tabla 1.2.4 suponía que era solo).
-> - Limpieza (punto 4, etapas A–C): **no se ejecutó** a propósito; la condición es llevar 2 semanas abierto a todos.
-> - Cotrero: los cortes de las etiquetas se reescalaron con la simulación (Leyenda ≈ 4%, Jugador de paso ≈ 25%); el término de valoración máxima de la fórmula pasó de `peak×6` a `(peak−55)×6`; con elecciones al azar Exprés no queda 15% por debajo de Intensa (se mide con `node server/scripts/calibrar-cotrero.js`).
+> **Lo que antes estaba pendiente, ahora hecho:**
+> - Visor único también en la Carrera DT (`MatchSimulator`): el motor y los controles no cambian, solo el dibujo.
+> - Puntos `versus` por victorias online (Mentiroso, ¿Quién es? en vivo, Equipo-Jugador, Dorsal, Supervivencia, Subasta): el relay (`ws-relay.js`) anota quién (con sesión) compartió cada sala y el servidor solo acredita si el ganador jugó con otra persona de verdad. Sigue siendo el ganador quien avisa el resultado, así que el máximo que se puede inflar es 30 por día.
+> - Draft contra un amigo en línea: salas con código, cada uno arma su equipo, el servidor juega un partido (con prórroga y penales) y decide. «Pasar el teléfono» se retiró como decía el punto 1.2.8.
+> - Escudos «Medio» (blanco y negro, sin pistas), todos los modos de Escudos reportan `aciertos / 10` y aviso «Continuar» para partidas a medias guardadas en el teléfono.
+> - Supervivencia suma por la vía de las victorias online (era multijugador y no tenía fracción).
+> - Limpieza: etapa A (con el rediseño, toda escritura en Trivia, Modo B, banco, retos del día, encuestas y torneos de duelos responde 410) y etapa B para lo aislado (borrados Pase de temporada, Quiniela, Campeón y descenso, Mercado de pases, Fantasy y FantasyFiction, liga de grupos, Vida FUT, ranking global viejo y la página de Trivia, con sus rutas y pantallas). Las tablas **no** se tocaron (etapa C): siguen en la base.
+>
+> **Lo que queda a propósito:** las pantallas del modo sin rediseño (`Dashboard`, `Splash`, `Group`, tutorial de diapositivas, Modo B, banco de preguntas, cálculo viejo de logros), los `.html` viejos de Cotrero y del 8a2 (se abren con `?legacy=1` para terminar una partida guardada) y la etapa C. Quitarlos obliga a que `FUTOTAL2` deje de ser una bandera y todos los usuarios pasen al rediseño sin vuelta atrás: la condición del plan es llevar 2 semanas abierto a todos, y eso lo decides tú. Cotrero: los cortes de las etiquetas se reescalaron con la simulación (Leyenda ≈ 4%, Jugador de paso ≈ 25%) y el término de valoración máxima pasó de `peak×6` a `(peak−55)×6`; con elecciones al azar Exprés no queda 15% por debajo de Intensa (`node server/scripts/calibrar-cotrero.js`).
 
 ## 0. Antes de empezar
 

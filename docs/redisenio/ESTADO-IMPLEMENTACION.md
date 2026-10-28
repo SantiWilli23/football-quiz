@@ -60,4 +60,6 @@ Todo sigue detrás de `FUTOTAL2=1`. Con `FUTOTAL2_JUEGOS=juego1,juego2` (por eje
 - **Álbum de selecciones (W7)**: torneos desde el panel, banner en Hoy, premios y carta de selección en cada sobre.
 - **Versus y DT**: ganar un duelo suma 30; el podio de cada jornada de DT Online suma 60 / 40 / 20 en clubes Total.
 
-Pendiente: ver el bloque «Estado de ejecución» de `ESPEC-PENDIENTES.md` (visor en Carrera DT, puntos de Versus online, Draft contra un amigo, limpieza).
+### Tercera tanda (cierre de lo pendiente)
+
+Visor único en la Carrera DT · puntos `versus` por victorias online verificadas por el relay · Draft contra un amigo en línea · Escudos «Medio» y aviso de partida a medias · limpieza etapa A (410 en escrituras retiradas) y etapa B de lo aislado (Pase, Quiniela, Campeón y descenso, Mercado, Fantasy, liga de grupos, Vida FUT, ranking global viejo, Trivia). Queda a propósito el camino sin rediseño y la etapa C (ver «Estado de ejecución» de `ESPEC-PENDIENTES.md`).

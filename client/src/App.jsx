@@ -48,28 +48,21 @@ const JugarJuego = lazy(() => import("./v2/JugarJuego.jsx"));
 const QuienEs = lazy(() => import("./pages/QuienEs.jsx"));
 const Cartas = lazy(() => import("./pages/Cartas.jsx"));
 const CopaSemanal = lazy(() => import("./pages/CopaSemanal.jsx"));
-const Mercado = lazy(() => import("./pages/Mercado.jsx"));
-const PaseTemporada = lazy(() => import("./pages/PaseTemporada.jsx"));
 const QuienEsVivo = lazy(() => import("./pages/QuienEsVivo.jsx"));
 const Survival = lazy(() => import("./pages/Survival.jsx"));
 const Wordle = lazy(() => import("./pages/Wordle.jsx"));
-const Quiniela = lazy(() => import("./pages/Quiniela.jsx"));
 const UnMinuto = lazy(() => import("./pages/UnMinuto.jsx"));
 const CrestQuiz = lazy(() => import("./pages/CrestQuiz.jsx"));
-const SeasonPredictions = lazy(() => import("./pages/SeasonPredictions.jsx"));
 const CareerMode = lazy(() => import("./carrera/index.jsx"));
 const EquipoJugador = lazy(() => import("./equipo-jugador/index.jsx"));
 const DtLeagueHome = lazy(() => import("./dt-liga/DtLeagueHome.jsx"));
 const DtLeagueRoom = lazy(() => import("./dt-liga/DtLeagueRoom.jsx"));
 const LiveMatch = lazy(() => import("./dt-liga/LiveMatch.jsx"));
 const Copa8a2 = lazy(() => import("./pages/Copa8a2.jsx"));
-const Fantasy = lazy(() => import("./pages/Fantasy.jsx"));
 const Presidente = lazy(() => import("./pages/Presidente.jsx"));
 const ArbitrajeVar = lazy(() => import("./pages/ArbitrajeVar.jsx"));
-const GlobalRanking = lazy(() => import("./pages/GlobalRanking.jsx"));
 const QuienSabeMas = lazy(() => import("./pages/QuienSabeMas.jsx"));
 const VarVotacion = lazy(() => import("./pages/VarVotacion.jsx"));
-const VidaFut = lazy(() => import("./pages/VidaFut.jsx"));
 const Bingo = lazy(() => import("./pages/Bingo.jsx"));
 const AQuienMeCompro = lazy(() => import("./pages/AQuienMeCompro.jsx"));
 const Piramide = lazy(() => import("./pages/Piramide.jsx"));
@@ -184,6 +177,8 @@ export default function App() {
       <Route path="/jugar/:juego" element={<PrivateRoute><JugarJuego /></PrivateRoute>} />
       <Route path="/jugar/:juego/:variante" element={<PrivateRoute><JugarJuego /></PrivateRoute>} />
       <Route path="/album" element={<PrivateRoute><Album /></PrivateRoute>} />
+      {/* Funciones retiradas en Futotal 2.0: los links viejos llevan al inicio. */}
+      {["/mercado", "/pase", "/quiniela", "/pronosticos", "/fantasy", "/fantasy/:id", "/fantasyfiction", "/vida-fut", "/ranking-global"].map((p) => <Route key={p} path={p} element={<Navigate to="/" replace />} />)}
       <Route path="/hoy" element={<PrivateRoute><Hoy /></PrivateRoute>} />
       <Route path="/hoy/archivo" element={<PrivateRoute><Archivo /></PrivateRoute>} />
       <Route path="/partido" element={<PrivateRoute><Partido /></PrivateRoute>} />
@@ -233,24 +228,6 @@ export default function App() {
         element={
           <PrivateRoute>
             <CopaSemanal />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/mercado"
-        element={
-          <PrivateRoute>
-            <FeatureGate flag="temporada">
-              <Mercado />
-            </FeatureGate>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/pase"
-        element={
-          <PrivateRoute>
-            <PaseTemporada />
           </PrivateRoute>
         }
       />
@@ -335,26 +312,6 @@ export default function App() {
         }
       />
       <Route
-        path="/quiniela"
-        element={
-          <PrivateRoute>
-            <FeatureGate flag="pronosticos">
-              <Quiniela />
-            </FeatureGate>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/pronosticos"
-        element={
-          <PrivateRoute>
-            <FeatureGate flag="temporada">
-              <SeasonPredictions />
-            </FeatureGate>
-          </PrivateRoute>
-        }
-      />
-      <Route
         path="/un-minuto"
         element={
           <PrivateRoute>
@@ -378,36 +335,11 @@ export default function App() {
           </PrivateRoute>
         }
       />
-      <Route path="/fantasyfiction" element={<Navigate to="/fantasy" replace />} />
-      <Route
-        path="/fantasy"
-        element={
-          <PrivateRoute>
-            <Fantasy />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/fantasy/:id"
-        element={
-          <PrivateRoute>
-            <Fantasy />
-          </PrivateRoute>
-        }
-      />
       <Route
         path="/presidente"
         element={
           <PrivateRoute>
             <Presidente />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/vida-fut"
-        element={
-          <PrivateRoute>
-            <VidaFut />
           </PrivateRoute>
         }
       />
@@ -473,14 +405,6 @@ export default function App() {
         element={
           <PrivateRoute>
             <ArbitrajeVar />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/ranking-global"
-        element={
-          <PrivateRoute>
-            <GlobalRanking />
           </PrivateRoute>
         }
       />

@@ -193,3 +193,18 @@ test("contra un amigo: sala por código, mismo formato, y el servidor decide el 
   // Sala terminada: no se puede reutilizar.
   assert.equal((await call("post", "/room/join", { userId: c, body: { code } })).status, 409);
 });
+
+test("siempre sale alguien que encaje en los puestos que faltan, aunque queden pocos", () => {
+  for (let seed = 1; seed <= 300; seed++) {
+    let s = D.newRun({ formation: Object.keys(D.FORMATIONS)[seed % 8], mode: "almanaque", style: "equilibrado" }, seed * 13);
+    // Se llenan primero los puestos más difíciles (arquero y laterales) para que queden solo huecos raros.
+    for (let g = 0; s.phase === "draft" && g < 100; g++) {
+      const empties = new Set(s.slots.filter((x) => !x.filled).map((x) => x.type));
+      assert.ok(s.pool.some((p) => D.normalizePositions(p.p).some((t) => empties.has(t))), `semilla ${seed}: el pool tiene que servir`);
+      let best = null;
+      s.pool.forEach((pl, pi) => s.slots.forEach((sl, si) => { if (!sl.filled && D.normalizePositions(pl.p).includes(sl.type)) { const w = sl.type === "GOL" || sl.type === "LD" || sl.type === "LE" ? 100 : 0; if (!best || pl.r + w > best.r) best = { poolIdx: pi, slotIdx: si, r: pl.r + w }; } }));
+      s = D.pick(s, best);
+    }
+    assert.equal(s.phase, "result");
+  }
+});

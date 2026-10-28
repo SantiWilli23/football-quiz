@@ -11,8 +11,6 @@ const PAGES = [
   { label: "Mi grupo", to: "/grupo" },
   { label: "Estadísticas", to: "/estadisticas" },
   { label: "Historial", to: "/historial" },
-  { label: "Ranking global", to: "/ranking-global" },
-  { label: "Vida FUT", to: "/vida-fut" },
   { label: "Mi perfil", to: "/perfil" },
 ];
 

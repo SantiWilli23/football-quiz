@@ -86,7 +86,13 @@ function drawTeam(st, opts = {}, attempt = 0) {
   if (!opts.keepSeason && st.excludeSeason !== null) o.excludeSeason = st.excludeSeason;
   const team = pickTeam(st, o);
   const pool = shuffle(st, team.players).slice(0, POOL_SIZE);
-  if (!poolFits(st, pool) && attempt < 15) return drawTeam(st, {}, attempt + 1);
+  if (!poolFits(st, pool)) {
+    // El plantel no trae a nadie para los puestos que quedan: se cambia uno del pool por alguien que sí encaje.
+    const empties = emptyTypes(st);
+    const fit = team.players.find((p) => !pool.includes(p) && normalizePositions(p.p).some((t) => empties.has(t)));
+    if (fit) pool[pool.length - 1] = fit;
+    else if (attempt < 40) return drawTeam(st, {}, attempt + 1);
+  }
   st.team = { club: team.club, season: team.season, flag: team.flag, revelacion: team.revelacion, note: team.note };
   st.pool = pool;
   st.bestXI = isBestXI(team, pool);

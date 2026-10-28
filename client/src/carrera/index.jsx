@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import VidaFutBanner from "../components/VidaFutBanner.jsx";
 import {
   Home, Shuffle, LayoutDashboard, Users, ArrowLeftRight, LayoutGrid, SlidersHorizontal, Sprout,
   Wallet, CalendarDays, History, Settings as SettingsIcon,
@@ -141,7 +140,6 @@ export default function CareerMode() {
   const vf = new URLSearchParams(search).get("vidafut") === "1";
   return (
     <CareerProvider key={vf ? "vidafut" : "suelta"}>
-      <VidaFutBanner />
       <CareerApp />
     </CareerProvider>
   );

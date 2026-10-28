@@ -18,7 +18,6 @@ import AnniversaryBanner from "../components/AnniversaryBanner.jsx";
 import WeeklyRecap from "../components/WeeklyRecap.jsx";
 import GroupCup from "../components/GroupCup.jsx";
 import GroupDivision from "../components/GroupDivision.jsx";
-import GroupLeague from "../components/GroupLeague.jsx";
 import DuelBets from "../components/DuelBets.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 
@@ -653,7 +652,6 @@ export default function Group() {
               distinta de la división mensual de abajo — antes vivía como
               pantalla propia en el catálogo de Juegos, ahora es una función
               del grupo como Cartas. */}
-          <GroupLeague groupId={activeGroupId} isCreator={detail?.created_by === user?.id} />
           <div>
             <h2 className="tone-amber t-eyebrow text-tone border-b border-tone pb-2 mb-4 flex items-center gap-1.5">
               <Shield size={13} /> División mensual
