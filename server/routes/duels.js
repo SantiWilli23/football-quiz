@@ -2,6 +2,9 @@ import { Router } from "express";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { sendToUser } from "../utils/push.js";
+import { creditPoints, FLAT_POINTS } from "../utils/ledger.js";
+import { redesignOn } from "../utils/clubs.js";
+import { todayStr } from "../utils/points.js";
 
 // Un duelo depende de que el otro se entere. Si el aviso falla (no tiene
 // notificaciones activadas, se le venció la suscripción) el duelo sigue su
@@ -69,7 +72,7 @@ async function answersOf(duelId, userId) {
 }
 
 // Cierra el duelo cuando los dos terminaron sus cinco preguntas.
-async function resolveIfComplete(duel) {
+export async function resolveIfComplete(duel) {
   if (duel.status === "terminado") return duel;
 
   const total = parseQuestionIds(duel).length;
@@ -92,6 +95,12 @@ async function resolveIfComplete(duel) {
           WHERE id = ?`,
     args: [challengerCorrect, opponentCorrect, winnerId, duel.id],
   });
+
+  // Futotal 2.0 (fuente «versus», falla F2): el ganador de un duelo cerrado por el servidor, con dos
+  // personas distintas, suma 30 a sus clubes Total (una vez al día, dentro del tope de 100).
+  if (winnerId && redesignOn() && duel.challenger_id !== duel.opponent_id) {
+    await creditPoints(winnerId, todayStr(), "versus", FLAT_POINTS.versus).catch((e) => console.error("versus", e));
+  }
 
   // El aviso sale una sola vez: el UPDATE de arriba deja el duelo en
   // 'terminado' y esta función corta al principio si ya lo estaba.
