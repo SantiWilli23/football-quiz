@@ -86,8 +86,8 @@ function PackOpening({ cards, onDone }) {
     return (
       <div className="flex justify-center py-10">
         <div
-          className={`w-28 h-40 rounded-xl bg-gradient-to-br from-accent to-accent-dark shadow-lg transition-all duration-500 ${
-            phase === "tearing" ? "scale-110 opacity-0 -rotate-6" : "scale-100 opacity-100"
+          className={`relative overflow-hidden w-28 h-40 rounded-xl bg-gradient-to-br from-accent to-accent-dark shadow-lg fq-shine ${
+            phase === "tearing" ? "fq-tear" : ""
           }`}
           style={{ clipPath: "polygon(0 12%, 50% 0, 100% 12%, 100% 100%, 0 100%)" }}
         />
@@ -97,7 +97,7 @@ function PackOpening({ cards, onDone }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
       {cards.map((c, i) => (
-        <div key={i} className="animate-result-pop" style={{ animationDelay: `${i * 80}ms` }}>
+        <div key={i} className="fq-deal" style={{ animationDelay: `${i * 110}ms` }}>
           <PlayerCard c={c} />
         </div>
       ))}
@@ -152,16 +152,18 @@ export default function Cartas() {
   }
 
   const [shop, setShop] = useState(SHOP_FALLBACK);
-  useEffect(() => {
-    api.get("/cards/shop").then(({ data }) => data?.prices && setShop({ prices: data.prices, labels: data.labels || SHOP_LABEL, descriptions: data.descriptions || {} })).catch(() => {});
+  const loadShop = useCallback(() => {
+    api.get("/cards/shop").then(({ data }) => data?.prices && setShop({ prices: data.prices, labels: data.labels || SHOP_LABEL, descriptions: data.descriptions || {}, deal: data.deal || null })).catch(() => {});
   }, []);
+  useEffect(() => { loadShop(); }, [loadShop]);
 
-  async function buyPack(quality) {
+  async function buyPack(quality, deal = false) {
     setBusy(true);
     try {
-      await api.post("/cards/shop/buy", { quality });
-      setWallet((w) => w - (shop.prices[quality] ?? 0));
+      await api.post("/cards/shop/buy", { quality, deal });
+      setWallet((w) => w - (deal ? shop.deal.price : shop.prices[quality] ?? 0));
       toast("Sobre comprado");
+      if (deal) loadShop();
       load();
     } catch (err) {
       toast(err.response?.data?.error || "No se pudo comprar");
@@ -170,13 +172,18 @@ export default function Cartas() {
     }
   }
 
-  async function sell(card) {
+  async function sell(card, confirmTheme = false) {
     try {
-      const { data } = await api.post("/cards/sell", { name: card.name, count: 1 });
+      const { data } = await api.post("/cards/sell", { name: card.name, count: 1, confirmTheme });
       setWallet(data.balance);
       toast(`Vendida por ${data.earned} monedas`);
       load();
     } catch (err) {
+      // Es una repetida útil para el desafío temático: se pide confirmar antes de venderla.
+      if (err.response?.status === 409 && err.response.data?.needsConfirm) {
+        if (window.confirm(err.response.data.error)) sell(card, true);
+        return;
+      }
       toast(err.response?.data?.error || "No se pudo vender");
     }
   }
@@ -338,6 +345,18 @@ export default function Cartas() {
           <Card>
             <p className="t-eyebrow mb-1">Tienda de sobres</p>
             <p className="text-xs text-gray-500 mb-3">Comprá con la moneda de vender cartas — nunca con dinero real.</p>
+            {shop.deal && (
+              <div className="deal-card mb-3 flex items-center justify-between gap-3 rounded-card border border-amber-400/50 bg-amber-400/10 px-3 py-2.5">
+                <span className="min-w-0 text-sm">
+                  <span className="block text-[11px] font-semibold uppercase tracking-wide text-amber-400">Oferta del día · −30%</span>
+                  <span className="block">{shop.deal.label}</span>
+                </span>
+                <button onClick={() => buyPack(shop.deal.quality, true)} disabled={busy || shop.deal.taken || wallet < shop.deal.price}
+                  className="btn btn-secondary btn-sm shrink-0 disabled:opacity-40">
+                  {shop.deal.taken ? "Comprada hoy" : <><s className="mr-1 text-gray-500">{shop.deal.normalPrice}</s><Coins size={12} className="inline text-amber-400" /> {shop.deal.price}</>}
+                </button>
+              </div>
+            )}
             <div className="grid sm:grid-cols-3 gap-2">
               {Object.keys(shop.prices).map((q) => (
                 <button

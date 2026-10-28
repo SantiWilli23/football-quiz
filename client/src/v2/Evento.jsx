@@ -20,6 +20,23 @@ function whenText(iso) {
   return `${when} · faltan ${h > 0 ? `${h} h ` : ""}${m} min`;
 }
 
+// Entrada animada del kit del evento: humo de bengalas, noche de estrellas o pantalla partida.
+// Corre una sola vez al abrir Hoy y se desvanece sola; con movimiento reducido no aparece.
+function EntryFx({ kind, pal }) {
+  const stars = Array.from({ length: 22 }, (_, i) => ({ left: `${(i * 37) % 100}%`, delay: `${((i * 53) % 26) / 10}s`, fall: `${180 + ((i * 29) % 120)}px` }));
+  const puffs = Array.from({ length: 7 }, (_, i) => ({ left: `${8 + i * 14}%`, delay: `${(i % 4) * 0.35}s` }));
+  if (kind === "estrellas") {
+    return <div className="fq-fx" aria-hidden="true">{stars.map((s, i) => <span key={i} className="fq-star" style={{ left: s.left, top: 0, animationDelay: s.delay, "--fall": s.fall }} />)}</div>;
+  }
+  if (kind === "humo") {
+    return <div className="fq-fx" aria-hidden="true">{puffs.map((p, i) => <span key={i} className="fq-puff" style={{ left: p.left, animationDelay: p.delay, background: i % 2 ? (pal.a || "#e8554e") : (pal.b || "#ffffff") }} />)}</div>;
+  }
+  if (kind === "partida") {
+    return <div className="fq-fx" aria-hidden="true"><span className="fq-half l" style={{ background: pal.a || "#ffffff", opacity: 0.55 }} /><span className="fq-half r" style={{ background: pal.b || "#1c3f94", opacity: 0.55 }} /></div>;
+  }
+  return null;
+}
+
 export default function EventCards({ groupId, played }) {
   const [days, setDays] = useState(null);
   const reload = useCallback(() => api.get("/events/current").then((r) => setDays(r.data.days)).catch(() => setDays([])), []);
@@ -46,7 +63,8 @@ function EventCard({ day, groupId, played, onChange }) {
 
   return (
     <Card variant="feature" className="overflow-hidden" >
-      <div className="-m-5 mb-3 px-5 py-3" style={{ background: `linear-gradient(120deg, ${pal.b || "#1c3f94"}33, ${pal.bg || "#10131a"})` }}>
+      <div className="relative -m-5 mb-3 px-5 py-3 overflow-hidden" style={{ background: `linear-gradient(120deg, ${pal.b || "#1c3f94"}33, ${pal.bg || "#10131a"})` }}>
+        {rel !== "yesterday" && <EntryFx kind={event.entry} pal={pal} />}
         <p className="t-eyebrow">{rel === "tomorrow" ? "Previa" : rel === "today" ? "Hoy" : "Ayer"} · {event.label}</p>
         <p className="mt-0.5 text-lg font-bold leading-tight">{sideName("home")} <span className="text-gray-500">vs</span> {sideName("away")}</p>
         <p className="text-xs text-gray-400">{whenText(event.kickoff)}</p>

@@ -5,7 +5,7 @@ import { Check, Goal, Shield, X } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import PlayerFace, { ClubCrest } from "../components/PlayerFace.jsx";
-import { playSfx } from "../utils/sfx.js";
+import { playSfx, playWhistle, playGoal, startAmbience } from "../utils/sfx.js";
 import { track } from "./analytics.js";
 import { useClubs } from "./useClubs.js";
 import Mano, { AddToHome } from "./Mano.jsx";
@@ -55,6 +55,14 @@ export default function Partido() {
 
   const items = data?.items || [];
   const item = items[idx];
+
+  // Ambiente de estadio: solo en partidos temáticos (el tercer tiempo es el juego especial).
+  const themed = items.some((i) => i.kind === "especial");
+  const playing = phase === "part" || phase === "item" || phase === "feedback";
+  useEffect(() => {
+    if (!themed || !playing) return undefined;
+    return startAmbience();
+  }, [themed, playing]);
 
   useEffect(() => {
     let alive = true;
@@ -108,6 +116,7 @@ export default function Partido() {
     try {
       const { data: r } = await api.post("/daily/finish");
       setResult(r);
+      playWhistle(true);
       playSfx("win");
       track("partido_terminado", { total: r.total });
     } catch (e) {
@@ -147,7 +156,7 @@ export default function Partido() {
         return;
       }
     }
-    if (!offline) playSfx(entry.ok ? "ok" : "bad");
+    if (!offline) { if (entry.ok && item?.kind === "penal") playGoal(); else playSfx(entry.ok ? "ok" : "bad"); }
     setAnswers((a) => [...a, entry]);
     setPhase("feedback");
     if (!practice && !offline && main && ghostOn()) {
@@ -232,7 +241,7 @@ export default function Partido() {
               </li>
             ))}
           </ol>
-          <button className="btn btn-primary w-full" onClick={() => { track("partido_inicio", { practice }); setPhase("part"); }}>Pitazo inicial</button>
+          <button className="btn btn-primary w-full" onClick={() => { track("partido_inicio", { practice }); playWhistle(); setPhase("part"); }}>Pitazo inicial</button>
         </div>
       </Layout>
     );
@@ -368,7 +377,13 @@ export function MasMenos({ item, showing, last, onPick }) {
 export function Penal({ item, showing, last, onPick }) {
   return (
     <div className="space-y-3">
-      <div className="relative rounded-3xl border border-border bg-panel p-4 text-center overflow-hidden">
+      <div className={`relative rounded-3xl border border-border bg-panel p-4 text-center overflow-hidden ${showing && !last.offline && !last.ok ? "fq-shake" : ""}`}>
+        {showing && !last.offline && last.ok && (
+          <>
+            <span className="fq-flash pointer-events-none absolute inset-0 flex items-center justify-center text-5xl font-black tracking-widest text-good/90" aria-hidden="true">¡GOL!</span>
+            {[-70, -40, -12, 14, 42, 72].map((x, i) => <span key={i} className="fq-spark absolute left-1/2 top-12 bg-good" style={{ "--sx": `${x}px`, animationDelay: `${i * 40}ms` }} aria-hidden="true" />)}
+          </>
+        )}
         <div className={`mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full ${showing && !last.offline ? (last.ok ? "bg-good/20 text-good" : "bg-bad/20 text-bad") : "bg-accent/15 text-accent"}`}>
           {showing && !last.offline ? (last.ok ? <Goal size={28} /> : <Shield size={28} />) : <Goal size={28} />}
         </div>

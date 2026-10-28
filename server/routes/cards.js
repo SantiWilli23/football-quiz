@@ -489,6 +489,15 @@ router.post("/sell", async (req, res) => {
     const inLineup = lineup.some((c) => c.name === name);
     if (inLineup && have - count < 1) return res.status(400).json({ error: "No podés vender la última copia de una carta que está en tu equipo" });
 
+    // Si es una repetida que sirve para el desafío temático activo, se avisa antes de venderla.
+    if (redesignOn() && !req.body?.confirmTheme && have - count >= 1) {
+      const { theme, start } = themePeriod(todayStr());
+      if (theme && theme.pool.some((c) => c.name === name)) {
+        const done = (await db.execute({ sql: "SELECT 1 FROM card_packs WHERE user_id = ? AND date = ? AND source = ?", args: [req.userId, start, `bueno-sbctema-${theme.key}`] })).rows[0];
+        if (!done) return res.status(409).json({ needsConfirm: true, error: `${name} es una repetida que sirve para el desafío de ${theme.label}. ¿La vendés igual?` });
+      }
+    }
+
     const value = (SELL_VALUE[card.tier] || 0) * count;
     if (have === count) await db.execute({ sql: "DELETE FROM user_cards WHERE user_id = ? AND player_name = ?", args: [req.userId, name] });
     else await db.execute({ sql: "UPDATE user_cards SET count = count - ? WHERE user_id = ? AND player_name = ?", args: [count, req.userId, name] });
@@ -507,8 +516,24 @@ router.post("/sell", async (req, res) => {
 // forma normal de progresar, es un lujo ocasional).
 const SHOP_PRICE = Object.fromEntries(Object.entries(PACKS).map(([k, d]) => [k, d.price]));
 
-router.get("/shop", (req, res) => {
+// Oferta del día (Futotal 2.0): un sobre distinto cada día con 30% de descuento, una
+// compra por persona. Se elige por la fecha, así que es la misma para todos.
+export function dailyDeal(date) {
+  const keys = Object.keys(SHOP_PRICE).filter((k) => k !== "normal");
+  let h = 0;
+  for (const ch of `oferta-${date}`) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const quality = keys[h % keys.length];
+  return { quality, label: PACKS[quality].label, normalPrice: SHOP_PRICE[quality], price: Math.max(5, Math.round((SHOP_PRICE[quality] * 0.7) / 5) * 5) };
+}
+
+router.get("/shop", async (req, res) => {
+  const deal = redesignOn() ? dailyDeal(todayStr()) : null;
+  if (deal) {
+    const taken = (await db.execute({ sql: "SELECT 1 FROM card_packs WHERE user_id = ? AND date = ? AND source = ?", args: [req.userId, todayStr(), `${deal.quality}-oferta`] })).rows[0];
+    deal.taken = !!taken;
+  }
   res.json({
+    deal,
     prices: SHOP_PRICE,
     labels: Object.fromEntries(Object.entries(PACKS).map(([k, d]) => [k, d.label])),
     descriptions: Object.fromEntries(Object.entries(PACKS).map(([k, d]) => [k, d.desc])),
@@ -518,8 +543,17 @@ router.get("/shop", (req, res) => {
 router.post("/shop/buy", async (req, res) => {
   try {
     const quality = String(req.body?.quality || "");
-    const price = SHOP_PRICE[quality];
+    let price = SHOP_PRICE[quality];
     if (!price) return res.status(400).json({ error: "Calidad de sobre inválida" });
+    const asDeal = !!req.body?.deal && redesignOn();
+    if (asDeal) {
+      const deal = dailyDeal(todayStr());
+      if (deal.quality !== quality) return res.status(400).json({ error: "Esa no es la oferta de hoy" });
+      if ((await db.execute({ sql: "SELECT 1 FROM card_packs WHERE user_id = ? AND date = ? AND source = ?", args: [req.userId, todayStr(), `${quality}-oferta`] })).rows[0]) {
+        return res.status(409).json({ error: "Ya compraste la oferta de hoy" });
+      }
+      price = deal.price;
+    }
 
     const wallet = (await db.execute({ sql: "SELECT balance FROM card_wallets WHERE user_id = ?", args: [req.userId] })).rows[0];
     const balance = wallet ? Number(wallet.balance) : 0;
@@ -530,7 +564,8 @@ router.post("/shop/buy", async (req, res) => {
     // "bueno"/"top" sí, para que qualityOf() les dé las mejores probabilidades.
     const prefix = quality === "normal" ? "tienda" : `${quality}-tienda`;
     const n = Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM card_packs WHERE user_id = ? AND date = ? AND source LIKE ?", args: [req.userId, today, `${prefix}%`] })).rows[0].n);
-    await db.execute({ sql: "INSERT INTO card_packs (user_id, date, source) VALUES (?, ?, ?)", args: [req.userId, today, `${prefix}${n + 1}`] });
+    // La oferta del día va con su propia fuente (`<calidad>-oferta`): sirve de candado de una por día.
+    await db.execute({ sql: "INSERT INTO card_packs (user_id, date, source) VALUES (?, ?, ?)", args: [req.userId, today, asDeal ? `${quality}-oferta` : `${prefix}${n + 1}`] });
     await creditWallet(req.userId, -price);
 
     res.json({ ok: true, balance: balance - price });

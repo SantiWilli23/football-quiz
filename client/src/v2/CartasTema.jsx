@@ -93,6 +93,13 @@ export default function CartasTema({ lockedPacks = 0, onChanged }) {
           <p className="t-eyebrow flex items-center gap-1.5"><Sparkles size={13} /> Desafío de la temporada · {sbc.theme.label}</p>
           <p className="text-sm text-gray-400 mt-1">Entregá 11 cartas <b>repetidas</b> de {sbc.theme.label} y ganá un sobre muy bueno de la temática. Siempre te queda una copia de cada una. Dura hasta el {sbc.theme.end}.</p>
           <p className="text-xs text-gray-500 mt-1">Mientras dure, cada sobre que abras trae una carta de {sbc.theme.label}.</p>
+          {!sbc.done && (
+            <div className="mt-3" aria-label={`${sbc.owned} de 11 repetidas en tu mejor formación`}>
+              <p className="text-sm"><b className="tabular-nums">{sbc.owned}/11</b> <span className="text-gray-400">repetidas listas en tu mejor formación ({sbc.best.formation})</span></p>
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-border"><div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${Math.round((sbc.owned / 11) * 100)}%` }} /></div>
+              {Object.keys(sbc.best.missing).length > 0 && <p className="mt-1 text-xs text-gray-500">{missingText(sbc.best.missing)}.</p>}
+            </div>
+          )}
 
           {sbc.done ? (
             <p className="mt-3 text-sm text-good">Ya completaste este desafío. El próximo tema llega el {sbc.theme.end}.</p>
@@ -103,7 +110,7 @@ export default function CartasTema({ lockedPacks = 0, onChanged }) {
                   <button key={f} onClick={() => { setFormation(f); setPicked([]); }} className={`flex-1 rounded-xl border py-1.5 text-sm ${formation === f ? "border-accent bg-accent/10 font-semibold" : "border-border text-gray-400"}`}>{f}</button>
                 ))}
               </div>
-              <p className="mt-3 text-sm"><b className="tabular-nums">{picked.length}</b>/11 elegidas
+              <p className="mt-3 text-sm"><b className="tabular-nums">{picked.length}</b>/11 elegidas en {formation}
                 {Object.keys(missing).length > 0 && <span className="text-gray-400"> · {missingText(missing)} repetidos</span>}
               </p>
               {Object.keys(need).map((pos) => (

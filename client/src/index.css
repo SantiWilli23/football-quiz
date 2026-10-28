@@ -456,3 +456,40 @@ html[data-device="desktop"] .phone-only { display: none !important; }
 @media (prefers-reduced-motion: reduce) {
   .sheet-in, .wizard-step, .wizard-crest, .badge-lit, .club-tab { animation: none; }
 }
+
+/* Animaciones del prototipo de Futotal 2.0. Con prefijo fq- para no pisar las de Tailwind.
+   Solo transform y opacity; todas se apagan con prefers-reduced-motion. */
+@keyframes fq-starfall { from { transform: translateY(-30px); opacity: 0; } 10% { opacity: 1; } to { transform: translateY(var(--fall, 360px)); opacity: 0; } }
+@keyframes fq-smoke { 0% { transform: translateY(0) scale(.6); opacity: 0; } 30% { opacity: .6; } 100% { transform: translateY(-120px) scale(1.8); opacity: 0; } }
+@keyframes fq-spark { 0% { transform: scale(0); opacity: 1; } 100% { transform: translate(var(--sx, 20px), -46px) scale(1.4); opacity: 0; } }
+@keyframes fq-deal { from { opacity: 0; transform: translateY(-40px) scale(.7) rotate(-8deg); } to { opacity: 1; transform: none; } }
+@keyframes fq-flash { 0% { opacity: 0; transform: scale(.5); } 20% { opacity: 1; transform: scale(1.1); } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(1.2); } }
+@keyframes fq-shake { 0%, 100% { transform: none; } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+@keyframes fq-tear { 0% { transform: scale(1); } 20% { transform: scale(1.05) rotate(-4deg); } 40% { transform: scale(1.05) rotate(4deg); } 60% { transform: scale(1.1) rotate(-3deg); } 100% { transform: scale(1.6); opacity: 0; filter: brightness(3); } }
+@keyframes fq-shine { 0% { transform: translateX(-120%); } 60%, 100% { transform: translateX(120%); } }
+@keyframes fq-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes fq-ripple { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(3); } }
+@keyframes fq-pop { 0% { transform: scale(.9); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }
+@keyframes fq-slide-l { from { transform: translateX(-101%); } to { transform: none; } }
+@keyframes fq-slide-r { from { transform: translateX(101%); } to { transform: none; } }
+@keyframes fq-fade-out { to { opacity: 0; visibility: hidden; } }
+.fq-shake { animation: fq-shake 0.35s ease-in-out both; }
+.fq-flash { animation: fq-flash 0.9s ease-out both; }
+.fq-deal { animation: fq-deal 0.45s cubic-bezier(.2,.9,.3,1) both; }
+.fq-tear { animation: fq-tear 0.6s ease-in forwards; }
+.fq-rise { animation: fq-rise 0.35s ease-out both; }
+.fq-pop { animation: fq-pop 0.4s ease-out both; }
+.fq-shine::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.28) 50%, transparent 70%); animation: fq-shine 2.4s ease-in-out 0.4s 1 both; pointer-events: none; }
+.fq-fx { position: absolute; inset: 0; overflow: hidden; pointer-events: none; animation: fq-fade-out 0.6s ease-out 3.4s forwards; }
+.fq-fx > span { position: absolute; display: block; }
+.fq-star { width: 4px; height: 4px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px 1px rgba(255,255,255,.7); animation: fq-starfall 2.6s linear infinite; }
+.fq-puff { bottom: -20px; width: 46px; height: 46px; border-radius: 50%; filter: blur(8px); animation: fq-smoke 3s ease-out infinite; }
+.fq-half { top: 0; bottom: 0; width: 50%; }
+.fq-half.l { left: 0; animation: fq-slide-l 0.7s cubic-bezier(.2,.9,.3,1) both; }
+.fq-half.r { right: 0; animation: fq-slide-r 0.7s cubic-bezier(.2,.9,.3,1) both; }
+.fq-spark { width: 6px; height: 6px; border-radius: 50%; animation: fq-spark 0.9s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .fq-shake, .fq-flash, .fq-deal, .fq-tear, .fq-rise, .fq-pop { animation: none; }
+  .fq-shine::after { display: none; }
+  .fq-fx { display: none; }
+}

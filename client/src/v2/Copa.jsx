@@ -65,7 +65,13 @@ export default function Copa({ clubId, userId }) {
               </div>
             </div>
           ))}
-          {cup.champion && <p className="text-center text-sm">Campeón: <b className="text-accent">{name(cup.champion)}</b></p>}
+          {cup.champion && (
+            <div className="relative overflow-hidden rounded-2xl border border-amber/40 bg-amber/10 py-3 text-center fq-rise">
+              {cup.champion.userId === userId && <div className="celebrate-confetti absolute inset-x-0 top-0 h-0 pointer-events-none" aria-hidden="true">{Array.from({ length: 12 }, (_, i) => <span key={i} />)}</div>}
+              <Trophy size={22} className="mx-auto text-amber fq-pop" />
+              <p className="mt-1 text-sm">Campeón: <b className="text-accent">{name(cup.champion)}</b></p>
+            </div>
+          )}
         </div>
       )}
     </Card>
