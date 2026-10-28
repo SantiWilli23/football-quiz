@@ -11,6 +11,7 @@ import {
   FACES,
   FRAMES,
   FRAME_REQUIREMENTS,
+  TROPHY_FRAMES,
   HAIRS,
   HAIR_COLORS,
   JERSEYS,
@@ -27,6 +28,9 @@ const FRAME_LABELS = {
   oro: "Oro",
   fuego: "Fuego",
   leyenda: "Leyenda",
+  copa: "Copa",
+  racha: "Racha 30",
+  podio: "Podio",
 };
 
 const HAIR_LABELS = {
@@ -167,12 +171,13 @@ export default function AvatarEditor({ user, onSaved }) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [unlockedCount, setUnlockedCount] = useState(0);
+  const [earned, setEarned] = useState(new Set()); // logros ganados (para los marcos de trofeo)
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     api
       .get("/stats/achievements", { params: activeGroupId ? { groupId: activeGroupId } : {} })
-      .then(({ data }) => setUnlockedCount(data.unlocked_count || 0))
+      .then(({ data }) => { setUnlockedCount(data.unlocked_count || 0); setEarned(new Set((data.achievements || []).filter((a) => a.unlocked).map((a) => a.id))); })
       .catch(() => setUnlockedCount(0));
   }, [activeGroupId]);
 
@@ -351,9 +356,10 @@ export default function AvatarEditor({ user, onSaved }) {
           <div>
             <p className="text-xs text-gray-500 mb-2">Marco ({unlockedCount} logros desbloqueados)</p>
             <div className="flex gap-2 flex-wrap">
-              {FRAMES.map((frame) => {
-                const need = FRAME_REQUIREMENTS[frame];
-                const available = unlockedCount >= need;
+              {[...FRAMES, ...Object.keys(TROPHY_FRAMES)].map((frame) => {
+                const trophy = TROPHY_FRAMES[frame];
+                const need = trophy ? 1 : FRAME_REQUIREMENTS[frame];
+                const available = trophy ? earned.has(trophy) : unlockedCount >= need;
                 return (
                   <button
                     key={frame}
@@ -371,7 +377,7 @@ export default function AvatarEditor({ user, onSaved }) {
                   >
                     {!available && <Lock size={11} />}
                     {FRAME_LABELS[frame]}
-                    {!available && <span className="text-xs">({need})</span>}
+                    {!available && <span className="text-xs">({trophy ? "trofeo" : need})</span>}
                   </button>
                 );
               })}

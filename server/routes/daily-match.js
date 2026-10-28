@@ -1,7 +1,9 @@
 import { Router } from "express";
+import { afterDailyMatch, safely } from "../utils/achievements.js";
+import { streakFromDates } from "../utils/streak.js";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
-import { todayStr, addDays } from "../utils/points.js";
+import { todayStr, addDays, mondayOf } from "../utils/points.js";
 import { creditPoints, clubTable } from "../utils/ledger.js";
 import { grantPack } from "../utils/rewards.js";
 import { grantClubStreakPacks, redesignOn } from "../utils/clubs.js";
@@ -134,6 +136,19 @@ async function closeMatch(userId, date) {
   const clubIds = (await db.execute({ sql: "SELECT group_id FROM group_members WHERE user_id = ?", args: [userId] })).rows;
   let clubPack = false;
   for (const c of clubIds) if ((await grantClubStreakPacks(c.group_id, date)) > 0) clubPack = true;
+  // Logros (Futotal 2.0): primer partido, perfecto, rachas, semana completa, hincha fiel y fantasma.
+  if (redesignOn()) {
+    const dates = (await db.execute({ sql: "SELECT date FROM daily_match_results WHERE user_id = ?", args: [userId] })).rows.map((r) => r.date);
+    let beatGhost = false;
+    const main = (await db.execute({ sql: "SELECT group_id FROM user_main_club WHERE user_id = ?", args: [userId] })).rows[0];
+    if (main) {
+      const rival = await rivalFor(main.group_id, userId, date).catch(() => null);
+      const theirs = rival ? await resultOf(rival.userId, date) : null;
+      beatGhost = !!theirs && total > Number(theirs.total);
+    }
+    const monday = mondayOf(date);
+    await safely(afterDailyMatch({ userId, date, answered, streak: streakFromDates(dates, date).streak, weekStart: monday, weekEnd: addDays(monday, 6), beatGhost }));
+  }
   return { status: 200, body: { parts, total, club, pack: quality, clubPack, dailyCard, event: eventReward, already: false } };
 }
 

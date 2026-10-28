@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { grant, safely } from "../utils/achievements.js";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { todayStr, addDays } from "../utils/points.js";
@@ -205,6 +206,7 @@ router.get("/lineup", async (req, res) => {
         const hits = marks.filter((x) => x.hit).length;
         if (!guess.revealed_at) {
           await db.execute({ sql: "UPDATE line_guesses SET hits = ?, revealed_at = datetime('now') WHERE user_id = ? AND event_date = ?", args: [hits, req.userId, date] });
+          if (hits >= 8) await safely(grant(req.userId, "adivino_clasico"));
           if (hits >= LINEUP_PACK_MIN_HITS) {
             const kit = kitByKey(ev.kit_key);
             await db.execute({ sql: "INSERT OR IGNORE INTO card_packs (user_id, date, source, theme) VALUES (?, ?, ?, ?)", args: [req.userId, date, `bueno-evento-alineacion-${date}`, kit?.sbcTheme || null] });

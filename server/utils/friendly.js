@@ -1,4 +1,5 @@
 import { db } from "../db/client.js";
+import { grant, safely } from "./achievements.js";
 import { addDays, mondayOf, todayStr } from "./points.js";
 
 // Amistoso entre clubes (Futotal 2.0): funciona con solo 2 clubes y es la puerta a la futura
@@ -84,6 +85,7 @@ export async function closeDueFriendlies(today = todayStr()) {
     if (s.winner) {
       const members = (await db.execute({ sql: "SELECT user_id FROM group_members WHERE group_id = ?", args: [s.winner] })).rows;
       for (const m of members) {
+        await safely(grant(m.user_id, "amistoso_ganado"));
         await db.execute({ sql: "INSERT OR IGNORE INTO event_badges (user_id, date, kit_key, kind) VALUES (?, ?, 'amistoso', ?)", args: [m.user_id, addDays(f.week, 6), `amistoso-${f.id}`] });
       }
     }

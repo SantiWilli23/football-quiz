@@ -1,7 +1,9 @@
 import { Router } from "express";
+import { grant, safely } from "../utils/achievements.js";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { todayStr } from "../utils/points.js";
+import { redesignOn } from "../utils/clubs.js";
 import { AREAS, analysis, computeAdn, futotalCard } from "../utils/adn.js";
 import { trainingItems } from "../utils/daily-match.js";
 
@@ -34,7 +36,11 @@ router.get("/adn", async (req, res) => {
       const ok = (await db.execute({ sql: "SELECT 1 FROM group_members WHERE group_id = ? AND user_id = ?", args: [groupId, req.userId] })).rows[0];
       if (!ok) return res.status(403).json({ error: "No pertenecés a ese club" });
     }
-    res.json(await analysis(req.userId, range, { groupId }));
+    const result = await analysis(req.userId, range, { groupId });
+    if (redesignOn() && Object.values(result.areas || {}).length >= 6 && Object.values(result.areas).every((a) => a.score !== null && a.score !== undefined)) {
+      await safely(grant(req.userId, "adn_completo"));
+    }
+    res.json(result);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });

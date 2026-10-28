@@ -1,4 +1,5 @@
 import { db } from "../db/client.js";
+import { grant, safely } from "./achievements.js";
 import { addDays, monthOf, todayStr } from "./points.js";
 import { clubTable } from "./ledger.js";
 
@@ -30,6 +31,8 @@ export async function closeMonth(groupId, month) {
   const awarded = [];
   for (const r of podium) {
     await db.execute({ sql: "INSERT OR IGNORE INTO club_trophies (user_id, group_id, month, place, points) VALUES (?, ?, ?, ?, ?)", args: [r.userId, groupId, month, r.rank, r.points] });
+    await safely(grant(r.userId, "podio_mes"));
+    if (r.rank === 1) await safely(grant(r.userId, "campeon_mes"));
     const main = (await db.execute({ sql: "SELECT group_id FROM user_main_club WHERE user_id = ?", args: [r.userId] })).rows[0];
     let elite = false;
     if (main?.group_id === groupId) {

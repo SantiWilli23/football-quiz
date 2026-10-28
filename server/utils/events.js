@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { grant, safely } from "./achievements.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { db } from "../db/client.js";
@@ -171,6 +172,8 @@ export async function resolveEvent(date, { getMatch } = {}) {
   const hits = (await db.execute({ sql: "SELECT user_id FROM event_preds WHERE date = ? AND pick = ?", args: [date, winner] })).rows;
   for (const h of hits) {
     await db.execute({ sql: "INSERT OR IGNORE INTO card_packs (user_id, date, source) VALUES (?, ?, ?)", args: [h.user_id, date, `evento-pred-${date}`] });
+    const won = Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM card_packs WHERE user_id = ? AND source LIKE 'evento-pred-%'", args: [h.user_id] })).rows[0].n);
+    if (won >= 3) await safely(grant(h.user_id, "pronosticador"));
   }
   return eventOn(date);
 }

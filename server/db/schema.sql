@@ -1429,3 +1429,26 @@ CREATE TABLE IF NOT EXISTS custom_sbcs (
   bonus_coins INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Logros de Futotal 2.0: los ganados quedan escritos acá y de acá se leen (marcos incluidos).
+-- `legacy` = logro del catálogo anterior, congelado una sola vez por usuario (achievement_freeze)
+-- para que borrar las funciones viejas no le quite nada a nadie.
+CREATE TABLE IF NOT EXISTS user_achievements (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  key TEXT NOT NULL,
+  earned_at TEXT NOT NULL DEFAULT (datetime('now')),
+  legacy INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (user_id, key)
+);
+
+CREATE TABLE IF NOT EXISTS achievement_freeze (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id),
+  at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Días en que le ganaste al fantasma de tu rival (para «Cazafantasmas»).
+CREATE TABLE IF NOT EXISTS ghost_wins (
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  date TEXT NOT NULL,
+  PRIMARY KEY (user_id, date)
+);

@@ -1,4 +1,5 @@
 import { db } from "../db/client.js";
+import { grant, safely } from "./achievements.js";
 import { addDays, mondayOf, todayStr } from "./points.js";
 import { COPA_POINTS, creditPointsToGroup } from "./ledger.js";
 
@@ -132,6 +133,7 @@ export async function settleCup(groupId, monday) {
     const res = await creditPointsToGroup(prize.userId, groupId, sunday, "copa", prize.base);
     if (res.credited) credited += 1;
   }
+  if (raw.champion?.userId) await safely(grant(raw.champion.userId, "copa_ganada"));
   return { settled: true, credited, champion: raw.champion.userId };
 }
 

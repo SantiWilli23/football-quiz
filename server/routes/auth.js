@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { redesignOn } from "../utils/clubs.js";
+import { ensureFrozen, has as hasAchievement, unlockedCount } from "../utils/achievements.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { db } from "../db/client.js";
@@ -16,6 +18,8 @@ const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: "Dem
 // así que se revalida acá cuántos logros tiene de verdad en vez de confiar
 // en lo que mande el cliente.
 const FRAME_REQUIREMENTS = { ninguno: 0, bronce: 3, plata: 6, oro: 10, fuego: 14, leyenda: 17 };
+// Marcos de trofeo (Futotal 2.0): no dependen de la cantidad sino de un logro puntual.
+const TROPHY_FRAMES = { copa: "copa_ganada", racha: "imparable", podio: "campeon_mes" };
 
 const router = Router();
 
@@ -192,16 +196,28 @@ router.put("/avatar", requireAuth, async (req, res) => {
   }
 
   const frame = config.frame || "ninguno";
-  if (!(frame in FRAME_REQUIREMENTS)) {
+  if (!(frame in FRAME_REQUIREMENTS) && !(frame in TROPHY_FRAMES)) {
     return res.status(400).json({ error: "Marco inválido" });
   }
 
   try {
     if (frame !== "ninguno") {
       const groupId = Number(req.body?.groupId) || null;
-      const { unlocked_count } = await computeAchievements(req.userId, groupId);
-      if (unlocked_count < FRAME_REQUIREMENTS[frame]) {
-        return res.status(403).json({ error: "Todavía no desbloqueaste ese marco" });
+      if (frame in TROPHY_FRAMES) {
+        if (!redesignOn() || !(await hasAchievement(req.userId, TROPHY_FRAMES[frame]))) {
+          return res.status(403).json({ error: "Todavía no desbloqueaste ese marco" });
+        }
+      } else {
+        let unlocked_count;
+        if (redesignOn()) {
+          await ensureFrozen(req.userId, computeAchievements);
+          unlocked_count = await unlockedCount(req.userId);
+        } else {
+          ({ unlocked_count } = await computeAchievements(req.userId, groupId));
+        }
+        if (unlocked_count < FRAME_REQUIREMENTS[frame]) {
+          return res.status(403).json({ error: "Todavía no desbloqueaste ese marco" });
+        }
       }
     }
     clean.frame = frame;

@@ -3,9 +3,9 @@ import { Award, Lock } from "lucide-react";
 import api from "../api.js";
 import Card from "./Card.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
-import { FRAMES, FRAME_REQUIREMENTS, frameStyle } from "./Avatar.jsx";
+import { FRAMES, FRAME_REQUIREMENTS, TROPHY_FRAMES, frameStyle } from "./Avatar.jsx";
 
-const FRAME_LABELS = { ninguno: "Ninguno", bronce: "Bronce", plata: "Plata", oro: "Oro", fuego: "Fuego", leyenda: "Leyenda" };
+const FRAME_LABELS = { ninguno: "Ninguno", bronce: "Bronce", plata: "Plata", oro: "Oro", fuego: "Fuego", leyenda: "Leyenda", copa: "Copa", racha: "Racha 30", podio: "Podio" };
 
 // Una sola vitrina para lo que se gana: los logros (con su progreso) y los
 // marcos de avatar que esos logros desbloquean. Antes vivían en dos lugares
@@ -23,7 +23,10 @@ export default function Vitrina() {
 
   if (!data) return null;
   const unlocked = data.unlocked_count || 0;
-  const frames = FRAMES.filter((f) => f !== "ninguno");
+  const frames = [...FRAMES.filter((f) => f !== "ninguno"), ...Object.keys(TROPHY_FRAMES)];
+  const earned = new Set((data.achievements || []).filter((a) => a.unlocked).map((a) => a.id));
+  // Los marcos de trofeo dependen de un logro puntual; los demás, de la cantidad.
+  const frameOk = (f) => (TROPHY_FRAMES[f] ? earned.has(TROPHY_FRAMES[f]) : unlocked >= FRAME_REQUIREMENTS[f]);
 
   return (
     <Card>
@@ -40,7 +43,7 @@ export default function Vitrina() {
           atrás, no todo mezclado en el mismo orden en que se definieron. */}
       {["unlocked", "locked"].map((phase) => {
         const shelfAchievements = (data.achievements || []).filter((a) => (phase === "unlocked") === a.unlocked);
-        const shelfFrames = frames.filter((f) => (phase === "unlocked") === (unlocked >= FRAME_REQUIREMENTS[f]));
+        const shelfFrames = frames.filter((f) => (phase === "unlocked") === frameOk(f));
         if (shelfAchievements.length === 0 && shelfFrames.length === 0) return null;
         return (
           <div key={phase} className="mb-3 last:mb-0">
@@ -65,13 +68,13 @@ export default function Vitrina() {
 
               {shelfFrames.map((f) => {
                 const need = FRAME_REQUIREMENTS[f];
-                const ok = unlocked >= need;
+                const ok = frameOk(f);
                 return (
                   <div key={f} className={`rounded-lg border px-3 py-2.5 flex items-center gap-2.5 ${ok ? "border-accent/40 bg-accent/5" : "border-border opacity-60"}`}>
                     <span className="w-6 h-6 rounded-full bg-white/10 shrink-0" style={ok ? frameStyle(f) || {} : {}} />
                     <span className="text-xs font-semibold leading-tight">
                       Marco {FRAME_LABELS[f]}
-                      {!ok && <span className="flex items-center gap-1 text-gray-500 font-normal mt-0.5"><Lock size={10} /> {need} logros</span>}
+                      {!ok && <span className="flex items-center gap-1 text-gray-500 font-normal mt-0.5"><Lock size={10} /> {TROPHY_FRAMES[f] ? "con un trofeo" : `${need} logros`}</span>}
                     </span>
                   </div>
                 );

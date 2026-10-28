@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { grant, safely } from "../utils/achievements.js";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rateLimit.js";
@@ -21,6 +22,7 @@ router.post("/score", limiter, async (req, res) => {
   const label = String(req.body?.label || "").slice(0, 30);
   if (!GAMES.has(game) || !Number.isFinite(score) || score < 0) return res.status(400).json({ error: "Carrera inválida" });
   try {
+    if (label === "Leyenda") await safely(grant(req.userId, "leyenda_cotrero"));
     const name = String(req.body?.name || "").replace(/[<>]/g, "").slice(0, 40);
     const pos = String(req.body?.position || "").replace(/[<>]/g, "").slice(0, 24);
     await db.execute({

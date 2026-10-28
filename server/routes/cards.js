@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { grant, safely } from "../utils/achievements.js";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -414,6 +415,10 @@ router.post("/open", async (req, res) => {
       sql: "INSERT INTO user_cards (user_id, player_name, count) VALUES (?, ?, 1) ON CONFLICT(user_id, player_name) DO UPDATE SET count = count + 1",
       args: [req.userId, c.name],
     })), "write");
+    if (redesignOn()) {
+      const distinct = Number((await db.execute({ sql: "SELECT COUNT(*) AS n FROM user_cards WHERE user_id = ?", args: [req.userId] })).rows[0].n);
+      if (distinct >= 50) await safely(grant(req.userId, "coleccionista"));
+    }
     res.json({ cards, quality, pity: gotStar ? 0 : misses + 1, starBonus: gotStar ? 0 : (misses + 1) * 3 });
   } catch (err) {
     console.error(err);
@@ -1108,6 +1113,7 @@ router.post("/sbc-tema/submit", async (req, res) => {
     for (const n of names) await db.execute({ sql: "UPDATE user_cards SET count = count - 1 WHERE user_id = ? AND player_name = ? AND count >= 2", args: [req.userId, n] });
     await db.execute({ sql: "INSERT INTO card_packs (user_id, date, source, theme) VALUES (?, ?, ?, ?)", args: [req.userId, start, source, theme.key] });
     if (theme.bonusCoins) await creditWallet(req.userId, theme.bonusCoins);
+    await safely(grant(req.userId, "plantilla_armada"));
     res.json({ ok: true, reward: { pack: "muy bueno", theme: theme.label, coins: theme.bonusCoins || 0 } });
   } catch (err) {
     console.error(err);

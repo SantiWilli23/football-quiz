@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { afterDuel, safely } from "../utils/achievements.js";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { sendToUser } from "../utils/push.js";
@@ -101,6 +102,7 @@ export async function resolveIfComplete(duel) {
   if (winnerId && redesignOn()) {
     await creditPoints(winnerId, todayStr(), "versus", FLAT_POINTS.versus).catch((e) => console.error("versus", e));
   }
+  if (winnerId && redesignOn()) await safely(afterDuel(winnerId));
 
   // El aviso sale una sola vez: el UPDATE de arriba deja el duelo en
   // 'terminado' y esta función corta al principio si ya lo estaba.

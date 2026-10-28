@@ -93,6 +93,8 @@ export const JERSEYS = ["lisa", "rayas", "banda", "mitades"];
 // unlocked_count en GET /stats/achievements). Puramente decorativo — un
 // anillo alrededor del avatar, nada que afecte el dibujo en sí.
 export const FRAMES = ["ninguno", "bronce", "plata", "oro", "fuego", "leyenda"];
+// Marcos de trofeo (Futotal 2.0): se ganan con un logro puntual, no por cantidad.
+export const TROPHY_FRAMES = { copa: "copa_ganada", racha: "imparable", podio: "campeon_mes" };
 
 export const FRAME_REQUIREMENTS = {
   ninguno: 0,
@@ -110,6 +112,9 @@ const FRAME_STYLES = {
   oro: { boxShadow: "0 0 0 3px #d9a441" },
   fuego: { boxShadow: "0 0 0 3px #d9534f, 0 0 14px 1px #f0907e88" },
   leyenda: { boxShadow: "0 0 0 3px #8b5cf6, 0 0 16px 2px #8b5cf699" },
+  copa: { boxShadow: "0 0 0 3px #f5c542, 0 0 0 5px #8a6a12, 0 0 14px 2px #f5c54299" },
+  racha: { boxShadow: "0 0 0 3px #fb923c, 0 0 0 5px #b45309, 0 0 16px 2px #fb923c99" },
+  podio: { boxShadow: "0 0 0 3px #38bdf8, 0 0 0 5px #0369a1, 0 0 14px 2px #38bdf899" },
 };
 
 export function frameStyle(frame) {

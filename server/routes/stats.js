@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { redesignOn } from "../utils/clubs.js";
+import { achievementsOf, ensureFrozen } from "../utils/achievements.js";
 import { db } from "../db/client.js";
 import { requireAuth } from "../middleware/auth.js";
 import { addDays, getBestStreak, getCurrentStreak, todayStr } from "../utils/points.js";
@@ -1055,6 +1057,11 @@ export async function computeAchievements(userId, groupId) {
 router.get("/achievements", async (req, res) => {
   const groupId = Number(req.query.groupId) || null;
   try {
+    // Futotal 2.0: los logros se leen de la tabla (congelando antes los del catálogo anterior).
+    if (redesignOn()) {
+      await ensureFrozen(req.userId, computeAchievements);
+      return res.json(await achievementsOf(req.userId));
+    }
     if (groupId && !(await requireMembership(groupId, req.userId))) {
       return res.status(403).json({ error: "No perteneces a este grupo" });
     }
