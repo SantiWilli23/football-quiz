@@ -107,3 +107,11 @@ Plan hecho primero (diagnóstico jugando a 1440 px) y prototipo de referencia en
 - **Calendario**: mes con chips por competición, resultado en el día y la franja del mercado abierto; semana con los partidos de entre semana; lista de todos los partidos de todas las competiciones.
 - **DT Online**: cabecera con el avance del mes y el mercado, pestañas nuevas, «tu próximo partido» con su botón arriba de la Jornada, chips por competición, y **fichajes entre managers** (`dt_league_player_offers`): ver las plantillas de los demás, ofertar, aceptar / rechazar / contraofertar; el trato se aplica en los dos clubes una sola vez (jugador y plata). El intercambio de clubes sigue, plegado al final del Mercado.
 - Pruebas nuevas: `dt-motor.test.js` (agenda, ventanas, negociación, cuotas, necesidades, pedir más, contrato) y `dt-mercado-managers.test.js` (oferta, contraoferta, trato cerrado, mercado cerrado, sin plata).
+
+## Versión Demo del dueño (OWNER_USERNAME)
+
+Solo el usuario de `OWNER_USERNAME` ve el botón flotante «Futotal 1 · Actual · Demo» (ruta `GET /api/me/owner`; la elección vive en el navegador, `fq_version`). Los demás siempre ven «Actual».
+- **Futotal 1**: la app de antes, sin el rediseño (solo para el dueño).
+- **Demo**: cambios probados antes de pasarlos a Actual. Cada uno está registrado con su número en `client/src/demo/changes/index.js`; el panel los lista, cuenta («N cambios») y los copia uno a uno, elegidos o todos. Dos rediseños grandes seleccionables en «Diseño»: A «Noche de estadio» y B «Álbum de figuritas».
+- Los cambios de la Demo se activan con `useDemo()` (`client/src/demo/version.js`); pasar uno a Actual es quitar su condición.
+- Cambios actuales: 2A/2B (temas), 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16a–c (cartas).

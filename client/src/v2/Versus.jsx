@@ -2,6 +2,8 @@ import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout.jsx";
 import { playSfx } from "../utils/sfx.js";
+import { useDemo } from "../demo/version.js";
+import Picker from "../demo/Picker.jsx";
 
 // Versus: una ruleta elige el modo de duelo con tu club. Respeta prefers-reduced-motion: sin
 // animación el resultado aparece de una.
@@ -27,6 +29,8 @@ function arc(i) {
 
 export default function Versus() {
   const navigate = useNavigate();
+  const demo = useDemo();
+  const [stage, setStage] = useState("pick");
   const [angle, setAngle] = useState(0);
   const [picked, setPicked] = useState(null);
   const [spinning, setSpinning] = useState(false);
@@ -46,6 +50,11 @@ export default function Versus() {
     playSfx("tick");
     const done = () => { setSpinning(false); setPicked(MODES[target]); playSfx("win"); };
     if (reduce) done(); else setTimeout(done, 3200);
+  }
+
+  // Demo: primero se elige cómo jugar (un modo o la ruleta).
+  if (demo && stage === "pick") {
+    return <Picker title="Versus" subtitle="Elige un modo o deja que decida la ruleta." items={[{ label: "Que decida la ruleta", hint: "Giras y sale un modo al azar.", onClick: () => setStage("ruleta"), tag: "Sorpresa" }, ...MODES.map((m) => ({ label: m.label, hint: m.text, onClick: () => go(navigate, m.to) }))]} />;
   }
 
   return (

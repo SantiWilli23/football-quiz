@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api.js";
+import { useVersion } from "../demo/version.js";
 
 // Futotal 2.0 viene encendido; el servidor lo apaga con FUTOTAL2=0. Se pregunta una sola vez y
 // mientras llega la respuesta (o sin señal) se usa la última conocida, así no parpadea la app vieja.
@@ -22,10 +23,13 @@ export function loadFutotal2() {
 
 export default function useFutotal2() {
   const [state, setState] = useState({ on: cached(), ready: false, games: [] });
+  // Futotal 1 (solo para el dueño): la app de antes, sin el rediseño.
+  const f1 = useVersion().version === "f1";
+  useEffect(() => { if (f1) document.documentElement.removeAttribute("data-v2"); else if (state.on) document.documentElement.setAttribute("data-v2", ""); }, [f1, state.on]);
   useEffect(() => {
     let alive = true;
     loadFutotal2().then(({ on, games }) => { if (alive) setState({ on, ready: true, games }); });
     return () => { alive = false; };
   }, []);
-  return state;
+  return f1 ? { ...state, on: false, games: [] } : state;
 }

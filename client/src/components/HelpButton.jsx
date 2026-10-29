@@ -6,6 +6,8 @@ import { tutorialFor } from "../tutorial/steps.js";
 import TutorialPlayer from "../tutorial/TutorialPlayer.jsx";
 import Demo from "../v2/Demo.jsx";
 import useFutotal2 from "../v2/useFutotal2.js";
+import { useDemo } from "../demo/version.js";
+import { helpPathOf } from "../demo/helpPath.js";
 
 // Botón «?» de cada pantalla: abre un resumen de cómo se juega o de cómo
 // funciona. Los textos viven en data/helpTexts.js. `inline` = dentro de una
@@ -16,8 +18,11 @@ export default function HelpButton({ inline = false }) {
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [demoOpen, setDemoOpen] = useState(false);
   const { on: v2 } = useFutotal2();
-  const help = helpFor(pathname);
-  const tutorial = tutorialFor(pathname);
+  const demo = useDemo();
+  // Demo: las rutas /jugar/… se traducen a las de siempre y el tutorial también se ofrece con el rediseño.
+  const hp = demo ? helpPathOf(pathname) : pathname;
+  const help = helpFor(hp);
+  const tutorial = tutorialFor(hp);
 
   useEffect(() => { setOpen(false); setTutorialOpen(false); setDemoOpen(false); }, [pathname]);
   useEffect(() => {
@@ -63,7 +68,7 @@ export default function HelpButton({ inline = false }) {
             )}
             <div className="flex gap-2">
               {v2 && <button onClick={() => { setOpen(false); setDemoOpen(true); }} className="btn btn-secondary flex-1">Ver demo</button>}
-              {!v2 && tutorial && (
+              {(!v2 || demo) && tutorial && (
                 <button onClick={() => { setOpen(false); setTutorialOpen(true); }} className="btn btn-secondary flex-1">Ver tutorial</button>
               )}
               <button onClick={() => setOpen(false)} className="btn btn-primary flex-1">Entendido</button>

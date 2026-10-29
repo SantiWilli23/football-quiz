@@ -375,3 +375,98 @@
 :root[data-v2][data-theme="cancha-dia"] .p-porta .p-btn { background: #ffffff; color: #0b6b50; }
 :root[data-v2][data-theme="cancha-dia"] .p-card, :root[data-v2][data-theme="cancha-dia"] .p-row, :root[data-v2][data-theme="cancha-dia"] .p-gc { box-shadow: 0 1px 2px rgb(16 35 31 / 0.05), 0 8px 22px -14px rgb(16 35 31 / 0.2); }
 :root[data-v2][data-theme="cancha-dia"] .p-x2, :root[data-v2][data-theme="cancha-dia"] .p-seal.t { color: #fff; }
+
+/* ===== Demo · paleta ampliada (solo con data-demo en <html>, que pone el dueño) =====
+   Antes todo giraba alrededor de un verde. Ahora hay un verde césped de base y cuatro colores de
+   apoyo (cian, violeta, ámbar, coral) que se reparten las secciones, y las superficies llevan un
+   leve tinte para no ser todas del mismo gris verdoso. */
+:root[data-v2][data-demo] {
+  --demo-cyan: #3cc6e0; --demo-violet: #9a86ff; --demo-amber: #f2b84b; --demo-coral: #f07a64; --demo-lime: #a6dc4a;
+  --bg: #07110f; --bg2: #0b1815; --panel: #101f1c; --panel2: #162a26; --line: #22403a;
+  --c-bg: 7 17 15; --c-panel: 16 31 28; --c-panel-hi: 22 42 38; --c-border: 34 64 58;
+}
+:root[data-v2][data-demo] .p-hero { background: radial-gradient(120% 90% at 100% 0%, rgba(60,198,224,.18), transparent 55%), radial-gradient(90% 80% at 0% 100%, rgba(154,134,255,.14), transparent 60%), repeating-linear-gradient(90deg, var(--stripe1) 0 38px, var(--stripe2) 38px 76px); border-color: color-mix(in srgb, var(--demo-cyan) 35%, var(--line)); }
+:root[data-v2][data-demo] .p-sect:nth-of-type(4n+1) > h3 { color: var(--acc2); }
+:root[data-v2][data-demo] .p-sect:nth-of-type(4n+2) > h3 { color: var(--demo-cyan); }
+:root[data-v2][data-demo] .p-sect:nth-of-type(4n+3) > h3 { color: var(--demo-violet); }
+:root[data-v2][data-demo] .p-sect:nth-of-type(4n) > h3 { color: var(--demo-amber); }
+:root[data-v2][data-demo] .p-sect:nth-of-type(4n+1) .p-card { border-top: 2px solid var(--acc); }
+:root[data-v2][data-demo] .p-sect:nth-of-type(4n+2) .p-card { border-top: 2px solid var(--demo-cyan); }
+:root[data-v2][data-demo] .p-sect:nth-of-type(4n+3) .p-card { border-top: 2px solid var(--demo-violet); }
+:root[data-v2][data-demo] .p-sect:nth-of-type(4n) .p-card { border-top: 2px solid var(--demo-amber); }
+:root[data-v2][data-demo] .p-row.me { background: linear-gradient(90deg, rgba(60,198,224,.14), transparent); border-color: var(--demo-cyan); }
+:root[data-v2][data-demo] .p-btn:not(.ghost) { background: linear-gradient(135deg, var(--acc), var(--demo-cyan)); color: #04150c; }
+:root[data-v2][data-demo] .p-gc { background: linear-gradient(160deg, color-mix(in srgb, var(--gc) 22%, var(--panel)), var(--panel) 70%); border-color: color-mix(in srgb, var(--gc) 45%, var(--line)); }
+:root[data-v2][data-demo] .t-eyebrow { color: var(--demo-cyan); }
+
+/* ===== Demo · rediseño A «Noche de estadio» ===== */
+:root[data-v2][data-demo][data-tema="a"] {
+  --bg: #050a1a; --bg2: #08112a; --panel: #0b1633; --panel2: #101e45; --line: #1d2f66;
+  --c-bg: 5 10 26; --c-panel: 11 22 51; --c-panel-hi: 16 30 69; --c-border: 29 47 102;
+  --fg: #eef3ff; --mute: #94a7d6; --dim: #62759f;
+  --acc: #29d3ff; --acc2: #7be3ff; --onacc: #021424; --c-accent: 41 211 255; --c-accent-light: 123 227 255; --c-accent-dark: 20 160 205; --c-onaccent: 2 20 36;
+  --glow: #29d3ff30; --stripe1: #0a1738; --stripe2: #0c1c46; --me-bg: #10285a; --me-line: #29d3ff;
+  --theme-color: #050a1a;
+}
+:root[data-v2][data-demo][data-tema="a"] body { background: radial-gradient(80% 50% at 50% -10%, #12337a55, transparent 70%), var(--bg); }
+:root[data-v2][data-demo][data-tema="a"] .p-card, :root[data-v2][data-demo][data-tema="a"] .p-gc { box-shadow: 0 0 0 1px #29d3ff14, 0 12px 30px -14px #29d3ff55; }
+:root[data-v2][data-demo][data-tema="a"] .p-btn:not(.ghost) { background: linear-gradient(135deg, #29d3ff, #9a86ff); color: #021424; box-shadow: 0 0 24px #29d3ff55; }
+
+/* ===== Demo · rediseño B «Álbum de figuritas» (claro, papel, bordes gruesos) ===== */
+:root[data-v2][data-demo][data-tema="b"] {
+  --bg: #f6efe0; --bg2: #efe6d0; --panel: #fffaf0; --panel2: #fff3d6; --line: #2a2118;
+  --c-bg: 246 239 224; --c-panel: 255 250 240; --c-panel-hi: 255 243 214; --c-border: 42 33 24;
+  --c-white: 42 33 24; --c-gray-200: 235 225 200; --c-gray-300: 70 58 44; --c-gray-400: 100 86 68; --c-gray-500: 120 104 84; --c-gray-600: 140 124 100; --c-gray-700: 170 154 128; --c-gray-800: 235 225 200; --c-gray-900: 246 239 224;
+  --fg: #2a2118; --mute: #6b5a44; --dim: #8c7a60;
+  --acc: #1f9d6b; --acc2: #167a52; --onacc: #ffffff; --c-accent: 31 157 107; --c-accent-light: 22 122 82; --c-accent-dark: 17 100 68; --c-onaccent: 255 255 255;
+  --demo-cyan: #1aa6b7; --demo-violet: #7a5af0; --demo-amber: #e8a317; --demo-coral: #ee5a44;
+  --glow: #e8a31722; --stripe1: #f1e7cf; --stripe2: #ebe0c4; --cell: #fffaf0; --cell-line: #2a2118; --cell-empty: #d9cba9;
+  --me-bg: #ffe8a8; --me-line: #2a2118; --gold: #c98400; --red: #d8432f; --blue: #1a73c4;
+  --theme-color: #f6efe0; color-scheme: light;
+}
+:root[data-v2][data-demo][data-tema="b"] body { background: var(--bg); color: var(--fg); background-image: radial-gradient(#2a211812 1px, transparent 1px); background-size: 18px 18px; }
+:root[data-v2][data-demo][data-tema="b"] .p-card, :root[data-v2][data-demo][data-tema="b"] .p-gc, :root[data-v2][data-demo][data-tema="b"] .p-row { border: 2.5px solid var(--fg); box-shadow: 4px 4px 0 var(--fg); border-radius: 16px; }
+:root[data-v2][data-demo][data-tema="b"] .p-hero { border: 3px solid var(--fg); box-shadow: 6px 6px 0 var(--fg); background: repeating-linear-gradient(90deg, #cfe8c2 0 38px, #c3e0b4 38px 76px); }
+:root[data-v2][data-demo][data-tema="b"] .p-hero * { color: var(--fg); }
+:root[data-v2][data-demo][data-tema="b"] .p-btn:not(.ghost) { background: var(--demo-amber); color: var(--fg); border: 3px solid var(--fg); box-shadow: 4px 4px 0 var(--fg); }
+:root[data-v2][data-demo][data-tema="b"] .p-btn.ghost { border: 2.5px solid var(--fg); color: var(--fg); }
+:root[data-v2][data-demo][data-tema="b"] .p-sect > h3 { color: var(--fg); }
+:root[data-v2][data-demo][data-tema="b"] .p-sect:nth-of-type(4n+1) .p-card { background: #d7f0e3; }
+:root[data-v2][data-demo][data-tema="b"] .p-sect:nth-of-type(4n+2) .p-card { background: #d3eef2; }
+:root[data-v2][data-demo][data-tema="b"] .p-sect:nth-of-type(4n+3) .p-card { background: #e5dcff; }
+:root[data-v2][data-demo][data-tema="b"] .p-sect:nth-of-type(4n) .p-card { background: #ffe9b8; }
+
+/* ===== Demo · cartas (FigCard, apertura de sobres) ===== */
+.fig { --mx: 50%; --my: 30%; position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; aspect-ratio: 5 / 7; padding: 10px 8px 8px; border-radius: 16px; text-align: center; color: #1b1405; overflow: hidden; isolation: isolate; border: 2px solid var(--fig-edge); background: radial-gradient(120% 70% at 50% 0%, var(--fig-hi), var(--fig-lo) 75%); box-shadow: 0 10px 22px -12px var(--fig-edge), inset 0 0 0 2px #ffffff30; transition: transform .2s; }
+.fig:hover { transform: translateY(-3px) rotate(-.6deg); }
+.fig::after { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(circle at var(--mx) var(--my), #ffffff70, transparent 45%), conic-gradient(from 210deg at var(--mx) var(--my), #ff7ad933, #7affd933, #7ab8ff33, #ffe27a33, #ff7ad933); mix-blend-mode: soft-light; opacity: .75; pointer-events: none; }
+.fig-bronce { --fig-hi: #e0a064; --fig-lo: #8a4d1c; --fig-edge: #b9742f; }
+.fig-plata { --fig-hi: #eef2f5; --fig-lo: #8996a3; --fig-edge: #bcc6cf; }
+.fig-oro { --fig-hi: #ffe27a; --fig-lo: #c08a12; --fig-edge: #f0b92b; }
+.fig-estrella { --fig-hi: #d6b8ff; --fig-lo: #5b2fd6; --fig-edge: #a47bff; color: #fff; }
+.fig-top { width: 100%; display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: 4px; text-align: left; }
+.fig-ovr { font: 800 clamp(26px, 8vw, 38px)/0.9 var(--f-n, inherit); letter-spacing: -.01em; }
+.fig-pos { grid-column: 1; font: 700 10px var(--f-b, inherit); font-style: normal; opacity: .75; letter-spacing: .06em; }
+.fig-top > :last-child:not(.fig-ovr):not(.fig-pos) { grid-column: 3; grid-row: 1 / span 2; }
+.fig-face { margin-top: -2px; border-radius: 999px; padding: 3px; background: #ffffff55; }
+.fig-name { font: 800 clamp(12px, 3.4vw, 15px)/1.05 var(--f-d, inherit); max-width: 100%; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.fig-meta { font: 600 10px var(--f-b, inherit); opacity: .7; }
+.fig-tag, .fig-new, .fig-form, .fig-sell { position: absolute; font: 800 9px var(--f-b, inherit); border-radius: 999px; padding: 2px 6px; }
+.fig-tag { top: 6px; left: 50%; transform: translateX(-50%); background: #1b1405; color: #ffe27a; }
+.fig-new { bottom: 6px; left: 6px; background: #ef5b5b; color: #fff; }
+.fig-form { bottom: 6px; left: 6px; background: #1b1405; color: #ffe27a; }
+.fig-sell { bottom: 6px; right: 6px; background: #1b1405cc; color: #ffe27a; display: inline-flex; gap: 3px; align-items: center; cursor: pointer; }
+.fig-sel { outline: 3px solid var(--acc, #2fb673); outline-offset: 2px; }
+.fig-s { padding: 6px 5px 5px; gap: 3px; border-radius: 12px; }
+.fig-s .fig-ovr { font-size: 22px; }
+.fig-s .fig-name { font-size: 11px; }
+.fig-back { justify-content: center; --fig-hi: #1d3a30; --fig-lo: #0a1511; --fig-edge: #2fb673; color: #6fd9a8; }
+.fig-logo { font: 800 34px var(--f-d, inherit); letter-spacing: .05em; }
+.fig-flip { perspective: 800px; }
+.fig-flip > .fig-inner { position: relative; transition: transform .6s cubic-bezier(.2,.8,.2,1); transform-style: preserve-3d; }
+.fig-flip.up > .fig-inner { transform: rotateY(180deg); }
+.fig-flip .fig-front, .fig-flip .fig-rev { backface-visibility: hidden; }
+.fig-flip .fig-rev { position: absolute; inset: 0; transform: rotateY(180deg); }
+.fig-glow-estrella.up .fig-rev .fig { box-shadow: 0 0 40px 6px #a47bff; }
+.fig-glow-oro.up .fig-rev .fig { box-shadow: 0 0 34px 4px #f0b92b; }
+@media (prefers-reduced-motion: reduce) { .fig, .fig-flip > .fig-inner { transition: none; } .fig:hover { transform: none; } }

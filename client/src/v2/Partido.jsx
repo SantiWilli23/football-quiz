@@ -10,6 +10,8 @@ import { track } from "./analytics.js";
 import { useClubs } from "./useClubs.js";
 import Mano, { AddToHome } from "./Mano.jsx";
 import { getQueue, loadPackage, queueAnswer, savePackage, syncQueue } from "./offline.js";
+import { useDemo } from "../demo/version.js";
+import PenalPitch from "../demo/PenalPitch.jsx";
 
 // El día de Chile en el teléfono, para reconocer el paquete guardado cuando no hay red.
 const CHILE_DAY = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago", year: "numeric", month: "2-digit", day: "2-digit" });
@@ -375,6 +377,20 @@ export function MasMenos({ item, showing, last, onPick }) {
 }
 
 export function Penal({ item, showing, last, onPick }) {
+  const demo = useDemo();
+  const estado = showing && !last.offline ? (last.ok ? "gol" : "atajado") : "idle";
+  if (demo) {
+    return (
+      <div className="space-y-3">
+        <div className="rounded-3xl border border-border bg-panel p-3 text-center overflow-hidden">
+          <PenalPitch estado={estado} />
+          <p className="mt-2 text-xs uppercase tracking-wide text-gray-500">Penal</p>
+          <p className="mt-1 font-semibold leading-snug">{item.question}</p>
+        </div>
+        <Options item={item} showing={showing} last={last} onPick={onPick} />
+      </div>
+    );
+  }
   return (
     <div className="space-y-3">
       <div className={`relative rounded-3xl border border-border bg-panel p-4 text-center overflow-hidden ${showing && !last.offline && !last.ok ? "fq-shake" : ""}`}>

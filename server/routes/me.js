@@ -28,6 +28,19 @@ router.post("/welcome", async (req, res) => {
   }
 });
 
+// ¿Soy el dueño de la app? (OWNER_USERNAME). El cliente lo usa para mostrar el selector de versiones
+// (Futotal 1 / Actual / Demo) solo a esa persona.
+router.get("/owner", async (req, res) => {
+  try {
+    const owner = String(process.env.OWNER_USERNAME || "").trim().toLowerCase();
+    const me = (await db.execute({ sql: "SELECT username FROM users WHERE id = ?", args: [req.userId] })).rows[0];
+    res.json({ owner: !!owner && !!me && String(me.username).toLowerCase() === owner });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
+
 router.get("/adn", async (req, res) => {
   try {
     const range = ["week", "month", "all"].includes(req.query.range) ? req.query.range : "month";
