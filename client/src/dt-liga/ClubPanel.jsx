@@ -9,7 +9,7 @@ import Cantera from "../carrera/components/Cantera.jsx";
 import Finances from "../carrera/components/Finances.jsx";
 import { DaysSection } from "../carrera/components/SeasonCalendar.jsx";
 import PreseasonPanel from "./PreseasonPanel.jsx";
-import { ackBudgetAdjustments, claimYouth, getBudgetAdjustments, getCpuOffers, getSquad, getYouthClaims, respondCpuOffer, saveSquad } from "./api.js";
+import { ackPlayerMove, getPlayerMoves, ackBudgetAdjustments, claimYouth, getBudgetAdjustments, getCpuOffers, getSquad, getYouthClaims, respondCpuOffer, saveSquad } from "./api.js";
 
 // Lo mismo que el Modo DT solo, para el club del manager en la liga online (sin Inicio ni
 // Historial, que la liga cubre con Jornada, Calendario y Tabla).
@@ -24,7 +24,7 @@ const SECTIONS = [
 ];
 
 function Sections({ code, league, leagueWeek, season, marketLabel }) {
-  const { syncOnlineWeek, syncOnlineSeason, applyBudgetAdjustment, injectCpuOffers } = useCareer();
+  const { syncOnlineWeek, syncOnlineSeason, applyBudgetAdjustment, injectCpuOffers, applyManagerMoves } = useCareer();
   const [screen, setScreen] = useState("squad");
 
   // Temporada nueva: el club cierra la anterior. Después, cada jornada de la liga hace pasar una
@@ -43,6 +43,20 @@ function Sections({ code, league, leagueWeek, season, marketLabel }) {
     getCpuOffers(code).then((offers) => { if (alive) injectCpuOffers(offers); }).catch(() => {});
     return () => { alive = false; };
   }, [code, leagueWeek, season]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fichajes entre managers ya cerrados: se aplican al club (y se avisa al servidor). Se revisa
+  // también cada medio minuto, por si el otro manager acepta mientras tienes el club abierto.
+  useEffect(() => {
+    let alive = true;
+    const pull = () => getPlayerMoves(code).then((moves) => {
+      if (!alive || !moves.length) return;
+      applyManagerMoves(moves);
+      moves.forEach((m) => ackPlayerMove(code, m.offerId).catch(() => {}));
+    }).catch(() => {});
+    pull();
+    const t = setInterval(() => { if (document.visibilityState === "visible") pull(); }, 30000);
+    return () => { alive = false; clearInterval(t); };
+  }, [code]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-4">

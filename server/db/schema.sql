@@ -1524,4 +1524,27 @@ CREATE TABLE IF NOT EXISTS draft_rooms (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_draft_rooms_creator ON draft_rooms(creator_id, status)
+CREATE INDEX IF NOT EXISTS idx_draft_rooms_creator ON draft_rooms(creator_id, status);
+
+-- Fichajes entre managers de la Liga Online DT: un humano le oferta a otro por un jugador. El
+-- vendedor acepta, rechaza o contraoferta (counter_amount). El comprador acepta o no la contraoferta.
+-- Aceptada, cada club aplica el movimiento (jugador y plata) la próxima vez que abre su club y lo
+-- marca con buyer_applied / seller_applied.
+CREATE TABLE IF NOT EXISTS dt_league_player_offers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  league_id INTEGER NOT NULL REFERENCES dt_leagues(id),
+  season INTEGER NOT NULL DEFAULT 1,
+  buyer_id INTEGER NOT NULL REFERENCES users(id),
+  seller_id INTEGER NOT NULL REFERENCES users(id),
+  player_id TEXT NOT NULL,
+  player_name TEXT NOT NULL,
+  ovr INTEGER NOT NULL DEFAULT 0,
+  amount REAL NOT NULL,
+  counter_amount REAL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  player_json TEXT,
+  buyer_applied INTEGER NOT NULL DEFAULT 0,
+  seller_applied INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  resolved_at TEXT
+);

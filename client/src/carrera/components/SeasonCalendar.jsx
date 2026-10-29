@@ -4,9 +4,11 @@ import { useCareer } from "../context/CareerContext.jsx";
 import { teamById } from "../data/teams.js";
 import {
   ACTIVITIES, DAY_LABELS, DAY_NAMES, DEFAULT_ACTIVITY, MATCH_DAY, MONTH_NAMES,
-  dateOfDay, energyOf, energyTone, matchReadiness, monthKey, squadEnergy,
+  dateOfDay, energyOf, energyTone, matchReadiness, monthKey, squadEnergy, seasonStartDate,
 } from "../engine/energy.js";
 import TeamCrest from "./TeamCrest.jsx";
+import CompChip from "./CompChip.jsx";
+import { COMP, seasonSchedule, windowAt } from "../engine/schedule.js";
 
 const SECTIONS = [
   ["dias", "Días del mes"],
@@ -87,35 +89,37 @@ function StandingsSection() {
 
 function FixturesSection() {
   const { state } = useCareer();
+  const events = seasonSchedule(state);
+  const nextId = events.find((e) => !e.played)?.id;
+  const res = (e) => (!e.result ? null : e.result.my > e.result.rival || e.result.won ? "G" : e.result.my === e.result.rival ? "E" : "P");
+  const tone = { G: "var(--acc2)", E: "var(--gold)", P: "var(--red)" };
   return (
-    <div>
-      <h2 className="text-lg font-bold mb-3">Partidos</h2>
-      {/* Línea de tiempo: un punto por fecha, coloreado según resultado; la
-          próxima fecha se destaca. La lista de abajo sigue con el detalle. */}
-      <div className="flex items-center gap-1 overflow-x-auto pb-2 mb-3" role="img" aria-label="Línea de tiempo de la temporada">
-        {state.calendar.map((c) => {
-          const isNext = !c.played && state.calendar.find((x) => !x.played)?.week === c.week;
-          const color = !c.played
-            ? isNext ? "bg-accent ring-2 ring-accent/40" : "bg-white/10"
-            : c.result.myGoals > c.result.rivalGoals ? "bg-good" : c.result.myGoals === c.result.rivalGoals ? "bg-amber" : "bg-bad";
-          return <span key={c.week} title={`J${c.week}`} className={`shrink-0 w-2.5 h-2.5 rounded-full ${color}`} />;
-        })}
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2 items-center">
+        <h2 className="text-lg font-bold mr-auto">Todos los partidos</h2>
+        {Object.keys(COMP).map((c) => <CompChip key={c} comp={c} />)}
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 max-h-[28rem] overflow-y-auto pr-1">
-        {state.calendar.map((c) => {
-          const rival = teamById(c.opponentTeamId);
-          const tone = !c.played ? "tone-blue" : c.result.myGoals > c.result.rivalGoals ? "tone-emerald" : c.result.myGoals === c.result.rivalGoals ? "tone-amber" : "tone-red";
+      {/* Línea de tiempo: un punto por partido, coloreado según resultado; el próximo se destaca. */}
+      <div className="flex items-center gap-1 overflow-x-auto pb-1" role="img" aria-label="Línea de tiempo de la temporada">
+        {events.map((e) => <span key={e.id} title={`${e.round}`} className="shrink-0 w-2.5 h-2.5 rounded-full" style={{ background: e.id === nextId ? "var(--acc)" : res(e) ? tone[res(e)] : "var(--panel2)", boxShadow: e.id === nextId ? "0 0 0 3px #2fb67344" : undefined, outline: e.comp !== "liga" ? `1px solid ${COMP[e.comp].color}` : undefined }} />)}
+      </div>
+      <ul className="p-card divide-y" style={{ padding: "4px 14px", borderColor: "var(--line)" }}>
+        {events.map((e) => {
+          const d = dateOfDay(state.season, e.weekIdx, e.day);
+          const t = teamById(e.opponentId);
+          const r = res(e);
           return (
-            <div key={c.week} className={`${tone} tile-b rounded-card px-3 py-2.5 flex flex-col gap-1`}>
-              <span className="text-[11px] uppercase tracking-wider text-gray-300">J{c.week} · {c.home ? "Local" : "Visitante"}</span>
-              <span className="text-sm font-semibold truncate">{rival?.name}</span>
-              <span className="text-lg font-bold tabular-nums text-tone">
-                {c.played ? `${c.result.myGoals} - ${c.result.rivalGoals}` : "—"}
-              </span>
-            </div>
+            <li key={e.id} className="flex items-center gap-3 py-2.5" style={{ borderColor: "var(--line)", background: e.id === nextId ? "var(--me-bg)" : undefined }}>
+              <span className="p-num w-16 text-sm p-muted shrink-0">{DAY_LABELS[(d.getUTCDay() + 6) % 7]} {d.getUTCDate()}/{d.getUTCMonth() + 1}</span>
+              <CompChip comp={e.comp} short />
+              {t ? <TeamCrest team={t} size={22} /> : <span className="w-[22px]" />}
+              <span className="flex-1 min-w-0 truncate text-sm font-medium">{e.home ? "vs" : "@"} {t?.name || e.opponentName}<small className="block p-dim text-[11px]">{e.round}</small></span>
+              {r ? <span className="p-num text-lg rounded-lg px-2" style={{ color: tone[r], background: "var(--panel2)" }}>{e.result.my}-{e.result.rival}</span>
+                : <span className="text-xs p-muted">{e.id === nextId ? "Próximo" : "Pendiente"}</span>}
+            </li>
           );
         })}
-      </div>
+      </ul>
     </div>
   );
 }
@@ -154,15 +158,19 @@ export function DaysSection() {
   const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
   const firstWeekday = (shown.getUTCDay() + 6) % 7; // lunes = 0
 
-  // Cada fecha de partido de la temporada cae en su sábado.
+  // Todos los partidos de la temporada (liga, copa, Europa, amistosos) en su día.
+  const events = useMemo(() => (isOnline ? [] : seasonSchedule(state)), [state, isOnline]);
   const matchByDate = useMemo(() => {
     const map = {};
-    (isOnline ? [] : state.calendar).forEach((c) => {
-      const d = dateOfDay(state.season, c.week - 1, MATCH_DAY); // la fecha 1 se juega en la semana 0
-      map[d.toISOString().slice(0, 10)] = c;
+    events.forEach((e) => {
+      const iso = dateOfDay(state.season, e.weekIdx, e.day).toISOString().slice(0, 10);
+      (map[iso] = map[iso] || []).push(e);
     });
     return map;
-  }, [state.calendar, state.season, isOnline]);
+  }, [events, state.season]);
+  const start = seasonStartDate(state.season).getTime();
+  const weekOfIso = (iso) => Math.floor((Date.parse(iso) - start) / 86400000 / 7);
+  const weekEvents = events.filter((e) => e.weekIdx === state.week);
 
   const tiredPlayers = [...state.squad].sort((a, b) => energyOf(state, a.id) - energyOf(state, b.id)).slice(0, 5);
   const todayIso = today.toISOString().slice(0, 10);
@@ -198,6 +206,7 @@ export function DaysSection() {
             const past = i < day;
             const current = i === day;
             const isMatch = i === MATCH_DAY;
+            const ev = weekEvents.find((e) => e.day === i && e.comp !== "liga");
             const logged = (state.dayLog || []).find((l) => l.week === state.week && l.day === i);
             return (
               <div
@@ -206,7 +215,7 @@ export function DaysSection() {
               >
                 <p className="font-semibold">{label}</p>
                 <p className="mt-0.5 text-[10px] leading-tight min-h-[24px]">
-                  {isMatch ? "Partido" : logged ? ACTIVITIES[logged.activity]?.label.split(" ")[0] : current ? "Hoy" : i > MATCH_DAY ? "Libre" : ""}
+                  {ev ? <span style={{ color: COMP[ev.comp].color, fontWeight: 700 }}>{COMP[ev.comp].short}{ev.played ? " ✓" : ""}</span> : isMatch ? "Partido" : logged ? ACTIVITIES[logged.activity]?.label.split(" ")[0] : current ? "Hoy" : i > MATCH_DAY ? "Libre" : ""}
                 </p>
               </div>
             );
@@ -259,30 +268,40 @@ export function DaysSection() {
             {cells.map((d, i) => {
               if (d == null) return <span key={`e${i}`} />;
               const iso = new Date(Date.UTC(year, month, d)).toISOString().slice(0, 10);
-              const m = matchByDate[iso];
-              const mRival = m ? teamById(m.opponentTeamId) : null;
+              const evs = matchByDate[iso] || [];
               const isToday = iso === todayIso;
               const past = iso < todayIso;
+              const inWindow = !isOnline && windowAt(weekOfIso(iso));
               return (
                 <div
                   key={iso}
-                  className={`min-h-[58px] rounded-xl border p-1.5 flex flex-col items-center gap-0.5 text-xs ${isToday ? "border-accent bg-accent/15" : m ? "border-amber/40 bg-amber/5" : "border-border bg-panel"} ${past && !isToday ? "opacity-60" : ""}`}
+                  className={`relative min-h-[64px] lg:min-h-[86px] rounded-xl border p-1.5 flex flex-col gap-1 text-xs overflow-hidden ${past && !isToday ? "opacity-60" : ""}`}
+                  style={{ borderColor: isToday ? "var(--acc)" : "var(--line)", background: isToday ? "var(--me-bg)" : "var(--panel)" }}
                 >
-                  <span className={`tabular-nums ${isToday ? "font-bold text-accent" : "text-gray-300"}`}>{d}</span>
-                  {m && (
-                    <>
-                      <TeamCrest team={mRival} size={16} />
-                      <span className={`text-[10px] tabular-nums ${m.played ? (m.result.myGoals > m.result.rivalGoals ? "text-good" : m.result.myGoals === m.result.rivalGoals ? "text-amber" : "text-bad") : "text-gray-500"}`}>
-                        {m.played ? `${m.result.myGoals}-${m.result.rivalGoals}` : m.home ? "L" : "V"}
+                  <span className={`p-num text-sm ${isToday ? "" : "p-muted"}`} style={isToday ? { color: "var(--acc2)" } : undefined}>{d}</span>
+                  {evs.map((m) => {
+                    const mRival = teamById(m.opponentId);
+                    const c = COMP[m.comp];
+                    const r = m.result;
+                    return (
+                      <span key={m.id} className="flex items-center gap-1 rounded-md px-1 py-0.5 text-[10px] font-semibold truncate" style={{ color: c.color, background: `${c.color}1f`, border: `1px solid ${c.color}55` }} title={`${m.round} · ${m.home ? "vs" : "@"} ${mRival?.name || m.opponentName}`}>
+                        {mRival && <TeamCrest team={mRival} size={12} />}
+                        <span className="truncate hidden sm:inline">{r ? `${r.my}-${r.rival}` : `${m.home ? "vs" : "@"} ${(mRival?.name || m.opponentName || "").split(" ")[0]}`}</span>
+                        <span className="sm:hidden">{r ? `${r.my}-${r.rival}` : c.short}</span>
                       </span>
-                    </>
-                  )}
-                  {!m && d === 1 && <span className="text-[9px] leading-tight text-purple text-center">Nuevos jóvenes</span>}
+                    );
+                  })}
+                  {inWindow && <i className="absolute inset-x-0 bottom-0 h-1" style={{ background: "var(--gold)", opacity: 0.6 }} title="Mercado de fichajes abierto" />}
+                  {!evs.length && d === 1 && <span className="text-[9px] leading-tight text-purple">Nuevos jóvenes</span>}
                 </div>
               );
             })}
           </div>
-          <p className="text-xs text-gray-500 mt-3">Cada mes que pasa tus redes de cantera te muestran jóvenes nuevos. Los partidos caen los sábados.</p>
+          <div className="flex flex-wrap gap-2 items-center mt-3 text-xs p-muted">
+            {Object.keys(COMP).map((c) => <CompChip key={c} comp={c} />)}
+            <span className="flex items-center gap-1.5"><i className="w-5 h-1 rounded" style={{ background: "var(--gold)" }} /> Mercado abierto</span>
+          </div>
+          <p className="text-xs p-dim mt-2">Liga los sábados, Europa los martes y Copa los miércoles. Cada mes tus redes de cantera traen jóvenes nuevos.</p>
         </div>
 
         <div className="bg-panel border border-border rounded-2xl p-4">

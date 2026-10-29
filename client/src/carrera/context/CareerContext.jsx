@@ -22,7 +22,8 @@ import {
 import {
   generateAcademyBatch, rollAcademyCost, MAX_ACADEMY_AGENTS, ACADEMY_INTERVAL_WEEKS,
 } from "../engine/academy.js";
-import { clubDecision, playerDecision } from "../engine/transferMarket.js";
+import { clubDecision, playerDecision, clubNegotiation, playerNegotiation, wageTotal, wageCapOf, raiseIncoming, MAX_ROUNDS } from "../engine/transferMarket.js";
+import { windowAt, midweekBlocking, cupName } from "../engine/schedule.js";
 import { rollMatchInjuries, recoverInjuries, forceInjury } from "../engine/injuryEngine.js";
 import { rollEvent } from "../engine/eventEngine.js";
 import { ACTIVITIES, DEFAULT_ACTIVITY, MATCH_DAY, applyDayActivity, currentDate, formScoreFromSharpness, monthKey } from "../engine/energy.js";
@@ -385,7 +386,9 @@ function reconcileSquad(s) {
 function normalizeState(s) {
   if (!s) return s;
   const withCantera = ensureCantera(s);
-  return reconcileSquad({ day: 0, sharpness: 50, dayLog: [], difficulty: "media", ...withCantera });
+  // Masa salarial: el tope se fija una vez (lo que pagaba el plantel + 20 %) y no crece con cada fichaje.
+  const wageCap = s.wageCap ?? Math.round(wageTotal(s.squad) * 1.2);
+  return reconcileSquad({ day: 0, sharpness: 50, dayLog: [], difficulty: "media", ...withCantera, wageCap });
 }
 
 // Avanza los días que faltan hasta el sábado con trabajo liviano (cuando se juega el
@@ -416,11 +419,30 @@ function monthlyTick(s) {
   };
 }
 
+// Pre-acuerdos: fichajes firmados con la ventana cerrada. Se incorporan apenas abre (la plata ya
+// se reservó al firmar).
+function joinPreAgreed(s) {
+  const pending = s.pendingSignings || [];
+  if (!pending.length || !windowAt(s.week)) return s;
+  let squad = s.squad;
+  let reserves = s.lineup.reserves;
+  for (const d of pending) {
+    const signed = { ...d.player, teamId: s.teamId, wage: d.wage, contractYears: d.years, role: d.role, xp: 0, isYouth: false, academyProduct: false, transferListed: false, loanListed: false, releaseClause: null, number: nextAvailableNumber(squad) };
+    squad = [...squad, signed];
+    reserves = [...reserves, signed.id];
+  }
+  return {
+    ...s, squad, lineup: { ...s.lineup, reserves }, pendingSignings: [],
+    news: [`✍️ Abrió el mercado: se suman ${pending.map((d) => d.player.name).join(", ")}.`, ...(s.news || [])].slice(0, 8),
+  };
+}
+
 // Fin de semana: el domingo se descansa, empieza una semana nueva y se revisa la cantera.
 function endOfWeek(s) {
   const fatigue = { ...(s.fatigue || {}) };
   (s.squad || []).forEach((p) => { fatigue[p.id] = Math.min(100, (fatigue[p.id] ?? 100) + 8); });
   let next = monthlyTick({ ...s, fatigue, day: 0 });
+  next = joinPreAgreed(next);
   // Contratos (moral por sueldo y relevancia), forma del plantel, cambios de estilo y progresión semanal.
   const contracts = stepContracts(next);
   next = { ...next, ...contracts };
@@ -484,7 +506,7 @@ export function CareerProvider({ children, online = null }) {
 
   // Crea una carrera nueva en un slot propio (no pisa las carreras existentes).
   function selectTeam(teamId) {
-    const initial = buildInitialState(teamId);
+    const initial = normalizeState(buildInitialState(teamId));
     createSaveSlot(initial);
     setState(initial);
     setSaveSlots(listSaveSlots());
@@ -590,6 +612,36 @@ export function CareerProvider({ children, online = null }) {
       if (!fresh.length) return st;
       return { ...st, incomingOffers: [...fresh, ...(st.incomingOffers || [])].slice(0, 40), news: [`📨 ${fresh.length} oferta${fresh.length === 1 ? "" : "s"} de clubes por tus jugadores.`, ...st.news].slice(0, 8) };
     });
+  }
+
+  // Fichajes entre managers de la liga online ya cerrados: entra o sale el jugador y la plata. Cada
+  // oferta se aplica una sola vez (managerMovesApplied), aunque el aviso al servidor falle.
+  function applyManagerMoves(moves) {
+    if (!online || !moves?.length) return [];
+    const done = new Set(state?.managerMovesApplied || []);
+    const todo = moves.filter((m) => !done.has(m.offerId));
+    setState((st) => {
+      if (!st) return st;
+      const applied = new Set(st.managerMovesApplied || []);
+      let next = st;
+      for (const m of moves) {
+        if (applied.has(m.offerId)) continue;
+        applied.add(m.offerId);
+        if (m.kind === "in" && m.player && !next.squad.some((p) => String(p.id) === String(m.player.id))) {
+          const signed = { ...m.player, teamId: next.teamId, transferListed: false, loanListed: false, number: nextAvailableNumber(next.squad) };
+          next = { ...next, squad: [...next.squad, signed], lineup: { ...next.lineup, reserves: [...next.lineup.reserves, signed.id] }, budget: Math.round((next.budget - m.amount) * 20) / 20, news: [`✍️ Fichaste a ${m.player.name} por €${m.amount}M (de otro manager).`, ...next.news].slice(0, 8) };
+        } else if (m.kind === "out") {
+          const id = next.squad.find((p) => String(p.id) === String(m.playerId))?.id;
+          const lineup = id == null ? next.lineup : {
+            starters: next.lineup.starters.map((sl) => (sl.playerId === id ? { ...sl, playerId: null } : sl)),
+            bench: next.lineup.bench.filter((x) => x !== id), reserves: next.lineup.reserves.filter((x) => x !== id),
+          };
+          next = { ...next, squad: next.squad.filter((p) => p.id !== id), lineup, budget: Math.round((next.budget + m.amount) * 20) / 20, news: [`💰 Vendiste a ${m.playerName} por €${m.amount}M a otro manager.`, ...next.news].slice(0, 8) };
+        }
+      }
+      return { ...next, managerMovesApplied: [...applied].slice(-200) };
+    });
+    return todo.map((m) => m.offerId);
   }
 
   // Compat: algunos componentes todavía llaman resetCareer() para "salir".
@@ -834,6 +886,134 @@ export function CareerProvider({ children, online = null }) {
     return { success: true };
   }
 
+  // ===== Fichajes 2.0: negociación por rondas, cuotas, pre-acuerdos y masa salarial =====
+  // state.negotiations[playerId] = { fee: { round, counter, agreed, installments }, wage: { round, counter }, week }
+
+  function negotiationOf(playerId) {
+    const n = (state?.negotiations || {})[playerId];
+    // Una negociación vale por la ventana en que empezó (o la semana, fuera de ventana).
+    if (!n) return null;
+    const sameWindow = windowAt(n.week) && windowAt(n.week) === windowAt(state.week);
+    return sameWindow || n.week === state.week ? n : null;
+  }
+
+  function saveNegotiation(playerId, patch) {
+    setState((s) => {
+      const cur = (s.negotiations || {})[playerId] || { week: s.week };
+      return { ...s, negotiations: { ...(s.negotiations || {}), [playerId]: { ...cur, ...patch, week: cur.week ?? s.week } } };
+    });
+  }
+
+  // Oferta por el pase. Devuelve { verdict: accept | counter | reject, ask, counter, round, last }.
+  function negotiateFee(player, amount, { installments = false } = {}) {
+    if (isOnOfferCooldown(player.id)) return { verdict: "cooldown", weeks: weeksUntilCanOffer(player.id) };
+    const clause = (state.releaseClauses || {})[player.id];
+    if (clause != null && amount >= clause) {
+      saveNegotiation(player.id, { fee: { round: 1, agreed: amount, installments: false, byClause: true } });
+      return { verdict: "accept", price: amount, byClause: true };
+    }
+    const prev = negotiationOf(player.id)?.fee;
+    const round = Math.min(MAX_ROUNDS, (prev?.round || 0) + 1);
+    const prestigeBonus = ((state.managerPrestige ?? 50) - 50) * 0.005;
+    const res = clubNegotiation(player, teamById(player.teamId), Math.round(amount * (1 + prestigeBonus) * 20) / 20, round, { installments });
+    const out = { ...res, round, price: res.verdict === "accept" ? amount : undefined };
+    if (res.verdict === "accept") saveNegotiation(player.id, { fee: { round, agreed: amount, installments } });
+    else if (res.angry || res.last) {
+      // Muy lejos, o se agotaron las rondas: el club corta por unas semanas.
+      setState((s) => ({ ...s, offerCooldowns: { ...(s.offerCooldowns || {}), [player.id]: s.week + (res.angry ? 1 : 3) }, negotiations: { ...(s.negotiations || {}), [player.id]: undefined } }));
+    } else saveNegotiation(player.id, { fee: { round, counter: res.counter ?? null, ask: res.ask, installments } });
+    setState((s) => ({ ...s, sentOffers: [{ id: `fee_${player.id}_${s.week}_${Date.now()}`, type: "fee", playerId: player.id, playerName: player.name, teamId: player.teamId, amount, accepted: res.verdict === "accept", verdict: res.verdict, week: s.week }, ...(s.sentOffers || [])].slice(0, 30) }));
+    return out;
+  }
+
+  // Aceptar la contraoferta del club tal cual.
+  function acceptFeeCounter(player) {
+    const fee = negotiationOf(player.id)?.fee;
+    if (!fee?.counter) return null;
+    saveNegotiation(player.id, { fee: { ...fee, agreed: fee.counter, counter: null } });
+    return { verdict: "accept", price: fee.counter };
+  }
+
+  // Contrato con el jugador (sueldo en €k/semana). Se valida la masa salarial.
+  function negotiateContract(player, wage, years, role) {
+    const neg = negotiationOf(player.id);
+    if (neg?.fee?.agreed == null) return { verdict: "no_fee" };
+    const cap = wageCapOf(state);
+    if (wageTotal(state.squad) + wage > cap) return { verdict: "wage_cap", cap, total: wageTotal(state.squad) };
+    const prev = neg.wage;
+    const round = Math.min(MAX_ROUNDS, (prev?.round || 0) + 1);
+    const res = playerNegotiation(player, teamById(player.teamId), team, wage, years, role, state.squad, round);
+    if (res.verdict === "accept") saveNegotiation(player.id, { wage: { round, agreed: wage, years, role } });
+    else if (res.angry || res.last) {
+      setState((s) => ({ ...s, offerCooldowns: { ...(s.offerCooldowns || {}), [player.id]: s.week + 2 }, negotiations: { ...(s.negotiations || {}), [player.id]: undefined } }));
+    } else saveNegotiation(player.id, { wage: { round, counter: res.counter ?? null } });
+    return { ...res, round };
+  }
+
+  function acceptWageCounter(player, years, role) {
+    const neg = negotiationOf(player.id);
+    if (!neg?.wage?.counter) return null;
+    const wage = neg.wage.counter;
+    if (wageTotal(state.squad) + wage > wageCapOf(state)) return { verdict: "wage_cap" };
+    saveNegotiation(player.id, { wage: { ...neg.wage, agreed: wage, years, role, counter: null } });
+    return { verdict: "accept", price: wage };
+  }
+
+  // Firmar: con la ventana abierta se suma ya; cerrada, queda como pre-acuerdo y se suma al abrir.
+  // En cuotas se paga la mitad ahora y la otra mitad al empezar la temporada siguiente.
+  function signPlayer(player) {
+    const neg = negotiationOf(player.id);
+    const fee = neg?.fee?.agreed;
+    const w = neg?.wage;
+    if (fee == null || w?.agreed == null) return { success: false, reason: "not_agreed" };
+    const installments = !!neg.fee.installments;
+    const now = installments ? Math.round((fee / 2) * 20) / 20 : fee;
+    if (state.budget < now) return { success: false, reason: "insufficient_budget" };
+    const open = isTransferWindowOpen();
+    setState((s) => {
+      if (s.budget < now) return s;
+      const deal = { player, fee, wage: w.agreed, years: w.years, role: w.role || expectedRole(player, s.squad).id };
+      const base = {
+        ...s,
+        budget: Math.round((s.budget - now) * 20) / 20,
+        debts: installments ? [...(s.debts || []), { amount: Math.round((fee - now) * 20) / 20, label: player.name }] : (s.debts || []),
+        acquired: [...(s.acquired || []), player.id],
+        watchlist: (s.watchlist || []).filter((id) => id !== player.id),
+        negotiations: { ...(s.negotiations || {}), [player.id]: undefined },
+      };
+      if (!open) {
+        return { ...base, pendingSignings: [...(s.pendingSignings || []), deal], news: [`🤝 Pre-acuerdo con ${player.name} (€${fee}M): se suma cuando abra el mercado.`, ...s.news].slice(0, 8) };
+      }
+      const signed = { ...player, teamId: s.teamId, wage: deal.wage, contractYears: deal.years, role: deal.role, xp: 0, isYouth: false, academyProduct: false, transferListed: false, loanListed: false, releaseClause: null, number: nextAvailableNumber(s.squad) };
+      return {
+        ...base,
+        squad: [...s.squad, signed],
+        lineup: { ...s.lineup, reserves: [...s.lineup.reserves, signed.id] },
+        news: [`✍️ Fichaste a ${player.name} por €${fee}M${installments ? " (en dos cuotas)" : ""}.`, ...s.news].slice(0, 8),
+      };
+    });
+    return { success: true, preAgreed: !open };
+  }
+
+  // «Pedir más» por una oferta recibida: el club sube un 15 % si tenía margen, o se retira.
+  function counterIncomingOffer(offerId) {
+    const offer = (state?.incomingOffers || []).find((o) => o.id === offerId && o.status === "pending");
+    if (!offer || offer.isLoan) return null;
+    const player = state.squad.find((p) => p.id === offer.playerId);
+    const r = raiseIncoming(offer, player);
+    setState((s) => ({
+      ...s,
+      incomingOffers: s.incomingOffers.map((o) => (o.id !== offerId ? o : r.raised ? { ...o, amount: r.amount, raisedOnce: true } : { ...o, status: "withdrawn" })),
+      news: [r.raised ? `📈 ${offer.teamName} sube su oferta por ${offer.playerName} a €${r.amount}M.` : `🚪 ${offer.teamName} se retira: no va a pagar más por ${offer.playerName}.`, ...s.news].slice(0, 8),
+    }));
+    return r;
+  }
+
+  // Saltar los amistosos que queden de pretemporada.
+  function skipPreseason() {
+    setState((s) => (s.preseason ? { ...s, preseason: { ...s.preseason, done: true } } : s));
+  }
+
   function toggleWatchlist(playerId) {
     setState((s) => {
       const watchlist = s.watchlist || [];
@@ -894,7 +1074,7 @@ export function CareerProvider({ children, online = null }) {
       const offer = (s.jobOffers || []).find((o) => o.id === offerId && o.status === "pending");
       if (!offer) return s;
       // Construir nueva carrera en el club destino, manteniendo prestige e historial
-      const newState = buildInitialState(offer.fromTeamId);
+      const newState = normalizeState(buildInitialState(offer.fromTeamId));
       return {
         ...newState,
         managerPrestige: s.managerPrestige,
@@ -1074,6 +1254,8 @@ export function CareerProvider({ children, online = null }) {
   function playNextMatchFirstHalf() {
     const fixture = currentFixture();
     if (!fixture || !team) return null;
+    // Primero el partido de Copa/Europa de esta semana (si hay uno pendiente).
+    if (midweekBlocking(state)) return null;
     const base = autoDaysToMatch(state);
     const rival = teamById(fixture.opponentTeamId);
     const rivalSquad = playersByTeam(rival.id).filter((p) => !(state.acquired || []).includes(p.id));
@@ -1515,10 +1697,10 @@ export function CareerProvider({ children, online = null }) {
         news = [`🏅 Copa ${COPA_ROUNDS[roundIdx]}: avanzas a ${COPA_ROUNDS[roundIdx + 1]} vs ${newCopa.opponents[roundIdx + 1]?.name || "?"} (ganaste ${result.myGoals}-${result.rivalGoals}${result.myGoals === result.rivalGoals ? " en penales" : ""}). +€${COPA_PRIZES[roundIdx]}M.`, ...news].slice(0, 8);
       }
 
-      return { ...s, copa: newCopa, news, budget, injuries, playerStats, morale, fatigue, lastMatch: { ...result, rival: rivalTeam, competitionLabel: `Copa del Rey · ${COPA_ROUNDS[roundIdx]}` } };
+      return { ...s, copa: newCopa, news, budget, injuries, playerStats, morale, fatigue, lastMatch: { ...result, rival: rivalTeam, competitionLabel: `${cupName(teamById(s.teamId)?.league)} · ${COPA_ROUNDS[roundIdx]}` } };
     });
 
-    return { ...result, rival: rivalTeam, competitionLabel: `Copa del Rey · ${COPA_ROUNDS[roundIdx]}` };
+    return { ...result, rival: rivalTeam, competitionLabel: `${cupName(team?.league)} · ${COPA_ROUNDS[roundIdx]}` };
   }
 
   function continentalIsAvailable() {
@@ -1765,7 +1947,9 @@ export function CareerProvider({ children, online = null }) {
       squad,
       renewalOffers,
       lineup: defaultLineup(squad, s.formation),
-      budget,
+      // Segundas cuotas de fichajes: se pagan al arrancar la temporada nueva.
+      budget: Math.round((budget - (s.debts || []).reduce((n, d) => n + d.amount, 0)) * 20) / 20,
+      debts: [],
       lastSeasonIncome: income,
       lastSeasonPosition: position,
       boardConfidence,
@@ -1789,7 +1973,7 @@ export function CareerProvider({ children, online = null }) {
         ...renewalNews,
         objectiveMet ? `¡Objetivo cumplido! Terminaste ${position}° — la directiva confía en el proyecto.` : `No se cumplió el objetivo (terminaste ${position}°). La directiva está molesta.`,
         `Nueva temporada: llegan 3 promesas de la cantera.`,
-        `Copa del Rey: primera ronda disponible en jornada ${COPA_WEEKS[0]}.`,
+        `${cupName(teamById(s.teamId)?.league)}: la primera ronda se juega el miércoles de la semana ${COPA_WEEKS[0]}.`,
         ...s.news,
       ].slice(0, 8),
       gameOver,
@@ -1930,6 +2114,15 @@ export function CareerProvider({ children, online = null }) {
       offerForPlayer,
       offerContractTo,
       completeTransfer,
+      negotiationOf,
+      negotiateFee,
+      acceptFeeCounter,
+      negotiateContract,
+      acceptWageCounter,
+      signPlayer,
+      counterIncomingOffer,
+      skipPreseason,
+      applyManagerMoves,
       isOnOfferCooldown,
       weeksUntilCanOffer,
       isTransferWindowOpen,

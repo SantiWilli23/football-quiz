@@ -1,7 +1,12 @@
+import { getManagersSquads, getPlayerOffers, sendPlayerOffer, respondPlayerOffer } from "./api.js";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Check, ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import ClubPanel from "./ClubPanel.jsx";
+import CompChip from "../carrera/components/CompChip.jsx";
+
+// Competición del servidor → color de la agenda (liga, copa nacional o copa europea).
+const chipOf = (comp) => (comp === "liga" ? "liga" : ["champions", "europa", "conference"].includes(comp) ? "europa" : "copa");
 import { dateOfDay, MONTH_NAMES } from "../carrera/engine/energy.js";
 import {
   getLeague, pickTeam, startLeague, setCpuDifficulty,
@@ -104,16 +109,27 @@ export default function DtLeagueRoom() {
   return (
     <div className="min-h-screen bg-bg text-white p-4">
       <div className="w-full max-w-[1500px] mx-auto space-y-5">
-        <div className="hero-b rounded-3xl p-5 sm:p-6 flex items-center justify-between gap-3" style={{ "--hero-a": "var(--c-accent)", "--hero-b": "var(--c-purple)" }}>
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight">{league.name}</h1>
-            <p className="text-sm text-gray-300 mt-1">
-              {league.leagueKey === "premier" ? "Premier League" : "La Liga"}
-              {league.status === "in_progress" && ` · ${league.weeksPerMonth} jornada${league.weeksPerMonth === 1 ? "" : "s"} por mes`}
-              {league.status === "finished" && " · Temporada terminada"}
+        <div className="p-card flex items-center justify-between gap-4 flex-wrap">
+          <div className="min-w-0">
+            <p className="p-eyebrow" style={{ justifyContent: "flex-start" }}>Liga Online DT · {league.leagueKey === "premier" ? "Premier League" : "La Liga"}{league.season > 1 ? ` · Temporada ${league.season}` : ""}</p>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight truncate" style={{ fontFamily: "var(--f-d)" }}>{league.name}</h1>
+            <p className="text-sm p-muted mt-0.5">
+              {league.status === "in_progress" && `${league.weeksPerMonth} jornada${league.weeksPerMonth === 1 ? "" : "s"} por mes`}
+              {league.status === "finished" && "Temporada terminada"}
+              {league.status === "lobby" && "Esperando que arranque"}
+              {league.marketLabel && <span style={{ color: "var(--gold)" }}> · {league.marketLabel} abierto</span>}
             </p>
           </div>
-          <Link to="/dt-liga" className="text-xs text-gray-500 hover:text-white shrink-0">🏠 Mis ligas</Link>
+          {league.status === "in_progress" && league.totalWeeks > 0 && (() => {
+            const months = Math.max(1, Math.ceil(league.totalWeeks / (league.weeksPerMonth || 4)));
+            return (
+              <div className="w-48">
+                <p className="p-eyebrow"><span>Mes</span><span>{league.currentMonth} de {months}</span></p>
+                <div className="p-cbar mt-1"><i style={{ width: `${Math.min(100, (league.currentMonth / months) * 100)}%` }} /></div>
+              </div>
+            );
+          })()}
+          <Link to="/dt-liga" className="p-btn ghost sm shrink-0">Mis ligas</Link>
         </div>
 
         {error && (
@@ -267,16 +283,12 @@ export default function DtLeagueRoom() {
 
         {(league.status === "in_progress" || league.status === "finished") && (
           <>
-            <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none]">
-              {[["fixtures", "Jornada"], ["club", "Mi club"], ["calendar", "Calendario"], ["standings", "Tabla"], ["score", "Puntaje"], ["market", "Mercado"], ["config", "Configuración"]].map(([id, label]) => (
-                <button
-                  key={id}
-                  onClick={() => setTab(id)}
-                  className={`${{ fixtures: "tone-accent", club: "tone-emerald", calendar: "tone-purple", standings: "tone-blue", score: "tone-amber", market: "tone-pink", config: "tone-cyan" }[id]} shrink-0 whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold ${
-                    tab === id ? "tile-b text-white" : "text-gray-400 border border-border hover:text-white"
-                  }`}
-                >
+            <div className="flex gap-1 overflow-x-auto [scrollbar-width:none] border-b sticky top-0 z-10 -mx-4 px-4" style={{ borderColor: "var(--line)", background: "color-mix(in srgb, var(--bg) 94%, transparent)", backdropFilter: "blur(8px)" }} role="tablist" aria-label="Secciones de la liga">
+              {[["fixtures", "Jornada"], ["club", "Mi club"], ["calendar", "Calendario"], ["standings", "Tabla"], ["score", "Puntaje"], ["market", "Mercado"], ["config", "Ajustes"]].map(([id, label]) => (
+                <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
+                  className="relative shrink-0 whitespace-nowrap px-3 py-2.5 text-sm font-semibold transition-colors" style={{ color: tab === id ? "var(--fg)" : "var(--mute)" }}>
                   {label}
+                  {tab === id && <i className="absolute left-2 right-2 bottom-0 h-[3px] rounded-t" style={{ background: "var(--acc)" }} />}
                 </button>
               ))}
             </div>
@@ -374,6 +386,26 @@ function FixturesTab({ code, league, myTeamId, onAdvanced, onReload }) {
     <div className="space-y-4">
       {error && <div className="bg-red-500/10 border border-red-500/30 rounded-2xl px-4 py-2.5 text-sm text-red-300">{error}</div>}
 
+      {(() => {
+        // Tu próximo partido del mes, con su botón: lo primero que se busca al entrar.
+        const nx = data.fixtures.find((f) => f.involvesMe && !f.played && !f.bye);
+        if (!nx || seasonOver) return null;
+        const mineHome = nx.homeTeamId === myTeamId;
+        return (
+          <section className="p-hero">
+            <div className="p-eyebrow"><span className="flex items-center gap-2"><CompChip comp={chipOf(nx.comp)} />{nx.comp === "liga" ? `Jornada ${nx.week}` : `${nx.compLabel} · ${nx.roundLabel || ""}`}</span><span>{mineHome ? "Local" : "Visitante"}</span></div>
+            <div className="flex items-center justify-between gap-3 my-4">
+              <b className="text-lg sm:text-2xl truncate" style={{ fontFamily: "var(--f-d)" }}>{nx.homeTeamName}</b>
+              <span className="p-num text-3xl" style={{ color: "var(--mute)" }}>VS</span>
+              <b className="text-lg sm:text-2xl truncate text-right" style={{ fontFamily: "var(--f-d)" }}>{nx.awayTeamName}</b>
+            </div>
+            {nx.canPlaySolo && <button onClick={() => handlePlaySolo(nx.id)} disabled={busyId === nx.id} className="p-btn big">{busyId === nx.id ? "Jugando…" : "Jugar partido"}</button>}
+            {nx.canPlayLive && <button onClick={() => navigate(`/dt-liga/${code}/live/${nx.id}`)} className="p-btn big">🔴 Jugar en vivo</button>}
+            {!nx.canPlaySolo && !nx.canPlayLive && <p className="text-sm p-muted">{nx.locked ? "Este mes ya se cerró." : nx.isPvp ? `Contra ${mineHome ? nx.awayManager : nx.homeManager}: se juega en vivo con los dos conectados.` : "Todavía no se puede jugar."}</p>}
+          </section>
+        );
+      })()}
+
       {league.status === "in_progress" && <MonthPanel code={code} onChanged={() => { load(); onReload?.(); }} />}
 
       <div className="flex items-center justify-between">
@@ -414,9 +446,7 @@ function FixturesTab({ code, league, myTeamId, onAdvanced, onReload }) {
               }`}
             >
               {f.isClasico && <span title="El clásico de la jornada" className="shrink-0">⭐</span>}
-              {f.comp !== "liga" && (
-                <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-full border border-accent/30 text-accent" title={f.compLabel}>{f.compLabel} · {f.roundLabel}</span>
-              )}
+              {f.comp !== "liga" && <span title={`${f.compLabel} · ${f.roundLabel}`}><CompChip comp={chipOf(f.comp)} short /></span>}
               <span className={`flex-1 text-right ${f.homeTeamId === myTeamId ? "font-semibold text-accent" : ""}`}>{f.homeTeamName}</span>
               <span className="w-16 text-center font-bold tabular-nums shrink-0">
                 {f.played ? `${f.homeGoals} - ${f.awayGoals}` : "vs"}
@@ -715,17 +745,20 @@ function StandingsTab({ code, myTeamId }) {
 
 function MarketTab({ code, league }) {
   const [trades, setTrades] = useState([]);
+  const [offers, setOffers] = useState({ received: [], sent: [], marketOpen: false });
+  const [squads, setSquads] = useState([]);
+  const [openMgr, setOpenMgr] = useState(null);
+  const [bidFor, setBidFor] = useState(null); // { sellerId, playerId, amount }
+  const [counterFor, setCounterFor] = useState(null); // { id, amount }
   const [proposingTo, setProposingTo] = useState(null);
   const [error, setError] = useState(null);
+  const [msg, setMsg] = useState(null);
 
   const load = useCallback(async () => {
-    try {
-      setTrades(await getTrades(code));
-    } catch {
-      setTrades([]);
-    }
+    getTrades(code).then(setTrades).catch(() => setTrades([]));
+    getPlayerOffers(code).then(setOffers).catch(() => {});
+    getManagersSquads(code).then((d) => setSquads(d.managers || [])).catch(() => setSquads([]));
   }, [code]);
-
   useEffect(() => { load(); }, [load]);
 
   const me = league.members.find((m) => m.isMe);
@@ -733,101 +766,140 @@ function MarketTab({ code, league }) {
   const pendingWithUser = (userId) =>
     trades.some((t) => t.status === "pending" && ((t.fromUserId === userId) || (t.toUserId === userId)) && (t.fromUserId === me?.userId || t.toUserId === me?.userId));
 
-  async function handlePropose(toUserId) {
-    setProposingTo(toUserId);
-    setError(null);
-    try {
-      await proposeTrade(code, toUserId);
-      await load();
-    } catch (err) {
-      setError(err.response?.data?.error || "No se pudo mandar la propuesta");
-    } finally {
-      setProposingTo(null);
-    }
+  async function run(fn, ok) {
+    setError(null); setMsg(null);
+    try { await fn(); if (ok) setMsg(ok); await load(); } catch (err) { setError(err.response?.data?.error || "No se pudo completar"); }
   }
 
-  async function handleRespond(tradeId, accept) {
-    setError(null);
-    try {
-      await respondTrade(code, tradeId, accept);
-      await load();
-    } catch (err) {
-      setError(err.response?.data?.error || "No se pudo responder");
-    }
-  }
-
-  if (!me?.teamId) {
-    return <p className="text-sm text-gray-500 text-center py-6">No diriges ningún equipo en esta liga.</p>;
-  }
+  if (!me?.teamId) return <p className="text-sm text-gray-500 text-center py-6">No diriges ningún equipo en esta liga.</p>;
 
   const pending = trades.filter((t) => t.status === "pending");
   const resolved = trades.filter((t) => t.status !== "pending");
+  const recv = offers.received.filter((o) => o.status === "pending" || o.status === "countered");
+  const sent = offers.sent.filter((o) => ["pending", "countered", "accepted"].includes(o.status));
+  const old = [...offers.received, ...offers.sent].filter((o) => !["pending", "countered", "accepted"].includes(o.status));
+  const field = { background: "var(--bg)", borderColor: "var(--line)" };
 
   return (
-    <div className="space-y-5">
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-2xl px-4 py-2.5 text-sm text-red-300">{error}</div>
-      )}
+    <div className="space-y-4">
+      <div className="p-card" style={{ borderColor: offers.marketOpen ? "var(--gold-line)" : "var(--line)" }}>
+        <p className="p-eyebrow" style={{ justifyContent: "flex-start" }}>{offers.marketOpen ? "Mercado abierto" : "Mercado cerrado"}</p>
+        <p className="text-sm mt-1">{offers.marketOpen ? "Puedes ofertar por jugadores de los otros managers. El que vende acepta, rechaza o te contraoferta." : "Las ofertas entre managers abren en el mercado de verano y en el de invierno."}</p>
+      </div>
+      {error && <div className="rounded-2xl px-4 py-2.5 text-sm" style={{ background: "#ef5b5b1a", border: "1px solid #ef5b5b55", color: "var(--red)" }}>{error}</div>}
+      {msg && <p className="text-sm" style={{ color: "var(--acc2)" }}>{msg}</p>}
 
-      {pending.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Propuestas pendientes</p>
-          {pending.map((t) => (
-            <div key={t.id} className="bg-panel border border-border rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
-              <p className="text-sm">
-                {t.isMine
-                  ? `Le ofreciste ${t.fromTeamName} a ${t.toUsername} a cambio de ${t.toTeamName}`
-                  : `${t.fromUsername} te ofrece ${t.fromTeamName} a cambio de tu ${t.toTeamName}`}
-              </p>
-              {!t.isMine && (
-                <div className="flex gap-1.5 shrink-0">
-                  <button
-                    onClick={() => handleRespond(t.id, true)}
-                    className="text-xs font-medium px-3 py-1.5 rounded-full bg-emerald/15 text-emerald border border-emerald/40 hover:bg-emerald/25 transition-colors"
-                  >
-                    Aceptar
-                  </button>
-                  <button
-                    onClick={() => handleRespond(t.id, false)}
-                    className="text-xs font-medium px-3 py-1.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition-colors"
-                  >
-                    Rechazar
-                  </button>
-                </div>
-              )}
-              {t.isMine && <span className="text-xs text-gray-500 shrink-0">esperando respuesta</span>}
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Proponer intercambio de club</p>
-        {others.length === 0 && <p className="text-sm text-gray-500">No hay otros managers con club en esta liga.</p>}
-        {others.map((m) => (
-          <div key={m.userId} className="bg-panel border border-border rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
-            <p className="text-sm">{m.username} — dirige {league.allTeams.find((t) => t.id === m.teamId)?.name || m.teamId}</p>
-            <button
-              onClick={() => handlePropose(m.userId)}
-              disabled={proposingTo === m.userId || pendingWithUser(m.userId)}
-              className="text-xs font-medium px-3 py-1.5 rounded-full bg-accent/10 text-accent border border-accent/40 hover:bg-accent/20 disabled:opacity-40 transition-colors shrink-0"
-            >
-              {pendingWithUser(m.userId) ? "Ya hay propuesta" : "Proponer cambio"}
-            </button>
+      <section className="p-card space-y-2">
+        <p className="p-eyebrow"><span>Ofertas por tus jugadores</span><span>{recv.length}</span></p>
+        {!recv.length && <p className="text-sm p-muted">Nadie te ofertó por ahora.</p>}
+        {recv.map((o) => (
+          <div key={o.id} className="rounded-xl p-3" style={{ background: "var(--panel2)" }}>
+            <p className="text-sm"><b>{o.buyerName}</b> ofrece <b className="p-num text-base" style={{ color: "var(--gold)" }}>€{o.amount}M</b> por <b>{o.playerName}</b> <small className="p-muted">(OVR {o.ovr})</small></p>
+            {o.status === "countered" ? (
+              <p className="text-xs p-muted mt-1">Le contraofertaste €{o.counterAmount}M. Esperando su respuesta.</p>
+            ) : counterFor?.id === o.id ? (
+              <div className="flex gap-2 mt-2 items-center">
+                <input type="number" step={0.5} value={counterFor.amount} onChange={(e) => setCounterFor({ ...counterFor, amount: Number(e.target.value) })} className="w-24 rounded-lg border px-2 py-1.5 text-sm" style={field} aria-label="Contraoferta en millones" />
+                <button onClick={() => run(() => respondPlayerOffer(code, o.id, "counter", counterFor.amount), "Contraoferta enviada.").then(() => setCounterFor(null))} className="p-btn sm gold">Contraofertar</button>
+                <button onClick={() => setCounterFor(null)} className="p-btn sm ghost">Cancelar</button>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2 mt-2">
+                <button onClick={() => run(() => respondPlayerOffer(code, o.id, "accept"), "Vendido: se aplica al abrir Mi club.")} className="p-btn sm">Aceptar</button>
+                <button onClick={() => setCounterFor({ id: o.id, amount: Math.round(o.amount * 1.2 * 2) / 2 })} className="p-btn sm gold">Contraofertar</button>
+                <button onClick={() => run(() => respondPlayerOffer(code, o.id, "reject"))} className="p-btn sm ghost">Rechazar</button>
+              </div>
+            )}
           </div>
         ))}
-      </div>
+      </section>
 
-      {resolved.length > 0 && (
-        <details>
-          <summary className="text-xs text-gray-600 cursor-pointer hover:text-gray-400">Historial ({resolved.length})</summary>
-          <div className="mt-2 space-y-1.5">
-            {resolved.map((t) => (
-              <p key={t.id} className="text-xs text-gray-500">
-                {t.fromUsername} ↔ {t.toUsername} — <span className={t.status === "accepted" ? "text-emerald" : "text-red-400"}>{t.status === "accepted" ? "aceptado" : t.status === "rejected" ? "rechazado" : "cancelado"}</span>
-              </p>
-            ))}
+      <section className="p-card space-y-2">
+        <p className="p-eyebrow"><span>Tus ofertas</span><span>{sent.length}</span></p>
+        {!sent.length && <p className="text-sm p-muted">No tienes ofertas abiertas.</p>}
+        {sent.map((o) => (
+          <div key={o.id} className="rounded-xl p-3" style={{ background: "var(--panel2)" }}>
+            <p className="text-sm">Ofreciste <b className="p-num text-base">€{o.amount}M</b> a {o.sellerName} por <b>{o.playerName}</b></p>
+            {o.status === "pending" && <p className="text-xs p-muted mt-1">Esperando respuesta.</p>}
+            {o.status === "accepted" && <p className="text-xs mt-1" style={{ color: "var(--acc2)" }}>¡Trato cerrado! Se suma a tu plantel al abrir Mi club.</p>}
+            {o.status === "countered" && (
+              <div className="mt-2">
+                <p className="text-sm">{o.sellerName} pide <b className="p-num text-base" style={{ color: "var(--gold)" }}>€{o.counterAmount}M</b>.</p>
+                <div className="flex gap-2 mt-2">
+                  <button onClick={() => run(() => respondPlayerOffer(code, o.id, "accept"), "¡Trato cerrado! Se suma al abrir Mi club.")} className="p-btn sm gold">Aceptar €{o.counterAmount}M</button>
+                  <button onClick={() => run(() => respondPlayerOffer(code, o.id, "reject"))} className="p-btn sm ghost">No, gracias</button>
+                </div>
+              </div>
+            )}
           </div>
+        ))}
+      </section>
+
+      <section className="p-card space-y-2">
+        <p className="p-eyebrow"><span>Plantillas de los otros managers</span></p>
+        {!squads.length && <p className="text-sm p-muted">Todavía no hay otros managers con plantel guardado.</p>}
+        {squads.map((mg) => (
+          <div key={mg.userId} className="rounded-xl" style={{ background: "var(--panel2)" }}>
+            <button onClick={() => setOpenMgr(openMgr === mg.userId ? null : mg.userId)} className="w-full flex items-center justify-between px-3 py-2.5 text-sm" aria-expanded={openMgr === mg.userId}>
+              <span><b>{mg.username}</b> <span className="p-muted">· {mg.teamName} · {mg.players.length} jugadores</span></span>
+              <span className="p-muted">{openMgr === mg.userId ? "▲" : "▼"}</span>
+            </button>
+            {openMgr === mg.userId && (
+              <ul className="px-3 pb-3 space-y-1">
+                {mg.players.map((p) => {
+                  const bidding = bidFor?.playerId === p.id && bidFor?.sellerId === mg.userId;
+                  return (
+                    <li key={p.id} className="flex items-center gap-2 text-sm py-1 flex-wrap" style={{ borderTop: "1px solid var(--line)" }}>
+                      <span className="p-num w-9 text-base" style={{ color: "var(--acc2)" }}>{p.ovr}</span>
+                      <span className="flex-1 min-w-[140px] truncate">{p.name} <small className="p-muted">{p.position} · {p.age} a · €{p.value}M</small></span>
+                      {bidding ? (
+                        <span className="flex gap-1.5 items-center">
+                          <input type="number" step={0.5} value={bidFor.amount} onChange={(e) => setBidFor({ ...bidFor, amount: Number(e.target.value) })} className="w-20 rounded-lg border px-2 py-1 text-sm" style={field} aria-label="Oferta en millones" />
+                          <button onClick={() => run(() => sendPlayerOffer(code, mg.userId, p.id, bidFor.amount), "Oferta enviada.").then(() => setBidFor(null))} className="p-btn sm">Enviar</button>
+                          <button onClick={() => setBidFor(null)} className="p-btn sm ghost">✕</button>
+                        </span>
+                      ) : (
+                        <button disabled={!offers.marketOpen} onClick={() => setBidFor({ sellerId: mg.userId, playerId: p.id, amount: p.value })} className="p-btn sm ghost">Ofertar</button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        ))}
+      </section>
+
+      <details className="p-card">
+        <summary className="cursor-pointer text-sm font-semibold">Intercambiar clubes con otro manager</summary>
+        <div className="space-y-2 mt-3">
+          {pending.map((t) => (
+            <div key={t.id} className="rounded-xl px-3 py-2.5 flex items-center justify-between gap-3" style={{ background: "var(--panel2)" }}>
+              <p className="text-sm">{t.isMine ? `Le ofreciste ${t.fromTeamName} a ${t.toUsername} a cambio de ${t.toTeamName}` : `${t.fromUsername} te ofrece ${t.fromTeamName} a cambio de tu ${t.toTeamName}`}</p>
+              {!t.isMine ? (
+                <div className="flex gap-1.5 shrink-0">
+                  <button onClick={() => run(() => respondTrade(code, t.id, true))} className="p-btn sm">Aceptar</button>
+                  <button onClick={() => run(() => respondTrade(code, t.id, false))} className="p-btn sm ghost">Rechazar</button>
+                </div>
+              ) : <span className="text-xs p-muted shrink-0">esperando respuesta</span>}
+            </div>
+          ))}
+          {others.map((m) => (
+            <div key={m.userId} className="rounded-xl px-3 py-2.5 flex items-center justify-between gap-3" style={{ background: "var(--panel2)" }}>
+              <p className="text-sm">{m.username} — dirige {league.allTeams.find((t) => t.id === m.teamId)?.name || m.teamId}</p>
+              <button onClick={() => { setProposingTo(m.userId); run(() => proposeTrade(code, m.userId)).finally(() => setProposingTo(null)); }} disabled={proposingTo === m.userId || pendingWithUser(m.userId)} className="p-btn sm ghost">
+                {pendingWithUser(m.userId) ? "Ya hay propuesta" : "Proponer cambio"}
+              </button>
+            </div>
+          ))}
+          {resolved.length > 0 && <p className="text-xs p-muted">Historial: {resolved.map((t) => `${t.fromUsername} ↔ ${t.toUsername} (${t.status === "accepted" ? "aceptado" : t.status === "rejected" ? "rechazado" : "cancelado"})`).join(" · ")}</p>}
+        </div>
+      </details>
+
+      {old.length > 0 && (
+        <details>
+          <summary className="text-xs p-muted cursor-pointer">Historial de ofertas ({old.length})</summary>
+          <ul className="mt-2 space-y-1 text-xs p-muted">{old.map((o) => <li key={o.id}>{o.buyerName} → {o.sellerName}: {o.playerName} €{o.amount}M · {o.status === "rejected" ? "rechazada" : o.status === "withdrawn" ? "retirada" : "cancelada"}</li>)}</ul>
         </details>
       )}
     </div>

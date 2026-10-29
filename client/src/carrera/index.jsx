@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  Home, Shuffle, LayoutDashboard, Users, ArrowLeftRight, LayoutGrid, SlidersHorizontal, Sprout,
-  Wallet, CalendarDays, History, Settings as SettingsIcon,
+  Home, Shuffle, LayoutDashboard, Users, ArrowLeftRight, Wallet, CalendarDays, Settings as SettingsIcon,
 } from "lucide-react";
 import { CareerProvider, useCareer } from "./context/CareerContext.jsx";
 import TeamSelector from "./components/TeamSelector.jsx";
@@ -20,20 +19,49 @@ import CareerHistory from "./components/CareerHistory.jsx";
 import Finances from "./components/Finances.jsx";
 import TeamCrest from "./components/TeamCrest.jsx";
 import { teamById } from "./data/teams.js";
+import { currentDate, DAY_LABELS, MONTH_NAMES } from "./engine/energy.js";
+import { wageTotal, wageCapOf } from "./engine/transferMarket.js";
 
-// Menú del Modo DT, en este orden (Configuración siempre al final).
+// Menú del Modo DT: 6 secciones; Plantel y Club tienen sub-pestañas (antes eran 10 botones sueltos).
 const MENU = [
-  ["dashboard", "Inicio", LayoutDashboard],
-  ["squad", "Plantel", Users],
-  ["formations", "Formaciones", LayoutGrid],
-  ["tactics", "Tácticas", SlidersHorizontal],
-  ["transfers", "Fichajes", ArrowLeftRight],
-  ["cantera", "Cantera", Sprout],
-  ["finances", "Finanzas", Wallet],
-  ["calendar", "Calendario", CalendarDays],
-  ["history", "Historial", History],
-  ["settings", "Configuración", SettingsIcon],
+  { id: "dashboard", label: "Inicio", icon: LayoutDashboard },
+  { id: "plantel", label: "Plantel", icon: Users, sub: [["squad", "Plantel"], ["formations", "Formación"], ["tactics", "Tácticas"]] },
+  { id: "transfers", label: "Fichajes", icon: ArrowLeftRight },
+  { id: "calendar", label: "Calendario", icon: CalendarDays },
+  { id: "club", label: "Club", icon: Wallet, sub: [["finances", "Finanzas"], ["cantera", "Cantera"], ["history", "Historial"]] },
+  { id: "settings", label: "Ajustes", icon: SettingsIcon },
 ];
+const groupOf = (screen) => MENU.find((m) => m.id === screen || m.sub?.some(([k]) => k === screen)) || MENU[0];
+const LEAGUE_LABELS = { premier: "Premier League", laliga: "La Liga", seriea: "Serie A", bundesliga: "Bundesliga" };
+
+// Cabecera del club: fecha, posición, presupuesto y masa salarial siempre a la vista.
+function ClubHeader({ team, onExit }) {
+  const { state, standingsSorted } = useCareer();
+  const d = currentDate(state);
+  const pos = standingsSorted.findIndex((r) => r.teamId === state.teamId) + 1;
+  const wages = wageTotal(state.squad);
+  const cap = wageCapOf(state);
+  const pct = Math.min(100, Math.round((wages / cap) * 100));
+  return (
+    <div className="flex items-center gap-3 flex-wrap px-4 pt-3 pb-2 max-w-[1280px] mx-auto">
+      {team && <TeamCrest team={team} size={40} className="shrink-0" />}
+      <div className="min-w-0 mr-auto">
+        <p className="font-bold text-lg leading-tight truncate" style={{ fontFamily: "var(--f-d)" }}>{team?.name}</p>
+        <p className="text-xs p-muted">{DAY_LABELS[(d.getUTCDay() + 6) % 7]} {d.getUTCDate()} {MONTH_NAMES[d.getUTCMonth()].slice(0, 3)} · {pos}° {LEAGUE_LABELS[team?.league] || ""} · Temp. {state.season}</p>
+      </div>
+      <div className="text-right">
+        <p className="p-eyebrow" style={{ justifyContent: "flex-end" }}>Presupuesto</p>
+        <p className="p-num text-2xl leading-none" style={{ color: "var(--gold)" }}>€{state.budget}M</p>
+      </div>
+      <div className="w-36 hidden sm:block" title={`Sueldos: €${wages}k/sem de un tope de €${cap}k/sem`}>
+        <p className="p-eyebrow"><span>Masa salarial</span><span>{pct}%</span></p>
+        <div className="p-cbar mt-1"><i style={{ width: `${pct}%`, background: pct > 95 ? "var(--red)" : undefined }} /></div>
+      </div>
+      <Link to="/hoy" title="Volver a Futotal" className="p-roundb shrink-0"><Home size={16} /></Link>
+      <button onClick={onExit} title="Cambiar de carrera" className="p-roundb shrink-0"><Shuffle size={16} /></button>
+    </div>
+  );
+}
 
 function CareerApp() {
   const { state, saveSlots, exitToMenu } = useCareer();
@@ -58,62 +86,32 @@ function CareerApp() {
   }
 
   const team = teamById(state.teamId);
+  const group = groupOf(screen);
 
   return (
     <div className="min-h-screen bg-bg text-white">
-      <nav className="sticky top-0 z-10 bg-panel border-b border-border">
-        <div className="flex items-center gap-2 px-3 pt-2.5">
-          {team && <TeamCrest team={team} size={22} className="shrink-0" />}
-          <p className="text-sm font-semibold truncate mr-auto">{team?.name}</p>
-          <Link
-            to="/panel"
-            title="Volver al menú principal"
-            className="p-1.5 rounded-card text-gray-500 hover:text-white hover:bg-white/5 shrink-0"
-          >
-            <Home size={16} />
-          </Link>
-          <button
-            onClick={() => { setForceNewCareer(false); exitToMenu(); }}
-            title="Cambiar de carrera"
-            className="p-1.5 rounded-card text-gray-500 hover:text-white hover:bg-white/5 shrink-0"
-          >
-            <Shuffle size={16} />
-          </button>
-        </div>
-        <div className="flex md:hidden items-center gap-1 overflow-x-auto px-2 pb-1 pt-1.5">
-          {MENU.map(([id, label, Icon]) => {
-            const active = screen === id;
+      <nav className="sticky top-0 z-10 border-b" style={{ background: "color-mix(in srgb, var(--bg2) 94%, transparent)", backdropFilter: "blur(8px)", borderColor: "var(--line)" }}>
+        <ClubHeader team={team} onExit={() => { setForceNewCareer(false); exitToMenu(); }} />
+        <div className="flex gap-1 overflow-x-auto px-3 max-w-[1280px] mx-auto [scrollbar-width:none]" role="tablist" aria-label="Secciones del Modo DT">
+          {MENU.map(({ id, label, icon: Icon, sub }) => {
+            const active = group.id === id;
             return (
-              <button
-                key={id}
-                onClick={() => setScreen(id)}
-                className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors border-b-2 shrink-0 ${
-                  active ? "text-accent border-accent" : "text-gray-400 border-transparent hover:text-white"
-                }`}
-              >
-                <Icon size={15} />
-                {label}
+              <button key={id} role="tab" aria-selected={active} onClick={() => setScreen(sub ? sub[0][0] : id)}
+                className="relative flex items-center gap-1.5 px-3 py-2.5 text-sm font-semibold whitespace-nowrap shrink-0 transition-colors"
+                style={{ color: active ? "var(--fg)" : "var(--mute)" }}>
+                <Icon size={15} />{label}
+                {active && <i className="absolute left-2 right-2 bottom-0 h-[3px] rounded-t" style={{ background: "var(--acc)" }} />}
               </button>
             );
           })}
         </div>
       </nav>
-      <div className="md:flex w-full">
-      <aside className="hidden md:block w-56 shrink-0 p-4 pr-0">
-        <div className="sticky top-24 space-y-1">
-          {MENU.map(([id, label, Icon]) => (
-            <button
-              key={id}
-              onClick={() => setScreen(id)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-card text-sm text-left border transition-colors ${screen === id ? "tone-accent tile-b text-white font-semibold" : "border-transparent text-gray-400 hover:text-white hover:bg-white/5"}`}
-            >
-              <Icon size={16} className={screen === id ? "text-tone shrink-0" : "shrink-0"} />
-              {label}
-            </button>
-          ))}
-        </div>
-      </aside>
-      <main className="flex-1 min-w-0 p-4 w-full">
+      <main className="w-full max-w-[1280px] mx-auto p-4 space-y-4">
+        {group.sub && (
+          <div className="p-seg" style={{ maxWidth: 420 }} role="tablist" aria-label={group.label}>
+            {group.sub.map(([k, l]) => <button key={k} role="tab" aria-selected={screen === k} className={screen === k ? "on" : ""} onClick={() => setScreen(k)}>{l}</button>)}
+          </div>
+        )}
         {screen === "dashboard" && (
           <Dashboard onPlayMatch={(result) => { setMatchResult(result); setScreen("match"); }} />
         )}
@@ -127,7 +125,6 @@ function CareerApp() {
         {screen === "calendar" && <SeasonCalendar />}
         {screen === "history" && <CareerHistory />}
       </main>
-      </div>
     </div>
   );
 }

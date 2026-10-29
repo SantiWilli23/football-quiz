@@ -9,6 +9,9 @@ import { getInjury } from "../engine/injuryEngine.js";
 import TeamCrest from "./TeamCrest.jsx";
 import NationalTeamCard from "./NationalTeamCard.jsx";
 import WeeklyDecisionCard from "./WeeklyDecisionCard.jsx";
+import CompChip from "./CompChip.jsx";
+import { nextEvent, upcoming, windowClosesIn, nextWindow } from "../engine/schedule.js";
+import { DAY_LABELS, MONTH_NAMES, dateOfDay, matchReadiness } from "../engine/energy.js";
 
 const CONFIDENCE_GRADIENT = {
   good: "linear-gradient(90deg, rgb(var(--c-emerald)), #3b9dd6)",
@@ -218,7 +221,7 @@ export default function Dashboard({ onPlayMatch }) {
     preseasonAvailable, playPreseasonMatch, setSeasonName,
     setCustomObjective, toggleCustomObjectiveDone, clearCustomObjective,
     COPA_ROUNDS: CR, COPA_WEEKS: CW, CONTINENTAL_ROUNDS, CONTINENTAL_WEEKS, CONTINENTAL_LABELS,
-    maybeOfferNationalTeam,
+    maybeOfferNationalTeam, respondToIncomingOffer, counterIncomingOffer, skipPreseason,
   } = useCareer();
 
   useEffect(() => {
@@ -288,370 +291,177 @@ export default function Dashboard({ onPlayMatch }) {
     );
   }
 
+  // Agenda unificada: el próximo partido de cualquier competición y los que siguen.
+  const next = nextEvent(state);
+  const agenda = upcoming(state, 6);
+  const nextRival = next ? teamById(next.opponentId) : null;
+  const nextDate = next ? dateOfDay(state.season || 1, next.weekIdx, next.day) : null;
+  const nextIsDerby = next?.comp === "liga" && fixtureIsDerby;
+  const readiness = matchReadiness(state);
+  const rivalRow = next ? standingsSorted.findIndex((r) => r.teamId === next.opponentId) : -1;
+  const closesIn = windowClosesIn(state.week);
+  const nextWin = nextWindow(state.week);
+  const pendingIncoming = (state.incomingOffers || []).filter((o) => o.status === "pending");
+  const myIdx = standingsSorted.findIndex((r) => r.teamId === state.teamId);
+  const tableRows = standingsSorted.slice(0, 5).some((r) => r.teamId === state.teamId)
+    ? standingsSorted.slice(0, 5)
+    : [...standingsSorted.slice(0, 4), standingsSorted[myIdx]].filter(Boolean);
+
+  function playNext() {
+    if (!next) return;
+    const fn = { liga: handlePlay, copa: handlePlayCopa, europa: handlePlayContinental, amistoso: handlePlayPreseason }[next.comp];
+    fn?.();
+  }
+  const fmt = (d) => `${DAY_LABELS[(d.getUTCDay() + 6) % 7]} ${d.getUTCDate()} ${MONTH_NAMES[d.getUTCMonth()].slice(0, 3)}`;
+
   return (
-    <div className="space-y-5">
-      {/* Banner ventana cerrada */}
-      {!windowOpen && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-2xl px-4 py-2.5 flex items-center gap-2.5">
-          <Lock size={15} className="text-red-400 shrink-0" />
-          <p className="text-sm text-red-300">
-            <span className="font-semibold">Ventana de transferencias cerrada.</span> No puedes fichar jugadores hasta la jornada 20 (ventana de invierno).
-          </p>
-        </div>
-      )}
-
+    <div className="space-y-4">
       <NationalTeamCard />
-
-      {/* Club header */}
-      <div className="hero-b rounded-3xl p-5 sm:p-6" style={{ "--hero-a": "var(--c-emerald)", "--hero-b": "var(--c-blue)" }}>
-        <div className="flex items-center gap-4 flex-wrap">
-          <TeamCrest team={team} size={72} />
-          <div className="min-w-0 flex-1">
-            <p className="font-bold text-2xl sm:text-3xl tracking-tight truncate">{team.name}</p>
-            <p className="text-sm text-gray-500">{LEAGUE_LABELS[team.league] || team.league} · Temporada {state.season}</p>
-          </div>
-        </div>
-        <SeasonNameEditor value={state.seasonName} onSave={setSeasonName} />
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mt-4 pt-4 border-t border-border">
-          <div className="min-w-[140px]">
-            <p className="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Confianza directiva</p>
-            <div className="w-full max-w-[160px] h-1.5 rounded-full bg-white/10 overflow-hidden">
-              <div className="h-full rounded-full transition-[width]" style={{ width: `${state.boardConfidence}%`, background: CONFIDENCE_GRADIENT[confTier] }} />
-            </div>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 mb-0.5 uppercase tracking-wide">Reputación DT</p>
-            <span className={`text-sm font-semibold ${pLabel.color}`}>{pLabel.text} <span className="text-gray-600 font-normal">({prestige})</span></span>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 mb-0.5 uppercase tracking-wide">Vínculo al club</p>
-            <span className={`text-sm font-semibold ${cLabel.color}`}>{cLabel.text} <span className="text-gray-600 font-normal">({clubRep})</span></span>
-          </div>
-        </div>
-      </div>
-
-      {/* Decisión de la semana: una por jornada */}
-      <WeeklyDecisionCard />
-
-      {/* Próximo partido — la acción principal de la pantalla, ocupa todo el ancho */}
-      <div className="hero-b rounded-3xl p-5 sm:p-6" style={fixtureIsDerby ? { "--hero-a": "var(--c-red)", "--hero-b": "var(--c-amber)" } : { "--hero-a": "var(--c-accent)", "--hero-b": "var(--c-purple)" }}>
-        {fixture ? (
-          <div className="flex items-center gap-4 flex-wrap sm:flex-nowrap">
-            <div className="flex-1 min-w-0">
-              <div className={`flex items-center gap-1.5 text-xs uppercase tracking-wide mb-2 font-semibold ${fixtureIsDerby ? "text-red-400" : "text-accent"}`}>
-                {fixtureIsDerby ? <Flame size={13} /> : <TrendingUp size={13} />}
-                <span>{fixtureIsDerby ? "Clásico · Liga" : "Próximo partido · Liga"}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                {rival && <TeamCrest team={rival} size={36} />}
-                <div className="min-w-0">
-                  <p className="font-bold text-lg truncate">{rival?.name}</p>
-                  <p className="text-xs text-gray-500">{fixture.home ? "Local" : "Visitante"} · Jornada {fixture.week}</p>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] items-start">
+        <div className="space-y-4 min-w-0">
+          {/* Próximo partido: cualquier competición, un solo botón. */}
+          <section className="p-hero" style={nextIsDerby ? { borderColor: "var(--red)" } : undefined}>
+            {next ? (
+              <>
+                <div className="p-eyebrow">
+                  <span className="flex items-center gap-2"><CompChip comp={next.comp} />{next.round}{nextIsDerby && <span style={{ color: "var(--red)" }}>· Clásico</span>}</span>
+                  <span className="p-mono">{fmt(nextDate)}</span>
                 </div>
-              </div>
-            </div>
-            <button
-              onClick={handlePlay}
-              className="btn btn-primary shrink-0 w-full sm:w-auto transition"
-            >
-              Jugar partido
-            </button>
-          </div>
-        ) : (
-          <p className="text-sm text-gray-400">Sin partidos pendientes.</p>
-        )}
-      </div>
-
-      {/* Franja de stats: posición, presupuesto, moral */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-panel border border-border rounded-2xl p-4">
-          <TrendingUp size={16} className="text-gray-500 mb-2" />
-          <p className="text-2xl font-bold leading-none">{myPos}°</p>
-          <p className="text-xs text-gray-500 mt-1.5">de {standingsSorted.length} equipos</p>
-        </div>
-        <div className="bg-panel border border-border rounded-2xl p-4">
-          <Wallet size={16} className="text-gray-500 mb-2" />
-          <p className="text-2xl font-bold leading-none">€{state.budget}M</p>
-          <p className="text-xs text-gray-500 mt-1.5">presupuesto</p>
-        </div>
-        <div className="bg-panel border border-border rounded-2xl p-4">
-          <MoraleIcon size={16} className={`mb-2 ${avgMorale >= 70 ? "text-emerald" : avgMorale >= 45 ? "text-amber" : "text-red-400"}`} />
-          <p className="text-2xl font-bold leading-none">{avgMorale}</p>
-          <p className="text-xs text-gray-500 mt-1.5">moral del plantel</p>
-        </div>
-      </div>
-
-      {/* Objetivo de temporada */}
-      <div className="bg-panel border border-border rounded-2xl p-4">
-        <div className="flex items-center justify-between gap-3 mb-2.5">
-          <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide font-semibold text-gray-500">
-            <Target size={13} />
-            <span>Objetivo de la directiva</span>
-          </div>
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
-            objective.onTrack ? "text-emerald border-emerald/30 bg-emerald/10" : "text-amber border-amber/30 bg-amber/10"
-          }`}>
-            {objective.onTrack ? "En camino" : "Afuera por ahora"}
-          </span>
-        </div>
-        <p className="text-sm font-semibold mb-2">{objective.label}</p>
-        <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
-          <div
-            className="h-full rounded-full transition-[width]"
-            style={{ width: `${objective.pct}%`, background: objective.onTrack ? "rgb(var(--c-emerald))" : "rgb(var(--c-amber))" }}
-          />
-        </div>
-        <p className="text-xs text-gray-500 mt-1.5">
-          Vas {myPos}° — hace falta {objective.threshold === 1 ? "terminar 1°" : `terminar entre los primeros ${objective.threshold}`}.
-        </p>
-      </div>
-
-      <CustomObjectiveCard
-        objective={state.customObjective}
-        onSet={setCustomObjective}
-        onToggleDone={toggleCustomObjectiveDone}
-        onClear={clearCustomObjective}
-      />
-
-      {/* Trofeos ganados esta temporada */}
-      {(copa?.champion || continental?.champion) && (
-        <div className="grid sm:grid-cols-2 gap-3">
-          {copa?.champion && (
-            <div className="bg-amber/10 border border-amber/40 rounded-2xl p-4 flex items-center gap-3">
-              <Trophy size={28} className="text-amber shrink-0" />
-              <div>
-                <p className="font-bold text-amber text-sm">¡Campeón de Copa!</p>
-                <p className="text-xs text-gray-400">Copa del Rey conquistada esta temporada</p>
-              </div>
-            </div>
-          )}
-          {continental?.champion && (
-            <div className="bg-blue/10 border border-blue/40 rounded-2xl p-4 flex items-center gap-3">
-              <Trophy size={28} className="text-blue shrink-0" />
-              <div>
-                <p className="font-bold text-blue text-sm">¡Campeón de {CONTINENTAL_LABELS[continental.competition]}!</p>
-                <p className="text-xs text-gray-400">Título continental conquistado esta temporada</p>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Otras competiciones en curso */}
-      {(preseasonAvailable() || (copa && !copa.champion && !copa.eliminated) || (continental && !continental.champion && !continental.eliminated)) && (
-        <div className="grid sm:grid-cols-2 gap-3">
-          {preseasonAvailable() && (
-            <CompetitionCard
-              Icon={PlayCircle}
-              label={`Pretemporada · Amistoso ${state.preseason.matchesPlayed + 1}/${state.preseason.total}`}
-              color="text-gray-300"
-              bg="bg-panel border-border hover:bg-white/5"
-              round="Amistoso"
-              opponentName={state.preseason.opponents[state.preseason.matchesPlayed]?.name}
-              available
-              onPlay={handlePlayPreseason}
-              playLabel="Jugar amistoso"
-            />
-          )}
-          {copa && !copa.champion && !copa.eliminated && (
-            <CompetitionCard
-              Icon={Trophy}
-              label="Copa del Rey"
-              color="text-amber"
-              bg="bg-amber/10 border-amber/30"
-              round={COPA_ROUNDS[copa.currentRound]}
-              opponentName={copa.opponents[copa.currentRound]?.name}
-              available={copaIsAvailable()}
-              onPlay={handlePlayCopa}
-              playLabel="Jugar Copa del Rey"
-              unavailableWeek={COPA_WEEKS[copa.currentRound]}
-            />
-          )}
-          {continental && !continental.champion && !continental.eliminated && (() => {
-            const meta = competitionMeta(continental.competition);
-            return (
-              <CompetitionCard
-                Icon={meta.Icon}
-                label={CONTINENTAL_LABELS[continental.competition]}
-                color={meta.color}
-                bg={meta.bg}
-                round={CONTINENTAL_ROUNDS[continental.currentRound]}
-                opponentName={continental.opponents[continental.currentRound]?.name}
-                available={continentalIsAvailable()}
-                onPlay={handlePlayContinental}
-                playLabel={`Jugar ${CONTINENTAL_LABELS[continental.competition]}`}
-                unavailableWeek={CONTINENTAL_WEEKS[continental.currentRound]}
-              />
-            );
-          })()}
-        </div>
-      )}
-      {copa?.eliminated && (
-        <div className="bg-panel border border-border rounded-2xl p-4 flex items-center gap-2.5">
-          <Trophy size={15} className="text-gray-600 shrink-0" />
-          <p className="text-sm text-gray-400">Copa del Rey: eliminados en {COPA_ROUNDS[Math.max(0, (copa.currentRound || 1) - 1)]}</p>
-        </div>
-      )}
-      {continental?.eliminated && (
-        <div className="bg-panel border border-border rounded-2xl p-4 flex items-center gap-2.5">
-          {(() => { const meta = competitionMeta(continental.competition); const Icon = meta.Icon; return <Icon size={15} className="text-gray-600 shrink-0" />; })()}
-          <p className="text-sm text-gray-400">{CONTINENTAL_LABELS[continental.competition]}: eliminados en {CONTINENTAL_ROUNDS[Math.max(0, (continental.currentRound || 1) - 1)]}</p>
-        </div>
-      )}
-
-      {/* Bajas por lesión */}
-      {injuredPlayers.length > 0 && (
-        <div className="bg-panel border border-border rounded-2xl p-5">
-          <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide mb-3 font-semibold text-red-400">
-            <HeartPulse size={13} />
-            <span>Jugadores lesionados ({injuredPlayers.length})</span>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-2">
-            {injuredPlayers.map(i => (
-              <div key={i.id} className="flex items-center justify-between gap-2 border-l-2 border-red-500/50 bg-white/[0.02] rounded-r-xl px-3 py-2">
-                <div>
-                  <p className="text-sm font-medium">{i.name}</p>
-                  <p className="text-xs text-gray-500">{i.type}</p>
-                </div>
-                <span className="text-xs text-red-400 shrink-0">
-                  {i.weeksLeft === 1 ? "vuelve próx. sem." : `${i.weeksLeft} sem.`}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Ofertas de otros clubes */}
-      {pendingJobOffers.length > 0 && (
-        <div className="bg-panel border border-amber/30 rounded-2xl p-5 space-y-3">
-          <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide font-semibold text-amber">
-            <Mail size={13} />
-            <span>Oferta de banquillo</span>
-          </div>
-          {pendingJobOffers.map((offer) => {
-            const offerTeam = teamById(offer.fromTeamId);
-            return (
-              <div key={offer.id} className="flex items-center gap-4 flex-wrap border-l-2 border-amber/50 pl-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    {offerTeam && <TeamCrest team={offerTeam} size={22} />}
-                    <p className="font-semibold">{offer.fromTeamName}</p>
+                <div className="flex items-center gap-4 sm:gap-6 my-5">
+                  <div className="text-center min-w-0"><TeamCrest team={team} size={64} /><p className="text-sm font-semibold mt-1 truncate max-w-[120px]">{team.name}</p></div>
+                  <span className="p-num text-4xl" style={{ color: "var(--mute)" }}>VS</span>
+                  <div className="text-center min-w-0">{nextRival ? <TeamCrest team={nextRival} size={64} /> : <span className="p-av" style={{ width: 64, height: 64 }}>?</span>}<p className="text-sm font-semibold mt-1 truncate max-w-[120px]">{nextRival?.name || next.opponentName}</p></div>
+                  <div className="hidden sm:block ml-auto text-right text-xs p-muted space-y-1">
+                    <p>{next.home ? "Local" : "Visitante"}</p>
+                    {rivalRow >= 0 && <p>Rival: <b className="p-num text-base" style={{ color: "var(--fg)" }}>{rivalRow + 1}°</b> con {standingsSorted[rivalRow].pts} pts</p>}
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {LEAGUE_LABELS[offer.fromLeague] || offer.fromLeague} · Te ofrecen el puesto de técnico principal
-                  </p>
-                  <p className="text-xs text-gray-600 mt-0.5">Aceptar implica dejar {team.name} y empezar de cero en ese club. Mantienes tu reputación acumulada.</p>
                 </div>
-                <div className="flex gap-2 shrink-0">
-                  <button
-                    onClick={() => acceptJobOffer(offer.id)}
-                    className="text-sm font-medium px-4 py-2 rounded-2xl bg-amber/15 text-amber border border-amber/30 hover:bg-amber/25 transition-colors"
-                  >
-                    Aceptar
-                  </button>
-                  <button
-                    onClick={() => declineJobOffer(offer.id)}
-                    className="text-sm font-medium px-4 py-2 rounded-2xl bg-panel border border-border text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
-                  >
-                    Rechazar
-                  </button>
+                <div className="grid sm:grid-cols-[1fr_220px] gap-4 items-end">
+                  <div>
+                    <div className="flex justify-between text-xs p-muted mb-1"><span>Energía del XI · {readiness.label}</span><b className="p-num text-sm" style={{ color: "var(--fg)" }}>{readiness.energy}</b></div>
+                    <div className="p-cbar"><i style={{ width: `${readiness.energy}%` }} /></div>
+                  </div>
+                  <button onClick={playNext} className="p-btn big" style={{ marginInline: 0 }}>Jugar {next.comp === "amistoso" ? "amistoso" : "partido"}</button>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                {next.comp === "amistoso" && <button onClick={skipPreseason} className="p-link mt-1">Saltar la pretemporada</button>}
+                {next.comp === "liga" && state.week > 0 && <p className="text-xs p-dim mt-2">Antes del partido puedes planear la semana de entrenamiento en Calendario.</p>}
+              </>
+            ) : <p className="text-sm p-muted">Terminó la temporada: no quedan partidos.</p>}
+          </section>
 
-      {/* Contratos por vencer */}
-      {renewalOffers.length > 0 && (
-        <div className="bg-panel border border-blue/30 rounded-2xl p-5 space-y-3">
-          <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide font-semibold text-blue">
-            <PenLine size={13} />
-            <span>Contratos por vencer</span>
-          </div>
-          {renewalOffers.map((offer) => (
-            <div key={offer.playerId} className="flex items-center gap-4 flex-wrap border-l-2 border-blue/50 pl-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold">{offer.name}</p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {offer.position} · {offer.age} años · OVR {offer.ovr}
-                </p>
-                <p className="text-xs text-gray-600 mt-0.5">
-                  Renovar: {offer.suggestedYears} año{offer.suggestedYears === 1 ? "" : "s"} a €{offer.suggestedWage}k/sem
-                </p>
+          {/* Bandeja: lo que espera una decisión tuya. */}
+          <section className="p-card space-y-3">
+            <div className="p-eyebrow"><span>Bandeja</span></div>
+            {closesIn != null && (
+              <p className="rounded-xl px-3 py-2 text-sm" style={{ background: "#f2b84b14", border: "1px solid var(--gold-line)" }}>
+                ⏱ <b>Mercado abierto.</b> {closesIn === 0 ? "Cierra esta semana: último día para cerrar fichajes." : `Cierra en ${closesIn} ${closesIn === 1 ? "semana" : "semanas"}.`}
+              </p>
+            )}
+            {closesIn == null && nextWin && <p className="text-xs p-muted">Mercado cerrado: abre el {nextWin.label.toLowerCase()} en {nextWin.from - state.week} semanas. Puedes dejar fichajes pre-acordados.</p>}
+            {(state.pendingSignings || []).length > 0 && <p className="text-xs p-muted">Pre-acuerdos: {(state.pendingSignings || []).map((d) => d.player.name).join(", ")} (se suman al abrir el mercado).</p>}
+            <WeeklyDecisionCard />
+            {pendingIncoming.map((o) => (
+              <div key={o.id} className="rounded-xl p-3" style={{ background: "var(--panel2)" }}>
+                <p className="p-eyebrow" style={{ justifyContent: "flex-start", color: "var(--blue)" }}>Oferta recibida</p>
+                <p className="text-sm mt-1"><b>{o.teamName}</b> ofrece {o.isLoan ? "un préstamo" : <b className="p-num text-base" style={{ color: "var(--gold)" }}>€{o.amount}M</b>} por <b>{o.playerName}</b>.</p>
+                {o.playerWilling === false && <p className="text-xs" style={{ color: "var(--red)" }}>{o.playerReason}</p>}
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <button onClick={() => respondToIncomingOffer(o.id, true)} disabled={o.playerWilling === false} className="p-btn sm">Aceptar</button>
+                  {!o.isLoan && !o.raisedOnce && <button onClick={() => counterIncomingOffer(o.id)} className="p-btn sm gold">Pedir más</button>}
+                  <button onClick={() => respondToIncomingOffer(o.id, false)} className="p-btn sm ghost">Rechazar</button>
+                </div>
               </div>
-              <div className="flex gap-2 shrink-0">
-                <button
-                  onClick={() => renewContract(offer.playerId, offer.suggestedYears, offer.suggestedWage)}
-                  className="text-sm font-medium px-4 py-2 rounded-2xl bg-blue/15 text-blue border border-blue/30 hover:bg-blue/25 transition-colors"
-                >
-                  Renovar
-                </button>
-                <button
-                  onClick={() => releasePlayer(offer.playerId)}
-                  className="text-sm font-medium px-4 py-2 rounded-2xl bg-panel border border-border text-gray-400 hover:text-white hover:border-gray-500 transition-colors"
-                >
-                  Dejar salir
-                </button>
+            ))}
+            {pendingJobOffers.map((offer) => (
+              <div key={offer.id} className="rounded-xl p-3" style={{ background: "var(--panel2)" }}>
+                <p className="p-eyebrow" style={{ justifyContent: "flex-start", color: "var(--gold)" }}>Oferta de banquillo</p>
+                <p className="text-sm mt-1"><b>{offer.fromTeamName}</b> ({LEAGUE_LABELS[offer.fromLeague] || offer.fromLeague}) te ofrece ser su técnico. Dejarías {team.name} y mantienes tu reputación.</p>
+                <div className="flex gap-2 mt-2"><button onClick={() => acceptJobOffer(offer.id)} className="p-btn sm gold">Aceptar</button><button onClick={() => declineJobOffer(offer.id)} className="p-btn sm ghost">Rechazar</button></div>
               </div>
+            ))}
+            {renewalOffers.map((offer) => (
+              <div key={offer.playerId} className="rounded-xl p-3" style={{ background: "var(--panel2)" }}>
+                <p className="p-eyebrow" style={{ justifyContent: "flex-start" }}>Contrato por vencer</p>
+                <p className="text-sm mt-1"><b>{offer.name}</b> · {offer.position} · {offer.age} años · OVR {offer.ovr}. Renovar {offer.suggestedYears} año{offer.suggestedYears === 1 ? "" : "s"} a €{offer.suggestedWage}k/sem.</p>
+                <div className="flex gap-2 mt-2"><button onClick={() => renewContract(offer.playerId, offer.suggestedYears, offer.suggestedWage)} className="p-btn sm">Renovar</button><button onClick={() => releasePlayer(offer.playerId)} className="p-btn sm ghost">Dejar salir</button></div>
+              </div>
+            ))}
+            {injuredPlayers.length > 0 && (
+              <div className="rounded-xl p-3" style={{ background: "var(--panel2)" }}>
+                <p className="p-eyebrow" style={{ justifyContent: "flex-start", color: "var(--red)" }}><HeartPulse size={13} /> Lesionados ({injuredPlayers.length})</p>
+                <ul className="mt-1 text-sm space-y-0.5">{injuredPlayers.map((i) => <li key={i.id} className="flex justify-between gap-2"><span>{i.name} <small className="p-muted">{i.type}</small></span><small style={{ color: "var(--red)" }}>{i.weeksLeft === 1 ? "vuelve próx. sem." : `${i.weeksLeft} sem.`}</small></li>)}</ul>
+              </div>
+            )}
+          </section>
+
+          {(copa?.champion || continental?.champion) && (
+            <div className="grid sm:grid-cols-2 gap-3">
+              {copa?.champion && <div className="p-card flex items-center gap-3" style={{ borderColor: "var(--gold-line)" }}><Trophy size={28} style={{ color: "var(--gold)" }} /><b>¡Campeón de Copa!</b></div>}
+              {continental?.champion && <div className="p-card flex items-center gap-3" style={{ borderColor: "var(--blue)" }}><Trophy size={28} style={{ color: "var(--blue)" }} /><b>¡Campeón de {CONTINENTAL_LABELS[continental.competition]}!</b></div>}
             </div>
-          ))}
-        </div>
-      )}
+          )}
 
-      {/* Noticias */}
-      <div className="bg-panel border border-border rounded-2xl p-5">
-        <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide mb-3 font-semibold text-gray-500">
-          <Newspaper size={13} />
-          <span>Noticias</span>
+          <section className="p-card">
+            <div className="p-eyebrow mb-2"><span className="flex items-center gap-1.5"><Newspaper size={13} /> Noticias</span></div>
+            <ul className="space-y-2">{state.news.slice(0, 6).map((n, i) => <li key={i} className="text-sm pl-3" style={{ borderLeft: "2px solid var(--line)" }}>{n}</li>)}</ul>
+          </section>
         </div>
-        <ul className="space-y-2.5">
-          {state.news.slice(0, 6).map((n, i) => (
-            <li key={i} className="text-sm text-gray-300 pl-3 border-l-2 border-border">{n}</li>
-          ))}
-        </ul>
+
+        <div className="space-y-4 min-w-0">
+          <section className="p-card">
+            <div className="p-eyebrow mb-2"><span>Agenda</span></div>
+            <ul className="space-y-1">
+              {agenda.map((e) => {
+                const d = dateOfDay(state.season || 1, e.weekIdx, e.day);
+                const t = teamById(e.opponentId);
+                return (
+                  <li key={e.id} className="flex items-center gap-3 py-1.5">
+                    <span className="text-center w-10 shrink-0"><small className="block p-dim text-[10px] uppercase">{DAY_LABELS[(d.getUTCDay() + 6) % 7]}</small><b className="p-num text-xl leading-none">{d.getUTCDate()}</b></span>
+                    {t ? <TeamCrest team={t} size={22} /> : <span className="p-av" style={{ width: 22, height: 22, fontSize: 10 }}>{(e.opponentName || "?")[0]}</span>}
+                    <span className="flex-1 min-w-0 truncate text-sm">{e.home ? "vs" : "@"} {t?.name || e.opponentName}</span>
+                    <CompChip comp={e.comp} short />
+                  </li>
+                );
+              })}
+              {agenda.length === 0 && <li className="text-sm p-muted">No quedan partidos esta temporada.</li>}
+            </ul>
+          </section>
+
+          <section className="p-card">
+            <div className="p-eyebrow mb-2"><span>{LEAGUE_LABELS[team.league] || "Liga"}</span><span>{myPos}° de {standingsSorted.length}</span></div>
+            <table className="w-full text-sm">
+              <tbody>
+                {tableRows.map((r) => {
+                  const pos = standingsSorted.indexOf(r) + 1;
+                  const mine = r.teamId === state.teamId;
+                  return (
+                    <tr key={r.teamId} style={mine ? { background: "var(--me-bg)" } : undefined}>
+                      <td className="p-num text-base w-7 pl-2 py-1" style={{ color: "var(--mute)" }}>{pos}</td>
+                      <td className="truncate max-w-[170px] py-1" style={mine ? { color: "var(--acc2)", fontWeight: 600 } : undefined}>{teamById(r.teamId)?.name}</td>
+                      <td className="p-num text-base text-right p-muted w-8">{r.played}</td>
+                      <td className="p-num text-base text-right w-10 pr-2">{r.pts}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </section>
+
+          <section className="p-card">
+            <div className="p-eyebrow mb-2"><span className="flex items-center gap-1.5"><Target size={13} /> Objetivo de la directiva</span><span style={{ color: objective.onTrack ? "var(--acc2)" : "var(--gold)" }}>{objective.onTrack ? "En camino" : "Afuera"}</span></div>
+            <p className="font-semibold">{objective.label}</p>
+            <div className="p-cbar mt-2"><i style={{ width: `${objective.pct}%` }} /></div>
+            <div className="grid grid-cols-3 gap-2 mt-3 text-center">
+              <div><b className="p-num text-xl block">{state.boardConfidence}</b><small className="p-muted text-[11px]">Confianza</small></div>
+              <div><b className="p-num text-xl block" style={{ color: "var(--fg)" }}>{prestige}</b><small className="p-muted text-[11px]">Reputación</small></div>
+              <div><b className="p-num text-xl block">{avgMorale}</b><small className="p-muted text-[11px]">Moral</small></div>
+            </div>
+          </section>
+
+          <CustomObjectiveCard objective={state.customObjective} onSet={setCustomObjective} onToggleDone={toggleCustomObjectiveDone} onClear={clearCustomObjective} />
+          <SeasonNameEditor value={state.seasonName} onSave={setSeasonName} />
+        </div>
       </div>
-
-      {/* Historial de Copa */}
-      {copa?.results?.length > 0 && (
-        <div className="bg-panel border border-border rounded-2xl p-5">
-          <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide mb-3 font-semibold text-gray-500">
-            <Trophy size={13} />
-            <span>Copa del Rey — Resultados</span>
-          </div>
-          <div className="space-y-1.5">
-            {copa.results.map((r, i) => (
-              <div key={i} className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">{COPA_ROUNDS[r.round]}</span>
-                <span className={r.won ? "text-emerald" : "text-red-400"}>
-                  {r.myGoals}-{r.rivalGoals} {r.won ? "✓" : "✗"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Historial continental */}
-      {continental?.results?.length > 0 && (
-        <div className="bg-panel border border-border rounded-2xl p-5">
-          <div className="flex items-center gap-1.5 text-xs uppercase tracking-wide mb-3 font-semibold text-gray-500">
-            <ShieldAlert size={13} />
-            <span>{CONTINENTAL_LABELS[continental.competition]} — Resultados</span>
-          </div>
-          <div className="space-y-1.5">
-            {continental.results.map((r, i) => (
-              <div key={i} className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">{CONTINENTAL_ROUNDS[r.round]}</span>
-                <span className={r.won ? "text-emerald" : "text-red-400"}>
-                  {r.myGoals}-{r.rivalGoals} {r.won ? "✓" : "✗"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

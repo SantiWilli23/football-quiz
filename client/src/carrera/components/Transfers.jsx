@@ -1,343 +1,237 @@
 import { useMemo, useState } from "react";
+import { Star, X } from "lucide-react";
 import { useCareer } from "../context/CareerContext.jsx";
 import { teams, teamById } from "../data/teams.js";
 import { players as allPlayers } from "../data/players.js";
 import { formatRange, reportFor } from "../engine/scouting.js";
-import { HINT_LABEL } from "../engine/transferMarket.js";
+import { askingPrice, squadNeeds, lineOf, LINES, wageTotal, wageCapOf, MAX_ROUNDS } from "../engine/transferMarket.js";
 import { ROLES, expectedRole } from "../engine/playerForm.js";
+import { windowClosesIn, nextWindow } from "../engine/schedule.js";
 import Scouts from "./Scouts.jsx";
 import ComparePlayers from "./ComparePlayers.jsx";
 import PlayerInfoModal from "./PlayerInfoModal.jsx";
 import PlayerFace from "../../components/PlayerFace.jsx";
 import TeamCrest from "./TeamCrest.jsx";
 
+// Fichajes 2.0 (Modo DT y DT Online): qué necesita tu plantel, el mercado como lista ordenable y
+// una negociación por rondas (el club y el jugador contraofertan; sin azar si cumples lo que piden),
+// con pago en cuotas, pre-acuerdos con la ventana cerrada y tope de masa salarial.
+
 function findAnyPlayer(state, playerId) {
   return state.squad.find((p) => p.id === playerId) || allPlayers.find((p) => p.id === playerId);
 }
 
 const LEAGUE_OPTIONS = [["premier", "Premier League"], ["laliga", "La Liga"], ["seriea", "Serie A"], ["bundesliga", "Bundesliga"]];
-const ALL_POSITIONS = [...new Set(allPlayers.map((p) => p.position))].sort();
+const LIGHT = ["var(--acc)", "var(--gold)", "var(--red)"];
+const COLS = [["name", "Jugador"], ["age", "Edad"], ["club", "Club"], ["ovr", "OVR"], ["value", "Valor"], ["ask", "Pide"], ["contract", "Contrato"]];
+const mid = (r) => (r ? (r.ovrRange[0] + r.ovrRange[1]) / 2 : -1);
+const round5 = (v) => Math.round(v / 5) * 5 || Math.round(v);
 
 export default function Transfers() {
-  const {
-    state, team, offerForPlayer, offerContractTo, completeTransfer,
-    isOnOfferCooldown, weeksUntilCanOffer, isTransferWindowOpen,
-    toggleWatchlist, respondToIncomingOffer, sendScoutMission,
-  } = useCareer();
+  const { state, team, toggleWatchlist, respondToIncomingOffer, counterIncomingOffer, isOnOfferCooldown, weeksUntilCanOffer, sendScoutMission, isTransferWindowOpen } = useCareer();
   const [subTab, setSubTab] = useState("mercado");
-  const [leagueFilter, setLeagueFilter] = useState("");
-  const [teamId, setTeamId] = useState("");
   const [query, setQuery] = useState("");
-  const [posFilter, setPosFilter] = useState("");
-  const [ageMin, setAgeMin] = useState("");
-  const [ageMax, setAgeMax] = useState("");
-  const [ovrMin, setOvrMin] = useState("");
-  const [ovrMax, setOvrMax] = useState("");
-  const [availability, setAvailability] = useState(""); // "" | contract | scouted
+  const [league, setLeague] = useState("");
+  const [line, setLine] = useState("");
+  const [afford, setAfford] = useState(false);
+  const [lastYear, setLastYear] = useState(false);
+  const [scoutedOnly, setScoutedOnly] = useState(false);
+  const [sort, setSort] = useState({ k: "ovr", d: -1 });
   const [target, setTarget] = useState(null);
   const [compareTarget, setCompareTarget] = useState(null);
-  const [infoPlayer, setInfoPlayer] = useState(null); // ficha completa abierta desde la Central
+  const [infoPlayer, setInfoPlayer] = useState(null);
 
   const windowOpen = isTransferWindowOpen();
-  const ownedIds      = new Set([
-    ...state.squad.map((p) => p.id),
-    ...(state.acquired || []),
-    ...Object.keys(state.stolenByAI || {}).map(Number),
-  ]);
-  const watchlist     = state.watchlist || [];
-  const sentOffers    = state.sentOffers || [];
+  const closesIn = windowClosesIn(state.week);
+  const nextWin = nextWindow(state.week);
+  const scoutReports = state.scoutReports || {};
+  const watchlist = state.watchlist || [];
   const incomingOffers = state.incomingOffers || [];
   const pendingIncoming = incomingOffers.filter((o) => o.status === "pending");
-  const releaseClauses = state.releaseClauses || {};
+  const needs = useMemo(() => squadNeeds(state.squad), [state.squad]);
+  const wages = wageTotal(state.squad);
+  const cap = wageCapOf(state);
 
-  // Buscador de jugadores: filtra por liga, club, edad, OVR (solo entre los
-  // scouteados — al resto no se le conoce el nivel) y disponibilidad. Sin
-  // filtros muestra los mejores del mundo.
-  const pool = useMemo(
-    () => allPlayers.filter((p) => !ownedIds.has(p.id)),
+  const ownedIds = useMemo(() => new Set([...state.squad.map((p) => p.id), ...(state.acquired || []), ...Object.keys(state.stolenByAI || {}).map(Number)]),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [(state.acquired || []).length, state.squad.length]
-  );
-  const clubsForLeague = useMemo(
-    () => teams.filter((t) => t.id !== team.id && (!leagueFilter || t.league === leagueFilter)),
-    [leagueFilter, team.id]
-  );
-  const scoutReports = state.scoutReports || {};
-  const { filtered, totalMatches } = useMemo(() => {
+    [state.squad.length, (state.acquired || []).length]);
+  const pool = useMemo(() => allPlayers.filter((p) => !ownedIds.has(p.id)), [ownedIds]);
+
+  const rowOf = (p) => {
+    const report = reportFor(scoutReports, p);
+    const seller = teamById(p.teamId);
+    return { p, report, seller, ask: report && seller ? askingPrice(p, seller) : null };
+  };
+
+  const { rows, total } = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const aMin = ageMin === "" ? null : Number(ageMin);
-    const aMax = ageMax === "" ? null : Number(ageMax);
-    const oMin = ovrMin === "" ? null : Number(ovrMin);
-    const oMax = ovrMax === "" ? null : Number(ovrMax);
     const list = pool
       .filter((p) => !q || p.name.toLowerCase().includes(q))
-      .filter((p) => !posFilter || p.position === posFilter)
-      .filter((p) => !teamId || p.teamId === teamId)
-      .filter((p) => !leagueFilter || teamById(p.teamId)?.league === leagueFilter)
-      .filter((p) => aMin == null || p.age >= aMin)
-      .filter((p) => aMax == null || p.age <= aMax)
-      .filter((p) => {
-        if (oMin == null && oMax == null) return true;
-        const r = reportFor(scoutReports, p);
-        if (!r) return false; // sin scoutear no se le conoce el OVR
-        const mid = (r.ovrRange[0] + r.ovrRange[1]) / 2;
-        return (oMin == null || mid >= oMin) && (oMax == null || mid <= oMax);
-      })
-      .filter((p) => availability !== "contract" || p.contractYears <= 1)
-      .filter((p) => availability !== "scouted" || !!reportFor(scoutReports, p))
-      .sort((a, b) => b.ovr - a.ovr);
-    return { filtered: list.slice(0, 50), totalMatches: list.length };
-  }, [pool, query, posFilter, teamId, leagueFilter, ageMin, ageMax, ovrMin, ovrMax, availability, scoutReports]);
+      .filter((p) => !league || teamById(p.teamId)?.league === league)
+      .filter((p) => !line || lineOf(p.position) === line)
+      .filter((p) => !afford || p.value <= state.budget)
+      .filter((p) => !lastYear || p.contractYears <= 1)
+      .filter((p) => !scoutedOnly || !!reportFor(scoutReports, p))
+      .map(rowOf);
+    const key = {
+      name: (r) => r.p.name, age: (r) => r.p.age, club: (r) => r.seller?.name || "", ovr: (r) => (r.report ? mid(r.report) : r.p.ovr - 100),
+      value: (r) => r.p.value, ask: (r) => r.ask ?? -1, contract: (r) => r.p.contractYears ?? 0,
+    }[sort.k];
+    list.sort((a, b) => (key(a) > key(b) ? 1 : key(a) < key(b) ? -1 : 0) * sort.d);
+    return { rows: list.slice(0, 60), total: list.length };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pool, query, league, line, afford, lastYear, scoutedOnly, sort, scoutReports, state.budget]);
 
-  const hiredScouts = state.hiredScouts || [];
-  const scoutMissions = state.scoutMissions || [];
+  // Sugeridos: la línea que más necesita refuerzo, jugadores conocidos que alcanzan.
+  const worst = [...needs].sort((a, b) => b.status - a.status || a.level - b.level)[0];
+  const suggestions = useMemo(() => {
+    if (!worst || worst.status === 0) return [];
+    return pool.filter((p) => lineOf(p.position) === worst.id && p.value <= state.budget && reportFor(scoutReports, p))
+      .map(rowOf).filter((r) => mid(r.report) >= worst.level).sort((a, b) => mid(b.report) - mid(a.report)).slice(0, 4);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pool, worst?.id, worst?.status, state.budget, scoutReports]);
+
+  const sortBy = (k) => setSort((s) => ({ k, d: s.k === k ? -s.d : k === "name" || k === "club" ? 1 : -1 }));
+  const chip = (on) => ({ background: on ? "var(--me-bg)" : "transparent", borderColor: on ? "var(--acc)" : "var(--line)", color: on ? "var(--fg)" : "var(--mute)" });
 
   return (
-    <div className="space-y-5">
-      {/* Banner ventana cerrada */}
-      {!windowOpen && (
-        <div className="bg-amber/10 border border-amber/30 rounded-2xl px-4 py-3 flex items-start gap-3">
-          <span className="text-amber text-lg shrink-0"></span>
-          <div>
-            <p className="text-sm font-semibold text-amber">Ventana de transferencias cerrada</p>
-            <p className="text-xs text-gray-400 mt-0.5">
-              Puedes negociar y explorar el mercado, pero no puedes cerrar fichajes hasta la ventana de invierno (jornada 20-24) o el próximo verano.
-            </p>
-          </div>
+    <div className="space-y-4">
+      {/* Estado del mercado y necesidades del plantel */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1.2fr_repeat(4,minmax(0,1fr))]">
+        <div className="p-card" style={{ borderColor: windowOpen ? "var(--gold-line)" : "var(--line)" }}>
+          <p className="p-eyebrow" style={{ justifyContent: "flex-start" }}>{windowOpen ? "Mercado abierto" : "Mercado cerrado"}</p>
+          <p className="text-sm mt-1">{windowOpen ? (closesIn === 0 ? "Cierra esta semana." : `Cierra en ${closesIn} ${closesIn === 1 ? "semana" : "semanas"}.`) : nextWin ? `Abre en ${nextWin.from - state.week} semanas. Puedes dejar pre-acuerdos.` : "Abre en verano."}</p>
+          <p className="text-xs p-muted mt-1">Masa salarial €{wages}k de €{cap}k/sem</p>
+          <div className="p-cbar mt-1"><i style={{ width: `${Math.min(100, (wages / cap) * 100)}%` }} /></div>
         </div>
-      )}
-
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h2 className="text-2xl font-bold mb-1">Fichajes</h2>
-          <p className="text-sm text-gray-500 max-w-lg leading-relaxed">
-            Primero le ofertas al club por el pase. Si acepta, recién ahí le ofreces contrato al jugador.
-          </p>
-        </div>
-        <div className="tone-accent tile-b rounded-2xl px-5 py-3 text-right shrink-0">
-          <p className="text-xs uppercase tracking-wide text-gray-300">Presupuesto</p>
-          <p className="text-2xl font-extrabold text-tone leading-none">€{state.budget}M</p>
-        </div>
-      </div>
-
-      <div className="flex gap-1 flex-wrap">
-        {[
-          ["mercado", "Mercado"],
-          ["scouting", "Scouting"],
-          ["central", `Central de Transferencias${pendingIncoming.length ? ` (${pendingIncoming.length})` : ""}`],
-        ].map(([id, label]) => (
-          <button
-            key={id}
-            onClick={() => setSubTab(id)}
-            className={`px-3 py-1.5 rounded-card text-sm font-medium ${subTab === id ? "bg-accent/15 text-accent border border-accent/30" : "text-gray-400 border border-transparent hover:text-white"}`}
-          >
-            {label}
+        {needs.map((n) => (
+          <button key={n.id} onClick={() => { setLine(line === n.id ? "" : n.id); setSubTab("mercado"); }} className="p-card text-left transition-colors" style={line === n.id ? { borderColor: "var(--acc)" } : undefined} title={`Filtrar el mercado por ${n.label.toLowerCase()}`}>
+            <div className="flex items-center justify-between"><b className="p-num text-2xl">{n.id}</b><i className="w-3 h-3 rounded-full" style={{ background: LIGHT[n.status], boxShadow: "0 0 0 4px var(--panel2)" }} /></div>
+            <p className="text-xs p-muted mt-1"><b className="p-num text-base" style={{ color: "var(--fg)" }}>{n.count}</b>/{n.want} · nivel <b className="p-num text-base" style={{ color: "var(--fg)" }}>{n.level || "—"}</b></p>
+            <p className="text-[11px] mt-0.5" style={{ color: LIGHT[n.status] }}>{n.status === 2 ? (n.short ? `Faltan ${n.short}` : "Urgente") : n.status === 1 ? (n.short ? `Falta ${n.short}` : "Nivel bajo") : "Bien cubierto"}</p>
           </button>
         ))}
       </div>
 
+      <div className="p-seg" style={{ maxWidth: 520 }} role="tablist" aria-label="Fichajes">
+        {[["mercado", "Mercado"], ["scouting", "Scouting"], ["central", `Central${pendingIncoming.length ? ` (${pendingIncoming.length})` : ""}`]].map(([id, label]) => (
+          <button key={id} role="tab" aria-selected={subTab === id} className={subTab === id ? "on" : ""} onClick={() => setSubTab(id)}>{label}</button>
+        ))}
+      </div>
+
       {subTab === "mercado" && (
-        <>
-          <div className="hero-b rounded-3xl p-4 sm:p-5 space-y-3" style={{ "--hero-a": "var(--c-amber)", "--hero-b": "var(--c-blue)" }}>
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-300">Buscar jugadores</p>
-            <div className="flex flex-wrap gap-3 items-center">
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Nombre del jugador…"
-                className="bg-bg border border-border rounded-2xl px-4 py-2.5 text-sm flex-1 min-w-[160px]"
-              />
-              <select
-                value={leagueFilter}
-                onChange={(e) => { setLeagueFilter(e.target.value); setTeamId(""); }}
-                className="bg-bg border border-border rounded-2xl px-3 py-2.5 text-sm"
-              >
-                <option value="">Todas las ligas</option>
-                {LEAGUE_OPTIONS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-              </select>
-              <select value={teamId} onChange={(e) => setTeamId(e.target.value)} className="bg-bg border border-border rounded-2xl px-3 py-2.5 text-sm max-w-[200px]">
-                <option value="">Todos los clubes</option>
-                {clubsForLeague.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
-              <select value={posFilter} onChange={(e) => setPosFilter(e.target.value)} className="bg-bg border border-border rounded-2xl px-3 py-2.5 text-sm">
-                <option value="">Cualquier posición</option>
-                {ALL_POSITIONS.map((pos) => <option key={pos} value={pos}>{pos}</option>)}
-              </select>
-            </div>
-            <div className="flex flex-wrap gap-3 items-center text-xs text-gray-400">
-              <span>Edad</span>
-              <input type="number" min={15} max={45} value={ageMin} onChange={(e) => setAgeMin(e.target.value)} placeholder="mín" className="w-16 bg-bg border border-border rounded-xl px-2 py-2 text-sm" />
-              <span>a</span>
-              <input type="number" min={15} max={45} value={ageMax} onChange={(e) => setAgeMax(e.target.value)} placeholder="máx" className="w-16 bg-bg border border-border rounded-xl px-2 py-2 text-sm" />
-              <span className="ml-2" title="Solo filtra entre los jugadores scouteados">OVR (scouteados)</span>
-              <input type="number" min={30} max={99} value={ovrMin} onChange={(e) => setOvrMin(e.target.value)} placeholder="mín" className="w-16 bg-bg border border-border rounded-xl px-2 py-2 text-sm" />
-              <span>a</span>
-              <input type="number" min={30} max={99} value={ovrMax} onChange={(e) => setOvrMax(e.target.value)} placeholder="máx" className="w-16 bg-bg border border-border rounded-xl px-2 py-2 text-sm" />
-              <select value={availability} onChange={(e) => setAvailability(e.target.value)} className="ml-auto bg-bg border border-border rounded-2xl px-3 py-2 text-sm text-gray-300">
-                <option value="">Mercado: todos</option>
-                <option value="contract">Último año de contrato</option>
-                <option value="scouted">Solo scouteados</option>
-              </select>
-            </div>
-            <p className="text-xs text-gray-600">{totalMatches} jugador{totalMatches === 1 ? "" : "es"} — mostrando los {filtered.length} de mayor OVR.</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {filtered.map((p) => {
-              const report = reportFor(scoutReports, p);
-              const cooling = isOnOfferCooldown(p.id);
-              const watched = watchlist.includes(p.id);
-              const clause = releaseClauses[p.id];
-              const scouting = scoutMissions.some((m) => m.playerIds.includes(p.id));
-              return (
-                <div key={p.id} className={`${/^(GK)$/.test(p.position) ? "tone-amber" : /^(CB|LB|RB)$/.test(p.position) ? "tone-blue" : /^(CDM|CM|CAM)$/.test(p.position) ? "tone-emerald" : "tone-pink"} bg-panel border border-border border-l-4 border-l-tone rounded-2xl p-3 flex flex-col gap-2.5 min-w-0`}>
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <button
-                      onClick={() => toggleWatchlist(p.id)}
-                      title={watched ? "Quitar de la Central de Transferencias" : "Poner en la Central de Transferencias"}
-                      className={`text-lg leading-none shrink-0 ${watched ? "text-amber" : "text-gray-600 hover:text-gray-300"}`}
-                    >
-                      {watched ? "★" : "☆"}
+        <div className={`grid gap-4 items-start ${target ? "lg:grid-cols-[minmax(0,1fr)_400px]" : ""}`}>
+          <div className="space-y-3 min-w-0">
+            {suggestions.length > 0 && (
+              <section className="p-card">
+                <p className="p-eyebrow"><span>Para reforzar · {worst.label.toLowerCase()}</span><span>te alcanzan</span></p>
+                <div className="grid sm:grid-cols-2 gap-2 mt-2">
+                  {suggestions.map(({ p, report, seller }) => (
+                    <button key={p.id} onClick={() => setTarget(p)} className="p-row" style={{ padding: "8px 10px" }}>
+                      <PlayerFace name={p.name} size={30} />
+                      <span className="nm text-sm">{p.name}<small style={{ color: "var(--mute)" }}>{p.position} · {p.age} años · {seller?.name}</small></span>
+                      <span className="text-right"><b className="p-num text-base block" style={{ color: "var(--acc2)" }}>{formatRange(report.ovrRange)}</b><small className="p-muted">€{p.value}M</small></span>
                     </button>
-                    <div className="relative shrink-0">
-                      <PlayerFace name={p.name} size={36} className="border border-border" />
-                      <span className="absolute -bottom-1 -right-1 rounded bg-bg border border-border px-1 text-[9px] font-bold text-gray-300 leading-4">{p.position}</span>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold truncate">{p.name}{report?.isPublic && <span className="ml-1.5 text-xs text-accent" title="Figura mundial: ya viene scouteado">●</span>}</p>
-                      <p className="text-[11px] text-gray-500 truncate flex items-center gap-1.5">
-                        {teamById(p.teamId) && <TeamCrest team={teamById(p.teamId)} size={14} />}
-                        {teamById(p.teamId)?.name} · {p.age} años
-                        {clause != null && <span className="text-amber ml-1.5">· cláusula €{clause}M</span>}
-                        {p.contractYears <= 1 && <span className="text-amber ml-1.5">· último año</span>}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-1.5 text-center">
-                    <div className="bg-bg/60 border border-border rounded-xl py-1.5">
-                      <p className="text-[10px] uppercase tracking-wide text-gray-600">OVR act.</p>
-                      <p className="text-sm font-semibold">{report ? formatRange(report.ovrRange) : <span className="text-gray-600">—</span>}</p>
-                    </div>
-                    <div className="bg-bg/60 border border-border rounded-xl py-1.5">
-                      <p className="text-[10px] uppercase tracking-wide text-gray-600">OVR pot.</p>
-                      <p className="text-sm text-gray-300">{report?.potentialEstimate != null ? `~${report.potentialEstimate}` : <span className="text-gray-600">—</span>}</p>
-                    </div>
-                    <div className="bg-bg/60 border border-border rounded-xl py-1.5">
-                      <p className="text-[10px] uppercase tracking-wide text-gray-600">Valor</p>
-                      <p className="text-sm font-semibold">€{p.value}M</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 justify-end flex-wrap">
-                    {!report && !scouting && (
-                      hiredScouts.length ? (
-                        <select
-                          defaultValue=""
-                          onChange={(e) => { if (e.target.value) sendScoutMission(e.target.value, p.id); e.target.value = ""; }}
-                          title="Mandar a un ojeador a la liga de este jugador"
-                          className="text-xs font-medium px-2.5 py-2 rounded-xl bg-panel border border-border text-gray-300 hover:border-gray-500 transition-colors"
-                        >
-                          <option value="">Scoutear…</option>
-                          {hiredScouts.map((sc) => (
-                            <option key={sc.id} value={sc.id}>{sc.specialty === "ovr" ? "OVR" : sc.specialty === "potential" ? "Potencial" : "Generalista"}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <span className="text-[11px] text-gray-600" title="Contrata un ojeador en la pestaña Scouting">sin ojeadores</span>
-                      )
-                    )}
-                    {scouting && <span className="text-[11px] text-gray-600 px-1">en camino…</span>}
-                    {cooling ? (
-                      <span className="text-[11px] text-gray-600 px-2 py-2 inline-block" title="Te rechazaron hace poco">
-                        Espera {weeksUntilCanOffer(p.id)} sem.
-                      </span>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => setCompareTarget(p)}
-                          className="text-xs font-medium px-3 py-2 rounded-xl border border-border text-gray-300 hover:text-white hover:border-white/30 transition-colors whitespace-nowrap"
-                        >
-                          Comparar
-                        </button>
-                        <button
-                          onClick={() => setTarget(p)}
-                          className="text-xs font-medium px-3.5 py-2 rounded-xl bg-accent/10 text-accent border border-accent/40 hover:bg-accent/20 transition-colors whitespace-nowrap"
-                        >
-                          Fichar
-                        </button>
-                      </>
-                    )}
-                  </div>
+                  ))}
                 </div>
-              );
-            })}
-                        {!filtered.length && (
-              <p className="col-span-full px-4 py-6 text-center text-gray-600 text-sm bg-panel border border-border rounded-2xl">Sin resultados con esos filtros.</p>
+              </section>
             )}
+
+            <section className="p-card space-y-3">
+              <div className="flex flex-wrap gap-2 items-center">
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar jugador…" className="flex-1 min-w-[160px] rounded-xl border px-3 py-2 text-sm" style={{ background: "var(--bg)", borderColor: "var(--line)" }} />
+                <select value={league} onChange={(e) => setLeague(e.target.value)} className="rounded-xl border px-3 py-2 text-sm" style={{ background: "var(--bg)", borderColor: "var(--line)" }}>
+                  <option value="">Todas las ligas</option>
+                  {LEAGUE_OPTIONS.map(([id, l]) => <option key={id} value={id}>{l}</option>)}
+                </select>
+                <select value={line} onChange={(e) => setLine(e.target.value)} className="rounded-xl border px-3 py-2 text-sm" style={{ background: "var(--bg)", borderColor: "var(--line)" }}>
+                  <option value="">Todas las líneas</option>
+                  {LINES.map((l) => <option key={l.id} value={l.id}>{l.label}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {[["Me alcanza", afford, setAfford], ["Último año de contrato", lastYear, setLastYear], ["Solo scouteados", scoutedOnly, setScoutedOnly]].map(([l, on, set]) => (
+                  <button key={l} onClick={() => set(!on)} aria-pressed={on} className="rounded-full border px-3 py-1 text-xs font-semibold" style={chip(on)}>{l}</button>
+                ))}
+                <span className="text-xs p-dim self-center ml-auto">{total} jugadores · se muestran {rows.length}</span>
+              </div>
+
+              {/* Computador: tabla ordenable. Teléfono: filas compactas. */}
+              <div className="hidden md:block -mx-2 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs p-muted">
+                      <th className="w-6" />
+                      {COLS.map(([k, l]) => (
+                        <th key={k} onClick={() => sortBy(k)} className="px-2 pb-2 font-medium cursor-pointer select-none hover:text-white whitespace-nowrap" aria-sort={sort.k === k ? (sort.d === 1 ? "ascending" : "descending") : "none"}>
+                          {l} {sort.k === k && (sort.d === 1 ? "↑" : "↓")}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map(({ p, report, seller, ask }) => {
+                      const watched = watchlist.includes(p.id);
+                      const sel = target?.id === p.id;
+                      return (
+                        <tr key={p.id} onClick={() => setTarget(p)} className="cursor-pointer transition-colors" style={{ borderTop: "1px solid var(--line)", background: sel ? "var(--me-bg)" : undefined }}>
+                          <td className="pl-2"><button onClick={(e) => { e.stopPropagation(); toggleWatchlist(p.id); }} aria-label={watched ? "Dejar de seguir" : "Seguir"} style={{ color: watched ? "var(--gold)" : "var(--dim)" }}><Star size={15} fill={watched ? "currentColor" : "none"} /></button></td>
+                          <td className="px-2 py-2">
+                            <span className="flex items-center gap-2 min-w-0"><PlayerFace name={p.name} size={28} /><span className="min-w-0"><b className="block truncate max-w-[180px]">{p.name}</b><small className="p-num text-xs p-muted">{p.position}{report?.isPublic ? " · figura" : ""}</small></span></span>
+                          </td>
+                          <td className="p-num px-2 text-base">{p.age}</td>
+                          <td className="px-2"><span className="flex items-center gap-1.5 p-muted truncate max-w-[130px]">{seller && <TeamCrest team={seller} size={16} />}{seller?.name}</span></td>
+                          <td className="p-num px-2 text-base whitespace-nowrap" style={{ color: report ? "var(--acc2)" : "var(--dim)" }}>{report ? formatRange(report.ovrRange) : "?"}</td>
+                          <td className="p-num px-2 text-base whitespace-nowrap">€{p.value}M</td>
+                          <td className="p-num px-2 text-base whitespace-nowrap" style={{ color: ask == null ? "var(--dim)" : ask > state.budget ? "var(--red)" : "var(--gold)" }}>{ask == null ? "—" : `~€${round5(ask)}M`}</td>
+                          <td className="p-num px-2 text-base whitespace-nowrap" style={{ color: p.contractYears <= 1 ? "var(--gold)" : "var(--mute)" }}>{p.contractYears} a</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div className="md:hidden"><div className="p-rows">
+                {rows.map(({ p, report, seller, ask }) => (
+                  <button key={p.id} onClick={() => setTarget(p)} className="p-row" style={{ padding: "8px 10px" }}>
+                    <PlayerFace name={p.name} size={30} />
+                    <span className="nm text-sm">{p.name}<small style={{ color: "var(--mute)" }}>{p.position} · {p.age} a · {seller?.name}{p.contractYears <= 1 ? " · último año" : ""}</small></span>
+                    <span className="text-right shrink-0"><b className="p-num text-base block" style={{ color: report ? "var(--acc2)" : "var(--dim)" }}>{report ? formatRange(report.ovrRange) : "?"}</b><small className="p-muted">{ask == null ? `€${p.value}M` : `pide ~€${round5(ask)}M`}</small></span>
+                  </button>
+                ))}
+              </div></div>
+              {!rows.length && <p className="text-center text-sm p-muted py-4">Sin resultados con esos filtros.</p>}
+              <p className="text-xs p-dim">El OVR es «?» hasta que lo scoutees (las figuras mundiales ya vienen scouteadas). «Pide» es lo que más o menos pide el club: se confirma al negociar.</p>
+            </section>
           </div>
 
-          <p className="text-xs text-gray-600">
-            Las figuras mundiales (●) ya vienen scouteadas. Para el resto, el OVR es un "—" hasta que mandes un ojeador: viaja a la liga del jugador entre 3 y 14 días (más rápido cuanto más conocido) y trae informes de varios jugadores de esa liga. La estrella lo suma a la Central de Transferencias.
-          </p>
-        </>
+          {target && (
+            <Negotiation key={target.id} player={target} onClose={() => setTarget(null)}
+              onCompare={() => setCompareTarget(target)} onInfo={() => setInfoPlayer(target)} onScout={sendScoutMission}
+              hiredScouts={state.hiredScouts || []} scouting={(state.scoutMissions || []).some((m) => m.playerIds.includes(target.id))}
+              cooling={isOnOfferCooldown(target.id)} coolWeeks={weeksUntilCanOffer(target.id)} />
+          )}
+        </div>
       )}
 
       {subTab === "scouting" && <Scouts />}
 
       {subTab === "central" && (
-        <TransferHub
-          state={state}
-          watchlist={watchlist}
-          sentOffers={sentOffers}
-          incomingOffers={incomingOffers}
-          onUnwatch={toggleWatchlist}
-          onOffer={(p) => setTarget(p)}
-          onRespond={respondToIncomingOffer}
-          onInfo={setInfoPlayer}
-        />
+        <TransferHub state={state} watchlist={watchlist} sentOffers={state.sentOffers || []} incomingOffers={incomingOffers}
+          onUnwatch={toggleWatchlist} onOffer={(p) => { setTarget(p); setSubTab("mercado"); }} onRespond={respondToIncomingOffer} onCounter={counterIncomingOffer} onInfo={setInfoPlayer} />
       )}
 
       {compareTarget && (
-        <ComparePlayers
-          target={compareTarget}
-          mine={[...state.squad].filter((p) => p.position === compareTarget.position).sort((a, b) => b.ovr - a.ovr)[0] || null}
-          onClose={() => setCompareTarget(null)}
-        />
+        <ComparePlayers target={compareTarget} mine={[...state.squad].filter((p) => p.position === compareTarget.position).sort((a, b) => b.ovr - a.ovr)[0] || null} onClose={() => setCompareTarget(null)} />
       )}
-
       {infoPlayer && (
-        <PlayerInfoModal
-          player={infoPlayer}
-          state={state}
-          watched={watchlist.includes(infoPlayer.id)}
-          onClose={() => setInfoPlayer(null)}
-          onOffer={(p) => setTarget(p)}
-          onUnwatch={toggleWatchlist}
-        />
-      )}
-
-      {target && (
-        <OfferFlow
-          squad={state.squad}
-          player={target}
-          budget={state.budget}
-          report={reportFor(state.scoutReports, target)}
-          releaseClause={releaseClauses[target.id]}
-          windowOpen={windowOpen}
-          isOnOfferCooldown={isOnOfferCooldown}
-          weeksUntilCanOffer={weeksUntilCanOffer}
-          onOfferForPlayer={offerForPlayer}
-          onOfferContractTo={offerContractTo}
-          onComplete={completeTransfer}
-          onClose={() => setTarget(null)}
-        />
+        <PlayerInfoModal player={infoPlayer} state={state} watched={watchlist.includes(infoPlayer.id)} onClose={() => setInfoPlayer(null)} onOffer={(p) => { setTarget(p); setInfoPlayer(null); setSubTab("mercado"); }} onUnwatch={toggleWatchlist} />
       )}
     </div>
   );
 }
 
-function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, onOffer, onRespond, onInfo }) {
+function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, onOffer, onRespond, onCounter, onInfo }) {
   const pending  = incomingOffers.filter((o) => o.status === "pending");
   const resolved = incomingOffers.filter((o) => o.status !== "pending");
 
@@ -359,6 +253,7 @@ function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, 
                 <button onClick={() => onRespond(o.id, true)} disabled={o.playerWilling === false} title={o.playerWilling === false ? "El jugador no quiere irse" : undefined} className="text-xs font-medium px-3 py-1.5 rounded-full bg-emerald/15 text-emerald border border-emerald/40 hover:bg-emerald/25 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                   Aceptar
                 </button>
+                {!o.isLoan && !o.raisedOnce && <button onClick={() => onCounter(o.id)} className="text-xs font-medium px-3 py-1.5 rounded-full border transition-colors" style={{ color: "var(--gold)", borderColor: "var(--gold-line)" }}>Pedir más</button>}
                 <button onClick={() => onRespond(o.id, false)} className="text-xs font-medium px-3 py-1.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition-colors">
                   Rechazar
                 </button>
@@ -419,7 +314,7 @@ function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, 
           {sentOffers.map((o) => (
             <p key={o.id} className="text-xs text-gray-500">
               {o.type === "fee" ? `€${o.amount}M por el pase de` : `€${o.amount}k/sem (${o.years} años) a`} {o.playerName}
-              {o.byClause ? " (cláusula)" : ""} · <span className={o.accepted ? "text-emerald" : "text-red-400"}>{o.accepted ? "aceptada" : "rechazada"}</span>
+              {o.byClause ? " (cláusula)" : ""} · <span className={o.accepted ? "text-emerald" : o.verdict === "counter" ? "text-amber" : "text-red-400"}>{o.accepted ? "aceptada" : o.verdict === "counter" ? "contraoferta" : "rechazada"}</span>
             </p>
           ))}
         </div>
@@ -428,227 +323,179 @@ function TransferHub({ state, watchlist, sentOffers, incomingOffers, onUnwatch, 
   );
 }
 
-const STEP_LABELS = { fee: 1, "window-closed-after-fee": 1, wage: 2, "window-closed": 2, "complete-error": 2, done: 2 };
 
-function StepIndicator({ stage }) {
-  const step = STEP_LABELS[stage] || 1;
+function Rounds({ round }) {
   return (
-    <div className="flex items-center gap-2 mb-1">
-      {[1, 2].map((n) => (
-        <div key={n} className="flex items-center gap-2 flex-1">
-          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-            step >= n ? "bg-accent text-onaccent" : "bg-bg border border-border text-gray-500"
-          }`}>
-            {n}
-          </div>
-          <span className={`text-xs ${step >= n ? "text-gray-300" : "text-gray-600"}`}>{n === 1 ? "Pase" : "Contrato"}</span>
-          {n === 1 && <div className={`h-px flex-1 ${step >= 2 ? "bg-accent" : "bg-border"}`} />}
-        </div>
-      ))}
+    <div className="flex items-center gap-1.5 mt-3" aria-label={`Ronda ${round} de ${MAX_ROUNDS}`}>
+      {Array.from({ length: MAX_ROUNDS }, (_, i) => <i key={i} className="h-1.5 flex-1 rounded-full" style={{ background: i < round ? "var(--acc)" : "var(--panel2)" }} />)}
+      <span className="p-num text-sm p-muted ml-1">Ronda {Math.min(round + 1, MAX_ROUNDS)}/{MAX_ROUNDS}</span>
     </div>
   );
 }
 
-function OfferFlow({ squad, player, budget, report, releaseClause, windowOpen, isOnOfferCooldown, weeksUntilCanOffer, onOfferForPlayer, onOfferContractTo, onComplete, onClose }) {
-  const sellerTeam = teamById(player.teamId);
-  const [stage, setStage] = useState("fee");
-  const [feeInput, setFeeInput] = useState(report?.suggestedOffer ?? player.value);
-  const [feeAgreed, setFeeAgreed] = useState(null);
-  const [feeResult, setFeeResult] = useState(null);
-  const [wageInput, setWageInput] = useState(player.wage + Math.round(player.wage * 0.2));
-  const [years, setYears] = useState(3);
-  const wantedRole = expectedRole(player, squad || []);
-  const [role, setRole] = useState(wantedRole.id);
-  const [wageResult, setWageResult] = useState(null);
-  const [completeError, setCompleteError] = useState(null);
+function Bubble({ me, who, children }) {
+  return (
+    <div className={`max-w-[88%] rounded-2xl px-3.5 py-2 text-sm ${me ? "ml-auto rounded-br-sm" : "rounded-bl-sm"}`} style={{ background: me ? "color-mix(in srgb, var(--acc) 22%, transparent)" : "var(--panel2)" }}>
+      {who && <p className="text-[11px] p-muted">{who}</p>}
+      {children}
+    </div>
+  );
+}
 
-  const feeCooling = isOnOfferCooldown(player.id);
+// Negociación por rondas: primero el pase con el club, después el contrato con el jugador, y firmar.
+function Negotiation({ player, onClose, onCompare, onInfo, onScout, hiredScouts, scouting, cooling, coolWeeks }) {
+  const { state, team, negotiationOf, negotiateFee, acceptFeeCounter, negotiateContract, acceptWageCounter, signPlayer, isTransferWindowOpen } = useCareer();
+  const seller = teamById(player.teamId);
+  const report = reportFor(state.scoutReports, player);
+  const clause = (state.releaseClauses || {})[player.id];
+  const neg = negotiationOf(player.id);
+  const fee = neg?.fee;
+  const wageN = neg?.wage;
+  const [bid, setBid] = useState(fee?.counter ?? report?.suggestedOffer ?? player.value);
+  const [split, setSplit] = useState(!!fee?.installments);
+  const [wage, setWage] = useState(wageN?.counter ?? Math.round(player.wage * 1.15));
+  const [years, setYears] = useState(player.age >= 31 ? 2 : 4);
+  const wanted = expectedRole(player, state.squad);
+  const [role, setRole] = useState(wanted.id);
+  const [log, setLog] = useState([]);
+  const [done, setDone] = useState(null);
+  const say = (m) => setLog((l) => [...l, m]);
+  const wages = wageTotal(state.squad);
+  const cap = wageCapOf(state);
+  const open = isTransferWindowOpen();
+  const stage = done ? "done" : fee?.agreed == null ? "fee" : wageN?.agreed == null ? "wage" : "sign";
 
-  function submitFee(overrideAmount) {
-    const amount = overrideAmount ?? feeInput;
-    if (amount > budget) {
-      setFeeResult({ accepted: false, hint: "muy_lejos", noBudget: true });
-      return;
-    }
-    const res = onOfferForPlayer(player, amount);
-    setFeeResult(res);
-    if (res.askingPrice != null) setFeeInput(res.askingPrice);
-    if (res.accepted) {
-      setFeeAgreed(amount);
-      setStage(!windowOpen ? "window-closed-after-fee" : "wage");
-    }
+  function sendFee(amount = bid) {
+    if (amount > state.budget && !split) { say({ who: seller?.name, text: `No te alcanza: tienes €${state.budget}M.` }); return; }
+    say({ me: true, text: `Ofrecemos €${amount}M${split ? " en dos cuotas" : ""}.` });
+    const r = negotiateFee(player, amount, { installments: split });
+    if (r.verdict === "cooldown") say({ who: seller?.name, text: `No queremos hablar por ${r.weeks} semana${r.weeks === 1 ? "" : "s"}.` });
+    else if (r.verdict === "accept") say({ who: seller?.name, text: r.byClause ? "Pagas la cláusula: no podemos negarnos." : "Trato hecho. Habla con el jugador." });
+    else if (r.verdict === "counter") { say({ who: seller?.name, text: `Insuficiente. Pedimos €${r.counter}M.${r.last ? " Es nuestra última palabra." : ""}`, counter: true }); setBid(r.counter); }
+    else say({ who: seller?.name, text: r.angry ? "Eso es una falta de respeto. No vuelvan a llamar por un tiempo." : r.last ? "No hay acuerdo. Cerramos la negociación." : `Muy lejos. Por menos de €${round5(r.ask)}M ni lo pensamos.` });
   }
 
-  function submitWage() {
-    const res = onOfferContractTo(player, wageInput, years, role);
-    setWageResult(res);
-    if (res.expectedWageHint != null) setWageInput(res.expectedWageHint);
-    if (res.accepted) {
-      const completed = onComplete(player, feeAgreed, wageInput, years, role);
-      if (completed?.success === false) {
-        if (completed.reason === "window_closed") setStage("window-closed");
-        else { setCompleteError(completed.reason); setStage("complete-error"); }
-      } else {
-        setStage("done");
-      }
-    }
+  function sendWage(amount = wage) {
+    say({ me: true, text: `Te ofrecemos €${amount}k/semana, ${years} año${years === 1 ? "" : "s"}, como ${ROLES[role].label.toLowerCase()}.` });
+    const r = negotiateContract(player, amount, years, role);
+    if (r.verdict === "wage_cap") say({ who: "Directiva", text: `Ese sueldo pasa el tope de masa salarial (€${cap}k/sem). Vende a alguien o baja la cifra.` });
+    else if (r.verdict === "accept") say({ who: player.name, text: `${r.roleTalk} Acepto.` });
+    else if (r.verdict === "counter") { say({ who: player.name, text: `${r.roleTalk} Quiero €${r.counter}k/semana.${r.last ? " No bajo de ahí." : ""}`, counter: true }); setWage(r.counter); }
+    else if (r.verdict === "no_fee") say({ who: "Directiva", text: "Primero cierra el pase con el club." });
+    else say({ who: player.name, text: r.last ? "No nos entendimos. Me quedo donde estoy." : `${r.roleTalk} Así no vengo: estás muy lejos.` });
   }
+
+  function sign() {
+    const r = signPlayer(player);
+    if (r.success) setDone(r.preAgreed ? "pre" : "ok");
+    else say({ who: "Directiva", text: r.reason === "insufficient_budget" ? "No alcanza el presupuesto para cerrar." : "Falta cerrar el pase o el contrato." });
+  }
+
+  const after = wages + (stage === "wage" ? wage : wageN?.agreed || 0);
+  const now = fee?.agreed != null ? (fee.installments ? Math.round((fee.agreed / 2) * 20) / 20 : fee.agreed) : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-3" onClick={onClose}>
-      <div className="bg-panel border border-border rounded-2xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <p className="font-semibold">{player.name}</p>
-              <p className="text-xs text-gray-500">{player.position} · {player.age} años · {sellerTeam.name}</p>
-            </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-white text-sm">✕</button>
-          </div>
-          <StepIndicator stage={stage} />
+    <aside className="p-card h-fit lg:sticky lg:top-[132px] fixed inset-x-0 bottom-0 z-40 lg:static max-h-[85vh] overflow-y-auto lg:max-h-none rounded-b-none lg:rounded-b-[18px]" style={{ boxShadow: "0 -20px 40px -20px #000" }}>
+      <div className="flex items-start gap-3">
+        <PlayerFace name={player.name} size={44} />
+        <div className="min-w-0 flex-1">
+          <p className="p-eyebrow" style={{ justifyContent: "flex-start" }}>Negociación</p>
+          <h3 className="text-lg font-bold leading-tight truncate" style={{ fontFamily: "var(--f-d)" }}>{player.name}</h3>
+          <p className="text-xs p-muted">{seller?.name} · {player.position} · {player.age} años · contrato {player.contractYears} a</p>
         </div>
+        <button onClick={onClose} aria-label="Cerrar" className="p-roundb shrink-0"><X size={16} /></button>
+      </div>
+      <div className="grid grid-cols-3 gap-2 mt-3 text-center">
+        <div className="rounded-xl py-1.5" style={{ background: "var(--panel2)" }}><small className="p-muted text-[10px] uppercase">OVR</small><b className="p-num text-lg block">{report ? formatRange(report.ovrRange) : "?"}</b></div>
+        <div className="rounded-xl py-1.5" style={{ background: "var(--panel2)" }}><small className="p-muted text-[10px] uppercase">Potencial</small><b className="p-num text-lg block">{report?.potentialEstimate ? `~${report.potentialEstimate}` : "?"}</b></div>
+        <div className="rounded-xl py-1.5" style={{ background: "var(--panel2)" }}><small className="p-muted text-[10px] uppercase">Valor</small><b className="p-num text-lg block">€{player.value}M</b></div>
+      </div>
+      <div className="flex flex-wrap gap-1.5 mt-2">
+        <button onClick={onInfo} className="p-btn ghost sm">Ficha</button>
+        <button onClick={onCompare} className="p-btn ghost sm">Comparar</button>
+        {!report && !scouting && hiredScouts.length > 0 && (
+          <select defaultValue="" onChange={(e) => { if (e.target.value) onScout(e.target.value, player.id); e.target.value = ""; }} className="rounded-xl border px-2 text-xs" style={{ background: "var(--panel2)", borderColor: "var(--line)" }}>
+            <option value="">Scoutear…</option>
+            {hiredScouts.map((sc) => <option key={sc.id} value={sc.id}>{sc.specialty === "ovr" ? "OVR" : sc.specialty === "potential" ? "Potencial" : "Generalista"}</option>)}
+          </select>
+        )}
+        {scouting && <span className="text-xs p-muted self-center">Ojeador en camino…</span>}
+      </div>
 
-        <div className="p-4 space-y-4">
+      {cooling && stage === "fee" ? (
+        <p className="mt-4 text-sm" style={{ color: "var(--gold)" }}>El club no quiere hablar por {coolWeeks} semana{coolWeeks === 1 ? "" : "s"} más.</p>
+      ) : (
+        <>
+          {stage !== "done" && <Rounds round={(stage === "fee" ? fee?.round : wageN?.round) || 0} />}
+          {log.length > 0 && <div className="mt-3 space-y-2">{log.map((m, i) => <Bubble key={i} me={m.me} who={m.who}>{m.text}</Bubble>)}</div>}
+
           {stage === "fee" && (
-            <>
-              <p className="text-sm text-gray-400">
-                Valor de mercado: <span className="text-white font-semibold">€{player.value}M</span> · Presupuesto: <span className="text-white font-semibold">€{budget}M</span>
-                {report?.suggestedOffer != null && <> · Sugerida por scout: <span className="text-white font-semibold">€{report.suggestedOffer}M</span></>}
-              </p>
-              <p className="text-xs text-gray-500">Si igualas o superas lo que pide el club, el pase se cierra seguro. Por debajo es más arriesgado.</p>
-
-              {/* Cláusula de liberación */}
-              {releaseClause != null && (
-                <div className="bg-amber/5 border border-amber/25 rounded-xl p-3 space-y-2">
-                  <p className="text-xs text-amber font-semibold">Cláusula de liberación: €{releaseClause}M</p>
-                  <p className="text-xs text-gray-500">Pagando esta cifra el club está obligado a vender sin importar su decisión.</p>
-                  <button
-                    onClick={() => submitFee(releaseClause)}
-                    disabled={releaseClause > budget || feeCooling}
-                    className="text-xs px-3 py-1.5 rounded-full bg-amber/15 text-amber border border-amber/30 hover:bg-amber/25 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {releaseClause > budget ? "No te alcanza el presupuesto" : `Activar cláusula (€${releaseClause}M)`}
-                  </button>
+            <div className="mt-4 space-y-3">
+              {clause != null && (
+                <button onClick={() => sendFee(clause)} disabled={clause > state.budget} className="w-full rounded-xl border px-3 py-2 text-left text-sm disabled:opacity-40" style={{ borderColor: "var(--gold-line)" }}>
+                  Pagar la cláusula: <b className="p-num text-base" style={{ color: "var(--gold)" }}>€{clause}M</b> <small className="p-muted">(el club no puede negarse)</small>
+                </button>
+              )}
+              <div className="rounded-xl p-3" style={{ background: "var(--panel2)" }}>
+                <div className="flex justify-between items-baseline text-sm"><span className="p-muted">Tu oferta por el pase</span><b className="p-num text-2xl" style={{ color: "var(--acc2)" }}>€{bid}M</b></div>
+                <input type="range" min={Math.max(0.5, Math.round(player.value * 0.5))} max={Math.round(Math.max(player.value * 1.6, bid))} step={0.5} value={bid} onChange={(e) => setBid(Number(e.target.value))} className="w-full mt-2" style={{ accentColor: "var(--acc)" }} aria-label="Oferta en millones" />
+                <div className="flex items-center justify-between mt-1 gap-2">
+                  <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={split} onChange={(e) => setSplit(e.target.checked)} style={{ accentColor: "var(--acc)" }} /> Pagar en 2 cuotas <span className="p-muted">(+5 %)</span></label>
+                  <input type="number" min={0} step={0.5} value={bid} onChange={(e) => setBid(Number(e.target.value))} className="w-20 rounded-lg border px-2 py-1 text-sm text-right" style={{ background: "var(--bg)", borderColor: "var(--line)" }} aria-label="Oferta exacta" />
                 </div>
-              )}
-
-              {feeResult && !feeResult.accepted && (
-                <div className="bg-red-500/10 border border-red-500/25 rounded-xl p-3 space-y-1">
-                  <p className="text-sm text-red-300">
-                    ❌ {feeResult.noBudget ? "No te alcanza el presupuesto." : `Rechazada. ${HINT_LABEL[feeResult.hint]}`}
-                  </p>
-                  {feeResult.askingPrice != null && (
-                    <p className="text-xs text-gray-400">El club pide unos <span className="text-white font-semibold">€{feeResult.askingPrice}M</span> — ya te lo prellenamos abajo, ajusta y vuelve a intentar.</p>
-                  )}
-                </div>
-              )}
-
-              {feeCooling ? (
-                <p className="text-xs text-amber">Le ofertaste algo muy bajo y el club no quiere hablar por {weeksUntilCanOffer(player.id)} semana{weeksUntilCanOffer(player.id) === 1 ? "" : "s"} más.</p>
-              ) : (
-                <>
-                  <label className="block text-xs text-gray-500 uppercase tracking-wide">Oferta por el pase (€M)</label>
-                  <input
-                    type="number" min="0" step="0.5" value={feeInput}
-                    onChange={(e) => setFeeInput(Number(e.target.value))}
-                    className="w-full bg-bg border border-border rounded-2xl px-4 py-3 text-sm"
-                  />
-                  <button onClick={() => submitFee()} className="btn btn-primary w-full transition">
-                    {feeResult && !feeResult.accepted ? "Volver a ofertar" : "Enviar oferta al club"}
-                  </button>
-                </>
-              )}
-            </>
-          )}
-
-          {stage === "window-closed-after-fee" && (
-            <>
-              <p className="text-sm text-emerald font-medium">✅ El club aceptó €{feeAgreed}M por el pase.</p>
-              <div className="bg-amber/10 border border-amber/30 rounded-xl p-3">
-                <p className="text-sm text-amber font-semibold">Ventana cerrada</p>
-                <p className="text-xs text-gray-400 mt-1">El pase está acordado pero no puedes cerrar el fichaje hasta la ventana de invierno (jornada 20-24) o el próximo verano.</p>
+                <p className="text-[11px] p-muted mt-1">Presupuesto €{state.budget}M{split ? ` · ahora pagas €${Math.round((bid / 2) * 20) / 20}M y el resto la próxima temporada` : ""}</p>
               </div>
-              <button onClick={onClose} className="w-full bg-panel border border-border text-gray-300 font-semibold py-2.5 rounded-2xl hover:border-gray-500 transition">
-                Cerrar (negociación pendiente)
-              </button>
-            </>
+              <div className="flex gap-2">
+                {fee?.counter != null && <button onClick={() => { const r = acceptFeeCounter(player); if (r) say({ me: true, text: `Aceptamos €${r.price}M.` }); }} className="p-btn gold flex-1">Aceptar €{fee.counter}M</button>}
+                <button onClick={() => sendFee()} className={`p-btn flex-1 ${fee?.counter != null ? "ghost" : ""}`}>{fee?.round ? "Nueva oferta" : "Enviar oferta"}</button>
+              </div>
+            </div>
           )}
 
           {stage === "wage" && (
-            <>
-              <p className="text-sm text-emerald font-medium">✅ El club aceptó €{feeAgreed}M por el pase.</p>
-              <p className="text-sm text-gray-400">Sueldo actual: <span className="text-white font-semibold">€{player.wage}k/sem</span></p>
-              <p className="text-xs text-gray-500">Habla con el jugador: sueldo y relevancia. Si igualas o superas lo que pide, firma seguro. Contratos de 1 año piden un plus.</p>
-              <div className="bg-bg border border-border rounded-xl p-3 text-sm">
-                <p className="text-[11px] uppercase tracking-wide text-gray-600 mb-1">{player.name} dice</p>
-                <p className="text-gray-300">{wageResult?.roleTalk || `Para venir quiero tener un lugar de ${wantedRole.label.toLowerCase()} en tu equipo.`}</p>
+            <div className="mt-4 space-y-3">
+              <p className="text-sm" style={{ color: "var(--acc2)" }}>✓ Pase acordado: <b className="p-num text-base">€{fee.agreed}M</b>{fee.installments ? " en dos cuotas" : ""}</p>
+              <div className="rounded-xl p-3 space-y-3" style={{ background: "var(--panel2)" }}>
+                <div className="flex justify-between items-baseline text-sm"><span className="p-muted">Sueldo (hoy cobra €{player.wage}k)</span><b className="p-num text-2xl">€{wage}k<small className="text-xs p-muted">/sem</small></b></div>
+                <input type="range" min={Math.max(1, Math.round(player.wage * 0.6))} max={Math.round(Math.max(player.wage * 2.5, wage))} value={wage} onChange={(e) => setWage(Number(e.target.value))} className="w-full" style={{ accentColor: "var(--acc)" }} aria-label="Sueldo semanal en miles" />
+                <div className="flex items-center justify-between text-sm"><span className="p-muted">Años</span><span className="flex gap-1">{[1, 2, 3, 4, 5].map((y) => <button key={y} onClick={() => setYears(y)} className="p-num w-8 rounded-lg py-0.5 text-base" style={{ background: years === y ? "var(--acc)" : "var(--panel)", color: years === y ? "var(--onacc)" : "var(--fg)" }}>{y}</button>)}</span></div>
+                <div className="flex items-center justify-between text-sm gap-2"><span className="p-muted">Rol que le prometes</span><span className="flex gap-1">{Object.values(ROLES).map((r) => <button key={r.id} onClick={() => setRole(r.id)} className="rounded-lg px-2 py-1 text-xs" style={{ background: role === r.id ? "var(--acc)" : "var(--panel)", color: role === r.id ? "var(--onacc)" : "var(--fg)" }}>{r.label}</button>)}</span></div>
+                <p className="text-[11px] p-muted">Él espera ser {wanted.label.toLowerCase()}. Si después no lo cumples, su moral baja.</p>
               </div>
-
-              {wageResult && !wageResult.accepted && (
-                <div className="bg-red-500/10 border border-red-500/25 rounded-xl p-3 space-y-1">
-                  <p className="text-sm text-red-300">❌ Rechazó el contrato. {HINT_LABEL[wageResult.hint]}</p>
-                  {wageResult.expectedWageHint != null && (
-                    <p className="text-xs text-gray-400">Pide unos <span className="text-white font-semibold">€{wageResult.expectedWageHint}k/sem</span> — ya lo prellenamos, ajusta y reintenta.</p>
-                  )}
-                </div>
-              )}
-
-              <label className="block text-xs text-gray-500 uppercase tracking-wide">Sueldo ofrecido (€k/semana)</label>
-              <input
-                type="number" min="1" value={wageInput}
-                onChange={(e) => setWageInput(Number(e.target.value))}
-                className="w-full bg-bg border border-border rounded-2xl px-4 py-3 text-sm"
-              />
-              <label className="block text-xs text-gray-500 uppercase tracking-wide">Relevancia que le prometes</label>
-              <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full bg-bg border border-border rounded-2xl px-4 py-3 text-sm">
-                {Object.values(ROLES).map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
-              </select>
-              <p className="text-[11px] text-gray-600">Si después no la cumples, su moral baja de a poco. Prometer más de lo que vas a dar sale caro.</p>
-              <label className="block text-xs text-gray-500 uppercase tracking-wide">Años de contrato</label>
-              <select value={years} onChange={(e) => setYears(Number(e.target.value))} className="w-full bg-bg border border-border rounded-2xl px-4 py-3 text-sm">
-                {[1, 2, 3, 4, 5].map((y) => <option key={y} value={y}>{y} año{y === 1 ? "" : "s"}</option>)}
-              </select>
-              <button onClick={submitWage} className="btn btn-primary w-full transition">
-                {wageResult && !wageResult.accepted ? "Volver a ofrecer" : "Ofrecer contrato al jugador"}
-              </button>
-            </>
+              <div className="text-xs space-y-1.5">
+                <p className="p-muted">Masa salarial (tope €{cap}k/sem)</p>
+                <div className="flex items-center gap-2"><span className="w-14">Antes</span><div className="p-cbar flex-1"><i style={{ width: `${Math.min(100, (wages / cap) * 100)}%` }} /></div><span className="p-num w-12 text-right text-sm">€{wages}k</span></div>
+                <div className="flex items-center gap-2"><span className="w-14">Después</span><div className="p-cbar flex-1"><i style={{ width: `${Math.min(100, (after / cap) * 100)}%`, background: after > cap ? "var(--red)" : undefined }} /></div><span className="p-num w-12 text-right text-sm" style={after > cap ? { color: "var(--red)" } : undefined}>€{after}k</span></div>
+              </div>
+              <div className="flex gap-2">
+                {wageN?.counter != null && <button onClick={() => { const r = acceptWageCounter(player, years, role); if (r?.verdict === "accept") say({ me: true, text: `Aceptamos €${r.price}k/semana.` }); else if (r) say({ who: "Directiva", text: "Ese sueldo pasa el tope de masa salarial." }); }} className="p-btn gold flex-1">Aceptar €{wageN.counter}k</button>}
+                <button onClick={() => sendWage()} disabled={after > cap} className={`p-btn flex-1 ${wageN?.counter != null ? "ghost" : ""}`}>Ofrecer contrato</button>
+              </div>
+            </div>
           )}
 
-          {stage === "window-closed" && (
-            <>
-              <p className="text-sm text-emerald font-medium">✅ El jugador aceptó el contrato.</p>
-              <div className="bg-amber/10 border border-amber/30 rounded-xl p-3">
-                <p className="text-sm text-amber font-semibold">Ventana cerrada</p>
-                <p className="text-xs text-gray-400 mt-1">Todo está acordado pero no puedes formalizar el traspaso hasta que abra la ventana.</p>
+          {stage === "sign" && (
+            <div className="mt-4 space-y-3">
+              <div className="rounded-xl p-3 text-sm space-y-1" style={{ background: "var(--panel2)" }}>
+                <p>Pase: <b className="p-num text-base">€{fee.agreed}M</b>{fee.installments ? <span className="p-muted"> (ahora €{now}M, resto la próxima temporada)</span> : ""}</p>
+                <p>Contrato: <b className="p-num text-base">€{wageN.agreed}k/sem</b> · {wageN.years} años · {ROLES[wageN.role]?.label || "Rotación"}</p>
               </div>
-              <button onClick={onClose} className="w-full bg-panel border border-border text-gray-300 font-semibold py-2.5 rounded-2xl hover:border-gray-500 transition">
-                Cerrar
-              </button>
-            </>
-          )}
-
-          {stage === "complete-error" && (
-            <>
-              <p className="text-sm text-red-400">
-                ❌ {completeError === "insufficient_budget" ? "El presupuesto bajó y ya no te alcanza para cerrar este fichaje." : "No se pudo cerrar el fichaje."}
-              </p>
-              <p className="text-xs text-gray-500">El acuerdo con el jugador se perdió. Revisa tu presupuesto e intenta de nuevo más adelante.</p>
-              <button onClick={onClose} className="w-full bg-panel border border-border text-gray-300 font-semibold py-2.5 rounded-2xl hover:border-gray-500 transition">
-                Cerrar
-              </button>
-            </>
+              {!open && <p className="text-xs" style={{ color: "var(--gold)" }}>El mercado está cerrado: quedará como pre-acuerdo y se suma al equipo apenas abra.</p>}
+              <button onClick={sign} disabled={now > state.budget} className="p-btn big" style={{ marginInline: 0 }}>{open ? "Firmar" : "Firmar pre-acuerdo"}</button>
+            </div>
           )}
 
           {stage === "done" && (
-            <>
-              <p className="text-sm text-emerald font-semibold">¡Fichaje cerrado! {player.name} ya es tuyo.</p>
-              <button onClick={onClose} className="btn btn-primary w-full transition">
-                Cerrar
-              </button>
-            </>
+            <div className="mt-5 rounded-xl p-5 text-center" style={{ background: "var(--me-bg)" }}>
+              <p className="text-3xl">✍️</p>
+              <p className="font-bold mt-1" style={{ fontFamily: "var(--f-d)" }}>{done === "pre" ? `Pre-acuerdo con ${player.name}` : `¡${player.name} es de ${team.name}!`}</p>
+              <p className="text-sm p-muted">{done === "pre" ? "Se suma cuando abra el mercado." : "Ya está en tu plantel, entre los suplentes."}</p>
+              <button onClick={onClose} className="p-btn ghost sm mt-3">Seguir en el mercado</button>
+            </div>
           )}
-        </div>
-      </div>
-    </div>
+        </>
+      )}
+    </aside>
   );
 }
+

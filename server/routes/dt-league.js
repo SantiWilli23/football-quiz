@@ -1062,4 +1062,146 @@ router.post("/:code/trade/:tradeId/respond", async (req, res) => {
   res.json({ ok: true, accepted: true });
 });
 
+// ---- Fichajes entre managers: ofertas por jugadores de otro humano, con contraoferta ----
+async function savedState(leagueId, userId) {
+  const row = (await db.execute({ sql: "SELECT state FROM dt_league_squads WHERE league_id = ? AND user_id = ?", args: [leagueId, userId] })).rows[0];
+  try { return row ? JSON.parse(row.state) : null; } catch { return null; }
+}
+const marketOpen = (league) => league.status === "in_progress" && !!windowAt(Number(league.current_week || 0));
+const offerOut = (o) => ({
+  id: o.id, buyerId: o.buyer_id, buyerName: o.buyer_name, sellerId: o.seller_id, sellerName: o.seller_name,
+  playerId: o.player_id, playerName: o.player_name, ovr: o.ovr, amount: Number(o.amount),
+  counterAmount: o.counter_amount != null ? Number(o.counter_amount) : null, status: o.status,
+});
+
+// Las plantillas de los otros managers (lo que se puede ofertar).
+router.get("/:code/managers-squads", async (req, res) => {
+  const league = await loadLeagueByCode(req.params.code);
+  if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  const { members, me } = await requireMembership(league, req.userId);
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
+  const others = members.filter((m) => m.user_id !== req.userId && m.team_id && !m.expelled_at);
+  const out = [];
+  for (const m of others) {
+    const st = await savedState(league.id, m.user_id);
+    const players = (st?.squad || []).filter((p) => !p.isYouth).map((p) => ({ id: String(p.id), name: p.name, position: p.position, age: p.age, ovr: p.ovr, value: p.value, wage: p.wage }));
+    out.push({ userId: m.user_id, username: m.username, teamId: m.team_id, teamName: TEAMS.find((t) => t.id === m.team_id)?.name || m.team_id, players: players.sort((a, b) => b.ovr - a.ovr) });
+  }
+  res.json({ marketOpen: marketOpen(league), managers: out });
+});
+
+router.get("/:code/player-offers", async (req, res) => {
+  const league = await loadLeagueByCode(req.params.code);
+  if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  const { me } = await requireMembership(league, req.userId);
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
+  const rows = (await db.execute({
+    sql: `SELECT o.*, ub.username AS buyer_name, us.username AS seller_name FROM dt_league_player_offers o
+          JOIN users ub ON ub.id = o.buyer_id JOIN users us ON us.id = o.seller_id
+          WHERE o.league_id = ? AND (o.buyer_id = ? OR o.seller_id = ?) ORDER BY o.id DESC LIMIT 40`,
+    args: [league.id, req.userId, req.userId],
+  })).rows;
+  res.json({ marketOpen: marketOpen(league), received: rows.filter((o) => o.seller_id === req.userId).map(offerOut), sent: rows.filter((o) => o.buyer_id === req.userId).map(offerOut) });
+});
+
+router.post("/:code/player-offers", async (req, res) => {
+  const league = await loadLeagueByCode(req.params.code);
+  if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  const { members, me } = await requireMembership(league, req.userId);
+  if (!me?.team_id) return res.status(403).json({ error: "No tienes club en esta liga" });
+  if (!marketOpen(league)) return res.status(400).json({ error: "El mercado está cerrado: abre en verano y en invierno" });
+  const sellerId = Number(req.body?.sellerId);
+  const amount = Math.round(Number(req.body?.amount) * 20) / 20;
+  const playerId = String(req.body?.playerId || "");
+  const seller = members.find((m) => m.user_id === sellerId && m.team_id && !m.expelled_at);
+  if (!seller || sellerId === req.userId) return res.status(400).json({ error: "Ese manager no tiene club en esta liga" });
+  if (!(amount > 0)) return res.status(400).json({ error: "La oferta tiene que ser mayor que cero" });
+  const player = ((await savedState(league.id, sellerId))?.squad || []).find((p) => String(p.id) === playerId);
+  if (!player) return res.status(404).json({ error: "Ese jugador ya no está en su plantel" });
+  const mine = await savedState(league.id, req.userId);
+  if (mine && Number(mine.budget) < amount) return res.status(400).json({ error: `No te alcanza: tienes €${mine.budget}M` });
+  const dup = (await db.execute({ sql: "SELECT id FROM dt_league_player_offers WHERE league_id = ? AND buyer_id = ? AND player_id = ? AND status IN ('pending','countered')", args: [league.id, req.userId, playerId] })).rows[0];
+  if (dup) return res.status(409).json({ error: "Ya tienes una oferta abierta por ese jugador" });
+  const r = await db.execute({
+    sql: "INSERT INTO dt_league_player_offers (league_id, season, buyer_id, seller_id, player_id, player_name, ovr, amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    args: [league.id, Number(league.season || 1), req.userId, sellerId, playerId, String(player.name || "Jugador"), Number(player.ovr) || 0, amount],
+  });
+  res.status(201).json({ id: Number(r.lastInsertRowid) });
+});
+
+// Cerrar el trato: guarda una copia del jugador (para el comprador) y retira las demás ofertas por él.
+async function closePlayerDeal(league, offer, amount) {
+  const player = ((await savedState(league.id, offer.seller_id))?.squad || []).find((p) => String(p.id) === String(offer.player_id));
+  if (!player) {
+    await db.execute({ sql: "UPDATE dt_league_player_offers SET status = 'cancelled', resolved_at = datetime('now') WHERE id = ?", args: [offer.id] });
+    return { error: "Ese jugador ya no está en el plantel del vendedor" };
+  }
+  await db.execute({ sql: "UPDATE dt_league_player_offers SET status = 'accepted', amount = ?, player_json = ?, resolved_at = datetime('now') WHERE id = ?", args: [amount, JSON.stringify(player), offer.id] });
+  await db.execute({ sql: "UPDATE dt_league_player_offers SET status = 'withdrawn', resolved_at = datetime('now') WHERE league_id = ? AND player_id = ? AND seller_id = ? AND id <> ? AND status IN ('pending','countered')", args: [league.id, offer.player_id, offer.seller_id, offer.id] });
+  return { ok: true, accepted: true, amount };
+}
+
+// El vendedor: accept | reject | counter (con amount). El comprador, ante una contraoferta: accept | reject.
+router.post("/:code/player-offers/:id/respond", async (req, res) => {
+  const league = await loadLeagueByCode(req.params.code);
+  if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  const { me } = await requireMembership(league, req.userId);
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
+  const offer = (await db.execute({ sql: "SELECT * FROM dt_league_player_offers WHERE id = ? AND league_id = ?", args: [Number(req.params.id), league.id] })).rows[0];
+  if (!offer) return res.status(404).json({ error: "Oferta no encontrada" });
+  const action = String(req.body?.action || "");
+  const sellerTurn = offer.status === "pending" && offer.seller_id === req.userId;
+  const buyerTurn = offer.status === "countered" && offer.buyer_id === req.userId;
+  if (!sellerTurn && !buyerTurn) return res.status(400).json({ error: "No es tu turno en esta oferta" });
+  if (action === "reject") {
+    await db.execute({ sql: "UPDATE dt_league_player_offers SET status = 'rejected', resolved_at = datetime('now') WHERE id = ?", args: [offer.id] });
+    return res.json({ ok: true, accepted: false });
+  }
+  if (!marketOpen(league)) return res.status(400).json({ error: "El mercado está cerrado" });
+  if (sellerTurn && action === "counter") {
+    const amount = Math.round(Number(req.body?.amount) * 20) / 20;
+    if (!(amount > Number(offer.amount))) return res.status(400).json({ error: "La contraoferta tiene que ser mayor que la oferta" });
+    await db.execute({ sql: "UPDATE dt_league_player_offers SET status = 'countered', counter_amount = ? WHERE id = ?", args: [amount, offer.id] });
+    return res.json({ ok: true, countered: true, amount });
+  }
+  if (action !== "accept") return res.status(400).json({ error: "Acción no válida" });
+  const amount = buyerTurn ? Number(offer.counter_amount) : Number(offer.amount);
+  if (buyerTurn) {
+    const mine = await savedState(league.id, req.userId);
+    if (mine && Number(mine.budget) < amount) return res.status(400).json({ error: `No te alcanza: tienes €${mine.budget}M` });
+  }
+  const out = await closePlayerDeal(league, offer, amount);
+  if (out.error) return res.status(409).json({ error: out.error });
+  res.json(out);
+});
+
+// Movimientos cerrados que el club de este manager todavía no aplicó (entra o sale un jugador y la plata).
+router.get("/:code/player-moves", async (req, res) => {
+  const league = await loadLeagueByCode(req.params.code);
+  if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  const { me } = await requireMembership(league, req.userId);
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
+  const rows = (await db.execute({
+    sql: `SELECT * FROM dt_league_player_offers WHERE league_id = ? AND status = 'accepted'
+          AND ((buyer_id = ? AND buyer_applied = 0) OR (seller_id = ? AND seller_applied = 0))`,
+    args: [league.id, req.userId, req.userId],
+  })).rows;
+  res.json({
+    moves: rows.map((o) => o.buyer_id === req.userId
+      ? { offerId: o.id, kind: "in", amount: Number(o.amount), player: (() => { try { return JSON.parse(o.player_json); } catch { return null; } })() }
+      : { offerId: o.id, kind: "out", amount: Number(o.amount), playerId: o.player_id, playerName: o.player_name }),
+  });
+});
+
+router.post("/:code/player-moves/:offerId/ack", async (req, res) => {
+  const league = await loadLeagueByCode(req.params.code);
+  if (!league) return res.status(404).json({ error: "No existe ninguna liga con ese código" });
+  const { me } = await requireMembership(league, req.userId);
+  if (!me) return res.status(403).json({ error: "No eres parte de esta liga" });
+  const id = Number(req.params.offerId);
+  await db.execute({ sql: "UPDATE dt_league_player_offers SET buyer_applied = 1 WHERE id = ? AND league_id = ? AND buyer_id = ? AND status = 'accepted'", args: [id, league.id, req.userId] });
+  await db.execute({ sql: "UPDATE dt_league_player_offers SET seller_applied = 1 WHERE id = ? AND league_id = ? AND seller_id = ? AND status = 'accepted'", args: [id, league.id, req.userId] });
+  res.json({ ok: true });
+});
+
 export default router;

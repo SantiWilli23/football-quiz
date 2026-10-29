@@ -126,6 +126,31 @@ export async function respondTrade(code, tradeId, accept) {
   return data;
 }
 
+// Fichajes entre managers: plantillas de los demás, ofertas (con contraoferta) y movimientos cerrados.
+export async function getManagersSquads(code) {
+  const { data } = await api.get(`/dt-league/${code}/managers-squads`);
+  return data;
+}
+export async function getPlayerOffers(code) {
+  const { data } = await api.get(`/dt-league/${code}/player-offers`);
+  return data;
+}
+export async function sendPlayerOffer(code, sellerId, playerId, amount) {
+  const { data } = await api.post(`/dt-league/${code}/player-offers`, { sellerId, playerId, amount });
+  return data;
+}
+export async function respondPlayerOffer(code, id, action, amount) {
+  const { data } = await api.post(`/dt-league/${code}/player-offers/${id}/respond`, { action, amount });
+  return data;
+}
+export async function getPlayerMoves(code) {
+  const { data } = await api.get(`/dt-league/${code}/player-moves`);
+  return data.moves || [];
+}
+export async function ackPlayerMove(code, offerId) {
+  await api.post(`/dt-league/${code}/player-moves/${offerId}/ack`);
+}
+
 export function dtLiveWsUrl(fixtureId) {
   const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
   const token = localStorage.getItem("fq_token") || "";
