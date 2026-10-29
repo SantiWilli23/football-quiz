@@ -115,3 +115,7 @@ Solo el usuario de `OWNER_USERNAME` ve el botón flotante «Futotal 1 · Actual 
 - **Demo**: cambios probados antes de pasarlos a Actual. Cada uno está registrado con su número en `client/src/demo/changes/index.js`; el panel los lista, cuenta («N cambios») y los copia uno a uno, elegidos o todos. Dos rediseños grandes seleccionables en «Diseño»: A «Noche de estadio» y B «Álbum de figuritas».
 - Los cambios de la Demo se activan con `useDemo()` (`client/src/demo/version.js`); pasar uno a Actual es quitar su condición.
 - Cambios actuales: 2A/2B (temas), 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16a–c (cartas).
+
+### Cambios de la beta pasados a Actual (2026-10-29)
+Aprobados por el dueño y ahora activos para todos (`useDemo()` es verdadero salvo en Futotal 1): 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16a, 16b y 16c.
+Siguen solo en la beta (`data-beta`): 2A, 2B y 5 (colores y temas). Comentario del dueño: no gustó; funcionaba solo de noche y se perdió el verde característico. El próximo intento debe funcionar en claro y oscuro y conservar el verde.

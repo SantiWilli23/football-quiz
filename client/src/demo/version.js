@@ -21,15 +21,27 @@ export const isOwnerNow = () => ownerServer || codeOk();
 
 // Tema de la beta (los dos rediseños grandes): «base» es la paleta ampliada, «a» Noche de estadio y «b» Álbum de figuritas.
 const TEMAS = ["base", "a", "b"];
-export const currentTema = () => { try { const v = localStorage.getItem("fq_tema"); return TEMAS.includes(v) ? v : "base"; } catch { return "base"; } };
+// Los cambios aprobados (Futotal 2.0 con la paleta ampliada, caras, escudos, cartas nuevas…) ya son
+// la versión Actual para todos. Quedan «base» y «b» (Álbum de figuritas) para elegir en Ajustes;
+// «a» (Noche de estadio) sigue siendo solo de la beta del dueño.
+export const currentTema = () => {
+  let v = "base";
+  try { v = localStorage.getItem("fq_tema") || "base"; } catch { /* sin storage */ }
+  if (!TEMAS.includes(v)) return "base";
+  // Los colores y temas siguen en la beta: fuera de ella no se aplican.
+  if (!(isOwnerNow() && stored() === "demo")) return "base";
+  return v;
+};
 export function setTema(t) {
-  if (!isOwnerNow() || !TEMAS.includes(t)) return;
+  if (!TEMAS.includes(t) || (t === "a" && !isOwnerNow())) return;
   try { localStorage.setItem("fq_tema", t); } catch { /* sin storage */ }
   emit();
 }
 
 export const currentVersion = () => (isOwnerNow() ? stored() : "actual");
-export const isDemoNow = () => currentVersion() === "demo";
+// «Demo» ya no es una versión aparte: los cambios aprobados están en Actual y en la Beta. Solo
+// Futotal 1 (para el dueño) los apaga.
+export const isDemoNow = () => currentVersion() !== "f1";
 
 export function setVersion(v) {
   if (!isOwnerNow() || !VERSIONS.includes(v)) return;
@@ -70,4 +82,5 @@ export function useVersion() {
   return { owner: isOwner, version, setVersion, tema, setTema };
 }
 
-export const useDemo = () => useVersion().version === "demo";
+export const useDemo = () => useVersion().version !== "f1";
+export const useBeta = () => useVersion().version === "demo";
