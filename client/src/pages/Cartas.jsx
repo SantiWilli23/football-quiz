@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Coins, Layers, Package, Puzzle, Shield, ShoppingBag, Swords } from "lucide-react";
+import { Coins, Gavel, Layers, Package, Puzzle, Shield, ShoppingBag, Swords } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
@@ -9,6 +9,7 @@ import MatchStage from "../match/MatchStage.jsx";
 import { fromEngine } from "../match/simMatch.js";
 import CardExtrasPanel from "../components/CardExtrasPanel.jsx";
 import CartasTema from "../v2/CartasTema.jsx";
+import Mercado from "../v2/Mercado.jsx";
 import useFutotal2 from "../v2/useFutotal2.js";
 import { useToast } from "../context/ToastContext.jsx";
 import { playSfx } from "../utils/sfx.js";
@@ -174,7 +175,7 @@ function SobresV2({ state, busy, openPack, claimDaily }) {
 export default function Cartas() {
   const { toast } = useToast();
   const [params] = useSearchParams();
-  const [tab, setTab] = useState(() => (["sobres", "album", "equipo", "sbc", "tienda"].includes(params.get("tab")) ? params.get("tab") : "sobres"));
+  const [tab, setTab] = useState(() => (["sobres", "album", "equipo", "sbc", "tienda", "mercado"].includes(params.get("tab")) ? params.get("tab") : "sobres"));
   const { on: v2 } = useFutotal2();
   const [state, setState] = useState(null);
   const [collection, setCollection] = useState([]);
@@ -346,7 +347,7 @@ export default function Cartas() {
   }
 
   const TABS = v2
-    ? [["sobres", "Sobres", Package], ["album", "Álbum", Layers], ["equipo", "Mi once", Shield], ["sbc", "SBC", Puzzle], ["tienda", "Tienda", ShoppingBag]]
+    ? [["sobres", "Sobres", Package], ["album", "Álbum", Layers], ["equipo", "Mi once", Shield], ["sbc", "SBC", Puzzle], ["tienda", "Tienda", ShoppingBag], ["mercado", "Mercado", Gavel]]
     : [["sobres", "Sobres", Package], ["album", "Álbum", Layers], ["equipo", "Mi equipo", Shield]];
   // Con el rediseño, SBC y Tienda tienen su pestaña; antes iban debajo de los sobres.
   const show = (k) => (v2 ? tab === k : tab === "sobres");
@@ -412,7 +413,7 @@ export default function Cartas() {
       </div>
       </>)}
 
-      {["sobres", "sbc", "tienda"].includes(tab) && state && (
+      {["sobres", "sbc", "tienda", "mercado"].includes(tab) && state && (
         <div className="space-y-4">
           {show("sobres") && v2 && <SobresV2 state={state} busy={busy} openPack={openPack} claimDaily={claimDaily} />}
           {show("sobres") && !v2 && <Card className="text-center py-8">
@@ -431,6 +432,7 @@ export default function Cartas() {
             <p className="t-meta mt-4 beta-hide">Ganas sobres con el diario, cumpliendo el reto del día y ganando partidos (máx. 2 por día) — mejor calidad cuanto más contundente la victoria.</p>
           </Card>}
           {opened && <PackOpening cards={opened} />}
+          {v2 && tab === "mercado" && <Mercado collection={collection} onChanged={load} />}
           {v2 && tab === "sbc" && <CartasTema lockedPacks={state.lockedPacks || 0} onChanged={load} />}
 
           {show("tienda") && <Card>

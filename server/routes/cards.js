@@ -921,6 +921,8 @@ router.post("/trades/:id/accept", async (req, res) => {
       bump(t.from_user, t.give, -1), bump(t.to_user, t.give, 1),
       bump(t.to_user, t.want, -1), bump(t.from_user, t.want, 1),
       { sql: "UPDATE card_trades SET status = 'accepted' WHERE id = ?", args: [t.id] },
+      { sql: "INSERT INTO card_history (card, from_user, to_user, kind) VALUES (?, ?, ?, 'trueque')", args: [t.give, t.from_user, t.to_user] },
+      { sql: "INSERT INTO card_history (card, from_user, to_user, kind) VALUES (?, ?, ?, 'trueque')", args: [t.want, t.to_user, t.from_user] },
     ], "write");
     res.json({ ok: true });
   } catch (err) {

@@ -1554,3 +1554,41 @@ CREATE TABLE IF NOT EXISTS user_celebration (
   user_id INTEGER PRIMARY KEY REFERENCES users(id),
   id TEXT NOT NULL
 );
+
+-- Futotal 2.0: mercado de cartas. Subastas entre miembros de un club con las monedas del juego.
+CREATE TABLE IF NOT EXISTS market_listings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  seller_id INTEGER NOT NULL REFERENCES users(id),
+  group_id INTEGER NOT NULL REFERENCES groups_t(id),
+  card TEXT NOT NULL,
+  base INTEGER NOT NULL,
+  ends_at TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'open',
+  winner_id INTEGER,
+  price INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_market_open ON market_listings(status, group_id, ends_at);
+
+CREATE TABLE IF NOT EXISTS market_bids (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  listing_id INTEGER NOT NULL REFERENCES market_listings(id),
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  amount INTEGER NOT NULL,
+  at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_market_bids_listing ON market_bids(listing_id, amount);
+
+-- Historial de cada carta: de quien a quien paso (subastas y trueques).
+CREATE TABLE IF NOT EXISTS card_history (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  card TEXT NOT NULL,
+  from_user INTEGER,
+  to_user INTEGER,
+  kind TEXT NOT NULL,
+  price INTEGER,
+  at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_card_history_card ON card_history(card, id);
