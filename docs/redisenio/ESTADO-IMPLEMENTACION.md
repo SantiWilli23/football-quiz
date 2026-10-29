@@ -119,3 +119,5 @@ Solo el usuario de `OWNER_USERNAME` ve el botón flotante «Futotal 1 · Actual 
 ### Cambios de la beta pasados a Actual (2026-10-29)
 Aprobados por el dueño y ahora activos para todos (`useDemo()` es verdadero salvo en Futotal 1): 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16a, 16b y 16c.
 Siguen solo en la beta (`data-beta`): 2A, 2B y 5 (colores y temas). Comentario del dueño: no gustó; funcionaba solo de noche y se perdió el verde característico. El próximo intento debe funcionar en claro y oscuro y conservar el verde.
+
+Se quitaron la paleta ampliada y los temas A y B (también de la beta): los colores son los de siempre. Comentario del dueño: no gustó; funcionaba solo de noche y se perdió el verde característico.

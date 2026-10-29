@@ -12,28 +12,10 @@ const VERS = [
   ["demo", "Beta", "Cambios por probar"],
 ];
 
-// Diseño de la app (para todos): la paleta de siempre o el Álbum de figuritas (claro).
-export function DisenoAjuste() {
-  const { tema, setTema } = useVersion();
-  return (
-    <Card className="mb-6">
-      <h2 className="font-semibold mb-3">Diseño</h2>
-      <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Diseño">
-        {[["base", "Estadio", "Oscuro con colores"], ["b", "Álbum de figuritas", "Claro, bordes gruesos"]].map(([k, l, s]) => (
-          <button key={k} type="button" role="radio" aria-checked={tema === k} onClick={() => setTema(k)}
-            className={`rounded-xl border px-3 py-2.5 text-left ${tema === k ? "border-accent bg-accent/10" : "border-border text-gray-400"}`}>
-            <b className="block text-sm">{l}</b><span className="block text-[11px] leading-tight">{s}</span>
-          </button>
-        ))}
-      </div>
-    </Card>
-  );
-}
-
 // «Código» en Ajustes: con el código correcto aparece debajo el apartado de versiones (anterior,
 // actual y beta con su número de cambios) y, en la beta, la lista de cambios para copiarlos.
 export default function CodigoAjuste() {
-  const { owner, version, setVersion, tema, setTema } = useVersion();
+  const { owner, version, setVersion } = useVersion();
   const [code, setCode] = useState("");
   const [bad, setBad] = useState(false);
   const [sel, setSel] = useState(() => new Set());
@@ -84,17 +66,6 @@ export default function CodigoAjuste() {
           </div>
           {version === "demo" && (
             <div className="mt-4 space-y-4">
-              <section aria-label="Diseño" className="space-y-2">
-                <h3 className="text-sm font-semibold">Diseño de la beta</h3>
-                <div className="grid grid-cols-3 gap-2" role="tablist">
-                  {[["base", "Estadio", "Paleta ampliada"], ["a", "A", "Noche de estadio"], ["b", "B", "Álbum de figuritas"]].map(([k, l, s]) => (
-                    <button key={k} type="button" role="tab" aria-selected={tema === k} onClick={() => setTema(k)}
-                      className={`rounded-xl border px-2 py-2 text-left ${tema === k ? "border-accent bg-accent/10" : "border-border text-gray-400"}`}>
-                      <b className="block text-sm">{l}</b><span className="block text-[11px] leading-tight">{s}</span>
-                    </button>
-                  ))}
-                </div>
-              </section>
               <section aria-label="Cambios de la beta" className="space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-sm font-semibold">{n} {n === 1 ? "cambio" : "cambios"}</h3>
