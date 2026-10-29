@@ -190,6 +190,7 @@ export default function Yo() {
           <PushToggle />
           <RecoveryCode />
           <CodigoAjuste />
+          <Link to="/otro" className="p-btn ghost w-full">Otro</Link>
           <AccountSettings user={user} onUpdated={refreshMe} />
           <button onClick={logout} className="p-btn ghost w-full"><LogOut size={16} /> Cerrar sesión</button>
         </div>

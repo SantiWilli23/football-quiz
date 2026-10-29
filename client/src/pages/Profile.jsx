@@ -163,6 +163,7 @@ export default function Profile() {
           </Card>
           <RecoveryCode />
           <CodigoAjuste />
+          <Link to="/otro" className="btn btn-secondary w-full mb-6">Otro</Link>
           {v2 && <GhostToggle />}
           <Card className="mb-6">
             <div className="flex items-center gap-4">
