@@ -95,3 +95,11 @@ El modo teléfono queda como estaba. El modo computador usa el «Modo de pantall
 - **Colores de vuelta**: Nocturno, Azul clásico y Cancha de día (clara) en versión rediseño; los colores fijos de `v2.css` pasaron a variables por tema. Selector «Colores» en Yo › Ajustes.
 - **Cotrero único**: una tarjeta en Jugar; al entrar se elige la dificultad (Simple o Media) y dentro del juego se cambia con «Dificultad: Simple · Media».
 - **Traspasos eliminado**: sale de ¿Quién es? (`/traspasos` redirige a ¿Quién es?) y de la rotación del juego diario desde el 30/10/2026 (las fechas anteriores conservan su juego).
+
+## Versión Demo del dueño (OWNER_USERNAME)
+
+Solo el usuario de `OWNER_USERNAME` ve el botón flotante «Futotal 1 · Actual · Demo» (ruta `GET /api/me/owner`; la elección vive en el navegador, `fq_version`). Los demás siempre ven «Actual».
+- **Futotal 1**: la app de antes, sin el rediseño (solo para el dueño).
+- **Demo**: cambios probados antes de pasarlos a Actual. Cada uno está registrado con su número en `client/src/demo/changes/index.js`; el panel los lista, cuenta («N cambios») y los copia uno a uno, elegidos o todos. Dos rediseños grandes seleccionables en «Diseño»: A «Noche de estadio» y B «Álbum de figuritas».
+- Los cambios de la Demo se activan con `useDemo()` (`client/src/demo/version.js`); pasar uno a Actual es quitar su condición.
+- Cambios actuales: 2A/2B (temas), 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16a–c (cartas).

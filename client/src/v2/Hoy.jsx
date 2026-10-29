@@ -12,6 +12,7 @@ import { pendingMatch, syncQueue } from "./offline.js";
 import EventCards from "./Evento.jsx";
 import Ceremonia from "./Ceremonia.jsx";
 import { TorneoBanner } from "./Album.jsx";
+import { useDemo } from "../demo/version.js";
 
 const DAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
@@ -33,6 +34,7 @@ function Countdown() {
 const matchNumber = (date) => (date ? Math.round((Date.parse(date) - Date.parse("2026-01-01")) / 86400000) + 1 : null);
 
 function Hero({ today, streak, mult }) {
+  const demo = useDemo();
   const navigate = useNavigate();
   const played = today && today.result;
   const inProgress = today && !today.result && today.answered?.length > 0;
@@ -78,7 +80,7 @@ function Hero({ today, streak, mult }) {
           <button className="p-btn big p-pulse" onClick={() => { track("partido_click_hoy"); navigate("/partido"); }}>
             {inProgress ? "SEGUIR JUGANDO" : "JUGAR"}
           </button>
-          <p className="text-center text-xs p-muted mt-2.5">3 minijuegos · unos 3 minutos{mult > 1 ? " · vale doble en tu club" : ""}</p>
+          {demo ? (mult > 1 && <p className="mt-2.5 text-center"><span className="p-x2">×2 en tu club</span></p>) : <p className="text-center text-xs p-muted mt-2.5">3 minijuegos · unos 3 minutos{mult > 1 ? " · vale doble en tu club" : ""}</p>}
         </>
       )}
       <div className="p-week">
@@ -90,20 +92,21 @@ function Hero({ today, streak, mult }) {
       </div>
       <div className="flex justify-between mt-3 text-xs p-muted">
         <span className="flex gap-1.5 items-center" style={{ color: "var(--gold)" }}><Flame size={14} /><b className="p-num text-[15px]">Racha de {streak?.streak ?? 0}</b></span>
-        <span className="flex gap-1.5 items-center" style={{ color: "var(--blue)" }}><Shield size={14} />Protector ×{streak?.protectorAvailable ? 1 : 0}</span>
+        <span className="flex gap-1.5 items-center" style={{ color: "var(--blue)" }}><Shield size={14} />{demo ? "×" : "Protector ×"}{streak?.protectorAvailable ? 1 : 0}</span>
       </div>
     </section>
   );
 }
 
 function ClubBlock({ main, table, me, loaded }) {
+  const demo = useDemo();
   if (!loaded) return null;
   if (!main) {
     return (
       <section className="p-sect p-stg" style={{ "--i": 1 }}>
         <h3>Tu club</h3>
         <div className="p-card flex flex-col gap-2.5">
-          <p className="text-sm p-muted">Juegas contra todos. Con un club juegas contra tus amigos, tus puntos cuentan y se abren los sobres.</p>
+          {!demo && <p className="text-sm p-muted">Juegas contra todos. Con un club juegas contra tus amigos, tus puntos cuentan y se abren los sobres.</p>}
           <div className="p-btns" style={{ marginTop: 0 }}>
             <Link className="p-btn" to="/club?crear=1">Crear club</Link>
             <Link className="p-btn ghost" to="/club">Unirme</Link>
@@ -118,7 +121,7 @@ function ClubBlock({ main, table, me, loaded }) {
         <h3>{main.name}<Link to="/club">Ver club</Link></h3>
         <div className="p-card flex flex-col gap-2">
           <span><span className="p-seal b">PRETEMPORADA</span> <small className="p-muted">Aún no suman puntos</small></span>
-          <p className="text-sm p-muted">{main.members} {main.members === 1 ? "miembro" : "miembros"}. {main.owner ? "Cuando estén todos, inicia la temporada desde Club." : "Esperando que el dueño inicie la temporada."}</p>
+          <p className="text-sm p-muted">{main.members} {main.members === 1 ? "miembro" : "miembros"}.{!demo && (main.owner ? " Cuando estén todos, inicia la temporada desde Club." : " Esperando que el dueño inicie la temporada.")}</p>
         </div>
       </section>
     );
@@ -149,19 +152,21 @@ function ClubBlock({ main, table, me, loaded }) {
 }
 
 function ClubStreak({ data }) {
+  const demo = useDemo();
   if (!data || data.members < 2) return null;
   return (
     <section className="p-sect p-stg" style={{ "--i": 2 }}>
       <h3>Racha del club<small style={{ color: "var(--gold)" }}>{data.streak} {data.streak === 1 ? "día" : "días"}</small></h3>
       <div className="p-card">
         <div className="p-cbar"><i style={{ width: `${Math.min(100, (data.playedToday || 0) / data.members * 100)}%` }} /></div>
-        <p className="text-sm mt-2.5">{data.todayDone ? "Hoy jugaron todos: el club ganó un sobre extra." : <>Hoy jugaron <b>{data.playedToday || 0} de {data.members}</b>. Si juegan todos, el club gana un sobre extra.</>}</p>
+        {demo ? <p className="mt-2 flex items-baseline justify-between"><b className="p-num" style={{ fontSize: 28 }}>{data.playedToday || 0}<small className="p-muted">/{data.members}</small></b><span className="text-xs p-muted">{data.todayDone ? "Sobre extra ganado" : "jugaron hoy"}</span></p> : <p className="text-sm mt-2.5">{data.todayDone ? "Hoy jugaron todos: el club ganó un sobre extra." : <>Hoy jugaron <b>{data.playedToday || 0} de {data.members}</b>. Si juegan todos, el club gana un sobre extra.</>}</p>}
       </div>
     </section>
   );
 }
 
 function CupBlock({ cup }) {
+  const demo = useDemo();
   if (!cup || !cup.started) return null;
   let title;
   let sub = "";
@@ -178,7 +183,7 @@ function CupBlock({ cup }) {
       <h3>Copa de la semana<Link to="/club?tab=copa">Ver cuadro</Link></h3>
       <Link to="/club?tab=copa" className="p-card flex gap-3 items-center">
         <Trophy size={28} style={{ color: "var(--gold)" }} />
-        <span><b className="block">{title}</b><small className="p-muted">{sub}</small></span>
+        <span><b className="block">{title}</b>{!demo && <small className="p-muted">{sub}</small>}</span>
       </Link>
     </section>
   );
@@ -187,6 +192,7 @@ function CupBlock({ cup }) {
 // Hoy: lo que importa del día en pocos bloques. El partido del día arriba, tu club
 // debajo, la copa y después seguir jugando.
 export default function Hoy() {
+  const demo = useDemo();
   const { user } = useAuth();
   const { clubs, loaded, main } = useClubs();
   const streak = useStreak();
@@ -232,7 +238,7 @@ export default function Hoy() {
       <header className="p-dhead">
         <div>
           <h1>Hola, {user?.username}</h1>
-          <p>{new Date().toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Santiago" })} · el partido de hoy es igual para todos.</p>
+          <p>{new Date().toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Santiago" })}{!demo && " · el partido de hoy es igual para todos."}</p>
         </div>
       </header>
 
@@ -262,11 +268,11 @@ export default function Hoy() {
           <section className="p-sect p-stg" style={{ "--i": 5, order: 7 }}>
             <h3>Seguir jugando</h3>
             <div className="p-rows">
-              <Link to="/juegos" className="p-row"><span className="nm">Todos los juegos<small style={{ color: "var(--mute)" }}>Arcade, con amigos y carrera</small></span><ChevronRight size={20} style={{ color: "var(--acc2)" }} /></Link>
-              <Link to="/hoy/archivo" className="p-row"><span className="nm">Partidos pasados<small style={{ color: "var(--mute)" }}>Sin puntos ni sobre</small></span><ChevronRight size={20} style={{ color: "var(--acc2)" }} /></Link>
+              <Link to="/juegos" className="p-row"><span className="nm">Todos los juegos{!demo && <small style={{ color: "var(--mute)" }}>Arcade, con amigos y carrera</small>}</span><ChevronRight size={20} style={{ color: "var(--acc2)" }} /></Link>
+              <Link to="/hoy/archivo" className="p-row"><span className="nm">Partidos pasados{!demo && <small style={{ color: "var(--mute)" }}>Sin puntos ni sobre</small>}</span><ChevronRight size={20} style={{ color: "var(--acc2)" }} /></Link>
             </div>
           </section>
-          {loaded && clubs.length > 1 && <p className="text-xs p-dim text-center mt-4" style={{ order: 8 }}>Tu partido de hoy cuenta en los {clubs.length} clubes en los que estás.</p>}
+          {!demo && loaded && clubs.length > 1 && <p className="text-xs p-dim text-center mt-4" style={{ order: 8 }}>Tu partido de hoy cuenta en los {clubs.length} clubes en los que estás.</p>}
         </div>
       </div>
     </Layout>

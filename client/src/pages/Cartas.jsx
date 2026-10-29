@@ -12,6 +12,9 @@ import CartasTema from "../v2/CartasTema.jsx";
 import useFutotal2 from "../v2/useFutotal2.js";
 import { useToast } from "../context/ToastContext.jsx";
 import { playSfx } from "../utils/sfx.js";
+import { useDemo } from "../demo/version.js";
+import FigCard from "../demo/FigCard.jsx";
+import PackOpeningDemo from "../demo/PackOpeningDemo.jsx";
 
 // Clases escritas literales para que Tailwind las genere.
 const TIER_STYLE = {
@@ -42,6 +45,8 @@ function LockedCard({ c, small }) {
 }
 
 function PlayerCard({ c, selected, onClick, small, onSell }) {
+  const demo = useDemo();
+  if (demo) return <FigCard c={c} selected={selected} onClick={onClick} small={small} onSell={onSell} />;
   const Tag = onClick ? "button" : "div";
   return (
     <Tag
@@ -77,6 +82,7 @@ function PlayerCard({ c, selected, onClick, small, onSell }) {
 // Sobre animado: se "abre" 900ms y cada carta gira al revelarse, en vez de
 // aparecer todas de golpe.
 function PackOpening({ cards, onDone }) {
+  const demo = useDemo();
   const [phase, setPhase] = useState("closed"); // closed | tearing | revealed
   useEffect(() => {
     const t1 = setTimeout(() => setPhase("tearing"), 120);
@@ -84,6 +90,7 @@ function PackOpening({ cards, onDone }) {
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
+  if (demo) return <PackOpeningDemo cards={cards} />;
   if (phase !== "revealed") {
     return (
       <div className="flex justify-center py-10">
@@ -117,6 +124,26 @@ const EARN = [
   ["Partidas libres", "La primera de cada juego al día"],
 ];
 function SobresV2({ state, busy, openPack, claimDaily }) {
+  const demo = useDemo();
+  if (demo) {
+    return (
+      <div className="space-y-4">
+        <section className="flex flex-col items-center gap-3 rounded-3xl border border-border bg-panel p-6">
+          <button type="button" onClick={openPack} disabled={busy || state.packs === 0} aria-label="Abrir sobre" className="relative h-56 w-40 rounded-2xl border-2 border-accent/70 shadow-2xl transition-transform hover:-rotate-2 hover:scale-105 disabled:opacity-40 disabled:hover:scale-100"
+            style={{ background: "linear-gradient(160deg, var(--acc, #2fb673), #0f3d2a 70%)" }}>
+            <span className="block pt-14 text-5xl font-black tracking-widest text-white/90">FT</span>
+            <span className="absolute -right-3 -top-3 flex h-9 w-9 items-center justify-center rounded-full bg-amber-400 text-lg font-black text-black">{state.packs}</span>
+          </button>
+          <b style={{ font: "800 20px var(--f-d, inherit)" }}>{state.packs > 0 ? "Abrir sobre" : "Sin sobres"}</b>
+          {!state.dailyClaimed && <button onClick={claimDaily} className="p-btn ghost">Reclamar sobre diario</button>}
+          {state.lockedPacks > 0 && <span className="rounded-full border border-border px-3 py-1 text-xs text-gray-400">{state.lockedPacks} guardado{state.lockedPacks === 1 ? "" : "s"} para tu club</span>}
+        </section>
+        <section aria-label="Cómo ganas sobres" className="flex flex-wrap gap-2">
+          {["Partido del día", "Copa semanal", "Podio del mes", "Racha del club", "Partidas libres"].map((t) => <span key={t} className="rounded-full border border-border px-3 py-1 text-xs text-gray-300">{t}</span>)}
+        </section>
+      </div>
+    );
+  }
   return (
     <div className="p-dgrid even">
       <section className="p-l" style={{ display: "block" }}>

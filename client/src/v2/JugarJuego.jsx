@@ -7,6 +7,11 @@ import Card from "../components/Card.jsx";
 import useFutotal2 from "./useFutotal2.js";
 import { FUSED, fusedPath, gameBySlug, lastVariant, rememberVariant, unfinishedVariant } from "./fusion.js";
 import { ShellContext } from "./ShellContext.js";
+import { useDemo } from "../demo/version.js";
+import FirstTimeHelp from "../demo/FirstTimeHelp.jsx";
+import Picker from "../demo/Picker.jsx";
+import RecordsDemo from "../demo/RecordsDemo.jsx";
+import { hintFor } from "../demo/hints.js";
 
 // Récords de la variante: lo que ya guarda el Historial (partidas, mejor puntaje, promedio,
 // plenos y racha). No se cambia ninguna clave: se leen las que ya existen.
@@ -37,6 +42,8 @@ function Records({ variant }) {
 }
 
 function Chips({ game, g, variant, records, setRecords }) {
+  const demo = useDemo();
+  const nm = (v) => (demo ? hintFor(game, v.key)?.[0] || v.label : v.label);
   const pending = unfinishedVariant(game);
   const base = "shrink-0 rounded-full border px-3 py-1.5 text-sm transition-colors";
   return (
@@ -54,7 +61,7 @@ function Chips({ game, g, variant, records, setRecords }) {
         {g.pick && <span className="t-eyebrow shrink-0 mr-1">{g.pick}</span>}
         {g.variants.length > 1 && g.variants.map((v) => (
           <Link key={v.key} role="tab" aria-selected={variant.key === v.key && !records} to={fusedPath(game, v.key)} onClick={() => setRecords(false)}
-            className={`${base} ${variant.key === v.key && !records ? "border-accent bg-accent/10 font-semibold" : "border-border text-gray-400"}`}>{v.label}</Link>
+            className={`${base} ${variant.key === v.key && !records ? "border-accent bg-accent/10 font-semibold" : "border-border text-gray-400"}`}>{nm(v)}</Link>
         ))}
         <button role="tab" aria-selected={records} onClick={() => setRecords(!records)}
           className={`${base} inline-flex items-center gap-1.5 ${records ? "border-accent bg-accent/10 font-semibold" : "border-border text-gray-400"}`}><Trophy size={13} /> Récords</button>
@@ -96,6 +103,7 @@ export default function JugarJuego() {
   const { search } = useLocation();
   const found = gameBySlug(juego);
   const [records, setRecords] = useState(false);
+  const demo = useDemo();
   const game = found?.[0];
   const g = found?.[1];
   // Un juego con una sola variante (Bingo) vive en /jugar/<juego> a secas: sin esto se
@@ -111,13 +119,18 @@ export default function JugarJuego() {
   if (!found || !on || !games.includes(game)) return <Navigate to="/juegos" replace />;
   // Cotrero: sin dificultad elegida se pregunta (Simple o Media) en vez de abrir la última.
   if (!variant && g.pick) return <Layout><PickVariant game={game} g={g} /></Layout>;
+  // Demo: se elige cómo jugar antes de entrar a la primera variante.
+  if (!variant && demo && !search) {
+    return <Picker title={g.label} subtitle="Elige cómo quieres jugar." items={g.variants.map((v) => { const h = hintFor(game, v.key); return { label: h?.[0] || v.label, hint: h?.[1] || v.hint, to: fusedPath(game, v.key) }; })} />;
+  }
   if (!variant) return <Navigate to={`${fusedPath(game, lastVariant(game))}${search}`} replace />;
   const Page = variant.Page;
   return (
     <ShellContext.Provider value={shell}>
       <Suspense fallback={<Layout>{shell?.chips}<p className="text-sm text-gray-500">Cargando…</p></Layout>}>
-        {records ? <Layout><Records variant={variant} /></Layout> : <Page />}
+        {records ? <Layout>{demo ? <RecordsDemo game={game} g={g} current={variant.key} /> : <Records variant={variant} />}</Layout> : <Page />}
       </Suspense>
+      {demo && !records && <FirstTimeHelp key={variant.key} pathname={`/jugar/${g.slug}/${variant.key}`} />}
     </ShellContext.Provider>
   );
 }

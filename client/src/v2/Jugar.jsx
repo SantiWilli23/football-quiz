@@ -6,6 +6,7 @@ import Layout from "../components/Layout.jsx";
 import useFutotal2 from "./useFutotal2.js";
 import { useClubs } from "./useClubs.js";
 import { fusedPath } from "./fusion.js";
+import { useDemo } from "../demo/version.js";
 
 // Jugar (Futotal 2.0): de ~35 entradas a 12 juegos, en tres filas deslizables como en el
 // prototipo. Cada juego fusionado abre su carcasa /jugar/<juego>; si todavía no está abierto
@@ -58,6 +59,7 @@ function forYou() {
 }
 
 export default function Jugar() {
+  const demo = useDemo();
   const { games: open = [] } = useFutotal2();
   const { main } = useClubs();
   const [free, setFree] = useState(null);
@@ -74,10 +76,12 @@ export default function Jugar() {
         <div><h1>Jugar</h1><p>12 juegos: los de antes viven dentro de cada uno como variantes.</p></div>
         <div style={{ minWidth: 320 }}>{cap}</div>
       </header>
+      {!demo && (
       <section className="p-sect p-stg" style={{ "--i": 0, marginTop: 6 }}>
         <h3>Para ti</h3>
         <div className="p-hrow big">{forYou().map((g) => <GameCard key={g.label} g={g} open={open} big />)}</div>
       </section>
+      )}
       <div className="p-stg p-only-phone" style={{ "--i": 1 }}>{cap}</div>
       {SECS.map(([k, label, sub], i) => (
         <section key={k} className="p-sect p-stg" style={{ "--i": i + 2 }}>

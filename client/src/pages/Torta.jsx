@@ -8,6 +8,8 @@ import { GameHeader, Layout, OptionRow, PreGame, ShareResult } from "../futgames
 import { loadGame, recordResult, saveGame } from "../futgames/storage.js";
 import { reportResult } from "../futgames/report.js";
 import { playSfx } from "../utils/sfx.js";
+import { ClubCrest } from "../components/PlayerFace.jsx";
+import { useDemo } from "../demo/version.js";
 
 // Torta de plantel: una torta con las nacionalidades de los jugadores (de la
 // base de Futotal) que vistieron la camiseta de un club. Hay que adivinar el
@@ -29,9 +31,11 @@ function arcPath(a0, a1) {
   return `M${x0} ${y0} A${R_OUT} ${R_OUT} 0 ${large} 1 ${x1} ${y1} L${x2} ${y2} A${R_IN} ${R_IN} 0 ${large} 0 ${x3} ${y3}Z`;
 }
 
+// Paleta de la Demo: los mismos colores de los juegos, para que la torta combine con el resto.
+const DEMO_COLORS = ["#2fb673", "#4aa8e8", "#f2b84b", "#ef5b5b", "#8e7dff", "#3cd6c4", "#f27aa8", "#9bd24a", "#e8835a", "#5b8def", "#d6a2e8", "#c8c36a"];
 const HUES = [152, 38, 205, 0, 275, 95, 330, 180, 60, 20, 240, 125];
 
-function Donut({ countries, visible, centerTop, centerBottom, onHover, hover }) {
+function Donut({ countries, visible, centerTop, centerBottom, onHover, hover, demo = false }) {
   const total = countries.reduce((n, c) => n + c.count, 0);
   let acc = 0;
   const slices = countries.map((c, i) => {
@@ -41,19 +45,21 @@ function Donut({ countries, visible, centerTop, centerBottom, onHover, hover }) 
     return { ...c, i, a0, a1, mid: (a0 + a1) / 2 };
   });
   return (
-    <svg viewBox="0 0 300 300" className="w-full max-w-[320px] mx-auto block" role="img" aria-label="Torta de nacionalidades del plantel">
+    <svg viewBox="0 0 300 300" className={`w-full mx-auto block ${demo ? "max-w-[460px]" : "max-w-[320px]"}`} role="img" aria-label="Torta de nacionalidades del plantel">
       {slices.map((s) => {
         const shown = visible.has(s.i);
         const full = countries.length === 1;
         return (
           <g key={s.country} onMouseEnter={() => shown && onHover(s.i)} onMouseLeave={() => onHover(null)} onClick={() => shown && onHover(s.i)} style={{ cursor: shown ? "pointer" : "default" }}>
             {full ? (
-              <circle cx="150" cy="150" r={(R_OUT + R_IN) / 2} fill="none" strokeWidth={R_OUT - R_IN} stroke={shown ? `hsl(${HUES[0]} 45% 38%)` : "rgba(128,128,128,0.18)"} />
+              <circle cx="150" cy="150" r={(R_OUT + R_IN) / 2} fill="none" strokeWidth={R_OUT - R_IN} stroke={shown ? (demo ? DEMO_COLORS[0] : `hsl(${HUES[0]} 45% 38%)`) : "rgba(128,128,128,0.18)"} />
             ) : (
               <path
                 d={arcPath(s.a0, s.a1)}
-                fill={shown ? `hsl(${HUES[s.i % HUES.length]} 45% ${hover === s.i ? 48 : 36}%)` : "rgba(128,128,128,0.18)"}
-                stroke={shown ? "none" : "rgba(128,128,128,0.35)"}
+                fill={shown ? (demo ? DEMO_COLORS[s.i % DEMO_COLORS.length] : `hsl(${HUES[s.i % HUES.length]} 45% ${hover === s.i ? 48 : 36}%)`) : "rgba(128,128,128,0.18)"}
+                fillOpacity={shown && demo ? (hover === s.i ? 1 : 0.88) : undefined}
+                stroke={shown ? (demo ? "var(--bg, #0b1410)" : "none") : "rgba(128,128,128,0.35)"}
+                strokeWidth={shown && demo ? 2 : undefined}
                 strokeDasharray={shown ? undefined : "3 3"}
               />
             )}
@@ -77,6 +83,7 @@ function Donut({ countries, visible, centerTop, centerBottom, onHover, hover }) 
 }
 
 export default function Torta() {
+  const demo = useDemo();
   // Desde "Juego diario" (?diario=1): el club de hoy, igual para todos, una sola vez.
   // Desde Fútbol 12: partidas libres con un club al azar, sin límite.
   const fromDaily = useSearchParams()[0].get("diario") === "1";
@@ -218,7 +225,10 @@ export default function Torta() {
       {state && data && (
         <div className="space-y-4">
           <Card>
+            <div className="relative mx-auto" style={{ maxWidth: demo ? 460 : undefined }}>
+            {demo && over && reveal?.club && <ClubCrest name={reveal.club} size={56} className="absolute left-1/2 top-[30%] -translate-x-1/2 -translate-y-1/2" />}
             <Donut
+              demo={demo}
               countries={data.countries}
               visible={visible}
               hover={hover}
@@ -226,6 +236,16 @@ export default function Torta() {
               centerTop={over ? (reveal?.club || "…") : "¿Qué club?"}
               centerBottom={`${data.total} jugadores`}
             />
+            </div>
+            {demo && (
+              <ul className="mt-3 flex flex-wrap justify-center gap-1.5" aria-label="Nacionalidades">
+                {data.countries.map((c, i) => visible.has(i) && (
+                  <li key={c.country}><button type="button" onClick={() => setHover(hover === i ? null : i)} className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs" style={hover === i ? { borderColor: DEMO_COLORS[i % DEMO_COLORS.length] } : undefined}>
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: DEMO_COLORS[i % DEMO_COLORS.length] }} />{c.flag} {c.country} <b className="tabular-nums">{c.count}</b>
+                  </button></li>
+                ))}
+              </ul>
+            )}
             <div className="flex justify-center items-center gap-2 mt-3" aria-label={`Intentos: ${state.guesses.length} de ${MAX}`}>
               {Array.from({ length: MAX }).map((_, i) => {
                 const used = i < state.guesses.length;

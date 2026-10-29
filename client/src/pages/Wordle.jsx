@@ -7,6 +7,8 @@ import Card from "../components/Card.jsx";
 import { useGroups } from "../context/GroupContext.jsx";
 import { playSfx } from "../utils/sfx.js";
 import { celebrateScore } from "../utils/celebrate.js";
+import PlayerFace from "../components/PlayerFace.jsx";
+import { useDemo } from "../demo/version.js";
 
 const HINT_ORDER_LABELS = ["Posición", "Liga", "Nacionalidad", "Nacimiento", "Club"];
 // Fichado se juega según por dónde entras: desde "Juego diario" (?diario=1) es UN
@@ -50,6 +52,7 @@ function SimilarityBar({ value }) {
 }
 
 function GuessRow({ g }) {
+  const demo = useDemo();
   // "Estilo" (tipo de juego real: pivote, extremo, killer...) solo viaja en
   // modo fácil — ver server/routes/wordle.js. El resto de las dificultades
   // no la manda, así que la grilla se acomoda sola a 5 o 6 columnas.
@@ -57,7 +60,9 @@ function GuessRow({ g }) {
     <div className="space-y-1">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-semibold truncate flex items-center gap-2">
-          <span className="w-6 h-6 shrink-0 rounded-full bg-accent/20 text-accent text-[11px] font-bold flex items-center justify-center">{String(g.name || "?")[0]}</span>
+          {demo
+            ? <PlayerFace name={g.name} size={34} className="ring-2 ring-accent/40" />
+            : <span className="w-6 h-6 shrink-0 rounded-full bg-accent/20 text-accent text-[11px] font-bold flex items-center justify-center">{String(g.name || "?")[0]}</span>}
           {g.name}
         </p>
         <SimilarityBar value={g.similarity} />
@@ -91,6 +96,7 @@ function shareText(game) {
 }
 
 export default function Wordle() {
+  const demo = useDemo();
   const { activeGroupId: groupId } = useGroups();
   const [meta, setMeta] = useState({ leagues: [], difficulties: [], maxAttempts: 8, hintCost: 3 });
   const [params] = useSearchParams();
@@ -218,17 +224,19 @@ export default function Wordle() {
     <Layout>
       <h1 className="text-xl sm:text-2xl font-bold mb-1">Fichado</h1>
       {/* Reglas y comodines solo en pantallas grandes: en el teléfono, el «?» las tiene. */}
-      <p className="hidden sm:block text-gray-400 text-sm mb-1">
+      {!demo && <p className="hidden sm:block text-gray-400 text-sm mb-1">
         Adivina al futbolista secreto en {meta.maxAttempts} intentos. Cada intento te marca en verde lo que coincide y te da un número de parecido de 0 a 100.
-      </p>
-      <p className="hidden sm:block text-xs text-gray-500 mb-4">
+      </p>}
+      {!demo && <p className="hidden sm:block text-xs text-gray-500 mb-4">
         Cada {wildcards.step} días seguidos ganando la diaria ganas un comodín: una pista gratis que no gasta intentos.
         {wildcards.streak > 0 && <span className="text-amber ml-1">Racha actual: {wildcards.streak} día{wildcards.streak === 1 ? "" : "s"}.</span>}
-      </p>
+      </p>}
 
       <div className="mb-2 sm:mb-3">
         <span className="text-xs font-semibold uppercase tracking-wide text-accent">{MODE_INFO[mode].label}</span>
-        <span className="hidden sm:inline text-xs text-gray-500 ml-2">{modeNote?.challenge?.label || MODE_INFO[mode].hint}</span>
+        {demo
+          ? <span className="ml-2 inline-flex items-center gap-1.5 text-xs text-gray-400"><span className="rounded-full border border-border px-2 py-0.5">{meta.maxAttempts} intentos</span>{wildcards.available > 0 && <span className="rounded-full border border-amber/50 px-2 py-0.5 text-amber">{wildcards.available} comodín{wildcards.available === 1 ? "" : "es"}</span>}</span>
+          : <span className="hidden sm:inline text-xs text-gray-500 ml-2">{modeNote?.challenge?.label || MODE_INFO[mode].hint}</span>}
       </div>
 
       {loading && <p className="text-sm text-gray-500">Cargando...</p>}

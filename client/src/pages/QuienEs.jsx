@@ -7,6 +7,8 @@ import Card from "../components/Card.jsx";
 import { reportResult } from "../futgames/report.js";
 import ResultScreen from "../components/ResultScreen.jsx";
 import { playSfx } from "../utils/sfx.js";
+import { ClubCrest } from "../components/PlayerFace.jsx";
+import { useDemo } from "../demo/version.js";
 
 // "¿Quién es?" solo. Desde Fútbol 12 son partidas libres (infinitas, dan sobre y no suman puntos);
 // desde "Juego diario" (?diario=1) es el jugador del día, igual para todos, una sola vez y con puntos.
@@ -15,6 +17,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 const DAILY_KEY = "quien_es_diario";
 
 export default function QuienEs() {
+  const demo = useDemo();
   const fromDaily = useSearchParams()[0].get("diario") === "1";
   return (
     <Layout>
@@ -171,6 +174,26 @@ function QuienEsSolo({ fromDaily }) {
             {/* Línea de "escudos" (iniciales sobre un color derivado del nombre del
                 club, no hay logos reales para esta base) que se destapa a medida
                 que se piden pistas de club. */}
+            {demo ? (
+              <ol className="mb-4 flex items-start gap-1 overflow-x-auto pb-2" aria-label="Carrera del jugador, club por club">
+                {game.clues.filter((c) => c.kind === "club").map((c, i, arr) => {
+                  const [name, years] = c.text.split(" · ");
+                  return (
+                    <li key={i} className="flex shrink-0 items-start">
+                      <div className="flex w-[74px] flex-col items-center gap-1 text-center">
+                        <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-black/20"><ClubCrest name={name} size={40} /></span>
+                        <span className="w-full truncate text-[11px] font-semibold leading-tight" title={name}>{name}</span>
+                        {years && <span className="text-[10px] tabular-nums text-gray-500">{years}</span>}
+                      </div>
+                      {(i < arr.length - 1 || (game.clues.length < game.total)) && <span className="mt-7 h-px w-3 shrink-0 bg-border" aria-hidden="true" />}
+                    </li>
+                  );
+                })}
+                {game.clues[game.clues.length - 1]?.kind === "club" && game.clues.length < game.total && (
+                  <li className="flex w-[74px] shrink-0 flex-col items-center gap-1"><span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-dashed border-border text-gray-600">?</span></li>
+                )}
+              </ol>
+            ) : (
             <div className="flex items-center gap-1.5 mb-4 overflow-x-auto pb-1" role="img" aria-label="Carrera del jugador, club por club">
               {game.clues.filter((c) => c.kind === "club").map((c, i) => {
                 const name = c.text.split(" · ")[0];
@@ -192,6 +215,7 @@ function QuienEsSolo({ fromDaily }) {
                 <div className="w-10 h-10 rounded-lg border border-dashed border-border flex items-center justify-center text-gray-600 shrink-0">?</div>
               )}
             </div>
+            )}
             <ol className="space-y-2">
               {game.clues.map((c, i) => (
                 <li key={i} className="flex items-center gap-3 text-sm">

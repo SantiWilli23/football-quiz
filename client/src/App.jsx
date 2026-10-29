@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard.jsx";
 import CommandPalette from "./components/CommandPalette.jsx";
 import { FEATURES } from "./data/features.js";
 import useFutotal2 from "./v2/useFutotal2.js";
+import DemoBar from "./demo/DemoBar.jsx";
 import { WithSide } from "./v2/Shell.jsx";
 import { LEGACY, redirectFor } from "./v2/fusion.js";
 
@@ -152,6 +153,7 @@ export default function App() {
   return (
     <>
     <CommandPalette />
+    <DemoBar />
     <LegacyGate>
     <Routes>
       <Route
