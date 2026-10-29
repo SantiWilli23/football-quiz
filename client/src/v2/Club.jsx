@@ -106,7 +106,7 @@ export default function Club() {
             </span>
             {clubs.length > 1 && <ChevronRight size={20} style={{ color: "var(--mute)" }} />}
           </button>
-          <p className="p-stg mt-2.5 text-xs p-muted" style={{ "--i": 1 }}>{tt ? "Suman: partido del día ×2, copa ×2 y partidas libres (tope 100/día)." : "Suman: partido del día y copa semanal."}</p>
+          <p className="p-stg mt-2.5 text-xs p-muted beta-hide" style={{ "--i": 1 }}>{tt ? "Suman: partido del día ×2, copa ×2 y partidas libres (tope 100/día)." : "Suman: partido del día y copa semanal."}</p>
 
           <div className="p-dgrid mt-1">
           <div className="p-l">
@@ -114,7 +114,7 @@ export default function Club() {
             <div className="p-stg mt-3" style={{ "--i": 2 }}>
               <div className="p-card flex flex-col gap-3">
                 <div className="flex items-center gap-2 flex-wrap"><span className="p-seal b">PRETEMPORADA</span><small className="p-muted">Aún no suman puntos</small></div>
-                <p className="text-sm p-muted">Los puntos empiezan cuando se inicia la temporada. Así todos alcanzan a entrar.</p>
+                <p className="text-sm p-muted beta-hide">Los puntos empiezan cuando se inicia la temporada. Así todos alcanzan a entrar.</p>
                 <div className="p-row" style={{ justifyContent: "space-between" }}>
                   <span className="p-muted text-xs">Código</span>
                   <b className="p-mono select-all" style={{ color: "var(--gold)", fontSize: 18 }}>{invite || "…"}</b>
@@ -157,7 +157,7 @@ export default function Club() {
                       </button>
                     ))}
                   </div>
-                  <p className="p-gap">{view === "hoy" ? "Solo cuenta el partido del día." : view === "mes" ? `Este mes · incluye partido, copa${tt ? " y partidas libres." : "."}` : "Todas las temporadas."}</p>
+                  <p className="p-gap beta-hide">{view === "hoy" ? "Solo cuenta el partido del día." : view === "mes" ? `Este mes · incluye partido, copa${tt ? " y partidas libres." : "."}` : "Todas las temporadas."}</p>
                   <div className="mt-4"><Friendlies clubId={club.id} /></div>
                 </div>
               )}
@@ -180,13 +180,13 @@ export default function Club() {
           <section className="p-sect">
             <h3>Invitar</h3>
             <div className="p-card">
-              <p className="text-sm p-muted">Pásales este código a tus amigos:</p>
+              <p className="text-sm p-muted beta-hide">Pásales este código a tus amigos:</p>
               <p className="mt-1 select-all rounded-xl border border-dashed px-3 py-2 text-center p-mono" style={{ borderColor: "var(--line)", fontSize: 20, color: "var(--gold)" }}>{invite || "…"}</p>
               <div className="p-btns">
                 {invite && <button onClick={copyLink} className="p-btn ghost sm">Copiar link con desafío</button>}
                 {!club.main && <button onClick={makeMain} className="p-btn ghost sm">Hacer principal</button>}
               </div>
-              {club.main && <p className="text-xs p-muted mt-3 flex items-center gap-1"><Star size={12} style={{ color: "var(--gold)" }} /> Es tu club principal: de aquí sale el súper sobre del podio del mes.</p>}
+              {club.main && <p className="text-xs p-muted mt-3 flex items-center gap-1 beta-hide"><Star size={12} style={{ color: "var(--gold)" }} /> Es tu club principal: de aquí sale el súper sobre del podio del mes.</p>}
             </div>
           </section>
 
@@ -194,11 +194,11 @@ export default function Club() {
             <section className="p-sect">
               <h3>Modo del club</h3>
               <div className="p-card">
-                <p className="text-sm p-muted">{MODES[club.mode].text}</p>
+                <p className="text-sm p-muted beta-hide">{MODES[club.mode].text}</p>
                 <div className="p-btns">
                   {Object.entries(MODES).filter(([k]) => k !== club.mode).map(([k, m]) => <button key={k} onClick={() => setMode(k)} className="p-btn ghost sm">Pasar a {m.label}</button>)}
                 </div>
-                {club.started && <p className="text-xs p-dim mt-2">El modo solo se cambia el día 1 de cada mes.</p>}
+                {club.started && <p className="text-xs p-dim mt-2 beta-hide">El modo solo se cambia el día 1 de cada mes.</p>}
               </div>
             </section>
           )}
@@ -206,7 +206,7 @@ export default function Club() {
           <section className="p-sect">
             <div className="p-card" style={{ opacity: 0.8 }}>
               <p className="p-eyebrow" style={{ justifyContent: "flex-start" }}><Lock size={13} /> Liga de clubes · próximamente</p>
-              <p className="mt-1 text-sm p-muted">Se abre cuando haya al menos 5 clubes con la temporada iniciada. Mientras tanto, desafía a otro club a un amistoso.</p>
+              <p className="mt-1 text-sm p-muted beta-hide">Se abre cuando haya al menos 5 clubes con la temporada iniciada. Mientras tanto, desafía a otro club a un amistoso.</p>
             </div>
           </section>
 

@@ -157,7 +157,7 @@ function SobresV2({ state, busy, openPack, claimDaily }) {
           <div className="p-card text-center text-sm p-muted">No tienes sobres. Juega el partido del día para ganar uno.</div>
         )}
         {!state.dailyClaimed && <button onClick={claimDaily} className="p-btn ghost w-full mt-2.5">Reclamar sobre diario</button>}
-        {state.lockedPacks > 0 && <p className="p-gap">Tienes {state.lockedPacks} {state.lockedPacks === 1 ? "sobre guardado" : "sobres guardados"}: se abren al entrar a un club con la temporada iniciada.</p>}
+        {state.lockedPacks > 0 && <p className="p-gap beta-hide">Tienes {state.lockedPacks} {state.lockedPacks === 1 ? "sobre guardado" : "sobres guardados"}: se abren al entrar a un club con la temporada iniciada.</p>}
       </section>
       <section className="p-sect p-r" style={{ display: "block" }}>
         <h3>Cómo ganas sobres</h3>
@@ -371,7 +371,7 @@ export default function Cartas() {
       {v2 ? (
         <div className="mt-1.5 mb-4">
           <header className="p-dhead">
-            <div><h1>Cartas</h1><p>Abre sobres, completa el álbum, arma tu once y entrega repetidas en los SBC.</p></div>
+            <div><h1>Cartas</h1><p className="beta-hide">Abre sobres, completa el álbum, arma tu once y entrega repetidas en los SBC.</p></div>
             {state && <span className="p-pill" style={{ fontSize: 18 }}><Coins size={16} />{wallet} monedas</span>}
           </header>
           <div className="p-seg scroll" role="tablist" aria-label="Secciones de Cartas">
@@ -388,7 +388,7 @@ export default function Cartas() {
       ) : (<>
       <div className="mb-6">
         <h1 className="t-title mb-1">Cartas</h1>
-        <p className="text-gray-400 text-sm">Cada jugador de la base es una carta. Abre sobres, arma tu once y juega partidos: la química sale de los clubes que compartieron.</p>
+        <p className="text-gray-400 text-sm beta-hide">Cada jugador de la base es una carta. Abre sobres, arma tu once y juega partidos: la química sale de los clubes que compartieron.</p>
       </div>
 
       <div className="flex gap-1.5 mb-5">
@@ -428,14 +428,14 @@ export default function Cartas() {
                 </button>
               )}
             </div>
-            <p className="t-meta mt-4">Ganas sobres con el diario, cumpliendo el reto del día y ganando partidos (máx. 2 por día) — mejor calidad cuanto más contundente la victoria.</p>
+            <p className="t-meta mt-4 beta-hide">Ganas sobres con el diario, cumpliendo el reto del día y ganando partidos (máx. 2 por día) — mejor calidad cuanto más contundente la victoria.</p>
           </Card>}
           {opened && <PackOpening cards={opened} />}
           {v2 && tab === "sbc" && <CartasTema lockedPacks={state.lockedPacks || 0} onChanged={load} />}
 
           {show("tienda") && <Card>
             <p className="t-eyebrow mb-1">Tienda de sobres</p>
-            <p className="text-xs text-gray-500 mb-3">Compra con la moneda de vender cartas — nunca con dinero real.</p>
+            <p className="text-xs text-gray-500 mb-3 beta-hide">Compra con la moneda de vender cartas — nunca con dinero real.</p>
             {shop.deal && (
               <div className="deal-card mb-3 flex items-center justify-between gap-3 rounded-card border border-amber-400/50 bg-amber-400/10 px-3 py-2.5">
                 <span className="min-w-0 text-sm">
@@ -468,7 +468,7 @@ export default function Cartas() {
 
           {show("sbc") && <Card>
             <p className="t-eyebrow mb-1">{v2 ? "Más SBC" : "SBC — arma el equipo, gana el sobre"}</p>
-            <p className="text-xs text-gray-500 mb-3">Entregas 11 cartas que cumplan el requisito (se pierden, como en el FIFA real) y te dan un sobre a cambio.</p>
+            <p className="text-xs text-gray-500 mb-3 beta-hide">Entregas 11 cartas que cumplan el requisito (se pierden, como en el FIFA real) y te dan un sobre a cambio.</p>
             <div className="space-y-2">
               {sbcs.map((s) => (
                 <div key={s.id} className="rounded-card border border-border p-3">

@@ -410,3 +410,6 @@
 .fig-glow-estrella.up .fig-rev .fig { box-shadow: 0 0 40px 6px #a47bff; }
 .fig-glow-oro.up .fig-rev .fig { box-shadow: 0 0 34px 4px #f0b92b; }
 @media (prefers-reduced-motion: reduce) { .fig, .fig-flip > .fig-inner { transition: none; } .fig:hover { transform: none; } }
+
+/* ===== Beta · menos texto: lo que lleva beta-hide se oculta solo en la beta ===== */
+html[data-beta] .beta-hide { display: none !important; }

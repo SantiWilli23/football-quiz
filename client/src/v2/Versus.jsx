@@ -64,7 +64,7 @@ export default function Versus() {
         <div className="desk:col-span-2">
           <p className="t-eyebrow">Versus</p>
           <h1 className="t-title">Que decida la ruleta</h1>
-          <p className="text-sm text-gray-400">Giras, sale un modo y a jugar contra alguien de tu club.</p>
+          <p className="text-sm text-gray-400 beta-hide">Giras, sale un modo y a jugar contra alguien de tu club.</p>
         </div>
 
         <div className="space-y-5">
@@ -113,8 +113,8 @@ export default function Versus() {
             ))}
           </div>
         </div>
-        <p className="text-xs text-gray-500">Ganar un Duelo suma 30 puntos a los clubes Total en los que estás (una vez al día). Si nadie está conectado, el Duelo se juega a tu ritmo: respondes ahora y tu rival cuando entre.</p>
-        <ul className="space-y-1 text-left text-xs text-gray-500 desk:hidden">{MODES.map((m) => <li key={m.label}><b className="text-gray-300">{m.label}:</b> {m.text}</li>)}</ul>
+        <p className="text-xs text-gray-500 beta-hide">Ganar un Duelo suma 30 puntos a los clubes Total en los que estás (una vez al día). Si nadie está conectado, el Duelo se juega a tu ritmo: respondes ahora y tu rival cuando entre.</p>
+        <ul className="space-y-1 text-left text-xs text-gray-500 desk:hidden beta-hide">{MODES.map((m) => <li key={m.label}><b className="text-gray-300">{m.label}:</b> {m.text}</li>)}</ul>
         </div>
       </div>
     </Layout>

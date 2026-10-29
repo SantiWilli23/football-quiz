@@ -65,7 +65,7 @@ function CartaFutotal({ card, user }) {
           </div>
         </div>
       </button>
-      <p className="p-gap" style={{ justifyContent: "center" }}>{card.played === 1 ? "Media de tu primer partido del día" : `Media de tus últimos ${card.played} partidos del día`}. Toca para ver tu ADN.</p>
+      <p className="p-gap beta-hide" style={{ justifyContent: "center" }}>{card.played === 1 ? "Media de tu primer partido del día" : `Media de tus últimos ${card.played} partidos del día`}. Toca para ver tu ADN.</p>
     </section>
   );
 }
@@ -157,7 +157,7 @@ export default function Yo() {
                 <button key={m.id} role="radio" aria-checked={device === m.id} title={m.hint} className={device === m.id ? "on" : ""} onClick={() => { setDeviceMode(m.id); setDevice(m.id); }}>{m.label}</button>
               ))}
             </div>
-            <small className="block mt-1.5 p-dim">{DEVICE_MODES.find((m) => m.id === device)?.hint}</small>
+            <small className="block mt-1.5 p-dim beta-hide">{DEVICE_MODES.find((m) => m.id === device)?.hint}</small>
           </div>
           <div className="py-3 border-b" style={{ borderColor: "var(--line)" }}>
             <span className="block mb-2">Colores</span>
