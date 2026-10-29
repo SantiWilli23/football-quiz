@@ -15,6 +15,7 @@ import ThemeSettings from "../components/ThemeSettings.jsx";
 import Vitrina from "../components/Vitrina.jsx";
 import PlayerCard from "../components/PlayerCard.jsx";
 import TutorialPlayer from "../tutorial/TutorialPlayer.jsx";
+import CodigoAjuste from "../demo/CodigoAjuste.jsx";
 import { GENERAL_TUTORIAL } from "../tutorial/steps.js";
 import RecoveryCode from "../v2/RecoveryCode.jsx";
 import GhostToggle from "../v2/GhostToggle.jsx";
@@ -161,6 +162,7 @@ export default function Profile() {
             )}
           </Card>
           <RecoveryCode />
+          <CodigoAjuste />
           {v2 && <GhostToggle />}
           <Card className="mb-6">
             <div className="flex items-center gap-4">

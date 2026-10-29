@@ -19,6 +19,7 @@ import Adn from "./Adn.jsx";
 import { resetManos } from "./Mano.jsx";
 import { DEVICE_MODES, readDeviceMode, setDeviceMode } from "../utils/device.js";
 import { useTheme } from "../context/ThemeContext.jsx";
+import CodigoAjuste from "../demo/CodigoAjuste.jsx";
 
 const AREAS = [["chile", "CHI"], ["europa", "EUR"], ["leyendas", "LEY"], ["actualidad", "ACT"], ["mercado", "MER"], ["velocidad", "VEL"]];
 const TIER = { especial: ["#f2b84b", "Especial"], oro: ["#e8c46a", "Oro"], plata: ["#b9c2cc", "Plata"], bronce: ["#c58a5b", "Bronce"] };
@@ -186,6 +187,7 @@ export default function Yo() {
           <GhostToggle />
           <PushToggle />
           <RecoveryCode />
+          <CodigoAjuste />
           <AccountSettings user={user} onUpdated={refreshMe} />
           <button onClick={logout} className="p-btn ghost w-full"><LogOut size={16} /> Cerrar sesión</button>
         </div>
