@@ -10,7 +10,6 @@ export const FUSED = {
     variants: [
       { key: "parecido", label: "Parecido", old: "/fulbodle", keys: ["fichado"], Page: lazy(() => import("../pages/Wordle.jsx")) },
       { key: "carrera", label: "Carrera", old: "/quien-es", keys: ["quien_es"], Page: lazy(() => import("../pages/QuienEs.jsx")) },
-      { key: "traspasos", label: "Traspasos", old: "/traspasos", keys: ["traspasos"], Page: lazy(() => import("../pages/Traspasos.jsx")) },
     ],
   },
   que_club: {
@@ -42,10 +41,11 @@ export const FUSED = {
     ],
   },
   cotrero: {
-    slug: "cotrero", label: "Cotrero",
+    // Un solo Cotrero: las dos versiones son su dificultad (se elige al entrar).
+    slug: "cotrero", label: "Cotrero", pick: "Dificultad",
     variants: [
-      { key: "simple", label: "Simple", old: "/cotrero.html", keys: [], Page: lazy(() => import("./CotreroSimple.jsx")) },
-      { key: "medio", label: "Medio", old: "/cotrero-medio.html", keys: [], Page: lazy(() => import("./CotreroMedio.jsx")) },
+      { key: "simple", label: "Simple", hint: "Creas tu jugador y tomas una decisión por temporada; el azar hace el resto. Ritmo intenso, normal o exprés.", old: "/cotrero.html", keys: [], Page: lazy(() => import("./CotreroSimple.jsx")) },
+      { key: "medio", label: "Media", hint: "Delantero o enganche: pretemporada, reputación del hincha, convocatoria a la selección y una figura histórica al retirarte.", old: "/cotrero-medio.html", keys: [], Page: lazy(() => import("./CotreroMedio.jsx")) },
     ],
   },
   draft: {

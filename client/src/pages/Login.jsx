@@ -1,10 +1,13 @@
 import { useState } from "react";
+import BrandPanel from "../v2/BrandPanel.jsx";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import FloatField from "../components/FloatField.jsx";
+import useFutotal2 from "../v2/useFutotal2.js";
 
 export default function Login() {
   const { login } = useAuth();
+  const { on: v2 } = useFutotal2();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,6 +36,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex bg-bg text-white">
+      {v2 ? <BrandPanel /> : (
       <div className="hidden lg:flex flex-1 flex-col items-center justify-center gap-10 p-12 bg-panel border-r border-border text-center relative overflow-hidden">
         <svg aria-hidden="true" className="absolute inset-0 w-full h-full text-white opacity-[0.06] pointer-events-none" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice" fill="none" stroke="currentColor" strokeWidth="2">
           <rect x="30" y="30" width="340" height="540" rx="4" />
@@ -76,6 +80,7 @@ export default function Login() {
 
         <p className="text-xs text-gray-600 tracking-wide">COTRERO · DRAFT EUROPEO 8A2 · TRIVIA</p>
       </div>
+      )}
 
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">

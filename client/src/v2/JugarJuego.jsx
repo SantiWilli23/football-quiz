@@ -50,13 +50,38 @@ function Chips({ game, g, variant, records, setRecords }) {
           <span>Tienes una partida de <b>{pending.label}</b> a medias</span><span className="font-semibold text-accent">Continuar →</span>
         </Link>
       )}
-      <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Variantes">
+      <div className="flex gap-2 overflow-x-auto pb-1 items-center" role="tablist" aria-label={g.pick || "Variantes"}>
+        {g.pick && <span className="t-eyebrow shrink-0 mr-1">{g.pick}</span>}
         {g.variants.length > 1 && g.variants.map((v) => (
           <Link key={v.key} role="tab" aria-selected={variant.key === v.key && !records} to={fusedPath(game, v.key)} onClick={() => setRecords(false)}
             className={`${base} ${variant.key === v.key && !records ? "border-accent bg-accent/10 font-semibold" : "border-border text-gray-400"}`}>{v.label}</Link>
         ))}
         <button role="tab" aria-selected={records} onClick={() => setRecords(!records)}
           className={`${base} inline-flex items-center gap-1.5 ${records ? "border-accent bg-accent/10 font-semibold" : "border-border text-gray-400"}`}><Trophy size={13} /> Récords</button>
+      </div>
+    </div>
+  );
+}
+
+// Elegir la dificultad (o la versión) antes de jugar: una tarjeta grande por cada una.
+function PickVariant({ game, g }) {
+  const last = lastVariant(game);
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="t-eyebrow">Jugar</p>
+        <h1 className="t-title">{g.label}</h1>
+        <p className="text-sm text-gray-400 mt-1">De potrero a leyenda. Elige la {g.pick.toLowerCase()}.</p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {g.variants.map((v) => (
+          <Link key={v.key} to={fusedPath(game, v.key)} className="p-card block hover:border-accent transition-colors" style={v.key === last ? { borderColor: "var(--me-line)" } : undefined}>
+            <span className="t-eyebrow">{g.pick}</span>
+            <b className="block mt-1" style={{ font: "800 24px var(--f-d)" }}>{v.label}</b>
+            <span className="block text-sm text-gray-400 mt-1.5">{v.hint}</span>
+            <span className="p-btn sm mt-4">Jugar en {v.label.toLowerCase()}</span>
+          </Link>
+        ))}
       </div>
     </div>
   );
@@ -73,7 +98,9 @@ export default function JugarJuego() {
   const [records, setRecords] = useState(false);
   const game = found?.[0];
   const g = found?.[1];
-  const variant = g?.variants.find((v) => v.key === variante) || null;
+  // Un juego con una sola variante (Bingo) vive en /jugar/<juego> a secas: sin esto se
+  // redirigía a sí mismo y la pantalla quedaba en negro.
+  const variant = g?.variants.find((v) => v.key === variante) || (!variante && g?.variants.length === 1 ? g.variants[0] : null);
 
   useEffect(() => { if (game && variant) rememberVariant(game, variant.key); }, [game, variant]);
   useEffect(() => { setRecords(false); }, [variante]);
@@ -82,6 +109,8 @@ export default function JugarJuego() {
 
   if (!ready) return null;
   if (!found || !on || !games.includes(game)) return <Navigate to="/juegos" replace />;
+  // Cotrero: sin dificultad elegida se pregunta (Simple o Media) en vez de abrir la última.
+  if (!variant && g.pick) return <Layout><PickVariant game={game} g={g} /></Layout>;
   if (!variant) return <Navigate to={`${fusedPath(game, lastVariant(game))}${search}`} replace />;
   const Page = variant.Page;
   return (

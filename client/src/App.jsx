@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard.jsx";
 import CommandPalette from "./components/CommandPalette.jsx";
 import { FEATURES } from "./data/features.js";
 import useFutotal2 from "./v2/useFutotal2.js";
+import { WithSide } from "./v2/Shell.jsx";
 import { LEGACY, redirectFor } from "./v2/fusion.js";
 
 // Pantallas de funciones apagadas (client/src/data/features.js): si la bandera
@@ -67,7 +68,6 @@ const Bingo = lazy(() => import("./pages/Bingo.jsx"));
 const AQuienMeCompro = lazy(() => import("./pages/AQuienMeCompro.jsx"));
 const Piramide = lazy(() => import("./pages/Piramide.jsx"));
 const Torta = lazy(() => import("./pages/Torta.jsx"));
-const Traspasos = lazy(() => import("./pages/Traspasos.jsx"));
 const DorsalHistorico = lazy(() => import("./pages/DorsalHistorico.jsx"));
 const Subasta = lazy(() => import("./pages/Subasta.jsx"));
 
@@ -109,6 +109,12 @@ function GamesOrJugar() {
 
 // Raíz: con el rediseño, quien no inició sesión ve la portada (se juega antes de registrarse)
 // y quien sí, va directo a Hoy. Sin el rediseño todo sigue como siempre.
+// En computador, con el rediseño, las pantallas a pantalla completa llevan la barra lateral.
+function SideIfV2({ children }) {
+  const { on } = useFutotal2();
+  return on ? <WithSide>{children}</WithSide> : children;
+}
+
 function Root() {
   const { user, loading } = useAuth();
   const { on, ready } = useFutotal2();
@@ -386,11 +392,7 @@ export default function App() {
       />
       <Route
         path="/traspasos"
-        element={
-          <PrivateRoute>
-            <Traspasos />
-          </PrivateRoute>
-        }
+        element={<Navigate to="/jugar/quien-es" replace />}
       />
       <Route
         path="/torta"
@@ -412,7 +414,7 @@ export default function App() {
         path="/carrera-dt"
         element={
           <PrivateRoute>
-            <CareerMode />
+            <SideIfV2><CareerMode /></SideIfV2>
           </PrivateRoute>
         }
       />
@@ -420,7 +422,7 @@ export default function App() {
         path="/equipo-jugador"
         element={
           <PrivateRoute>
-            <EquipoJugador />
+            <SideIfV2><EquipoJugador /></SideIfV2>
           </PrivateRoute>
         }
       />
@@ -428,7 +430,7 @@ export default function App() {
         path="/dt-liga"
         element={
           <PrivateRoute>
-            <DtLeagueHome />
+            <SideIfV2><DtLeagueHome /></SideIfV2>
           </PrivateRoute>
         }
       />
@@ -436,7 +438,7 @@ export default function App() {
         path="/dt-liga/:code"
         element={
           <PrivateRoute>
-            <DtLeagueRoom />
+            <SideIfV2><DtLeagueRoom /></SideIfV2>
           </PrivateRoute>
         }
       />
@@ -444,7 +446,7 @@ export default function App() {
         path="/dt-liga/:code/live/:fixtureId"
         element={
           <PrivateRoute>
-            <LiveMatch />
+            <SideIfV2><LiveMatch /></SideIfV2>
           </PrivateRoute>
         }
       />

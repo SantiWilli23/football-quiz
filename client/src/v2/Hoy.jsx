@@ -226,8 +226,8 @@ export default function Hoy() {
   return (
     <Layout hub>
       <Ceremonia />
-      {synced && <p className="p-card text-sm mb-3" role="status" style={{ borderColor: "#2c6a4f" }}>Tu partido se envió al club: sacaste <b>{synced.total}</b>.</p>}
-      {waiting && !synced && <p className="p-card text-sm mb-3" role="status" style={{ borderColor: "#6b5420" }}>Tu partido está guardado en el teléfono y se envía solo cuando vuelva la conexión.</p>}
+      {synced && <p className="p-card text-sm mb-3" role="status" style={{ borderColor: "var(--me-line)" }}>Tu partido se envió al club: sacaste <b>{synced.total}</b>.</p>}
+      {waiting && !synced && <p className="p-card text-sm mb-3" role="status" style={{ borderColor: "var(--gold-line)" }}>Tu partido está guardado en el teléfono y se envía solo cuando vuelva la conexión.</p>}
 
       <header className="p-dhead">
         <div>

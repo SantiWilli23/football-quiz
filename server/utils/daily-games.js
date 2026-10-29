@@ -39,19 +39,28 @@ export const DAILY_GAMES = [
 const LEGACY_KEYS = DAILY_GAMES.slice(0, 12).map((g) => g.key);
 const SHUFFLE_FROM_DAY = Math.floor(Date.parse("2026-10-12T00:00:00Z") / 86400000);
 
-function cycleOrder(cycle) {
-  return shuffle(DAILY_GAMES.map((g) => g.key), rng(dailySeed(String(cycle), "orden-diario")));
+function cycleOrder(cycle, keys = DAILY_GAMES.map((g) => g.key), salt = "orden-diario") {
+  return shuffle(keys, rng(dailySeed(String(cycle), salt)));
+}
+
+// Desde el 30/10/2026 Traspasos sale de la rotación (el dueño lo eliminó). Las fechas anteriores
+// conservan su juego del día.
+const NO_TRASPASOS_FROM_DAY = Math.floor(Date.parse("2026-10-30T00:00:00Z") / 86400000);
+const ROTATION = DAILY_GAMES.map((g) => g.key).filter((k) => k !== "traspasos");
+
+function rotate(offset, keys, salt) {
+  const n = keys.length;
+  const cycle = Math.floor(offset / n);
+  const order = cycleOrder(cycle, keys, salt);
+  if (cycle > 0 && order[0] === cycleOrder(cycle - 1, keys, salt)[n - 1]) order.push(order.shift()); // evita repetir el de ayer
+  return order[offset % n];
 }
 
 export function dailyGameKeyFor(dateStr) {
   const day = Math.floor(Date.parse(dateStr + "T00:00:00Z") / 86400000);
   if (day < SHUFFLE_FROM_DAY) return LEGACY_KEYS[((day % LEGACY_KEYS.length) + LEGACY_KEYS.length) % LEGACY_KEYS.length];
-  const n = DAILY_GAMES.length;
-  const offset = day - SHUFFLE_FROM_DAY;
-  const cycle = Math.floor(offset / n);
-  const order = cycleOrder(cycle);
-  if (cycle > 0 && order[0] === cycleOrder(cycle - 1)[n - 1]) order.push(order.shift()); // evita repetir el de ayer
-  return order[offset % n];
+  if (day < NO_TRASPASOS_FROM_DAY) return rotate(day - SHUFFLE_FROM_DAY, DAILY_GAMES.map((g) => g.key), "orden-diario");
+  return rotate(day - NO_TRASPASOS_FROM_DAY, ROTATION, "orden-diario-2");
 }
 
 // Los que mandan su resultado desde el cliente (fichado y quiniela no).

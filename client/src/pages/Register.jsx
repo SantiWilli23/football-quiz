@@ -1,4 +1,5 @@
 import { useState } from "react";
+import BrandPanel from "../v2/BrandPanel.jsx";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -87,6 +88,7 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex bg-bg text-white">
+      {v2 ? <BrandPanel /> : (
       <div className="hidden lg:flex flex-1 flex-col justify-between p-12 bg-panel border-r border-border">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 rounded-card bg-accent/15 border border-accent/30 flex items-center justify-center text-accent font-bold">
@@ -107,6 +109,7 @@ export default function Register() {
         </div>
         <p className="text-xs text-gray-600">Futotal © {new Date().getFullYear()}</p>
       </div>
+      )}
 
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">

@@ -107,7 +107,7 @@ function CreatePlayer({ game, onStart }) {
   return (
     <form onSubmit={go} className="space-y-4">
       <Card variant="feature">
-        <p className="t-eyebrow">{medio ? "Cotrero medio" : "Cotrero simple"}</p>
+        <p className="t-eyebrow">{medio ? "Cotrero · dificultad media" : "Cotrero · dificultad simple"}</p>
         <p className="mt-1 text-sm text-gray-300">{medio ? "Elige tu posición, cuida tu reputación y llega a la selección. Al final, ¿a qué figura te pareces?" : "De potrero a leyenda: una decisión, una temporada, y el azar se encarga del resto."}</p>
       </Card>
       {!medio && (

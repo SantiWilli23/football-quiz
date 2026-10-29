@@ -87,3 +87,11 @@ El modo teléfono queda como estaba. El modo computador usa el «Modo de pantall
 - **Jugar**: cuadrícula con descripción de cada juego (Arcade 3×2, Con amigos 3, Carrera 4) y «Para ti» en 3 tarjetas grandes.
 - Encabezado de página solo en computador (`.p-dhead`), números del marcador más grandes, portada más grande.
 - Arreglado el interruptor del fantasma (la bolita se salía).
+
+### Sexta tanda (todo a computador, colores, Cotrero y Traspasos)
+
+- **Todo adaptado a computador**: recorrido de todas las rutas a 1440 px. Modo DT, DT Online y Equipo-Jugador llevan la barra lateral (`WithSide`); Versus en dos columnas (ruleta | modos); Partidos pasados en cuadrícula; Iniciar sesión y Crear cuenta con panel de marca (`v2/BrandPanel.jsx`) en vez del panel viejo («Trivia diaria», «Grupos»); en modo enfoque «Salir» se alinea con el juego.
+- **Bingo en negro arreglado** (afectaba también al teléfono): `/jugar/bingo` se redirigía a sí mismo porque tiene una sola variante.
+- **Colores de vuelta**: Nocturno, Azul clásico y Cancha de día (clara) en versión rediseño; los colores fijos de `v2.css` pasaron a variables por tema. Selector «Colores» en Yo › Ajustes.
+- **Cotrero único**: una tarjeta en Jugar; al entrar se elige la dificultad (Simple o Media) y dentro del juego se cambia con «Dificultad: Simple · Media».
+- **Traspasos eliminado**: sale de ¿Quién es? (`/traspasos` redirige a ¿Quién es?) y de la rotación del juego diario desde el 30/10/2026 (las fechas anteriores conservan su juego).

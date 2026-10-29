@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowUpDown, Building2, Crown, Gavel, Grid3x3, Shield, Sparkles, Star, Swords, Timer, Trophy, User, Users } from "lucide-react";
+import { ArrowUpDown, Building2, Crown, Gavel, Grid3x3, Shield, Star, Swords, Timer, Trophy, User, Users } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import useFutotal2 from "./useFutotal2.js";
 import { useClubs } from "./useClubs.js";
 import { fusedPath } from "./fusion.js";
 
-// Jugar (Futotal 2.0): de ~35 entradas a 13 juegos, en tres filas deslizables como en el
+// Jugar (Futotal 2.0): de ~35 entradas a 12 juegos, en tres filas deslizables como en el
 // prototipo. Cada juego fusionado abre su carcasa /jugar/<juego>; si todavía no está abierto
 // (FUTOTAL2_JUEGOS), la tarjeta lleva a la pantalla de siempre.
 const GAMES = [
-  { id: "quien_es", label: "¿Quién es?", icon: User, color: "#2fb673", min: 3, solo: true, sec: "arcade", old: "/fulbodle", desc: "Adivina al futbolista por su parecido, su carrera o sus traspasos.", replaces: "Fichado, ¿Quién es? y Traspasos" },
+  { id: "quien_es", label: "¿Quién es?", icon: User, color: "#2fb673", min: 3, solo: true, sec: "arcade", old: "/fulbodle", desc: "Adivina al futbolista por su parecido o por su carrera.", replaces: "Fichado y ¿Quién es?" },
   { id: "que_club", label: "¿Qué club?", icon: Shield, color: "#4aa8e8", min: 3, solo: true, sec: "arcade", old: "/escudos", desc: "Un escudo borroso o las nacionalidades de un plantel.", replaces: "Escudos y Torta de plantel" },
   { id: "mas_o_menos", label: "Más o menos", icon: ArrowUpDown, color: "#f2b84b", min: 3, solo: true, sec: "arcade", old: "/a-quien-me-compro", desc: "¿Quién vale más? Ordena o apuesta por uno.", replaces: "Pirámide y ¿A quién me compro?" },
   { id: "trivia", label: "Trivia", icon: Timer, color: "#8e7dff", min: 2, solo: true, sec: "arcade", old: "/un-minuto", desc: "Preguntas contra el reloj o hasta que falles.", replaces: "Un Minuto y Supervivencia" },
@@ -22,8 +22,7 @@ const GAMES = [
   { id: "dtonline", label: "DT Online", icon: Trophy, color: "#f2b84b", min: 60, solo: false, sec: "amigos", to: "/dt-liga", desc: "Una liga de verdad con tus amigos, jornada a jornada.", replaces: "" },
   { id: "dt", label: "Modo DT", icon: Users, color: "#4aa8e8", min: 60, solo: true, sec: "carrera", to: "/carrera-dt", desc: "Dirige un club: tácticas, fichajes y partidos.", replaces: "" },
   { id: "presidente", label: "Presidente", icon: Building2, color: "#c9a9e8", min: 30, solo: true, sec: "carrera", to: "/presidente", desc: "Decisiones, prensa y la presión de la directiva.", replaces: "" },
-  { id: "cotrero", variant: "simple", label: "Cotrero simple", icon: Crown, color: "#f2b84b", min: 15, solo: true, sec: "carrera", old: "/cotrero.html", desc: "De potrero a leyenda, una decisión por temporada.", replaces: "De potrero a leyenda" },
-  { id: "cotrero", variant: "medio", label: "Cotrero medio", icon: Sparkles, color: "#ef5b5b", min: 25, solo: true, sec: "carrera", old: "/cotrero-medio.html", desc: "Reputación, selección y un lugar en el salón de leyendas.", replaces: "Reputación y selección" },
+  { id: "cotrero", label: "Cotrero", icon: Crown, color: "#f2b84b", min: 15, solo: true, sec: "carrera", old: "/cotrero.html", desc: "De potrero a leyenda. Eliges la dificultad: simple o media.", replaces: "Cotrero simple y Cotrero medio" },
 ];
 const SECS = [["arcade", "Arcade", "Rápido y solo"], ["amigos", "Con amigos", "Versus, Draft y ligas"], ["carrera", "Carrera", "Partidas largas"]];
 
@@ -72,7 +71,7 @@ export default function Jugar() {
   return (
     <Layout hub>
       <header className="p-dhead">
-        <div><h1>Jugar</h1><p>13 juegos: los de antes viven dentro de cada uno como variantes.</p></div>
+        <div><h1>Jugar</h1><p>12 juegos: los de antes viven dentro de cada uno como variantes.</p></div>
         <div style={{ minWidth: 320 }}>{cap}</div>
       </header>
       <section className="p-sect p-stg" style={{ "--i": 0, marginTop: 6 }}>
@@ -90,7 +89,7 @@ export default function Jugar() {
           })()}
         </section>
       ))}
-      <p className="text-xs p-dim text-center mt-5 p-only-phone">13 juegos. Los de antes siguen dentro de cada uno como variantes.</p>
+      <p className="text-xs p-dim text-center mt-5 p-only-phone">12 juegos. Los de antes siguen dentro de cada uno como variantes.</p>
     </Layout>
   );
 }

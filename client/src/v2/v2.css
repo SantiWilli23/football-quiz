@@ -33,6 +33,9 @@
   --fg: #e9f2ed; --mute: #8ba69a; --dim: #5b766b;
   --acc: #2fb673; --acc2: #6fd9a8; --onacc: #04150c;
   --gold: #f2b84b; --red: #ef5b5b; --blue: #4aa8e8;
+  --stripe1: #0f2118; --stripe2: #112a1e; --glow: #2fb67322; --glow-soft: #2fb6730f;
+  --cell: #050b08; --cell-line: #2a4237; --cell-empty: #3a4f45;
+  --me-bg: #16342a; --me-line: #2c6a4f; --gold-line: #6b5420;
   --f-d: "Bricolage Grotesque", system-ui, sans-serif;
   --f-b: "Figtree", system-ui, sans-serif;
   --f-n: "Barlow Condensed", "Arial Narrow", sans-serif;
@@ -115,21 +118,21 @@
 .p-x2 { background: var(--gold); color: #241800; font: 800 13px var(--f-n); letter-spacing: 0.06em; padding: 2px 7px; border-radius: 6px; }
 .p-chipr { display: flex; flex-wrap: wrap; gap: 6px; }
 .p-chip { padding: 8px 13px; border-radius: 999px; background: var(--panel); border: 2px solid var(--line); font-weight: 700; font-size: 13px; color: var(--fg); transition: 0.15s; }
-.p-chip.on { border-color: var(--acc); background: #16342a; }
+.p-chip.on { border-color: var(--acc); background: var(--me-bg); }
 .p-cbar { height: 7px; border-radius: 4px; background: var(--panel2); overflow: hidden; }
 .p-cbar i { display: block; height: 100%; background: linear-gradient(90deg, var(--acc), var(--gold)); transition: width 0.8s cubic-bezier(.2, .9, .2, 1); }
 .p-gap { margin-top: 10px; font-size: 13px; color: var(--mute); display: flex; align-items: center; gap: 8px; }
 .p-gap b { color: var(--fg); }
 
 /* ---------- marcador del partido del día ---------- */
-.p-hero { margin-top: 6px; border-radius: 24px; padding: 16px; border: 1px solid var(--line); background: repeating-linear-gradient(90deg, #0f2118 0 38px, #112a1e 38px 76px); position: relative; overflow: hidden; }
-.p-hero::after { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 80% at 50% 0, #2fb67322, transparent 60%); pointer-events: none; }
+.p-hero { margin-top: 6px; border-radius: 24px; padding: 16px; border: 1px solid var(--line); background: repeating-linear-gradient(90deg, var(--stripe1) 0 38px, var(--stripe2) 38px 76px); position: relative; overflow: hidden; }
+.p-hero::after { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 80% at 50% 0, var(--glow), transparent 60%); pointer-events: none; }
 .p-hero > * { position: relative; z-index: 1; }
 .p-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0; }
-.p-cell { background: #050b08; border: 1px solid #2a4237; border-radius: 12px; padding: 8px 6px 6px; text-align: center; }
+.p-cell { background: var(--cell); border: 1px solid var(--cell-line); border-radius: 12px; padding: 8px 6px 6px; text-align: center; }
 .p-cell .lab { display: block; font: 700 11px var(--f-n); letter-spacing: 0.18em; color: var(--mute); }
 .p-cell .num { display: block; font: 700 44px/1 var(--f-n); color: var(--gold); text-shadow: 0 0 14px #f2b84b55; font-variant-numeric: tabular-nums; }
-.p-cell .num.empty { color: #3a4f45; text-shadow: none; }
+.p-cell .num.empty { color: var(--cell-empty); text-shadow: none; }
 .p-cell small { display: block; font-size: 10px; color: var(--dim); margin-top: 2px; }
 .p-total { display: flex; align-items: baseline; justify-content: center; gap: 8px; }
 .p-total b { font: 700 64px/1 var(--f-n); color: var(--fg); font-variant-numeric: tabular-nums; }
@@ -145,13 +148,13 @@
 /* ---------- tablas ---------- */
 .p-rows { display: flex; flex-direction: column; gap: 6px; }
 .p-row { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 9px 12px; color: var(--fg); text-align: left; width: 100%; }
-.p-row.me { background: #16342a; border-color: #2c6a4f; }
+.p-row.me { background: var(--me-bg); border-color: var(--me-line); }
 .p-row .pos { width: 20px; text-align: center; font: 700 17px var(--f-n); color: var(--mute); flex: none; }
 .p-row .nm { flex: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .p-row .nm small { display: block; font-weight: 500; font-size: 11px; color: var(--gold); }
 .p-row .pt { font: 700 22px var(--f-n); font-variant-numeric: tabular-nums; }
 .p-pend { font-size: 11px; color: var(--dim); border: 1px dashed var(--line); border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
-.p-nudge { font-size: 11px; color: var(--gold); border: 1px solid #6b5420; border-radius: 999px; padding: 3px 9px; margin-left: 4px; }
+.p-nudge { font-size: 11px; color: var(--gold); border: 1px solid var(--gold-line); border-radius: 999px; padding: 3px 9px; margin-left: 4px; }
 
 /* ---------- jugar ---------- */
 .p-hrow { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -16px; padding: 2px 16px 8px; scrollbar-width: none; }
@@ -194,7 +197,7 @@
 .p-fcard .fadn b { display: block; font-size: 15px; color: #fff; }
 
 /* ---------- portada ---------- */
-.p-porta { min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; position: relative; overflow: hidden; background: radial-gradient(90% 55% at 50% 100%, #2fb67333, transparent 70%), repeating-linear-gradient(90deg, #0b1a13 0 46px, #0d2017 46px 92px); color: var(--fg); }
+.p-porta { min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; position: relative; overflow: hidden; background: radial-gradient(90% 55% at 50% 100%, var(--glow), transparent 70%), repeating-linear-gradient(90deg, var(--stripe1) 0 46px, var(--stripe2) 46px 92px); color: var(--fg); }
 .p-wm { font: 800 54px/1 var(--f-d); letter-spacing: -0.04em; }
 .p-wm span { color: var(--acc); }
 .p-tagl { color: var(--mute); max-width: 260px; }
@@ -205,7 +208,7 @@
 .p-porta .p-btn { width: 100%; max-width: 280px; }
 
 @keyframes p-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-@keyframes p-pulse { 0%, 100% { box-shadow: 0 0 0 0 #2fb67366; } 50% { box-shadow: 0 0 0 10px #2fb67300; } }
+@keyframes p-pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--acc) 40%, transparent); } 50% { box-shadow: 0 0 0 10px transparent; } }
 @keyframes p-shine { 0% { transform: translateX(-120%); } 60%, 100% { transform: translateX(120%); } }
 @keyframes p-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-70px) rotate(180deg); } }
 @keyframes p-bsh { 0%, 100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(0.5); opacity: 0.25; } }
@@ -234,7 +237,7 @@
 :root[data-device="desktop"] .p-side-logo .p-logo { font-size: 26px; }
 .p-side-link { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 12px; color: var(--mute); font: 600 15px var(--f-b); position: relative; transition: background 0.15s, color 0.15s; }
 .p-side-link:hover { background: var(--panel2); color: var(--fg); }
-.p-side-link.on { background: #16342a; color: var(--acc2); }
+.p-side-link.on { background: var(--me-bg); color: var(--acc2); }
 .p-side-link.on::before { content: ""; position: absolute; left: -14px; top: 9px; bottom: 9px; width: 4px; border-radius: 0 4px 4px 0; background: var(--acc); }
 .p-side-me { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg2); color: var(--fg); font-size: 14px; }
 .p-side-me:hover { border-color: var(--acc); }
@@ -245,7 +248,7 @@
 :root[data-device="desktop"] .p-main { width: 100%; max-width: 960px; margin: 0 auto; padding: 28px 40px 56px; }
 :root[data-device="desktop"] .p-col.hub .p-main { max-width: 1180px; }
 :root[data-device="desktop"] .p-col.wide .p-main { max-width: 1440px; }
-:root[data-device="desktop"] .p-app { background: radial-gradient(70% 50% at 70% 0, #2fb6730f, transparent 70%), var(--bg); }
+:root[data-device="desktop"] .p-app { background: radial-gradient(70% 50% at 70% 0, var(--glow-soft), transparent 70%), var(--bg); }
 
 :root[data-device="desktop"] .p-dgrid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(300px, 1fr); gap: 0 32px; align-items: start; }
 :root[data-device="desktop"] .p-dgrid.even { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -317,3 +320,58 @@
   :root[data-device="desktop"] .p-dgrid > .p-r { margin-top: 0; }
   :root[data-device="desktop"] .p-hrow, :root[data-device="desktop"] .p-hrow.big { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 }
+
+/* Pantallas a pantalla completa con la barra lateral del computador (WithSide). */
+:root[data-device="desktop"] .p-withside { margin-left: 248px; }
+@media (max-width: 1099px) { :root[data-device="desktop"] .p-withside { margin-left: 76px; } }
+
+/* ===================== Diseños de color (Yo › Ajustes › Colores) =====================
+   Nocturno es el de arriba (césped oscuro). Azul clásico y Cancha de día son las mismas piezas
+   con otra paleta: el tema lo marca ThemeContext en <html data-theme>. */
+:root[data-v2][data-theme="azul"] {
+  --c-bg: 11 18 32; --c-panel: 21 32 51; --c-panel-hi: 27 40 64; --c-border: 38 53 79;
+  --c-white: 232 238 247; --c-onaccent: 4 18 29;
+  --c-gray-200: 38 53 79; --c-gray-300: 200 210 226; --c-gray-400: 139 155 180; --c-gray-500: 139 155 180;
+  --c-gray-600: 93 108 134; --c-gray-700: 58 72 96; --c-gray-800: 38 53 79; --c-gray-900: 6 10 20;
+  --c-accent: 59 157 214; --c-accent-dark: 40 120 170; --c-accent-light: 124 196 234;
+  --c-amber: 217 164 65; --c-emerald: 63 174 154;
+  --theme-color: #0b1220;
+  --bg: #0b1220; --bg2: #0f1828; --panel: #152033; --panel2: #1b2840; --line: #26354f;
+  --fg: #e8eef7; --mute: #8b9bb4; --dim: #5d6c86;
+  --acc: #3b9dd6; --acc2: #7cc4ea; --onacc: #04121d; --gold: #d9a441;
+  --stripe1: #0f1a2e; --stripe2: #122038; --glow: #3b9dd622; --glow-soft: #3b9dd60f;
+  --cell: #060b16; --cell-line: #2a3b5a; --cell-empty: #3a4a66;
+  --me-bg: #16304a; --me-line: #2c5f8a; --gold-line: #6b5420;
+}
+:root[data-v2][data-theme="cancha-dia"] {
+  --c-bg: 238 243 241; --c-panel: 255 255 255; --c-panel-hi: 247 250 249; --c-border: 207 220 215;
+  --c-white: 16 35 31; --c-onaccent: 255 255 255;
+  --c-gray-200: 207 220 215; --c-gray-300: 60 78 72; --c-gray-400: 82 100 94; --c-gray-500: 82 100 94;
+  --c-gray-600: 110 128 122; --c-gray-700: 150 168 161; --c-gray-800: 207 220 215; --c-gray-900: 238 243 241;
+  --c-accent: 11 143 106; --c-accent-dark: 8 106 78; --c-accent-light: 11 143 106;
+  --c-amber: 217 119 6; --c-red: 220 38 38; --c-blue: 37 99 235; --c-emerald: 11 143 106;
+  --theme-color: #eef3f1;
+  --bg: #eef3f1; --bg2: #f6f9f8; --panel: #ffffff; --panel2: #e9f0ed; --line: #d3dfda;
+  --fg: #10231f; --mute: #4c6660; --dim: #7a908a;
+  --acc: #0b8f6a; --acc2: #0b8f6a; --onacc: #ffffff; --gold: #c26a00; --red: #dc2626; --blue: #2563eb;
+  --stripe1: #1d7a57; --stripe2: #1f8460; --glow: #ffffff22; --glow-soft: #0b8f6a12;
+  --cell: #0c3a2a; --cell-line: #2b7a5c; --cell-empty: #4f8a74;
+  --me-bg: #dff3ea; --me-line: #8fd0b4; --gold-line: #e5b35a;
+  color-scheme: light;
+}
+/* Cancha de día: el marcador es una cancha de verdad (verde) con letras claras; el resto, claro. */
+:root[data-v2][data-theme="cancha-dia"] .p-hero { color: #f2f7f4; border-color: #1a6b4c; }
+:root[data-v2][data-theme="cancha-dia"] .p-hero .p-eyebrow, :root[data-v2][data-theme="cancha-dia"] .p-hero .p-muted,
+:root[data-v2][data-theme="cancha-dia"] .p-hero .p-mono, :root[data-v2][data-theme="cancha-dia"] .p-hero .p-total span { color: #d8efe4; }
+:root[data-v2][data-theme="cancha-dia"] .p-hero .p-total b { color: #ffffff; }
+:root[data-v2][data-theme="cancha-dia"] .p-hero .p-wd { color: #cfe7db; }
+:root[data-v2][data-theme="cancha-dia"] .p-hero .p-wd i { border-color: #7fc2a5; }
+:root[data-v2][data-theme="cancha-dia"] .p-hero .p-btn.ghost { background: #ffffff1f; color: #fff; border-color: #ffffff40; }
+:root[data-v2][data-theme="cancha-dia"] .p-hero .p-btn:not(.ghost) { background: #ffffff; color: #0b6b50; }
+:root[data-v2][data-theme="cancha-dia"] .p-cell .num { color: #ffd27a; }
+:root[data-v2][data-theme="cancha-dia"] .p-porta { color: #ffffff; }
+:root[data-v2][data-theme="cancha-dia"] .p-porta .p-tagl, :root[data-v2][data-theme="cancha-dia"] .p-porta .p-link, :root[data-v2][data-theme="cancha-dia"] .p-porta .p-muted { color: #e2f2ea; }
+:root[data-v2][data-theme="cancha-dia"] .p-porta .p-wm span { color: #b9f5d8; }
+:root[data-v2][data-theme="cancha-dia"] .p-porta .p-btn { background: #ffffff; color: #0b6b50; }
+:root[data-v2][data-theme="cancha-dia"] .p-card, :root[data-v2][data-theme="cancha-dia"] .p-row, :root[data-v2][data-theme="cancha-dia"] .p-gc { box-shadow: 0 1px 2px rgb(16 35 31 / 0.05), 0 8px 22px -14px rgb(16 35 31 / 0.2); }
+:root[data-v2][data-theme="cancha-dia"] .p-x2, :root[data-v2][data-theme="cancha-dia"] .p-seal.t { color: #fff; }

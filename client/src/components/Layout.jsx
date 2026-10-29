@@ -9,7 +9,7 @@ import PlenoStreak from "./PlenoStreak.jsx";
 import { markVisit } from "../utils/visits.js";
 import { ShellContext } from "../v2/ShellContext.js";
 import useFutotal2 from "../v2/useFutotal2.js";
-import Shell from "../v2/Shell.jsx";
+import Shell, { Wordmark } from "../v2/Shell.jsx";
 
 // `focus` = modo enfoque: durante una partida se esconden el menú y la barra
 // y queda solo el juego y un botón «Salir». Los juegos lo prenden mientras
@@ -24,7 +24,9 @@ export default function Layout({ children, focus = false, exitTo = "/juegos", wi
   if (focus) {
     return (
       <div className="min-h-screen bg-bg text-white page-fade">
-        <div className="flex justify-end items-center gap-2 px-4 pt-3 sm:px-6">
+        {/* La barra de enfoque se alinea con el juego (no con el borde de la pantalla). */}
+        <div className={`flex justify-end items-center gap-2 px-4 pt-3 sm:px-6 lg:px-8 mx-auto ${wide ? "max-w-7xl" : "max-w-3xl"}`}>
+          {v2 && <Wordmark className="p-logo mr-auto hidden desk:inline" />}
           <HelpButton inline />
           <Link to={exitTo} className="btn btn-secondary btn-sm">
             <X size={14} /> Salir

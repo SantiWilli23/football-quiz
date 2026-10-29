@@ -99,6 +99,17 @@ export function SideBar() {
   );
 }
 
+// Pantallas con su propio diseño a pantalla completa (Modo DT, DT Online, Equipo-Jugador): en
+// computador se les suma la barra lateral para no perder la navegación; en teléfono no cambia nada.
+export function WithSide({ children }) {
+  return (
+    <>
+      <SideBar />
+      <div className="p-withside">{children}</div>
+    </>
+  );
+}
+
 // `hub`: las cinco pantallas principales usan todo el ancho; los juegos, un ancho de lectura.
 export default function Shell({ children, chips, wide = false, hub = false }) {
   return (

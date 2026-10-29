@@ -18,6 +18,7 @@ import GhostToggle from "./GhostToggle.jsx";
 import Adn from "./Adn.jsx";
 import { resetManos } from "./Mano.jsx";
 import { DEVICE_MODES, readDeviceMode, setDeviceMode } from "../utils/device.js";
+import { useTheme } from "../context/ThemeContext.jsx";
 
 const AREAS = [["chile", "CHI"], ["europa", "EUR"], ["leyendas", "LEY"], ["actualidad", "ACT"], ["mercado", "MER"], ["velocidad", "VEL"]];
 const TIER = { especial: ["#f2b84b", "Especial"], oro: ["#e8c46a", "Oro"], plata: ["#b9c2cc", "Plata"], bronce: ["#c58a5b", "Bronce"] };
@@ -92,6 +93,7 @@ export default function Yo() {
   const [editing, setEditing] = useState(false);
   const [guides, setGuides] = useState(false);
   const [device, setDevice] = useState(readDeviceMode);
+  const { theme, setTheme, themes } = useTheme();
   useEffect(() => { api.get("/me/card").then((r) => setCard(r.data)).catch(() => setCard(null)); }, []);
   if (!user) return null;
 
@@ -155,6 +157,19 @@ export default function Yo() {
               ))}
             </div>
             <small className="block mt-1.5 p-dim">{DEVICE_MODES.find((m) => m.id === device)?.hint}</small>
+          </div>
+          <div className="py-3 border-b" style={{ borderColor: "var(--line)" }}>
+            <span className="block mb-2">Colores</span>
+            <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Colores">
+              {themes.map((t) => (
+                <button key={t.id} role="radio" aria-checked={theme === t.id} onClick={() => setTheme(t.id)}
+                  className="rounded-xl border p-2 text-left text-xs font-semibold transition-colors"
+                  style={{ borderColor: theme === t.id ? "var(--acc)" : "var(--line)", background: theme === t.id ? "var(--me-bg)" : "transparent" }}>
+                  <span className="flex h-6 rounded-md overflow-hidden mb-1.5" aria-hidden="true">{t.swatch.map((c) => <i key={c} className="flex-1" style={{ background: c }} />)}</span>
+                  {t.label}
+                </button>
+              ))}
+            </div>
           </div>
           <Toggle label="Sonido" on={sound} onChange={(v) => { setSfxOn(v); setSound(v); }} />
           <div className="py-3 border-b flex items-center justify-between gap-3" style={{ borderColor: "var(--line)" }}>

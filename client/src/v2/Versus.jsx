@@ -50,14 +50,16 @@ export default function Versus() {
 
   return (
     <Layout>
-      <div className="mx-auto max-w-sm space-y-5 text-center">
-        <div>
+      {/* Teléfono: una columna. Computador: la ruleta a la izquierda y los modos a la derecha. */}
+      <div className="mx-auto max-w-sm space-y-5 text-center desk:max-w-4xl desk:grid desk:grid-cols-2 desk:gap-x-12 desk:gap-y-6 desk:space-y-0 desk:items-start desk:pt-4">
+        <div className="desk:col-span-2">
           <p className="t-eyebrow">Versus</p>
           <h1 className="t-title">Que decida la ruleta</h1>
           <p className="text-sm text-gray-400">Giras, sale un modo y a jugar contra alguien de tu club.</p>
         </div>
 
-        <div className="relative mx-auto w-64">
+        <div className="space-y-5">
+        <div className="relative mx-auto w-64 desk:w-80">
           <div className="absolute left-1/2 -top-2 z-10 h-0 w-0 -translate-x-1/2 border-x-[10px] border-t-[18px] border-x-transparent border-t-white" aria-hidden="true" />
           <svg viewBox="0 0 200 200" className="w-full drop-shadow-lg" style={{ transform: `rotate(${angle}deg)`, transition: reduce ? "none" : "transform 3.2s cubic-bezier(.12,.7,.15,1)" }} role="img" aria-label={`Ruleta con ${N} modos: ${MODES.map((m) => m.label).join(", ")}`}>
             {MODES.map((m, i) => {
@@ -85,14 +87,26 @@ export default function Versus() {
         ) : (
           <button onClick={spin} disabled={spinning} className="btn btn-primary w-full disabled:opacity-60">{spinning ? "Girando…" : "Girar la ruleta"}</button>
         )}
+        </div>
+        <div className="space-y-5 desk:text-left">
         <div>
           <p className="t-eyebrow mb-1.5">¿Prefieres elegir?</p>
-          <div className="flex flex-wrap justify-center gap-1.5">
+          <div className="flex flex-wrap justify-center gap-1.5 desk:hidden">
             {MODES.map((m) => <button key={m.label} onClick={() => go(navigate, m.to)} className="rounded-full border border-border px-3 py-1.5 text-xs text-gray-300 hover:border-accent/60">{m.label}</button>)}
+          </div>
+          {/* En computador, cada modo es una fila con su explicación. */}
+          <div className="hidden desk:flex flex-col gap-2">
+            {MODES.map((m) => (
+              <button key={m.label} onClick={() => go(navigate, m.to)} className="p-row" style={{ alignItems: "flex-start" }}>
+                <span className="nm" style={{ whiteSpace: "normal" }}>{m.label}<small style={{ color: "var(--mute)" }}>{m.text}</small></span>
+                <span className="p-nudge" style={{ color: "var(--acc2)", borderColor: "var(--me-line)" }}>Jugar</span>
+              </button>
+            ))}
           </div>
         </div>
         <p className="text-xs text-gray-500">Ganar un Duelo suma 30 puntos a los clubes Total en los que estás (una vez al día). Si nadie está conectado, el Duelo se juega a tu ritmo: respondes ahora y tu rival cuando entre.</p>
-        <ul className="space-y-1 text-left text-xs text-gray-500">{MODES.map((m) => <li key={m.label}><b className="text-gray-300">{m.label}:</b> {m.text}</li>)}</ul>
+        <ul className="space-y-1 text-left text-xs text-gray-500 desk:hidden">{MODES.map((m) => <li key={m.label}><b className="text-gray-300">{m.label}:</b> {m.text}</li>)}</ul>
+        </div>
       </div>
     </Layout>
   );
