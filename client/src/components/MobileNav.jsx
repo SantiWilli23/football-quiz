@@ -22,6 +22,7 @@ const linksV2 = [
   { to: "/hoy", label: "Hoy", icon: Home, end: true },
   { to: "/juegos", label: "Jugar", icon: Gamepad2 },
   { to: "/club", label: "Club", icon: Users },
+  { to: "/futbol", label: "En vivo", icon: Radio },
   { to: "/cartas", label: "Cartas", icon: Layers },
   { to: "/perfil", label: "Yo", icon: User },
 ];
