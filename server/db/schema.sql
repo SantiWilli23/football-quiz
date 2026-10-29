@@ -1548,3 +1548,9 @@ CREATE TABLE IF NOT EXISTS dt_league_player_offers (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   resolved_at TEXT
 );
+
+-- Futotal 2.0: celebración de gol elegida (se desbloquean por nivel, ver utils/progreso.js).
+CREATE TABLE IF NOT EXISTS user_celebration (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id),
+  id TEXT NOT NULL
+);

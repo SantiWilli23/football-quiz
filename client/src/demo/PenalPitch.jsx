@@ -2,7 +2,29 @@
 // al ancho del teléfono y del computador (el dibujo escala; la pregunta va debajo).
 // estado: "idle" (antes de elegir), "gol" (la pelota entra y el portero se tira al otro lado) o
 // "atajado" (el portero llega a la pelota).
+import useProgreso from "./useProgreso.js";
+
+const PARTS = [-86, -58, -30, -8, 14, 40, 66, 90];
+function Celebracion({ id }) {
+  if (id === "clasica") return null;
+  const color = { fuegos: ["#f2b84b", "#ef5b5b", "#4aa8e8"], confeti: ["#2fb673", "#f2b84b", "#f27aa8", "#8e7dff"], estrella: ["#ffe27a"], leyenda: ["#ffe27a", "#2fb673"] }[id] || ["#f2b84b"];
+  return (
+    <g aria-hidden="true" style={{ pointerEvents: "none" }}>
+      {PARTS.map((x, i) => (
+        <g key={i} className="fq-spark-svg" style={{ animationDelay: `${i * 60}ms` }}>
+          {id === "estrella" || id === "leyenda"
+            ? <text x={160 + x * 1.6} y={40 + (i % 3) * 18} fontSize={id === "leyenda" ? 18 : 14} textAnchor="middle" fill={color[i % color.length]}>★</text>
+            : id === "confeti"
+              ? <rect x={160 + x * 1.6} y={30 + (i % 4) * 14} width="6" height="10" rx="1" fill={color[i % color.length]} transform={`rotate(${i * 37} ${160 + x * 1.6} ${30 + (i % 4) * 14})`} />
+              : <circle cx={160 + x * 1.6} cy={38 + (i % 3) * 16} r={i % 2 ? 4 : 6} fill={color[i % color.length]} />}
+        </g>
+      ))}
+    </g>
+  );
+}
+
 export default function PenalPitch({ estado = "idle" }) {
+  const { progreso } = useProgreso();
   const gol = estado === "gol";
   const atajado = estado === "atajado";
   const keeper = gol ? "translate(58px, 6px) rotate(24deg)" : atajado ? "translate(40px, 4px) rotate(18deg)" : "translate(0, 0)";
@@ -28,6 +50,7 @@ export default function PenalPitch({ estado = "idle" }) {
         <circle cx="160" cy="150" r="11" fill="#f4f7f5" stroke="#111" strokeWidth="2" />
         <path d="M160 143 L166 148 L164 155 L156 155 L154 148Z" fill="#111" />
       </g>
+      {gol && <Celebracion id={progreso?.celebration || "clasica"} />}
       {gol && <text x="160" y="116" textAnchor="middle" fontSize="30" fontWeight="900" fontFamily="system-ui, sans-serif" fill="#2fb673" letterSpacing="3">¡GOL!</text>}
       {atajado && <text x="160" y="116" textAnchor="middle" fontSize="26" fontWeight="900" fontFamily="system-ui, sans-serif" fill="#ef5b5b" letterSpacing="2">ATAJADO</text>}
     </svg>

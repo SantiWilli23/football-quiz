@@ -6,6 +6,7 @@ import { todayStr } from "../utils/points.js";
 import { redesignOn } from "../utils/clubs.js";
 import { AREAS, analysis, computeAdn, futotalCard } from "../utils/adn.js";
 import { trainingItems } from "../utils/daily-match.js";
+import { progreso, chooseCelebration } from "../utils/progreso.js";
 
 // Yo (Futotal 2.0): ADN futbolero, carta Futotal y sesiones de entrenamiento.
 const router = Router();
@@ -39,6 +40,18 @@ router.get("/owner", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Error del servidor" });
   }
+});
+
+// Nivel, experiencia, título y celebraciones de gol del perfil.
+router.get("/progreso", async (req, res) => {
+  try { res.json(await progreso(req.userId)); } catch (err) { console.error(err); res.status(500).json({ error: "Error del servidor" }); }
+});
+router.put("/celebracion", async (req, res) => {
+  try {
+    const out = await chooseCelebration(req.userId, String(req.body?.id || ""));
+    if (out.error) return res.status(400).json(out);
+    res.json(out);
+  } catch (err) { console.error(err); res.status(500).json({ error: "Error del servidor" }); }
 });
 
 router.get("/adn", async (req, res) => {

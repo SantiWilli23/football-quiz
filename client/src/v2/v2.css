@@ -413,3 +413,8 @@
 
 /* ===== Beta · menos texto: lo que lleva beta-hide se oculta solo en la beta ===== */
 html[data-beta] .beta-hide { display: none !important; }
+
+/* Celebraciones de gol del penal (SVG): las partículas suben y se desvanecen */
+@keyframes fq-spark-svg { 0% { opacity: 0; transform: translateY(18px) scale(.4); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-22px) scale(1.15); } }
+.fq-spark-svg { animation: fq-spark-svg 1.3s ease-out both; transform-box: fill-box; transform-origin: center; }
+@media (prefers-reduced-motion: reduce) { .fq-spark-svg { animation: none; opacity: .9; } }

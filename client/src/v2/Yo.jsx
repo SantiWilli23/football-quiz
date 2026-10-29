@@ -20,6 +20,7 @@ import { resetManos } from "./Mano.jsx";
 import { DEVICE_MODES, readDeviceMode, setDeviceMode } from "../utils/device.js";
 import { useTheme } from "../context/ThemeContext.jsx";
 import CodigoAjuste from "../demo/CodigoAjuste.jsx";
+import ProgresoCard from "../demo/ProgresoCard.jsx";
 
 const AREAS = [["chile", "CHI"], ["europa", "EUR"], ["leyendas", "LEY"], ["actualidad", "ACT"], ["mercado", "MER"], ["velocidad", "VEL"]];
 const TIER = { especial: ["#f2b84b", "Especial"], oro: ["#e8c46a", "Oro"], plata: ["#b9c2cc", "Plata"], bronce: ["#c58a5b", "Bronce"] };
@@ -113,6 +114,7 @@ export default function Yo() {
       <div className="p-dgrid">
       <div className="p-l">
       <div style={{ order: 2 }}><CartaFutotal card={card} user={user} /></div>
+      <div className="mt-4" style={{ order: 3 }}><ProgresoCard /></div>
 
       <div className="p-stats p-stg mt-4" style={{ "--i": 3, order: 4 }}>
         <div><b>{card?.games ?? 0}</b><span>Partidos</span></div>
