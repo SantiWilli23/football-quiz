@@ -5,6 +5,7 @@ import Layout from "../components/Layout.jsx";
 import { INICIALES, TOTAL, combinar } from "../otro/recetas.js";
 
 const KEY = "fq_alquimia";
+const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 const load = () => {
   try {
     const v = JSON.parse(localStorage.getItem(KEY));
@@ -20,6 +21,7 @@ export default function Alquimia() {
   const [board, setBoard] = useState([]); // {id, n, e, x, y}
   const [msg, setMsg] = useState("");
   const [nuevo, setNuevo] = useState("");
+  const [q, setQ] = useState("");
   const area = useRef(null);
   const drag = useRef(null);
   const seq = useRef(1);
@@ -85,8 +87,10 @@ export default function Alquimia() {
             {nuevo && <p role="status" className="absolute top-2 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-black">¡Nuevo: {nuevo}!</p>}
           </div>
           <aside aria-label="Elementos descubiertos" className="rounded-card border border-border p-2 max-h-[420px] overflow-auto">
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar" aria-label="Buscar elemento"
+              className="mb-2 w-full rounded-card border border-border bg-bg px-3 py-1.5 text-sm focus:border-accent focus:outline-none" />
             <div className="flex flex-wrap gap-2">
-              {found.map((f) => (
+              {[...found].reverse().filter((f) => norm(f.n).includes(norm(q))).map((f) => (
                 <button key={f.n} type="button" onPointerDown={(e) => begin(e, f, false)} onPointerMove={move} onPointerUp={end} onPointerCancel={end}
                   className="touch-none cursor-grab rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm font-medium">
                   <span className="mr-1">{f.e}</span>{f.n}
