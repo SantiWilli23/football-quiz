@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { Flame, Gamepad2, Home, Layers, Shield, User } from "lucide-react";
+import { Flame, Gamepad2, Home, Layers, Radio, Shield, User } from "lucide-react";
 import api from "../api.js";
 import AlertsBell from "../components/AlertsBell.jsx";
 import Avatar from "../components/Avatar.jsx";
@@ -14,6 +14,7 @@ const TABS = [
   { to: "/hoy", label: "Hoy", icon: Home, end: true },
   { to: "/juegos", label: "Jugar", icon: Gamepad2, also: ["/jugar"] },
   { to: "/club", label: "Club", icon: Shield },
+  { to: "/futbol", label: "En vivo", icon: Radio },
   { to: "/cartas", label: "Cartas", icon: Layers },
   { to: "/perfil", label: "Yo", icon: User },
 ];

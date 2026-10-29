@@ -72,7 +72,7 @@
 .p-pill svg { color: var(--gold); }
 .p-roundb { position: relative; width: 36px; height: 36px; border-radius: 50%; background: var(--panel); border: 1px solid var(--line); display: grid; place-items: center; color: var(--fg); }
 .p-main { flex: 1; min-width: 0; padding: 4px 16px calc(96px + env(safe-area-inset-bottom)); }
-.p-tabs { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; z-index: 40; display: grid; grid-template-columns: repeat(5, 1fr); background: var(--panel); border-top: 1px solid var(--line); padding-bottom: max(4px, env(safe-area-inset-bottom)); }
+.p-tabs { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; z-index: 40; display: grid; grid-template-columns: repeat(6, 1fr); background: var(--panel); border-top: 1px solid var(--line); padding-bottom: max(4px, env(safe-area-inset-bottom)); }
 .p-tabs a { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 0 8px; color: var(--dim); font: 600 11px var(--f-b); transition: color 0.2s; }
 .p-tabs a svg { transition: transform 0.25s cubic-bezier(.3, 1.6, .5, 1); }
 .p-tabs a.on { color: var(--acc2); }
