@@ -9,6 +9,7 @@ import { loadGame, recordResult, saveGame } from "../futgames/storage.js";
 import { reportResult } from "../futgames/report.js";
 import { playSfx } from "../utils/sfx.js";
 import { ClubCrest } from "../components/PlayerFace.jsx";
+import Flag, { flagUrl } from "../components/Flag.jsx";
 import { useDemo } from "../demo/version.js";
 
 // Torta de plantel: una torta con las nacionalidades de los jugadores (de la
@@ -63,11 +64,15 @@ function Donut({ countries, visible, centerTop, centerBottom, onHover, hover, de
                 strokeDasharray={shown ? undefined : "3 3"}
               />
             )}
-            {shown && s.a1 - s.a0 > 0.09 && (
-              <text x={150 + 91 * Math.sin(s.mid)} y={150 - 91 * Math.cos(s.mid)} textAnchor="middle" dominantBaseline="central" fontSize={s.a1 - s.a0 > 0.5 ? 22 : s.a1 - s.a0 > 0.25 ? 15 : 9}>
-                {s.flag}
-              </text>
-            )}
+            {shown && s.a1 - s.a0 > 0.09 && (() => {
+              const w = s.a1 - s.a0 > 0.5 ? 34 : s.a1 - s.a0 > 0.25 ? 24 : 15;
+              const cx = full ? 150 : 150 + 91 * Math.sin(s.mid);
+              const cy = full ? 150 - 91 : 150 - 91 * Math.cos(s.mid);
+              const url = flagUrl(s.flag, 80);
+              return url
+                ? <image href={url} x={cx - w / 2} y={cy - (w * 0.75) / 2} width={w} height={w * 0.75} preserveAspectRatio="xMidYMid slice" style={{ pointerEvents: "none" }} />
+                : <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={w * 0.65}>{s.flag}</text>;
+            })()}
           </g>
         );
       })}
@@ -75,7 +80,7 @@ function Donut({ countries, visible, centerTop, centerBottom, onHover, hover, de
       <text x="150" y="160" textAnchor="middle" fontSize="11" fill="currentColor" opacity="0.7">{centerBottom}</text>
       {hover != null && (
         <text x="150" y="182" textAnchor="middle" fontSize="11" fill="currentColor">
-          {countries[hover].flag} {countries[hover].count} jug.
+          {countries[hover].country} · {countries[hover].count} jug.
         </text>
       )}
     </svg>
@@ -241,7 +246,7 @@ export default function Torta() {
               <ul className="mt-3 flex flex-wrap justify-center gap-1.5" aria-label="Nacionalidades">
                 {data.countries.map((c, i) => visible.has(i) && (
                   <li key={c.country}><button type="button" onClick={() => setHover(hover === i ? null : i)} className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs" style={hover === i ? { borderColor: DEMO_COLORS[i % DEMO_COLORS.length] } : undefined}>
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: DEMO_COLORS[i % DEMO_COLORS.length] }} />{c.flag} {c.country} <b className="tabular-nums">{c.count}</b>
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: DEMO_COLORS[i % DEMO_COLORS.length] }} /><Flag emoji={c.flag} size={18} /> {c.country} <b className="tabular-nums">{c.count}</b>
                   </button></li>
                 ))}
               </ul>
@@ -255,7 +260,7 @@ export default function Torta() {
             </div>
             <p className="text-xs text-gray-500 text-center mt-2 min-h-[2.5em]">
               {hovered
-                ? `${hovered.flag} ${hovered.country}: ${hovered.count} jugador${hovered.count === 1 ? "" : "es"}${hoveredPlayers ? ` — ${hoveredPlayers.join(", ")}` : ""}`
+                ? <><Flag emoji={hovered.flag} size={18} className="mr-1 align-middle" />{`${hovered.country}: ${hovered.count} jugador${hovered.count === 1 ? "" : "es"}${hoveredPlayers ? ` — ${hoveredPlayers.join(", ")}` : ""}`}</>
                 : over ? "Toca una porción para ver quiénes son." : "Toca una porción para ver cuántos jugadores tiene."}
             </p>
           </Card>
