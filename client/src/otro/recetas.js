@@ -273,6 +273,35 @@ CAT("Hinchada", "📣", `Argentina=La Doce;Chile=Los de Abajo;Brasil=La Torcida;
 CAT("Cantera", "🌱", `España=La Masía;Francia=Clairefontaine;Países Bajos=La Academia de Ajax;Argentina=Las inferiores;Brasil=Las categorías de base;Portugal=La Academia de Sporting;Alemania=Los centros de formación;Inglaterra=La Academia de St George's;Chile=La cantera de Colo-Colo;Uruguay=La cantera de Peñarol`);
 CAT("Árbitro", "🧑‍⚖️", `Italia=Pierluigi Collina;Argentina=Néstor Pitana;Inglaterra=Howard Webb;Alemania=Markus Merk;Francia=Clément Turpin;España=Mateu Lahoz;Chile=Julio Bascuñán;Brasil=Sandro Ricci;Uruguay=Esteban Ostojich;México=Joel Aguilar`);
 
+// Cuántos niveles de combinación separan a cada elemento de los cuatro básicos.
+let DEPTH = null;
+export function profundidades() {
+  if (DEPTH) return DEPTH;
+  const d = new Map(INICIALES.map((i) => [i.n, 0]));
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const [k, v] of R) {
+      const [a, b] = k.split("|");
+      if (!d.has(a) || !d.has(b)) continue;
+      const c = Math.max(d.get(a), d.get(b)) + 1;
+      if (!d.has(v.n) || c < d.get(v.n)) { d.set(v.n, c); changed = true; }
+    }
+  }
+  return (DEPTH = d);
+}
+
+// Reto del día: el mismo para todos (sale de la fecha). Pide algo ni muy cerca ni muy lejos de los básicos.
+export function retoDelDia(fecha) {
+  const d = profundidades();
+  const emoji = new Map([...R.values()].map((v) => [v.n, v.e]));
+  const pool = [...d].filter(([nombre, n]) => n >= 6 && n <= 12 && emoji.get(nombre) !== "🧩").map(([nombre]) => nombre).sort((a, b) => a.localeCompare(b, "es"));
+  let h = 0;
+  for (const ch of String(fecha)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const nombre = pool[h % pool.length];
+  return { n: nombre, e: emoji.get(nombre) || "⚽", niveles: d.get(nombre) };
+}
+
 export const RECETAS = R;
 export const combinar = (a, b) => R.get(key(a, b)) || null;
 export const TOTAL = new Set([...[...R.values()].map((r) => r.n), ...INICIALES.map((i) => i.n)]).size;

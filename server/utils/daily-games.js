@@ -77,7 +77,7 @@ export const MERGED_GAME = {
 };
 export const mergedKey = (gameKey) => MERGED_GAME[gameKey] || gameKey;
 
-export const SUBMITTABLE_DAILY = new Set(["cotrero", "escudos", "draft_europeo", "un_minuto", "arbitraje_var", "tateti", "piramide", "torta", "traspasos", "a_quien_me_compro", "trivia", "quien_es", "bingo"]);
+export const SUBMITTABLE_DAILY = new Set(["cotrero", "escudos", "draft_europeo", "un_minuto", "arbitraje_var", "tateti", "piramide", "torta", "traspasos", "a_quien_me_compro", "trivia", "quien_es", "bingo", "alquimia"]);
 
 export function pointsFromFraction(fraction) {
   const f = Number(fraction);

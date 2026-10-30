@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowUpDown, Building2, Crown, Gavel, Grid3x3, Shield, Star, Swords, Timer, Trophy, User, Users } from "lucide-react";
+import { ArrowUpDown, Building2, Crown, FlaskConical, Gavel, Grid3x3, Shield, Star, Swords, Timer, Trophy, User, Users } from "lucide-react";
 import api from "../api.js";
 import Layout from "../components/Layout.jsx";
 import useFutotal2 from "./useFutotal2.js";
@@ -18,6 +18,7 @@ const GAMES = [
   { id: "trivia", label: "Trivia", icon: Timer, color: "#8e7dff", min: 2, solo: true, sec: "arcade", old: "/un-minuto", desc: "Preguntas contra el reloj o hasta que falles.", replaces: "Un Minuto y Supervivencia" },
   { id: "var", label: "VAR", icon: Gavel, color: "#ef5b5b", min: 3, solo: true, sec: "arcade", old: "/arbitraje-var", desc: "Mira la jugada y decide como árbitro.", replaces: "Arbitraje y Votación del VAR" },
   { id: "bingo", label: "Bingo", icon: Grid3x3, color: "#3cd6c4", min: 5, solo: true, sec: "arcade", old: "/bingo", desc: "Completa el tablero con jugadores que pasaron por cada club.", replaces: "Bingo y Tatetí" },
+  { id: "alquimia", label: "Alquimia", icon: FlaskConical, color: "#9be15d", min: 5, solo: true, sec: "arcade", to: "/alquimia", desc: "Junta elementos y descubre el fútbol. Cada día, un reto que suma al club.", replaces: "" },
   { id: "versus", label: "Versus", icon: Swords, color: "#f27aa8", min: 5, solo: false, sec: "amigos", to: "/versus", desc: "Una ruleta elige el modo y juegas contra alguien de tu club.", replaces: "Duelos, Mentiroso, Equipo-Jugador, ¿Quién es? en vivo" },
   { id: "draft", label: "Draft", icon: Star, color: "#2fb673", min: 10, solo: false, sec: "amigos", old: "/copa-8a2", desc: "Arma tu once por rondas: solo, en copa, en subasta o contra un amigo.", replaces: "8a2, Copa 8a2 y Subasta" },
   { id: "dtonline", label: "DT Online", icon: Trophy, color: "#f2b84b", min: 60, solo: false, sec: "amigos", to: "/dt-liga", desc: "Una liga de verdad con tus amigos, jornada a jornada.", replaces: "" },

@@ -175,7 +175,8 @@ export default function App() {
       <Route path="/practica" element={<Suspense fallback={<RouteFallback />}><Practica /></Suspense>} />
       <Route path="/versus" element={<PrivateRoute><Versus /></PrivateRoute>} />
       <Route path="/otro" element={<PrivateRoute><Otro /></PrivateRoute>} />
-      <Route path="/otro/alquimia" element={<PrivateRoute><Alquimia /></PrivateRoute>} />
+      <Route path="/otro/alquimia" element={<Navigate to="/alquimia" replace />} />
+      <Route path="/alquimia" element={<PrivateRoute><Alquimia /></PrivateRoute>} />
       <Route path="/admin" element={<PrivateRoute><Admin /></PrivateRoute>} />
       <Route path="/bienvenida" element={<PrivateRoute><Bienvenida /></PrivateRoute>} />
       <Route
