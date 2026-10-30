@@ -122,7 +122,7 @@ export default function Alquimia() {
               <p className="font-semibold">Reto del día: crea <span className="whitespace-nowrap">{reto.e} {reto.n}</span></p>
               {reto.hecho
                 ? <p className="text-gray-400">{reto.texto || "Reto cumplido."}</p>
-                : <p className="text-gray-400">Dificultad {reto.niveles <= 7 ? "baja" : reto.niveles <= 10 ? "media" : "alta"}. Combinaciones de hoy: {reto.intentos}.</p>}
+                : <p className="text-gray-400">Dificultad {reto.niveles <= 6 ? "baja" : reto.niveles <= 7 ? "media" : "alta"}. Combinaciones de hoy: {reto.intentos}.</p>}
             </div>
           </section>
         )}

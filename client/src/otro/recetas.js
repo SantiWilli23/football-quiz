@@ -43,6 +43,12 @@ Planta+Agua=Árbol|🌳
 Madera+Madera=Poste|🥅
 Poste+Poste=Arco|🥅
 Arco+Pasto=Cancha|🏟️
+Vapor+Agua=Lluvia|🌧️
+Planta+Tierra=Pasto|🌿
+Pasto+Viento=Pelota|⚽
+Planta+Metal=Madera|🪵
+Madera+Tierra=Poste|🥅
+Madera+Poste=Arco|🥅
 Viento+Cancha=Pelota|⚽
 Pelota+Pasto=Pase|↗️
 Pelota+Arco=Gol|🥅
@@ -291,11 +297,14 @@ export function profundidades() {
   return (DEPTH = d);
 }
 
+// Cosas que no son de fútbol (el camino hacia la pelota): no salen de reto.
+const NATURALEZA = new Set(["Vapor", "Barro", "Lava", "Polvo", "Ola", "Humo", "Lago", "Montaña", "Incendio", "Tormenta", "Nube", "Cielo", "Lluvia", "Planta", "Piedra", "Metal", "Acero", "Espada", "Ladrillo", "Muro", "Ceniza", "Árbol", "Bosque", "Madera", "Rayo", "Pasto", "Poste", "Tecnología", "Red", "Luces", "Reloj"]);
+
 // Reto del día: el mismo para todos (sale de la fecha). Pide algo ni muy cerca ni muy lejos de los básicos.
 export function retoDelDia(fecha) {
   const d = profundidades();
   const emoji = new Map([...R.values()].map((v) => [v.n, v.e]));
-  const pool = [...d].filter(([nombre, n]) => n >= 6 && n <= 12 && emoji.get(nombre) !== "🧩").map(([nombre]) => nombre).sort((a, b) => a.localeCompare(b, "es"));
+  const pool = [...d].filter(([nombre, n]) => n >= 5 && n <= 8 && !NATURALEZA.has(nombre) && emoji.get(nombre) !== "🧩").map(([nombre]) => nombre).sort((a, b) => a.localeCompare(b, "es"));
   let h = 0;
   for (const ch of String(fecha)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   const nombre = pool[h % pool.length];
