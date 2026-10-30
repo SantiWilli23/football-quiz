@@ -11,7 +11,9 @@ const RETO = "fq_alquimia_reto";
 const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 const read = (k, fb) => { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? fb; } catch { return fb; } };
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* sin storage */ } };
-const loadFound = () => { const v = read(KEY, null); return Array.isArray(v) && v.length ? v : INICIALES; };
+// Sin repetidos: una versión anterior podía guardar el mismo elemento dos veces.
+const uniq = (list) => { const seen = new Set(); return list.filter((f) => f && !seen.has(f.n) && seen.add(f.n)); };
+const loadFound = () => { const v = read(KEY, null); return Array.isArray(v) && v.length ? uniq(v) : INICIALES; };
 const localDate = () => new Date().toLocaleDateString("en-CA");
 
 // Alquimia de fútbol: arrastra un elemento sobre otro para juntarlos. Lo que descubres se guarda en
@@ -90,7 +92,7 @@ export default function Alquimia() {
     if (!other) return;
     const res = combinar(me.n, other.n);
     if (!res) { say("No pasa nada"); return; }
-    if (!foundRef.current.some((f) => f.n === res.n)) { setFound((f) => f.concat(res)); setNuevo(res.n); setTimeout(() => setNuevo(""), 2200); }
+    if (!foundRef.current.some((f) => f.n === res.n)) { setFound((f) => (f.some((x) => x.n === res.n) ? f : f.concat(res))); setNuevo(res.n); setTimeout(() => setNuevo(""), 2200); }
     say(`${me.n} + ${other.n} = ${res.n}`);
     upd((x) => x.filter((i) => i.id !== d.id && i.id !== other.id).concat({ id: seq.current++, n: res.n, e: res.e, x: (me.x + other.x) / 2, y: (me.y + other.y) / 2 }));
     const rt = retoRef.current;
